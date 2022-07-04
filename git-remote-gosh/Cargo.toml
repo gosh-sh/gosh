@@ -1,0 +1,60 @@
+[package]
+edition = '2021'
+keywords = ['git-remote', 'git', 'gosh']
+name = 'git-remote-gosh'
+version = '0.1.0'
+resolver = "2"
+
+[dependencies]
+git2 = '^0'
+indexmap = '^1'
+log = '^0'
+log4rs = '^1'
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+base64 = "0.13.0"
+base64-serde = "0.6.1"
+bytes = "^1"
+lazy_static = '^1'
+git-object = "^0"
+git-hash = "0.9.3"
+git-odb = "^0"
+git-repository = "^0"
+shellexpand = "2.1.0"
+
+[dependencies.reqwest]
+features = ['multipart', 'stream', 'json']
+version = '^0.11.11'
+
+[dependencies.tokio]
+features = ['full']
+version = '1.19.2'
+
+[dependencies.ton_client]
+git = 'https://github.com/tonlabs/ever-sdk.git'
+tag = '1.35.0'
+package = 'ton_client'
+
+[dependencies.ton_sdk]
+git = 'https://github.com/tonlabs/ever-sdk.git'
+tag = '1.35.0'
+package = 'ton_sdk'
+
+[dependencies.zstd]
+default-features = false
+version = '^0'
+
+[patch.crates-io]
+"tokio" = { git = "https://github.com/tokio-rs/tokio", tag = "tokio-1.19.2" }
+
+[lib]
+name = 'git_remote_gosh'
+path = 'src/lib.rs'
+
+[[bin]]
+name = "git-remote-gosh"
+path = "src/main.rs"
+
+[[bin]]
+name = "git-remote-gosh-vscode-debug"
+path = "src/vscode-debug.rs"
