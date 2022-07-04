@@ -161,6 +161,12 @@ contract Repository is Modifiers{
         }
         return AllBranches;
     }
+    
+    function getSnapshotAddr(string branch, string name) external view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
 
     function getCommitCode() external view returns(TvmCell) {
         return m_CommitCode;

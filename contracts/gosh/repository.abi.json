@@ -112,6 +112,16 @@
 			]
 		},
 		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getCommitCode",
 			"inputs": [
 			],
