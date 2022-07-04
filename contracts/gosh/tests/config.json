@@ -1,0 +1,10 @@
+{
+    "localNode": true,
+    "url": ["http://localhost"],
+    "urlWeb": [
+        "https://eri01.net.everos.dev",
+        "https://rbx01.net.everos.dev",
+        "https://gra01.net.everos.dev"
+    ],
+    "verbose": true
+}
