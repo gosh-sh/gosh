@@ -1,11 +1,8 @@
-use std::error::Error;
 use std::collections::HashMap;
 use crate::blockchain::{
-    GoshContract, 
     Number, 
-    Base64Standard, 
-    TonClient
 };
+use data_contract_macro_derive::DataContract;
 
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
@@ -17,27 +14,15 @@ pub struct TreeComponent {
     type_obj: String, 
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, DataContract)]
+#[abi = "tree.abi.json"]
+#[abi_data_fn = "gettree"]
 pub struct Tree {
     #[serde(rename = "value0")]
     objects: HashMap<String, TreeComponent>,
 }
 
 
-impl Tree {
-    pub async fn load(context: &TonClient, address: &str) -> Result<Tree, Box<dyn Error>> {
-        let contract = GoshContract::tree(address);
-        let tree_content_as_blob = contract.run_local(context, "gettree", None).await?;
-        let tree = Tree::parse_json(tree_content_as_blob)?;         
-        unimplemented!();
-//        contract.run_local(context, "gettree")
-    }
-
-    fn parse_json(json: serde_json::Value) -> Result<Tree, Box<dyn Error>> {
-        return serde_json::from_value::<Tree>(json)
-            .map_err(|e| e.into());
-    }
-}
 
 #[cfg(test)]
 mod tests {

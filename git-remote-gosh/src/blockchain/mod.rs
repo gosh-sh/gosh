@@ -35,10 +35,12 @@ use ton_client::{
 };
 
 mod tree;
+mod commit;
 mod snapshot;
 mod serde_number;
 use snapshot::Snapshot;
 use tree::Tree;
+pub use commit::GoshCommit;
 use serde_number::Number;
 
 use crate::abi as gosh_abi;
@@ -78,9 +80,6 @@ impl GoshContract {
         }
     }
 
-    pub fn tree(address: &str) -> Self {
-        Self::new(address, gosh_abi::TREE)
-    }
 
     pub async fn run_local(
         &self,
@@ -93,14 +92,6 @@ impl GoshContract {
     }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct GoshCommit {
-    repo: String,
-    branch: String,
-    pub sha: String,
-    parents: Vec<String>,
-    pub content: String,
-}
 
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {
@@ -328,9 +319,7 @@ pub async fn get_commit_address(context: &TonClient, repository_address: &str, s
 }
 
 pub async fn get_commit_by_addr(context: &TonClient, address: &str) -> Result<Option<GoshCommit>, Box<dyn Error>> {
-    let contract = GoshContract::new(address, gosh_abi::COMMIT);
-    let _commit_result = contract.run_local(context, "getCommit", None).await?;
-    let commit: GoshCommit = serde_json::from_value(_commit_result).unwrap();
+    let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
 

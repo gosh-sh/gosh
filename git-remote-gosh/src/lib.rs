@@ -15,6 +15,9 @@ extern crate base64;
 extern crate git_object;
 extern crate git_hash;
 
+#[macro_use]
+extern crate data_contract_macro_derive;
+
 pub(crate) mod git_helper;
 pub mod ipfs;
 pub(crate) mod logger;

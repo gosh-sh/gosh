@@ -21,6 +21,8 @@ git-hash = "0.9.3"
 git-odb = "^0"
 git-repository = "^0"
 shellexpand = "2.1.0"
+data-contract-macro-derive = { path = "crates/data-contract-macro-derive" }
+
 
 [dependencies.reqwest]
 features = ['multipart', 'stream', 'json']
