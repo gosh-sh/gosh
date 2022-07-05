@@ -58,12 +58,12 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        _name = nameRepo;
+        m_WalletCode = WalletCode;        
         _rootGosh = rootGosh;
         _goshdao = goshdao;
         _pubkey = pubkey;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
         _branchcommit = branchcommit;
