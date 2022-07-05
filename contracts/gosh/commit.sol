@@ -54,15 +54,15 @@ contract Commit is Modifiers {
         address tree,
         uint128 index
         ) public {
+        _rootGosh = rootGosh;
+        _goshdao = goshdao;
+        _pubkey = pubkey;
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
         require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _parents = parents;
         _name = nameRepo;
-        _rootGosh = rootGosh;
-        _goshdao = goshdao;
-        _pubkey = pubkey;
         _rootRepo = repo;
         _nameBranch = nameBranch;
         _commit = commit;
