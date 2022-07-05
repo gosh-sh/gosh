@@ -74,7 +74,11 @@ impl GitHelper {
         let mut ref_list = refs.unwrap();
         if !for_push {
             let head = get_head(&self.es_client, self.repo_addr.as_str()).await?;
-            ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
+            let mut iter = ref_list.clone().into_iter();
+            let head_ref = iter.find(|x| x.ends_with(&head));
+            if head_ref != None {
+                ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
+            }
         }
         ref_list.push("".to_owned());
         Ok(ref_list)
