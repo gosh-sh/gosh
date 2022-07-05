@@ -71,10 +71,13 @@ impl GitHelper {
 
     async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
         let refs = get_refs(&self.es_client, self.repo_addr.as_str()).await?;
-        let mut ref_list = refs.unwrap();
+        let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
             let head = get_head(&self.es_client, self.repo_addr.as_str()).await?;
-            ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
+            let refs_suffix = format!(" refs/heads/{}", head);
+            if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
+                ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
+            }
         }
         ref_list.push("".to_owned());
         Ok(ref_list)
