@@ -38,13 +38,13 @@ contract Tag is Modifiers{
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _rootGosh = goshaddr;
         _goshdao = goshdao;
+        _pubkey = pubkey;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _nameCommit = nameCommit;
         _commit = commit;
         _content = content;
-        _pubkey = pubkey;
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {

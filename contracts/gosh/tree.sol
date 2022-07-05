@@ -44,11 +44,11 @@ contract Tree is Modifiers {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
-        _ipfs = ipfs;
         _pubkey = rootPubkey;
         _rootGosh = rootGosh;
         _goshdao = goshdao;
+        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
+        _ipfs = ipfs;
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         if (_ipfs.hasValue() == false) { checkCorrect(data); }
