@@ -6,8 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"uint256"},
+				{"name":"pubkeysender","type":"uint256"},
+				{"name":"pubkey","type":"uint256"},
 				{"name":"rootgosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootrepo","type":"address"},
@@ -38,7 +38,7 @@
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diff","type":"tuple"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diff","type":"tuple"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
