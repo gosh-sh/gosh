@@ -322,7 +322,7 @@ pub async fn get_blob_address(context: &TonClient, repository_address: &str, kin
 
 pub async fn calculate_snapshot_address(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<String, Box<dyn Error>>{
     // ! getSnapshotAddr must be relocated to repo-contract
-    let wallet_address = "0:0ee218a90934c1a409ed31b6ecf07240d17f261f3205f0dfab553f66e06514c6";
+    let wallet_address = "0:28a99e8c42e3da1fe6689d7f0fda8e390f44434adb9369a67023dc2106c5358b";
     let repo = GoshContract::new(wallet_address, gosh_abi::WALLET);
     let params = serde_json::json!({
         "repo": repository_address,
@@ -400,9 +400,9 @@ mod tests {
             TestEnv {
                 config: cfg,
                 client,
-                gosh: "0:6349c0ac2e02b6f4639a207d504d85aaca404b3af72d515fc7eff5d9f5d15677".to_string(),
-                dao: "20220704-01".to_string(),
-                repo: "repo-01".to_string(),
+                gosh: "0:eef0faac2330d2608c725b32becc916dced505bdb88d84f18c222708a7fa8229".to_string(),
+                dao: "teampre".to_string(),
+                repo: "testme".to_string(),
             }
         }
     }
@@ -418,7 +418,7 @@ mod tests {
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
-        let expected = "0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9";
+        let expected = "0:0453b13b3386a08e4f391a930b0d7689daf6c12aa73c6a51876d31acccc75dcc";
         assert_eq!(expected, repo_addr.unwrap());
     }
 
@@ -428,7 +428,7 @@ mod tests {
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
         let remote_refs = get_refs(&te.client, &repo_addr).await.unwrap().unwrap();
         let expected_refs = vec![
-            "5685accbdd225ac02c98c8a6724b61a43fb97679 refs/heads/dev"
+            "e8099827e251c2fb4485b1039b3b6d31e5f428e4 refs/heads/dev"
         ];
         assert_eq!(1, remote_refs.len());
         assert_eq!(expected_refs, remote_refs);
@@ -443,7 +443,7 @@ mod tests {
         assert_eq!(None, empty.unwrap());
 
         let commit_sha = remote_rev_parse(&te.client, &repo_addr, "dev").await;
-        assert_eq!(Some("0:67bd193ab0f541acc0b029e248595e92a1b9bb3d2d6d76268e94e3bc1ff537ad".to_owned()), commit_sha.unwrap());
+        assert_eq!(Some("0:eca4354dbf3ad5d328f80ac58284c6b5a7fe5b975dc6015cb88b22a9e33fff17".to_owned()), commit_sha.unwrap());
     }
 
     #[tokio::test]
@@ -459,7 +459,7 @@ mod tests {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
 
-        let gosh_wallet_addr = "0:0ee218a90934c1a409ed31b6ecf07240d17f261f3205f0dfab553f66e06514c6";
+        let gosh_wallet_addr = "0:28a99e8c42e3da1fe6689d7f0fda8e390f44434adb9369a67023dc2106c5358b";
         let keys = KeyPair {
             public: "56931c7fe75bd4e7364671d5c2cd553104b6b6cbce8b3c1d2f1c579dbf9745a1".to_owned(),
             secret: "92410336883c797c5662ee059815d33c8426a4b2184e4ce939e58395d8ec783b".to_owned(),
@@ -475,6 +475,6 @@ mod tests {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
         let snapshot_addr = calculate_snapshot_address(&te.client, &repo_addr, "dev", "index.txt").await;
-        assert_eq!("0:c191199824e37ac8aa4c4fdc900bdb00b85247d1a720c710fe56a36ebbb14038", snapshot_addr.unwrap());
+        assert_eq!("0:b5f206d2826ec5407e5874b1ede7d1ebcda6928bba4c89189493bf9767941e8d", snapshot_addr.unwrap());
     }
 }
