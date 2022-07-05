@@ -44,11 +44,11 @@ contract Repository is Modifiers{
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        m_WalletCode = WalletCode;        
         _pubkey = pubkey;
         _rootGosh = rootgosh;
         _goshdao = goshdao;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _name = name;
         m_CommitCode = CommitCode;
         m_codeTag = codeTag;
