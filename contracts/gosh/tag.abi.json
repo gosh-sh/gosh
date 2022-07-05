@@ -6,8 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"uint256"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"pubkeysender","type":"uint256"},
 				{"name":"nameCommit","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"content","type":"string"},

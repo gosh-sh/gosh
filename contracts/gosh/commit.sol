@@ -40,8 +40,8 @@ contract Commit is Modifiers {
 
     constructor(address goshdao, 
         address rootGosh, 
-        uint256 value0,
-        uint256 value1, 
+        uint256 pubkey,
+        uint256 pubkeysender, 
         string nameRepo, 
         string nameBranch, 
         string commit, 
@@ -54,22 +54,22 @@ contract Commit is Modifiers {
         address tree,
         uint128 index
         ) public {
-        require(_nameCommit != "", ERR_NO_DATA);
-        tvm.accept();
-        _parents = parents;
-        _name = nameRepo;
         _rootGosh = rootGosh;
         _goshdao = goshdao;
-        _pubkey = value0;
+        _pubkey = pubkey;
+        require(_nameCommit != "", ERR_NO_DATA);
+        tvm.accept();
+        m_WalletCode = WalletCode;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _parents = parents;
+        _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
         _commit = commit;
-        m_WalletCode = WalletCode;
         m_CommitCode = CommitCode;
         m_codeDiff = codeDiff;
         _diff = diff;
         _tree = tree;
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         getMoney(_pubkey);
     }
     

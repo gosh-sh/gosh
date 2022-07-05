@@ -26,8 +26,8 @@ contract Tag is Modifiers{
     TvmCell m_WalletCode;
     
     constructor(
-        uint256 value0, 
-        uint256 value1,
+        uint256 pubkey, 
+        uint256 pubkeysender,
         string nameCommit, 
         address commit, 
         string content,
@@ -37,14 +37,14 @@ contract Tag is Modifiers{
         uint128 index) public onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
+        m_WalletCode = WalletCode;
         _rootGosh = goshaddr;
         _goshdao = goshdao;
+        _pubkey = pubkey;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _nameCommit = nameCommit;
         _commit = commit;
         _content = content;
-        m_WalletCode = WalletCode;
-        _pubkey = value0;
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {

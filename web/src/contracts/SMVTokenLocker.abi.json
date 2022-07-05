@@ -1,0 +1,187 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"_platformCodeHash","type":"uint256"},
+				{"name":"_platformCodeDepth","type":"uint16"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startPlatform",
+			"inputs": [
+				{"name":"platformCode","type":"cell"},
+				{"name":"clientCode","type":"cell"},
+				{"name":"amountToLock","type":"uint128"},
+				{"name":"staticCell","type":"cell"},
+				{"name":"inputCell","type":"cell"},
+				{"name":"deployFee","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onInitialized",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"root","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"gasTo","type":"address"},
+				{"name":"value5","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unlockVoting",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onHeadUpdated",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"newClientHead","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onClientCompleted",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"success","type":"bool"},
+				{"name":"newClientHead","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onLockAmountUpdate",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateHead",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvAccount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"smvAccount","type":"address"}
+			]
+		},
+		{
+			"name": "tokenRoot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "lockerBusy",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lockerBusy","type":"bool"}
+			]
+		},
+		{
+			"name": "clientHead",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"clientHead","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "total_votes",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"total_votes","type":"uint128"}
+			]
+		},
+		{
+			"name": "votes_locked",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"votes_locked","type":"uint128"}
+			]
+		},
+		{
+			"name": "tip3Wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tip3Wallet","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "platformCodeHash",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformCodeHash","type":"uint256"}
+			]
+		},
+		{
+			"name": "platformCodeDepth",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformCodeDepth","type":"uint16"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"smvAccount","type":"address"},
+		{"key":2,"name":"tokenRoot","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"smvAccount","type":"address"},
+		{"name":"tokenRoot","type":"address"},
+		{"name":"lockerBusy","type":"bool"},
+		{"name":"clientHead","type":"optional(address)"},
+		{"name":"total_votes","type":"uint128"},
+		{"name":"votes_locked","type":"uint128"},
+		{"name":"tip3Wallet","type":"optional(address)"},
+		{"name":"platformCodeHash","type":"uint256"},
+		{"name":"platformCodeDepth","type":"uint16"},
+		{"name":"actionValue","type":"uint128"},
+		{"name":"actionLockAmount","type":"uint128"},
+		{"name":"actionInputCell","type":"cell"}
+	]
+}

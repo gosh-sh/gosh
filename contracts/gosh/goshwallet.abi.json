@@ -122,7 +122,7 @@
 				{"name":"branchcommit","type":"address"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index","type":"uint128"},
 				{"name":"last","type":"bool"}
 			],
