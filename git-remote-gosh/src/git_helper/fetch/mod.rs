@@ -35,16 +35,18 @@ impl GitHelper {
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj)?;
+        log::info!("Writing git object - success");
         return Ok(object_id);
     }
 
 
     async fn write_git_data<'a>(&mut self, obj: git_object::Data<'a>) -> Result<git_hash::ObjectId, Box<dyn Error>> {
-        log::info!("Writing git object: {} -> size: {}", obj.kind, obj.data.len());
+        log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
         let mut store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write_buf(obj.kind, obj.data)?;
+        log::info!("Writing git data - success");
         return Ok(object_id);
     }
 
@@ -81,6 +83,7 @@ impl GitHelper {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit = blockchain::GoshCommit::load(&self.es_client, address).await?;
+                log::info!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(git_object::Kind::Commit, onchain_commit.content.as_bytes());
                 let obj = git_object::Object::from(data.decode()?).into_commit();
                 log::info!("Received commit {}", id);
@@ -89,10 +92,10 @@ impl GitHelper {
                     oid: obj.tree.clone()
                 };
                 tree_obj_queue.push_back(to_load);
-                for parent_id in obj.parents {
+                for parent_id in &obj.parents {
                     commits_queue.push_back(parent_id.clone());
                 }
-                self.write_git_data(data).await?;
+                self.write_git_object(obj).await?;
                 continue;
             }
             if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
