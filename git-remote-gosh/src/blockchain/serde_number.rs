@@ -4,7 +4,6 @@ use base64_serde::base64_serde_type;
 
 use std::borrow::Borrow;
 use std::{env, fmt, sync::Arc, error::Error};
-use serde_json;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::Visitor;
 use serde::de::Error as SerdeError;

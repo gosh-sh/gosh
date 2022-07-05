@@ -10,8 +10,8 @@ pub struct TreeComponent {
     name: String,
     sha1: String,
     mode: String, 
-    #[serde(rename = "treeObj")]    
-    type_obj: String, 
+    #[serde(rename = "typeObj")]
+    type_obj: String,
 }
 
 #[derive(Deserialize, Debug, DataContract)]
@@ -21,8 +21,6 @@ pub struct Tree {
     #[serde(rename = "value0")]
     objects: HashMap<String, TreeComponent>,
 }
-
-
 
 #[cfg(test)]
 mod tests {

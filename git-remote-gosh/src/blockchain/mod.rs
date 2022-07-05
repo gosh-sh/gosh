@@ -80,7 +80,6 @@ impl GoshContract {
         }
     }
 
-
     pub async fn run_local(
         &self,
         context: &TonClient,
@@ -92,7 +91,6 @@ impl GoshContract {
     }
 }
 
-
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {
     sha: String,
@@ -101,6 +99,17 @@ pub struct GoshBlob {
     pub content: Vec<u8>,
     pub ipfs: String,
     pub flags: Number
+}
+
+#[derive(Deserialize, Debug)]
+struct CallResult {
+    #[serde(rename = "id")]
+    trx_id: String,
+    status: u8,
+    #[serde(with = "ton_sdk::json_helper::uint")]
+    total_fees: u64,
+    in_msg: String,
+    out_msgs: Vec<String>
 }
 
 pub type TonClient = Arc<ClientContext>;
@@ -210,9 +219,8 @@ async fn call(
     context: &TonClient,
     contract: GoshContract,
     function_name: &str,
-    args: Option<serde_json::Value>,
-    traverse: bool,
-) -> Result<String, String> {
+    args: Option<serde_json::Value>
+) -> Result<CallResult, String> {
     let call_set = match args {
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name)
@@ -239,26 +247,9 @@ async fn call(
     .await;
 
     let ResultOfProcessMessage { transaction,/* decoded, */..} = result.unwrap();
+    let call_result: CallResult = serde_json::from_value(transaction).unwrap();
 
-    /* let output = match decoded {
-        Some(value) => value.output.as_ref(),
-        None => None
-    }; */
-
-    if traverse {
-        let params = ParamsOfQueryTransactionTree {
-            in_msg: transaction["in_msg"].as_str().unwrap().to_string(),
-            ..Default::default()
-        };
-
-        let result_qtt = ton_client::net::query_transaction_tree(context.clone(), params).await;
-    }
-
-    let transaction_id = match &transaction["id"] {
-        serde_json::Value::String(value) => value.to_string(),
-        _ => unreachable!()
-    };
-    Ok(transaction_id)
+    Ok(call_result)
 }
 
 pub async fn get_repo_address(context: &TonClient, gosh_root_addr: &str, dao: &str, repo: &str) -> Result<String, Box<dyn Error>> {
@@ -293,10 +284,10 @@ pub async fn set_head(
     repo_name: &str,
     new_head: &str,
     keys: KeyPair
-) -> Result<(), String> {
+) -> Result<(), Box<dyn Error>> {
     let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
     let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
-    let result = call(context, contract, "setHEAD", Some(args), true).await?;
+    let result = call(context, contract, "setHEAD", Some(args)).await?;
 
     Ok(())
 }
@@ -383,8 +374,10 @@ pub async fn get_blob_by_addr(context: &TonClient, ipfs_client: &IpfsService, ad
 pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let _head_result = contract.run_local(context, "getHEAD", None).await?;
-    let head = _head_result["value0"].as_str().unwrap().to_owned();
-    Ok(head)
+    match &_head_result["value0"] {
+        serde_json::Value::String(value) => Ok(value.to_string()),
+        _ => unreachable!()
+    }
 }
 
 #[cfg(test)]
@@ -458,7 +451,7 @@ mod tests {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
         let current_head = get_head(&te.client, &repo_addr).await;
-        assert_eq!("main", current_head.unwrap());
+        assert_eq!("dev", current_head.unwrap());
     }
 
     #[tokio::test]

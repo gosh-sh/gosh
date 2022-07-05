@@ -14,7 +14,7 @@ pub static TREE: &str = abi!("tree.abi.json");
 
 #[derive(serde::Serialize)]
 struct GetCommitAddrArgs {
-    #[serde(rename = "nameCommit")] 
+    #[serde(rename = "nameCommit")]
     pub name_commit: String,
 }
 
@@ -23,7 +23,6 @@ struct GetBlobAddrArgs {
     #[serde(rename = "nameBlob")]
     pub name_blob: String,
 }
-
 
 pub fn get_commit_addr_args(sha: &str) -> Option<serde_json::Value> {
     Some(
