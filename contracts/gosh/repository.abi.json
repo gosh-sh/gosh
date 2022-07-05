@@ -70,7 +70,8 @@
 			"name": "setCommit",
 			"inputs": [
 				{"name":"nameBranch","type":"string"},
-				{"name":"commit","type":"address"}
+				{"name":"commit","type":"address"},
+				{"name":"namecommit","type":"string"}
 			],
 			"outputs": [
 			]
