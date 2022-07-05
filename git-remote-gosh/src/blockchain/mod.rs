@@ -38,8 +38,8 @@ mod tree;
 mod commit;
 mod snapshot;
 mod serde_number;
-use snapshot::Snapshot;
-use tree::Tree;
+pub use snapshot::Snapshot;
+pub use tree::Tree;
 pub use commit::GoshCommit;
 use serde_number::Number;
 
@@ -320,34 +320,6 @@ pub async fn get_blob_address(context: &TonClient, repository_address: &str, kin
     return Ok(result.get("value0").unwrap().as_str().unwrap().to_owned());
 }
 
-pub async fn calculate_snapshot_address(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<String, Box<dyn Error>>{
-    // ! getSnapshotAddr must be relocated to repo-contract
-    let wallet_address = "0:28a99e8c42e3da1fe6689d7f0fda8e390f44434adb9369a67023dc2106c5358b";
-    let repo = GoshContract::new(wallet_address, gosh_abi::WALLET);
-    let params = serde_json::json!({
-        "repo": repository_address,
-        "branch": branch_name,
-        "name": file_path
-    });
-    let result = run_local(context, &repo, "getSnapshotAddr", Some(params)).await?;
-    let snapshot_addr = match &result["value0"] {
-        serde_json::Value::String(value) => value.to_string(),
-        _ => unreachable!()
-    };
-    Ok(snapshot_addr)
-}
-
-pub async fn download_snapshot(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<Option<Snapshot>, Box<dyn Error>> {
-    let address = calculate_snapshot_address(context, repository_address, branch_name, file_path).await?; 
-    let contract = GoshContract::new(&address, gosh_abi::SNAPSHOT);
-    // TODO:
-    // Validate that snapshot exists. Return None if not
-    let snapshot = serde_json::from_value(
-        contract.run_local(context, "getSnapshot", None).await?
-    ).unwrap();
-    return Ok(Some(snapshot));
-}
-
 pub async fn get_blob_by_addr(context: &TonClient, ipfs_client: &IpfsService, address: &str) -> Result<Option<GoshBlob>, Box<dyn Error>> {
     unimplemented!();
     /*
@@ -471,10 +443,53 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn ensure_repository_address_received_correctly() {
+        let te = TestEnv::new();
+        let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
+        assert_eq!("0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", repo_addr);
+    }
+
+    #[tokio::test]
     async fn ensure_snapshot_address_received_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
         let snapshot_addr = calculate_snapshot_address(&te.client, &repo_addr, "dev", "index.txt").await;
         assert_eq!("0:b5f206d2826ec5407e5874b1ede7d1ebcda6928bba4c89189493bf9767941e8d", snapshot_addr.unwrap());
     }
+
+    pub async fn calculate_snapshot_address(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<String, Box<dyn Error>>{
+    // ! getSnapshotAddr must be relocated to repo-contract
+    let wallet_address = "0:0ee218a90934c1a409ed31b6ecf07240d17f261f3205f0dfab553f66e06514c6";
+    let repo = GoshContract::new(wallet_address, gosh_abi::WALLET);
+    let params = serde_json::json!({
+        "repo": repository_address,
+        "branch": branch_name,
+        "name": file_path
+    });
+    let result = run_local(context, &repo, "getSnapshotAddr", Some(params)).await?;
+    let snapshot_addr = match &result["value0"] {
+        serde_json::Value::String(value) => value.to_string(),
+        _ => unreachable!()
+    };
+    Ok(snapshot_addr)
 }
+
+    #[tokio::test]
+    async fn ensure_snapshot_can_be_loaded() {
+        let te = TestEnv::new();
+        let snapshot_addr = calculate_snapshot_address(&te.client, &"0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", &"dev", &"a.txt").await.expect("must be there");
+        //let snapshot_addr = "0:c191199824e37ac8aa4c4fdc900bdb00b85247d1a720c710fe56a36ebbb14038";
+        let snapshot = Snapshot::load(&te.client, &snapshot_addr).await.expect("must load correctly");
+        assert_eq!("", format!("{:?}", snapshot));
+    }
+    
+    #[tokio::test]
+    async fn ensure_tree_root_can_be_loaded() {
+        let te = TestEnv::new();
+///context: &TonClient, gosh_root_addr: &str, repository_address: &str, path: &str
+        let tree_root_addr = Tree::calculate_address(&te.client, &te.gosh, &"0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", &"cc8315b829f220918ea79767c8db21fb0be15dee").await.unwrap();
+        let tree_obj = Tree::load(&te.client, &tree_root_addr).await.unwrap(); 
+        assert_eq!("\"a.txt\"", format!("{:?}", tree_obj.objects["0xa13b9a9a9d3b03f1cc80ab2555324a9720cf9a290341f916913643bada48c9d9"].name));
+    }
+}
+
