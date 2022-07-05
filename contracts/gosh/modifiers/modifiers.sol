@@ -29,6 +29,7 @@ struct Diff {
     string commit;
     optional(bytes) patch;
     optional(string) ipfs;
+    string sha1;
 }
 
 struct Item {
