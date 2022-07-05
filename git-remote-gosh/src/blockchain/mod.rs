@@ -443,53 +443,31 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn ensure_repository_address_received_correctly() {
-        let te = TestEnv::new();
-        let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
-        assert_eq!("0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", repo_addr);
-    }
-
-    #[tokio::test]
     async fn ensure_snapshot_address_received_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
-        let snapshot_addr = calculate_snapshot_address(&te.client, &repo_addr, "dev", "index.txt").await;
-        assert_eq!("0:b5f206d2826ec5407e5874b1ede7d1ebcda6928bba4c89189493bf9767941e8d", snapshot_addr.unwrap());
+        let snapshot_addr = Snapshot::calculate_address(&te.client, &repo_addr, "dev", "README.md").await;
+        assert_eq!("0:c61cab86fc0372c719a590761c8f67ebca1f577e50e7f37609866b1e2c90959a", snapshot_addr.unwrap());
     }
-
-    pub async fn calculate_snapshot_address(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<String, Box<dyn Error>>{
-    // ! getSnapshotAddr must be relocated to repo-contract
-    let wallet_address = "0:0ee218a90934c1a409ed31b6ecf07240d17f261f3205f0dfab553f66e06514c6";
-    let repo = GoshContract::new(wallet_address, gosh_abi::WALLET);
-    let params = serde_json::json!({
-        "repo": repository_address,
-        "branch": branch_name,
-        "name": file_path
-    });
-    let result = run_local(context, &repo, "getSnapshotAddr", Some(params)).await?;
-    let snapshot_addr = match &result["value0"] {
-        serde_json::Value::String(value) => value.to_string(),
-        _ => unreachable!()
-    };
-    Ok(snapshot_addr)
-}
 
     #[tokio::test]
     async fn ensure_snapshot_can_be_loaded() {
         let te = TestEnv::new();
-        let snapshot_addr = calculate_snapshot_address(&te.client, &"0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", &"dev", &"a.txt").await.expect("must be there");
+        let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
+        let snapshot_addr = Snapshot::calculate_address(&te.client, &repo_addr, &"dev", &"src/some.txt").await.expect("must be there");
         //let snapshot_addr = "0:c191199824e37ac8aa4c4fdc900bdb00b85247d1a720c710fe56a36ebbb14038";
         let snapshot = Snapshot::load(&te.client, &snapshot_addr).await.expect("must load correctly");
         assert_eq!("", format!("{:?}", snapshot));
     }
-    
+
     #[tokio::test]
     async fn ensure_tree_root_can_be_loaded() {
         let te = TestEnv::new();
-///context: &TonClient, gosh_root_addr: &str, repository_address: &str, path: &str
-        let tree_root_addr = Tree::calculate_address(&te.client, &te.gosh, &"0:d27914b114bb9a773f470228727313687b50fe30d6e9cc3694f91aea07cd47d9", &"cc8315b829f220918ea79767c8db21fb0be15dee").await.unwrap();
-        let tree_obj = Tree::load(&te.client, &tree_root_addr).await.unwrap(); 
-        assert_eq!("\"a.txt\"", format!("{:?}", tree_obj.objects["0xa13b9a9a9d3b03f1cc80ab2555324a9720cf9a290341f916913643bada48c9d9"].name));
+        let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
+        let tree_sha = "39683d79c14d9508a930fca9d0974e83b3dbeca4";
+        let tree_addr = Tree::calculate_address(&te.client, &te.gosh, &repo_addr, tree_sha).await.unwrap();
+        assert_eq!("0:fd4014cbb38307925b747b0d782952aedac97a9e438ff09f0f490dc7a25b6418", tree_addr);
+        let tree_obj = Tree::load(&te.client, &tree_addr).await.unwrap();
+        assert_eq!("\"some.txt\"", format!("{:?}", tree_obj.objects["0xa419777677a02a989ff0b6bb62d5c903eb11d1afc8056df32c1753e7a4a692d1"].name));
     }
 }
-
