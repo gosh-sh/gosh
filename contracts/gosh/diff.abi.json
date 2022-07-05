@@ -8,8 +8,8 @@
 			"inputs": [
 				{"name":"goshdao","type":"address"},
 				{"name":"rootGosh","type":"address"},
-				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"uint256"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"pubkeysender","type":"uint256"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"branchcommit","type":"address"},

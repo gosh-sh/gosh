@@ -39,9 +39,9 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
 
-    constructor(uint256 value0, uint256 value1,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, bool snap, string oldbranch, uint128 index) public {
+    constructor(uint256 pubkeysender, uint256 pubkey,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, bool snap, string oldbranch, uint128 index) public {
         tvm.accept();
-        _pubkey = value1;
+        _pubkey = pubkey;
         _rootRepo = rootrepo;
         m_codeSnapshot = codeSnapshot;
         m_CommitCode = codeCommit;
@@ -53,7 +53,7 @@ contract Snapshot is Modifiers {
         _rootgosh = rootgosh;
         _goshdao = goshdao;
         m_WalletCode = WalletCode;
-        if (snap == false) { require(checkAccess(value0, msg.sender, index), ERR_SENDER_NO_ALLOWED); }
+        if (snap == false) { require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED); }
         else {    
             TvmCell deployCode = GoshLib.buildSnapshotCode(m_codeSnapshot, _rootRepo, oldbranch, version);
             TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: oldbranch + "/" + _name}});

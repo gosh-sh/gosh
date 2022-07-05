@@ -31,8 +31,8 @@ contract Repository is Modifiers{
     mapping(string => Item) _Branches;
 
     constructor(
-        uint256 value0, 
-        uint256 value1,
+        uint256 pubkey, 
+        uint256 pubkeysender,
         string name, 
         address goshdao,
         address rootgosh,
@@ -44,18 +44,18 @@ contract Repository is Modifiers{
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
-        _pubkey = value0;
+        m_WalletCode = WalletCode;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _pubkey = pubkey;
         _rootGosh = rootgosh;
         _goshdao = goshdao;
         _name = name;
         m_CommitCode = CommitCode;
-        m_WalletCode = WalletCode;
         m_codeTag = codeTag;
         m_SnapshotCode = SnapshotCode;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), 0, 0);
         _head = "main";
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
     }
     
     //Snapshot part
