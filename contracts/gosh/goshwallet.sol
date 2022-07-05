@@ -88,10 +88,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
                         proposalCode.depth(), _tip3Root
     ) {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
+        m_WalletCode = WalletCode;
+        if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
+        if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
         _creator = creator;
         m_CommitCode = commitCode;
         m_RepositoryCode = repositoryCode;
-        m_WalletCode = WalletCode;
         m_TagCode = TagCode;
         m_SnapshotCode = SnapshotCode;
         m_codeTree = codeTree;
@@ -105,8 +107,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
         _tip3root = _tip3Root;
-        if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
-        if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
         getMoney();
     }
     

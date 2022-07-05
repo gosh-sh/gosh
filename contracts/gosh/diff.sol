@@ -42,8 +42,8 @@ contract DiffC is Modifiers {
 
     constructor(address goshdao, 
         address rootGosh, 
-        uint256 value0,
-        uint256 value1, 
+        uint256 pubkey,
+        uint256 pubkeysender, 
         string nameRepo, 
         string nameBranch, 
         address branchcommit,
@@ -58,20 +58,20 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
+        m_WalletCode = WalletCode;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _name = nameRepo;
         _rootGosh = rootGosh;
         _goshdao = goshdao;
-        _pubkey = value0;
+        _pubkey = pubkey;
         _rootRepo = repo;
         _nameBranch = nameBranch;
         _branchcommit = branchcommit;
         _commit = commit;
-        m_WalletCode = WalletCode;
         m_codeDiff = codeDiff;
         m_CommitCode = CommitCode;
         _diff = diffs;
         _last = last;
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         getMoney(_pubkey);
     }
     
