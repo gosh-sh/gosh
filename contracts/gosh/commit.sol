@@ -140,7 +140,7 @@ contract Commit is Modifiers {
         address branchCommit ,  
         address newC) private view {
         if (branchCommit  == address(this)) {
-                Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branchName, newC);
+                Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branchName, newC, _nameCommit);
         }
         else {
             if (_parents.length == 0) { Commit(newC).cancelCommit{value: 0.2 ton, flag: 1}(_nameCommit); return; }

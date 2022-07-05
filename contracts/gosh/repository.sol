@@ -125,10 +125,10 @@ contract Repository is Modifiers{
     }
     
     //Setters    
-    function setCommit(string nameBranch, address commit) public senderIs(_Branches[nameBranch].value) {
+    function setCommit(string nameBranch, address commit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if (_Branches[nameBranch].deployed < _Branches[nameBranch].need) {
+        if ((_Branches[nameBranch].deployed < _Branches[nameBranch].need) || (_Branches[nameBranch].value != msg.sender)) {
             Commit(commit).NotCorrect{value: 0.1 ton, flag: 1}();
             return;
         }
@@ -192,7 +192,7 @@ contract Repository is Modifiers{
         return _head;
     }
 
-    function getCommitAddr(string nameCommit) external view returns(address)  {
+    function getCommitAddr(string nameCommit) public view returns(address)  {
         TvmCell s1 = _composeCommitStateInit(nameCommit);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
