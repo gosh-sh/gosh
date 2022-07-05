@@ -9,4 +9,3 @@ pub struct GoshCommit {
     pub content: String,
 }
 
-

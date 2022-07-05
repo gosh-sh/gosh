@@ -50,7 +50,7 @@ impl GitHelper {
         let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
-
+        log::info!("Opening repo at {}", local_git_dir);
         Ok(Self {
             config,
             es_client,
