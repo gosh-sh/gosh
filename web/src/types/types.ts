@@ -53,9 +53,11 @@ export type TGoshTree = {
 };
 
 export type TGoshDiff = {
-    snapshotAddr: string;
-    patch: string;
+    snap: string;
+    patch: string | null;
     ipfs: string | null;
+    commit: string;
+    sha1: string;
 };
 
 export type TCreateCommitCallbackParams = {
@@ -218,6 +220,7 @@ export interface IGoshWallet extends IContract {
     updateHead(): Promise<void>;
     getTreeAddr(repoAddr: string, treeName: string): Promise<string>;
     getDiffAddr(repoName: string, commitName: string, index: number): Promise<string>;
+    setHead(repoName: string, branch: string): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {

@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { Field, Form, Formik } from 'formik';
-import {
-    Navigate,
-    useNavigate,
-    useOutletContext,
-    useParams,
-} from 'react-router-dom';
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import TextField from '../../components/FormikForms/TextField';
 import { useMonaco } from '@monaco-editor/react';
@@ -42,16 +37,14 @@ const BlobCreatePage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshRepo, goshWallet } =
-        useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [blobCodeLanguage, setBlobCodeLanguage] =
-        useState<string>('plaintext');
+    const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const { progress, progressCallback } = useCommitProgress();
 
     const urlBack = `/${daoName}/${repoName}/tree/${branchName}${
@@ -73,11 +66,9 @@ const BlobCreatePage = () => {
 
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`;
             const exists = goshRepoTree.tree?.items.find(
-                (item) =>
-                    `${item.path ? `${item.path}/` : ''}${item.name}` === name
+                (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name
             );
-            if (exists)
-                throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
+            if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
 
             const message = [values.title, values.message]
                 .filter((v) => !!v)
@@ -140,12 +131,10 @@ const BlobCreatePage = () => {
                                         component={TextField}
                                         errorEnabled={false}
                                         inputProps={{
-                                            className:
-                                                '!text-sm !px-2.5 !py-1.5',
+                                            className: '!text-sm !px-2.5 !py-1.5',
                                             autoComplete: 'off',
                                             placeholder: 'Name of new file',
-                                            disabled:
-                                                !monaco || activeTab === 1,
+                                            disabled: !monaco || activeTab === 1,
                                             onBlur: (e: any) => {
                                                 // Formik `handleBlur` event
                                                 handleBlur(e);

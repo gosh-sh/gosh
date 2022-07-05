@@ -152,22 +152,22 @@ export const getTreeItemsFromPath = (
     return items;
 };
 
-const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
-    return content.split('\n').map((entry: string) => {
-        const [head, fname] = entry.split('\t');
-        const [flags, mode, type, sha] = head.split(' ');
-        const lastSlash = fname.lastIndexOf('/');
-        const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : '';
-        return {
-            flags: +flags,
-            mode: mode as TGoshTreeItem['mode'],
-            type: type as TGoshTreeItem['type'],
-            sha,
-            path,
-            name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
-        };
-    });
-};
+// const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
+//     return content.split('\n').map((entry: string) => {
+//         const [head, fname] = entry.split('\t');
+//         const [flags, mode, type, sha] = head.split(' ');
+//         const lastSlash = fname.lastIndexOf('/');
+//         const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : '';
+//         return {
+//             flags: +flags,
+//             mode: mode as TGoshTreeItem['mode'],
+//             type: type as TGoshTreeItem['type'],
+//             sha,
+//             path,
+//             name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
+//         };
+//     });
+// };
 
 /** Build grouped by path tree from TGoshTreeItem[] */
 export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {

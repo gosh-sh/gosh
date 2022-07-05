@@ -396,9 +396,11 @@ export class GoshWallet implements IGoshWallet {
                 ipfs = await saveToIPFS(content);
             }
             diffs.push({
-                snapshotAddr: addr,
-                patch: ipfs ? '' : patch,
+                snap: addr,
+                patch: ipfs ? null : patch,
                 ipfs,
+                commit: '',
+                sha1: sha1(modified, 'blob'),
             });
 
             const blobPathItems = getTreeItemsFromPath(blob.name, blob.modified, flags);
@@ -674,9 +676,9 @@ export class GoshWallet implements IGoshWallet {
                 items: [],
             },
         ];
-        for (const { snapshotAddr, patch, ipfs } of diffs) {
+        for (const diff of diffs) {
             const chunk = chunked[chunked.length - 1];
-            const item = { snap: snapshotAddr, patch, ipfs, commit: commitName };
+            const item = { ...diff, commit: commitName };
 
             const chunkLen = Buffer.from(JSON.stringify(chunk.items)).byteLength;
             const itemLen = Buffer.from(JSON.stringify(item)).byteLength;
@@ -1012,8 +1014,13 @@ export class GoshWallet implements IGoshWallet {
         });
     }
 
+    /** For smv */
     async updateHead(): Promise<void> {
         await this.run('updateHead', {});
+    }
+
+    async setHead(repoName: string, branch: string): Promise<void> {
+        await this.run('setHEAD', { repoName, branchName: branch });
     }
 
     async run(
@@ -1326,8 +1333,11 @@ export class GoshSnapshot implements IGoshSnapshot {
         }
 
         // Always read patch (may be needed for commit history)
-        let patchedRaw = Buffer.from(patched, 'hex').toString('base64');
-        patchedRaw = await zstd.decompress(this.account.client, patchedRaw, true);
+        let patchedRaw = '';
+        if (patched) {
+            patchedRaw = Buffer.from(patched, 'hex').toString('base64');
+            patchedRaw = await zstd.decompress(this.account.client, patchedRaw, true);
+        }
 
         // Prepare content for whole app usage
         let content: Buffer | string;
