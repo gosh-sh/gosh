@@ -4,39 +4,83 @@ use super::GitHelper;
 use crate::blockchain;
 use git2::Repository;
 use git_diff;
-use git_hash;
+use git_hash::{self, ObjectId};
 use git_object;
 use git_odb;
 use git_odb::{Find, Write};
-use git_repository;
+use git_repository::{self, Object};
 use std::env::current_dir;
 use std::os;
+use std::process::Command;
 use std::{
     collections::{HashSet, VecDeque},
     error::Error,
     str::FromStr,
     vec::Vec,
 };
+use tokio::io::AsyncBufReadExt;
 
-async fn push_ref(local_ref: &str, remote_ref: &str) -> Result<String, Box<dyn Error>> {
-    let repo = Repository::open_from_env()?;
-    let full_ref = repo.resolve_reference_from_short_name(local_ref)?;
-    let commit = repo.reference_to_annotated_commit(&full_ref)?;
+async fn push_object(
+    repo: &git_repository::Repository,
+    object_id: &ObjectId,
+) -> Result<String, Box<dyn Error>> {
+    todo!()
+}
 
-    log::debug!("local ref commit {:?}", commit.id());
+async fn push_ref(
+    repo: &git_repository::Repository,
+    local_ref: &str,
+    remote_ref: &str,
+) -> Result<String, Box<dyn Error>> {
+    let local_commit_id = repo.find_reference(local_ref)?.into_fully_peeled_id()?;
+    let commit_id = local_commit_id.object()?.id;
 
-    let oid = git_hash::ObjectId::from_str(&commit.id().to_string());
-    // git_object::Commit::
+    // git rev-list
 
-    log::debug!("oid {oid:?}");
+    // let repo = Repository::open_from_env()?; // libgit2
+    // let full_ref = repo.resolve_reference_from_short_name(local_ref)?;
+    // let commit = repo.reference_to_annotated_commit(&full_ref)?;
 
-    let splitted: Vec<&str> = local_ref.split("/").collect();
-    let branch = match splitted.as_slice() {
-        [.., branch] => branch,
-        _ => unreachable!(),
-    };
+    log::debug!("local ref commit {:?}", commit_id);
 
-    log::debug!("{}", current_dir()?.to_str().unwrap());
+    let mut commits_queue = VecDeque::<git_hash::ObjectId>::new();
+    struct TreeObjectsQueueItem {
+        pub path: String,
+        pub object_id: ObjectId,
+    }
+    let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
+
+    commits_queue.push_back(commit_id);
+
+    let cmd = Command::new("git")
+        .args([
+            "rev-list",
+            "--objects",
+            "--in-commit-order",
+            "--reverse",
+            format!("{local_ref}").as_str(),
+            // format!("{remote_ref}").as_str(),
+        ])
+        .spawn()
+        .expect("git rev-list failed");
+
+    let cmd_out = cmd.wait_with_output()?;
+    for line in String::from_utf8(cmd_out.stdout)?.lines() {
+        if let Some(oid) = line.split_ascii_whitespace().nth(0) {
+            let object = git_hash::ObjectId::from_str(oid)?;
+            push_object(&repo, &object).await?;
+        } else {
+            break;
+        }
+    }
+
+    // let splitted: Vec<&str> = local_ref.split("/").collect();
+    // let branch = match splitted.as_slice() {
+    //     [.., branch] => branch,
+    //     _ => unreachable!(),
+    // };
+
+    // log::debug!("{}", current_dir()?.to_str().unwrap());
 
     let result_ok = format!("ok {local_ref}");
     Ok(result_ok)
@@ -51,7 +95,9 @@ impl GitHelper {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
-            [local_ref, remote_ref] => push_ref(local_ref, remote_ref).await?,
+            [local_ref, remote_ref] => {
+                push_ref(&self.local_git_repository, local_ref, remote_ref).await?
+            }
             _ => unreachable!(),
         };
 
@@ -69,12 +115,12 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test]
-    async fn ensure_push_ok() {
-        let local_ref = "refs/heads/demo";
-        let push_result = push_ref(local_ref, "refs/heads/demo").await.unwrap();
-        assert_eq!(format!("ok {}", local_ref), push_result);
-    }
+    // #[tokio::test]
+    // async fn ensure_push_ok() {
+    //     let local_ref = "refs/heads/demo";
+    //     let push_result = push_ref(local_ref, "refs/heads/demo").await.unwrap();
+    //     assert_eq!(format!("ok {}", local_ref), push_result);
+    // }
 
     #[tokio::test]
     async fn test_push() -> Result<(), Box<dyn Error>> {
