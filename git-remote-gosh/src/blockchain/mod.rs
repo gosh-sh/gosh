@@ -332,35 +332,6 @@ pub async fn get_commit_by_addr(context: &TonClient, address: &str) -> Result<Op
     Ok(Some(commit))
 }
 
-pub async fn get_blob_address(context: &TonClient, repository_address: &str, kind: &str, sha: &str) -> Result<String, Box<dyn Error>> {
-    let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let result = contract.run_local(context, "getBlobAddr", gosh_abi::get_blob_addr_args(kind, sha)).await?;
-    return Ok(result.get("value0").unwrap().as_str().unwrap().to_owned());
-}
-
-pub async fn get_blob_by_addr(context: &TonClient, ipfs_client: &IpfsService, address: &str) -> Result<Option<GoshBlob>, Box<dyn Error>> {
-    unimplemented!();
-    /*
-    let contract = GoshContract::new(address, gosh_abi::BLOB);
-
-    let result = contract.run_local(context, "getBlob", None).await?;
-    log::info!("blob> {}", result);
-    let mut blob: GoshBlob = serde_json::from_value(result).unwrap();
-    let content = {
-        if blob.ipfs != "" && blob.content.is_empty() {
-            let data = ipfs_client.load(&blob.ipfs).await?;
-            base64::decode(data)?
-        } else {
-            blob.content
-        }
-    };
-    log::info!("Parsed");
-    blob.content = ton_client::utils::decompress_zstd(&content)?;
-    log::info!("decompressed. Content");
-    Ok(Some(blob))
-    */
-}
-
 pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let _head_result = contract.run_local(context, "getHEAD", None).await?;
