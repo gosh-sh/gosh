@@ -424,7 +424,7 @@ pub async fn load_messages_to(context: &TonClient, address: &str) -> Result<Vec<
 
         if decoded.name == "applyDiff" {
             let value = decoded.value.unwrap();
-            let diff: Diff = serde_json::from_value(value["diff"]).unwrap();
+            let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
             messages.insert(0, DiffMessage { diff, created_lt: raw_msg.created_lt });
         }
     }
