@@ -119,7 +119,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"branchcommit","type":"address"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diffs","type":"tuple[]"},
