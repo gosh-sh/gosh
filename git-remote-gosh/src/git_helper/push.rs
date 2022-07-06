@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 use super::GitHelper;
 use crate::blockchain;
+use git2::Repository;
 use git_diff;
 use git_hash;
 use git_object;
@@ -18,6 +19,17 @@ use std::{
 };
 
 async fn push_ref(local_ref: &str, remote_ref: &str) -> Result<String, Box<dyn Error>> {
+    let repo = Repository::open_from_env()?;
+    let full_ref = repo.resolve_reference_from_short_name(local_ref)?;
+    let commit = repo.reference_to_annotated_commit(&full_ref)?;
+
+    log::debug!("local ref commit {:?}", commit.id());
+
+    let oid = git_hash::ObjectId::from_str(&commit.id().to_string());
+    // git_object::Commit::
+
+    log::debug!("oid {oid:?}");
+
     let splitted: Vec<&str> = local_ref.split("/").collect();
     let branch = match splitted.as_slice() {
         [.., branch] => branch,
@@ -102,6 +114,10 @@ mod tests {
 
         let head = repo.head()?;
         println!("head {:?}", head.name());
+        let full_ref = repo.resolve_reference_from_short_name("main")?;
+        let commit = repo.reference_to_annotated_commit(&full_ref)?;
+
+        println!("commit {:?}", commit.id());
 
         // get current branch
         let mut branch = Branch::wrap(head);

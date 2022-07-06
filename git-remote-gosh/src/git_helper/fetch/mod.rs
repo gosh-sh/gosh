@@ -4,6 +4,7 @@ use git_hash;
 use git_object;
 use git_odb;
 use git_odb::{Find, Write};
+use git_traverse::{commit, tree, tree::visit::Action};
 use std::collections::{hash_map, HashMap, HashSet, VecDeque};
 use std::env;
 use std::error::Error;
