@@ -385,9 +385,12 @@ export const chacha20 = {
 };
 
 export const zstd = {
-    async compress(client: TonClient, data: string): Promise<string> {
+    async compress(client: TonClient, data: string | Buffer): Promise<string> {
+        const uncompressed = Buffer.isBuffer(data)
+            ? data.toString('base64')
+            : Buffer.from(data).toString('base64');
         const result = await client.utils.compress_zstd({
-            uncompressed: Buffer.from(data).toString('base64'),
+            uncompressed,
         });
         return result.compressed;
     },
