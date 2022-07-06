@@ -14,10 +14,10 @@ pub struct TreeComponent {
     pub flags: Number,
     pub name: String,
     pub sha1: String,
-    pub mode: String, 
+    pub mode: String,
 
     #[serde(rename = "typeObj")]
-    pub type_obj: String, 
+    pub type_obj: String,
 }
 
 #[derive(Deserialize, Debug, DataContract)]

@@ -12,7 +12,6 @@
 				{"name":"pubkeysender","type":"uint256"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
-				{"name":"branchcommit","type":"address"},
 				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"WalletCode","type":"cell"},
@@ -51,6 +50,7 @@
 		{
 			"name": "sendDiffAll",
 			"inputs": [
+				{"name":"branchcommit","type":"address"}
 			],
 			"outputs": [
 			]
@@ -58,7 +58,8 @@
 		{
 			"name": "sendDiff",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"branchcommit","type":"address"}
 			],
 			"outputs": [
 			]
@@ -167,6 +168,7 @@
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchcommit","type":"address"},
 		{"name":"_newC","type":"address"},
-		{"name":"_last","type":"bool"}
+		{"name":"_last","type":"bool"},
+		{"name":"_entry","type":"bool"}
 	]
 }

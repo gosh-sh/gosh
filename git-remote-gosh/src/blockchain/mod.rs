@@ -3,6 +3,7 @@ use base64;
 use base64_serde::base64_serde_type;
 
 use std::borrow::Borrow;
+use std::os::raw;
 use std::{env, fmt, sync::Arc, error::Error};
 use serde_json;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -18,13 +19,16 @@ use ton_client::{
     abi::{
         Abi,
         CallSet,
+        ParamsOfDecodeMessageBody,
         ParamsOfEncodeMessage,
         Signer,
+        decode_message_body,
         encode_message,
     },
     crypto::KeyPair,
     net::{
         NetworkQueriesProtocol,
+        ParamsOfQuery,
         ParamsOfQueryCollection,
         ParamsOfQueryTransactionTree,
         query_collection,
@@ -110,6 +114,20 @@ struct CallResult {
     total_fees: u64,
     in_msg: String,
     out_msgs: Vec<String>
+}
+
+#[derive(Debug)]
+pub struct DiffMessage {
+    pub diff: Diff,
+    pub created_lt: u64
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Diff {
+    snap: String,
+    commit: String,
+    patch: String,
+    ipfs: String
 }
 
 pub type TonClient = Arc<ClientContext>;
@@ -352,8 +370,72 @@ pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<
     }
 }
 
+pub async fn load_messages_to(context: &TonClient, address: &str) -> Result<Vec<DiffMessage>, Box<dyn Error>> {
+    let query = r#"query($addr: String!){
+      blockchain{
+        account(address:$addr) {
+          messages(msg_type:[IntIn]) {
+            edges {
+              node{ body created_lt status }
+              cursor
+            }
+            pageInfo { hasNextPage }
+          }
+        }
+      }
+    }"#.to_string();
+
+    let result = ton_client::net::query(
+        context.clone(),
+        ParamsOfQuery {
+            query,
+            variables: Some(serde_json::json!({"addr": address})),
+            ..Default::default()
+        },
+    )
+    .await
+    .map(|r| r.result)?;
+
+    #[derive(Deserialize, Debug)]
+    struct Message {
+        body: String,
+        #[serde(with = "ton_sdk::json_helper::uint")]
+        created_lt: u64,
+        status: u8
+    }
+
+    let mut messages: Vec<DiffMessage> = Vec::new();
+    let nodes = result["data"]["blockchain"]["account"]["messages"]["edges"].as_array().unwrap();
+    for message in nodes {
+        let raw_msg: Message = serde_json::from_value(message["node"].clone()).unwrap();
+        if raw_msg.status != 5 {
+            continue;
+        }
+        let decoded = decode_message_body(
+            context.clone(),
+            ParamsOfDecodeMessageBody {
+                abi: Abi::Json(gosh_abi::SNAPSHOT.to_string()),
+                body: raw_msg.body,
+                is_internal: true,
+                ..Default::default()
+            }
+        )
+        .await?;
+
+        if decoded.name == "applyDiff" {
+            let value = decoded.value.unwrap();
+            let diff: Diff = serde_json::from_value(value["diff"]).unwrap();
+            messages.insert(0, DiffMessage { diff, created_lt: raw_msg.created_lt });
+        }
+    }
+
+    Ok(messages)
+}
+
 #[cfg(test)]
 mod tests {
+    use reqwest::header::TE;
+
     use super::*;
     use crate::{config, git::get_refs};
 
@@ -469,5 +551,14 @@ mod tests {
         assert_eq!("0:fd4014cbb38307925b747b0d782952aedac97a9e438ff09f0f490dc7a25b6418", tree_addr);
         let tree_obj = Tree::load(&te.client, &tree_addr).await.unwrap();
         assert_eq!("\"some.txt\"", format!("{:?}", tree_obj.objects["0xa419777677a02a989ff0b6bb62d5c903eb11d1afc8056df32c1753e7a4a692d1"].name));
+    }
+
+    #[tokio::test]
+    async fn ensure_load_messages_correctly() {
+        let te = TestEnv::new();
+        let snapshot_addr = "0:c61cab86fc0372c719a590761c8f67ebca1f577e50e7f37609866b1e2c90959a";
+        let messages = load_messages_to(&te.client, snapshot_addr).await.unwrap();
+        eprintln!("load_messages_to(): {:#?}", messages);
+        // assert_eq!(2, messages.len());
     }
 }

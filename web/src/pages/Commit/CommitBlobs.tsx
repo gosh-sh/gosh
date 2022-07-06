@@ -57,6 +57,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const getMessages = async (
         addr: string,
         commit: string,
+        approved: boolean = false,
         reached: boolean = false,
         cursor: string = '',
         msgs: any[] = []
@@ -102,8 +103,10 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     allow_partial: true,
                 });
                 console.debug('Decoded', decoded);
-                if (decoded.name === 'destroy') return msgs;
-                if (decoded.name === 'applyDiff') {
+                if (decoded.name === 'approve') approved = true;
+                else if (decoded.name === 'cancelDiff') approved = false;
+                else if (decoded.name === 'destroy') return msgs;
+                else if (approved && decoded.name === 'applyDiff') {
                     msgs.push(decoded.value);
                     if (reached) return msgs;
                     if (decoded.value.namecommit === commit) reached = true;
@@ -112,7 +115,14 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         }
 
         if (messages.pageInfo.hasPreviousPage) {
-            await getMessages(addr, commit, reached, messages.pageInfo.startCursor, msgs);
+            await getMessages(
+                addr,
+                commit,
+                approved,
+                reached,
+                messages.pageInfo.startCursor,
+                msgs
+            );
         }
         return msgs;
     };

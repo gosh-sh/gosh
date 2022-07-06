@@ -703,7 +703,7 @@ export class GoshWallet implements IGoshWallet {
                 console.debug('Deploy diff', {
                     repoName,
                     branchName: branch.name,
-                    branchcommit: branch.commitAddr,
+                    // branchcommit: branch.commitAddr,
                     commitName,
                     fullCommit: commitContent,
                     diffs: chunk.items,
@@ -713,7 +713,7 @@ export class GoshWallet implements IGoshWallet {
                 await this.run('deployDiff', {
                     repoName,
                     branchName: branch.name,
-                    branchcommit: branch.commitAddr,
+                    // branchcommit: branch.commitAddr,
                     commitName,
                     fullCommit: commitContent,
                     diffs: chunk.items,

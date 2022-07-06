@@ -24,7 +24,7 @@ pub struct Snapshot {
 
     #[serde(rename = "value2")]
     pub next_ipfs: Option<String>,
-        
+
     #[serde(rename = "value3")]
     pub current_commit: String,
 
