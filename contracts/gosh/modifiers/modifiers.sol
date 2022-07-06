@@ -30,7 +30,6 @@ struct Diff {
     optional(bytes) patch;
     optional(string) ipfs;
     string sha1;
-    string prevsha1;
 }
 
 struct Item {
