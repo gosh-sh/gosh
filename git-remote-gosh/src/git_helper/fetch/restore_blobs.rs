@@ -169,6 +169,8 @@ impl BlobsRebuildingPlan {
                 let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
                 let blob_id = git_helper.write_git_data(blob).await?;
                 last_restored_snapshots.put(blob_id, blob_data);
+                visited.insert(blob_id);
+                blobs.remove(&blob_id);
             }
         }
         Ok(())
