@@ -137,19 +137,24 @@ impl BlobsRebuildingPlan {
             let restored_snapshots = BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
             let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(2);
             if let Some((blob_id, blob)) = restored_snapshots.0 {
+                visited.insert(blob_id);
                 last_restored_snapshots.put(blob_id, blob);
+                blobs.remove(&blob_id);
             }
             if let Some((blob_id, blob)) = restored_snapshots.1 {
+                visited.insert(blob_id);
                 last_restored_snapshots.put(blob_id, blob);
+                blobs.remove(&blob_id);
             }
               
-            log::info!("Expecting to restore blobs: {:?}", blobs);
+            log::info!("Expecting to restore blobs: {:?} from {}", blobs, snapshot_address);
 
             // TODO: convert to async iterator
             // This should download next messages seemless 
             let mut messages = blockchain::load_messages_to(&git_helper.es_client, snapshot_address).await?;
             let mut messages = messages.iter();
             while !blobs.is_empty() {
+                log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot
                 // remove matching blob ids
                 //
@@ -168,6 +173,7 @@ impl BlobsRebuildingPlan {
 
                 let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
                 let blob_id = git_helper.write_git_data(blob).await?;
+                log::info!("Restored blob {}", blob_id);
                 last_restored_snapshots.put(blob_id, blob_data);
                 visited.insert(blob_id);
                 blobs.remove(&blob_id);

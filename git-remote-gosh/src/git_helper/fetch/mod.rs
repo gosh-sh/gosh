@@ -139,9 +139,11 @@ impl GitHelper {
                         | git_object::tree::EntryMode::BlobExecutable => {
                              
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
+                            
                             // Note:
                             // Removing prefixing "/" in the path
                             let snapshot_address = blockchain::Snapshot::calculate_address(&self.es_client, &self.repo_addr, &branch, &file_path[1..]).await?;
+                            log::info!("Adding a blob to search for. Path: {}, id: {}, snapshot: {}", file_path, oid, snapshot_address);
                             blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                         },
                         _ => unimplemented!()
