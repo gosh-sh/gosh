@@ -124,10 +124,13 @@ pub struct DiffMessage {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Diff {
-    snap: String,
+    #[serde(rename = "snap")]
+    snapshot_contract_address: String,
     commit: String,
-    patch: String,
-    ipfs: String
+    pub patch: String,
+    pub ipfs: String,
+    #[serde(rename = "sha1")]
+    pub modified_blob_sha1: String
 }
 
 pub type TonClient = Arc<ClientContext>;

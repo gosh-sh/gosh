@@ -19,7 +19,7 @@ pub struct Snapshot {
     pub next_commit: String,
 
     #[serde(rename = "value1")]
-    #[serde(deserialize_with = "snapshot_content_custom_serialization")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub next_content: Vec<u8>,
 
     #[serde(rename = "value2")]
@@ -29,7 +29,7 @@ pub struct Snapshot {
     pub current_commit: String,
 
     #[serde(rename = "value4")]
-    #[serde(deserialize_with = "snapshot_content_custom_serialization")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub current_content: Vec<u8>,
 
     #[serde(rename = "value5")]
@@ -51,7 +51,7 @@ impl Snapshot {
     }
 }
 
-fn snapshot_content_custom_serialization<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+fn snapshot_content_custom_deserialization<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 where
     D: de::Deserializer<'de>,
 {

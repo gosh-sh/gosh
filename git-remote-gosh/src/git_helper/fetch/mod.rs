@@ -17,6 +17,7 @@ use git_odb::{
     Write
 };
 use crate::blockchain;
+mod restore_blobs;
 
 impl GitHelper {
     pub async fn calculate_commit_address(&self, commit_id: &git_hash::ObjectId) -> Result<String, Box<dyn Error>> {
@@ -68,6 +69,7 @@ impl GitHelper {
                 if visited.contains(&$id) { continue; }
                 if $id.is_null() { continue; }  
                 visited.insert($id.clone());
+                if self.is_commit_in_local_cache(&$id) { continue; }
             };
         }
 
@@ -77,7 +79,7 @@ impl GitHelper {
             pub oid: git_hash::ObjectId
         }
         let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
-        let mut blobs_restore_plan = HashMap::<String, HashSet::<git_hash::ObjectId>>::new();
+        let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
         let sha = git_hash::ObjectId::from_str(sha)?;
         commits_queue.push_back(sha);
         loop {
@@ -133,14 +135,14 @@ impl GitHelper {
                         git_object::tree::EntryMode::Commit => {
                             commits_queue.push_back(oid);
                         },
-                         git_object::tree::EntryMode::Blob 
+                        git_object::tree::EntryMode::Blob 
                         | git_object::tree::EntryMode::BlobExecutable => {
+                             
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
-                            let mut blobs_queue = match blobs_restore_plan.entry(file_path) {
-                                hash_map::Entry::Occupied(o) => o.into_mut(),
-                                hash_map::Entry::Vacant(v) => v.insert(HashSet::<git_hash::ObjectId>::new()),
-};
-                            blobs_queue.insert(oid);
+                            // Note:
+                            // Removing prefixing "/" in the path
+                            let snapshot_address = blockchain::Snapshot::calculate_address(&self.es_client, &self.repo_addr, &branch, &file_path[1..]).await?;
+                            blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                         },
                         _ => unimplemented!()
                     }
@@ -150,68 +152,7 @@ impl GitHelper {
             }
             break; 
         }
-        for (path, blobs) in blobs_restore_plan.iter_mut() {
-            // Note:
-            // Commit restore plan has an issue:
-            // In case someone is trying to load a commit that was not accepted by a repo, yet it points to some existing commit it will force it to load entire repository again and fail afterwards
-            // Reason for this behaviour:
-            // It will not be able to find a blob id in snapshots history
-            // ---
-            //Note: removing prefixing "/" in the path.
-            let path = &path[1..];
-            log::info!("Trying to load a snapshot. Path: {} on the branch: {}", path, branch);
-            log::info!("Expecting to restore blobs: {:?}", blobs);
-            let snapshot_address = blockchain::Snapshot::calculate_address(&self.es_client, &self.repo_addr, &branch, path).await?;
-            let snapshot = blockchain::Snapshot::load(&self.es_client, &snapshot_address).await?;
-            log::info!("Loaded a snapshot: {:?}", snapshot);
-            async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, ipfs: &Option<String>) -> Result<git_object::Object, Box<dyn Error>>{
-                let ipfs_data = if let Some(ipfs_address) = ipfs {
-                    let ipfs_data = helper.ipfs_client.load(&ipfs_address).await?;
-                    base64::decode(ipfs_data)?
-                } else {
-                    vec![] 
-                };
-
-                let data = match ipfs {
-                    None => &content,
-                    Some(_) => &ipfs_data
-                };
-                 
-                log::info!("got: {:?}", data);
-
-                let data = git_object::Data::new(git_object::Kind::Blob, &data);
-                let obj = git_object::Object::from(data.decode()?);
-                Ok(obj)
-            }
-            
-            let snapshot_next_commit = git_hash::ObjectId::from_str(&snapshot.next_commit);
-            if snapshot_next_commit.is_ok() {
-                // TODO: fix this
-                // Note: this is a wrong solution. It create tons of junk files in the system
-                let blob = convert_snapshot_into_blob(self, &snapshot.next_content, &snapshot.next_ipfs).await?;
-                let blob_oid = self.write_git_object(blob).await?;
-                log::info!("Saved a snapshot as a blob. Id: {}", blob_oid);
-                if blobs.contains(&blob_oid) {
-                    blobs.remove(&blob_oid);
-                } 
-            }
-            let current_commit_sha = git_hash::ObjectId::from_str(&snapshot.current_commit);
-            if current_commit_sha.is_ok() {
-                // TODO: fix this
-                // Note: this is a wrong solution. It create tons of junk files in the system
-                let blob = convert_snapshot_into_blob(self, &snapshot.current_content, &snapshot.current_ipfs).await?;
-                let blob_oid = self.write_git_object(blob).await?;
-                log::info!("Saved a snapshot as a blob. Id: {}", blob_oid);
-                if blobs.contains(&blob_oid) {
-                    blobs.remove(&blob_oid);
-                } 
-            }
-            while !blobs.is_empty() {
-                // take next a chunk of messages and reverse it on a snapshot
-                // remove matching blob ids
-                unimplemented!();
-            } 
-        }
+        blobs_restore_plan.restore(self).await?;
         Ok(vec!["\n".to_owned()])
     }
 }
