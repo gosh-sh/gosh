@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 use super::GitHelper;
 use crate::blockchain;
+use git_diff;
 use git_hash;
 use git_object;
 use git_odb;
@@ -50,7 +51,9 @@ impl GitHelper {
 mod tests {
     use std::fs;
 
-    use git2::{string_array::StringArray, IndexAddOption, IndexTime, Repository, Signature, Time};
+    use git2::{
+        string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
+    };
 
     use super::*;
 
@@ -63,6 +66,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_push() -> Result<(), Box<dyn Error>> {
+        // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
 
         fs::remove_dir_all(&dir)?;
@@ -72,7 +76,10 @@ mod tests {
         println!("Testing push {:?}", dir);
 
         let repo = Repository::init(dir).expect("repository init successfuly");
-        repo.remote_set_url("origin", "gosh::test://test")?;
+        repo.remote_set_url(
+            "origin",
+            "gosh::test_network://account@test/repository/name",
+        )?;
 
         let mut index = repo.index()?;
         index.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)?;
@@ -82,8 +89,6 @@ mod tests {
 
         let author = Signature::new("tester", "test@test.test", &Time::new(0, 0))?;
 
-        // let head = repo.head()?;
-        // let ref_opt = head.name();
         let update_ref = Some("HEAD");
 
         repo.commit(
@@ -95,7 +100,18 @@ mod tests {
             &[],
         )?;
 
-        repo.remotes()?.iter().for_each(|x| println!("{x:?}"));
+        let head = repo.head()?;
+        println!("head {:?}", head.name());
+
+        // get current branch
+        let mut branch = Branch::wrap(head);
+        // set upstream
+        branch.set_upstream(repo.remotes()?.get(0))?;
+
+        // get local and repote refs
+        // push
+
+        // push_ref()
 
         Ok(())
     }
