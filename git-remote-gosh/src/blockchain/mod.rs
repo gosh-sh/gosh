@@ -126,8 +126,8 @@ pub struct DiffMessage {
 pub struct Diff {
     snap: String,
     commit: String,
-    patch: String,
-    ipfs: String
+    patch: Option<String>,
+    ipfs: Option<String>
 }
 
 pub type TonClient = Arc<ClientContext>;
