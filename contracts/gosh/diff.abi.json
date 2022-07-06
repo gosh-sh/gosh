@@ -17,7 +17,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diffs","type":"tuple[]"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"prevsha1","type":"string"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index","type":"uint128"},
 				{"name":"last","type":"bool"}
 			],
@@ -120,7 +120,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"prevsha1","type":"string"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -159,7 +159,7 @@
 		{"name":"_commit","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},
-		{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"_diff","type":"tuple[]"},
+		{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"prevsha1","type":"string"}],"name":"_diff","type":"tuple[]"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
