@@ -358,7 +358,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function deployBranch(
         string repoName,
         string newName,
-        string fromName
+        string fromCommit
     ) public onlyOwner accept saveMsg {
         require(checkName(newName), ERR_WRONG_NAME);
         counter += 1;
@@ -366,7 +366,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         Repository(repo).deployBranch{
             value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
-        }(tvm.pubkey(), newName, fromName, _index);
+        }(tvm.pubkey(), newName, fromCommit, _index);
     }
 
     function deleteBranch(

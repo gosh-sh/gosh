@@ -157,7 +157,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"newName","type":"string"},
-				{"name":"fromName","type":"string"}
+				{"name":"fromCommit","type":"string"}
 			],
 			"outputs": [
 			]
