@@ -116,13 +116,13 @@ struct CallResult {
     out_msgs: Vec<String>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DiffMessage {
     pub diff: Diff,
     pub created_lt: u64
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Diff {
     snap: String,
     commit: String,
@@ -424,7 +424,7 @@ pub async fn load_messages_to(context: &TonClient, address: &str) -> Result<Vec<
 
         if decoded.name == "applyDiff" {
             let value = decoded.value.unwrap();
-            let diff: Diff = serde_json::from_value(value["diff"]).unwrap();
+            let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
             messages.insert(0, DiffMessage { diff, created_lt: raw_msg.created_lt });
         }
     }
