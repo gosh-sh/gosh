@@ -26,7 +26,6 @@ contract DiffC is Modifiers {
     address _rootRepo;
     address _goshdao;
     string _nameBranch;
-    string _commit;
     string _name;
     bool check = false;
     Diff[] _diff;
@@ -47,7 +46,6 @@ contract DiffC is Modifiers {
         uint256 pubkeysender, 
         string nameRepo, 
         string nameBranch, 
-        string commit, 
         address repo,
         TvmCell WalletCode,
         TvmCell codeDiff,
@@ -66,7 +64,6 @@ contract DiffC is Modifiers {
         _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
-        _commit = commit;
         m_codeDiff = codeDiff;
         m_CommitCode = CommitCode;
         _diff = diffs;

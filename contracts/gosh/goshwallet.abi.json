@@ -99,9 +99,10 @@
 			"name": "deployNewBranchSnapshot",
 			"inputs": [
 				{"name":"branch","type":"string"},
-				{"name":"oldbranch","type":"string"},
+				{"name":"oldcommit","type":"string"},
 				{"name":"name","type":"string"},
-				{"name":"repo","type":"address"}
+				{"name":"repo","type":"address"},
+				{"name":"snapshotdata","type":"bytes"}
 			],
 			"outputs": [
 			]
@@ -120,7 +121,6 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
-				{"name":"fullCommit","type":"string"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index","type":"uint128"},
 				{"name":"last","type":"bool"}
@@ -157,7 +157,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"newName","type":"string"},
-				{"name":"fromName","type":"string"}
+				{"name":"fromCommit","type":"string"}
 			],
 			"outputs": [
 			]
