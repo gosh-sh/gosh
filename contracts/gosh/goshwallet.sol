@@ -258,7 +258,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function deployDiff(
         string repoName,
         string branchName,
-        address branchcommit,
         string commitName,
         string fullCommit,
         Diff[] diffs,
@@ -267,13 +266,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwner accept saveMsg {
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
-        _deployDiff(repoName, branchName, branchcommit, commitName, fullCommit, diffs, index, last);
+        _deployDiff(repoName, branchName, commitName, fullCommit, diffs, index, last);
     }
 
     function _deployDiff(
         string repoName,
         string branchName,
-        address branchcommit,
         string commitName,
         string fullCommit,
         Diff[] diffs,
@@ -283,7 +281,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeDiffStateInit(commitName, repo, index);
         new DiffC {stateInit: s1, value: FEE_DEPLOY_DIFF, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, branchcommit, fullCommit, repo, m_WalletCode, m_codeDiff, m_CommitCode, diffs, _index, last);
+            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, repo, m_WalletCode, m_codeDiff, m_CommitCode, diffs, _index, last);
         getMoney();
     }
     
@@ -333,7 +331,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
-        Commit(addrC).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(tvm.pubkey(), _index, branchname);
+        Repository(repo).SendDiff{value: 0.7 ton, bounce: true, flag: 1}(tvm.pubkey(), _index, branchname, addrC);
     }
 
     function setCommit(
