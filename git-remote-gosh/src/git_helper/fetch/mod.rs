@@ -55,11 +55,13 @@ impl GitHelper {
         if !name.starts_with(REFS_HEAD_PREFIX) {
             return Err("Error. Can not fetch an object without refs/heads/ prefix")?;
         }
+        log::info!("Fetching sha: {} name: {}", sha, name);
         let branch: &str  = {
             let mut iter = name.chars();
-            iter.by_ref().nth(REFS_HEAD_PREFIX.len());
+            iter.by_ref().nth(REFS_HEAD_PREFIX.len()-1);
             iter.as_str()
         };
+        log::info!("Calculate branch: {}", branch);
         let mut visited: HashSet::<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -154,9 +156,14 @@ impl GitHelper {
             // In case someone is trying to load a commit that was not accepted by a repo, yet it points to some existing commit it will force it to load entire repository again and fail afterwards
             // Reason for this behaviour:
             // It will not be able to find a blob id in snapshots history
+            // ---
+            //Note: removing prefixing "/" in the path.
+            let path = &path[1..];
+            log::info!("Trying to load a snapshot. Path: {} on the branch: {}", path, branch);
+            log::info!("Expecting to restore blobs: {:?}", blobs);
             let snapshot_address = blockchain::Snapshot::calculate_address(&self.es_client, &self.repo_addr, &branch, path).await?;
             let snapshot = blockchain::Snapshot::load(&self.es_client, &snapshot_address).await?;
-
+            log::info!("Loaded a snapshot: {:?}", snapshot);
             async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, ipfs: &Option<String>) -> Result<git_object::Object, Box<dyn Error>>{
                 let ipfs_data = if let Some(ipfs_address) = ipfs {
                     let ipfs_data = helper.ipfs_client.load(&ipfs_address).await?;
@@ -166,10 +173,12 @@ impl GitHelper {
                 };
 
                 let data = match ipfs {
-                    None => content,
+                    None => &content,
                     Some(_) => &ipfs_data
                 };
-                let data = ton_client::utils::decompress_zstd(&data)?;
+                 
+                log::info!("got: {:?}", data);
+
                 let data = git_object::Data::new(git_object::Kind::Blob, &data);
                 let obj = git_object::Object::from(data.decode()?);
                 Ok(obj)
@@ -181,6 +190,7 @@ impl GitHelper {
                 // Note: this is a wrong solution. It create tons of junk files in the system
                 let blob = convert_snapshot_into_blob(self, &snapshot.next_content, &snapshot.next_ipfs).await?;
                 let blob_oid = self.write_git_object(blob).await?;
+                log::info!("Saved a snapshot as a blob. Id: {}", blob_oid);
                 if blobs.contains(&blob_oid) {
                     blobs.remove(&blob_oid);
                 } 
@@ -191,6 +201,7 @@ impl GitHelper {
                 // Note: this is a wrong solution. It create tons of junk files in the system
                 let blob = convert_snapshot_into_blob(self, &snapshot.current_content, &snapshot.current_ipfs).await?;
                 let blob_oid = self.write_git_object(blob).await?;
+                log::info!("Saved a snapshot as a blob. Id: {}", blob_oid);
                 if blobs.contains(&blob_oid) {
                     blobs.remove(&blob_oid);
                 } 
@@ -208,5 +219,10 @@ impl GitHelper {
 #[cfg(test)]
 mod tests {
     use super::*;
+    
+    #[test]
+    fn testing_what_is_inside_the_snapshot_content() {
+        
+    }
 }
 

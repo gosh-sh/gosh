@@ -169,7 +169,7 @@ async fn run_local(
     .unwrap();
 
     if query.is_empty() {
-        return Err(Box::new(RunLocalError::from(format!("account with address {} not found", contract.address))));
+        return Err(Box::new(RunLocalError::from(format!("account with address {} not found. Was trying to call {}", contract.address, function_name))));
     }
     let account_boc = &query[0]["boc"].as_str();
     let call_set = match args {
