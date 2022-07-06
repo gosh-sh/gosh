@@ -235,11 +235,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
-    function deployNewBranchSnapshot(string branch, string oldbranch, string name, address repo) public onlyOwner accept saveMsg{
+    function deployNewBranchSnapshot(string branch, string oldcommit, string name, address repo, bytes snapshotdata) public onlyOwner accept saveMsg{
+        snapshotdata;
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, oldbranch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: oldbranch + "/" + name}});
+        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, oldcommit, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: oldcommit + "/" + name}});
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         Snapshot(addr).deployNewSnapshot{value: FEE_DEPLOY_COPY_SNAPSHOT, bounce: true, flag: 1}(tvm.pubkey(), branch, _index);
         getMoney();
@@ -259,21 +260,19 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string commitName,
-        string fullCommit,
         Diff[] diffs,
         uint128 index,
         bool last
     ) public onlyOwner accept saveMsg {
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
-        _deployDiff(repoName, branchName, commitName, fullCommit, diffs, index, last);
+        _deployDiff(repoName, branchName, commitName, diffs, index, last);
     }
 
     function _deployDiff(
         string repoName,
         string branchName,
         string commitName,
-        string fullCommit,
         Diff[] diffs,
         uint128 index,
         bool last
@@ -281,7 +280,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeDiffStateInit(commitName, repo, index);
         new DiffC {stateInit: s1, value: FEE_DEPLOY_DIFF, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, repo, m_WalletCode, m_codeDiff, m_CommitCode, diffs, _index, last);
+            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, repo, m_WalletCode, m_codeDiff, m_CommitCode, diffs, _index, last);
         getMoney();
     }
     
