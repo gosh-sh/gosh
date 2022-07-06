@@ -116,18 +116,21 @@ struct CallResult {
     out_msgs: Vec<String>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DiffMessage {
     pub diff: Diff,
     pub created_lt: u64
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Diff {
-    snap: String,
+    #[serde(rename = "snap")]
+    snapshot_contract_address: String,
     commit: String,
-    patch: String,
-    ipfs: String
+    patch: Option<String>,
+    pub ipfs: Option<String>,
+    #[serde(rename = "sha1")]
+    pub modified_blob_sha1: Option<String>
 }
 
 pub type TonClient = Arc<ClientContext>;
@@ -187,7 +190,7 @@ async fn run_local(
     .unwrap();
 
     if query.is_empty() {
-        return Err(Box::new(RunLocalError::from(format!("account with address {} not found", contract.address))));
+        return Err(Box::new(RunLocalError::from(format!("account with address {} not found. Was trying to call {}", contract.address, function_name))));
     }
     let account_boc = &query[0]["boc"].as_str();
     let call_set = match args {
@@ -332,35 +335,6 @@ pub async fn get_commit_by_addr(context: &TonClient, address: &str) -> Result<Op
     Ok(Some(commit))
 }
 
-pub async fn get_blob_address(context: &TonClient, repository_address: &str, kind: &str, sha: &str) -> Result<String, Box<dyn Error>> {
-    let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let result = contract.run_local(context, "getBlobAddr", gosh_abi::get_blob_addr_args(kind, sha)).await?;
-    return Ok(result.get("value0").unwrap().as_str().unwrap().to_owned());
-}
-
-pub async fn get_blob_by_addr(context: &TonClient, ipfs_client: &IpfsService, address: &str) -> Result<Option<GoshBlob>, Box<dyn Error>> {
-    unimplemented!();
-    /*
-    let contract = GoshContract::new(address, gosh_abi::BLOB);
-
-    let result = contract.run_local(context, "getBlob", None).await?;
-    log::info!("blob> {}", result);
-    let mut blob: GoshBlob = serde_json::from_value(result).unwrap();
-    let content = {
-        if blob.ipfs != "" && blob.content.is_empty() {
-            let data = ipfs_client.load(&blob.ipfs).await?;
-            base64::decode(data)?
-        } else {
-            blob.content
-        }
-    };
-    log::info!("Parsed");
-    blob.content = ton_client::utils::decompress_zstd(&content)?;
-    log::info!("decompressed. Content");
-    Ok(Some(blob))
-    */
-}
-
 pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let _head_result = contract.run_local(context, "getHEAD", None).await?;
@@ -430,6 +404,39 @@ pub async fn load_messages_to(context: &TonClient, address: &str) -> Result<Vec<
     }
 
     Ok(messages)
+}
+
+impl Diff {
+    pub fn with_patch<'a, F, R>(&self, f: F) -> R
+    where 
+        F: FnOnce(Option<&diffy::Patch<[u8]>>) -> R
+    {
+        let data = match self.get_patch_data() {
+            None => return f(None),
+            Some(d) => d
+        };
+        let patch = diffy::Patch::from_bytes(&data)
+            .expect("Must be correct patch"); 
+        let result: R = f(Some(&patch));
+        return result;
+    }
+    fn get_patch_data<'a>(&self) -> Option<Vec<u8>> {
+        let data: String = match &self.patch {
+            None => return None,
+            Some(s) => s.clone()
+        }; 
+        assert!(data.len() % 2 == 0, "It is certainly not a hex string. better to fail now");
+        let data: Vec<u8> = (0..data.len())
+            .step_by(2)
+            .map(|i| {
+                u8::from_str_radix(&data[i..i + 2], 16)
+                    .expect("must be hex string")
+            })
+            .collect();
+        let data: Vec<u8> = ton_client::utils::decompress_zstd(&data)
+            .expect("Must be correct archive");
+        return Some(data);
+    }
 }
 
 #[cfg(test)]

@@ -7,12 +7,9 @@ use crate::blockchain::{
     TonClient,
     GoshContract
 };
-
 use base64;
-use base64_serde::base64_serde_type;
-
-base64_serde_type!(Base64Standard, base64::STANDARD);
-
+use serde::de;
+use std::fmt;
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
@@ -22,7 +19,7 @@ pub struct Snapshot {
     pub next_commit: String,
 
     #[serde(rename = "value1")]
-    #[serde(with = "Base64Standard")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub next_content: Vec<u8>,
 
     #[serde(rename = "value2")]
@@ -32,7 +29,7 @@ pub struct Snapshot {
     pub current_commit: String,
 
     #[serde(rename = "value4")]
-    #[serde(with = "Base64Standard")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub current_content: Vec<u8>,
 
     #[serde(rename = "value5")]
@@ -54,3 +51,45 @@ impl Snapshot {
     }
 }
 
+fn snapshot_content_custom_deserialization<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    // define a visitor that deserializes
+    struct CompressedHexStringVisitor;
+
+    impl<'de> de::Visitor<'de> for CompressedHexStringVisitor {
+        type Value = Vec<u8>;
+    
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a hex string containing compressed data")
+        }
+    
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            if v.len() % 2 != 0 {
+                // It is certainly not a hex string 
+                return Err(E::custom("Not a hex string"));
+            }
+            let compressed_data: Vec<u8> = (0..v.len())
+                .step_by(2)
+                .map(|i| {
+                    u8::from_str_radix(&v[i..i + 2], 16)
+                        .map_err(|_| E::custom(format!("Not a hex at {} -> {}", i, &v[i..i + 2] )))
+                })
+                .collect::<Result<Vec<u8>, E>>()?;
+            let data = ton_client::utils::decompress_zstd(
+                &compressed_data
+            ).map_err(|e| E::custom(format!("Decompress failed. Inner error: {}", e)))?;
+//            let base64_encoded_compressed_data = base64::encode(&compressed_data);
+//            let base64_encoded_decompressed_data = ton_client::utils::decompress_zstd(&base64_encoded_compressed_data)?;
+//            let data = base64::decode(base64_encoded_decompressed_data)?;
+            return Ok(data);
+        }
+    }
+    
+    // use our visitor to deserialize an `ActualValue`
+    deserializer.deserialize_any(CompressedHexStringVisitor) 
+}

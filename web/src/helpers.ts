@@ -281,22 +281,23 @@ export const getBlobDiffPatch = (
     modified: string,
     original: string
 ) => {
-    let patch = Diff.createTwoFilesPatch(
-        `a/${filename}`,
-        `b/${filename}`,
-        original,
-        modified
-    );
-    patch = patch.split('\n').slice(1).join('\n');
+    // let patch = Diff.createTwoFilesPatch(
+    //     `a/${filename}`,
+    //     `b/${filename}`,
+    //     original,
+    //     modified
+    // );
+    // patch = patch.split('\n').slice(1).join('\n');
 
-    const shaOriginal = original ? sha1(original, 'blob') : '0000000';
-    const shaModified = modified ? sha1(modified, 'blob') : '0000000';
-    patch =
-        `index ${shaOriginal.slice(0, 7)}..${shaModified.slice(0, 7)} 100644\n` + patch;
+    // const shaOriginal = original ? sha1(original, 'blob') : '0000000';
+    // const shaModified = modified ? sha1(modified, 'blob') : '0000000';
+    // patch =
+    //     `index ${shaOriginal.slice(0, 7)}..${shaModified.slice(0, 7)} 100644\n` + patch;
 
-    if (!original) patch = patch.replace(`a/${filename}`, '/dev/null');
-    if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
-    return patch;
+    // if (!original) patch = patch.replace(`a/${filename}`, '/dev/null');
+    // if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
+    const patch = Diff.createPatch(filename, original, modified);
+    return patch.split('\n').slice(4).join('\n');
 };
 
 export const getCommit = async (
@@ -385,9 +386,12 @@ export const chacha20 = {
 };
 
 export const zstd = {
-    async compress(client: TonClient, data: string): Promise<string> {
+    async compress(client: TonClient, data: string | Buffer): Promise<string> {
+        const uncompressed = Buffer.isBuffer(data)
+            ? data.toString('base64')
+            : Buffer.from(data).toString('base64');
         const result = await client.utils.compress_zstd({
-            uncompressed: Buffer.from(data).toString('base64'),
+            uncompressed,
         });
         return result.compressed;
     },

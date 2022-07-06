@@ -18,6 +18,9 @@ extern crate git_hash;
 #[macro_use]
 extern crate data_contract_macro_derive;
 
+extern crate diffy;
+extern crate lru;
+
 pub(crate) mod git_helper;
 pub mod ipfs;
 pub(crate) mod logger;

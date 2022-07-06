@@ -21,7 +21,7 @@ use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-struct GitHelper {
+pub struct GitHelper {
     config: Config,
     es_client: TonClient,
     ipfs_client: IpfsService,
@@ -95,10 +95,6 @@ impl GitHelper {
         }
         Ok(vec!["unsupported".to_string()])
     }
-
-    // async fn push(&self, _ref_arg: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    //     Ok(vec!["push".to_owned()])
-    // }
 
     fn set_verbosity(&mut self, verbosity: u8) {
         // TODO: maybe connect verbosity to logging?

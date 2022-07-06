@@ -388,10 +388,7 @@ export class GoshWallet implements IGoshWallet {
                 flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED;
 
                 let content = modified;
-                if (Buffer.isBuffer(content)) {
-                    content = content.toString('base64');
-                    flags |= EGoshBlobFlag.BINARY;
-                }
+                if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY;
                 content = await zstd.compress(this.account.client, content);
                 ipfs = await saveToIPFS(content);
             }
