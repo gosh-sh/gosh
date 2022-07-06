@@ -18,14 +18,6 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
-use tokio::io::AsyncBufReadExt;
-
-// async fn push_object(
-//     repo: &git_repository::Repository,
-//     object: &Object,
-// ) -> Result<String, Box<dyn Error>> {
-//     todo!()
-// }
 
 impl GitHelper {
     async fn push_ref(
@@ -57,30 +49,31 @@ impl GitHelper {
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
+        let mut commit_id = None;
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
-            if let Some(oid) = line.split_ascii_whitespace().nth(0) {
-                let object_id = git_hash::ObjectId::from_str(oid)?;
-                // kind?
-                let object = repo.find_object(object_id)?;
-                match object.kind {
-                    git_object::Kind::Blob => todo!(),
-                    // git_object::Kind::Commit => push_commit(&repo, &object).await?,
-                    git_object::Kind::Commit => todo!(),
-                    git_object::Kind::Tag => todo!(),
-                    git_object::Kind::Tree => todo!(),
+            match line.split_ascii_whitespace().nth(0) {
+                Some(oid) => {
+                    let object_id = git_hash::ObjectId::from_str(oid)?;
+                    // kind?
+                    let object = repo.find_object(object_id)?;
+                    match object.kind {
+                        git_object::Kind::Commit => {
+                            commit_id = Some(object.id.clone());
+                            todo!();
+                        }
+                        git_object::Kind::Blob => {
+                            // branch
+                            // commit_id
+                            // commit_data
+                            // Vec<diff>
+                        }
+                        git_object::Kind::Tag => todo!(),
+                        git_object::Kind::Tree => todo!(),
+                    }
                 }
-            } else {
-                break;
+                None => break,
             }
         }
-
-        // let splitted: Vec<&str> = local_ref.split("/").collect();
-        // let branch = match splitted.as_slice() {
-        //     [.., branch] => branch,
-        //     _ => unreachable!(),
-        // };
-
-        // log::debug!("{}", current_dir()?.to_str().unwrap());
 
         let result_ok = format!("ok {local_ref}");
         Ok(result_ok)
@@ -96,13 +89,6 @@ impl GitHelper {
         Ok(vec![result])
     }
 }
-
-// async fn push_commit(
-//     repo: &git_repository::Repository,
-//     object: &Object,
-// ) -> Result<(), Box<dyn Error>> {
-//     todo!()
-// }
 
 async fn delete_remote_ref(remote_ref: &str) -> Result<String, String> {
     Ok("delete ref ok".to_owned())
@@ -172,7 +158,7 @@ mod tests {
         let mut branch = Branch::wrap(head);
         // set upstream
         // branch set upstream "origin"
-        branch.set_upstream(repo.remotes()?.get(0))?;
+        // branch.set_upstream(repo.remotes()?.get(0))?;
 
         // get remote ref
         // let remote_ref = repo.branch_remote_name()
