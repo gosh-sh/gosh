@@ -181,6 +181,13 @@ contract Commit is Modifiers {
         return stateInit;
     }
     
+    //Fallback/Receive
+    receive() external view {
+        if (msg.sender == _tree) {
+            DiffC(_diff).cancelCommit{value : 0.2 ton, flag: 1}();
+        }
+    }
+    
     //Selfdestruct
     function destroy(uint128 index) public {
         require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);
