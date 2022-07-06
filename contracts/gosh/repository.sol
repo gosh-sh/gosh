@@ -118,6 +118,14 @@ contract Repository is Modifiers{
         });
         return _contractflex;
     }
+    
+    //Diff part
+    function SendDiff(uint256 value1, uint128 index, string branch, address commit) public view {
+        tvm.accept();
+        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
+        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value);
+    }
 
     //Selfdestruct
     function destroy() public onlyOwner {

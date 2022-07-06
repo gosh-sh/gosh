@@ -116,11 +116,10 @@ contract Commit is Modifiers {
         DiffC(_diff).cancelCommit{value : 0.2 ton, flag: 1}();
     }
     
-    function SendDiff(uint256 value1, uint128 index, string branch) public view {
+    function SendDiff(string branch, address branchcommit) public view senderIs(_rootRepo){
         tvm.accept();
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         require(branch == _nameBranch, ERR_WRONG_BRANCH);
-        DiffC(_diff).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}();
+        DiffC(_diff).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branchcommit);
         getMoney(_pubkey);
     }
     

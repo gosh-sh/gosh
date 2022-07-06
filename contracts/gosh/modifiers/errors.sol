@@ -35,4 +35,5 @@ abstract contract Errors {
     uint constant ERR_WRONG_INDEX = 224;
     uint constant ERR_WALLET_NOT_EXIST = 225;
     uint constant ERR_WRONG_BRANCH = 226;
+    uint constant ERR_DIFF_ALREADY_USED = 227;
 }

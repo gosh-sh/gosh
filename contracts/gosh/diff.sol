@@ -39,6 +39,7 @@ contract DiffC is Modifiers {
     address _branchcommit;
     address _newC;
     bool _last;
+    bool _entry;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -46,7 +47,6 @@ contract DiffC is Modifiers {
         uint256 pubkeysender, 
         string nameRepo, 
         string nameBranch, 
-        address branchcommit,
         string commit, 
         address repo,
         TvmCell WalletCode,
@@ -66,7 +66,6 @@ contract DiffC is Modifiers {
         _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
-        _branchcommit = branchcommit;
         _commit = commit;
         m_codeDiff = codeDiff;
         m_CommitCode = CommitCode;
@@ -142,26 +141,29 @@ contract DiffC is Modifiers {
     }
     
     //Diff part        
-    function sendDiffAll() public view {
+    function sendDiffAll(address branchcommit) public {
         tvm.accept();
+        require(_entry == false, ERR_DIFF_ALREADY_USED);
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
-        this.sendDiff{value: 0.1 ton, flag: 1}(0);
+        _entry = true;
+        _branchcommit = branchcommit;
+        this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
         getMoney(_pubkey);
     }
     
     function sendDiff(
-        uint128 index) public view senderIs(address(this)) {
+        uint128 index, address branchcommit) public view senderIs(address(this)) {
         tvm.accept();
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
             if (_last == false) { 
-                DiffC(getDiffAddress(_index + 1)).sendDiffAll{value : 0.2 ton, flag: 1}();
+                DiffC(getDiffAddress(_index + 1)).sendDiffAll{value : 0.2 ton, flag: 1}(branchcommit);
             }
             return; 
         }
         Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index);
         getMoney(_pubkey);
-        this.sendDiff{value: 0.1 ton, flag: 1}(index + 1);
+        this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
     function approveDiff(bool res, string commit, uint256 sha) public view {

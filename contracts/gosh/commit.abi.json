@@ -52,9 +52,8 @@
 		{
 			"name": "SendDiff",
 			"inputs": [
-				{"name":"value1","type":"uint256"},
-				{"name":"index","type":"uint128"},
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"}
 			],
 			"outputs": [
 			]
