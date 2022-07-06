@@ -127,7 +127,8 @@ pub struct Diff {
     snap: String,
     commit: String,
     patch: Option<String>,
-    ipfs: Option<String>
+    ipfs: Option<String>,
+    sha1: Option<String>
 }
 
 pub type TonClient = Arc<ClientContext>;
