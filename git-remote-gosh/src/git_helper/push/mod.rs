@@ -20,79 +20,92 @@ use std::{
 };
 use tokio::io::AsyncBufReadExt;
 
-async fn push_object(
-    repo: &git_repository::Repository,
-    object_id: &ObjectId,
-) -> Result<String, Box<dyn Error>> {
-    todo!()
-}
-
-async fn push_ref(
-    repo: &git_repository::Repository,
-    local_ref: &str,
-    remote_ref: &str,
-) -> Result<String, Box<dyn Error>> {
-    // TODO: git rev-list?
-
-    let remote_commit_id = repo
-        .find_reference(remote_ref)?
-        .into_fully_peeled_id()?
-        .object()?
-        .id;
-
-    log::debug!("remote commit id {remote_commit_id}");
-
-    let cmd = Command::new("git")
-        .args([
-            "rev-list",
-            "--objects",
-            "--in-commit-order",
-            "--reverse",
-            format!("{local_ref}").as_str(),
-            format!("^{remote_commit_id}").as_str(),
-        ])
-        .spawn()
-        .expect("git rev-list failed");
-
-    let cmd_out = cmd.wait_with_output()?;
-    for line in String::from_utf8(cmd_out.stdout)?.lines() {
-        if let Some(oid) = line.split_ascii_whitespace().nth(0) {
-            let object = git_hash::ObjectId::from_str(oid)?;
-            push_object(&repo, &object).await?;
-        } else {
-            break;
-        }
-    }
-
-    // let splitted: Vec<&str> = local_ref.split("/").collect();
-    // let branch = match splitted.as_slice() {
-    //     [.., branch] => branch,
-    //     _ => unreachable!(),
-    // };
-
-    // log::debug!("{}", current_dir()?.to_str().unwrap());
-
-    let result_ok = format!("ok {local_ref}");
-    Ok(result_ok)
-}
-
-async fn delete_remote_ref(remote_ref: &str) -> Result<String, String> {
-    Ok("delete ref ok".to_owned())
-}
+// async fn push_object(
+//     repo: &git_repository::Repository,
+//     object: &Object,
+// ) -> Result<String, Box<dyn Error>> {
+//     todo!()
+// }
 
 impl GitHelper {
-    pub async fn push(&self, refs: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    async fn push_ref(
+        &mut self,
+        local_ref: &str,
+        remote_ref: &str,
+    ) -> Result<String, Box<dyn Error>> {
+        // TODO: git rev-list?
+        let repo = self.local_repository();
+
+        let remote_commit_id = repo
+            .find_reference(remote_ref)?
+            .into_fully_peeled_id()?
+            .object()?
+            .id;
+
+        log::debug!("remote commit id {remote_commit_id}");
+
+        let cmd = Command::new("git")
+            .args([
+                "rev-list",
+                "--objects",
+                "--in-commit-order",
+                "--reverse",
+                format!("{local_ref}").as_str(),
+                format!("^{remote_commit_id}").as_str(),
+            ])
+            .spawn()
+            .expect("git rev-list failed");
+
+        let cmd_out = cmd.wait_with_output()?;
+        for line in String::from_utf8(cmd_out.stdout)?.lines() {
+            if let Some(oid) = line.split_ascii_whitespace().nth(0) {
+                let object_id = git_hash::ObjectId::from_str(oid)?;
+                // kind?
+                let object = repo.find_object(object_id)?;
+                match object.kind {
+                    git_object::Kind::Blob => todo!(),
+                    // git_object::Kind::Commit => push_commit(&repo, &object).await?,
+                    git_object::Kind::Commit => todo!(),
+                    git_object::Kind::Tag => todo!(),
+                    git_object::Kind::Tree => todo!(),
+                }
+            } else {
+                break;
+            }
+        }
+
+        // let splitted: Vec<&str> = local_ref.split("/").collect();
+        // let branch = match splitted.as_slice() {
+        //     [.., branch] => branch,
+        //     _ => unreachable!(),
+        // };
+
+        // log::debug!("{}", current_dir()?.to_str().unwrap());
+
+        let result_ok = format!("ok {local_ref}");
+        Ok(result_ok)
+    }
+    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>, Box<dyn Error>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
-            [local_ref, remote_ref] => {
-                push_ref(&self.local_git_repository, local_ref, remote_ref).await?
-            }
+            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
 
         Ok(vec![result])
     }
+}
+
+// async fn push_commit(
+//     repo: &git_repository::Repository,
+//     object: &Object,
+// ) -> Result<(), Box<dyn Error>> {
+//     todo!()
+// }
+
+async fn delete_remote_ref(remote_ref: &str) -> Result<String, String> {
+    Ok("delete ref ok".to_owned())
 }
 
 #[cfg(test)]
@@ -126,7 +139,7 @@ mod tests {
         let repo = Repository::init(dir).expect("repository init successfuly");
         repo.remote_set_url(
             "origin",
-            "gosh::test_network://account@test/repository/name",
+            "gosh::vps23.ton.dev://0:54fdd2ac8027b16c83b2b8b0cc4360ff4135a936c355bdb5c4776bdd3190fefc/dadao/somefiles",
         )?;
 
         let mut index = repo.index()?;
@@ -158,6 +171,7 @@ mod tests {
         // get current branch
         let mut branch = Branch::wrap(head);
         // set upstream
+        // branch set upstream "origin"
         branch.set_upstream(repo.remotes()?.get(0))?;
 
         // get remote ref
