@@ -32,25 +32,15 @@ async fn push_ref(
     local_ref: &str,
     remote_ref: &str,
 ) -> Result<String, Box<dyn Error>> {
-    let local_commit_id = repo.find_reference(local_ref)?.into_fully_peeled_id()?;
-    let commit_id = local_commit_id.object()?.id;
+    // TODO: git rev-list?
 
-    // git rev-list
+    let remote_commit_id = repo
+        .find_reference(remote_ref)?
+        .into_fully_peeled_id()?
+        .object()?
+        .id;
 
-    // let repo = Repository::open_from_env()?; // libgit2
-    // let full_ref = repo.resolve_reference_from_short_name(local_ref)?;
-    // let commit = repo.reference_to_annotated_commit(&full_ref)?;
-
-    log::debug!("local ref commit {:?}", commit_id);
-
-    let mut commits_queue = VecDeque::<git_hash::ObjectId>::new();
-    struct TreeObjectsQueueItem {
-        pub path: String,
-        pub object_id: ObjectId,
-    }
-    let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
-
-    commits_queue.push_back(commit_id);
+    log::debug!("remote commit id {remote_commit_id}");
 
     let cmd = Command::new("git")
         .args([
@@ -59,7 +49,7 @@ async fn push_ref(
             "--in-commit-order",
             "--reverse",
             format!("{local_ref}").as_str(),
-            // format!("{remote_ref}").as_str(),
+            format!("^{remote_commit_id}").as_str(),
         ])
         .spawn()
         .expect("git rev-list failed");
