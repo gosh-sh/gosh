@@ -19,13 +19,14 @@ use git_odb::{
 use crate::blockchain;
 use git_hash::ObjectId;
 use diffy;
+use lru::LruCache;
 
 
 pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
 }
 
-async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, ipfs: &Option<String>) -> Result<git_object::Object, Box<dyn Error>>{
+async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, ipfs: &Option<String>) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>>{
     let ipfs_data = if let Some(ipfs_address) = ipfs {
         let ipfs_data = helper.ipfs_client.load(&ipfs_address).await?;
         base64::decode(ipfs_data)?
@@ -33,16 +34,16 @@ async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, i
         vec![] 
     };
 
-    let data = match ipfs {
-        None => &content,
-        Some(_) => &ipfs_data
+    let raw_data: Vec<u8> = match ipfs {
+        None => content.clone(),
+        Some(_) => ipfs_data
     };
                  
-    log::info!("got: {:?}", data);
+    log::info!("got: {:?}", raw_data);
 
-    let data = git_object::Data::new(git_object::Kind::Blob, &data);
+    let data = git_object::Data::new(git_object::Kind::Blob, &raw_data);
     let obj = git_object::Object::from(data.decode()?);
-    Ok(obj)
+    Ok((obj, raw_data))
 }
 
 
@@ -61,7 +62,39 @@ impl BlobsRebuildingPlan {
         blobs_queue.insert(blob_sha1); 
     }
 
-    pub async fn restore(&mut self, git_helper: &mut GitHelper) -> Result<(), Box<dyn Error>> {
+    async fn restore_snapshot_blob(git_helper: &mut GitHelper, snapshot_address: &str) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
+        let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
+        log::info!("Loaded a snapshot: {:?}", snapshot);
+        let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
+        let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
+        let snapshot_next = if snapshot_next_commit_sha.is_ok() {
+            let (blob, blob_data) = convert_snapshot_into_blob(
+                git_helper, 
+                &snapshot.next_content, 
+                &snapshot.next_ipfs
+            ).await?;
+            let blob_oid = git_helper.write_git_object(blob).await?;
+            Some((blob_oid, blob_data))
+        } else {
+            None
+        };
+        let snapshot_current = if snapshot_current_commit_sha.is_ok() {
+            let (blob, blob_data) = convert_snapshot_into_blob(
+                git_helper, 
+                &snapshot.current_content, 
+                &snapshot.current_ipfs
+            ).await?;
+            let blob_oid = git_helper.write_git_object(blob).await?;
+            Some((blob_oid, blob_data))
+        } else {
+            None
+        };
+        let restored_snapshots = (snapshot_next, snapshot_current);
+        assert!(restored_snapshots != (None, None), "It is clear that something is wrong. Better to fail now");
+        return Ok(restored_snapshots); 
+    }
+
+    pub async fn restore<'a>(&mut self, git_helper: &mut GitHelper) -> Result<(), Box<dyn Error>> {
         // Idea behind
         // --
         // We've marked all blob hashes that needs to be restored 
@@ -96,31 +129,22 @@ impl BlobsRebuildingPlan {
             blobs.retain(|e| !visited.contains(e));
             if blobs.is_empty() { continue; }
 
+            // In general it is not nice to return tuples since
+            // it misses context. 
+            // However this case seems to be an appropriate balance
+            // between code readability and resistance for 
+            // future changes that might break logic unnoticed
+            let restored_snapshots = BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
+            let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(2);
+            if let Some((blob_id, blob)) = restored_snapshots.0 {
+                last_restored_snapshots.put(blob_id, blob);
+            }
+            if let Some((blob_id, blob)) = restored_snapshots.1 {
+                last_restored_snapshots.put(blob_id, blob);
+            }
+              
             log::info!("Expecting to restore blobs: {:?}", blobs);
-            let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
-            log::info!("Loaded a snapshot: {:?}", snapshot);
-                        
-            let snapshot_next_commit_sha = git_hash::ObjectId::from_str(&snapshot.next_commit);
-            if snapshot_next_commit_sha.is_ok() {
-                let blob = convert_snapshot_into_blob(git_helper, &snapshot.next_content, &snapshot.next_ipfs).await?;
-                let blob_oid = git_helper.write_git_object(blob).await?;
-                log::info!("Saved a snapshot.next as a blob. Id: {}", blob_oid);
-                if blobs.contains(&blob_oid) {
-                    blobs.remove(&blob_oid);
-                } 
-            }
-            let snapshot_current_commit_sha = git_hash::ObjectId::from_str(&snapshot.current_commit);
-            if snapshot_current_commit_sha.is_ok() {
-                let blob = convert_snapshot_into_blob(git_helper, &snapshot.current_content, &snapshot.current_ipfs).await?;
-                let blob_oid = git_helper.write_git_object(blob).await?;
-                log::info!("Saved a snapshot.current as a blob. Id: {}", blob_oid);
-                if blobs.contains(&blob_oid) {
-                    blobs.remove(&blob_oid);
-                } 
-            }
-            if blobs.is_empty() {
-                continue;
-            }
+
             // TODO: convert to async iterator
             // This should download next messages seemless 
             let mut messages = blockchain::load_messages_to(&git_helper.es_client, snapshot_address).await?;
@@ -130,31 +154,21 @@ impl BlobsRebuildingPlan {
                 // remove matching blob ids
                 //
                 let message = messages.next().expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-                if message.diff.patch.is_none() {
-                    unimplemented!();
-                } else {
-                    let diff_data: String = message.diff.patch.as_ref().unwrap().clone();
-                    if diff_data.len() % 2 != 0 {
-                        // It is certainly not a hex string
-                        return Err("Not a hex string".into());
-                    }
-                    let compressed_data: Vec<u8> = (0..diff_data.len())
-                        .step_by(2)
-                        .map(|i| {
-                        u8::from_str_radix(&diff_data[i..i + 2], 16)
-                            .map_err(|_| format!("Not a hex at {} -> {}", i, &diff_data[i..i + 2]).into())
-                    })
-                    .collect::<Result<Vec<u8>, String>>()?;
-                    let data = ton_client::utils::decompress_zstd(
-                        &compressed_data
-                    )?;
-                
-                    let patch = diffy::Patch::from_bytes(data.as_slice())?;
-                    let reverse_patch = patch.reverse();
-                    let mut store = &mut git_helper.local_repository().objects;
-//                  let patched_blob = store. 
-                    let patched_sha = &message.diff.modified_blob_sha1;
-                }
+                let blob_data = message.diff.with_patch::<'a, _, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
+                    Some(patch) => {
+                        let patched_blob_sha = &message.diff.modified_blob_sha1.as_ref().expect("Option on this should be reverted. It must always be there");
+                        let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+                        let patched_blob = last_restored_snapshots.get(&patched_blob_sha)
+                            .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+                        let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
+                        return Ok(blob_data);
+                    },
+                    None => unimplemented!()
+                })?;
+
+                let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
+                let blob_id = git_helper.write_git_data(blob).await?;
+                last_restored_snapshots.put(blob_id, blob_data);
             }
         }
         Ok(())

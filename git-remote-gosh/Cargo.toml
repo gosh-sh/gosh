@@ -21,6 +21,7 @@ git-hash = "0.9.3"
 git-odb = "^0"
 git-repository = "^0"
 shellexpand = "2.1.0"
+lru = "0.7.7"
 data-contract-macro-derive = { path = "crates/data-contract-macro-derive" }
 diffy = { path = "crates/diffy-patched" }
 
