@@ -20,16 +20,22 @@ use crate::blockchain;
 use git_hash::ObjectId;
 use diffy;
 use lru::LruCache;
+use crate::ipfs::IpfsService;
 
 
 pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
 }
 
+async fn load_data_from_ipfs(ipfs_client: &IpfsService, ipfs_address: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    let ipfs_data = ipfs_client.load(&ipfs_address).await?;
+    let data = base64::decode(ipfs_data)?;
+    return Ok(data);
+}
+
 async fn convert_snapshot_into_blob(helper: &mut GitHelper, content: &Vec<u8>, ipfs: &Option<String>) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>>{
     let ipfs_data = if let Some(ipfs_address) = ipfs {
-        let ipfs_data = helper.ipfs_client.load(&ipfs_address).await?;
-        base64::decode(ipfs_data)?
+        load_data_from_ipfs(&helper.ipfs_client, &ipfs_address).await?
     } else {
         vec![] 
     };
@@ -159,17 +165,22 @@ impl BlobsRebuildingPlan {
                 // remove matching blob ids
                 //
                 let message = messages.next().expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-                let blob_data = message.diff.with_patch::<'a, _, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
-                    Some(patch) => {
-                        let patched_blob_sha = &message.diff.modified_blob_sha1.as_ref().expect("Option on this should be reverted. It must always be there");
-                        let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                        let patched_blob = last_restored_snapshots.get(&patched_blob_sha)
-                            .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
-                        let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
-                        return Ok(blob_data);
-                    },
-                    None => unimplemented!()
-                })?;
+                
+                let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
+                    load_data_from_ipfs(&git_helper.ipfs_client, &ipfs).await?
+                } else {
+                    message.diff.with_patch::<'a, _, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
+                        Some(patch) => {
+                            let patched_blob_sha = &message.diff.modified_blob_sha1.as_ref().expect("Option on this should be reverted. It must always be there");
+                            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+                            let patched_blob = last_restored_snapshots.get(&patched_blob_sha)
+                                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+                            let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
+                            return Ok(blob_data);
+                        },
+                        None => panic!("Broken diff detected: no ipfs neither patch exists")
+                    })?
+                };
 
                 let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
                 let blob_id = git_helper.write_git_data(blob).await?;
