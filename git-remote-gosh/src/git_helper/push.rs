@@ -108,7 +108,9 @@ mod tests {
         // set upstream
         branch.set_upstream(repo.remotes()?.get(0))?;
 
-        // get local and repote refs
+        // get remote ref
+        // let remote_ref = repo.branch_remote_name()
+
         // push
 
         // push_ref()

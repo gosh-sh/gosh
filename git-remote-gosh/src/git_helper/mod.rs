@@ -1,22 +1,22 @@
 #![allow(unused_variables)]
-use std::error::Error;
 use std::env;
+use std::error::Error;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use ton_client::crypto::KeyPair;
 
-use crate::config::Config;
 use crate::blockchain::{
-    TonClient,
     create_client,
     get_head,
     get_repo_address,
     // set_head,
+    TonClient,
 };
-use crate::git::{get_refs};
+use crate::config::Config;
+use crate::git::get_refs;
+use crate::ipfs::IpfsService;
 use crate::logger;
 use crate::util::Remote;
-use crate::ipfs::IpfsService;
 use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
@@ -40,13 +40,18 @@ mod push;
 
 impl GitHelper {
     fn local_repository(&mut self) -> &mut git_repository::Repository {
-        return &mut self.local_git_repository; 
+        return &mut self.local_git_repository;
     }
 
-    async fn build(config: Config, url: &str, logger: log4rs::Handle) -> Result<Self, Box<dyn Error>> {
+    async fn build(
+        config: Config,
+        url: &str,
+        logger: log4rs::Handle,
+    ) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
-        let repo_addr = get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
+        let repo_addr =
+            get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
         let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
@@ -59,7 +64,7 @@ impl GitHelper {
             repo_addr,
             verbosity: 0,
             logger,
-            local_git_repository
+            local_git_repository,
         })
     }
 
@@ -130,14 +135,10 @@ pub async fn run(config: Config, url: &str, logger: log4rs::Handle) -> Result<()
             (None, None, None) => return Ok(()),
             _ => Err("unknown command")?,
         };
-        /* stdout
-            .write(response.trim_end_matches("\n").as_bytes())
-            .await?; */
-        for s in response {
-            log::debug!("< {s}");
-            stdout.write_all(format!("{}\n", s).as_bytes()).await?;
+        for line in response {
+            log::debug!("< {line}");
+            stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
-        // stdout.write_all(b"\n").await?;
     }
     Ok(())
 }
