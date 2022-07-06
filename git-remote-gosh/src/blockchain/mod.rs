@@ -127,10 +127,10 @@ pub struct Diff {
     #[serde(rename = "snap")]
     snapshot_contract_address: String,
     commit: String,
-    pub patch: String,
-    pub ipfs: String,
+    pub patch: Option<String>,
+    pub ipfs: Option<String>,
     #[serde(rename = "sha1")]
-    pub modified_blob_sha1: String
+    pub modified_blob_sha1: Option<String>
 }
 
 pub type TonClient = Arc<ClientContext>;

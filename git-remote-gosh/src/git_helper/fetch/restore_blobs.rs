@@ -130,27 +130,31 @@ impl BlobsRebuildingPlan {
                 // remove matching blob ids
                 //
                 let message = messages.next().expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-                let diff_data: String = message.diff.patch.clone();
-                if diff_data.len() % 2 != 0 {
-                    // It is certainly not a hex string
-                    return Err("Not a hex string".into());
-                }
-                let compressed_data: Vec<u8> = (0..diff_data.len())
-                    .step_by(2)
-                    .map(|i| {
-                    u8::from_str_radix(&diff_data[i..i + 2], 16)
-                        .map_err(|_| format!("Not a hex at {} -> {}", i, &diff_data[i..i + 2]).into())
-                })
-                .collect::<Result<Vec<u8>, String>>()?;
-                let data = ton_client::utils::decompress_zstd(
-                    &compressed_data
-                )?;
+                if message.diff.patch.is_none() {
+                    unimplemented!();
+                } else {
+                    let diff_data: String = message.diff.patch.as_ref().unwrap().clone();
+                    if diff_data.len() % 2 != 0 {
+                        // It is certainly not a hex string
+                        return Err("Not a hex string".into());
+                    }
+                    let compressed_data: Vec<u8> = (0..diff_data.len())
+                        .step_by(2)
+                        .map(|i| {
+                        u8::from_str_radix(&diff_data[i..i + 2], 16)
+                            .map_err(|_| format!("Not a hex at {} -> {}", i, &diff_data[i..i + 2]).into())
+                    })
+                    .collect::<Result<Vec<u8>, String>>()?;
+                    let data = ton_client::utils::decompress_zstd(
+                        &compressed_data
+                    )?;
                 
-                let patch = diffy::Patch::from_bytes(data.as_slice())?;
-                let reverse_patch = patch.reverse();
-                let mut store = &mut git_helper.local_repository().objects;
-//                let patched_blob = store. 
-                let patched_sha = &message.diff.modified_blob_sha1;   
+                    let patch = diffy::Patch::from_bytes(data.as_slice())?;
+                    let reverse_patch = patch.reverse();
+                    let mut store = &mut git_helper.local_repository().objects;
+//                  let patched_blob = store. 
+                    let patched_sha = &message.diff.modified_blob_sha1;
+                }
             }
         }
         Ok(())
