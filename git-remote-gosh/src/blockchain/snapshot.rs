@@ -33,6 +33,12 @@ pub struct Snapshot {
     pub current_ipfs: Option<String>,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetSnapshotAddrResult {
+    #[serde(rename = "value0")]
+    pub address: String
+}
+
 impl Snapshot {
     pub async fn calculate_address(
         context: &TonClient,
@@ -45,11 +51,10 @@ impl Snapshot {
             "branch": branch_name,
             "name": file_path
         });
-        let address = repo
+        let result: GetSnapshotAddrResult = repo
             .run_local(context, "getSnapshotAddr", Some(params))
-            .await?["value0"]
-            .take();
-        return serde_json::from_value(address).map_err(|e| e.into());
+            .await?;
+        return Ok(result.address);
     }
 }
 

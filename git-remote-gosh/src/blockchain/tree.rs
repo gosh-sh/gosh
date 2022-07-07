@@ -24,6 +24,12 @@ pub struct Tree {
     pub objects: HashMap<String, TreeComponent>,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetTreeResult {
+    #[serde(rename = "value0")]
+    address: String
+}
+
 impl Tree {
     pub async fn calculate_address(
         context: &TonClient,
@@ -36,11 +42,10 @@ impl Tree {
             "repo": repository_address,
             "treeName": tree_obj_sha1
         });
-        let address = gosh_contract
+        let result: GetTreeResult = gosh_contract
             .run_local(context, "getTreeAddr", Some(params))
-            .await?["value0"]
-            .take();
-        return serde_json::from_value(address).map_err(|e| e.into());
+            .await?;
+        return Ok(result.address);
     }
 }
 

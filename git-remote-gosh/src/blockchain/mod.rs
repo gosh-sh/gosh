@@ -4,7 +4,7 @@ use base64_serde::base64_serde_type;
 
 
 
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de};
 use serde_json;
 
 
@@ -88,14 +88,16 @@ impl GoshContract {
     }
 
     #[instrument(level = "debug", skip(context))]
-    pub async fn run_local(
+    pub async fn run_local<T>(
         &self,
         context: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<serde_json::Value, Box<dyn Error>> {
+    ) -> Result<T, Box<dyn Error>> 
+    where T: de::DeserializeOwned
+    {
         let result = run_local(context, self, function_name, args).await?;
-        Ok(result)
+        Ok(serde_json::from_value::<T>(result)?)
     }
 }
 
@@ -136,6 +138,34 @@ pub struct Diff {
     #[serde(rename = "sha1")]
     pub modified_blob_sha1: Option<String>,
 }
+
+#[derive(Deserialize, Debug)]
+struct GetRepoAddrResult {
+    #[serde(rename = "value0")] 
+    pub address: String
+}
+
+#[derive(Deserialize, Debug)]
+struct GetCommitAddrResult {
+    #[serde(rename = "value0")] 
+    pub address: String
+}
+
+#[derive(Deserialize, Debug)]
+struct GetAllAddressBranchRef {
+    #[serde(rename = "key")]
+    pub branch_name: String,
+    
+    #[serde(rename = "value")]
+    pub commit_sha: String
+}
+
+#[derive(Deserialize, Debug)]
+struct GetAllAddressResult {
+    #[serde(rename = "value0")]
+    pub branch_ref: Vec<GetAllAddressBranchRef>
+}
+
 
 pub type TonClient = Arc<ClientContext>;
 
@@ -297,31 +327,20 @@ pub async fn get_repo_address(
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
-    let _repo_addr_result = contract
+    let result: GetRepoAddrResult = contract
         .run_local(context, "getAddrRepository", Some(args))
         .await?;
-    let repo_addr = _repo_addr_result["value0"].as_str().unwrap().to_owned();
-
-    Ok(repo_addr)
+    Ok(result.address)
 }
 
 pub async fn branch_list(
     context: &TonClient,
     repo_addr: &str,
-) -> Result<Vec<(String, String)>, Box<dyn Error>> {
+) -> Result<GetAllAddressResult, Box<dyn Error>> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
-    let list_result = contract.run_local(context, "getAllAddress", None).await?;
-
-    let list = list_result.get("value0").unwrap().as_array().unwrap();
-    let mut branches: Vec<(String, String)> = Vec::new();
-    for branch in list {
-        branches.push((
-            branch["key"].as_str().unwrap().to_string(),
-            branch["value"].as_str().unwrap().to_string(),
-        ));
-    }
-    Ok(branches)
+    let result: GetAllAddressResult = contract.run_local(context, "getAllAddress", None).await?;
+    Ok(result)
 }
 
 pub async fn set_head(
@@ -363,14 +382,14 @@ pub async fn get_commit_address(
     sha: &str,
 ) -> Result<String, Box<dyn Error>> {
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let result = contract
+    let result: GetCommitAddrResult = contract
         .run_local(
             context,
             "getCommitAddr",
             gosh_abi::get_commit_addr_args(sha),
         )
         .await?;
-    return Ok(result.get("value0").unwrap().as_str().unwrap().to_owned());
+    return Ok(result.address);
 }
 
 pub async fn get_commit_by_addr(

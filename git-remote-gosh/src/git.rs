@@ -55,7 +55,8 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
 pub async fn get_refs(context: &TonClient, repo_addr: &str) -> Result<Option<Vec<String>>, String> {
     let _list = branch_list(context, repo_addr)
         .await
-        .map_err(|e| e.description().to_string())?;
+        .map_err(|e| e.description().to_string())?
+        .branch_ref;
     if _list.len() == 0 {
         return Ok(None);
     }
