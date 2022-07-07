@@ -101,7 +101,7 @@ contract Commit is Modifiers {
     
     function getTreeSha(string commit, uint128 index) public view senderIs(getDiffAddress(commit, index)) {
         DiffC(msg.sender).approveDiffFinal{value: 0.2 ton, flag: 1}(_nameCommit, true);
-    
+        getMoney(_pubkey);    
     }
     
     //Commit part
@@ -186,6 +186,7 @@ contract Commit is Modifiers {
     function gotCount(uint128 count) public senderIs(_tree) {
         _count = count;
         _countready = true;
+        getMoney(_pubkey);
     }
     
     //Fallback/Receive

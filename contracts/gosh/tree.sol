@@ -67,6 +67,7 @@ contract Tree is Modifiers {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
         require(_count == false, ERR_PROCCESS_IS_EXIST);
         _count = true;
+        getMoney(_pubkey);
         this.count{value: 0.2 ton, flag: 1}(0);
     }
     
@@ -79,6 +80,7 @@ contract Tree is Modifiers {
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
             this.count{value: 0.2 ton, flag: 1}(index + 1);
         }
+        getMoney(_pubkey);
     }
     
     function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
@@ -88,6 +90,7 @@ contract Tree is Modifiers {
         _countFiles += res;
         _needAnswer -= 1;
         if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
+        getMoney(_pubkey);
     }
     
     function sendRequests(uint256 index) public senderIs(address(this)) {
@@ -96,12 +99,14 @@ contract Tree is Modifiers {
         else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         if (index == request.length - 1) { delete request; return; }
         this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
+        getMoney(_pubkey);
     }
     
     function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
         tvm.accept();
         if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
         request.push(TreeAnswer(msg.sender, true));
+        getMoney(_pubkey);
         return;
     }
     
@@ -109,6 +114,7 @@ contract Tree is Modifiers {
         tvm.accept();
         if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         request.push(TreeAnswer(msg.sender, false));
+        getMoney(_pubkey);
         return;
     }
     
@@ -117,6 +123,7 @@ contract Tree is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         if (address(this).balance > 80 ton) { return; }
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
+        getMoney(_pubkey);
     }
   
     function checkCorrect(TreeObject[] data) private {
@@ -135,18 +142,21 @@ contract Tree is Modifiers {
         allbytes.append(bytes(allTree));
         allbytes.append(byteTree);
         _shaTreeLocal = tvm.hash(allbytes);
+        getMoney(_pubkey);
     }
     
     function getShaInfoDiff(string commit, uint128 index, Request value0) public view {
         require(checkAccessDiff(commit, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
+        getMoney(_pubkey);
     }    
     
     function getShaInfoTree(string sha, Request value0) public view {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
+        getMoney(_pubkey);
     }
     
     function getShaInfo(Request value0) private view {
@@ -160,6 +170,7 @@ contract Tree is Modifiers {
             else {
                 DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null);
             }
+            getMoney(_pubkey);
             return;
         }
         else {
@@ -169,6 +180,7 @@ contract Tree is Modifiers {
             else {
                 DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, _tree[tvm.hash(value0.lastPath)]);
             }
+            getMoney(_pubkey);
             return;
         }
     }

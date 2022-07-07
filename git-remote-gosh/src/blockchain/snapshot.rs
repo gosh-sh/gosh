@@ -1,15 +1,12 @@
 #![allow(unused_variables)]
-use std::error::Error;
-use std::option::Option;
-use data_contract_macro_derive::DataContract;
 use crate::abi as gosh_abi;
-use crate::blockchain::{
-    TonClient,
-    GoshContract
-};
+use crate::blockchain::{GoshContract, TonClient};
 use base64;
+use data_contract_macro_derive::DataContract;
 use serde::de;
+use std::error::Error;
 use std::fmt;
+use std::option::Option;
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
@@ -36,18 +33,23 @@ pub struct Snapshot {
     pub current_ipfs: Option<String>,
 }
 
-
 impl Snapshot {
-    pub async fn calculate_address(context: &TonClient, repository_address: &str, branch_name: &str, file_path: &str) -> Result<String, Box<dyn Error>>{
+    pub async fn calculate_address(
+        context: &TonClient,
+        repository_address: &str,
+        branch_name: &str,
+        file_path: &str,
+    ) -> Result<String, Box<dyn Error>> {
         let repo = GoshContract::new(repository_address, gosh_abi::REPO);
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
         });
-        let address = repo.run_local(context, "getSnapshotAddr", Some(params))
-            .await?["value0"].take();
-        return serde_json::from_value(address)
-            .map_err(|e| e.into());
+        let address = repo
+            .run_local(context, "getSnapshotAddr", Some(params))
+            .await?["value0"]
+            .take();
+        return serde_json::from_value(address).map_err(|e| e.into());
     }
 }
 
@@ -60,36 +62,35 @@ where
 
     impl<'de> de::Visitor<'de> for CompressedHexStringVisitor {
         type Value = Vec<u8>;
-    
+
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a hex string containing compressed data")
         }
-    
+
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: de::Error,
         {
             if v.len() % 2 != 0 {
-                // It is certainly not a hex string 
+                // It is certainly not a hex string
                 return Err(E::custom("Not a hex string"));
             }
             let compressed_data: Vec<u8> = (0..v.len())
                 .step_by(2)
                 .map(|i| {
                     u8::from_str_radix(&v[i..i + 2], 16)
-                        .map_err(|_| E::custom(format!("Not a hex at {} -> {}", i, &v[i..i + 2] )))
+                        .map_err(|_| E::custom(format!("Not a hex at {} -> {}", i, &v[i..i + 2])))
                 })
                 .collect::<Result<Vec<u8>, E>>()?;
-            let data = ton_client::utils::decompress_zstd(
-                &compressed_data
-            ).map_err(|e| E::custom(format!("Decompress failed. Inner error: {}", e)))?;
-//            let base64_encoded_compressed_data = base64::encode(&compressed_data);
-//            let base64_encoded_decompressed_data = ton_client::utils::decompress_zstd(&base64_encoded_compressed_data)?;
-//            let data = base64::decode(base64_encoded_decompressed_data)?;
+            let data = ton_client::utils::decompress_zstd(&compressed_data)
+                .map_err(|e| E::custom(format!("Decompress failed. Inner error: {}", e)))?;
+            //            let base64_encoded_compressed_data = base64::encode(&compressed_data);
+            //            let base64_encoded_decompressed_data = ton_client::utils::decompress_zstd(&base64_encoded_compressed_data)?;
+            //            let data = base64::decode(base64_encoded_decompressed_data)?;
             return Ok(data);
         }
     }
-    
+
     // use our visitor to deserialize an `ActualValue`
-    deserializer.deserialize_any(CompressedHexStringVisitor) 
+    deserializer.deserialize_any(CompressedHexStringVisitor)
 }
