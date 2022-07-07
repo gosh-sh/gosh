@@ -85,7 +85,10 @@ mod tests {
         assert_eq!(remote.account, "default");
         assert_eq!(remote.dao, "gosh");
         assert_eq!(remote.repo, "binary-experiments");
-        assert_eq!(remote.gosh, "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358");
+        assert_eq!(
+            remote.gosh,
+            "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+        );
     }
 
     #[test]
@@ -96,7 +99,9 @@ mod tests {
         assert_eq!(remote.account, "default");
         assert_eq!(remote.dao, "gosh");
         assert_eq!(remote.repo, "binary-experiments");
-        assert_eq!(remote.gosh, "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358");
+        assert_eq!(
+            remote.gosh,
+            "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+        );
     }
-
 }

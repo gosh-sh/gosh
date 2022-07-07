@@ -21,7 +21,7 @@ use std::{
 
 impl GitHelper {
     // find ancestor commit
-    #[instrument(level="debug")]
+    #[instrument(level = "debug")]
     async fn push_ref(
         &mut self,
         local_ref: &str,

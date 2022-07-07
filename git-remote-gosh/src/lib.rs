@@ -2,18 +2,18 @@
 extern crate lazy_static;
 
 #[allow(unused_imports)]
-#[macro_use] 
+#[macro_use]
 extern crate serde;
 
 #[allow(unused_imports)]
 #[macro_use]
 extern crate serde_json;
 
-extern crate base64_serde;
 extern crate base64;
+extern crate base64_serde;
 
-extern crate git_object;
 extern crate git_hash;
+extern crate git_object;
 
 #[macro_use]
 extern crate data_contract_macro_derive;
@@ -24,19 +24,18 @@ extern crate tracing;
 extern crate diffy;
 extern crate lru;
 
+pub mod abi;
+pub mod blockchain;
+pub mod config;
+pub mod git;
 pub(crate) mod git_helper;
 pub mod ipfs;
 pub(crate) mod logger;
-pub mod abi;
-pub mod config;
-pub mod blockchain;
-pub mod git;
 pub mod util;
 
 use std::{env::args, error::Error};
 
-
-#[instrument(level="debug")]
+#[instrument(level = "debug")]
 pub async fn run() -> Result<(), Box<dyn Error>> {
     let logger = logger::GitHelperLogger::init()?;
     let config = config::Config::init()?;

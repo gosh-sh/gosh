@@ -2,21 +2,21 @@ use log;
 use log4rs::{
     append::{
         console::{ConsoleAppender, Target},
-        file::FileAppender
+        file::FileAppender,
     },
     config::{Appender, Logger, Root},
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
 };
-use std::{env, fmt};
-use std::str::FromStr;
 use std::error::Error;
+use std::str::FromStr;
+use std::{env, fmt};
 
-const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE"; 
+const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
 pub struct GitHelperLogger {
     handler: Handle,
-    verbosity: log::LevelFilter
+    verbosity: log::LevelFilter,
 }
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -32,14 +32,12 @@ impl fmt::Debug for GitHelperLogger {
 impl GitHelperLogger {
     pub fn init() -> Result<Self> {
         let verbosity_level = Self::calculate_log_level(0);
-        let initial_config = Self::build_config(
-            verbosity_level
-        )?;
- 
+        let initial_config = Self::build_config(verbosity_level)?;
+
         let log_handler = init_config(initial_config)?;
-        Ok(Self { 
+        Ok(Self {
             handler: log_handler,
-            verbosity: verbosity_level
+            verbosity: verbosity_level,
         })
     }
 
@@ -53,11 +51,10 @@ impl GitHelperLogger {
 
     fn calculate_log_level(verbosity_level: u8) -> log::LevelFilter {
         if let Ok(verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
-            let verbosity = u8::from_str(&verbosity)
-                .unwrap_or_default();
+            let verbosity = u8::from_str(&verbosity).unwrap_or_default();
             if verbosity > 0 {
                 return log::LevelFilter::Trace;
-            } 
+            }
         }
 
         match verbosity_level {
@@ -66,11 +63,11 @@ impl GitHelperLogger {
             2 => log::LevelFilter::Warn,
             3 => log::LevelFilter::Info,
             _ => log::LevelFilter::Debug,
-        }  
+        }
     }
 
     fn build_config(log_level: log::LevelFilter) -> Result<Config> {
-        // WARNING: Do not add stdout logger! 
+        // WARNING: Do not add stdout logger!
         // because it will break gitremote-helper logic
         let stderr_appender = Appender::builder().build(
             "stderr",
@@ -81,14 +78,8 @@ impl GitHelperLogger {
                     .build(),
             ),
         );
-        return Ok(
-            Config::builder()
-                .appender(stderr_appender)
-                .build(
-                    Root::builder()
-                        .appender("stderr")
-                        .build(log_level)
-                )?
-        );
+        return Ok(Config::builder()
+            .appender(stderr_appender)
+            .build(Root::builder().appender("stderr").build(log_level))?);
     }
 }

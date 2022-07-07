@@ -22,7 +22,6 @@ use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-
 pub struct GitHelper {
     config: Config,
     es_client: TonClient,
@@ -30,7 +29,7 @@ pub struct GitHelper {
     remote: Remote,
     repo_addr: String,
     local_git_repository: git_repository::Repository,
-    logger: Logger
+    logger: Logger,
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -46,11 +45,7 @@ impl GitHelper {
         return &mut self.local_git_repository;
     }
 
-    async fn build(
-        config: Config,
-        url: &str,
-        logger: Logger,
-    ) -> Result<Self, Box<dyn Error>> {
+    async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
         let repo_addr =
@@ -66,7 +61,7 @@ impl GitHelper {
             remote,
             repo_addr,
             local_git_repository,
-            logger
+            logger,
         })
     }
 
@@ -99,7 +94,7 @@ impl GitHelper {
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        self.logger.set_verbosity(verbosity); 
+        self.logger.set_verbosity(verbosity);
     }
 }
 

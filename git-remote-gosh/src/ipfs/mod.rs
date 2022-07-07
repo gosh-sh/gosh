@@ -4,7 +4,6 @@ use std::{error::Error, path::Path};
 
 use tokio::{fs::File, io::AsyncReadExt};
 
-
 #[derive(Debug, Deserialize)]
 struct SaveRes {
     #[serde(alias = "Hash")]
@@ -47,7 +46,10 @@ impl IpfsService {
     {
         log::debug!("Uploading {filename:?}");
 
-        let url = format!("{}/api/v0/add?pin=true&quiet=true", self.ipfs_endpoint_address);
+        let url = format!(
+            "{}/api/v0/add?pin=true&quiet=true",
+            self.ipfs_endpoint_address
+        );
 
         let mut file = File::open(filename).await?;
 

@@ -1,11 +1,11 @@
 extern crate shellexpand;
 use std::{
-    env,
-    fmt,
-    error::Error,
     collections::HashMap,
-    io::{Read, BufReader},
-    path::Path
+    env,
+    error::Error,
+    fmt,
+    io::{BufReader, Read},
+    path::Path,
 };
 
 mod defaults;
@@ -14,20 +14,20 @@ mod defaults;
 pub struct UserWalletConfig {
     address: String,
     pubkey: String,
-    secret: String
+    secret: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
-    #[serde(rename = "user-wallet")] 
+    #[serde(rename = "user-wallet")]
     user_wallet: Option<UserWalletConfig>,
-    // Note corresponding test: 
+    // Note corresponding test:
     // ensure_added_network_does_not_drop_defaults
     endpoints: Vec<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct Config {
     #[serde(rename = "ipfs")]
     ipfs_http_endpoint: String,
@@ -36,7 +36,7 @@ pub struct Config {
     primary_network: String,
 
     #[serde(rename = "networks")]
-    networks: HashMap<String, NetworkConfig>
+    networks: HashMap<String, NetworkConfig>,
 }
 
 impl fmt::Debug for UserWalletConfig {
@@ -51,17 +51,17 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             ipfs_http_endpoint: defaults::IPFS_HTTP_ENDPOINT.to_string(),
-            networks: defaults::NETWORK_ENDPOINTS.iter()
+            networks: defaults::NETWORK_ENDPOINTS
+                .iter()
                 .map(|(network, endpoints)| {
                     let network_config = NetworkConfig {
                         user_wallet: None,
-                        endpoints: endpoints.to_vec()
+                        endpoints: endpoints.to_vec(),
                     };
                     (network.to_owned(), network_config)
                 })
-                .collect()
-            ,
-            primary_network: defaults::PRIMARY_NETWORK.to_string()
+                .collect(),
+            primary_network: defaults::PRIMARY_NETWORK.to_string(),
         }
     }
 }
@@ -81,23 +81,29 @@ impl Config {
     }
 
     pub fn init() -> Result<Self, Box<dyn Error>> {
-        let config_path = env::var("GOSH_CONFIG_PATH")
-            .unwrap_or(defaults::CONFIG_LOCATION.to_string());
+        let config_path =
+            env::var("GOSH_CONFIG_PATH").unwrap_or(defaults::CONFIG_LOCATION.to_string());
         let config_path = shellexpand::tilde(&config_path).into_owned();
         let config_path = Path::new(&config_path);
-        if !config_path.exists() { return Ok(Self::default()); }
+        if !config_path.exists() {
+            return Ok(Self::default());
+        }
         let config_file = std::fs::File::open(config_path)?;
         let config_reader = BufReader::new(config_file);
         return Self::load(config_reader);
     }
 
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
-        return self.networks.get(network)
+        return self
+            .networks
+            .get(network)
             .map(|network_config| network_config.endpoints.clone());
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        return self.networks.get(network)
+        return self
+            .networks
+            .get(network)
             .map(|network_config| network_config.user_wallet.as_ref())
             .flatten()
             .cloned();
@@ -109,22 +115,25 @@ mod tests {
     use super::*;
 
     fn load_from(s: &str) -> Config {
-       return Config::load(s.as_bytes()).unwrap();
+        return Config::load(s.as_bytes()).unwrap();
     }
 
     #[test]
     fn ensure_ipfs_endpoint_is_taken_from_config() {
-        let config = load_from(r#"
+        let config = load_from(
+            r#"
             {
                 "ipfs": "foo.endpoint"
             }
-        "#);
+        "#,
+        );
         assert_eq!(config.ipfs_http_endpoint, "foo.endpoint");
     }
 
     #[test]
     fn ensure_network_endpoints_resolve_to_configured_value() {
-        let config = load_from(r#"
+        let config = load_from(
+            r#"
             {
                 "networks": {
                     "foo": {
@@ -135,26 +144,34 @@ mod tests {
                     }
                 }
             }
-        "#);
-        assert_eq!(config.find_network_endpoints("foo"), Some(vec!["endpoint 1".to_string()]));
-        assert_eq!(config.find_network_endpoints("bar"), Some(vec![ "endpoint 2a".to_string(), "endpoint 2b".to_string()]));
+        "#,
+        );
+        assert_eq!(
+            config.find_network_endpoints("foo"),
+            Some(vec!["endpoint 1".to_string()])
+        );
+        assert_eq!(
+            config.find_network_endpoints("bar"),
+            Some(vec!["endpoint 2a".to_string(), "endpoint 2b".to_string()])
+        );
     }
 
     #[test]
     #[ignore] // Bug: TODO: fix
     fn ensure_added_network_does_not_drop_defaults() {
-        let config = load_from(r#"
+        let config = load_from(
+            r#"
             {
                 "networks": {
                     "something-added": ["foo"]
                 }
             }
-        "#);
+        "#,
+        );
         for key in defaults::NETWORK_ENDPOINTS.keys() {
             let endpoints = config.find_network_endpoints(key);
             let default_values = defaults::NETWORK_ENDPOINTS.get(key).cloned();
             assert_eq!(endpoints, default_values);
         }
     }
-
 }
