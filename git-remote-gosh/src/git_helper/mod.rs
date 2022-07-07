@@ -39,7 +39,7 @@ mod fetch;
 mod push;
 
 impl GitHelper {
-    fn local_repository(&mut self) -> &mut git_repository::Repository {
+    pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         return &mut self.local_git_repository;
     }
 
