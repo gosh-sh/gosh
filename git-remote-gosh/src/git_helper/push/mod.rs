@@ -51,9 +51,7 @@ impl GitHelper {
             commit.sha
         };
 
-        let repo = self.local_repository();
-
-        let latest_commit_id = repo
+        let latest_commit_id = self.local_repository()
             .find_reference(local_ref)?
             .into_fully_peeled_id()?
             .object()?
@@ -95,12 +93,11 @@ impl GitHelper {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;
-                    // kind?
-                    let object = repo.find_object(object_id)?;
-                    match object.kind {
+                    let object_kind = self.local_repository().find_object(object_id)?.kind;
+                    match object_kind {
                         git_object::Kind::Commit => {
-                            commit_id = Some(object.id.clone());
-                            todo!();
+                            self.push_commit(&object_id).await?;
+                            commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
                             // branch
@@ -131,6 +128,10 @@ impl GitHelper {
         };
 
         Ok(vec![result])
+    }
+
+    pub async fn push_commit(&mut self, commit_id: &ObjectId) -> Result<(), Box<dyn Error>> {
+        Ok(())
     }
 }
 
