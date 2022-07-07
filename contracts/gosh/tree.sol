@@ -125,7 +125,6 @@ contract Tree is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         if (address(this).balance > 80 ton) { return; }
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
-        getMoney(_pubkey);
     }
   
     function checkCorrect(TreeObject[] data, uint128 index) public senderIs(address(this)) {
