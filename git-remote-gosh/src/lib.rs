@@ -35,16 +35,14 @@ pub mod util;
 
 use std::{env::args, error::Error};
 
+
+#[instrument(level="debug")]
 pub async fn run() -> Result<(), Box<dyn Error>> {
     let logger = logger::init()?;
     let config = config::Config::init()?;
-    log::info!("Start");
-
     let url = args()
         .nth(2)
         .ok_or("Wrong args for git-remote call\nRequired: <name> <url>")?;
     crate::git_helper::run(config, &url, logger).await?;
-
-    log::info!("Finish");
     Ok(())
 }

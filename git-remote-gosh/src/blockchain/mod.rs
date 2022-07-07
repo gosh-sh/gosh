@@ -214,7 +214,6 @@ async fn run_local(
     )
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
-    //log::info!("run_local: {} -> {:?}", function_name, encoded);
 
     let result = run_tvm(
         context.clone(),

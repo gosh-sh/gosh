@@ -104,6 +104,7 @@ impl GitHelper {
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
+#[instrument(level = "debug")]
 pub async fn run(config: Config, url: &str, logger: log4rs::Handle) -> Result<(), Box<dyn Error>> {
     let mut helper = GitHelper::build(config, url, logger).await?;
     let mut lines = BufReader::new(io::stdin()).lines();

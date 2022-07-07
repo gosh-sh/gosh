@@ -1,6 +1,7 @@
 extern crate shellexpand;
 use std::{
     env,
+    fmt,
     error::Error,
     collections::HashMap,
     io::{Read, BufReader},
@@ -16,7 +17,7 @@ pub struct UserWalletConfig {
     secret: String
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
     #[serde(rename = "user-wallet")] 
     user_wallet: Option<UserWalletConfig>,
@@ -25,7 +26,7 @@ pub struct NetworkConfig {
     endpoints: Vec<String>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)] 
 pub struct Config {
     #[serde(rename = "ipfs")]
@@ -36,6 +37,14 @@ pub struct Config {
 
     #[serde(rename = "networks")]
     networks: HashMap<String, NetworkConfig>
+}
+
+impl fmt::Debug for UserWalletConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UserWalletConfig")
+            .field("address", &self.address)
+            .finish()
+    }
 }
 
 impl Default for Config {
