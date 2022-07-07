@@ -36,8 +36,13 @@ impl GitHelper {
         let parsed_remote_ref = blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref)
             .await?;
 
-        let latest_remote_commit_id = if parsed_remote_ref == None {
-            // create branch
+        // 2. Find ancestor commit in local repo
+        let ancestor_commit_id = if parsed_remote_ref == None {
+            // 3. If branch needs to be created do so
+            //    ---
+            //    Otherwise check if a head of the branch
+            //    is pointing to the ancestor commit. Fail
+            //    if it doesn't
             // todo!();
             "".to_owned()
         } else {
@@ -56,19 +61,6 @@ impl GitHelper {
 
         log::debug!("latest commit id {latest_commit_id}");
 
-        // 2. Find ancestor co&mmit in local repo
-        // 3. If branch needs to be created do so
-        //    ---
-        //    Otherwise check if a head of the branch
-        //    is pointing to the ancestor commit. Fail
-        //    if it doesn't
-        // 4. Do prepare commit for all commits
-        // 5. Deploy tree objects of all commits
-        // 6. Deploy all **ne&w** snapshot
-        // 7. Deploy diff contracts
-        // 8. Deploy all commit objects
-        // 9. Set commit (move HEAD)
-        //
         // TODO: git rev-list?
 
         let mut cmd_args: Vec<&str> = vec![
@@ -80,8 +72,8 @@ impl GitHelper {
         ];
 
         let mut exclude;
-        if latest_remote_commit_id != "" {
-            exclude = format!("^{}", latest_remote_commit_id);
+        if ancestor_commit_id != "" {
+            exclude = format!("^{}", ancestor_commit_id);
             cmd_args.push(&exclude);
         }
 
@@ -92,6 +84,12 @@ impl GitHelper {
 
         let cmd_out = cmd.wait_with_output()?;
         let mut commit_id = None;
+        // 4. Do prepare commit for all commits
+        // 5. Deploy tree objects of all commits
+        // 6. Deploy all **new** snapshot
+        // 7. Deploy diff contracts
+        // 8. Deploy all commit objects
+
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
@@ -117,6 +115,8 @@ impl GitHelper {
             }
         }
 
+        // 9. Set commit (move HEAD)
+        //
         let result_ok = format!("ok {local_ref}");
         Ok(result_ok)
     }
