@@ -37,7 +37,10 @@ mod tree;
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;
-pub use tree::Tree;
+pub use tree::{
+    Tree,
+    push_tree
+};
 
 use crate::{abi as gosh_abi, git_helper::GitHelper};
 use crate::config::Config;
@@ -490,10 +493,6 @@ pub async fn load_messages_to(
 }
 
 pub async fn push_commit(context: &mut GitHelper, commit_id: &ObjectId) -> Result<(), Box<dyn Error>> {
-    Ok(())
-}
-
-pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
