@@ -96,7 +96,7 @@ impl GitHelper {
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
                         git_object::Kind::Commit => {
-                            self.push_commit(&object_id).await?;
+                            blockchain::push_commit(&mut self, &object_id).await?;
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
@@ -106,7 +106,7 @@ impl GitHelper {
                             // Vec<diff>
                         }
                         git_object::Kind::Tag => todo!(),
-                        git_object::Kind::Tree => todo!(),
+                        git_object::Kind::Tree => blockchain::push_tree(&mut self, &object_id).await?
                     }
                 }
                 None => break,
@@ -128,10 +128,6 @@ impl GitHelper {
         };
 
         Ok(vec![result])
-    }
-
-    pub async fn push_commit(&mut self, commit_id: &ObjectId) -> Result<(), Box<dyn Error>> {
-        Ok(())
     }
 }
 
