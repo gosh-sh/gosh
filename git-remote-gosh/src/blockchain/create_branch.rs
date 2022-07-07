@@ -37,6 +37,10 @@ impl<'a> CreateBranchOperation<'a> {
         todo!();
     }
 
+    async fn deploy_snapshot(&mut self, file_path: &str, data: &[u8]) -> Result<()> {
+        todo!(); 
+    }
+
     async fn push_initial_snapshots(&mut self) -> Result<()>
     {
         let ancestor_commit_tree = self.context.local_repository()

@@ -9,6 +9,25 @@ use std::{
 
 mod defaults;
 
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+pub struct UserWalletConfig {
+    #[serde(rename = "user-wallet-address")] 
+    address: String,
+    #[serde(rename = "user-wallet-pubkey")] 
+    pubkey: String,
+    #[serde(rename = "user-wallet-secret")] 
+    secret: String
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct NetworkConfig {
+    #[serde(flatten)] 
+    user_wallet: Option<UserWalletConfig>,
+    // Note corresponding test: 
+    // ensure_added_network_does_not_drop_defaults
+    endpoints: Vec<String>,
+}
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] 
 pub struct Config {
@@ -18,17 +37,23 @@ pub struct Config {
     primary_network: String,
 
     #[serde(rename = "networks")]
-    // Note: 
-    // corresponding test: ensure_added_network_does_not_drop_defaults
-    // #[serde(deserialize_with = "parse_network_endpoints")]
-    network_endpoints: HashMap<String, Vec<String>>
+    networks: HashMap<String, NetworkConfig>
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             ipfs_http_endpoint: defaults::IPFS_HTTP_ENDPOINT.to_string(),
-            network_endpoints: defaults::NETWORK_ENDPOINTS.clone(),
+            networks: defaults::NETWORK_ENDPOINTS.iter()
+                .map(|(network, endpoints)| {
+                    let network_config = NetworkConfig {
+                        user_wallet: None,
+                        endpoints: endpoints.to_vec()
+                    };
+                    (network.to_owned(), network_config)
+                })
+                .collect()
+            ,
             primary_network: defaults::PRIMARY_NETWORK.to_string()
         }
     }
@@ -60,7 +85,15 @@ impl Config {
     }
 
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
-        return self.network_endpoints.get(network).cloned();
+        return self.networks.get(network)
+            .map(|network_config| network_config.endpoints.clone());
+    }
+
+    pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
+        return self.networks.get(network)
+            .map(|network_config| network_config.user_wallet.as_ref())
+            .flatten()
+            .cloned();
     }
 }
 
@@ -87,8 +120,12 @@ mod tests {
         let config = load_from(r#"
             {
                 "networks": {
-                    "foo": ["endpoint 1"],
-                    "bar": [ "endpoint 2a", "endpoint 2b" ]
+                    "foo": {
+                        "endpoints": ["endpoint 1"]
+                    },
+                    "bar": {
+                        "endpoints": [ "endpoint 2a", "endpoint 2b" ]
+                    }
                 }
             }
         "#);
