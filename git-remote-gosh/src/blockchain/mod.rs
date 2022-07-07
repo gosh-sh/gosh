@@ -139,6 +139,7 @@ pub struct Diff {
 
 pub type TonClient = Arc<ClientContext>;
 
+#[instrument(level = "debug")]
 pub fn create_client(config: &Config, network: &str) -> Result<TonClient, String> {
     let endpoints = config.find_network_endpoints(network).unwrap();
     let proto = env::var("GOSH_PROTO")
