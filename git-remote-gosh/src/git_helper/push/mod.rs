@@ -26,7 +26,15 @@ impl GitHelper {
         local_ref: &str,
         remote_ref: &str,
     ) -> Result<String, Box<dyn Error>> {
+        log::info!("push_ref {} : {}", local_ref, remote_ref);
+        let remote_branch_name: &str = todo!();  
         // 1. Check if branch exists and ready in the blockchain
+        let is_branch_exist_on_blockchain = blockchain::branch_list(&self.es_client, &self.repo_addr)
+            .await?
+            .iter()
+            .find(|(key, _ )| key == remote_branch_name)
+            .is_some();
+
         // 2. Find ancestor commit in local repo
         // 3. If branch needs to be created do so
         //    ---
@@ -127,13 +135,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_push() -> Result<(), Box<dyn Error>> {
+        log::info!("Preparing repository for tests");
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
 
         fs::remove_dir_all(&dir)?;
         fs::create_dir_all(&dir)?;
         fs::write(dir.join("readme.txt").to_owned(), "test")?;
-
+        log::info!("Initializing git repo");
         println!("Testing push {:?}", dir);
 
         let repo = Repository::init(dir).expect("repository init successfuly");

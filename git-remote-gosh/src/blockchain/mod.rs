@@ -543,12 +543,18 @@ mod tests {
 
     #[tokio::test]
     async fn ensure_snapshot_can_be_loaded() {
+        // TODO: 
+        // Change test to follow updated repositories.
+        // seems like an integration test.  
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
         let snapshot_addr = Snapshot::calculate_address(&te.client, &repo_addr, &"dev", &"src/some.txt").await.expect("must be there");
         //let snapshot_addr = "0:c191199824e37ac8aa4c4fdc900bdb00b85247d1a720c710fe56a36ebbb14038";
         let snapshot = Snapshot::load(&te.client, &snapshot_addr).await.expect("must load correctly");
-        assert_eq!("", format!("{:?}", snapshot));
+        assert!(
+            snapshot.next_commit != ""
+            || snapshot.current_commit != ""
+        );
     }
 
     #[tokio::test]
