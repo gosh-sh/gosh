@@ -30,6 +30,7 @@ contract Commit is Modifiers {
     bool check = false;  
     TvmCell m_WalletCode;
     TvmCell m_CommitCode;
+    TvmCell m_SnapshotCode;
     TvmCell m_codeDiff;
     address[] _parents;
     address _rootGosh;
@@ -54,6 +55,7 @@ contract Commit is Modifiers {
         TvmCell WalletCode,
         TvmCell CommitCode,
         TvmCell codeDiff,
+        TvmCell SnapshotCode,
         address diff,
         address tree,
         uint128 index
@@ -71,6 +73,7 @@ contract Commit is Modifiers {
         _nameBranch = nameBranch;
         _commit = commit;
         m_CommitCode = CommitCode;
+        m_SnapshotCode = SnapshotCode;
         m_codeDiff = codeDiff;
         _diff = diff;
         _tree = tree;
@@ -137,6 +140,17 @@ contract Commit is Modifiers {
     function getAcceptedDiff(Diff value0, uint128 index) public view senderIs(getDiffAddress(_nameCommit, index)){
         value0;
         getMoney(_pubkey);
+    }
+    
+    function getAcceptedContent(bytes value0, optional(string) value1, string name) public view senderIs(getSnapshotAddr(name)){
+        value0; value1;
+        getMoney(_pubkey);
+    }
+    
+    function getSnapshotAddr(string name) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _rootRepo, _nameBranch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
         
     function _checkChain(uint256 pubkey,

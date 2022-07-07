@@ -18,6 +18,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
 				{"name":"diff","type":"address"},
 				{"name":"tree","type":"address"},
 				{"name":"index","type":"uint128"}
@@ -70,6 +71,16 @@
 			"inputs": [
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"value0","type":"tuple"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAcceptedContent",
+			"inputs": [
+				{"name":"value0","type":"bytes"},
+				{"name":"value1","type":"optional(string)"},
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 			]
@@ -240,6 +251,7 @@
 		{"name":"check","type":"bool"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"_parents","type":"address[]"},
 		{"name":"_rootGosh","type":"address"},

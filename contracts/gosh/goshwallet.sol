@@ -307,7 +307,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeCommitStateInit(commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, diff, tree, _index);
+            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, diff, tree, _index);
         getMoney();
     }
     
