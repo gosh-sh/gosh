@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 use base64;
 use base64_serde::base64_serde_type;
+use tracing::instrument;
 
 use std::borrow::Borrow;
 use std::os::raw;
@@ -86,6 +87,7 @@ impl GoshContract {
         }
     }
 
+    #[instrument(level = "debug", skip(context))]
     pub async fn run_local(
         &self,
         context: &TonClient,

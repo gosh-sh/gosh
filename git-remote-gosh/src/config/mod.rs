@@ -11,17 +11,14 @@ mod defaults;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
-    #[serde(rename = "user-wallet-address")] 
     address: String,
-    #[serde(rename = "user-wallet-pubkey")] 
     pubkey: String,
-    #[serde(rename = "user-wallet-secret")] 
     secret: String
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
-    #[serde(flatten)] 
+    #[serde(rename = "user-wallet")] 
     user_wallet: Option<UserWalletConfig>,
     // Note corresponding test: 
     // ensure_added_network_does_not_drop_defaults
@@ -34,6 +31,7 @@ pub struct Config {
     #[serde(rename = "ipfs")]
     ipfs_http_endpoint: String,
 
+    #[serde(rename = "primary-network")]
     primary_network: String,
 
     #[serde(rename = "networks")]

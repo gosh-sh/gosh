@@ -18,6 +18,9 @@ extern crate git_hash;
 #[macro_use]
 extern crate data_contract_macro_derive;
 
+#[macro_use]
+extern crate tracing;
+
 extern crate diffy;
 extern crate lru;
 
