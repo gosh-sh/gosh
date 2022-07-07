@@ -115,7 +115,7 @@ contract Repository is Modifiers{
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         if (_Branches[nameBranch].value != oldcommit) {
-            Commit(getCommitAddr(namecommit)).NotCorrect{value: 0.1 ton, flag: 1}();
+            Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}();
             return;
         }
         _Branches[nameBranch] = Item(nameBranch, getCommitAddr(namecommit));

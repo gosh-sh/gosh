@@ -206,7 +206,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
         address[] emptyArr;
-        _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), address.makeAddrNone());
+        _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone());
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
             _rootRepoPubkey, tvm.pubkey(), nameRepo, _goshdao, _rootgosh, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, _index);
@@ -286,13 +286,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         address[] parents,
-        address diff,
         address tree
     ) public onlyOwner accept saveMsg {
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
-        _deployCommit(repoName, branchName, commitName, fullCommit, parents, diff, tree);
+        _deployCommit(repoName, branchName, commitName, fullCommit, parents, tree);
     }
 
     function _deployCommit(
@@ -301,13 +300,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         address[] parents,
-        address diff,
         address tree
     ) internal {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeCommitStateInit(commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, diff, tree, _index);
+            _goshdao, _rootgosh, _rootRepoPubkey, tvm.pubkey(), repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, tree, _index);
         getMoney();
     }
     

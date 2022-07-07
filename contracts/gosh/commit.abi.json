@@ -19,7 +19,6 @@
 				{"name":"CommitCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
-				{"name":"diff","type":"address"},
 				{"name":"tree","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -60,13 +59,6 @@
 			]
 		},
 		{
-			"name": "NotCorrect",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getAcceptedDiff",
 			"inputs": [
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"value0","type":"tuple"},
@@ -97,9 +89,20 @@
 			]
 		},
 		{
+			"name": "abortDiff",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "DiffCheckCommit",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
 				{"name":"branchCommit","type":"address"}
 			],
 			"outputs": [
@@ -109,8 +112,25 @@
 			"name": "ChainAccept",
 			"inputs": [
 				{"name":"name","type":"string"},
+				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrect",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrectRepo",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -262,6 +282,8 @@
 		{"name":"_countready","type":"bool"},
 		{"name":"_check","type":"map(address,int128)"},
 		{"name":"_diffcheck","type":"bool"},
-		{"name":"_commitcheck","type":"bool"}
+		{"name":"_commitcheck","type":"bool"},
+		{"name":"_continueChain","type":"bool"},
+		{"name":"_continueDiff","type":"bool"}
 	]
 }
