@@ -226,23 +226,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     
     
     //Snapshot part
-    function deployNewSnapshot(string branch, address repo, string name) public onlyOwner accept saveMsg{
+    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata) public onlyOwner accept saveMsg{
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0}(tvm.pubkey(), _rootRepoPubkey, _rootgosh, _goshdao, repo, m_SnapshotCode, m_CommitCode, m_codeDiff, m_WalletCode, branch, name, false, "", _index);
-        getMoney();
-    }
-    
-    function deployNewBranchSnapshot(string branch, string oldcommit, string name, address repo, bytes snapshotdata) public onlyOwner accept saveMsg{
-        snapshotdata;
-        counter += 1;
-        if (counter == _limit_messages) { checkDeployWallets(); }
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, oldcommit, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: oldcommit + "/" + name}});
-        address addr = address.makeAddrStd(0, tvm.hash(stateInit));
-        Snapshot(addr).deployNewSnapshot{value: FEE_DEPLOY_COPY_SNAPSHOT, bounce: true, flag: 1}(tvm.pubkey(), branch, _index);
+        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0}(tvm.pubkey(), _rootRepoPubkey, _rootgosh, _goshdao, repo, m_SnapshotCode, m_CommitCode, m_codeDiff, m_WalletCode, branch, name, _index, snapshotdata, commit);
         getMoney();
     }
 
@@ -446,7 +435,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeTreeStateInit(shaTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(tvm.pubkey(), datatree, ipfs, _rootgosh, _goshdao, _rootRepoPubkey, m_WalletCode, m_codeDiff, m_codeTree, _index);
+        }(tvm.pubkey(), datatree, ipfs, _rootgosh, _goshdao, _rootRepoPubkey, m_WalletCode, m_codeDiff, m_codeTree, m_CommitCode, _index);
         getMoney();
     }
     

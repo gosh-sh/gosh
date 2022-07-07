@@ -39,7 +39,7 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
 
-    constructor(uint256 pubkeysender, uint256 pubkey,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, bool snap, string oldbranch, uint128 index) public {
+    constructor(uint256 pubkeysender, uint256 pubkey,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, uint128 index, bytes data, string commit) public {
         tvm.accept();
         _pubkey = pubkey;
         _rootRepo = rootrepo;
@@ -53,14 +53,11 @@ contract Snapshot is Modifiers {
         _rootgosh = rootgosh;
         _goshdao = goshdao;
         m_WalletCode = WalletCode;
-        if (snap == false) { require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED); }
-        else {    
-            TvmCell deployCode = GoshLib.buildSnapshotCode(m_codeSnapshot, _rootRepo, oldbranch, version);
-            TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: oldbranch + "/" + _name}});
-            address addr = address.makeAddrStd(0, tvm.hash(stateInit));
-            require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        }
-        Repository(_rootRepo).addSnapshotBranch{value: 0.3 ton, bounce: true, flag: 1}(_branch, NameOfFile);
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _oldcommits = commit;
+        _commits = commit;
+        _oldsnapshot = data;
+        _snapshot = data;
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -79,18 +76,6 @@ contract Snapshot is Modifiers {
         });
         return _contractflex;
     }   
-    
-    //Copy snapshot to new branch
-    function deployNewSnapshot(uint256 value, string newbranch, uint128 index) public view {
-        require(msg.value > 1.3 ton, 100);
-        require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_codeSnapshot, _rootRepo, newbranch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: newbranch + "/" + _name}});
-        address addr = address.makeAddrStd(0, tvm.hash(stateInit));
-        new Snapshot{stateInit:stateInit, value: 1.5 ton, wid: 0}(_pubkey, _pubkey, _rootgosh, _goshdao, _rootRepo, m_codeSnapshot, m_CommitCode, m_codeDiff, m_WalletCode, newbranch, _name, true, _branch, 0);
-        Snapshot(addr).setSnapshotSelf{value: 0.1 ton, bounce: true, flag: 1}(_oldcommits, _olddiff, _oldsnapshot, _ipfsold, _branch);
-    }
 
     function applyDiff(string namecommit, Diff diff, uint128 index) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
@@ -164,7 +149,6 @@ contract Snapshot is Modifiers {
     //Selfdestruct
     function destroy(uint256 value, uint128 index) public {
         require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).deleteSnapshotBranch{value: 0.3 ton, bounce: true, flag: 1}(_branch, NameOfFile);
         selfdestruct(msg.sender);
     }
     

@@ -36,6 +36,8 @@ contract Commit is Modifiers {
     address _tree;
     string _branchName;
     address _branchCommit;
+    uint128 _count;
+    bool _countready = false;
     mapping(address => int128) _check;
 
     constructor(address goshdao, 
@@ -181,6 +183,11 @@ contract Commit is Modifiers {
         return stateInit;
     }
     
+    function gotCount(uint128 count) public senderIs(_tree) {
+        _count = count;
+        _countready = true;
+    }
+    
     //Fallback/Receive
     receive() external view {
         if (msg.sender == _tree) {
@@ -248,6 +255,10 @@ contract Commit is Modifiers {
         string content
     ) {
         return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit);
+    }
+     
+    function getCount() external view returns(uint128, bool) {
+        return (_count, _countready);
     }
 
     function getVersion() external pure returns(string) {

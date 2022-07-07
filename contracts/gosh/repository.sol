@@ -54,38 +54,16 @@ contract Repository is Modifiers{
         m_codeTag = codeTag;
         m_SnapshotCode = SnapshotCode;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
-        _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), 0, 0);
+        _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
         _head = "main";
     }
-    
-    //Snapshot part
-    function addSnapshotBranch(string branch, string name)  public {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
-        address addr = address.makeAddrStd(0, tvm.hash(stateInit));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        require(_Branches.exists(branch) == true, ERR_BRANCH_NOT_EXIST);
-        _Branches[branch].deployed += 1;
-    }
-    
-    function deleteSnapshotBranch(string branch, string name)  public {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
-        address addr = address.makeAddrStd(0, tvm.hash(stateInit));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        require(_Branches.exists(branch) == true, ERR_BRANCH_NOT_EXIST);
-        _Branches[branch].deployed -= 1;
-    }
-      
+          
     //Branch part  
-    function deployBranch(uint256 pubkey, string newname, string fromname, uint128 index)  public minValue(0.5 ton) {
+    function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
-        require(_Branches.exists(fromname), ERR_BRANCH_NOT_EXIST);
-        _Branches[newname] = Item(newname, _Branches[fromname].value, 0, _Branches[fromname].deployed);
+        _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
     }
     
     function deleteBranch(uint256 pubkey, string name, uint128 index) public minValue(0.3 ton){
@@ -136,11 +114,11 @@ contract Repository is Modifiers{
     function setCommit(string nameBranch, address commit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if ((_Branches[nameBranch].deployed < _Branches[nameBranch].need) || (_Branches[nameBranch].value != msg.sender)) {
+        if (_Branches[nameBranch].value != msg.sender) {
             Commit(commit).NotCorrect{value: 0.1 ton, flag: 1}();
             return;
         }
-        _Branches[nameBranch] = Item(nameBranch, commit, _Branches[nameBranch].deployed, _Branches[nameBranch].need);
+        _Branches[nameBranch] = Item(nameBranch, commit);
         Commit(commit).allCorrect{value: 0.1 ton, flag: 1}();
     }
     

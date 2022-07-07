@@ -11,6 +11,7 @@ pragma AbiHeader pubkey;
 import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
+import "commit.sol";
 import "tree.sol";
 import "diff.sol";
 
@@ -29,6 +30,12 @@ contract Tree is Modifiers {
     TvmCell m_WalletCode;
     TvmCell m_codeDiff;
     TvmCell m_codeTree;
+    TvmCell m_codeCommit;
+    uint128 _countFiles = 0;
+    uint128 _needAnswer = 0;
+    bool _count = false;
+    bool _countend = false;
+    TreeAnswer[] request;
     
     constructor(
         uint256 pubkey,
@@ -40,6 +47,7 @@ contract Tree is Modifiers {
         TvmCell WalletCode,
         TvmCell codeDiff,
         TvmCell codeTree,
+        TvmCell codeCommit,
         uint128 index) public {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
@@ -51,8 +59,58 @@ contract Tree is Modifiers {
         _ipfs = ipfs;
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
+        m_codeCommit = codeCommit;
         if (_ipfs.hasValue() == false) { checkCorrect(data); }
     }    
+    
+    function countAll(uint256 pubkey, uint128 index) public {
+        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
+        require(_count == false, ERR_PROCCESS_IS_EXIST);
+        _count = true;
+        this.count{value: 0.2 ton, flag: 1}(0);
+    }
+    
+    function count(uint256 index) public senderIs(address(this)) {
+        optional(uint256, TreeObject) res = _tree.next(index);
+        if (res.hasValue()) {
+            TreeObject obj;
+            (index, obj) = res.get();
+            if (obj.mode == "040000") { _needAnswer += 1; Tree(getTreeAddr(obj.sha1)).getCountTree(_shaTree); }
+            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
+            this.count{value: 0.2 ton, flag: 1}(index + 1);
+        }
+    }
+    
+    function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
+        tvm.accept();
+        require(_countend == true, ERR_PROCCESS_END);
+        require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
+        _countFiles += res;
+        _needAnswer -= 1;
+        if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
+    }
+    
+    function sendRequests(uint256 index) public senderIs(address(this)) {
+        require(index < request.length, NOT_ERR);
+        if (request[index].isCommit == true) { Commit(msg.sender).gotCount(_countFiles); }
+        else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
+        if (index == request.length - 1) { delete request; return; }
+        this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
+    }
+    
+    function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
+        tvm.accept();
+        if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
+        request.push(TreeAnswer(msg.sender, true));
+        return;
+    }
+    
+    function getCountTree(string name) public senderIs(getTreeAddr(name)) {
+        tvm.accept();
+        if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
+        request.push(TreeAnswer(msg.sender, false));
+        return;
+    }
     
     function getMoney(uint256 pubkey) private view{
         TvmCell s1 = _composeWalletStateInit(pubkey, 0);
@@ -60,7 +118,7 @@ contract Tree is Modifiers {
         if (address(this).balance > 80 ton) { return; }
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
-    
+  
     function checkCorrect(TreeObject[] data) private {
         string allTree;
         bytes byteTree;
@@ -114,6 +172,12 @@ contract Tree is Modifiers {
             return;
         }
     }
+     
+    function getCommitAddr(string commit, address repo) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildCommitCode(m_codeCommit, repo, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: commit}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
     
     function getTreeAddr(string sha) private view returns(address) {
         TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
@@ -156,6 +220,10 @@ contract Tree is Modifiers {
     }
     
     //Getters
+         
+    function getCount() external view returns(uint128) {
+        return _countFiles;
+    }
     
     function gettree() external view returns(mapping(uint256 => TreeObject)) {
         return _tree;
