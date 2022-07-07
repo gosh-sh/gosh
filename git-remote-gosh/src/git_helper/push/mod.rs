@@ -28,53 +28,68 @@ impl GitHelper {
         remote_ref: &str,
     ) -> Result<String, Box<dyn Error>> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
-        let remote_branch_name: &str = todo!();
+        let remote_branch_name: &str = {
+            let mut iter = remote_ref.rsplit("/");
+            iter.next().unwrap()
+        };
         // 1. Check if branch exists and ready in the blockchain
-        let is_branch_exist_on_blockchain =
-            blockchain::branch_list(&self.es_client, &self.repo_addr)
-                .await?
-                .iter()
-                .find(|(key, _)| key == remote_branch_name)
-                .is_some();
+        let parsed_remote_ref = blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref)
+            .await?;
 
         // 2. Find ancestor commit in local repo
-        // 3. If branch needs to be created do so
-        //    ---
-        //    Otherwise check if a head of the branch
-        //    is pointing to the ancestor commit. Fail
-        //    if it doesn't
-        // 4. Do prepare commit for all commits
-        // 5. Deploy tree objects of all commits
-        // 6. Deploy all **new** snapshot
-        // 7. Deploy diff contracts
-        // 8. Deploy all commit objects
-        // 9. Set commit (move HEAD)
-        //
-        // TODO: git rev-list?
+        let ancestor_commit_id = if parsed_remote_ref == None {
+            // 3. If branch needs to be created do so
+            //    ---
+            //    Otherwise check if a head of the branch
+            //    is pointing to the ancestor commit. Fail
+            //    if it doesn't
+            // todo!();
+            "".to_owned()
+        } else {
+            let remote_commit_addr = parsed_remote_ref.unwrap();
+            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr).await?.unwrap();
+            commit.sha
+        };
+
         let repo = self.local_repository();
 
-        let remote_commit_id = repo
-            .find_reference(remote_ref)?
+        let latest_commit_id = repo
+            .find_reference(local_ref)?
             .into_fully_peeled_id()?
             .object()?
             .id;
 
-        log::debug!("remote commit id {remote_commit_id}");
+        log::debug!("latest commit id {latest_commit_id}");
+
+        // TODO: git rev-list?
+
+        let mut cmd_args: Vec<&str> = vec![
+            "rev-list",
+            "--objects",
+            "--in-commit-order",
+            "--reverse",
+            local_ref
+        ];
+
+        let mut exclude;
+        if ancestor_commit_id != "" {
+            exclude = format!("^{}", ancestor_commit_id);
+            cmd_args.push(&exclude);
+        }
 
         let cmd = Command::new("git")
-            .args([
-                "rev-list",
-                "--objects",
-                "--in-commit-order",
-                "--reverse",
-                format!("{local_ref}").as_str(),
-                format!("^{remote_commit_id}").as_str(),
-            ])
+            .args(cmd_args)
             .spawn()
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
         let mut commit_id = None;
+        // 4. Do prepare commit for all commits
+        // 5. Deploy tree objects of all commits
+        // 6. Deploy all **new** snapshot
+        // 7. Deploy diff contracts
+        // 8. Deploy all commit objects
+
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
@@ -100,9 +115,12 @@ impl GitHelper {
             }
         }
 
+        // 9. Set commit (move HEAD)
+        //
         let result_ok = format!("ok {local_ref}");
         Ok(result_ok)
     }
+
     pub async fn push(&mut self, refs: &str) -> Result<Vec<String>, Box<dyn Error>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
