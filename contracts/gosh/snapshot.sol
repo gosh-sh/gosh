@@ -39,7 +39,7 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
 
-    constructor(uint256 pubkeysender, uint256 pubkey,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, uint128 index, bytes data, string commit) public {
+    constructor(uint256 pubkeysender, uint256 pubkey,address rootgosh, address goshdao, address rootrepo, TvmCell codeSnapshot, TvmCell codeCommit, TvmCell codeDiff, TvmCell WalletCode, string branch, string name, uint128 index, bytes data, optional(string) ipfsdata, string commit) public {
         tvm.accept();
         _pubkey = pubkey;
         _rootRepo = rootrepo;
@@ -58,6 +58,8 @@ contract Snapshot is Modifiers {
         _commits = commit;
         _oldsnapshot = data;
         _snapshot = data;
+        _ipfsold = ipfsdata;
+        _ipfs = ipfsdata;
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {

@@ -226,12 +226,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     
     
     //Snapshot part
-    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata) public onlyOwner accept saveMsg{
+    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwner accept saveMsg{
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0}(tvm.pubkey(), _rootRepoPubkey, _rootgosh, _goshdao, repo, m_SnapshotCode, m_CommitCode, m_codeDiff, m_WalletCode, branch, name, _index, snapshotdata, commit);
+        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0}(tvm.pubkey(), _rootRepoPubkey, _rootgosh, _goshdao, repo, m_SnapshotCode, m_CommitCode, m_codeDiff, m_WalletCode, branch, name, _index, snapshotdata, snapshotipfs, commit);
         getMoney();
     }
 

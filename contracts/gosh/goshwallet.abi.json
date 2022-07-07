@@ -92,7 +92,8 @@
 				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"name","type":"string"},
-				{"name":"snapshotdata","type":"bytes"}
+				{"name":"snapshotdata","type":"bytes"},
+				{"name":"snapshotipfs","type":"optional(string)"}
 			],
 			"outputs": [
 			]
