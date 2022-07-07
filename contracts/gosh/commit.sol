@@ -185,7 +185,7 @@ contract Commit is Modifiers {
         address newC) public view {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        _checkChain(pubkey, branchName, branchCommit, newC);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(pubkey, branchName, branchCommit, newC);
         getMoney(pubkey);
     }
     
