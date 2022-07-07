@@ -147,8 +147,10 @@ contract DiffC is Modifiers {
         _branchcommit = branchcommit;
         if (_diff.length != 0) { 
             this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
+            getMoney(_pubkey);
+            return;
         }
-//        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
         else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         getMoney(_pubkey);
     }
