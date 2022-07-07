@@ -73,6 +73,14 @@
 			]
 		},
 		{
+			"name": "checkCorrect",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"data","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getShaInfoDiff",
 			"inputs": [
 				{"name":"commit","type":"string"},

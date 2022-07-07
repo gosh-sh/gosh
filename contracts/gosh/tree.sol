@@ -126,7 +126,8 @@ contract Tree is Modifiers {
         getMoney(_pubkey);
     }
   
-    function checkCorrect(TreeObject[] data) private {
+    function checkCorrect(TreeObject[] data) public senderIs(address(this)) {
+        tvm.accept();
         string allTree;
         bytes byteTree;
         bytes allbytes;
