@@ -21,6 +21,7 @@ use std::{
 
 
 impl GitHelper {
+    #[instrument(level="debug")]
     async fn push_ref(
         &mut self,
         local_ref: &str,

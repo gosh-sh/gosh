@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 use std::env;
 use std::error::Error;
+use std::rc;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use ton_client::crypto::KeyPair;
@@ -15,11 +16,12 @@ use crate::blockchain::{
 use crate::config::Config;
 use crate::git::get_refs;
 use crate::ipfs::IpfsService;
-use crate::logger;
+use crate::logger::GitHelperLogger as Logger;
 use crate::util::Remote;
 use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
+
 
 pub struct GitHelper {
     config: Config,
@@ -27,9 +29,8 @@ pub struct GitHelper {
     ipfs_client: IpfsService,
     remote: Remote,
     repo_addr: String,
-    verbosity: u8,
-    logger: log4rs::Handle,
     local_git_repository: git_repository::Repository,
+    logger: Logger
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -37,6 +38,8 @@ mod fetch;
 
 // Note: this module implements push method on GitHelper
 mod push;
+
+mod fmt;
 
 impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
@@ -46,7 +49,7 @@ impl GitHelper {
     async fn build(
         config: Config,
         url: &str,
-        logger: log4rs::Handle,
+        logger: Logger,
     ) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
@@ -62,9 +65,8 @@ impl GitHelper {
             ipfs_client,
             remote,
             repo_addr,
-            verbosity: 0,
-            logger,
             local_git_repository,
+            logger
         })
     }
 
@@ -97,15 +99,14 @@ impl GitHelper {
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        // TODO: maybe connect verbosity to logging?
-        self.verbosity = verbosity;
+        self.logger.set_verbosity(verbosity); 
     }
 }
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: log4rs::Handle) -> Result<(), Box<dyn Error>> {
+pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dyn Error>> {
     let mut helper = GitHelper::build(config, url, logger).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();

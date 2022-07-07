@@ -38,7 +38,7 @@ use std::{env::args, error::Error};
 
 #[instrument(level="debug")]
 pub async fn run() -> Result<(), Box<dyn Error>> {
-    let logger = logger::init()?;
+    let logger = logger::GitHelperLogger::init()?;
     let config = config::Config::init()?;
     let url = args()
         .nth(2)
