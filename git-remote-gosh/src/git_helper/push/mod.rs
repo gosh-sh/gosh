@@ -19,34 +19,36 @@ use std::{
     vec::Vec,
 };
 
-
 impl GitHelper {
+    // find ancestor commit
     async fn push_ref(
         &mut self,
         local_ref: &str,
         remote_ref: &str,
     ) -> Result<String, Box<dyn Error>> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
-        let remote_branch_name: &str = todo!();  
+        let remote_branch_name: &str = todo!();
         // 1. Check if branch exists and ready in the blockchain
-        let is_branch_exist_on_blockchain = blockchain::branch_list(&self.es_client, &self.repo_addr)
-            .await?
-            .iter()
-            .find(|(key, _ )| key == remote_branch_name)
-            .is_some();
+        let is_branch_exist_on_blockchain =
+            blockchain::branch_list(&self.es_client, &self.repo_addr)
+                .await?
+                .iter()
+                .find(|(key, _)| key == remote_branch_name)
+                .is_some();
 
         // 2. Find ancestor commit in local repo
         // 3. If branch needs to be created do so
         //    ---
-        //    Otherwise check if a head of the branch 
-        //    is pointing to the ancestor commit. Fail 
+        //    Otherwise check if a head of the branch
+        //    is pointing to the ancestor commit. Fail
         //    if it doesn't
         // 4. Do prepare commit for all commits
-        // 4. Deploy tree objects of all commits
-        // 5. Deploy all **new** snapshot
-        // 6. Deploy diff contracts 
-        // 5. Deploy all commit objects
-        // 
+        // 5. Deploy tree objects of all commits
+        // 6. Deploy all **new** snapshot
+        // 7. Deploy diff contracts
+        // 8. Deploy all commit objects
+        // 9. Set commit (move HEAD)
+        //
         // TODO: git rev-list?
         let repo = self.local_repository();
 
