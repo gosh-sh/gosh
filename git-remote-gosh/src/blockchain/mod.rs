@@ -62,24 +62,38 @@ const BLOB_FLAG_IPFS: u8 = 4;
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
 
-#[derive(Debug)]
 struct GoshContract {
     address: String,
+    pretty_name: String,
     abi: Abi,
     keys: Option<KeyPair>,
 }
 
+impl fmt::Debug for GoshContract {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let struct_name = format!(
+            "GoshContract<{}>", 
+            self.pretty_name
+        );
+        f.debug_struct(&struct_name)
+            .field("address", &self.address)
+            .finish_non_exhaustive()
+    } 
+}
+
 impl GoshContract {
-    pub fn new(address: &str, abi: &str) -> Self {
+    pub fn new(address: &str, (pretty_name, abi): (&str, &str)) -> Self {
         GoshContract {
+            pretty_name: pretty_name.to_owned(),
             address: address.to_owned(),
             abi: Abi::Json(abi.to_string()),
             keys: None,
         }
     }
 
-    pub fn new_with_keys(address: &str, abi: &str, keys: KeyPair) -> Self {
+    pub fn new_with_keys(address: &str, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self {
         GoshContract {
+            pretty_name: pretty_name.to_owned(),
             address: address.to_owned(),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
@@ -390,7 +404,7 @@ pub async fn load_messages_to(context: &TonClient, address: &str) -> Result<Vec<
         let decoded = decode_message_body(
             context.clone(),
             ParamsOfDecodeMessageBody {
-                abi: Abi::Json(gosh_abi::SNAPSHOT.to_string()),
+                abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
                 body: raw_msg.body,
                 is_internal: true,
                 ..Default::default()

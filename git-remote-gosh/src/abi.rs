@@ -1,16 +1,18 @@
 macro_rules! abi {
-    ($file: expr) => {{
+    ($file: expr) => {
         // NOTE: Run `make copy_abi` in case of `No such file...` error
-        include_str!(concat!("../resources/", $file))
-    }};
+        ($file, include_str!(concat!("../resources/", $file)))
+    };
 }
 
-pub static GOSH: &str = abi!("gosh.abi.json");
-pub static WALLET: &str = abi!("goshwallet.abi.json");
-pub static REPO: &str = abi!("repository.abi.json");
-pub static COMMIT: &str = abi!("commit.abi.json");
-pub static SNAPSHOT: &str = abi!("snapshot.abi.json");
-pub static TREE: &str = abi!("tree.abi.json");
+type Abi = (&'static str, &'static str);
+
+pub static GOSH: Abi = abi!("gosh.abi.json");
+pub static WALLET: Abi = abi!("goshwallet.abi.json");
+pub static REPO: Abi = abi!("repository.abi.json");
+pub static COMMIT: Abi = abi!("commit.abi.json");
+pub static SNAPSHOT: Abi = abi!("snapshot.abi.json");
+pub static TREE: Abi = abi!("tree.abi.json");
 
 #[derive(serde::Serialize)]
 struct GetCommitAddrArgs {

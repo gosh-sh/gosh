@@ -43,7 +43,7 @@ fn impl_data_contract(ast: &syn::DeriveInput) -> quote::Tokens {
             pub async fn load(context: &std::sync::Arc<::ton_client::ClientContext>, address: &str) -> std::result::Result<#name, Box<dyn std::error::Error>>
             {
                 let abi = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/", #abi));
-                let contract = crate::blockchain::GoshContract::new(address, abi);
+                let contract = crate::blockchain::GoshContract::new(address, (#abi, abi));
                 let content = contract.run_local(context, #abi_data_fn, None).await?;
                 let obj = ::serde_json::from_value::<#name>(content)
                     .map_err(|e| e.into());
