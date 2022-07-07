@@ -26,7 +26,7 @@ pub struct GitHelper {
     config: Config,
     es_client: TonClient,
     ipfs_client: IpfsService,
-    remote: Remote,
+    pub remote: Remote,
     repo_addr: String,
     local_git_repository: git_repository::Repository,
     logger: Logger,

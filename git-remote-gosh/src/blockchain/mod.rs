@@ -49,9 +49,12 @@ use crate::config::Config;
 pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 
-const BLOB_FLAG_BINARY: u8 = 1;
-const BLOB_FLAG_COMPRESSED: u8 = 2;
-const BLOB_FLAG_IPFS: u8 = 4;
+#[repr(u8)]
+pub enum GoshBlobBitFlags {
+    Binary = 1,
+    Compressed = 2,
+    Ipfs = 4
+}
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
 
