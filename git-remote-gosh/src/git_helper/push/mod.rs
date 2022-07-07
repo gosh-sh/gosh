@@ -11,7 +11,7 @@ use git_odb::{Find, Write};
 use git_repository::{self, Object};
 use std::env::current_dir;
 use std::os;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::{
     collections::{HashSet, VecDeque},
     error::Error,
@@ -79,6 +79,7 @@ impl GitHelper {
 
         let cmd = Command::new("git")
             .args(cmd_args)
+            .stdout(Stdio::piped())
             .spawn()
             .expect("git rev-list failed");
 
