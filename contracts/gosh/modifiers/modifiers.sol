@@ -9,6 +9,11 @@ pragma ton-solidity >=0.61.2;
 import "errors.sol";
 
 //Structs
+struct TreeAnswer {
+    address sender;
+    bool isCommit;
+}
+
 struct Request {
     address answer;
     string fullPath;
@@ -22,6 +27,7 @@ struct TreeObject {
     string typeObj;
     string name;
     string sha1;
+    string sha256;
 }
 
 struct Diff {
@@ -35,8 +41,6 @@ struct Diff {
 struct Item {
     string key;
     address value;
-    uint128 deployed;
-    uint128 need;
 }
 
 struct GlobalConfig {

@@ -89,19 +89,9 @@
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"branch","type":"string"},
+				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployNewBranchSnapshot",
-			"inputs": [
-				{"name":"branch","type":"string"},
-				{"name":"oldcommit","type":"string"},
 				{"name":"name","type":"string"},
-				{"name":"repo","type":"address"},
 				{"name":"snapshotdata","type":"bytes"}
 			],
 			"outputs": [
@@ -206,7 +196,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"shaTree","type":"string"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"datatree","type":"tuple[]"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"datatree","type":"tuple[]"},
 				{"name":"ipfs","type":"optional(string)"}
 			],
 			"outputs": [

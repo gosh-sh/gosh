@@ -7,7 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"data","type":"tuple[]"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"data","type":"tuple[]"},
 				{"name":"ipfs","type":"optional(string)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
@@ -15,7 +15,59 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"codeTree","type":"cell"},
+				{"name":"codeCommit","type":"cell"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "countAll",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "count",
+			"inputs": [
+				{"name":"index","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gotCount",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"res","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendRequests",
+			"inputs": [
+				{"name":"index","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCountCommit",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCountTree",
+			"inputs": [
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 			]
@@ -48,11 +100,19 @@
 			]
 		},
 		{
+			"name": "getCount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
 			"name": "gettree",
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -84,7 +144,7 @@
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"_shaTreeLocal","type":"uint256"},
-		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
 		{"name":"_ipfs","type":"optional(string)"},
@@ -93,6 +153,12 @@
 		{"name":"_goshdao","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
-		{"name":"m_codeTree","type":"cell"}
+		{"name":"m_codeTree","type":"cell"},
+		{"name":"m_codeCommit","type":"cell"},
+		{"name":"_countFiles","type":"uint128"},
+		{"name":"_needAnswer","type":"uint128"},
+		{"name":"_count","type":"bool"},
+		{"name":"_countend","type":"bool"},
+		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"}
 	]
 }

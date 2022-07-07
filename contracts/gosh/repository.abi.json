@@ -21,29 +21,11 @@
 			]
 		},
 		{
-			"name": "addSnapshotBranch",
-			"inputs": [
-				{"name":"branch","type":"string"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deleteSnapshotBranch",
-			"inputs": [
-				{"name":"branch","type":"string"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployBranch",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"newname","type":"string"},
-				{"name":"fromname","type":"string"},
+				{"name":"fromcommit","type":"string"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -112,7 +94,7 @@
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"deployed","type":"uint128"},{"name":"need","type":"uint128"}],"name":"value0","type":"tuple"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple"}
 			]
 		},
 		{
@@ -120,7 +102,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"deployed","type":"uint128"},{"name":"need","type":"uint128"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{

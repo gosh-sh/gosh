@@ -36,4 +36,7 @@ abstract contract Errors {
     uint constant ERR_WALLET_NOT_EXIST = 225;
     uint constant ERR_WRONG_BRANCH = 226;
     uint constant ERR_DIFF_ALREADY_USED = 227;
+    uint constant ERR_PROCCESS_IS_EXIST = 228;
+    uint constant ERR_PROCCESS_END = 229;
+    uint constant ERR_NO_NEED_ANSWER = 230;
 }

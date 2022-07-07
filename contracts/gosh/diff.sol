@@ -87,6 +87,7 @@ contract DiffC is Modifiers {
     }
     
     function checkAllAccess(address sender) private view returns(bool) {
+        if (address(this) == sender) { return true; }
         if (_buildCommitAddr(_nameCommit) == sender) { return true; }
         if (_index == 0) { return false; }
         if (getDiffAddress(_index - 1) == sender) { return true; }
@@ -239,6 +240,17 @@ contract DiffC is Modifiers {
         TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, _rootRepo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _nameCommit, _index: index}});
         return stateInit;
+    }
+    
+    function checkSender(uint128 index, address sender) public view senderIs(address(this)) {
+        if (index >= _diff.length) { return; }
+        if (_diff[index].snap == sender) { this.cancelCommit{value: 0.1 ton, flag: 1}(); return; }
+        this.checkSender{value: 0.2 ton, flag: 1}(index + 1, msg.sender);
+    }
+    
+    //Fallback/Receive
+    receive() external pure {
+        this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
     }
     
     //Selfdestruct
