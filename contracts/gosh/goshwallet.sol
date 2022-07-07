@@ -417,7 +417,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function deployTree(
         string repoName,
         string shaTree,
-        TreeObject[] datatree,
+        mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs
     ) public onlyOwner accept saveMsg {
         counter += 1;
@@ -428,7 +428,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function _deployTree(
         string repoName,
         string shaTree,
-        TreeObject[] datatree,
+        mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs
     ) internal {
         address repo = _buildRepositoryAddr(repoName);
