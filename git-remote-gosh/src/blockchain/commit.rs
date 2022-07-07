@@ -8,4 +8,3 @@ pub struct GoshCommit {
     parents: Vec<String>,
     pub content: String,
 }
-
