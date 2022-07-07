@@ -51,6 +51,7 @@ const BlobPage = () => {
             filepath = `${filepath}${treeItem.name}`;
 
             const snapAddr = await repo.getSnapshotAddr(branchName, filepath);
+            console.debug('Snap addr', snapAddr);
             const snap = new GoshSnapshot(wallet.account.client, snapAddr);
             const data = await snap.getSnapshot(commitName, treeItem);
             setBlob({ content: data.content });

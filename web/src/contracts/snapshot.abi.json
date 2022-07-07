@@ -17,19 +17,10 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"branch","type":"string"},
 				{"name":"name","type":"string"},
-				{"name":"snap","type":"bool"},
-				{"name":"oldbranch","type":"string"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployNewSnapshot",
-			"inputs": [
-				{"name":"value","type":"uint256"},
-				{"name":"newbranch","type":"string"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"data","type":"bytes"},
+				{"name":"ipfsdata","type":"optional(string)"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]

@@ -74,6 +74,7 @@
         "@types/react-copy-to-clipboard": "^5.0.2",
         "@types/react-dom": "^18.0.3",
         "autoprefixer": "^10.4.4",
+        "dotenv-cli": "^6.0.0",
         "postcss": "^8.4.12",
         "react-scripts": "5.0.1",
         "sass": "^1.49.7",

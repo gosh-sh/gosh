@@ -1,27 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { faChevronRight, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Field, Form, Formik, FormikHelpers } from "formik";
-import { useMutation } from "react-query";
-import { Link, useOutletContext, useParams } from "react-router-dom";
-import BranchSelect from "../../components/BranchSelect";
-import TextField from "../../components/FormikForms/TextField";
-import Spinner from "../../components/Spinner";
-import { TGoshBranch } from "../../types/types";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
-import * as Yup from "yup";
-import { useRecoilValue } from "recoil";
-import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
-import { isMainBranch } from "../../helpers";
-import { EGoshError, GoshError } from "../../types/errors";
-import { toast } from "react-toastify";
-
+import { useEffect, useState } from 'react';
+import { faChevronRight, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Field, Form, Formik, FormikHelpers } from 'formik';
+import { useMutation } from 'react-query';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import BranchSelect from '../../components/BranchSelect';
+import TextField from '../../components/FormikForms/TextField';
+import Spinner from '../../components/Spinner';
+import { TGoshBranch } from '../../types/types';
+import { TRepoLayoutOutletContext } from '../RepoLayout';
+import * as Yup from 'yup';
+import { useRecoilValue } from 'recoil';
+import { goshCurrBranchSelector } from '../../store/gosh.state';
+import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
+import { isMainBranch } from '../../helpers';
+import { EGoshError, GoshError } from '../../types/errors';
+import { toast } from 'react-toastify';
+import { GoshCommit } from '../../types/classes';
 
 type TCreateBranchFormValues = {
     newName: string;
     from?: TGoshBranch;
-}
+};
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams();
@@ -48,10 +48,12 @@ export const BranchesPage = () => {
                 toast.error(error.message);
             },
             onSettled: (data, error, variables) => {
-                setBranchesOnMutation((value) => value.filter((item) => item !== variables));
-            }
+                setBranchesOnMutation((value) =>
+                    value.filter((item) => item !== variables)
+                );
+            },
         }
-    )
+    );
 
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
@@ -61,20 +63,29 @@ export const BranchesPage = () => {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH);
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
-            await goshWallet.deployBranch(goshRepo, values.newName.toLowerCase(), values.from.name);
+            const commit = new GoshCommit(
+                goshWallet.account.client,
+                values.from.commitAddr
+            );
+            await goshWallet.deployBranch(
+                goshRepo,
+                values.newName.toLowerCase(),
+                values.from.name,
+                await commit.getName()
+            );
             await updateBranches();
             helpers.resetForm();
         } catch (e: any) {
             console.error(e);
             toast.error(e.message);
         }
-    }
+    };
 
     const onBranchDelete = (name: string) => {
         if (window.confirm(`Delete branch '${name}'?`)) {
             branchDeleteMutation.mutate(name);
         }
-    }
+    };
 
     useEffect(() => {
         updateBranches();
@@ -100,8 +111,11 @@ export const BranchesPage = () => {
                             newName: Yup.string()
                                 .matches(/^[\w-]+$/, 'Name has invalid characters')
                                 .max(64, 'Max length is 64 characters')
-                                .notOneOf((branches).map((b) => b.name), 'Branch exists')
-                                .required('Branch name is required')
+                                .notOneOf(
+                                    branches.map((b) => b.name),
+                                    'Branch exists'
+                                )
+                                .required('Branch name is required'),
                         })}
                     >
                         {({ isSubmitting, setFieldValue }) => (
@@ -119,7 +133,10 @@ export const BranchesPage = () => {
                                         disabled={isSubmitting}
                                     />
                                     <span className="mx-3">
-                                        <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                                        <FontAwesomeIcon
+                                            icon={faChevronRight}
+                                            size="sm"
+                                        />
                                     </span>
                                     <div className="grow">
                                         <Field
@@ -133,8 +150,11 @@ export const BranchesPage = () => {
                                                 className: '!text-sm !py-1.5',
                                                 disabled: isSubmitting,
                                                 onChange: (e: any) => {
-                                                    setFieldValue('newName', e.target.value.toLowerCase());
-                                                }
+                                                    setFieldValue(
+                                                        'newName',
+                                                        e.target.value.toLowerCase()
+                                                    );
+                                                },
                                             }}
                                         />
                                     </div>
@@ -165,7 +185,10 @@ export const BranchesPage = () => {
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {filtered.map((branch, index) => (
-                    <div key={index} className="flex gap-4 items-center px-3 py-2 text-sm">
+                    <div
+                        key={index}
+                        className="flex gap-4 items-center px-3 py-2 text-sm"
+                    >
                         <div className="grow">
                             <Link
                                 to={`/${daoName}/${repoName}/tree/${branch.name}`}
@@ -181,12 +204,17 @@ export const BranchesPage = () => {
                                     className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
                                         hover:bg-rose-500 disabled:bg-rose-400"
                                     onClick={() => onBranchDelete(branch.name)}
-                                    disabled={branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0}
-                                >
-                                    {branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0
-                                        ? <Spinner size="xs" />
-                                        : <FontAwesomeIcon icon={faTrash} size="sm" />
+                                    disabled={
+                                        branchDeleteMutation.isLoading &&
+                                        branchesOnMutation.indexOf(branch.name) >= 0
                                     }
+                                >
+                                    {branchDeleteMutation.isLoading &&
+                                    branchesOnMutation.indexOf(branch.name) >= 0 ? (
+                                        <Spinner size="xs" />
+                                    ) : (
+                                        <FontAwesomeIcon icon={faTrash} size="sm" />
+                                    )}
                                     <span className="ml-2">Delete</span>
                                 </button>
                             )}
@@ -196,6 +224,6 @@ export const BranchesPage = () => {
             </div>
         </div>
     );
-}
+};
 
 export default BranchesPage;
