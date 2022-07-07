@@ -18,8 +18,6 @@ export type TUserState = TUserStatePersist & {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-    deployed: number;
-    need: number;
 };
 
 export type TGoshCommitContent = {
@@ -43,7 +41,8 @@ export type TGoshTreeItem = {
     flags: number;
     mode: '040000' | '100644';
     type: 'tree' | 'blob';
-    sha: string;
+    sha1: string;
+    sha256: string;
     path: string;
     name: string;
 };
@@ -160,7 +159,12 @@ export interface IGoshWallet extends IContract {
     getRootAddr(): Promise<string>;
     getPubkey(): Promise<string>;
     deployRepo(name: string): Promise<void>;
-    deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void>;
+    deployBranch(
+        repo: IGoshRepository,
+        newName: string,
+        fromName: string,
+        fromCommit: string
+    ): Promise<void>;
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repo: IGoshRepository,
@@ -173,16 +177,13 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>;
     deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string>;
     deployTag(repo: IGoshRepository, commitName: string, content: string): Promise<void>;
-    deployNewBranchSnapshot(
-        branch: string,
-        fromBranch: string,
-        name: string,
-        repoAddr: string
-    ): Promise<void>;
     deployNewSnapshot(
         repoAddr: string,
         branchName: string,
-        filename: string
+        commitName: string,
+        filename: string,
+        data: string,
+        ipfs: string | null
     ): Promise<string>;
     deleteSnapshot(addr: string): Promise<void>;
     getSnapshotCode(branch: string, repoAddr: string): Promise<string>;
@@ -287,7 +288,7 @@ export interface IGoshSnapshot extends IContract {
 export interface IGoshTree extends IContract {
     address: string;
 
-    getTree(): Promise<TGoshTreeItem[]>;
+    getTree(): Promise<{ tree: TGoshTreeItem[]; ready: boolean }>;
     getSha(): Promise<any>;
 }
 

@@ -106,8 +106,7 @@ export const useGoshRepoBranches = (
 
     const updateBranches = useCallback(async () => {
         const branches = await goshRepo?.getBranches();
-        const filtered = branches?.filter(({ deployed, need }) => deployed >= need);
-        if (filtered) setBranches(filtered);
+        if (branches) setBranches(branches);
     }, [goshRepo, setBranches]);
 
     const updateBranch = useCallback(
