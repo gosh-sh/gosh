@@ -175,7 +175,7 @@ contract Commit is Modifiers {
         _continueDiff = false;
         _diffcheck = false;
         getMoney(pubkey);
-        if (_continueChain == false) { return; }
+        if (_continueChain == true) { return; }
         acceptAll(branch, branchCommit);
     }
     
@@ -184,7 +184,7 @@ contract Commit is Modifiers {
         _continueDiff = false;
         _diffcheck = true;
         getMoney(pubkey);
-        if (_continueChain == false) { return; }
+        if (_continueChain == true) { return; }
         acceptAll(branch, branchCommit);
     }
     
@@ -195,7 +195,7 @@ contract Commit is Modifiers {
         _continueChain = false;
         _commitcheck = true;
         getMoney(_pubkey);
-        if (_continueDiff == false) { return; }
+        if (_continueDiff == true) { return; }
         acceptAll(branchName, branchCommit);
     }
     
@@ -206,7 +206,7 @@ contract Commit is Modifiers {
         _continueChain = false;
         _commitcheck = false;
         getMoney(_pubkey);
-        if (_continueDiff == false) { return; }
+        if (_continueDiff == true) { return; }
         acceptAll(branch, branchCommit);
     }
     
