@@ -36,6 +36,7 @@ contract Tree is Modifiers {
     bool _count = false;
     bool _countend = false;
     TreeAnswer[] request;
+    bool _finishtree = false;
     
     constructor(
         uint256 pubkey,
@@ -60,7 +61,7 @@ contract Tree is Modifiers {
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
-        if (_ipfs.hasValue() == false) { this.checkCorrect{value: 0.2 ton, flag: 1}(data); }
+        if (_ipfs.hasValue() == false) { this.checkCorrect{value: 0.2 ton, flag: 1}(data, 0); }
     }    
     
     function countAll(uint256 pubkey, uint128 index) public {
@@ -126,23 +127,11 @@ contract Tree is Modifiers {
         getMoney(_pubkey);
     }
   
-    function checkCorrect(TreeObject[] data) public senderIs(address(this)) {
+    function checkCorrect(TreeObject[] data, uint128 index) public senderIs(address(this)) {
         tvm.accept();
-        string allTree;
-        bytes byteTree;
-        bytes allbytes;
-        for (TreeObject value : data) {
-            _tree[tvm.hash(value.name)] = value;
-            if (value.mode == "040000") { allTree = "40000"; }
-            else { allTree = value.mode; } 
-            allTree += " " + value.name + "\'0";
-            byteTree.append(bytes(allTree));
-            byteTree.append(bytes(value.sha1));
-        }
-        allTree = "tree " + format("{}", byteTree.length) + "\'0";
-        allbytes.append(bytes(allTree));
-        allbytes.append(byteTree);
-        _shaTreeLocal = tvm.hash(allbytes);
+        if (index == data.length) { _finishtree = true; return; }
+        _tree[tvm.hash(data[index].sha1)] = data[index]; 
+        this.checkCorrect{value: 0.2 ton, flag: 1}(data, index + 1);
         getMoney(_pubkey);
     }
     
@@ -238,8 +227,8 @@ contract Tree is Modifiers {
         return _countFiles;
     }
     
-    function gettree() external view returns(mapping(uint256 => TreeObject)) {
-        return _tree;
+    function gettree() external view returns(mapping(uint256 => TreeObject), bool) {
+        return (_tree, _finishtree);
     }
     
     function getsha() external view returns(uint256, string) {
