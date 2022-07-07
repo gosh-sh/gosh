@@ -62,6 +62,7 @@ contract Tree is Modifiers {
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
         if (_ipfs.hasValue() == false) { this.checkCorrect{value: 0.2 ton, flag: 1}(data, 0); }
+        getMoney(_pubkey);
     }    
     
     function countAll(uint256 pubkey, uint128 index) public {
