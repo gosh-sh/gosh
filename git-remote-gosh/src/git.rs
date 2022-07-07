@@ -61,14 +61,14 @@ pub async fn get_refs(context: &TonClient, repo_addr: &str) -> Result<Option<Vec
         return Ok(None);
     }
 
-    let mut ref_list: Vec<String> = Vec::new(); //_list.iter().map(|branch| format!("<SHA> refs/heads/{}", branch.0)).collect();
+    let mut ref_list: Vec<String> = Vec::new(); //_list.iter().map(|branch| format!("<SHA> refs/heads/{}", branch.branch_name)).collect();
     for branch in _list {
-        let _commit = get_commit_by_addr(context, &branch.1)
+        let _commit = get_commit_by_addr(context, &branch.commit_sha)
             .await
             .unwrap()
             .unwrap();
         if _commit.sha != ZERO_COMMIT {
-            ref_list.push(format!("{} refs/heads/{}", _commit.sha, branch.0));
+            ref_list.push(format!("{} refs/heads/{}", _commit.sha, branch.branch_name));
         }
     }
     Ok(Some(ref_list))

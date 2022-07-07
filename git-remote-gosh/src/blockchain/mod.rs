@@ -152,7 +152,7 @@ struct GetCommitAddrResult {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetAllAddressBranchRef {
+pub struct BranchRef {
     #[serde(rename = "key")]
     pub branch_name: String,
     
@@ -161,11 +161,22 @@ struct GetAllAddressBranchRef {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetAllAddressResult {
+pub struct GetAllAddressResult {
     #[serde(rename = "value0")]
-    pub branch_ref: Vec<GetAllAddressBranchRef>
+    pub branch_ref: Vec<BranchRef>
 }
 
+#[derive(Deserialize, Debug)]
+struct GetAddrBranchResult {
+    #[serde(rename = "value0")]
+    pub branch: BranchRef 
+}
+
+#[derive(Deserialize, Debug)]
+struct GetHeadResult {
+    #[serde(rename = "value0")]
+    pub head: String
+}
 
 pub type TonClient = Arc<ClientContext>;
 
@@ -364,15 +375,13 @@ pub async fn remote_rev_parse(
 ) -> Result<Option<String>, Box<dyn Error>> {
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
     let args = serde_json::json!({ "name": rev });
-    let branch_addr = contract
+    let result: GetAddrBranchResult = contract
         .run_local(context, "getAddrBranch", Some(args))
         .await?;
-
-    match &branch_addr["value0"]["key"] {
-        branch_name if branch_name == "" => Ok(None),
-        branch_name => Ok(Some(
-            branch_addr["value0"]["value"].as_str().unwrap().to_owned(),
-        )),
+    if result.branch.branch_name != "" {
+        return Ok(Some(result.branch.commit_sha));
+    } else {
+        return Ok(None);
     }
 }
 
@@ -402,11 +411,8 @@ pub async fn get_commit_by_addr(
 
 pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
-    let _head_result = contract.run_local(context, "getHEAD", None).await?;
-    match &_head_result["value0"] {
-        serde_json::Value::String(value) => Ok(value.to_string()),
-        _ => unreachable!(),
-    }
+    let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
+    return Ok(result.head);
 }
 
 pub async fn load_messages_to(
