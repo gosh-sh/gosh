@@ -26,6 +26,19 @@ impl GitHelper {
         local_ref: &str,
         remote_ref: &str,
     ) -> Result<String, Box<dyn Error>> {
+        // 1. Check if branch exists and ready in the blockchain
+        // 2. Find ancestor commit in local repo
+        // 3. If branch needs to be created do so
+        //    ---
+        //    Otherwise check if a head of the branch 
+        //    is pointing to the ancestor commit. Fail 
+        //    if it doesn't
+        // 4. Do prepare commit for all commits
+        // 4. Deploy tree objects of all commits
+        // 5. Deploy all **new** snapshot
+        // 6. Deploy diff contracts 
+        // 5. Deploy all commit objects
+        // 
         // TODO: git rev-list?
         let repo = self.local_repository();
 
