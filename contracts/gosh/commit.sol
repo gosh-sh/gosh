@@ -39,6 +39,8 @@ contract Commit is Modifiers {
     uint128 _count;
     bool _countready = false;
     mapping(address => int128) _check;
+    bool _diffcheck = false;
+    bool _commitcheck = false;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -122,6 +124,7 @@ contract Commit is Modifiers {
         tvm.accept();
         require(branch == _nameBranch, ERR_WRONG_BRANCH);
         DiffC(_diff).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branchcommit);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(_pubkey, branch, branchcommit, address(this));
         getMoney(_pubkey);
     }
     
@@ -138,26 +141,40 @@ contract Commit is Modifiers {
         
     function _checkChain(uint256 pubkey,
         string branchName,
-        address branchCommit ,  
-        address newC) private view {
+        address branchCommit,
+        address newC) public view senderIs(address(this)) {
         if (branchCommit  == address(this)) {
-                Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branchName, newC, _nameCommit);
+                Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchCommit, newC);
         }
         else {
             if (_parents.length == 0) { Commit(newC).cancelCommit{value: 0.2 ton, flag: 1}(_nameCommit); return; }
-            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , newC);
+            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , address(this));
         }
-        getMoney(_pubkey);
+        getMoney(pubkey);
     }     
     
-    function DiffCheckCommit(uint256 pubkey,
-        string nameCommit,
-        string branchName,
-        address branchCommit ,  
-        address newC) public view senderIs(getDiffAddress(nameCommit, 0)) {
+    function DiffCheckCommit(uint256 pubkey, address branchCommit) public senderIs(getDiffAddress(_nameCommit, 0)) {
         tvm.accept();    
-        _checkChain(pubkey, branchName, branchCommit, newC);
+        _diffcheck = true;
         getMoney(pubkey);
+        if (_commitcheck == false) { return; }
+        acceptAll(branchCommit);
+    }
+    
+    function ChainAccept(string name, address branchCommit, address newC) public senderIs(branchCommit) {
+        tvm.accept();
+        require(_buildCommitAddr(name) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(newC == address(this), ERR_WRONG_DATA);
+        _commitcheck = true;
+        getMoney(_pubkey);
+        if (_diffcheck == false) { return; }
+        acceptAll(branchCommit);
+    }
+    
+    function acceptAll(address branchCommit) private {
+        _commitcheck = false;
+        _diffcheck = false;
+        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(_nameBranch, branchCommit, _nameCommit);
     }
     
     function CommitCheckCommit(

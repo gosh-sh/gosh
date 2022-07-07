@@ -150,7 +150,7 @@ contract DiffC is Modifiers {
             getMoney(_pubkey);
             return;
         }
-        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _branchcommit);  } 
         else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         getMoney(_pubkey);
     }
@@ -190,7 +190,7 @@ contract DiffC is Modifiers {
         if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
         if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _branchcommit);  } 
             else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         }
         getMoney(_pubkey);
@@ -202,7 +202,7 @@ contract DiffC is Modifiers {
         getMoney(_pubkey);
         _approved += 1;
         if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _branchcommit);  } 
             else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); selfdestruct(_buildCommitAddr(_nameCommit));}
         }
         getMoney(_pubkey);

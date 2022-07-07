@@ -111,15 +111,15 @@ contract Repository is Modifiers{
     }
     
     //Setters    
-    function setCommit(string nameBranch, address commit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
+    function setCommit(string nameBranch, address oldcommit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if (_Branches[nameBranch].value != msg.sender) {
-            Commit(commit).NotCorrect{value: 0.1 ton, flag: 1}();
+        if (_Branches[nameBranch].value != oldcommit) {
+            Commit(getCommitAddr(namecommit)).NotCorrect{value: 0.1 ton, flag: 1}();
             return;
         }
-        _Branches[nameBranch] = Item(nameBranch, commit);
-        Commit(commit).allCorrect{value: 0.1 ton, flag: 1}();
+        _Branches[nameBranch] = Item(nameBranch, getCommitAddr(namecommit));
+        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}();
     }
     
     function setHEAD(uint256 pubkey, string nameBranch, uint128 index) public {

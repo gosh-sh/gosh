@@ -39,4 +39,5 @@ abstract contract Errors {
     uint constant ERR_PROCCESS_IS_EXIST = 228;
     uint constant ERR_PROCCESS_END = 229;
     uint constant ERR_NO_NEED_ANSWER = 230;
+    uint constant ERR_WRONG_DATA = 231;
 }

@@ -75,11 +75,29 @@
 			]
 		},
 		{
+			"name": "_checkChain",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "DiffCheckCommit",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"nameCommit","type":"string"},
-				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "ChainAccept",
+			"inputs": [
+				{"name":"name","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"}
 			],
@@ -230,6 +248,8 @@
 		{"name":"_branchCommit","type":"address"},
 		{"name":"_count","type":"uint128"},
 		{"name":"_countready","type":"bool"},
-		{"name":"_check","type":"map(address,int128)"}
+		{"name":"_check","type":"map(address,int128)"},
+		{"name":"_diffcheck","type":"bool"},
+		{"name":"_commitcheck","type":"bool"}
 	]
 }
