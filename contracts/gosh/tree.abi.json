@@ -73,6 +73,15 @@
 			]
 		},
 		{
+			"name": "checkCorrect",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"data","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getShaInfoDiff",
 			"inputs": [
 				{"name":"commit","type":"string"},
@@ -112,7 +121,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value0","type":"map(uint256,tuple)"},
+				{"name":"value1","type":"bool"}
 			]
 		},
 		{
@@ -159,6 +169,7 @@
 		{"name":"_needAnswer","type":"uint128"},
 		{"name":"_count","type":"bool"},
 		{"name":"_countend","type":"bool"},
-		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"}
+		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"},
+		{"name":"_finishtree","type":"bool"}
 	]
 }
