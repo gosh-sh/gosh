@@ -2,9 +2,8 @@ use log;
 use log4rs::{
     append::{
         console::{ConsoleAppender, Target},
-        file::FileAppender,
     },
-    config::{Appender, Logger, Root},
+    config::{Appender, Root},
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
 };

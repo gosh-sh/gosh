@@ -181,7 +181,7 @@ mod tests {
         println!("commit {:?}", commit.id());
 
         // get current branch
-        let mut branch = Branch::wrap(head);
+        let branch = Branch::wrap(head);
         // set upstream
         // branch set upstream "origin"
         // branch.set_upstream(repo.remotes()?.get(0))?;

@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
 use crate::blockchain::{GoshContract, TonClient};
-use base64;
+
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::error::Error;

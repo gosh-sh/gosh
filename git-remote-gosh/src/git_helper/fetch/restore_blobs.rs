@@ -6,10 +6,10 @@ use git_hash;
 use git_hash::ObjectId;
 use git_object;
 use git_odb;
-use git_odb::{Find, Write};
+use git_odb::{Find};
 use lru::LruCache;
-use std::collections::{hash_map, HashMap, HashSet, VecDeque};
-use std::env;
+use std::collections::{hash_map, HashMap, HashSet};
+
 use std::error::Error;
 use std::str::FromStr;
 use std::vec::Vec;
@@ -62,7 +62,7 @@ impl BlobsRebuildingPlan {
         appeared_at_snapshot_address: String,
         blob_sha1: ObjectId,
     ) {
-        let mut blobs_queue = match self
+        let blobs_queue = match self
             .snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
         {
@@ -177,7 +177,7 @@ impl BlobsRebuildingPlan {
 
             // TODO: convert to async iterator
             // This should download next messages seemless
-            let mut messages =
+            let messages =
                 blockchain::load_messages_to(&git_helper.es_client, snapshot_address).await?;
             let mut messages = messages.iter();
             while !blobs.is_empty() {
@@ -217,7 +217,7 @@ impl BlobsRebuildingPlan {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     #[test]
     fn testing_what_is_inside_the_snapshot_content() {}

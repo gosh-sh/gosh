@@ -2,12 +2,12 @@
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::de::Error as SerdeError;
-use serde::de::Visitor;
-use serde::{Deserialize, Deserializer, Serialize};
+
+
+use serde::{Deserialize, Deserializer};
 use serde_json;
-use std::borrow::Borrow;
-use std::os::raw;
+
+
 use std::{env, error::Error, fmt, sync::Arc};
 
 mod error;
@@ -22,8 +22,8 @@ use ton_client::{
     },
     crypto::KeyPair,
     net::{
-        query_collection, query_transaction_tree, NetworkQueriesProtocol, ParamsOfQuery,
-        ParamsOfQueryCollection, ParamsOfQueryTransactionTree,
+        query_collection, NetworkQueriesProtocol, ParamsOfQuery,
+        ParamsOfQueryCollection,
     },
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
     tvm::{run_tvm, ParamsOfRunTvm},
@@ -41,7 +41,7 @@ pub use tree::Tree;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;
-use crate::ipfs::IpfsService;
+
 
 pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
@@ -497,10 +497,10 @@ impl Diff {
 
 #[cfg(test)]
 mod tests {
-    use reqwest::header::TE;
+    
 
     use super::*;
-    use crate::{config, git::get_refs};
+    use crate::{config};
 
     struct TestEnv {
         config: Config,

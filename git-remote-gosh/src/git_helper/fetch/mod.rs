@@ -37,7 +37,7 @@ impl GitHelper {
         obj: impl git_object::WriteTo,
     ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
         log::info!("Writing git object");
-        let mut store = &mut self.local_repository().objects;
+        let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj)?;
@@ -50,7 +50,7 @@ impl GitHelper {
         obj: git_object::Data<'a>,
     ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
         log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
-        let mut store = &mut self.local_repository().objects;
+        let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write_buf(obj.kind, obj.data)?;
@@ -185,7 +185,7 @@ impl GitHelper {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     #[test]
     fn testing_what_is_inside_the_snapshot_content() {}
