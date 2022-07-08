@@ -1,4 +1,4 @@
-use crate::git_helper::GitHelper;
+use crate::{git_helper::GitHelper, blockchain::{user_wallet, call}};
 use std::error::Error;
 use git_hash::ObjectId;
 use git_odb::Find;
@@ -35,7 +35,7 @@ pub async fn push_commit(context: &mut GitHelper, commit_id: &ObjectId, branch: 
     let parents: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
     let tree_addr = context.calculate_tree_address(tree_id).await?;
 
-    let params = DeployCommitParams {
+    let args = DeployCommitParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch.to_string(),
         commit_id: commit_id.to_string(),
@@ -44,6 +44,11 @@ pub async fn push_commit(context: &mut GitHelper, commit_id: &ObjectId, branch: 
         diff_addr: tree_addr.clone(), // will be removed
         tree_addr,
     };
-    log::debug!("deployCommit params: {:?}", params);
+    log::debug!("deployCommit params: {:?}", args);
+
+    let wallet = user_wallet(context)?;
+    let params = serde_json::to_value(args)?;
+    let result = call(&context.es_client, wallet, "deployCommit", Some(params)).await?;
+    log::debug!("deployCommit result: {:?}", result);
     Ok(())
 }
