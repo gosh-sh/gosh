@@ -30,12 +30,14 @@ use ton_client::{
 
 mod commit;
 mod serde_number;
-mod snapshot;
+pub mod snapshot;
 mod tree;
 mod user_wallet;
 pub use commit::GoshCommit;
 use serde_number::Number;
-pub use snapshot::Snapshot;
+pub use snapshot::{
+    Snapshot
+};
 pub use tree::{
     Tree,
     push_tree

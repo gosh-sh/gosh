@@ -22,8 +22,46 @@ use std::{
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 impl GitHelper {
-    async fn push_blob(&mut self, blob_id: &ObjectId) -> Result<()>{
+    async fn generate_file_diff(self, blob_id_from: &ObjectId, blob_id_to: &ObjectId) -> Result<String> {
         todo!();
+    }
+    async fn push_new_blob(&mut self, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()>{
+        todo!();
+    }
+    async fn push_blob(&mut self, blob_id: &ObjectId, prev_commit_id: &Option<ObjectId>, current_commit_id: &ObjectId) -> Result<()>{
+        if prev_commit_id.is_none() {
+            return Ok(self.push_new_blob(
+                blob_id, 
+                current_commit_id
+            ).await?);
+        }
+        let prev_commit_id: ObjectId = prev_commit_id
+            .clone()
+            .expect("guarded");
+        let blob_file_path_occurrences: Vec<String> = todo!("Find all blob occurrences in the current commit tree");
+        for file_path in blob_file_path_occurrences.iter() {
+            let prev_state_blob_id: Option<ObjectId> = todo!("Traverse tree path in the prev commit");
+            if prev_state_blob_id.is_none() {
+                // This path is new
+                // (we're not handling renames yet)
+                self.push_new_blob(
+                    blob_id, 
+                    current_commit_id
+                ).await?;
+                continue;
+            }
+            let prev_state_blob_id = prev_state_blob_id.expect("guarded");
+            let file_diff = self.generate_file_diff(
+                &prev_state_blob_id, 
+                blob_id
+            ).await?;
+            blockchain::snapshot::push_diff(
+                self, 
+                file_path, 
+                &file_diff
+            ).await?;
+        }
+        Ok(())
     }
     // find ancestor commit
     #[instrument(level = "debug")]
@@ -87,7 +125,6 @@ impl GitHelper {
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
-        let mut commit_id = None;
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
          
@@ -95,6 +132,17 @@ impl GitHelper {
         // 7. Deploy diff contracts
         // 8. Deploy all commit objects
 
+        let mut prev_commit_id: Option<ObjectId> = None;
+        let mut commit_id: Option<ObjectId> = {
+            if ancestor_commit_id != "" {
+                Some(ObjectId::from_str(&ancestor_commit_id)?)
+            } else {
+                None
+            }
+        };
+
+        // TODO: Handle deleted fules
+        // Note: These files will NOT appear in the list here
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
@@ -103,10 +151,11 @@ impl GitHelper {
                     match object_kind {
                         git_object::Kind::Commit => {
                             blockchain::push_commit(self, &object_id, branch_name).await?;
+                            prev_commit_id = commit_id;
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
-                            self.push_blob(&object_id).await?; 
+                            self.push_blob(&object_id, &prev_commit_id, commit_id.as_ref().unwrap()).await?; 
                             // branch
                             // commit_id
                             // commit_data
