@@ -22,7 +22,7 @@ use git_repository;
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper {
-    config: Config,
+    pub config: Config,
     es_client: TonClient,
     ipfs_client: IpfsService,
     pub remote: Remote,
