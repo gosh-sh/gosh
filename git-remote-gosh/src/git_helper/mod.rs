@@ -23,10 +23,10 @@ static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper {
     pub config: Config,
-    es_client: TonClient,
-    ipfs_client: IpfsService,
+    pub es_client: TonClient,
+    pub ipfs_client: IpfsService,
     pub remote: Remote,
-    repo_addr: String,
+    pub repo_addr: String,
     local_git_repository: git_repository::Repository,
     logger: Logger,
 }

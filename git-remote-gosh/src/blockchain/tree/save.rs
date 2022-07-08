@@ -39,6 +39,7 @@ pub struct DeployTreeArgs {
     nodes: Vec<TreeNode>
 }
 
+
 impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
     fn from((sha256, entry): (String, &tree::EntryRef)) -> Self {
         Self {
@@ -103,9 +104,17 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
             sha: tree_id.to_hex().to_string(),
             repo_name: context.remote.repo.clone(),
             nodes: tree_nodes
-        }; 
-        
-        //blockchain::call(&context.es_client, 
+        };
+        let params: serde_json::Value = serde_json::to_value(params)?;
+       
+        let user_wallet_contract = blockchain::user_wallet(context)?;
+
+        blockchain::call(
+            &context.es_client,
+            user_wallet_contract,
+            "deployTree",
+            Some(params)
+        ).await?;
     }
     Ok(())
 }
