@@ -229,7 +229,7 @@ contract DiffC is Modifiers {
             if (_last == false) { DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}();
+        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index);
         Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], index);
         getMoney(_pubkey);
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
@@ -244,7 +244,7 @@ contract DiffC is Modifiers {
             _approved = 0;
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}();
+        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index);
         getMoney(_pubkey);
         this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
     }

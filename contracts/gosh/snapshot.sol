@@ -22,8 +22,6 @@ contract Snapshot is Modifiers {
     address _rootRepo;
     bytes _snapshot;
     bytes _oldsnapshot;
-    address _olddiff;
-    address _diff;
     address _rootgosh;
     address _goshdao;
     string _oldcommits;
@@ -96,11 +94,10 @@ contract Snapshot is Modifiers {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         tvm.accept();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != _diff)) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
+        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index))) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
         else { 
             require(_buildDiffAddr(namecommit, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
-            _diff = msg.sender;
             _commits = namecommit;
         }
         if (diff.ipfs.hasValue()) {
@@ -121,20 +118,18 @@ contract Snapshot is Modifiers {
         }
     }
     
-    function cancelDiff() public {
-        require(msg.sender == _diff, ERR_SENDER_NO_ALLOWED);
+    function cancelDiff(uint128 index) public {
+        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
-        _diff = _olddiff;
         _applying = false;
     }
     
-    function approve() public {
-        require(msg.sender == _diff, ERR_SENDER_NO_ALLOWED);
+    function approve(uint128 index) public {
+        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
-        _olddiff = _diff;
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
@@ -165,20 +160,6 @@ contract Snapshot is Modifiers {
     function destroy(uint256 value, uint128 index) public {
         require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
-    }
-    
-    //Setters
-    function setSnapshotSelf(string commits, address commit, bytes snapshot, optional(string) ipfs, string branch) public {
-        require(msg.sender == getSnapshotAddr(branch, branch + "/" + _name));
-        tvm.accept();
-        _oldsnapshot = snapshot;
-        _ipfsold = ipfs;
-        _oldcommits = commits;
-        _olddiff = commit;
-        _snapshot = snapshot;
-        _ipfs = ipfs;
-        _commits = commits;
-        _diff = commit;
     }
 
     //Getters
