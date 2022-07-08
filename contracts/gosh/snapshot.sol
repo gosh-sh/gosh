@@ -60,6 +60,19 @@ contract Snapshot is Modifiers {
         _snapshot = data;
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
+        Commit(_buildCommitAddr(_oldcommits)).getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
+    }
+    
+    function _buildCommitAddr(
+        string commit
+    ) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, _rootRepo, version);
+        TvmCell state = tvm.buildStateInit({
+            code: deployCode, 
+            contr: Commit,
+            varInit: {_nameCommit: commit}
+        });
+        return address(tvm.hash(state));
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -177,7 +190,7 @@ contract Snapshot is Modifiers {
         return NameOfFile;
     }
 
-    function getBranchAdress() external view returns(address) {
+    function getRepoAdress() external view returns(address) {
         return _rootRepo;
     }
 

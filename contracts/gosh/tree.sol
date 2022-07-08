@@ -36,11 +36,10 @@ contract Tree is Modifiers {
     bool _count = false;
     bool _countend = false;
     TreeAnswer[] request;
-    bool _finishtree = false;
     
     constructor(
         uint256 pubkey,
-        TreeObject[] data, 
+        mapping(uint256 => TreeObject) data, 
         optional(string) ipfs, 
         address rootGosh,
         address goshdao,
@@ -61,7 +60,7 @@ contract Tree is Modifiers {
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
-        if (_ipfs.hasValue() == false) { this.checkCorrect{value: 0.2 ton, flag: 1}(data, 0); }
+        _tree = data;
         getMoney(_pubkey);
     }    
     
@@ -125,14 +124,6 @@ contract Tree is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         if (address(this).balance > 80 ton) { return; }
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
-    }
-  
-    function checkCorrect(TreeObject[] data, uint128 index) public senderIs(address(this)) {
-        tvm.accept();
-        if (index == data.length) { _finishtree = true; return; }
-        _tree[tvm.hash(data[index].sha1)] = data[index]; 
-        this.checkCorrect{value: 0.2 ton, flag: 1}(data, index + 1);
-        getMoney(_pubkey);
     }
     
     function getShaInfoDiff(string commit, uint128 index, Request value0) public view {
@@ -227,8 +218,8 @@ contract Tree is Modifiers {
         return _countFiles;
     }
     
-    function gettree() external view returns(mapping(uint256 => TreeObject), bool) {
-        return (_tree, _finishtree);
+    function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
+        return (_tree, _ipfs);
     }
     
     function getsha() external view returns(uint256, string) {

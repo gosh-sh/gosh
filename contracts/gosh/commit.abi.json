@@ -18,7 +18,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
-				{"name":"diff","type":"address"},
+				{"name":"SnapshotCode","type":"cell"},
 				{"name":"tree","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -59,13 +59,6 @@
 			]
 		},
 		{
-			"name": "NotCorrect",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getAcceptedDiff",
 			"inputs": [
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"value0","type":"tuple"},
@@ -75,13 +68,69 @@
 			]
 		},
 		{
-			"name": "DiffCheckCommit",
+			"name": "getAcceptedContent",
+			"inputs": [
+				{"name":"value0","type":"bytes"},
+				{"name":"value1","type":"optional(string)"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_checkChain",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"nameCommit","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "abortDiff",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "DiffCheckCommit",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "ChainAccept",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrect",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrectRepo",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -222,6 +271,7 @@
 		{"name":"check","type":"bool"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"_parents","type":"address[]"},
 		{"name":"_rootGosh","type":"address"},
@@ -230,6 +280,10 @@
 		{"name":"_branchCommit","type":"address"},
 		{"name":"_count","type":"uint128"},
 		{"name":"_countready","type":"bool"},
-		{"name":"_check","type":"map(address,int128)"}
+		{"name":"_check","type":"map(address,int128)"},
+		{"name":"_diffcheck","type":"bool"},
+		{"name":"_commitcheck","type":"bool"},
+		{"name":"_continueChain","type":"bool"},
+		{"name":"_continueDiff","type":"bool"}
 	]
 }
