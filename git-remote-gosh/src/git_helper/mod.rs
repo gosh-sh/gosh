@@ -128,7 +128,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let arg2 = iter.next();
 
         log::debug!("Line: {line}");
-        log::debug!("> {cmd:?} {arg1:?} {arg2:?}");
+        log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
 
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,

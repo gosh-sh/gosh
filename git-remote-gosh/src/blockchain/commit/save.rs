@@ -23,6 +23,7 @@ pub struct DeployCommitParams {
     pub diff_addr: String,
 }
 
+#[instrument(level = "debug")]
 pub async fn push_commit(
     context: &mut GitHelper,
     commit_id: &ObjectId,

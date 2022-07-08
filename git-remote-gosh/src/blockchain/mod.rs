@@ -286,6 +286,7 @@ async fn default_callback(pe: ProcessingEvent) {
     eprintln!("cb: {:#?}", pe);
 }
 
+#[instrument(level = "debug", skip(context))]
 async fn call(
     context: &TonClient,
     contract: GoshContract,
