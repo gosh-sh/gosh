@@ -34,6 +34,7 @@ mod commit;
 mod serde_number;
 mod snapshot;
 mod tree;
+mod user_wallet;
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;
@@ -41,6 +42,7 @@ pub use tree::{
     Tree,
     push_tree
 };
+pub use user_wallet::user_wallet;
 
 use crate::{abi as gosh_abi, git_helper::GitHelper};
 use crate::config::Config;
@@ -58,7 +60,7 @@ pub enum GoshBlobBitFlags {
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
 
-struct GoshContract {
+pub struct GoshContract {
     address: String,
     pretty_name: String,
     abi: Abi,
