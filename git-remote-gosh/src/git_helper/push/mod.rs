@@ -164,7 +164,8 @@ impl GitHelper {
                             // commit_data
                             // Vec<diff>
                         }
-                        git_object::Kind::Tag => todo!(),
+                        // Not supported yet
+                        git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
                     }
                 }
