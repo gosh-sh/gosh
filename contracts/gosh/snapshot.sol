@@ -123,6 +123,7 @@ contract Snapshot is Modifiers {
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
+        _commits = _oldcommits;
         _applying = false;
     }
     

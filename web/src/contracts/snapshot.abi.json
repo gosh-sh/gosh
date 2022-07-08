@@ -38,6 +38,7 @@
 		{
 			"name": "cancelDiff",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -45,6 +46,7 @@
 		{
 			"name": "approve",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -54,18 +56,6 @@
 			"inputs": [
 				{"name":"value","type":"uint256"},
 				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setSnapshotSelf",
-			"inputs": [
-				{"name":"commits","type":"string"},
-				{"name":"commit","type":"address"},
-				{"name":"snapshot","type":"bytes"},
-				{"name":"ipfs","type":"optional(string)"},
-				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -122,8 +112,6 @@
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
-		{"name":"_olddiff","type":"address"},
-		{"name":"_diff","type":"address"},
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_oldcommits","type":"string"},

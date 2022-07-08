@@ -131,7 +131,6 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         for (let i = 0; i < messages.length; i++) {
             const item = messages[i];
             if (!_reached && item.namecommit === commit) _reached = true;
-            console.debug(_reached);
 
             if (item.diff.ipfs) {
                 const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
