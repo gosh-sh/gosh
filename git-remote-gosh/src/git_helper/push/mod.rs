@@ -27,7 +27,7 @@ use git_odb::FindExt;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &ObjectId, buffer: &mut Vec<PathBuf>) -> Result<()> {
+fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &ObjectId, blob_id: &ObjectId, buffer: &mut Vec<PathBuf>) -> Result<()> {
     use git_object::tree::EntryMode::*;
     let mut tree_object_buffer: Vec<u8> = Vec::new();
     let tree = odb.find_tree(tree_id, &mut tree_object_buffer)?;
@@ -41,7 +41,12 @@ fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &Ob
                     buffer
                 )?;
             },
-            _=> todo!()
+            Blob | BlobExecutable | Link => if entry.oid == blob_id {
+                buffer.push(
+                    &node_path.join(entry.filename.to_string())
+                );
+            },
+            Commit => unimplemented!("git submodule")
         }
     }    
     Ok(())
@@ -120,6 +125,7 @@ impl GitHelper {
                 &PathBuf::new(),
                 &self.local_repository().objects,
                 &tree_root_id,
+                &blob_id,
                 &mut blob_file_path_occurrences
             );
         }
