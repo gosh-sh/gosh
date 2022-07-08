@@ -764,6 +764,19 @@ export class GoshWallet implements IGoshWallet {
                 });
             }
         }
+        // chunked.push({
+        //     addr: await this.getDiffAddr(repo.meta.name, commitName, 1),
+        //     index: 1,
+        //     items: [
+        //         {
+        //             snap: diffs[0].snap,
+        //             patch: '28b52ffd00583d0200f4034040202d312c32202b312c332040400a206161610a2d6262620a5c204e6f206e65776c696e6520617420656e64206f662066696c650a2b6262620a2b63636301009f6e0505',
+        //             ipfs: null,
+        //             commit: diffs[0].commit,
+        //             sha1: '8cc58960380ebedd8130c64158d2a4ace18d42fd',
+        //         },
+        //     ],
+        // });
         console.debug('Deploy commit diffs:', chunked);
 
         // Deploy diffs
