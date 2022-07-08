@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use git_repository::OdbHandle;
 use git_odb::FindExt;
 
-use super::Result;
+use crate::git_helper::push::Result;
 
 pub fn find_tree_blob_occurrences(
     node_path: &PathBuf, 

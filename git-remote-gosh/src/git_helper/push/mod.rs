@@ -96,7 +96,11 @@ impl GitHelper {
         }
         for file_path in blob_file_path_occurrences.iter() {
             let file_path = into_tree_contract_complient_path(file_path);
-            let prev_state_blob_id: Option<ObjectId> = utilities::try_find_tree_leaf(self, prev_tree_root_id, &PathBuf::from(&file_path));
+            let prev_state_blob_id: Option<ObjectId> = utilities::try_find_tree_leaf(
+                &self.local_repository().objects, 
+                prev_tree_root_id, 
+                &PathBuf::from(&file_path)
+            )?;
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
