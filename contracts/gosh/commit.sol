@@ -132,7 +132,6 @@ contract Commit is Modifiers {
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
         require(_diffcheck == false, ERR_PROCCESS_IS_EXIST);
-        require(branch == _nameBranch, ERR_WRONG_BRANCH);
         DiffC(_diff).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(_pubkey, branch, branchcommit, address(this));
         _continueChain = true;
