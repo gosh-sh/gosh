@@ -197,7 +197,9 @@ contract DiffC is Modifiers {
         getMoney(_pubkey);
         if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
-        if (_approved == _diff.length) {
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
             if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit);  } 
             else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         }
@@ -214,7 +216,9 @@ contract DiffC is Modifiers {
         }
         getMoney(_pubkey);
         _approved += 1;
-        if (_approved == _diff.length) {
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
             if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit);  } 
             else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); }
         }
