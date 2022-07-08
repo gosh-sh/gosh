@@ -185,7 +185,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         blob = await applyMessages(repo.account.client, blob.commit, msgs, blob);
         setBlobs((curr) =>
             curr.map((item, i) => {
-                if (i === index) return { ...item, isFetching: false, showDiff: true };
+                if (i === index) return { ...blob, isFetching: false, showDiff: true };
                 else return item;
             })
         );
