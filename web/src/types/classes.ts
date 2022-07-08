@@ -56,7 +56,7 @@ import {
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
-import { boolean } from 'yup';
+import { SHA256 } from 'crypto-js';
 
 export class GoshDaoCreator implements IGoshDaoCreator {
     abi: any = GoshDaoCreatorABI;
@@ -363,13 +363,9 @@ export class GoshWallet implements IGoshWallet {
         // Store updated paths in separate variable
         const { items } = await getRepoTree(repo, branch.commitAddr);
         const updatedPaths: string[] = [];
-        const diffs: TGoshDiff[] = [];
         const processedBlobs: any[] = [];
         for (const blob of blobs) {
             const { name, modified, original, isIpfs = false } = blob;
-
-            // const addr = await this.deployNewSnapshot(repo.address, branch.name, name);
-            // console.debug('Snapshot addr:', addr);
 
             let flags = 0;
             let patch: string = '';
@@ -405,13 +401,6 @@ export class GoshWallet implements IGoshWallet {
                     sha1: sha1(modified, 'blob', 'sha1'),
                 },
             };
-            // diffs.push({
-            //     snap: addr,
-            //     patch: ipfs ? null : patch,
-            //     ipfs,
-            //     commit: '',
-            //     sha1: sha1(modified, 'blob'),
-            // });
 
             const blobPathItems = getTreeItemsFromPath(blob.name, blob.modified, flags);
             blobPathItems.forEach((pathItem) => {
@@ -750,6 +739,7 @@ export class GoshWallet implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             });
+        console.debug('Commit addr', await repo.getCommitAddr(commitName));
 
         // Split diffs by chunks of diffs
         const chunked: any[] = [
@@ -786,7 +776,6 @@ export class GoshWallet implements IGoshWallet {
                     branchName: branch.name,
                     // branchcommit: branch.commitAddr,
                     commitName,
-                    fullCommit: commitContent,
                     diffs: chunk.items,
                     index: chunk.index,
                     last,
@@ -796,7 +785,6 @@ export class GoshWallet implements IGoshWallet {
                     branchName: branch.name,
                     // branchcommit: branch.commitAddr,
                     commitName,
-                    fullCommit: commitContent,
                     diffs: chunk.items,
                     index: chunk.index,
                     last,
@@ -811,7 +799,6 @@ export class GoshWallet implements IGoshWallet {
             commitName,
             fullCommit: commitContent,
             parents: parentAddrs,
-            diff: chunked[0].addr,
             tree: treeAddr,
         });
         await this.run('deployCommit', {
@@ -820,7 +807,6 @@ export class GoshWallet implements IGoshWallet {
             commitName,
             fullCommit: commitContent,
             parents: parentAddrs,
-            diff: chunked[0].addr,
             tree: treeAddr,
         });
     }
@@ -845,30 +831,28 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Deploy tree and get address
-        console.debug('Deploy tree\n', {
-            repoName: repo.meta?.name,
-            shaTree: sha,
-            datatree: items.map(({ flags, mode, type, name, sha1, sha256 }) => ({
+        const datatree: any = {};
+        for (const { flags, mode, type, name, sha1, sha256 } of items) {
+            const key = SHA256(name).toString();
+            datatree[`0x${key}`] = {
                 flags: flags.toString(),
                 mode,
                 typeObj: type,
                 name,
                 sha1,
                 sha256,
-            })),
+            };
+        }
+        console.debug('Deploy tree\n', {
+            repoName: repo.meta?.name,
+            shaTree: sha,
+            datatree,
             ipfs: null,
         });
         await this.run('deployTree', {
             repoName: repo.meta?.name,
             shaTree: sha,
-            datatree: items.map(({ flags, mode, type, name, sha1, sha256 }) => ({
-                flags: flags.toString(),
-                mode,
-                typeObj: type,
-                name,
-                sha1,
-                sha256,
-            })),
+            datatree,
             ipfs: null,
         });
 
@@ -1429,7 +1413,7 @@ export class GoshTree implements IGoshTree {
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
-    async getTree(): Promise<{ tree: TGoshTreeItem[]; ready: boolean }> {
+    async getTree(): Promise<{ tree: TGoshTreeItem[]; ipfs: string }> {
         const result = await this.account.runLocal('gettree', {});
         const tree = Object.values(result.decoded?.output.value0).map((item: any) => ({
             flags: +item.flags,
@@ -1440,7 +1424,7 @@ export class GoshTree implements IGoshTree {
             path: '',
             name: item.name,
         }));
-        return { tree, ready: result.decoded?.output.value1 };
+        return { tree, ipfs: result.decoded?.output.value1 };
     }
 
     async getSha(): Promise<any> {

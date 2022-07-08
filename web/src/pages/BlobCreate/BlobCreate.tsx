@@ -82,7 +82,6 @@ const BlobCreatePage = () => {
                         name,
                         modified: values.content,
                         original: '',
-                        isIpfs: true,
                     },
                 ],
                 message,

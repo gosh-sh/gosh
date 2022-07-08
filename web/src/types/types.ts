@@ -288,7 +288,7 @@ export interface IGoshSnapshot extends IContract {
 export interface IGoshTree extends IContract {
     address: string;
 
-    getTree(): Promise<{ tree: TGoshTreeItem[]; ready: boolean }>;
+    getTree(): Promise<{ tree: TGoshTreeItem[]; ipfs: string }>;
     getSha(): Promise<any>;
 }
 

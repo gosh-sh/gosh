@@ -19,13 +19,7 @@ type TCommitBlobsType = {
 const CommitBlobs = (props: TCommitBlobsType) => {
     const { className, repo, branch, commit } = props;
     const [isFetched, setIsFetched] = useState<boolean>(false);
-    const [blobs, setBlobs] = useState<
-        {
-            filename: string;
-            prev: string;
-            curr: string;
-        }[]
-    >([]);
+    const [blobs, setBlobs] = useState<any[]>([]);
 
     const reversePatch = (patch: string) => {
         const parsedDiff = Diff.parsePatch(patch)[0];
@@ -127,27 +121,75 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         return { msgs, reached };
     };
 
-    // const applyMessages = async (
-    //     client: TonClient,
-    //     messages: any[],
-    //     content: string,
-    //     patched: string
-    // ) => {
-    //     for (const message of messages) {
-    //         if (message.diff.ipfs) {
-    //         } else {
-    //             const patch = await zstd.decompress(
-    //                 client,
-    //                 Buffer.from(message.diff.patch, 'hex').toString('base64'),
-    //                 true
-    //             );
-    //             console.debug('Patch', patch);
-    //             const reversedPatch = reversePatch(patch);
-    //             content = Diff.applyPatch(content, reversedPatch);
-    //         }
-    //     }
-    //     return content;
-    // };
+    const applyMessages = async (
+        client: TonClient,
+        commit: string,
+        messages: any[],
+        blob: any
+    ) => {
+        let _reached = false;
+        for (let i = 0; i < messages.length; i++) {
+            const item = messages[i];
+            if (!_reached && item.namecommit === commit) _reached = true;
+            console.debug(_reached);
+
+            if (item.diff.ipfs) {
+                const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
+                const decompressed = await zstd.decompress(client, compressed, true);
+                console.debug(decompressed);
+                if (!_reached) blob.curr = decompressed;
+                else blob.prev = decompressed;
+
+                console.debug('ipfs blob', blob);
+            } else {
+                const prevItem = i > 0 ? messages[i - 1] : null;
+                if (prevItem && prevItem.diff.ipfs) {
+                    if (prevItem.namecommit === commit) {
+                        blob.curr = blob.prev;
+                        blob.prev = blob.snapdata.patched;
+                        continue;
+                    } else blob.curr = blob.snapdata.patched;
+                }
+
+                if (prevItem && !prevItem.diff.ipfs) {
+                    if (prevItem.namecommit === commit) continue;
+                }
+
+                const patch = await zstd.decompress(
+                    repo.account.client,
+                    Buffer.from(item.diff.patch, 'hex').toString('base64'),
+                    true
+                );
+
+                const reversedPatch = reversePatch(patch);
+                const reversed = Diff.applyPatch(blob.curr, reversedPatch);
+                if (!_reached) blob.curr = reversed;
+                else blob.prev = reversed;
+
+                console.debug('patch blob', blob);
+            }
+        }
+
+        return blob;
+    };
+
+    const onLoadDiff = async (index: number) => {
+        setBlobs((curr) =>
+            curr.map((item, i) => {
+                if (i === index) return { ...item, isFetching: true };
+                else return item;
+            })
+        );
+        let blob = { ...blobs[index] };
+        const { msgs } = await getMessages(blob.snapaddr, blob.commit);
+        blob = await applyMessages(repo.account.client, blob.commit, msgs, blob);
+        setBlobs((curr) =>
+            curr.map((item, i) => {
+                if (i === index) return { ...item, isFetching: false, showDiff: true };
+                else return item;
+            })
+        );
+    };
 
     useEffect(() => {
         const getCommitBlobs = async (
@@ -178,20 +220,25 @@ const CommitBlobs = (props: TCommitBlobsType) => {
 
             // Iterate updated items and get snapshots
             const updatedBlobs: any[] = await Promise.all(
-                updatedItems.map(async (item) => {
+                updatedItems.map(async (item, index) => {
                     const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`;
                     const snapaddr = await repo.getSnapshotAddr(branch, fullpath);
                     console.debug(snapaddr);
                     const snap = new GoshSnapshot(repo.account.client, snapaddr);
                     const data = await snap.getSnapshot(commitName, item);
-                    const messages = await getMessages(snapaddr, commitName);
+                    const messages =
+                        index < 5 ? await getMessages(snapaddr, commitName) : [];
                     return {
                         item,
+                        snapaddr,
+                        commit: commitName,
                         fullpath,
                         snapdata: data,
                         messages,
                         prev: '',
                         curr: data.content,
+                        showDiff: index < 5,
+                        isFetching: false,
                     };
                 })
             );
@@ -199,66 +246,20 @@ const CommitBlobs = (props: TCommitBlobsType) => {
 
             // Apply patches
             await Promise.all(
-                updatedBlobs.map(async (blob) => {
-                    const { msgs } = blob.messages;
-                    let _reached = false;
-                    for (let i = 0; i < msgs.length; i++) {
-                        const item = msgs[i];
-                        if (!_reached && item.namecommit === commitName) _reached = true;
-                        console.debug(_reached);
-
-                        if (item.diff.ipfs) {
-                            const compressed = (
-                                await loadFromIPFS(item.diff.ipfs)
-                            ).toString();
-                            const decompressed = await zstd.decompress(
-                                repo.account.client,
-                                compressed,
-                                true
-                            );
-                            console.debug(decompressed);
-                            if (!_reached) blob.curr = decompressed;
-                            else blob.prev = decompressed;
-
-                            console.debug('ipfs blob', blob);
-                        } else {
-                            const prevItem = i > 0 ? msgs[i - 1] : null;
-                            if (prevItem && prevItem.diff.ipfs) {
-                                if (prevItem.namecommit === commitName) {
-                                    blob.curr = blob.prev;
-                                    blob.prev = blob.snapdata.patched;
-                                    continue;
-                                } else blob.curr = blob.snapdata.patched;
-                            }
-
-                            if (prevItem && !prevItem.diff.ipfs) {
-                                if (prevItem.namecommit === commitName) continue;
-                            }
-
-                            const patch = await zstd.decompress(
-                                repo.account.client,
-                                Buffer.from(item.diff.patch, 'hex').toString('base64'),
-                                true
-                            );
-
-                            const reversedPatch = reversePatch(patch);
-                            const reversed = Diff.applyPatch(blob.curr, reversedPatch);
-                            if (!_reached) blob.curr = reversed;
-                            else blob.prev = reversed;
-
-                            console.debug('patch blob', blob);
-                        }
-                    }
-                })
+                updatedBlobs
+                    .filter(({ showDiff }) => showDiff)
+                    .map(async (blob) => {
+                        const { msgs } = blob.messages;
+                        blob = await applyMessages(
+                            repo.account.client,
+                            commitName,
+                            msgs,
+                            blob
+                        );
+                    })
             );
 
-            setBlobs(
-                updatedBlobs.map((blob) => ({
-                    filename: blob.fullpath,
-                    prev: blob.prev,
-                    curr: blob.curr,
-                }))
-            );
+            setBlobs(updatedBlobs);
             setIsFetched(true);
         };
 
@@ -278,9 +279,22 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 blobs.map((blob, index) => (
                     <div key={index} className="my-5 border rounded overflow-hidden">
                         <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                            {blob.filename}
+                            {blob.fullpath}
                         </div>
-                        <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                        {blob.showDiff ? (
+                            <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                        ) : (
+                            <button
+                                className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
+                                disabled={false}
+                                onClick={() => onLoadDiff(index)}
+                            >
+                                {blob.isFetching && (
+                                    <Spinner className="mr-2" size="sm" />
+                                )}
+                                Load diff
+                            </button>
+                        )}
                     </div>
                 ))}
         </div>

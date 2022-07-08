@@ -256,8 +256,7 @@ export const getRepoTree = async (
     if (commit.meta?.sha !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree();
         const rootTree = new GoshTree(repo.account.client, rootTreeAddr);
-        const { tree, ready } = await rootTree.getTree();
-        console.debug('Tree ready', ready);
+        const { tree } = await rootTree.getTree();
         items = tree;
         // await new Promise<void>((resolve) =>
         //     setInterval(async () => {
