@@ -28,7 +28,13 @@ mod utilities;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 impl GitHelper {
-    async fn push_new_blob(&mut self, file_path: &str, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()> {
+    async fn push_new_blob(
+        &mut self,
+        file_path: &str,
+        blob_id: &ObjectId,
+        commit_id: &ObjectId,
+        branch_name: &str
+    ) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
         let content = self.local_repository().objects
             .try_find(blob_id, &mut buffer)?
@@ -37,10 +43,11 @@ impl GitHelper {
             .as_blob()
             .expect("It must be a blob object")
             .data;
-             
+
         blockchain::snapshot::push_initial_snapshot(
             self,
             commit_id,
+            branch_name,
             file_path,
             content
         ).await?;
@@ -60,12 +67,13 @@ impl GitHelper {
             .expect("It must be a commit object")
             .tree();
     }
-    
+
     async fn push_blob(
         &mut self,
         blob_id: &ObjectId,
         prev_commit_id: &Option<ObjectId>,
         current_commit_id: &ObjectId,
+        branch_name: &str,
     ) -> Result<()> {
         let prev_tree_root_id: Option<ObjectId> = {
             let mut buffer:Vec<u8> = Vec::new();
@@ -99,8 +107,9 @@ impl GitHelper {
                 // (we're not handling renames yet)
                 self.push_new_blob(
                     &file_path,
-                    blob_id, 
-                    current_commit_id
+                    blob_id,
+                    current_commit_id,
+                    branch_name
                 ).await?;
                 continue;
             }
@@ -111,9 +120,11 @@ impl GitHelper {
                 blob_id
             ).await?;
             blockchain::snapshot::push_diff(
-                self, 
-                &current_commit_id, 
-                &file_path, 
+                self,
+                &current_commit_id,
+                branch_name,
+                blob_id,
+                &file_path,
                 &file_diff
             ).await?;
         }
@@ -214,6 +225,7 @@ impl GitHelper {
                                 &object_id,
                                 &prev_commit_id,
                                 commit_id.as_ref().unwrap(),
+                                branch_name,
                             )
                             .await?;
                             // branch

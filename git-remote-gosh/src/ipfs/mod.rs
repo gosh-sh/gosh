@@ -12,8 +12,8 @@ struct SaveRes {
 
 #[derive(Debug)]
 pub struct IpfsService {
-    ipfs_endpoint_address: String,
-    cli: reqwest::Client,
+    pub ipfs_endpoint_address: String,
+    pub cli: reqwest::Client,
 }
 
 impl IpfsService {
