@@ -65,13 +65,19 @@ impl GitHelper {
         current_commit_id: &ObjectId,
     ) -> Result<()> {
         let prev_tree_root_id: Option<ObjectId> = {
+            let mut buffer:Vec<u8> = Vec::new();
             match prev_commit_id {
                 None => None,
-                Some(id) => {
-                    //self.local_repository()
-                    //    .objects;
-                    todo!();
-                }
+                Some(id) => Some(
+                    self.local_repository()
+                        .objects
+                        .try_find(id, &mut buffer)?
+                        .expect("commit must be in the local repository")
+                        .decode()?
+                        .as_commit()
+                        .expect("It must be a commit object")
+                        .tree()
+                )
             }
         };
         let prev_commit_id: ObjectId = prev_commit_id.clone().expect("guarded");
