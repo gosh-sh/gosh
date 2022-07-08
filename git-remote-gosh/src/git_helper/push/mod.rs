@@ -28,6 +28,7 @@ mod utilities;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 impl GitHelper {
+    #[instrument(level = "debug")]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -54,6 +55,7 @@ impl GitHelper {
         Ok(())
     }
 
+    #[instrument(level = "debug")]
     fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
         let mut buffer:Vec<u8> = Vec::new();
         return self.local_repository()
@@ -68,6 +70,7 @@ impl GitHelper {
             .tree();
     }
 
+    #[instrument(level = "debug")]
     async fn push_blob(
         &mut self,
         blob_id: &ObjectId,
@@ -130,6 +133,7 @@ impl GitHelper {
         }
         Ok(())
     }
+
     // find ancestor commit
     #[instrument(level = "debug")]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
@@ -248,6 +252,7 @@ impl GitHelper {
         Ok(result_ok)
     }
 
+    #[instrument(level = "debug")]
     pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {

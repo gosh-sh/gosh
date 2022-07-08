@@ -57,6 +57,7 @@ struct SaveRes {
     hash: String,
 }
 
+#[instrument(level = "debug")]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<String> {
     log::debug!("Uploading blob to IPFS");
 
@@ -73,6 +74,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     Ok(response_body.hash)
 }
 
+#[instrument(level = "debug")]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
@@ -119,6 +121,7 @@ pub async fn push_diff(
     Ok(())
 }
 
+#[instrument(level = "debug")]
 pub async fn push_initial_snapshot(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,

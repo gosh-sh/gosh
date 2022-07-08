@@ -424,7 +424,7 @@ pub async fn load_messages_to(
         account(address:$addr) {
           messages(msg_type:[IntIn]) {
             edges {
-              node{ body created_lt status }
+              node{ id body created_lt status bounced }
               cursor
             }
             pageInfo { hasNextPage }
@@ -447,10 +447,12 @@ pub async fn load_messages_to(
 
     #[derive(Deserialize, Debug)]
     struct Message {
+        id: String,
         body: String,
         #[serde(with = "ton_sdk::json_helper::uint")]
         created_lt: u64,
         status: u8,
+        bounced: bool
     }
 
     let mut messages: Vec<DiffMessage> = Vec::new();
@@ -459,9 +461,10 @@ pub async fn load_messages_to(
         .unwrap();
     for message in nodes {
         let raw_msg: Message = serde_json::from_value(message["node"].clone()).unwrap();
-        if raw_msg.status != 5 {
+        if raw_msg.status != 5 || raw_msg.bounced {
             continue;
         }
+        log::debug!("Decoding message {:?}", raw_msg.id);
         let decoded = decode_message_body(
             context.clone(),
             ParamsOfDecodeMessageBody {
