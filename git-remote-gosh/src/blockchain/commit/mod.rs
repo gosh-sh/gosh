@@ -1,3 +1,7 @@
+mod save;
+
+pub use save::push_commit;
+
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "commit.abi.json"]
 #[abi_data_fn = "getCommit"]
