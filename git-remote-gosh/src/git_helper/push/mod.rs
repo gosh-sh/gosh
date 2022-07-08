@@ -1,7 +1,10 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain;
+use crate::blockchain::{
+    self,
+    tree::into_tree_contract_complient_path
+};
 use git2::Repository;
 use git_diff;
 use git_hash::{self, ObjectId};
@@ -18,12 +21,35 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
+use std::path::PathBuf;
+use git_repository::OdbHandle;
+use git_odb::FindExt;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &ObjectId, buffer: &mut Vec<PathBuf>) -> Result<()> {
+    use git_object::tree::EntryMode::*;
+    let mut tree_object_buffer: Vec<u8> = Vec::new();
+    let tree = odb.find_tree(tree_id, &mut tree_object_buffer)?;
+    for entry in tree.entries {
+        match entry.mode {
+            Tree => {
+                find_tree_blob_occurrences(
+                    &node_path.join(entry.filename.to_string()),
+                    odb,
+                    &entry.oid.into(),
+                    buffer
+                )?;
+            },
+            _=> todo!()
+        }
+    }    
+    Ok(())
+}
+
 impl GitHelper {
     async fn generate_file_diff(
-        self,
+        &self,
         blob_id_from: &ObjectId,
         blob_id_to: &ObjectId,
     ) -> Result<Vec<u8>> {
@@ -56,7 +82,21 @@ impl GitHelper {
         }
         todo!();
     }
+  
         
+    fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
+        let mut buffer:Vec<u8> = Vec::new();
+        return self.local_repository()
+            .objects
+            .try_find(commit_id, &mut buffer)
+            .expect("odb must work")
+            .expect("commit must be in the local repository")
+            .decode()
+            .expect("Commit is commit")
+            .as_commit()
+            .expect("It must be a commit object")
+            .tree();
+    }
     
     async fn push_blob(
         &mut self,
@@ -68,28 +108,29 @@ impl GitHelper {
             let mut buffer:Vec<u8> = Vec::new();
             match prev_commit_id {
                 None => None,
-                Some(id) => Some(
-                    self.local_repository()
-                        .objects
-                        .try_find(id, &mut buffer)?
-                        .expect("commit must be in the local repository")
-                        .decode()?
-                        .as_commit()
-                        .expect("It must be a commit object")
-                        .tree()
-                )
+                Some(id) => Some(self.tree_root_for_commit(id))
             }
         };
-        let prev_commit_id: ObjectId = prev_commit_id.clone().expect("guarded");
-        let blob_file_path_occurrences: Vec<String> =
-            todo!("Find all blob occurrences in the current commit tree");
+        let mut blob_file_path_occurrences: Vec<PathBuf> = Vec::new();
+        {
+            let tree_root_id = self.tree_root_for_commit(
+                current_commit_id
+            );
+            find_tree_blob_occurrences(
+                &PathBuf::new(),
+                &self.local_repository().objects,
+                &tree_root_id,
+                &mut blob_file_path_occurrences
+            );
+        }
         for file_path in blob_file_path_occurrences.iter() {
-            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, file_path);
+            let file_path = into_tree_contract_complient_path(file_path);
+            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, &file_path);
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
                 self.push_new_blob(
-                    file_path,
+                    &file_path,
                     blob_id, 
                     current_commit_id
                 ).await?;
@@ -99,8 +140,12 @@ impl GitHelper {
             let file_diff = self
                 .generate_file_diff(&prev_state_blob_id, blob_id)
                 .await?;
-            blockchain::snapshot::push_diff(self, &current_commit_id, file_path, &file_diff)
-                .await?;
+            blockchain::snapshot::push_diff(
+                self, 
+                &current_commit_id, 
+                &file_path, 
+                &file_diff
+            ).await?;
         }
         Ok(())
     }

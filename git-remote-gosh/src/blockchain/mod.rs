@@ -27,7 +27,7 @@ use ton_client::{
 mod commit;
 mod serde_number;
 pub mod snapshot;
-mod tree;
+pub mod tree;
 mod user_wallet;
 pub use commit::push_commit;
 pub use commit::GoshCommit;

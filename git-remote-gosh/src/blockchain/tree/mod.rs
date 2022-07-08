@@ -11,3 +11,9 @@ mod save;
 
 pub use load::Tree;
 pub use save::push_tree;
+
+use std::path::Path;
+
+pub fn into_tree_contract_complient_path(path: &Path) -> String {
+   todo!();
+}
