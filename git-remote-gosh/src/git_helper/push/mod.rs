@@ -27,7 +27,13 @@ use git_odb::FindExt;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &ObjectId, blob_id: &ObjectId, buffer: &mut Vec<PathBuf>) -> Result<()> {
+fn find_tree_blob_occurrences(
+    node_path: &PathBuf, 
+    odb: &OdbHandle, 
+    tree_id: &ObjectId, 
+    blob_id: &ObjectId, 
+    buffer: &mut Vec<PathBuf>
+) -> Result<()> {
     use git_object::tree::EntryMode::*;
     let mut tree_object_buffer: Vec<u8> = Vec::new();
     let tree = odb.find_tree(tree_id, &mut tree_object_buffer)?;
@@ -38,12 +44,13 @@ fn find_tree_blob_occurrences(node_path: &PathBuf, odb: &OdbHandle, tree_id: &Ob
                     &node_path.join(entry.filename.to_string()),
                     odb,
                     &entry.oid.into(),
+                    blob_id,
                     buffer
                 )?;
             },
-            Blob | BlobExecutable | Link => if entry.oid == blob_id {
+            Blob | BlobExecutable | Link => if entry.oid == blob_id.as_ref() {
                 buffer.push(
-                    &node_path.join(entry.filename.to_string())
+                    node_path.join(entry.filename.to_string())
                 );
             },
             Commit => unimplemented!("git submodule")
@@ -81,7 +88,7 @@ impl GitHelper {
 
     // Note: local utility function
     // assumes tree doesn't exist if tree root is None. 
-    fn try_find_tree_leaf(&mut self, tree_root_id: Option<ObjectId>, file_path: &str) -> Option<ObjectId> {
+    fn try_find_tree_leaf(&mut self, tree_root_id: Option<ObjectId>, file_path: &PathBuf) -> Option<ObjectId> {
         if tree_root_id.is_none() {
             return None;
         }
@@ -131,7 +138,7 @@ impl GitHelper {
         }
         for file_path in blob_file_path_occurrences.iter() {
             let file_path = into_tree_contract_complient_path(file_path);
-            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, &file_path);
+            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, &PathBuf::from(&file_path));
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
