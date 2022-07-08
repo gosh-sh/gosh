@@ -1,7 +1,10 @@
-use crate::{git_helper::GitHelper, blockchain::{user_wallet, call}};
-use std::error::Error;
+use crate::{
+    blockchain::{call, user_wallet},
+    git_helper::GitHelper,
+};
 use git_hash::ObjectId;
 use git_odb::Find;
+use std::error::Error;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -17,10 +20,14 @@ pub struct DeployCommitParams {
     #[serde(rename = "tree")]
     pub tree_addr: String,
     #[serde(rename = "diff")]
-    pub diff_addr: String
+    pub diff_addr: String,
 }
 
-pub async fn push_commit(context: &mut GitHelper, commit_id: &ObjectId, branch: &str) -> Result<(), Box<dyn Error>> {
+pub async fn push_commit(
+    context: &mut GitHelper,
+    commit_id: &ObjectId,
+    branch: &str,
+) -> Result<(), Box<dyn Error>> {
     let mut buffer: Vec<u8> = Vec::new();
     let commit = context
         .local_repository()

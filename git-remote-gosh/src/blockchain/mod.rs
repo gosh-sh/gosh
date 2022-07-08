@@ -2,9 +2,8 @@
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::{Deserialize, Deserializer, de};
+use serde::{de, Deserialize, Deserializer};
 use serde_json;
-
 
 use std::{env, error::Error, fmt, sync::Arc};
 
@@ -19,10 +18,7 @@ use ton_client::{
         ParamsOfEncodeMessage, Signer,
     },
     crypto::KeyPair,
-    net::{
-        query_collection, NetworkQueriesProtocol, ParamsOfQuery,
-        ParamsOfQueryCollection,
-    },
+    net::{query_collection, NetworkQueriesProtocol, ParamsOfQuery, ParamsOfQueryCollection},
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientConfig, ClientContext,
@@ -33,21 +29,15 @@ mod serde_number;
 pub mod snapshot;
 mod tree;
 mod user_wallet;
+pub use commit::push_commit;
 pub use commit::GoshCommit;
 use serde_number::Number;
-pub use snapshot::{
-    Snapshot
-};
-pub use tree::{
-    Tree,
-    push_tree
-};
-pub use commit::push_commit;
+pub use snapshot::Snapshot;
+pub use tree::{push_tree, Tree};
 pub use user_wallet::user_wallet;
 
-use crate::{abi as gosh_abi};
+use crate::abi as gosh_abi;
 use crate::config::Config;
-
 
 pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
@@ -56,7 +46,7 @@ pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 pub enum GoshBlobBitFlags {
     Binary = 1,
     Compressed = 2,
-    Ipfs = 4
+    Ipfs = 4,
 }
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
@@ -102,8 +92,9 @@ impl GoshContract {
         context: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T, Box<dyn Error>> 
-    where T: de::DeserializeOwned
+    ) -> Result<T, Box<dyn Error>>
+    where
+        T: de::DeserializeOwned,
     {
         let result = run_local(context, self, function_name, args).await?;
         Ok(serde_json::from_value::<T>(result)?)
@@ -150,41 +141,41 @@ pub struct Diff {
 
 #[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
-    #[serde(rename = "value0")] 
-    pub address: String
+    #[serde(rename = "value0")]
+    pub address: String,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetCommitAddrResult {
-    #[serde(rename = "value0")] 
-    pub address: String
+    #[serde(rename = "value0")]
+    pub address: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct BranchRef {
     #[serde(rename = "key")]
     pub branch_name: String,
-    
+
     #[serde(rename = "value")]
-    pub commit_sha: String
+    pub commit_sha: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GetAllAddressResult {
     #[serde(rename = "value0")]
-    pub branch_ref: Vec<BranchRef>
+    pub branch_ref: Vec<BranchRef>,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetAddrBranchResult {
     #[serde(rename = "value0")]
-    pub branch: BranchRef 
+    pub branch: BranchRef,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetHeadResult {
     #[serde(rename = "value0")]
-    pub head: String
+    pub head: String,
 }
 
 pub type TonClient = Arc<ClientContext>;
@@ -532,10 +523,9 @@ impl Diff {
 
 #[cfg(test)]
 mod tests {
-    
 
     use super::*;
-    use crate::{config};
+    use crate::config;
 
     struct TestEnv {
         config: Config,

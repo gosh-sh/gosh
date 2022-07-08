@@ -27,7 +27,7 @@ pub struct Tree {
 #[derive(Deserialize, Debug)]
 struct GetTreeResult {
     #[serde(rename = "value0")]
-    address: String
+    address: String,
 }
 
 impl Tree {

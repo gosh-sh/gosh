@@ -8,8 +8,6 @@ use std::error::Error;
 use std::fmt;
 use std::option::Option;
 
-
-
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
 #[abi_data_fn = "getSnapshot"]
@@ -38,7 +36,7 @@ pub struct Snapshot {
 #[derive(Deserialize, Debug)]
 struct GetSnapshotAddrResult {
     #[serde(rename = "value0")]
-    pub address: String
+    pub address: String,
 }
 
 impl Snapshot {

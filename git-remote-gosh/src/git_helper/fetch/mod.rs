@@ -185,7 +185,6 @@ impl GitHelper {
 
 #[cfg(test)]
 mod tests {
-    
 
     #[test]
     fn testing_what_is_inside_the_snapshot_content() {}

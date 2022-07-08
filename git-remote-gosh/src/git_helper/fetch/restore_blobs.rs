@@ -6,7 +6,7 @@ use git_hash;
 use git_hash::ObjectId;
 use git_object;
 use git_odb;
-use git_odb::{Find};
+use git_odb::Find;
 use lru::LruCache;
 use std::collections::{hash_map, HashMap, HashSet};
 
@@ -217,7 +217,6 @@ impl BlobsRebuildingPlan {
 
 #[cfg(test)]
 mod tests {
-    
 
     #[test]
     fn testing_what_is_inside_the_snapshot_content() {}

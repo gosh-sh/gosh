@@ -44,8 +44,17 @@ impl GitHelper {
         return &mut self.local_git_repository;
     }
 
-    pub async fn calculate_tree_address(&self, tree_id: git_hash::ObjectId) -> Result<String, Box<dyn Error>>{
-        Tree::calculate_address(&self.es_client, self.remote.gosh.as_str(), self.repo_addr.as_str(), &tree_id.to_string()).await
+    pub async fn calculate_tree_address(
+        &self,
+        tree_id: git_hash::ObjectId,
+    ) -> Result<String, Box<dyn Error>> {
+        Tree::calculate_address(
+            &self.es_client,
+            self.remote.gosh.as_str(),
+            self.repo_addr.as_str(),
+            &tree_id.to_string(),
+        )
+        .await
     }
 
     async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {

@@ -1,22 +1,16 @@
 use crate::git_helper::GitHelper;
 
-
 use ::git_object;
 
-
-use std::error::Error;
+use crate::blockchain::{self, GoshBlobBitFlags};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb;
 use git_odb::Find;
-use std::vec::Vec;
 use sha256;
-use std::collections::{VecDeque, HashSet};
-use crate::blockchain::{
-    self,
-    GoshBlobBitFlags
-};
-
+use std::collections::{HashSet, VecDeque};
+use std::error::Error;
+use std::vec::Vec;
 
 #[derive(Serialize, Debug)]
 pub struct TreeNode {
@@ -26,29 +20,30 @@ pub struct TreeNode {
     type_obj: String,
     name: String,
     sha1: String,
-    sha256: String
+    sha256: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct DeployTreeArgs {
     #[serde(rename = "shaTree")]
-    pub sha: String, 
+    pub sha: String,
     #[serde(rename = "repoName")]
     pub repo_name: String,
-    #[serde(rename = "datatree")] 
-    nodes: Vec<TreeNode>
+    #[serde(rename = "datatree")]
+    nodes: Vec<TreeNode>,
 }
-
 
 impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
     fn from((sha256, entry): (String, &tree::EntryRef)) -> Self {
         Self {
             flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
-            mode: std::str::from_utf8(git_object::tree::EntryMode::Blob.as_bytes()).unwrap().to_owned(),
+            mode: std::str::from_utf8(git_object::tree::EntryMode::Blob.as_bytes())
+                .unwrap()
+                .to_owned(),
             type_obj: convert_to_type_obj(entry.mode),
             name: entry.filename.to_string(),
             sha1: entry.oid.to_hex().to_string(),
-            sha256: sha256
+            sha256: sha256,
         }
     }
 }
@@ -58,19 +53,20 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
     match entry_mode {
         Tree => "tree",
         Blob | BlobExecutable | Link => "blob",
-        Commit => unimplemented!()
-    }.to_owned()
+        Commit => unimplemented!(),
+    }
+    .to_owned()
 }
 
 fn sha256of(objects: &git_odb::Handle, entry: &tree::EntryRef) -> String {
     let mut buffer: Vec<u8> = Vec::new();
-    let obj = objects.try_find(entry.oid, &mut buffer); 
-    return sha256::digest_bytes(&buffer);  
-} 
+    let obj = objects.try_find(entry.oid, &mut buffer);
+    return sha256::digest_bytes(&buffer);
+}
 
 pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<(), Box<dyn Error>> {
-    let mut visited = HashSet::new(); 
-    let mut to_deploy = VecDeque::new(); 
+    let mut visited = HashSet::new();
+    let mut to_deploy = VecDeque::new();
     to_deploy.push_back(tree_id.clone());
     while let Some(tree_id) = to_deploy.pop_front() {
         if visited.contains(&tree_id) {
@@ -90,32 +86,26 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
             .map(|e| {
                 if e.mode == git_object::tree::EntryMode::Tree {
                     to_deploy.push_back(e.oid.into());
-                } 
-                TreeNode::from((
-                    sha256of(
-                        &context.local_repository().objects, 
-                        &e
-                    ), 
-                    e
-                ))
+                }
+                TreeNode::from((sha256of(&context.local_repository().objects, &e), e))
             })
             .collect();
         let params = DeployTreeArgs {
             sha: tree_id.to_hex().to_string(),
             repo_name: context.remote.repo.clone(),
-            nodes: tree_nodes
+            nodes: tree_nodes,
         };
         let params: serde_json::Value = serde_json::to_value(params)?;
-       
+
         let user_wallet_contract = blockchain::user_wallet(context)?;
 
         blockchain::call(
             &context.es_client,
             user_wallet_contract,
             "deployTree",
-            Some(params)
-        ).await?;
+            Some(params),
+        )
+        .await?;
     }
     Ok(())
 }
-

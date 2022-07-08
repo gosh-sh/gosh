@@ -22,63 +22,57 @@ use std::{
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 impl GitHelper {
-    async fn generate_file_diff(self, blob_id_from: &ObjectId, blob_id_to: &ObjectId) -> Result<Vec<u8>> {
+    async fn generate_file_diff(
+        self,
+        blob_id_from: &ObjectId,
+        blob_id_to: &ObjectId,
+    ) -> Result<Vec<u8>> {
         todo!();
     }
-    async fn push_new_blob(&mut self, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()>{
+    async fn push_new_blob(&mut self, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()> {
         todo!();
     }
-    async fn push_blob(&mut self, blob_id: &ObjectId, prev_commit_id: &Option<ObjectId>, current_commit_id: &ObjectId) -> Result<()>{
+    async fn push_blob(
+        &mut self,
+        blob_id: &ObjectId,
+        prev_commit_id: &Option<ObjectId>,
+        current_commit_id: &ObjectId,
+    ) -> Result<()> {
         if prev_commit_id.is_none() {
-            return Ok(self.push_new_blob(
-                blob_id, 
-                current_commit_id
-            ).await?);
+            return Ok(self.push_new_blob(blob_id, current_commit_id).await?);
         }
-        let prev_commit_id: ObjectId = prev_commit_id
-            .clone()
-            .expect("guarded");
-        let blob_file_path_occurrences: Vec<String> = todo!("Find all blob occurrences in the current commit tree");
+        let prev_commit_id: ObjectId = prev_commit_id.clone().expect("guarded");
+        let blob_file_path_occurrences: Vec<String> =
+            todo!("Find all blob occurrences in the current commit tree");
         for file_path in blob_file_path_occurrences.iter() {
-            let prev_state_blob_id: Option<ObjectId> = todo!("Traverse tree path in the prev commit");
+            let prev_state_blob_id: Option<ObjectId> =
+                todo!("Traverse tree path in the prev commit");
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
-                self.push_new_blob(
-                    blob_id, 
-                    current_commit_id
-                ).await?;
+                self.push_new_blob(blob_id, current_commit_id).await?;
                 continue;
             }
             let prev_state_blob_id = prev_state_blob_id.expect("guarded");
-            let file_diff = self.generate_file_diff(
-                &prev_state_blob_id, 
-                blob_id
-            ).await?;
-            blockchain::snapshot::push_diff(
-                self, 
-                &current_commit_id,
-                file_path, 
-                &file_diff
-            ).await?;
+            let file_diff = self
+                .generate_file_diff(&prev_state_blob_id, blob_id)
+                .await?;
+            blockchain::snapshot::push_diff(self, &current_commit_id, file_path, &file_diff)
+                .await?;
         }
         Ok(())
     }
     // find ancestor commit
     #[instrument(level = "debug")]
-    async fn push_ref(
-        &mut self,
-        local_ref: &str,
-        remote_ref: &str,
-    ) -> Result<String> {
+    async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit("/");
             iter.next().unwrap()
         };
         // 1. Check if branch exists and ready in the blockchain
-        let parsed_remote_ref = blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref)
-            .await?;
+        let parsed_remote_ref =
+            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref).await?;
 
         // 2. Find ancestor commit in local repo
         let ancestor_commit_id = if parsed_remote_ref == None {
@@ -91,11 +85,14 @@ impl GitHelper {
             "".to_owned()
         } else {
             let remote_commit_addr = parsed_remote_ref.unwrap();
-            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr).await?.unwrap();
+            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
+                .await?
+                .unwrap();
             commit.sha
         };
 
-        let latest_commit_id = self.local_repository()
+        let latest_commit_id = self
+            .local_repository()
             .find_reference(local_ref)?
             .into_fully_peeled_id()?
             .object()?
@@ -110,7 +107,7 @@ impl GitHelper {
             "--objects",
             "--in-commit-order",
             "--reverse",
-            local_ref
+            local_ref,
         ];
 
         let exclude;
@@ -128,7 +125,7 @@ impl GitHelper {
         let cmd_out = cmd.wait_with_output()?;
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
-         
+
         // 6. Deploy all **new** snapshot
         // 7. Deploy diff contracts
         // 8. Deploy all commit objects
@@ -156,14 +153,19 @@ impl GitHelper {
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
-                            self.push_blob(&object_id, &prev_commit_id, commit_id.as_ref().unwrap()).await?; 
+                            self.push_blob(
+                                &object_id,
+                                &prev_commit_id,
+                                commit_id.as_ref().unwrap(),
+                            )
+                            .await?;
                             // branch
                             // commit_id
                             // commit_data
                             // Vec<diff>
                         }
                         git_object::Kind::Tag => todo!(),
-                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?
+                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
                     }
                 }
                 None => break,

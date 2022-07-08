@@ -1,8 +1,6 @@
 use log;
 use log4rs::{
-    append::{
-        console::{ConsoleAppender, Target},
-    },
+    append::console::{ConsoleAppender, Target},
     config::{Appender, Root},
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
