@@ -364,65 +364,76 @@ export class GoshWallet implements IGoshWallet {
         const { items } = await getRepoTree(repo, branch.commitAddr);
         const updatedPaths: string[] = [];
         const processedBlobs: any[] = [];
-        for (const blob of blobs) {
-            const { name, modified, original, isIpfs = false } = blob;
+        await Promise.all(
+            blobs.map(async (blob) => {
+                const { name, modified, original, isIpfs = false } = blob;
 
-            let flags = 0;
-            let patch: string = '';
-            let ipfs = null;
-            if (!Buffer.isBuffer(modified) && !Buffer.isBuffer(original) && !isIpfs) {
-                patch = getBlobDiffPatch(name, modified, original || '');
-                patch = await zstd.compress(this.account.client, patch);
-                patch = Buffer.from(patch, 'base64').toString('hex');
+                let flags = 0;
+                let patch: string = '';
+                let ipfs = null;
+                if (!Buffer.isBuffer(modified) && !Buffer.isBuffer(original) && !isIpfs) {
+                    patch = getBlobDiffPatch(name, modified, original || '');
+                    patch = await zstd.compress(this.account.client, patch);
+                    patch = Buffer.from(patch, 'base64').toString('hex');
 
-                if (Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE) {
-                    const compressed = await zstd.compress(this.account.client, modified);
-                    ipfs = await saveToIPFS(compressed);
-                    flags |= EGoshBlobFlag.IPFS;
+                    if (Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE) {
+                        const compressed = await zstd.compress(
+                            this.account.client,
+                            modified
+                        );
+                        ipfs = await saveToIPFS(compressed);
+                        flags |= EGoshBlobFlag.IPFS;
+                    }
+
+                    flags |= EGoshBlobFlag.COMPRESSED;
+                } else {
+                    flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED;
+
+                    let content = modified;
+                    if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY;
+                    content = await zstd.compress(this.account.client, content);
+                    ipfs = await saveToIPFS(content);
                 }
+                const processedBlob = {
+                    ...blob,
+                    created: false,
+                    diff: {
+                        snap: '',
+                        patch: ipfs ? null : patch,
+                        ipfs,
+                        commit: '',
+                        sha1: sha1(modified, 'blob', 'sha1'),
+                    },
+                };
 
-                flags |= EGoshBlobFlag.COMPRESSED;
-            } else {
-                flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED;
-
-                let content = modified;
-                if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY;
-                content = await zstd.compress(this.account.client, content);
-                ipfs = await saveToIPFS(content);
-            }
-            const processedBlob = {
-                ...blob,
-                created: false,
-                diff: {
-                    snap: '',
-                    patch: ipfs ? null : patch,
-                    ipfs,
-                    commit: '',
-                    sha1: sha1(modified, 'blob', 'sha1'),
-                },
-            };
-
-            const blobPathItems = getTreeItemsFromPath(blob.name, blob.modified, flags);
-            blobPathItems.forEach((pathItem) => {
-                const pathIndex = updatedPaths.findIndex(
-                    (path) => path === pathItem.path
+                const blobPathItems = getTreeItemsFromPath(
+                    blob.name,
+                    blob.modified,
+                    flags
                 );
-                if (pathIndex < 0) updatedPaths.push(pathItem.path);
+                blobPathItems.forEach((pathItem) => {
+                    const pathIndex = updatedPaths.findIndex(
+                        (path) => path === pathItem.path
+                    );
+                    if (pathIndex < 0) updatedPaths.push(pathItem.path);
 
-                const itemIndex = items.findIndex(
-                    (item) => item.path === pathItem.path && item.name === pathItem.name
-                );
-                if (itemIndex >= 0) items[itemIndex] = pathItem;
-                else {
-                    items.push(pathItem);
-                    processedBlob.created = true;
-                }
-            });
+                    const itemIndex = items.findIndex(
+                        (item) =>
+                            item.path === pathItem.path && item.name === pathItem.name
+                    );
+                    if (itemIndex >= 0) items[itemIndex] = pathItem;
+                    else {
+                        items.push(pathItem);
+                        processedBlob.created = true;
+                    }
+                });
 
-            processedBlobs.push(processedBlob);
-        }
+                processedBlobs.push(processedBlob);
+            })
+        );
         console.debug('[Create commit] - New tree items:', items);
         console.debug('[Create commit] - Updated paths:', updatedPaths);
+        console.debug('Processed blobs', processedBlobs);
 
         // Build updated tree and updated hashes
         const updatedTree = getTreeFromItems(items);
@@ -442,41 +453,45 @@ export class GoshWallet implements IGoshWallet {
         console.debug('Future commit:', futureCommit);
 
         // Deploy snapshots and update diffs
-        console.debug('Processed blobs', processedBlobs);
-        for (const blob of processedBlobs) {
-            let snapdata = '';
-            if (!blob.diff.ipfs) {
-                snapdata = await zstd.compress(this.account.client, blob.modified);
-                snapdata = Buffer.from(snapdata, 'base64').toString('hex');
-            }
+        await Promise.all(
+            processedBlobs.map(async (blob) => {
+                let snapdata = '';
+                if (!blob.diff.ipfs) {
+                    snapdata = await zstd.compress(this.account.client, blob.modified);
+                    snapdata = Buffer.from(snapdata, 'base64').toString('hex');
+                }
 
-            const snapAddr = await this.deployNewSnapshot(
-                repo.address,
-                branch.name,
-                futureCommit.name,
-                blob.name,
-                snapdata,
-                blob.diff.ipfs
-            );
-            console.debug('Snap addr:', snapAddr);
-            if (blob.created) blob.diff = null;
-            else {
-                blob.diff.snap = snapAddr;
-                blob.diff.commit = futureCommit.name;
-            }
-        }
+                const snapAddr = await this.deployNewSnapshot(
+                    repo.address,
+                    branch.name,
+                    futureCommit.name,
+                    blob.name,
+                    snapdata,
+                    blob.diff.ipfs
+                );
+                console.debug('Snap addr:', snapAddr);
+
+                if (blob.created) blob.diff = null;
+                else {
+                    blob.diff.snap = snapAddr;
+                    blob.diff.commit = futureCommit.name;
+                }
+            })
+        );
         console.debug('Processed blobs', processedBlobs);
 
         // Deploy tree blobs
         const treeRootAddr = await this.deployTree(repo, updatedTree['']);
         console.debug('Root tree addr:', treeRootAddr);
-        for (let i = 0; i < updatedPaths.length; i++) {
-            const path = updatedPaths[i];
-            if (path === '') continue;
-            const subtree = updatedTree[path];
-            const addr = await this.deployTree(repo, subtree);
-            console.debug('Subtree addr:', addr);
-        }
+        await Promise.all(
+            updatedPaths
+                .filter((path) => path !== '')
+                .map(async (path) => {
+                    const subtree = updatedTree[path];
+                    const addr = await this.deployTree(repo, subtree);
+                    console.debug('Subtree addr:', addr);
+                })
+        );
         !!callback && callback({ treeDeploy: true });
 
         // Deploy commit
@@ -494,10 +509,12 @@ export class GoshWallet implements IGoshWallet {
 
         // Deploy tags
         const tagsList = tags ? tags.split(' ') : [];
-        for (let i = 0; i < tagsList.length; i++) {
-            console.debug('[Create commit] - Deploy tag:', i, tagsList[i]);
-            await this.deployTag(repo, futureCommit.name, tagsList[i]);
-        }
+        await Promise.all(
+            tagsList.map(async (tag) => {
+                console.debug('[Create commit] - Deploy tag:', tag);
+                await this.deployTag(repo, futureCommit.name, tag);
+            })
+        );
         !!callback && callback({ tagsDeploy: true });
 
         // Set tree
@@ -764,19 +781,6 @@ export class GoshWallet implements IGoshWallet {
                 });
             }
         }
-        // chunked.push({
-        //     addr: await this.getDiffAddr(repo.meta.name, commitName, 1),
-        //     index: 1,
-        //     items: [
-        //         {
-        //             snap: diffs[0].snap,
-        //             patch: '28b52ffd00583d0200f4034040202d312c32202b312c332040400a206161610a2d6262620a5c204e6f206e65776c696e6520617420656e64206f662066696c650a2b6262620a2b63636301009f6e0505',
-        //             ipfs: null,
-        //             commit: diffs[0].commit,
-        //             sha1: '8cc58960380ebedd8130c64158d2a4ace18d42fd',
-        //         },
-        //     ],
-        // });
         console.debug('Deploy commit diffs:', chunked);
 
         // Deploy diffs
