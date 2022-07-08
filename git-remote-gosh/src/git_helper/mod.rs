@@ -2,9 +2,7 @@
 use std::env;
 use std::error::Error;
 
-
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-
 
 use crate::blockchain::{
     create_client,
@@ -12,6 +10,7 @@ use crate::blockchain::{
     get_repo_address,
     // set_head,
     TonClient,
+    Tree,
 };
 use crate::config::Config;
 use crate::git::get_refs;
@@ -43,6 +42,10 @@ mod fmt;
 impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         return &mut self.local_git_repository;
+    }
+
+    pub async fn calculate_tree_address(&self, tree_id: git_hash::ObjectId) -> Result<String, Box<dyn Error>>{
+        Tree::calculate_address(&self.es_client, self.remote.gosh.as_str(), self.repo_addr.as_str(), &tree_id.to_string()).await
     }
 
     async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {

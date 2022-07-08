@@ -28,8 +28,8 @@ impl GitHelper {
         remote_ref: &str,
     ) -> Result<String, Box<dyn Error>> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
-        let remote_branch_name: &str = {
-            let mut iter = remote_ref.rsplit("/");
+        let branch_name: &str = {
+            let mut iter = local_ref.rsplit("/");
             iter.next().unwrap()
         };
         // 1. Check if branch exists and ready in the blockchain
@@ -69,7 +69,7 @@ impl GitHelper {
             local_ref
         ];
 
-        let mut exclude;
+        let exclude;
         if ancestor_commit_id != "" {
             exclude = format!("^{}", ancestor_commit_id);
             cmd_args.push(&exclude);
@@ -96,7 +96,7 @@ impl GitHelper {
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
                         git_object::Kind::Commit => {
-                            blockchain::push_commit(self, &object_id).await?;
+                            blockchain::push_commit(self, &object_id, branch_name).await?;
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
