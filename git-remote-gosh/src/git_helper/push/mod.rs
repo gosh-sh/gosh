@@ -80,7 +80,7 @@ impl GitHelper {
         branch_name: &str,
     ) -> Result<()> {
         let prev_tree_root_id: Option<ObjectId> = {
-            let mut buffer: Vec<u8> = Vec::new();
+            let buffer: Vec<u8> = Vec::new();
             match prev_commit_id {
                 None => None,
                 Some(id) => Some(self.tree_root_for_commit(id)),
