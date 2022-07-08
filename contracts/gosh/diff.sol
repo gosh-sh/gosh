@@ -216,7 +216,7 @@ contract DiffC is Modifiers {
         _approved += 1;
         if (_approved == _diff.length) {
             if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit);  } 
-            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); selfdestruct(_buildCommitAddr(_nameCommit));}
+            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); }
         }
         getMoney(_pubkey);
     }
@@ -226,8 +226,7 @@ contract DiffC is Modifiers {
         tvm.accept();
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
-            if (_last == true) { return; }
-            DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}();
+            if (_last == false) { DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
         Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}();
