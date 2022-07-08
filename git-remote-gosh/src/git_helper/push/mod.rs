@@ -22,7 +22,7 @@ use std::{
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 impl GitHelper {
-    async fn generate_file_diff(self, blob_id_from: &ObjectId, blob_id_to: &ObjectId) -> Result<String> {
+    async fn generate_file_diff(self, blob_id_from: &ObjectId, blob_id_to: &ObjectId) -> Result<Vec<u8>> {
         todo!();
     }
     async fn push_new_blob(&mut self, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()>{

@@ -7,8 +7,8 @@ use serde::de;
 use std::error::Error;
 use std::fmt;
 use std::option::Option;
-use crate::git_helper::GitHelper;
-use git_hash;
+
+
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
@@ -58,10 +58,6 @@ impl Snapshot {
             .await?;
         return Ok(result.address);
     }
-}
-
-pub async fn push_diff(context: &mut GitHelper, commit_id: &git_hash::ObjectId, file_path: &str, diff: &str) -> Result<(), Box<dyn std::error::Error>> {
-    todo!("deployDiff");
 }
 
 fn snapshot_content_custom_deserialization<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
