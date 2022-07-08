@@ -29,28 +29,64 @@ impl GitHelper {
     ) -> Result<Vec<u8>> {
         todo!();
     }
-    async fn push_new_blob(&mut self, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()> {
+    async fn push_new_blob(&mut self, file_path: &str, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()> {
+        let mut buffer: Vec<u8> = Vec::new();
+        let content = self.local_repository().objects
+            .try_find(blob_id, &mut buffer)?
+            .expect("blob must be in the local repository")
+            .decode()?
+            .as_blob()
+            .expect("It must be a blob object")
+            .data;
+             
+        blockchain::snapshot::push_initial_snapshot(
+            self,
+            commit_id,
+            file_path,
+            content
+        ).await?;
+        Ok(())
+    }
+
+    // Note: local utility function
+    // assumes tree doesn't exist if tree root is None. 
+    fn try_find_tree_leaf(&mut self, tree_root_id: Option<ObjectId>, file_path: &str) -> Option<ObjectId> {
+        if tree_root_id.is_none() {
+            return None;
+        }
         todo!();
     }
+        
+    
     async fn push_blob(
         &mut self,
         blob_id: &ObjectId,
         prev_commit_id: &Option<ObjectId>,
         current_commit_id: &ObjectId,
     ) -> Result<()> {
-        if prev_commit_id.is_none() {
-            return Ok(self.push_new_blob(blob_id, current_commit_id).await?);
-        }
+        let prev_tree_root_id: Option<ObjectId> = {
+            match prev_commit_id {
+                None => None,
+                Some(id) => {
+                    //self.local_repository()
+                    //    .objects;
+                    todo!();
+                }
+            }
+        };
         let prev_commit_id: ObjectId = prev_commit_id.clone().expect("guarded");
         let blob_file_path_occurrences: Vec<String> =
             todo!("Find all blob occurrences in the current commit tree");
         for file_path in blob_file_path_occurrences.iter() {
-            let prev_state_blob_id: Option<ObjectId> =
-                todo!("Traverse tree path in the prev commit");
+            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, file_path);
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
-                self.push_new_blob(blob_id, current_commit_id).await?;
+                self.push_new_blob(
+                    file_path,
+                    blob_id, 
+                    current_commit_id
+                ).await?;
                 continue;
             }
             let prev_state_blob_id = prev_state_blob_id.expect("guarded");

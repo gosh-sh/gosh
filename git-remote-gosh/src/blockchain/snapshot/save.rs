@@ -17,7 +17,7 @@ pub async fn push_initial_snapshot(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
     file_path: &str,
-    content: Vec<u8>,
+    content: &[u8],
 ) -> Result<()> {
     todo!("deployNewSnapshot");
 }
