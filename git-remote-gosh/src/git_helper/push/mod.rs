@@ -19,14 +19,19 @@ use std::{
     vec::Vec,
 };
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 impl GitHelper {
+    async fn push_blob(&mut self, blob_id: &ObjectId) -> Result<()>{
+        todo!();
+    }
     // find ancestor commit
     #[instrument(level = "debug")]
     async fn push_ref(
         &mut self,
         local_ref: &str,
         remote_ref: &str,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<String> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit("/");
@@ -85,6 +90,7 @@ impl GitHelper {
         let mut commit_id = None;
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
+         
         // 6. Deploy all **new** snapshot
         // 7. Deploy diff contracts
         // 8. Deploy all commit objects
@@ -100,6 +106,7 @@ impl GitHelper {
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
+                            self.push_blob(&object_id).await?; 
                             // branch
                             // commit_id
                             // commit_data
@@ -119,7 +126,7 @@ impl GitHelper {
         Ok(result_ok)
     }
 
-    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
@@ -131,7 +138,7 @@ impl GitHelper {
     }
 }
 
-async fn delete_remote_ref(remote_ref: &str) -> Result<String, String> {
+async fn delete_remote_ref(remote_ref: &str) -> Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
@@ -153,7 +160,7 @@ mod tests {
     // }
 
     #[tokio::test]
-    async fn test_push() -> Result<(), Box<dyn Error>> {
+    async fn test_push() -> Result<()> {
         log::info!("Preparing repository for tests");
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
