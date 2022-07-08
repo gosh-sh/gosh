@@ -109,7 +109,10 @@ impl BlobsRebuildingPlan {
         return Ok(restored_snapshots);
     }
 
-    pub async fn restore<'a>(&mut self, git_helper: &mut GitHelper) -> Result<(), Box<dyn Error>> {
+    pub async fn restore<'a, 'b>(
+        &'b mut self,
+        git_helper: &mut GitHelper,
+    ) -> Result<(), Box<dyn Error>> {
         // Idea behind
         // --
         // We've marked all blob hashes that needs to be restored
@@ -190,7 +193,7 @@ impl BlobsRebuildingPlan {
                 let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
                     load_data_from_ipfs(&git_helper.ipfs_client, &ipfs).await?
                 } else {
-                    message.diff.with_patch::<'a, _, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
+                    message.diff.with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
                         Some(patch) => {
                             let patched_blob_sha = &message.diff.modified_blob_sha1.as_ref().expect("Option on this should be reverted. It must always be there");
                             let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;

@@ -106,7 +106,7 @@ impl GitHelper {
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        self.logger.set_verbosity(verbosity);
+        self.logger.set_verbosity(verbosity).ok();
     }
 }
 

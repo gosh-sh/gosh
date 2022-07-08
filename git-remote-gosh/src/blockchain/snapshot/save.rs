@@ -2,11 +2,11 @@
 use crate::{
     blockchain::{call, user_wallet, snapshot},
     git_helper::GitHelper,
-    ipfs::{self, IpfsService},
+    ipfs::{IpfsService},
 };
 use git_hash;
 use git_object::bstr::ByteSlice;
-use git_repository::lock::tempfile::ContainingDirectory;
+
 use reqwest::multipart;
 use snapshot::Snapshot;
 
@@ -90,7 +90,7 @@ pub async fn push_diff(
         file_path
     ).await?;
 
-    let mut ipfs = "".to_string();
+    let ipfs = "".to_string();
     if diff.len() > 15000 /* crate::config::defaults::IPFS_THRESHOLD */ {
         // push to ipfs
         todo!();
