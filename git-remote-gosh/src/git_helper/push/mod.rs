@@ -24,41 +24,9 @@ use std::{
 use std::path::PathBuf;
 use git_repository::OdbHandle;
 use git_odb::FindExt;
+mod utilities;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-fn find_tree_blob_occurrences(
-    node_path: &PathBuf, 
-    odb: &OdbHandle, 
-    tree_id: &ObjectId, 
-    blob_id: &ObjectId, 
-    buffer: &mut Vec<PathBuf>
-) -> Result<()> {
-    use git_object::tree::EntryMode::*;
-    let mut tree_object_buffer: Vec<u8> = Vec::new();
-    let tree = odb.find_tree(tree_id, &mut tree_object_buffer)?;
-    for entry in tree.entries {
-        match entry.mode {
-            Tree => {
-                find_tree_blob_occurrences(
-                    &node_path.join(entry.filename.to_string()),
-                    odb,
-                    &entry.oid.into(),
-                    blob_id,
-                    buffer
-                )?;
-            },
-            Blob | BlobExecutable | Link => if entry.oid == blob_id.as_ref() {
-                buffer.push(
-                    node_path.join(entry.filename.to_string())
-                );
-            },
-            Commit => unimplemented!("git submodule")
-        }
-    }    
-    Ok(())
-}
-
 impl GitHelper {
     async fn generate_file_diff(
         &self,
@@ -86,16 +54,6 @@ impl GitHelper {
         Ok(())
     }
 
-    // Note: local utility function
-    // assumes tree doesn't exist if tree root is None. 
-    fn try_find_tree_leaf(&mut self, tree_root_id: Option<ObjectId>, file_path: &PathBuf) -> Option<ObjectId> {
-        if tree_root_id.is_none() {
-            return None;
-        }
-        todo!();
-    }
-  
-        
     fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
         let mut buffer:Vec<u8> = Vec::new();
         return self.local_repository()
@@ -128,7 +86,7 @@ impl GitHelper {
             let tree_root_id = self.tree_root_for_commit(
                 current_commit_id
             );
-            find_tree_blob_occurrences(
+            utilities::find_tree_blob_occurrences(
                 &PathBuf::new(),
                 &self.local_repository().objects,
                 &tree_root_id,
@@ -138,7 +96,7 @@ impl GitHelper {
         }
         for file_path in blob_file_path_occurrences.iter() {
             let file_path = into_tree_contract_complient_path(file_path);
-            let prev_state_blob_id: Option<ObjectId> = self.try_find_tree_leaf(prev_tree_root_id, &PathBuf::from(&file_path));
+            let prev_state_blob_id: Option<ObjectId> = utilities::try_find_tree_leaf(self, prev_tree_root_id, &PathBuf::from(&file_path));
             if prev_state_blob_id.is_none() {
                 // This path is new
                 // (we're not handling renames yet)
