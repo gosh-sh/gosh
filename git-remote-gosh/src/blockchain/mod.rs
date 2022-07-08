@@ -2,7 +2,8 @@
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::{de, Deserialize, Deserializer};
+use serde::Deserializer;
+use serde::{de, Deserialize};
 use serde_json;
 
 use std::{env, error::Error, fmt, sync::Arc};
@@ -452,7 +453,7 @@ pub async fn load_messages_to(
         #[serde(with = "ton_sdk::json_helper::uint")]
         created_lt: u64,
         status: u8,
-        bounced: bool
+        bounced: bool,
     }
 
     let mut messages: Vec<DiffMessage> = Vec::new();

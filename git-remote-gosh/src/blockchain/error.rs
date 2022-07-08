@@ -13,7 +13,7 @@ impl RunLocalError {
 
 impl fmt::Display for RunLocalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
+        write!(f, "Run local error: {}", self.msg)
     }
 }
 
