@@ -57,6 +57,7 @@ impl GitHelper {
             ).await?;
             blockchain::snapshot::push_diff(
                 self, 
+                &current_commit_id,
                 file_path, 
                 &file_diff
             ).await?;
