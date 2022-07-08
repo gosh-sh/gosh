@@ -8,4 +8,4 @@ macro_rules! provide {
 
 provide!(find_tree_blob_occurrences);
 provide!(try_find_tree_leaf);
-
+provide!(generate_blob_diff);

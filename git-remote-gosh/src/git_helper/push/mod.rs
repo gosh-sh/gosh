@@ -28,13 +28,6 @@ mod utilities;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 impl GitHelper {
-    async fn generate_file_diff(
-        &self,
-        blob_id_from: &ObjectId,
-        blob_id_to: &ObjectId,
-    ) -> Result<Vec<u8>> {
-        todo!();
-    }
     async fn push_new_blob(&mut self, file_path: &str, blob_id: &ObjectId, commit_id: &ObjectId) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
         let content = self.local_repository().objects
@@ -112,9 +105,11 @@ impl GitHelper {
                 continue;
             }
             let prev_state_blob_id = prev_state_blob_id.expect("guarded");
-            let file_diff = self
-                .generate_file_diff(&prev_state_blob_id, blob_id)
-                .await?;
+            let file_diff = utilities::generate_blob_diff(
+                &self.local_repository().objects,
+                &prev_state_blob_id, 
+                blob_id
+            ).await?;
             blockchain::snapshot::push_diff(
                 self, 
                 &current_commit_id, 
