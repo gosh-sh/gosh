@@ -70,7 +70,8 @@
 				{"name":"value2","type":"optional(string)"},
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"bytes"},
-				{"name":"value5","type":"optional(string)"}
+				{"name":"value5","type":"optional(string)"},
+				{"name":"value6","type":"string"}
 			]
 		},
 		{
