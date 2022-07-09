@@ -17,7 +17,7 @@ import "./modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "0.4.1";
+    string constant version = "0.5.0";
     
     uint256 _pubkey;
     TvmCell m_CommitCode;
@@ -98,11 +98,11 @@ contract Repository is Modifiers{
     }
     
     //Diff part
-    function SendDiff(uint256 value1, uint128 index, string branch, address commit) public view {
+    function SendDiff(uint256 value1, uint128 index, string branch, address commit, uint128 number) public view {
         tvm.accept();
         require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value, number);
     }
 
     //Selfdestruct
@@ -111,15 +111,15 @@ contract Repository is Modifiers{
     }
     
     //Setters    
-    function setCommit(string nameBranch, address oldcommit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
+    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         if (_Branches[nameBranch].value != oldcommit) {
-            Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}();
+            Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}(number);
             return;
         }
         _Branches[nameBranch] = Item(nameBranch, getCommitAddr(namecommit));
-        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}();
+        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
     
     function setHEAD(uint256 pubkey, string nameBranch, uint128 index) public {
