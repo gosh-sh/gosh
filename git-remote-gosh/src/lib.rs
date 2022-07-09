@@ -32,7 +32,7 @@ pub mod git;
 pub(crate) mod git_helper;
 pub mod ipfs;
 pub(crate) mod logger;
-pub mod util;
+pub mod utilities;
 
 use std::{env::args, error::Error};
 

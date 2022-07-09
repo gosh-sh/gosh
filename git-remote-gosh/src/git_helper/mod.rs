@@ -16,7 +16,7 @@ use crate::config::Config;
 use crate::git::get_refs;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
-use crate::util::Remote;
+use crate::utilities::Remote;
 use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
