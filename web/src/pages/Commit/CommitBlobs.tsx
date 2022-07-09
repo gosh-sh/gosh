@@ -51,11 +51,12 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const getMessages = async (
         addr: string,
         commit: string,
+        retry: boolean = true,
         approved: boolean = false,
         reached: boolean = false,
         cursor: string = '',
         msgs: any[] = []
-    ) => {
+    ): Promise<any> => {
         const queryString = `
         query{
             blockchain{
@@ -97,6 +98,17 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     allow_partial: true,
                 });
                 console.debug('Decoded', decoded);
+
+                // Retry reading messages if needed message not found
+                if (
+                    retry &&
+                    ['constructor', 'approve', 'cancelDiff'].indexOf(decoded.name) < 0
+                ) {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    return await getMessages(addr, commit);
+                } else retry = false;
+
+                // Process message by type
                 if (decoded.name === 'approve') approved = true;
                 else if (decoded.name === 'cancelDiff') approved = false;
                 else if (decoded.name === 'destroy') return { msgs, reached };
@@ -109,9 +121,10 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         }
 
         if (messages.pageInfo.hasPreviousPage) {
-            await getMessages(
+            return await getMessages(
                 addr,
                 commit,
+                retry,
                 approved,
                 reached,
                 messages.pageInfo.startCursor,
