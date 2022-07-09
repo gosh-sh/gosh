@@ -166,8 +166,8 @@ contract Snapshot is Modifiers {
     }
 
     //Getters
-    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string)) {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold);
+    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string), string) {
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
     }
 
     function getName() external view returns(string) {
