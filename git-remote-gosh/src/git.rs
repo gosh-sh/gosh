@@ -21,12 +21,14 @@ lazy_static! {
     };
 }
 
+/*
 pub fn open_repo() -> Result<Repository, String> {
     match Repository::open_from_env() {
         Ok(repo) => Ok(repo),
         Err(e) => Err(format!("error: failed to open local repository: {e}")),
     }
 }
+*/
 
 fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     let odb = repo.odb().ok()?;

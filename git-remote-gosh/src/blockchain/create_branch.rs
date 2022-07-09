@@ -2,6 +2,7 @@ use crate::git_helper::GitHelper;
 use git_hash::ObjectId;
 use git_object::tree;
 use git_traverse::tree::recorder;
+use crate::blockchain;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -37,7 +38,14 @@ impl<'a> CreateBranchOperation<'a> {
     }
 
     async fn deploy_snapshot(&mut self, file_path: &str, data: &[u8]) -> Result<()> {
-        todo!();
+        blockchain::snapshot::push_initial_snapshot(
+            self.context,
+            &self.ancestor_commit,
+            &self.new_branch,
+            file_path,
+            data
+        ).await?;
+        Ok(())
     }
 
     async fn push_initial_snapshots(&mut self) -> Result<()> {
@@ -61,6 +69,9 @@ impl<'a> CreateBranchOperation<'a> {
                 }
             })
             .collect();
+        //for snapshot in snapshots_to_deploy {
+            //self.deploy_snapshot(
+        //}  
         // for each snapshot call wallet -> deployNewSnapshot
         //
         todo!();
