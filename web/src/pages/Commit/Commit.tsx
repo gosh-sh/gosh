@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { IGoshRepository, TGoshCommit } from '../../types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { getCommit, getCommitTime } from '../../helpers';
@@ -11,7 +11,7 @@ import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
 
 const CommitPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { branchName, commitName } = useParams();
+    const { daoName, repoName, branchName, commitName } = useParams();
     const { branch } = useGoshRepoBranches(goshRepo, branchName);
     const [commit, setCommit] = useState<TGoshCommit>();
 
@@ -82,11 +82,28 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    {branch && commitName && (
+                    {branch && commit.branch !== branch.name && (
+                        <div className="mt-4">
+                            <p className="text-sm">
+                                This commit was created in branch <b>{commit.branch}</b>
+                            </p>
+                            <p className="text-sm">
+                                To see the commit diff follow this
+                                <Link
+                                    to={`/${daoName}/${repoName}/commits/${commit.branch}/${commit.name}`}
+                                    className="ml-1 underline"
+                                >
+                                    link
+                                </Link>
+                            </p>
+                        </div>
+                    )}
+
+                    {branch && commit.branch === branch.name && (
                         <CommitBlobs
                             repo={goshRepo}
                             branch={branch.name}
-                            commit={commitName}
+                            commit={commit.name}
                             className="mt-4"
                         />
                     )}

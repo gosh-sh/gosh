@@ -70,7 +70,8 @@
 				{"name":"value2","type":"optional(string)"},
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"bytes"},
-				{"name":"value5","type":"optional(string)"}
+				{"name":"value5","type":"optional(string)"},
+				{"name":"value6","type":"string"}
 			]
 		},
 		{
@@ -87,6 +88,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBaseCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
 			]
 		},
 		{
@@ -108,6 +117,7 @@
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"version","type":"string"},
+		{"name":"_baseCommit","type":"string"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
