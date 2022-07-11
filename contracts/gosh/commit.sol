@@ -160,8 +160,17 @@ contract Commit is Modifiers {
         getMoney(_pubkey);
     }
     
-    function _sendAllDiff(string branch, address branchcommit, uint128 index) public view senderIs(address(this)) {
+    function _sendAllDiff(string branch, address branchcommit, uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        if (_number == 0) { 
+            _approved = 0;
+            _continueDiff = false;
+            _diffcheck = true;
+            getMoney(_pubkey);
+            if (_continueChain == true) { return; }
+            acceptAll(branch, branchcommit);
+            return;
+        }
         if (index >= _number) { return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index + 1);
@@ -300,11 +309,26 @@ contract Commit is Modifiers {
         getMoney(_pubkey);
     }
     
+    function checkFallbackDiff (uint128 index, address sender) public senderIs(address(this)){
+        if (index >= _number) { return; }
+        if (sender == getDiffAddress(_nameCommit, index, 0)) { 
+            _continueDiff = false;
+            _diffcheck = false;
+            getMoney(_pubkey);
+            _approved = 0;
+            if (_continueChain == true) { return; }
+            acceptAll("", sender);
+        }
+        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, msg.sender);
+        getMoney(_pubkey);
+    }
+    
     //Fallback/Receive
     receive() external view {
         if (msg.sender == _tree) {
             this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
         }
+        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(0, msg.sender);
     }
     
     //Selfdestruct
