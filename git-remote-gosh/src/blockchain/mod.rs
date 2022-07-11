@@ -370,6 +370,7 @@ pub async fn set_head(
     Ok(())
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn remote_rev_parse(
     context: &TonClient,
     repository_address: &str,
