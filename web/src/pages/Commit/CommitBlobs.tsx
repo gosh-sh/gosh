@@ -51,11 +51,12 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const getMessages = async (
         addr: string,
         commit: string,
-        approved: boolean = false,
+        retry: boolean = true,
         reached: boolean = false,
+        approved: boolean = false,
         cursor: string = '',
         msgs: any[] = []
-    ) => {
+    ): Promise<any> => {
         const queryString = `
         query{
             blockchain{
@@ -97,79 +98,169 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     allow_partial: true,
                 });
                 console.debug('Decoded', decoded);
-                if (decoded.name === 'approve') approved = true;
+
+                // Retry reading messages if needed message not found
+                if (
+                    retry &&
+                    ['constructor', 'approve', 'cancelDiff'].indexOf(decoded.name) < 0
+                ) {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    return await getMessages(addr, commit);
+                } else retry = false;
+
+                // Process message by type
+                if (decoded.name === 'constructor') {
+                    msgs.push(decoded.value);
+                    return { msgs, prevcommit: decoded.value.commit };
+                } else if (decoded.name === 'approve') approved = true;
                 else if (decoded.name === 'cancelDiff') approved = false;
-                else if (decoded.name === 'destroy') return { msgs, reached };
+                else if (decoded.name === 'destroy') return { msgs, prevcommit: commit };
                 else if (approved && decoded.name === 'applyDiff') {
                     msgs.push(decoded.value);
-                    if (reached) return { msgs, reached };
+                    if (reached)
+                        return {
+                            msgs,
+                            prevcommit: decoded.value.namecommit,
+                        };
                     if (decoded.value.namecommit === commit) reached = true;
                 }
             } catch {}
         }
 
         if (messages.pageInfo.hasPreviousPage) {
-            await getMessages(
+            return await getMessages(
                 addr,
                 commit,
-                approved,
+                retry,
                 reached,
+                approved,
                 messages.pageInfo.startCursor,
                 msgs
             );
         }
-        return { msgs, reached };
+        return { msgs, prevcommit: commit };
     };
 
-    const applyMessages = async (
+    // const applyMessages = async (
+    //     client: TonClient,
+    //     commit: string,
+    //     messages: any[],
+    //     blob: any
+    // ) => {
+    //     let _reached = false;
+    //     for (let i = 0; i < messages.length; i++) {
+    //         const item = messages[i];
+    //         if (!_reached && item.namecommit === commit) _reached = true;
+
+    //         if (item.diff.ipfs) {
+    //             const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
+    //             const decompressed = await zstd.decompress(client, compressed, true);
+    //             console.debug(decompressed);
+    //             if (!_reached) blob.curr = decompressed;
+    //             else blob.prev = decompressed;
+
+    //             console.debug('ipfs blob', blob);
+    //         } else {
+    //             const prevItem = i > 0 ? messages[i - 1] : null;
+    //             if (prevItem && prevItem.diff.ipfs) {
+    //                 if (prevItem.namecommit === commit) {
+    //                     blob.curr = blob.prev;
+    //                     blob.prev = blob.snapdata.patched;
+    //                     continue;
+    //                 } else blob.curr = blob.snapdata.patched;
+    //             }
+
+    //             if (prevItem && !prevItem.diff.ipfs) {
+    //                 if (prevItem.namecommit === commit) continue;
+    //             }
+
+    //             const patch = await zstd.decompress(
+    //                 repo.account.client,
+    //                 Buffer.from(item.diff.patch, 'hex').toString('base64'),
+    //                 true
+    //             );
+
+    //             const reversedPatch = reversePatch(patch);
+    //             const reversed = Diff.applyPatch(blob.curr, reversedPatch);
+    //             if (!_reached) blob.curr = reversed;
+    //             else blob.prev = reversed;
+
+    //             console.debug('patch blob', blob);
+    //         }
+    //     }
+
+    //     return blob;
+    // };
+
+    const getBlobAtCommit = async (
         client: TonClient,
+        snapaddr: string,
         commit: string,
-        messages: any[],
-        blob: any
+        treeitem: TGoshTreeItem
     ) => {
-        let _reached = false;
-        for (let i = 0; i < messages.length; i++) {
-            const item = messages[i];
-            if (!_reached && item.namecommit === commit) _reached = true;
+        const snap = new GoshSnapshot(repo.account.client, snapaddr);
+        const snapdata = await snap.getSnapshot(commit, treeitem);
+        console.debug('Snap data', snapdata);
+        if (Buffer.isBuffer(snapdata.content))
+            return { content: snapdata.content, deployed: true };
 
-            if (item.diff.ipfs) {
-                const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
+        const { msgs, prevcommit } = await getMessages(snapaddr, commit);
+        console.debug('Snap messages', msgs, prevcommit);
+
+        let content = snapdata.content;
+        let deployed = false;
+        for (const message of msgs) {
+            const msgcommit = message.diff ? message.namecommit : message.commit;
+            const msgipfs = message.diff ? message.diff.ipfs : message.ipfsdata;
+            const msgpatch = message.diff ? message.diff.patch : null;
+            const msgdata = message.diff ? null : message.data;
+
+            console.debug('Message commit', msgcommit);
+            console.debug('Message ipfs', msgipfs);
+            console.debug('Message patch', msgpatch);
+            console.debug('Message data', msgdata);
+
+            if (msgipfs) {
+                const compressed = (await loadFromIPFS(msgipfs)).toString();
                 const decompressed = await zstd.decompress(client, compressed, true);
-                console.debug(decompressed);
-                if (!_reached) blob.curr = decompressed;
-                else blob.prev = decompressed;
-
-                console.debug('ipfs blob', blob);
-            } else {
-                const prevItem = i > 0 ? messages[i - 1] : null;
-                if (prevItem && prevItem.diff.ipfs) {
-                    if (prevItem.namecommit === commit) {
-                        blob.curr = blob.prev;
-                        blob.prev = blob.snapdata.patched;
-                        continue;
-                    } else blob.curr = blob.snapdata.patched;
-                }
-
-                if (prevItem && !prevItem.diff.ipfs) {
-                    if (prevItem.namecommit === commit) continue;
-                }
-
+                content = decompressed;
+                if (message.ipfsdata) deployed = true;
+            } else if (msgdata) {
+                const compressed = Buffer.from(msgdata, 'hex').toString('base64');
+                const decompressed = await zstd.decompress(client, compressed, true);
+                content = decompressed;
+                deployed = true;
+            } else if (msgpatch && msgcommit !== commit) {
                 const patch = await zstd.decompress(
                     repo.account.client,
-                    Buffer.from(item.diff.patch, 'hex').toString('base64'),
+                    Buffer.from(msgpatch, 'hex').toString('base64'),
                     true
                 );
-
                 const reversedPatch = reversePatch(patch);
-                const reversed = Diff.applyPatch(blob.curr, reversedPatch);
-                if (!_reached) blob.curr = reversed;
-                else blob.prev = reversed;
-
-                console.debug('patch blob', blob);
+                const reversed = Diff.applyPatch(content, reversedPatch);
+                content = reversed;
             }
+
+            if (msgcommit === commit) break;
+        }
+        console.debug('Result content', content);
+        return { content, deployed, prevcommit };
+    };
+
+    const getDiff = async (
+        client: TonClient,
+        snapaddr: string,
+        commit: string,
+        treeitem: TGoshTreeItem
+    ) => {
+        const curr = await getBlobAtCommit(client, snapaddr, commit, treeitem);
+
+        let prev;
+        if (!curr.deployed) {
+            prev = await getBlobAtCommit(client, snapaddr, curr.prevcommit, treeitem);
         }
 
-        return blob;
+        return { curr: curr.content, prev: prev?.content || '' };
     };
 
     const onLoadDiff = async (index: number) => {
@@ -179,12 +270,12 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 else return item;
             })
         );
-        let blob = { ...blobs[index] };
-        const { msgs } = await getMessages(blob.snapaddr, blob.commit);
-        blob = await applyMessages(repo.account.client, blob.commit, msgs, blob);
-        setBlobs((curr) =>
-            curr.map((item, i) => {
-                if (i === index) return { ...blob, isFetching: false, showDiff: true };
+        const { snap, commit, treeitem } = blobs[index];
+        const { curr, prev } = await getDiff(repo.account.client, snap, commit, treeitem);
+        setBlobs((state) =>
+            state.map((item, i) => {
+                if (i === index)
+                    return { ...item, curr, prev, isFetching: false, showDiff: true };
                 else return item;
             })
         );
@@ -217,46 +308,33 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             }
             console.debug('Updated items', updatedItems);
 
-            // Iterate updated items and get snapshots
+            // Iterate updated items and get snapshots states
             const updatedBlobs: any[] = await Promise.all(
                 updatedItems.map(async (item, index) => {
                     const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`;
                     const snapaddr = await repo.getSnapshotAddr(branch, fullpath);
-                    console.debug(snapaddr);
-                    const snap = new GoshSnapshot(repo.account.client, snapaddr);
-                    const data = await snap.getSnapshot(commitName, item);
-                    const messages =
-                        index < 5 ? await getMessages(snapaddr, commitName) : [];
+                    const diff =
+                        index < 5
+                            ? await getDiff(
+                                  repo.account.client,
+                                  snapaddr,
+                                  commitName,
+                                  item
+                              )
+                            : { curr: '', prev: '' };
+
                     return {
-                        item,
-                        snapaddr,
+                        snap: snapaddr,
                         commit: commitName,
+                        treeitem: item,
                         fullpath,
-                        snapdata: data,
-                        messages,
-                        prev: '',
-                        curr: data.content,
-                        showDiff: index < 5,
+                        ...diff,
                         isFetching: false,
+                        showDiff: index < 5,
                     };
                 })
             );
             console.debug('Updated blobs', updatedBlobs);
-
-            // Apply patches
-            await Promise.all(
-                updatedBlobs
-                    .filter(({ showDiff }) => showDiff)
-                    .map(async (blob) => {
-                        const { msgs } = blob.messages;
-                        blob = await applyMessages(
-                            repo.account.client,
-                            commitName,
-                            msgs,
-                            blob
-                        );
-                    })
-            );
 
             setBlobs(updatedBlobs);
             setIsFetched(true);

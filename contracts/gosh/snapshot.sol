@@ -18,6 +18,7 @@ import "diff.sol";
 contract Snapshot is Modifiers {
     string version = "0.4.1";
     
+    string _baseCommit;
     uint256 _pubkey;
     address _rootRepo;
     bytes _snapshot;
@@ -58,6 +59,7 @@ contract Snapshot is Modifiers {
         _snapshot = data;
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
+        _baseCommit = commit;
         Commit(_buildCommitAddr(_oldcommits)).getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
     }
     
@@ -164,8 +166,8 @@ contract Snapshot is Modifiers {
     }
 
     //Getters
-    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string)) {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold);
+    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string), string) {
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
     }
 
     function getName() external view returns(string) {
@@ -174,6 +176,10 @@ contract Snapshot is Modifiers {
 
     function getRepoAdress() external view returns(address) {
         return _rootRepo;
+    }
+    
+    function getBaseCommit() external view returns(string) {
+        return _baseCommit;
     }
 
     function getVersion() external view returns(string) {
