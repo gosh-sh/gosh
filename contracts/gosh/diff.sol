@@ -187,7 +187,7 @@ contract DiffC is Modifiers {
         if (res != true) { 
             if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1); }
             else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
-            this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; 
+            return; 
         }
         Commit(_buildCommitAddr(commit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index1, _index2);
     
@@ -210,9 +210,11 @@ contract DiffC is Modifiers {
     function approveDiffDiff(bool res) public senderIs(getDiffAddress(_index2 + 1)){
         tvm.accept();
         if (res != true) { 
-            if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1); }
+            if (_index2 == 0) { 
+                Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1); 
+                this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
+            }
             else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
-            this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             return; 
         }
         getMoney(_pubkey);
