@@ -19,8 +19,6 @@ pub struct DeployCommitParams {
     pub parents: Vec<String>,
     #[serde(rename = "tree")]
     pub tree_addr: String,
-    #[serde(rename = "diff")]
-    pub diff_addr: String,
 }
 
 #[instrument(level = "debug")]
@@ -40,7 +38,12 @@ pub async fn push_commit(
 
     let mut commit_iter = commit.try_into_commit_iter().unwrap();
     let tree_id = commit_iter.tree_id()?;
-    let parents: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
+    let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
+    let mut parents: Vec<String> = vec![];
+    for id in parent_ids {
+        let parent = blockchain::get_commit_address(&context.es_client, &context.repo_addr, &id.to_string()).await?;
+        parents.push(parent);
+    }
     let tree_addr = context.calculate_tree_address(tree_id).await?;
 
     let args = DeployCommitParams {
@@ -49,7 +52,6 @@ pub async fn push_commit(
         commit_id: commit_id.to_string(),
         raw_commit,
         parents,
-        diff_addr: tree_addr.clone(), // will be removed
         tree_addr,
     };
     log::debug!("deployCommit params: {:?}", args);
