@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{call, user_wallet},
+    blockchain::{call, get_commit_address, user_wallet},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -41,7 +41,7 @@ pub async fn push_commit(
     let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
     let mut parents: Vec<String> = vec![];
     for id in parent_ids {
-        let parent = blockchain::get_commit_address(&context.es_client, &context.repo_addr, &id.to_string()).await?;
+        let parent = get_commit_address(&context.es_client, &context.repo_addr, &id.to_string()).await?;
         parents.push(parent);
     }
     let tree_addr = context.calculate_tree_address(tree_id).await?;
