@@ -1,18 +1,14 @@
 #![allow(unused_variables)]
-use base64;
-use base64_serde::base64_serde_type;
 
-use std::borrow::Borrow;
-use std::{env, fmt, sync::Arc, error::Error};
-use serde::{Deserialize, Deserializer, Serialize};
-use serde::de::Visitor;
 use serde::de::Error as SerdeError;
+use serde::de::Visitor;
+use serde::{Deserialize, Deserializer, Serialize};
 
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(transparent)]
 pub struct Number(u8);
-
 
 impl<'de> Deserialize<'de> for Number {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -52,5 +48,3 @@ impl<'de> Deserialize<'de> for Number {
         deserializer.deserialize_any(MyVisitor)
     }
 }
-
-

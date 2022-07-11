@@ -3,7 +3,6 @@ use std::env;
 use std::error::Error;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-use ton_client::crypto::KeyPair;
 
 use crate::blockchain::{
     create_client,
@@ -11,25 +10,25 @@ use crate::blockchain::{
     get_repo_address,
     // set_head,
     TonClient,
+    Tree,
 };
 use crate::config::Config;
 use crate::git::get_refs;
 use crate::ipfs::IpfsService;
-use crate::logger;
-use crate::util::Remote;
+use crate::logger::GitHelperLogger as Logger;
+use crate::utilities::Remote;
 use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper {
-    config: Config,
-    es_client: TonClient,
-    ipfs_client: IpfsService,
-    remote: Remote,
-    repo_addr: String,
-    verbosity: u8,
-    logger: log4rs::Handle,
+    pub config: Config,
+    pub es_client: TonClient,
+    pub ipfs_client: IpfsService,
+    pub remote: Remote,
+    pub repo_addr: String,
     local_git_repository: git_repository::Repository,
+    logger: Logger,
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -38,16 +37,27 @@ mod fetch;
 // Note: this module implements push method on GitHelper
 mod push;
 
+mod fmt;
+
 impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         return &mut self.local_git_repository;
     }
 
-    async fn build(
-        config: Config,
-        url: &str,
-        logger: log4rs::Handle,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub async fn calculate_tree_address(
+        &self,
+        tree_id: git_hash::ObjectId,
+    ) -> Result<String, Box<dyn Error>> {
+        Tree::calculate_address(
+            &self.es_client,
+            self.remote.gosh.as_str(),
+            self.repo_addr.as_str(),
+            &tree_id.to_string(),
+        )
+        .await
+    }
+
+    async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
         let repo_addr =
@@ -62,9 +72,8 @@ impl GitHelper {
             ipfs_client,
             remote,
             repo_addr,
-            verbosity: 0,
-            logger,
             local_git_repository,
+            logger,
         })
     }
 
@@ -97,15 +106,14 @@ impl GitHelper {
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        // TODO: maybe connect verbosity to logging?
-        self.verbosity = verbosity;
+        self.logger.set_verbosity(verbosity).ok();
     }
 }
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: log4rs::Handle) -> Result<(), Box<dyn Error>> {
+pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dyn Error>> {
     let mut helper = GitHelper::build(config, url, logger).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
@@ -120,7 +128,7 @@ pub async fn run(config: Config, url: &str, logger: log4rs::Handle) -> Result<()
         let arg2 = iter.next();
 
         log::debug!("Line: {line}");
-        log::debug!("> {cmd:?} {arg1:?} {arg2:?}");
+        log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
 
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,

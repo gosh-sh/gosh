@@ -139,16 +139,22 @@ contract DiffC is Modifiers {
     }
     
     //Diff part        
-    function sendDiffAll(address branchcommit) public {
+    function sendDiffAll(string branch, address branchcommit) public {
         tvm.accept();
         require(_entry == false, ERR_DIFF_ALREADY_USED);
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
+        if (branch != _nameBranch) { 
+            Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, branch, branchcommit);
+            return;
+        }
         _entry = true;
         _branchcommit = branchcommit;
         if (_diff.length != 0) { 
             this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
+            getMoney(_pubkey);
+            return;
         }
-        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+        if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, branch, _branchcommit);  } 
         else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         getMoney(_pubkey);
     }
@@ -159,7 +165,7 @@ contract DiffC is Modifiers {
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
             if (_last == false) { 
-                DiffC(getDiffAddress(_index + 1)).sendDiffAll{value : 0.2 ton, flag: 1}(branchcommit);
+                DiffC(getDiffAddress(_index + 1)).sendDiffAll{value : 0.2 ton, flag: 1}(_nameBranch, branchcommit);
             }
             return; 
         }
@@ -177,7 +183,11 @@ contract DiffC is Modifiers {
         }
         getMoney(_pubkey);
         if (isIt == false) { return; }
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (res != true) { 
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit); }
+            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; 
+        }
         Commit(_buildCommitAddr(commit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index);
     
     }
@@ -187,8 +197,10 @@ contract DiffC is Modifiers {
         getMoney(_pubkey);
         if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
-        if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit);  } 
             else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         }
         getMoney(_pubkey);
@@ -196,12 +208,19 @@ contract DiffC is Modifiers {
     
     function approveDiffDiff(bool res) public senderIs(getDiffAddress(_index + 1)){
         tvm.accept();
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (res != true) { 
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit); }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
+            return; 
+        }
         getMoney(_pubkey);
         _approved += 1;
-        if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
-            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); selfdestruct(_buildCommitAddr(_nameCommit));}
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
+            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit);  } 
+            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); }
         }
         getMoney(_pubkey);
     }
@@ -211,11 +230,10 @@ contract DiffC is Modifiers {
         tvm.accept();
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
-            if (_last == true) { return; }
-            DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}();
+            if (_last == false) { DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}();
+        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index);
         Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], index);
         getMoney(_pubkey);
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
@@ -230,7 +248,7 @@ contract DiffC is Modifiers {
             _approved = 0;
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}();
+        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index);
         getMoney(_pubkey);
         this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
     }

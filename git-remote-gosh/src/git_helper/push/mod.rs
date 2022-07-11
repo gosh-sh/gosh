@@ -1,106 +1,256 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain;
+use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use git2::Repository;
 use git_diff;
 use git_hash::{self, ObjectId};
 use git_object;
 use git_odb;
+use git_odb::FindExt;
 use git_odb::{Find, Write};
+use git_repository::OdbHandle;
 use git_repository::{self, Object};
 use std::env::current_dir;
 use std::os;
-use std::process::Command;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::{
     collections::{HashSet, VecDeque},
     error::Error,
     str::FromStr,
     vec::Vec,
 };
+mod utilities;
 
-
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 impl GitHelper {
-    async fn push_ref(
+    #[instrument(level = "debug")]
+    async fn push_new_blob(
         &mut self,
-        local_ref: &str,
-        remote_ref: &str,
-    ) -> Result<String, Box<dyn Error>> {
+        file_path: &str,
+        blob_id: &ObjectId,
+        commit_id: &ObjectId,
+        branch_name: &str,
+    ) -> Result<()> {
+        let mut buffer: Vec<u8> = Vec::new();
+        let content = self
+            .local_repository()
+            .objects
+            .try_find(blob_id, &mut buffer)?
+            .expect("blob must be in the local repository")
+            .decode()?
+            .as_blob()
+            .expect("It must be a blob object")
+            .data;
+
+        blockchain::snapshot::push_initial_snapshot(
+            self,
+            commit_id,
+            branch_name,
+            file_path,
+            content,
+        )
+        .await?;
+        Ok(())
+    }
+
+    #[instrument(level = "debug")]
+    fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
+        let mut buffer: Vec<u8> = Vec::new();
+        return self
+            .local_repository()
+            .objects
+            .try_find(commit_id, &mut buffer)
+            .expect("odb must work")
+            .expect("commit must be in the local repository")
+            .decode()
+            .expect("Commit is commit")
+            .as_commit()
+            .expect("It must be a commit object")
+            .tree();
+    }
+
+    #[instrument(level = "debug")]
+    async fn push_blob(
+        &mut self,
+        blob_id: &ObjectId,
+        prev_commit_id: &Option<ObjectId>,
+        current_commit_id: &ObjectId,
+        branch_name: &str,
+    ) -> Result<()> {
+        let prev_tree_root_id: Option<ObjectId> = {
+            let buffer: Vec<u8> = Vec::new();
+            match prev_commit_id {
+                None => None,
+                Some(id) => Some(self.tree_root_for_commit(id)),
+            }
+        };
+        let mut blob_file_path_occurrences: Vec<PathBuf> = Vec::new();
+        {
+            let tree_root_id = self.tree_root_for_commit(current_commit_id);
+            utilities::find_tree_blob_occurrences(
+                &PathBuf::new(),
+                &self.local_repository().objects,
+                &tree_root_id,
+                &blob_id,
+                &mut blob_file_path_occurrences,
+            )?;
+        }
+        for file_path in blob_file_path_occurrences.iter() {
+            let file_path = into_tree_contract_complient_path(file_path);
+            let prev_state_blob_id: Option<ObjectId> = utilities::try_find_tree_leaf(
+                &self.local_repository().objects,
+                prev_tree_root_id,
+                &PathBuf::from(&file_path),
+            )?;
+            if prev_state_blob_id.is_none() {
+                // This path is new
+                // (we're not handling renames yet)
+                self.push_new_blob(&file_path, blob_id, current_commit_id, branch_name)
+                    .await?;
+                continue;
+            }
+            let prev_state_blob_id = prev_state_blob_id.expect("guarded");
+            let file_diff = utilities::generate_blob_diff(
+                &self.local_repository().objects,
+                &prev_state_blob_id,
+                blob_id,
+            )
+            .await?;
+            blockchain::snapshot::push_diff(
+                self,
+                &current_commit_id,
+                branch_name,
+                blob_id,
+                &file_path,
+                &file_diff,
+            )
+            .await?;
+        }
+        Ok(())
+    }
+
+    // find ancestor commit
+    #[instrument(level = "debug")]
+    async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
-        let remote_branch_name: &str = todo!();  
+        let branch_name: &str = {
+            let mut iter = local_ref.rsplit("/");
+            iter.next().unwrap()
+        };
         // 1. Check if branch exists and ready in the blockchain
-        let is_branch_exist_on_blockchain = blockchain::branch_list(&self.es_client, &self.repo_addr)
-            .await?
-            .iter()
-            .find(|(key, _ )| key == remote_branch_name)
-            .is_some();
+        let parsed_remote_ref =
+            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref).await?;
 
         // 2. Find ancestor commit in local repo
-        // 3. If branch needs to be created do so
-        //    ---
-        //    Otherwise check if a head of the branch 
-        //    is pointing to the ancestor commit. Fail 
-        //    if it doesn't
-        // 4. Do prepare commit for all commits
-        // 4. Deploy tree objects of all commits
-        // 5. Deploy all **new** snapshot
-        // 6. Deploy diff contracts 
-        // 5. Deploy all commit objects
-        // 
-        // TODO: git rev-list?
-        let repo = self.local_repository();
+        let ancestor_commit_id = if parsed_remote_ref == None {
+            // 3. If branch needs to be created do so
+            //    ---
+            //    Otherwise check if a head of the branch
+            //    is pointing to the ancestor commit. Fail
+            //    if it doesn't
+            // todo!();
+            "".to_owned()
+        } else {
+            let remote_commit_addr = parsed_remote_ref.unwrap();
+            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
+                .await?
+                .unwrap();
+            commit.sha
+        };
 
-        let remote_commit_id = repo
-            .find_reference(remote_ref)?
+        let latest_commit_id = self
+            .local_repository()
+            .find_reference(local_ref)?
             .into_fully_peeled_id()?
             .object()?
             .id;
 
-        log::debug!("remote commit id {remote_commit_id}");
+        log::debug!("latest commit id {latest_commit_id}");
+
+        // TODO: git rev-list?
+
+        let mut cmd_args: Vec<&str> = vec![
+            "rev-list",
+            "--objects",
+            "--in-commit-order",
+            "--reverse",
+            local_ref,
+        ];
+
+        let exclude;
+        if ancestor_commit_id != "" {
+            exclude = format!("^{}", ancestor_commit_id);
+            cmd_args.push(&exclude);
+        }
 
         let cmd = Command::new("git")
-            .args([
-                "rev-list",
-                "--objects",
-                "--in-commit-order",
-                "--reverse",
-                format!("{local_ref}").as_str(),
-                format!("^{remote_commit_id}").as_str(),
-            ])
+            .args(cmd_args)
+            .stdout(Stdio::piped())
             .spawn()
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
-        let mut commit_id = None;
+        // 4. Do prepare commit for all commits
+        // 5. Deploy tree objects of all commits
+
+        // 6. Deploy all **new** snapshot
+        // 7. Deploy diff contracts
+        // 8. Deploy all commit objects
+
+        let mut prev_commit_id: Option<ObjectId> = None;
+        let mut commit_id: Option<ObjectId> = {
+            if ancestor_commit_id != "" {
+                Some(ObjectId::from_str(&ancestor_commit_id)?)
+            } else {
+                None
+            }
+        };
+
+        // TODO: Handle deleted fules
+        // Note: These files will NOT appear in the list here
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;
-                    // kind?
-                    let object = repo.find_object(object_id)?;
-                    match object.kind {
+                    let object_kind = self.local_repository().find_object(object_id)?.kind;
+                    match object_kind {
                         git_object::Kind::Commit => {
-                            commit_id = Some(object.id.clone());
-                            todo!();
+                            blockchain::push_commit(self, &object_id, branch_name).await?;
+                            prev_commit_id = commit_id;
+                            commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
+                            self.push_blob(
+                                &object_id,
+                                &prev_commit_id,
+                                commit_id.as_ref().unwrap(),
+                                branch_name,
+                            )
+                            .await?;
                             // branch
                             // commit_id
                             // commit_data
                             // Vec<diff>
                         }
-                        git_object::Kind::Tag => todo!(),
-                        git_object::Kind::Tree => todo!(),
+                        // Not supported yet
+                        git_object::Kind::Tag => unimplemented!(),
+                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
                     }
                 }
                 None => break,
             }
         }
 
+        // 9. Set commit (move HEAD)
+        //
         let result_ok = format!("ok {local_ref}");
         Ok(result_ok)
     }
-    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>, Box<dyn Error>> {
+
+    #[instrument(level = "debug")]
+    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
@@ -112,7 +262,7 @@ impl GitHelper {
     }
 }
 
-async fn delete_remote_ref(remote_ref: &str) -> Result<String, String> {
+async fn delete_remote_ref(remote_ref: &str) -> Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
@@ -134,7 +284,7 @@ mod tests {
     // }
 
     #[tokio::test]
-    async fn test_push() -> Result<(), Box<dyn Error>> {
+    async fn test_push() -> Result<()> {
         log::info!("Preparing repository for tests");
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
@@ -178,7 +328,7 @@ mod tests {
         println!("commit {:?}", commit.id());
 
         // get current branch
-        let mut branch = Branch::wrap(head);
+        let branch = Branch::wrap(head);
         // set upstream
         // branch set upstream "origin"
         // branch.set_upstream(repo.remotes()?.get(0))?;

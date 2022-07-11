@@ -12,7 +12,6 @@
 				{"name":"pubkeysender","type":"uint256"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
-				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
@@ -28,7 +27,7 @@
 			"name": "TreeAnswer",
 			"inputs": [
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"string"}],"name":"value0","type":"tuple"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"value1","type":"optional(tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value1","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]
@@ -50,6 +49,7 @@
 		{
 			"name": "sendDiffAll",
 			"inputs": [
+				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"}
 			],
 			"outputs": [
@@ -108,6 +108,15 @@
 			]
 		},
 		{
+			"name": "checkSender",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 				{"name":"index","type":"uint128"}
@@ -156,7 +165,6 @@
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameBranch","type":"string"},
-		{"name":"_commit","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},
 		{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"_diff","type":"tuple[]"},

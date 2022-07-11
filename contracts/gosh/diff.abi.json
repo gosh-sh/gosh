@@ -49,6 +49,7 @@
 		{
 			"name": "sendDiffAll",
 			"inputs": [
+				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"}
 			],
 			"outputs": [

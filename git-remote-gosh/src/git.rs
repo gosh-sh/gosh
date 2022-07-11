@@ -1,7 +1,7 @@
+use git2::{Object, ObjectType, Oid, Repository};
 use std::collections::HashMap;
-use git2::{ Repository, Object, ObjectType, Oid };
 
-use crate::blockchain::{TonClient, branch_list, get_commit_by_addr};
+use crate::blockchain::{branch_list, get_commit_by_addr, TonClient};
 
 const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
 // pub const EMPTY_TREE_SHA: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"; // $ echo -n '' | git hash-object --stdin -t tree
@@ -21,12 +21,14 @@ lazy_static! {
     };
 }
 
+/*
 pub fn open_repo() -> Result<Repository, String> {
     match Repository::open_from_env() {
         Ok(repo) => Ok(repo),
         Err(e) => Err(format!("error: failed to open local repository: {e}")),
     }
 }
+*/
 
 fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     let odb = repo.odb().ok()?;
@@ -53,16 +55,22 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
 }
 
 pub async fn get_refs(context: &TonClient, repo_addr: &str) -> Result<Option<Vec<String>>, String> {
-    let _list = branch_list(context, repo_addr).await.map_err(|e| e.description().to_string())?;
+    let _list = branch_list(context, repo_addr)
+        .await
+        .map_err(|e| e.description().to_string())?
+        .branch_ref;
     if _list.len() == 0 {
-        return Ok(None)
+        return Ok(None);
     }
 
-    let mut ref_list: Vec<String> = Vec::new(); //_list.iter().map(|branch| format!("<SHA> refs/heads/{}", branch.0)).collect();
+    let mut ref_list: Vec<String> = Vec::new(); //_list.iter().map(|branch| format!("<SHA> refs/heads/{}", branch.branch_name)).collect();
     for branch in _list {
-        let _commit = get_commit_by_addr(context, &branch.1).await.unwrap().unwrap();
+        let _commit = get_commit_by_addr(context, &branch.commit_sha)
+            .await
+            .unwrap()
+            .unwrap();
         if _commit.sha != ZERO_COMMIT {
-            ref_list.push(format!("{} refs/heads/{}", _commit.sha, branch.0));
+            ref_list.push(format!("{} refs/heads/{}", _commit.sha, branch.branch_name));
         }
     }
     Ok(Some(ref_list))

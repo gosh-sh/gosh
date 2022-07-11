@@ -124,7 +124,7 @@ const PullCreatePage = () => {
                         (fItem) =>
                             fItem.path === item.path &&
                             fItem.name === item.name &&
-                            fItem.sha !== item.sha
+                            fItem.sha1 !== item.sha1
                     );
                 });
                 console.debug('[Pull crreate] - Intersected:', intersected);

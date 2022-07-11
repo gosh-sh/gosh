@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/Spinner';
 import { getRepoTree, loadFromIPFS, zstd } from '../../helpers';
-import { IGoshRepository } from '../../types/types';
-import { abiSerialized } from '@eversdk/core';
+import { IGoshRepository, TGoshTreeItem } from '../../types/types';
+import { abiSerialized, TonClient } from '@eversdk/core';
 import { Buffer } from 'buffer';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { GoshCommit, GoshSnapshot } from '../../types/classes';
@@ -19,13 +19,7 @@ type TCommitBlobsType = {
 const CommitBlobs = (props: TCommitBlobsType) => {
     const { className, repo, branch, commit } = props;
     const [isFetched, setIsFetched] = useState<boolean>(false);
-    const [blobs, setBlobs] = useState<
-        {
-            filename: string;
-            prev: string;
-            curr: string;
-        }[]
-    >([]);
+    const [blobs, setBlobs] = useState<any[]>([]);
 
     const reversePatch = (patch: string) => {
         const parsedDiff = Diff.parsePatch(patch)[0];
@@ -57,11 +51,12 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const getMessages = async (
         addr: string,
         commit: string,
-        approved: boolean = false,
+        retry: boolean = true,
         reached: boolean = false,
+        approved: boolean = false,
         cursor: string = '',
         msgs: any[] = []
-    ) => {
+    ): Promise<any> => {
         const queryString = `
         query{
             blockchain{
@@ -103,28 +98,187 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     allow_partial: true,
                 });
                 console.debug('Decoded', decoded);
-                if (decoded.name === 'approve') approved = true;
+
+                // Retry reading messages if needed message not found
+                if (
+                    retry &&
+                    ['constructor', 'approve', 'cancelDiff'].indexOf(decoded.name) < 0
+                ) {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    return await getMessages(addr, commit);
+                } else retry = false;
+
+                // Process message by type
+                if (decoded.name === 'constructor') {
+                    msgs.push(decoded.value);
+                    return { msgs, prevcommit: decoded.value.commit };
+                } else if (decoded.name === 'approve') approved = true;
                 else if (decoded.name === 'cancelDiff') approved = false;
-                else if (decoded.name === 'destroy') return msgs;
+                else if (decoded.name === 'destroy') return { msgs, prevcommit: commit };
                 else if (approved && decoded.name === 'applyDiff') {
                     msgs.push(decoded.value);
-                    if (reached) return msgs;
+                    if (reached)
+                        return {
+                            msgs,
+                            prevcommit: decoded.value.namecommit,
+                        };
                     if (decoded.value.namecommit === commit) reached = true;
                 }
             } catch {}
         }
 
         if (messages.pageInfo.hasPreviousPage) {
-            await getMessages(
+            return await getMessages(
                 addr,
                 commit,
-                approved,
+                retry,
                 reached,
+                approved,
                 messages.pageInfo.startCursor,
                 msgs
             );
         }
-        return msgs;
+        return { msgs, prevcommit: commit };
+    };
+
+    // const applyMessages = async (
+    //     client: TonClient,
+    //     commit: string,
+    //     messages: any[],
+    //     blob: any
+    // ) => {
+    //     let _reached = false;
+    //     for (let i = 0; i < messages.length; i++) {
+    //         const item = messages[i];
+    //         if (!_reached && item.namecommit === commit) _reached = true;
+
+    //         if (item.diff.ipfs) {
+    //             const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
+    //             const decompressed = await zstd.decompress(client, compressed, true);
+    //             console.debug(decompressed);
+    //             if (!_reached) blob.curr = decompressed;
+    //             else blob.prev = decompressed;
+
+    //             console.debug('ipfs blob', blob);
+    //         } else {
+    //             const prevItem = i > 0 ? messages[i - 1] : null;
+    //             if (prevItem && prevItem.diff.ipfs) {
+    //                 if (prevItem.namecommit === commit) {
+    //                     blob.curr = blob.prev;
+    //                     blob.prev = blob.snapdata.patched;
+    //                     continue;
+    //                 } else blob.curr = blob.snapdata.patched;
+    //             }
+
+    //             if (prevItem && !prevItem.diff.ipfs) {
+    //                 if (prevItem.namecommit === commit) continue;
+    //             }
+
+    //             const patch = await zstd.decompress(
+    //                 repo.account.client,
+    //                 Buffer.from(item.diff.patch, 'hex').toString('base64'),
+    //                 true
+    //             );
+
+    //             const reversedPatch = reversePatch(patch);
+    //             const reversed = Diff.applyPatch(blob.curr, reversedPatch);
+    //             if (!_reached) blob.curr = reversed;
+    //             else blob.prev = reversed;
+
+    //             console.debug('patch blob', blob);
+    //         }
+    //     }
+
+    //     return blob;
+    // };
+
+    const getBlobAtCommit = async (
+        client: TonClient,
+        snapaddr: string,
+        commit: string,
+        treeitem: TGoshTreeItem
+    ) => {
+        const snap = new GoshSnapshot(repo.account.client, snapaddr);
+        const snapdata = await snap.getSnapshot(commit, treeitem);
+        console.debug('Snap data', snapdata);
+        if (Buffer.isBuffer(snapdata.content))
+            return { content: snapdata.content, deployed: true };
+
+        const { msgs, prevcommit } = await getMessages(snapaddr, commit);
+        console.debug('Snap messages', msgs, prevcommit);
+
+        let content = snapdata.content;
+        let deployed = false;
+        for (const message of msgs) {
+            const msgcommit = message.diff ? message.namecommit : message.commit;
+            const msgipfs = message.diff ? message.diff.ipfs : message.ipfsdata;
+            const msgpatch = message.diff ? message.diff.patch : null;
+            const msgdata = message.diff ? null : message.data;
+
+            console.debug('Message commit', msgcommit);
+            console.debug('Message ipfs', msgipfs);
+            console.debug('Message patch', msgpatch);
+            console.debug('Message data', msgdata);
+
+            if (msgipfs) {
+                const compressed = (await loadFromIPFS(msgipfs)).toString();
+                const decompressed = await zstd.decompress(client, compressed, true);
+                content = decompressed;
+                if (message.ipfsdata) deployed = true;
+            } else if (msgdata) {
+                const compressed = Buffer.from(msgdata, 'hex').toString('base64');
+                const decompressed = await zstd.decompress(client, compressed, true);
+                content = decompressed;
+                deployed = true;
+            } else if (msgpatch && msgcommit !== commit) {
+                const patch = await zstd.decompress(
+                    repo.account.client,
+                    Buffer.from(msgpatch, 'hex').toString('base64'),
+                    true
+                );
+                const reversedPatch = reversePatch(patch);
+                const reversed = Diff.applyPatch(content, reversedPatch);
+                content = reversed;
+            }
+
+            if (msgcommit === commit) break;
+        }
+        console.debug('Result content', content);
+        return { content, deployed, prevcommit };
+    };
+
+    const getDiff = async (
+        client: TonClient,
+        snapaddr: string,
+        commit: string,
+        treeitem: TGoshTreeItem
+    ) => {
+        const curr = await getBlobAtCommit(client, snapaddr, commit, treeitem);
+
+        let prev;
+        if (!curr.deployed) {
+            prev = await getBlobAtCommit(client, snapaddr, curr.prevcommit, treeitem);
+        }
+
+        return { curr: curr.content, prev: prev?.content || '' };
+    };
+
+    const onLoadDiff = async (index: number) => {
+        setBlobs((curr) =>
+            curr.map((item, i) => {
+                if (i === index) return { ...item, isFetching: true };
+                else return item;
+            })
+        );
+        const { snap, commit, treeitem } = blobs[index];
+        const { curr, prev } = await getDiff(repo.account.client, snap, commit, treeitem);
+        setBlobs((state) =>
+            state.map((item, i) => {
+                if (i === index)
+                    return { ...item, curr, prev, isFetching: false, showDiff: true };
+                else return item;
+            })
+        );
     };
 
     useEffect(() => {
@@ -137,119 +291,52 @@ const CommitBlobs = (props: TCommitBlobsType) => {
 
             const commitAddr = await repo.getCommitAddr(commitName);
             const commit = new GoshCommit(repo.account.client, commitAddr);
+            const parents = await commit.getParents();
 
             const tree = await getRepoTree(repo, commitAddr);
+            const treeParent = await getRepoTree(repo, parents[0]);
             console.debug('Tree', tree);
+            console.debug('Tree parent', treeParent);
 
-            const messages = await repo.account.client.net.query_collection({
-                collection: 'messages',
-                filter: {
-                    dst: {
-                        eq: commitAddr,
-                    },
-                    msg_type: { eq: 0 },
-                },
-                result: 'dst boc created_at',
-            });
-            console.debug(messages.result);
-
-            const blobs: any[] = [];
-            for (const message of messages.result) {
-                try {
-                    const decoded = await repo.account.client.abi.decode_message({
-                        abi: abiSerialized(commit.abi),
-                        message: message.boc,
-                        allow_partial: true,
-                    });
-                    // console.debug('Decoded', decoded);
-
-                    if (decoded.name === 'getAcceptedDiff') {
-                        blobs.push({
-                            snap: decoded.value.value0.snap,
-                            commit: decoded.value.value0.commit,
-                        });
-                    }
-                } catch {}
+            // Compare trees to determine new/changed blobs
+            const updatedItems: TGoshTreeItem[] = [];
+            for (const item of tree.items) {
+                const found = treeParent.items.findIndex(
+                    (pitem) => pitem.sha1 === item.sha1
+                );
+                if (found < 0) updatedItems.push(item);
             }
+            console.debug('Updated items', updatedItems);
 
-            const _blobs: any[] = [];
-            for (const item of blobs) {
-                const snap = new GoshSnapshot(repo.account.client, item.snap);
-                let filename = await snap.getName();
-                filename = filename.split('/').slice(1).join('/');
+            // Iterate updated items and get snapshots states
+            const updatedBlobs: any[] = await Promise.all(
+                updatedItems.map(async (item, index) => {
+                    const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`;
+                    const snapaddr = await repo.getSnapshotAddr(branch, fullpath);
+                    const diff =
+                        index < 5
+                            ? await getDiff(
+                                  repo.account.client,
+                                  snapaddr,
+                                  commitName,
+                                  item
+                              )
+                            : { curr: '', prev: '' };
 
-                const treeItem = tree.items.find((item) => {
-                    const path = item.path ? `${item.path}/` : '';
-                    return `${path}${item.name}` === filename;
-                });
-                if (!treeItem) {
-                    console.error('Tree item not found', filename);
-                    continue;
-                }
+                    return {
+                        snap: snapaddr,
+                        commit: commitName,
+                        treeitem: item,
+                        fullpath,
+                        ...diff,
+                        isFetching: false,
+                        showDiff: index < 5,
+                    };
+                })
+            );
+            console.debug('Updated blobs', updatedBlobs);
 
-                const data = await snap.getSnapshot(commitName, treeItem);
-                console.debug('Snap data', data);
-                if (Buffer.isBuffer(data.content)) {
-                    _blobs.push({ filename, prev: data.content, curr: data.content });
-                    continue;
-                }
-
-                const snapMsgs = await getMessages(item.snap, commitName);
-                console.debug('Snap msgs', snapMsgs);
-
-                const _blob = { filename, prev: '', curr: data.content };
-                let _commitReached = false;
-                for (let i = 0; i < snapMsgs.length; i++) {
-                    const item = snapMsgs[i];
-                    if (!_commitReached && item.namecommit === commitName)
-                        _commitReached = true;
-
-                    if (item.diff.ipfs) {
-                        const compressed = (
-                            await loadFromIPFS(item.diff.ipfs)
-                        ).toString();
-                        const decompressed = await zstd.decompress(
-                            repo.account.client,
-                            compressed,
-                            true
-                        );
-                        if (!_commitReached) _blob.curr = decompressed;
-                        else _blob.prev = decompressed;
-
-                        console.debug('ipfs blob', { ..._blob });
-                    } else {
-                        const prevItem = i > 0 ? snapMsgs[i - 1] : null;
-                        if (prevItem && prevItem.diff.ipfs) {
-                            if (prevItem.namecommit === commitName) {
-                                _blob.curr = _blob.prev;
-                                _blob.prev = data.patched;
-                                continue;
-                            } else _blob.curr = data.patched;
-                        }
-
-                        if (prevItem && !prevItem.diff.ipfs) {
-                            if (prevItem.namecommit === commitName) continue;
-                        }
-
-                        const patch = await zstd.decompress(
-                            snap.account.client,
-                            Buffer.from(item.diff.patch, 'hex').toString('base64'),
-                            true
-                        );
-
-                        const reversedPatch = reversePatch(patch);
-                        const reversed = Diff.applyPatch(_blob.curr, reversedPatch);
-                        if (!_commitReached) _blob.curr = reversed;
-                        else _blob.prev = reversed;
-
-                        console.debug('patch blob', { ..._blob });
-                    }
-                }
-                console.debug('Blob', _blob);
-                _blobs.push(_blob);
-            }
-
-            setBlobs(_blobs);
+            setBlobs(updatedBlobs);
             setIsFetched(true);
         };
 
@@ -269,9 +356,22 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 blobs.map((blob, index) => (
                     <div key={index} className="my-5 border rounded overflow-hidden">
                         <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                            {blob.filename}
+                            {blob.fullpath}
                         </div>
-                        <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                        {blob.showDiff ? (
+                            <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                        ) : (
+                            <button
+                                className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
+                                disabled={false}
+                                onClick={() => onLoadDiff(index)}
+                            >
+                                {blob.isFetching && (
+                                    <Spinner className="mr-2" size="sm" />
+                                )}
+                                Load diff
+                            </button>
+                        )}
                     </div>
                 ))}
         </div>

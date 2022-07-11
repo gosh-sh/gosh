@@ -1,6 +1,6 @@
 import { TonClient } from '@eversdk/core';
 import { toast } from 'react-toastify';
-import cryptoJs, { SHA1 } from 'crypto-js';
+import cryptoJs, { SHA1, SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
 import { GoshTree, GoshCommit, GoshDaoCreator } from './types/classes';
 import {
@@ -88,7 +88,8 @@ export const isMainBranch = (branch: string = 'main'): boolean =>
 
 export const sha1 = (
     data: string | Buffer,
-    type: 'blob' | 'commit' | 'tree' | 'tag'
+    type: 'blob' | 'commit' | 'tree' | 'tag',
+    mode: 'sha1' | 'sha256'
 ): string => {
     let content = data;
 
@@ -103,23 +104,27 @@ export const sha1 = (
             : cryptoJs.enc.Utf8.parse(content)
     );
 
-    const hash = SHA1(words);
+    let hash;
+    if (mode === 'sha1') hash = SHA1(words);
+    if (mode === 'sha256') hash = SHA256(words);
+    if (!hash) throw new Error('Could not calculate hash');
+    // const hash = SHA1(words);
     return hash.toString();
 };
 
-export const sha1Tree = (items: TGoshTreeItem[]) => {
+export const sha1Tree = (items: TGoshTreeItem[], mode: 'sha1' | 'sha256') => {
     const buffer = Buffer.concat(
         items
             //@ts-ignore
             .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
-            .map((i: any) =>
+            .map((i) =>
                 Buffer.concat([
                     Buffer.from(`${i.mode === '040000' ? '40000' : i.mode} ${i.name}\0`),
-                    Buffer.from(i.sha, 'hex'),
+                    Buffer.from(i.sha1, 'hex'),
                 ])
             )
     );
-    return sha1(buffer, 'tree');
+    return sha1(buffer, 'tree', mode);
 };
 
 export const getTreeItemsFromPath = (
@@ -131,8 +136,9 @@ export const getTreeItemsFromPath = (
 
     // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(filePath);
-    const sha = sha1(fileContent, 'blob');
-    items.push({ flags, mode: '100644', type: 'blob', sha, path, name });
+    const sha = sha1(fileContent, 'blob', 'sha1');
+    const sha256 = sha1(fileContent, 'blob', 'sha256');
+    items.push({ flags, mode: '100644', type: 'blob', sha1: sha, sha256, path, name });
 
     // Parse blob path and push subtrees to items
     while (path !== '') {
@@ -142,7 +148,8 @@ export const getTreeItemsFromPath = (
                 flags: 0,
                 mode: '040000',
                 type: 'tree',
-                sha: '',
+                sha1: '',
+                sha256: '',
                 path: dirPath,
                 name: dirName,
             });
@@ -222,10 +229,11 @@ export const getRepoTree = async (
 
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i];
-            const treeAddr = await root.getTreeAddr(repo.address, tree.sha);
+            const treeAddr = await root.getTreeAddr(repo.address, tree.sha1);
             const treeBlob = new GoshTree(repo.account.client, treeAddr);
 
-            const treeItems = await treeBlob.getTree();
+            const gettree = await treeBlob.getTree();
+            const treeItems = gettree.tree;
             const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
             treeItems.forEach((item) => (item.path = treePath));
@@ -248,7 +256,18 @@ export const getRepoTree = async (
     if (commit.meta?.sha !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree();
         const rootTree = new GoshTree(repo.account.client, rootTreeAddr);
-        items = await rootTree.getTree();
+        const { tree } = await rootTree.getTree();
+        items = tree;
+        // await new Promise<void>((resolve) =>
+        //     setInterval(async () => {
+        //         const { tree, ready } = await rootTree.getTree();
+        //         console.debug('Tree ready', ready);
+        //         if (ready) {
+        //             items = tree;
+        //             resolve();
+        //         }
+        //     }, 2000)
+        // );
     }
     if (filterPath !== '') await blobTreeWalker('', items);
 
@@ -267,12 +286,14 @@ export const calculateSubtrees = (tree: TGoshTree) => {
         .sort((a, b) => b.length - a.length)
         .filter((key) => key.length)
         .forEach((key) => {
-            const sha = sha1Tree(tree[key]);
             const [path, name] = splitByPath(key);
             const found = tree[path].find(
                 (item) => item.path === path && item.name === name
             );
-            if (found) found.sha = sha;
+            if (found) {
+                found.sha1 = sha1Tree(tree[key], 'sha1');
+                found.sha256 = sha1Tree(tree[key], 'sha256');
+            }
         });
 };
 

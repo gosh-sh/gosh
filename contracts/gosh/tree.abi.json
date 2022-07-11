@@ -7,7 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"data","type":"tuple[]"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"data","type":"map(uint256,tuple)"},
 				{"name":"ipfs","type":"optional(string)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
@@ -112,7 +112,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"string"}],"name":"value0","type":"map(uint256,tuple)"},
+				{"name":"value1","type":"optional(string)"}
 			]
 		},
 		{

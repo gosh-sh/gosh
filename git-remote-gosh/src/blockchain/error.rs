@@ -1,13 +1,8 @@
-use std::{ 
-    fmt, 
-    convert::From,
-    error::Error 
-};
-
+use std::{convert::From, error::Error, fmt};
 
 #[derive(Debug, Clone)]
 pub struct RunLocalError {
-    msg: String
+    msg: String,
 }
 
 impl RunLocalError {
@@ -18,7 +13,7 @@ impl RunLocalError {
 
 impl fmt::Display for RunLocalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
+        write!(f, "Run local error: {}", self.msg)
     }
 }
 
@@ -43,11 +38,11 @@ impl From<String> for RunLocalError {
     }
 }
 
-impl <T> From<&T> for RunLocalError 
+impl<T> From<&T> for RunLocalError
 where
-    T: Error
+    T: Error,
 {
     fn from(e: &T) -> Self {
         RunLocalError::new(format!("Inner error: {}", e))
     }
-} 
+}

@@ -18,12 +18,11 @@ import "diff.sol";
 contract Snapshot is Modifiers {
     string version = "0.4.1";
     
+    string _baseCommit;
     uint256 _pubkey;
     address _rootRepo;
     bytes _snapshot;
     bytes _oldsnapshot;
-    address _olddiff;
-    address _diff;
     address _rootgosh;
     address _goshdao;
     string _oldcommits;
@@ -60,6 +59,20 @@ contract Snapshot is Modifiers {
         _snapshot = data;
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
+        _baseCommit = commit;
+        Commit(_buildCommitAddr(_oldcommits)).getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
+    }
+    
+    function _buildCommitAddr(
+        string commit
+    ) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, _rootRepo, version);
+        TvmCell state = tvm.buildStateInit({
+            code: deployCode, 
+            contr: Commit,
+            varInit: {_nameCommit: commit}
+        });
+        return address(tvm.hash(state));
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -83,11 +96,10 @@ contract Snapshot is Modifiers {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         tvm.accept();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != _diff)) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
+        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index))) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
         else { 
             require(_buildDiffAddr(namecommit, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
-            _diff = msg.sender;
             _commits = namecommit;
         }
         if (diff.ipfs.hasValue()) {
@@ -108,20 +120,19 @@ contract Snapshot is Modifiers {
         }
     }
     
-    function cancelDiff() public {
-        require(msg.sender == _diff, ERR_SENDER_NO_ALLOWED);
+    function cancelDiff(uint128 index) public {
+        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
-        _diff = _olddiff;
+        _commits = _oldcommits;
         _applying = false;
     }
     
-    function approve() public {
-        require(msg.sender == _diff, ERR_SENDER_NO_ALLOWED);
+    function approve(uint128 index) public {
+        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
-        _olddiff = _diff;
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
@@ -153,32 +164,22 @@ contract Snapshot is Modifiers {
         require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
     }
-    
-    //Setters
-    function setSnapshotSelf(string commits, address commit, bytes snapshot, optional(string) ipfs, string branch) public {
-        require(msg.sender == getSnapshotAddr(branch, branch + "/" + _name));
-        tvm.accept();
-        _oldsnapshot = snapshot;
-        _ipfsold = ipfs;
-        _oldcommits = commits;
-        _olddiff = commit;
-        _snapshot = snapshot;
-        _ipfs = ipfs;
-        _commits = commits;
-        _diff = commit;
-    }
 
     //Getters
-    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string)) {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold);
+    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string), string) {
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
     }
 
     function getName() external view returns(string) {
         return NameOfFile;
     }
 
-    function getBranchAdress() external view returns(address) {
+    function getRepoAdress() external view returns(address) {
         return _rootRepo;
+    }
+    
+    function getBaseCommit() external view returns(string) {
+        return _baseCommit;
     }
 
     function getVersion() external view returns(string) {
