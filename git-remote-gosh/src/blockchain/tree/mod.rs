@@ -49,22 +49,28 @@ impl fmt::Display for GoshPathError {
 
 impl GoshPath {
     pub fn to_path_buf(&self) -> PathBuf {
-        let mut p = PathBuf::new();
+        let mut path_buf = PathBuf::new();
         for x in self.inner.iter() {
-            p.push(x);
+            path_buf.push(x);
         }
-        p
+        path_buf
     }
 
-    pub fn is_valid_component(v: impl AsRef<str>) -> bool {
-        match v.as_ref() {
+    pub fn is_valid_component<T>(value: T) -> bool
+    where
+        T: AsRef<str>,
+    {
+        match value.as_ref() {
             "." | ".." => false,
-            v => true,
+            _ => true,
         }
     }
 
-    pub fn try_join(&mut self, v: impl Into<String>) -> Result<(), GoshPathError> {
-        let v = v.into();
+    pub fn try_join<T>(&mut self, value: T) -> Result<(), GoshPathError>
+    where
+        T: Into<String>,
+    {
+        let v = value.into();
         if GoshPath::is_valid_component(&v) {
             self.inner.push(v);
             Ok(())
