@@ -31,7 +31,7 @@ struct DeployDiffParams {
     #[serde(rename = "commitName")]
     commit_id: String,
     diffs: Vec<Diff>,
-    index: u128,
+    index: String,
     last: bool
 }
 
@@ -90,7 +90,7 @@ pub async fn push_diff(
         file_path
     ).await?;
 
-    let ipfs = "".to_string();
+    let ipfs = None;
     if diff.len() > 15000 /* crate::config::defaults::IPFS_THRESHOLD */ {
         // push to ipfs
         todo!();
@@ -99,18 +99,19 @@ pub async fn push_diff(
     let diff = Diff {
         snapshot_addr,
         commit_id: commit_id.to_string(),
-        patch: Some(String::from_utf8(diff.to_vec())?),
-        ipfs: Some(ipfs),
+        patch: Some(hex::encode(diff)),
+        ipfs,
         sha1: blob_id.to_string(),
     };
-    let diffs: Vec<Diff> = vec![];
+    let diffs: Vec<Diff> = vec![diff];
 
+    let index = 0;
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         diffs,
-        index: 0,
+        index: format!("0x{index}"),
         last: true
     };
 

@@ -30,6 +30,7 @@ tracing-futures = { version = "0.2.5", default-features = true }
 tracing-log = "0.1.3"
 data-contract-macro-derive = { path = "crates/data-contract-macro-derive" }
 diffy = { path = "crates/diffy-patched" }
+hex = "0.4"
 
 [dependencies.tracing]
 features = ['log', 'attributes', 'std']
@@ -45,12 +46,12 @@ version = '1.19.2'
 
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
-tag = '1.35.0'
+tag = '1.35.1'
 package = 'ton_client'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
-tag = '1.35.0'
+tag = '1.35.1'
 package = 'ton_sdk'
 
 [dependencies.zstd]

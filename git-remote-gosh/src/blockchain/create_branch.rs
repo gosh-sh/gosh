@@ -1,6 +1,7 @@
 use crate::git_helper::GitHelper;
-use git_hash::ObjectId;
+use git_hash::{ oid, ObjectId };
 use git_object::tree;
+use git_odb::Find;
 use git_traverse::tree::recorder;
 use crate::blockchain;
 
@@ -29,39 +30,68 @@ impl<'a> CreateBranchOperation<'a> {
         // We must prepare root tree for this commit
         // It needs to know a number of all blobs
         // in the entire tree
-        todo!();
+        // NOTE:
+        // Ignoring this. It is not yet implemented in contracts
+        // todo!();
+        Ok(())
     }
 
     async fn preinit_branch(&mut self) -> Result<()> {
-        // wallet -> deployBranch
-        todo!();
+        let wallet_contract = blockchain::user_wallet(self.context)?;
+        let params = serde_json::json!({
+            "repoName": self.context.remote.repo, 
+            "newName": self.new_branch,
+            "fromCommit": self.ancestor_commit.to_string(),
+        });  
+        blockchain::call(
+            &self.context.es_client,
+            wallet_contract,
+            "deployBranch",
+            Some(params)
+        ).await?; 
+        Ok(())
     }
 
-    async fn deploy_snapshot(&mut self, file_path: &str, data: &[u8]) -> Result<()> {
+    async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> Result<()> {
+        let mut buffer: Vec<u8> = Vec::new();
+        let content = self
+            .context
+            .local_repository()
+            .objects
+            .try_find(id, &mut buffer)?
+            .expect("blob must be in the local repository")
+            .decode()?
+            .as_blob()
+            .expect("It must be a blob object")
+            .data; 
         blockchain::snapshot::push_initial_snapshot(
             self.context,
             &self.ancestor_commit,
             &self.new_branch,
             file_path,
-            data
+            content
         ).await?;
         Ok(())
     }
 
     async fn push_initial_snapshots(&mut self) -> Result<()> {
-        let ancestor_commit_tree = self
-            .context
-            .local_repository()
-            .find_object(self.ancestor_commit)?
-            .into_commit()
-            .tree()?;
-        let snapshots_to_deploy: Vec<&recorder::Entry> = ancestor_commit_tree
-            .traverse()
-            .breadthfirst
-            .files()?
-            .iter()
+        let all_files:Vec<recorder::Entry> = {
+            self.context
+                .local_repository()
+                .find_object(self.ancestor_commit)?
+                .into_commit()
+                .tree()?
+                .traverse()
+                .breadthfirst
+                .files()?
+                .into_iter()
+                .collect()
+        };
+        let snapshots_to_deploy: Vec<recorder::Entry> = all_files
+            .into_iter()
             .filter(|e| match e.mode {
-                tree::EntryMode::Blob | tree::EntryMode::BlobExecutable => true,
+                tree::EntryMode::Blob 
+                | tree::EntryMode::BlobExecutable => true,
                 tree::EntryMode::Link => true,
                 tree::EntryMode::Tree => false,
                 tree::EntryMode::Commit => {
@@ -69,12 +99,12 @@ impl<'a> CreateBranchOperation<'a> {
                 }
             })
             .collect();
-        //for snapshot in snapshots_to_deploy {
-            //self.deploy_snapshot(
-        //}  
-        // for each snapshot call wallet -> deployNewSnapshot
-        //
-        todo!();
+        
+        for entry in snapshots_to_deploy {
+            let full_path = entry.filepath.to_string();
+            self.deploy_snapshot(&full_path, &entry.oid);
+        }  
+        Ok(())
     }
 
     async fn wait_branch_ready(&mut self) -> Result<()> {

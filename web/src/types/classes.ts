@@ -16,7 +16,6 @@ import GoshSmvClientABI from '../contracts/SMVClient.abi.json';
 import GoshSmvTokenRootABI from '../contracts/TokenRoot.abi.json';
 import {
     calculateSubtrees,
-    getGoshDaoCreator,
     getRepoTree,
     getTreeFromItems,
     getTreeItemsFromPath,
@@ -31,6 +30,7 @@ import {
     ZERO_COMMIT,
     getBlobDiffPatch,
     MAX_ONCHAIN_FILE_SIZE,
+    goshDaoCreator,
 } from '../helpers';
 import {
     IGoshTree,
@@ -80,7 +80,7 @@ export class GoshRoot implements IGoshRoot {
 
     constructor(client: TonClient, address: string) {
         this.address = address;
-        this.daoCreator = getGoshDaoCreator(client);
+        this.daoCreator = goshDaoCreator;
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
@@ -167,7 +167,7 @@ export class GoshDao implements IGoshDao {
 
     constructor(client: TonClient, address: string) {
         this.address = address;
-        this.daoCreator = getGoshDaoCreator(client);
+        this.daoCreator = goshDaoCreator;
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
@@ -495,6 +495,9 @@ export class GoshWallet implements IGoshWallet {
         !!callback && callback({ treeDeploy: true });
 
         // Deploy commit
+        const cleanDiffs = processedBlobs
+            .map(({ diff }) => diff)
+            .filter((item) => !!item);
         await this.deployCommit(
             repo,
             branch,
@@ -502,7 +505,7 @@ export class GoshWallet implements IGoshWallet {
             futureCommit.content,
             futureCommit.parents,
             treeRootAddr,
-            processedBlobs.map(({ diff }) => diff).filter((item) => !!item)
+            cleanDiffs
         );
         !!callback && callback({ commitDeploy: true });
         console.debug('[Create commit] - Commit name:', futureCommit.name);
@@ -527,7 +530,7 @@ export class GoshWallet implements IGoshWallet {
                 repo.meta.name,
                 branch.name,
                 futureCommit.name,
-                branch.commitAddr
+                cleanDiffs.length
             );
             await new Promise<void>((resolve) => {
                 const interval = setInterval(async () => {
@@ -544,7 +547,7 @@ export class GoshWallet implements IGoshWallet {
                 repo.meta.name,
                 branch.name,
                 futureCommit.name,
-                branch.commitAddr
+                cleanDiffs.length
             );
         }
         !!callback && callback({ completed: true });
@@ -756,55 +759,35 @@ export class GoshWallet implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             });
-        console.debug('Commit addr', await repo.getCommitAddr(commitName));
 
-        // Split diffs by chunks of diffs
-        const chunked: any[] = [
-            {
-                addr: await this.getDiffAddr(repo.meta.name, commitName, 0),
-                index: 0,
-                items: [],
-            },
-        ];
-        for (const diff of diffs) {
-            const chunk = chunked[chunked.length - 1];
-            const chunkLen = Buffer.from(JSON.stringify(chunk.items)).byteLength;
-            const itemLen = Buffer.from(JSON.stringify(diff)).byteLength;
-            if (chunkLen + itemLen < MAX_ONCHAIN_DIFF_SIZE) chunk.items.push(diff);
-            else {
-                const index = chunked.length;
-                const addr = await this.getDiffAddr(repo.meta.name, commitName, index);
-                chunked.push({
-                    addr,
-                    index,
-                    items: [diff],
-                });
-            }
-        }
-        console.debug('Deploy commit diffs:', chunked);
+        const repoName = repo.meta.name;
+        console.debug('Commit addr', await repo.getCommitAddr(commitName));
+        console.debug('Commit diffs:', diffs);
 
         // Deploy diffs
-        const repoName = repo.meta.name;
         await Promise.all(
-            chunked.map(async (chunk) => {
-                const last = chunk.index === chunked.length - 1;
+            diffs.map(async (diff, index) => {
                 console.debug('Deploy diff', {
                     repoName,
                     branchName: branch.name,
-                    // branchcommit: branch.commitAddr,
                     commitName,
-                    diffs: chunk.items,
-                    index: chunk.index,
-                    last,
+                    diffs: [diff],
+                    index1: index,
+                    index2: 0,
+                    last: true,
                 });
+                console.debug(
+                    'Diff addr',
+                    await this.getDiffAddr(repoName, commitName, index, 0)
+                );
                 await this.run('deployDiff', {
                     repoName,
                     branchName: branch.name,
-                    // branchcommit: branch.commitAddr,
                     commitName,
-                    diffs: chunk.items,
-                    index: chunk.index,
-                    last,
+                    diffs: [diff],
+                    index1: index,
+                    index2: 0,
+                    last: true,
                 });
             })
         );
@@ -860,7 +843,7 @@ export class GoshWallet implements IGoshWallet {
                 sha256,
             };
         }
-        console.debug('Deploy tree\n', {
+        console.debug('Deploy tree', {
             repoName: repo.meta?.name,
             shaTree: sha,
             datatree,
@@ -965,20 +948,19 @@ export class GoshWallet implements IGoshWallet {
         repoName: string,
         branchName: string,
         commitName: string,
-        branchCommit: string
+        filesCount: number
     ): Promise<void> {
-        console.debug(
-            '[Set commmit]:',
+        console.debug('Set commmit', {
             repoName,
             branchName,
-            commitName,
-            `"${branchCommit}"`
-        );
+            commit: commitName,
+            numberChangedFiles: filesCount,
+        });
         await this.run('setCommit', {
             repoName,
             branchName,
             commit: commitName,
-            branchcommit: branchCommit,
+            numberChangedFiles: filesCount,
         });
     }
 
@@ -986,20 +968,19 @@ export class GoshWallet implements IGoshWallet {
         repoName: string,
         branchName: string,
         commitName: string,
-        branchCommit: string
+        filesCount: number
     ): Promise<void> {
-        console.debug(
-            '[Start proposal]:',
+        console.debug('Start proposal', {
             repoName,
             branchName,
-            commitName,
-            `"${branchCommit}"`
-        );
+            commit: commitName,
+            numberChangedFiles: filesCount,
+        });
         await this.run('startProposalForSetCommit', {
             repoName,
             branchName,
             commit: commitName,
-            branchcommit: branchCommit,
+            numberChangedFiles: filesCount,
         });
     }
 
@@ -1015,12 +996,14 @@ export class GoshWallet implements IGoshWallet {
     async getDiffAddr(
         repoName: string,
         commitName: string,
-        index: number
+        index1: number,
+        index2: number
     ): Promise<string> {
         const result = await this.account.runLocal('getDiffAddr', {
             reponame: repoName,
             commitName,
-            index,
+            index1,
+            index2,
         });
         return result.decoded?.output.value0;
     }

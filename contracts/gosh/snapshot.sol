@@ -16,7 +16,7 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string version = "0.4.1";
+    string version = "0.5.0";
     
     string _baseCommit;
     uint256 _pubkey;
@@ -54,7 +54,7 @@ contract Snapshot is Modifiers {
         bytes data,
         optional(string) ipfsdata,
         string commit
-        ) public {
+    ) public {
         tvm.accept();
         _pubkey = pubkey;
         _rootRepo = rootrepo;
@@ -76,9 +76,10 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _baseCommit = commit;
-        Commit(_buildCommitAddr(_oldcommits)).getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
+        Commit(_buildCommitAddr(_oldcommits))
+            .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
     }
-    
+
     function _buildCommitAddr(
         string commit
     ) private view returns(address) {
@@ -90,13 +91,13 @@ contract Snapshot is Modifiers {
         });
         return address(tvm.hash(state));
     }
-    
+
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
-    
+
     function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
         TvmCell _contractflex = tvm.buildStateInit({
@@ -106,55 +107,64 @@ contract Snapshot is Modifiers {
             varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootgosh, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
-    }   
+    }
 
-    function applyDiff(string namecommit, Diff diff, uint128 index) public {
+    function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         tvm.accept();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index))) {
+        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
-        } else { 
-            require(_buildDiffAddr(namecommit, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        } else {
+            require(_buildDiffAddr(namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
             _commits = namecommit;
         }
         if (diff.ipfs.hasValue()) {
             _ipfs = diff.ipfs.get();
-             DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, empty); 
-             _applying = true;
-             return;
+            DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, empty);
+            _applying = true;
+            return;
         } else {
-             if (_ipfs.hasValue() == true) { DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return; }
-             if (diff.patch.hasValue() == false) { DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;  }
-             optional(bytes) res = gosh.applyZipPatchQ(_snapshot, diff.patch.get());
-             if (res.hasValue() != true) { DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return; }
-             _snapshot = res.get();
-             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot))); 
-             _applying = true;
-             return;
+            if (_ipfs.hasValue() == true) {
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                return;
+            }
+            if (diff.patch.hasValue() == false) {
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                return;
+            }
+            optional(bytes) res = gosh.applyZipPatchQ(_snapshot, diff.patch.get());
+            if (res.hasValue() != true) {
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                return;
+            }
+            _snapshot = res.get();
+            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+            _applying = true;
+            return;
         }
     }
-    
-    function cancelDiff(uint128 index) public {
-        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
+
+    function cancelDiff(uint128 index1, uint128 index2) public {
+        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
         _commits = _oldcommits;
         _applying = false;
     }
-    
-    function approve(uint128 index) public {
-        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
+
+    function approve(uint128 index1, uint128 index2) public {
+        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
     }
-    
+
     //Private getters
     function getSnapshotAddr(string branch, string name) private view returns(address) {
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_codeSnapshot, _rootRepo, branch, version);
@@ -162,16 +172,17 @@ contract Snapshot is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         return addr;
     }
-    
+
     function _buildDiffAddr(
         string commit,
-        uint128 index
+        uint128 index1,
+        uint128 index2
     ) private view returns(address) {
         TvmCell deployCode = GoshLib.buildDiffCode(m_codeDiff, _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
             contr: DiffC,
-            varInit: {_nameCommit: commit, _index: index}
+            varInit: {_nameCommit: commit, _index1: index1, _index2: index2}
         });
         return address(tvm.hash(state));
     }
@@ -183,7 +194,9 @@ contract Snapshot is Modifiers {
     }
 
     //Getters
-    function getSnapshot() external view returns(string, bytes, optional(string), string, bytes, optional(string), string) {
+    function getSnapshot() external view
+        returns(string, bytes, optional(string), string, bytes, optional(string), string)
+    {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
     }
 

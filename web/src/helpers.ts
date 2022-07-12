@@ -1,8 +1,8 @@
-import { TonClient } from '@eversdk/core';
+import { NetworkQueriesProtocol, TonClient } from '@eversdk/core';
 import { toast } from 'react-toastify';
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
-import { GoshTree, GoshCommit, GoshDaoCreator } from './types/classes';
+import { GoshTree, GoshCommit, GoshDaoCreator, GoshRoot } from './types/classes';
 import {
     IGoshDaoCreator,
     IGoshRepository,
@@ -22,17 +22,29 @@ export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
 export const MAX_ONCHAIN_FILE_SIZE = 15360;
 export const MAX_ONCHAIN_DIFF_SIZE = 15000;
 
-export const getEndpoints = (): string[] => {
-    switch (process.env.REACT_APP_EVER_NETWORK) {
-        case 'devnet':
-            return ['https://vps23.ton.dev'];
-        case 'mainnet':
-            return ['https://network.gosh.sh'];
-        case 'se':
-        default:
-            return ['http://localhost'];
-    }
-};
+export const goshClient = new TonClient({
+    network: {
+        endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+        queries_protocol: NetworkQueriesProtocol.WS,
+    },
+});
+export const goshDaoCreator = new GoshDaoCreator(
+    goshClient,
+    process.env.REACT_APP_CREATOR_ADDR || ''
+);
+export const goshRoot = new GoshRoot(goshClient, process.env.REACT_APP_GOSH_ADDR || '');
+
+// export const getEndpoints = (): string[] => {
+//     switch (process.env.REACT_APP_EVER_NETWORK) {
+//         case 'devnet':
+//             return ['https://vps23.ton.dev'];
+//         case 'mainnet':
+//             return ['https://network.gosh.sh'];
+//         case 'se':
+//         default:
+//             return ['http://localhost'];
+//     }
+// };
 
 // export const fsExists = async (pathname: string): Promise<boolean> => {
 //     try {
@@ -48,11 +60,11 @@ export const getEndpoints = (): string[] => {
 //     }
 // };
 
-export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
-    const address = process.env.REACT_APP_CREATOR_ADDR;
-    if (!address) throw new GoshError(EGoshError.NO_CREATOR_ADDR);
-    return new GoshDaoCreator(client, address);
-};
+// export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
+//     const address = process.env.REACT_APP_CREATOR_ADDR;
+//     if (!address) throw new GoshError(EGoshError.NO_CREATOR_ADDR);
+//     return new GoshDaoCreator(client, address);
+// };
 
 export const getCodeLanguageFromFilename = (monaco: any, filename: string): string => {
     let splitted = filename.split('.');

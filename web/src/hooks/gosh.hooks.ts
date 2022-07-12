@@ -1,7 +1,7 @@
 import { KeyPair } from '@eversdk/core';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { getRepoTree } from '../helpers';
+import { getRepoTree, goshRoot } from '../helpers';
 import {
     goshBranchesAtom,
     goshCurrBranchSelector,
@@ -10,7 +10,7 @@ import {
     goshRepoTreeSelector,
 } from '../store/gosh.state';
 import { userStateAtom } from '../store/user.state';
-import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from '../types/classes';
+import { GoshDao, GoshWallet, GoshRepository } from '../types/classes';
 import {
     IGoshDao,
     IGoshRepository,
@@ -19,18 +19,20 @@ import {
     TCreateCommitCallbackParams,
     TGoshBranch,
 } from '../types/types';
-import { useEverClient } from './ever.hooks';
+// import { useEverClient } from './ever.hooks';
 
 /** Create GoshRoot object */
+/** Backward compatibility, remove hook after full refactor */
 export const useGoshRoot = () => {
-    const client = useEverClient();
+    return goshRoot;
+    // const client = useEverClient();
 
-    return useMemo<IGoshRoot | undefined>(() => {
-        const address = process.env.REACT_APP_GOSH_ADDR;
-        if (client && address) {
-            return new GoshRoot(client, address);
-        }
-    }, [client]);
+    // return useMemo<IGoshRoot | undefined>(() => {
+    //     const address = process.env.REACT_APP_GOSH_ADDR;
+    //     if (client && address) {
+    //         return new GoshRoot(client, address);
+    //     }
+    // }, [client]);
 };
 
 export const useGoshDao = (name?: string) => {

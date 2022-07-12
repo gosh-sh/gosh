@@ -8,7 +8,7 @@ use git_object::tree;
 use git_odb;
 use git_odb::Find;
 use sha256;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque, HashMap};
 use std::error::Error;
 use std::vec::Vec;
 
@@ -30,7 +30,8 @@ pub struct DeployTreeArgs {
     #[serde(rename = "repoName")]
     pub repo_name: String,
     #[serde(rename = "datatree")]
-    nodes: Vec<TreeNode>,
+    nodes: HashMap<String, TreeNode>,
+    ipfs: Option<String>,
 }
 
 impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
@@ -74,7 +75,7 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
         }
         visited.insert(tree_id);
         let mut buffer: Vec<u8> = Vec::new();
-        let tree_nodes: Vec<TreeNode> = context
+        let tree_nodes: HashMap<String, TreeNode> = context
             .local_repository()
             .objects
             .try_find(tree_id, &mut buffer)?
@@ -87,13 +88,15 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
                 if e.mode == git_object::tree::EntryMode::Tree {
                     to_deploy.push_back(e.oid.into());
                 }
-                TreeNode::from((sha256of(&context.local_repository().objects, &e), e))
+                let hash = sha256of(&context.local_repository().objects, &e);
+                (format!("0x{hash}"), TreeNode::from((hash, e)))
             })
             .collect();
         let params = DeployTreeArgs {
             sha: tree_id.to_hex().to_string(),
             repo_name: context.remote.repo.clone(),
             nodes: tree_nodes,
+            ipfs: None, // !!!
         };
         let params: serde_json::Value = serde_json::to_value(params)?;
 

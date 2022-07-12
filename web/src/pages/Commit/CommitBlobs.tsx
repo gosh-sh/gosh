@@ -301,9 +301,12 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             // Compare trees to determine new/changed blobs
             const updatedItems: TGoshTreeItem[] = [];
             for (const item of tree.items) {
-                const found = treeParent.items.findIndex(
-                    (pitem) => pitem.sha1 === item.sha1
-                );
+                const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`;
+                const found = treeParent.items.findIndex((pitem) => {
+                    let pfullpath = `${pitem.path ? `${pitem.path}/` : ''}`;
+                    pfullpath = `${pfullpath}${pitem.name}`;
+                    return pitem.sha1 === item.sha1 && pfullpath === fullpath;
+                });
                 if (found < 0) updatedItems.push(item);
             }
             console.debug('Updated items', updatedItems);

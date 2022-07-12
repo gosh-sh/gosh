@@ -91,6 +91,11 @@ impl GitHelper {
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
+            } else {
+                if ref_list.len() > 0 {
+                    let mut splitted = ref_list[0].split(' ');
+                    ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()).to_owned());
+                }
             }
         }
         ref_list.push("".to_owned());
