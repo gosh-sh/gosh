@@ -29,7 +29,6 @@ pipeline {
                 label "linux"
             }
             steps {
-                echo OK
                 cat tmp
             }
         }
