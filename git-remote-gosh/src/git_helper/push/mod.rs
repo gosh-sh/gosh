@@ -140,8 +140,12 @@ impl GitHelper {
             iter.next().unwrap()
         };
         // 1. Check if branch exists and ready in the blockchain
+        let remote_branch_name: &str = {
+            let mut iter = remote_ref.rsplit("/");
+            iter.next().unwrap()
+        };
         let parsed_remote_ref =
-            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_ref).await?;
+            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name).await?;
 
         // 2. Find ancestor commit in local repo
         let ancestor_commit_id = if parsed_remote_ref == None {

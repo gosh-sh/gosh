@@ -370,6 +370,7 @@ pub async fn set_head(
     Ok(())
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn remote_rev_parse(
     context: &TonClient,
     repository_address: &str,
@@ -417,6 +418,7 @@ pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<
     return Ok(result.head);
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn load_messages_to(
     context: &TonClient,
     address: &str,
@@ -461,6 +463,8 @@ pub async fn load_messages_to(
     let nodes = result["data"]["blockchain"]["account"]["messages"]["edges"]
         .as_array()
         .unwrap();
+
+    log::debug!("Loaded {} message(s) to {}", nodes.len(), address);
     for message in nodes {
         let raw_msg: Message = serde_json::from_value(message["node"].clone()).unwrap();
         if raw_msg.status != 5 || raw_msg.bounced {
@@ -478,6 +482,7 @@ pub async fn load_messages_to(
         )
         .await?;
 
+        log::debug!("Decoded message `{}`", decoded.name);
         if decoded.name == "applyDiff" {
             let value = decoded.value.unwrap();
             let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();

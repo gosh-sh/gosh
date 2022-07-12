@@ -31,6 +31,9 @@ pub struct Snapshot {
 
     #[serde(rename = "value5")]
     pub current_ipfs: Option<String>,
+
+    #[serde(rename = "value6")]
+    pub original_commit: String
 }
 
 #[derive(Deserialize, Debug)]
