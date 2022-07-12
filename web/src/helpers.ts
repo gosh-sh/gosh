@@ -3,16 +3,10 @@ import { toast } from 'react-toastify';
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
 import { GoshTree, GoshCommit, GoshDaoCreator, GoshRoot } from './types/classes';
-import {
-    IGoshDaoCreator,
-    IGoshRepository,
-    TGoshCommit,
-    TGoshTree,
-    TGoshTreeItem,
-} from './types/types';
+import { IGoshRepository, TGoshCommit, TGoshTree, TGoshTreeItem } from './types/types';
 import * as Diff from 'diff';
 // import LightningFS from '@isomorphic-git/lightning-fs';
-import { EGoshError, GoshError } from './types/errors';
+// import { EGoshError, GoshError } from './types/errors';
 
 // export const fs = new LightningFS('app.gosh');
 
@@ -33,6 +27,34 @@ export const goshDaoCreator = new GoshDaoCreator(
     process.env.REACT_APP_CREATOR_ADDR || ''
 );
 export const goshRoot = new GoshRoot(goshClient, process.env.REACT_APP_GOSH_ADDR || '');
+
+export const getPaginatedAccounts = async (params: {
+    filters?: string[];
+    result?: string[];
+    limit?: number;
+    lastId?: string;
+}): Promise<{ results: any[]; lastId?: string; completed: boolean }> => {
+    const { filters = [], result = ['id'], limit = 10, lastId = null } = params;
+    const query = `query AccountsQuery( $lastId: String, $limit: Int) {
+        accounts(
+            filter: {
+                id: { gt: $lastId },
+                ${filters.join(',')}
+            }
+            orderBy: [{ path: "id", direction: ASC }]
+            limit: $limit
+        ) {
+            ${result.join(' ')}
+        }
+    }`;
+    const response = await goshClient.net.query({ query, variables: { lastId, limit } });
+    const results = response.result.data.accounts;
+    return {
+        results,
+        lastId: results.length ? results[results.length - 1].id : undefined,
+        completed: results.length < limit,
+    };
+};
 
 // export const getEndpoints = (): string[] => {
 //     switch (process.env.REACT_APP_EVER_NETWORK) {

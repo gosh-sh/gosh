@@ -53,6 +53,7 @@ import {
     IGoshSnapshot,
     TGoshDiff,
     IGoshDiff,
+    TGoshDaoDetails,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -174,6 +175,16 @@ export class GoshDao implements IGoshDao {
     async load(): Promise<void> {
         this.meta = {
             name: await this.getName(),
+        };
+    }
+
+    async getDetails(): Promise<TGoshDaoDetails> {
+        const smvTokenRootAddr = await this.getSmvRootTokenAddr();
+        const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr);
+        return {
+            name: await this.getName(),
+            participants: (await this.getWallets()).length,
+            supply: await smvTokenRoot.getTotalSupply(),
         };
     }
 

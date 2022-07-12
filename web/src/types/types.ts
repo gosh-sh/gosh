@@ -15,6 +15,12 @@ export type TUserState = TUserStatePersist & {
     keys?: KeyPair;
 };
 
+export type TGoshDaoDetails = {
+    name: string;
+    participants: number;
+    supply: number;
+};
+
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
@@ -112,6 +118,7 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
+    getDetails(): Promise<TGoshDaoDetails>;
     deployWallet(pubkey: string, keys: KeyPair): Promise<string>;
     getWalletAddr(pubkey: string, index: number): Promise<string>;
     getWallets(): Promise<string[]>;
