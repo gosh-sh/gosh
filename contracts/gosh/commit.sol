@@ -145,7 +145,8 @@ contract Commit is Modifiers {
     }
     
     function getAcceptedContent(bytes value0, optional(string) value1, string name) public view senderIs(getSnapshotAddr(name)){
-        value0; value1;
+        value0;
+        value1;
         getMoney(_pubkey);
     }
     

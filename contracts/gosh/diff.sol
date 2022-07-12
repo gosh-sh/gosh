@@ -159,8 +159,7 @@ contract DiffC is Modifiers {
         getMoney(_pubkey);
     }
     
-    function sendDiff(
-        uint128 index, address branchcommit) public view senderIs(address(this)) {
+    function sendDiff(uint128 index, address branchcommit) public view senderIs(address(this)) {
         tvm.accept();
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 

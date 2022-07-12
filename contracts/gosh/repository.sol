@@ -18,7 +18,7 @@ import "./modifiers/modifiers.sol";
 /* Root contract of Repository */
 contract Repository is Modifiers{
     string constant version = "0.4.1";
-    
+
     uint256 _pubkey;
     TvmCell m_CommitCode;
     TvmCell m_SnapshotCode;
@@ -57,7 +57,7 @@ contract Repository is Modifiers{
         _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
         _head = "main";
     }
-          
+
     //Branch part  
     function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -79,13 +79,13 @@ contract Repository is Modifiers{
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
-    
+
     function _composeCommitStateInit(string _commit) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, address(this), version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
         return stateInit;
     }
-    
+
     function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
         TvmCell _contractflex = tvm.buildStateInit({
@@ -96,7 +96,7 @@ contract Repository is Modifiers{
         });
         return _contractflex;
     }
-    
+
     //Diff part
     function SendDiff(uint256 value1, uint128 index, string branch, address commit) public view {
         tvm.accept();
@@ -109,7 +109,7 @@ contract Repository is Modifiers{
     function destroy() public onlyOwner {
         selfdestruct(msg.sender);
     }
-    
+
     //Setters    
     function setCommit(string nameBranch, address oldcommit, string namecommit) public senderIs(getCommitAddr(namecommit)) {
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
@@ -121,19 +121,19 @@ contract Repository is Modifiers{
         _Branches[nameBranch] = Item(nameBranch, getCommitAddr(namecommit));
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}();
     }
-    
+
     function setHEAD(uint256 pubkey, string nameBranch, uint128 index) public {
         require(checkAccess(pubkey, msg.sender, index),ERR_SENDER_NO_ALLOWED);
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         _head = nameBranch;
     }
-    
+
     //Getters
-    
+
     function getSnapCode(string branch) external view returns(TvmCell) {
         return GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
-    }   
+    }
 
     function getAddrBranch(string name) external view returns(Item) {
         return _Branches[name];
@@ -147,7 +147,7 @@ contract Repository is Modifiers{
         }
         return AllBranches;
     }
-    
+
     function getSnapshotAddr(string branch, string name) external view returns(address) {
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
@@ -157,7 +157,7 @@ contract Repository is Modifiers{
     function getCommitCode() external view returns(TvmCell) {
         return m_CommitCode;
     }
-    
+
     function getTagCode() external view returns(TvmCell) {
         return GoshLib.buildTagCode(m_codeTag, address(this), version);
     }
@@ -165,15 +165,15 @@ contract Repository is Modifiers{
     function getGoshAdress() external view returns(address) {
         return _rootGosh;
     }
-    
+
     function getRepoPubkey() external view returns(uint256) {
         return _pubkey;
     }
-    
+
     function getName() external view returns(string) {
         return _name;
     }
-    
+
     function getHEAD() external view returns(string) {
         return _head;
     }
