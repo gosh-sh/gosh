@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { Link, useOutletContext, useParams } from "react-router-dom";
-import { useGoshRoot } from "../../hooks/gosh.hooks";
-import { GoshRepository } from "../../types/classes";
-import { IGoshRepository } from "../../types/types";
-import { useQuery } from "react-query";
-import RepoListItem from "./RepoListItem";
-import { TDaoLayoutOutletContext } from "../DaoLayout";
-import Spinner from "../../components/Spinner";
-
+import { useState } from 'react';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { GoshRepository } from '../../types/classes';
+import { IGoshRepository } from '../../types/types';
+import { useQuery } from 'react-query';
+import RepoListItem from './RepoListItem';
+import { TDaoLayoutOutletContext } from '../DaoLayout';
+import Spinner from '../../components/Spinner';
 
 const DaoRepositoriesPage = () => {
     const goshRoot = useGoshRoot();
@@ -22,13 +21,15 @@ const DaoRepositoriesPage = () => {
 
             // Get GoshDaoRepoCode by GoshDao address and get all repos addreses
             const repoCode = await goshRoot.getDaoRepoCode(goshDao.address);
-            const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: repoCode });
+            const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({
+                boc: repoCode,
+            });
             const reposAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code_hash: { eq: repoCodeHash.hash }
+                    code_hash: { eq: repoCodeHash.hash },
                 },
-                result: 'id'
+                result: 'id',
             });
             console.debug('GoshRepos addreses:', reposAddrs?.result || []);
 
@@ -48,8 +49,10 @@ const DaoRepositoriesPage = () => {
             select: (data) => {
                 if (!search) return data;
                 const pattern = new RegExp(search, 'i');
-                return data.filter((repo) => repo.meta && repo.meta.name.search(pattern) >= 0);
-            }
+                return data.filter(
+                    (repo) => repo.meta && repo.meta.name.search(pattern) >= 0
+                );
+            },
         }
     );
 
@@ -71,7 +74,7 @@ const DaoRepositoriesPage = () => {
                 {goshWallet?.isDaoParticipant && (
                     <Link
                         className="btn btn--body px-4 py-1.5 !font-normal text-center w-full sm:w-auto"
-                        to={`/${goshDao.meta?.name}/repos/create`}
+                        to={`/${daoName}/repos/create`}
                     >
                         New repository
                     </Link>
@@ -92,12 +95,19 @@ const DaoRepositoriesPage = () => {
                     </div>
                 )}
 
-                {repoListQuery.data?.map((repository, index) => (
-                    daoName && <RepoListItem key={index} daoName={daoName} repository={repository} />
-                ))}
+                {repoListQuery.data?.map(
+                    (repository, index) =>
+                        daoName && (
+                            <RepoListItem
+                                key={index}
+                                daoName={daoName}
+                                repository={repository}
+                            />
+                        )
+                )}
             </div>
         </div>
     );
-}
+};
 
 export default DaoRepositoriesPage;

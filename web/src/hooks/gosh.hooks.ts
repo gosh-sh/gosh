@@ -43,7 +43,6 @@ export const useGoshDao = (name?: string) => {
         const createDao = async (goshRoot: IGoshRoot, daoName: string) => {
             const daoAddr = await goshRoot.getDaoAddr(daoName);
             const dao = new GoshDao(goshRoot.account.client, daoAddr);
-            await dao.load();
             setGoshDao(dao);
         };
 

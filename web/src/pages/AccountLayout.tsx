@@ -1,13 +1,11 @@
-import React from "react";
-import { classNames } from "../utils";
-import { NavLink, Outlet } from "react-router-dom";
-
+import { classNames } from '../utils';
+import { NavLink, Outlet } from 'react-router-dom';
 
 const AccountLayout = () => {
     const tabs = [
         { to: '/account/orgs', title: 'Organizations' },
         { to: '/account/repos', title: 'Repositories' },
-        { to: '/account/settings', title: 'Settings' }
+        { to: '/account/settings', title: 'Settings' },
     ];
 
     return (
@@ -21,10 +19,12 @@ const AccountLayout = () => {
                             <NavLink
                                 key={index}
                                 to={item.to}
-                                className={({ isActive }) => classNames(
-                                    'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
-                                    isActive ? '!text-gray-050a15' : null
-                                )}
+                                className={({ isActive }) =>
+                                    classNames(
+                                        'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
+                                        isActive ? '!text-gray-050a15' : null
+                                    )
+                                }
                             >
                                 {item.title}
                             </NavLink>
@@ -37,6 +37,6 @@ const AccountLayout = () => {
             </div>
         </div>
     );
-}
+};
 
 export default AccountLayout;
