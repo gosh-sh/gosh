@@ -30,12 +30,26 @@ impl<'a> CreateBranchOperation<'a> {
         // We must prepare root tree for this commit
         // It needs to know a number of all blobs
         // in the entire tree
-        todo!();
+        // NOTE:
+        // Ignoring this. It is not yet implemented in contracts
+        // todo!();
+        Ok(())
     }
 
     async fn preinit_branch(&mut self) -> Result<()> {
-        // wallet -> deployBranch
-        todo!();
+        let wallet_contract = blockchain::user_wallet(self.context)?;
+        let params = serde_json::json!({
+            "repoName": self.context.remote.repo, 
+            "newName": self.new_branch,
+            "fromCommit": self.ancestor_commit.to_string(),
+        });  
+        blockchain::call(
+            &self.context.es_client,
+            wallet_contract,
+            "deployBranch",
+            Some(params)
+        ).await?; 
+        Ok(())
     }
 
     async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> Result<()> {
