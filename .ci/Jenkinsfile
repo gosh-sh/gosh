@@ -1,0 +1,36 @@
+// We must limit publishing only from releasae branches
+//
+// If it was a commit into a release branch:
+// - build everything
+// - test it
+// - bump version based on commits since the last version
+// - tag it
+// - publish it
+// ----
+// in case it is a pull request into a release branch
+// - build
+// - test
+// - ...
+
+// Note: Due to <matrix> limitations this list has to be duplicated in 2 places.
+
+pipeline {
+    agent none
+    parameters {
+        choice(name: 'APPEND_COMMIT_VERSION', choices: 'ON\nOFF', description: 'Append Git commit ID to build version?')
+    }
+    options {
+        // Keep the 10 most recent builds
+        buildDiscarder(logRotator(numToKeepStr:'10')) 
+    }
+    stages {
+        stage('Integration tests') {
+            agent {
+                label "linux"
+            }
+            steps {
+                echo OK
+            }
+        }
+    }
+}
