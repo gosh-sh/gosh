@@ -55,7 +55,8 @@
 			"inputs": [
 				{"name":"repo","type":"address"},
 				{"name":"commit","type":"string"},
-				{"name":"index","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -113,7 +114,8 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diffs","type":"tuple[]"},
-				{"name":"index","type":"uint128"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
 				{"name":"last","type":"bool"}
 			],
 			"outputs": [
@@ -137,7 +139,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"}
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -217,7 +220,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"}
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -260,7 +264,8 @@
 			"inputs": [
 				{"name":"reponame","type":"string"},
 				{"name":"commitName","type":"string"},
-				{"name":"index","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
