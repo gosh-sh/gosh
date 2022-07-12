@@ -15,7 +15,7 @@ import "tree.sol";
 
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
-    string constant version = "0.4.1";
+    string constant version = "0.5.0";
     
     address _creator;
     TvmCell m_RepositoryCode;

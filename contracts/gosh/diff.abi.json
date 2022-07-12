@@ -150,8 +150,9 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_index","type":"uint128"},
-		{"key":2,"name":"_nameCommit","type":"string"}
+		{"key":1,"name":"_index1","type":"uint128"},
+		{"key":2,"name":"_index2","type":"uint128"},
+		{"key":3,"name":"_nameCommit","type":"string"}
 	],
 	"events": [
 	],
@@ -159,7 +160,8 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"_index","type":"uint128"},
+		{"name":"_index1","type":"uint128"},
+		{"name":"_index2","type":"uint128"},
 		{"name":"_nameCommit","type":"string"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},

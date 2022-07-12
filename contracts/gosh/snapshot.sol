@@ -16,7 +16,7 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string version = "0.4.1";
+    string version = "0.5.0";
     
     string _baseCommit;
     uint256 _pubkey;
@@ -92,13 +92,13 @@ contract Snapshot is Modifiers {
         return _contractflex;
     }   
 
-    function applyDiff(string namecommit, Diff diff, uint128 index) public {
+    function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         tvm.accept();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index))) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
+        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); return;}
         else { 
-            require(_buildDiffAddr(namecommit, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+            require(_buildDiffAddr(namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
             _commits = namecommit;
         }
@@ -120,8 +120,8 @@ contract Snapshot is Modifiers {
         }
     }
     
-    function cancelDiff(uint128 index) public {
-        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
+    function cancelDiff(uint128 index1, uint128 index2) public {
+        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
@@ -129,8 +129,8 @@ contract Snapshot is Modifiers {
         _applying = false;
     }
     
-    function approve(uint128 index) public {
-        require(msg.sender == _buildDiffAddr(_commits, index), ERR_SENDER_NO_ALLOWED);
+    function approve(uint128 index1, uint128 index2) public {
+        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
         _oldcommits = _commits;
@@ -148,13 +148,14 @@ contract Snapshot is Modifiers {
     
     function _buildDiffAddr(
         string commit,
-        uint128 index
+        uint128 index1,
+        uint128 index2
     ) private view returns(address) {
         TvmCell deployCode = GoshLib.buildDiffCode(m_codeDiff, _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
             contr: DiffC,
-            varInit: {_nameCommit: commit, _index: index}
+            varInit: {_nameCommit: commit, _index1: index1, _index2: index2}
         });
         return address(tvm.hash(state));
     }
