@@ -221,6 +221,7 @@ contract Commit is Modifiers {
     function DiffCheckCommit(uint256 pubkey, string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
         tvm.accept();    
         _approved += 1;
+        if (_continueDiff == false) { return; }
         if (_approved < _number) { return; }
         _approved = 0;
         _continueDiff = false;
