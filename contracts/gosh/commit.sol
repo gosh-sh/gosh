@@ -326,8 +326,9 @@ contract Commit is Modifiers {
     }
     
     //Fallback/Receive
-    fallback() external view {
+    onBounce(TvmSlice body) external view {
         tvm.accept();
+        body;
         if ((msg.sender == _parents[0]) ||  (msg.sender == _tree)) {
             this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
             return;
