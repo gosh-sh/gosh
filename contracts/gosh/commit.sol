@@ -312,6 +312,7 @@ contract Commit is Modifiers {
     }
     
     function checkFallbackDiff (uint128 index, address sender) public senderIs(address(this)){
+        tvm.accept();
         if (index >= _number) { return; }
         if (sender == getDiffAddress(_nameCommit, index, 0)) { 
             _continueDiff = false;
