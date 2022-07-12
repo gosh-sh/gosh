@@ -322,7 +322,7 @@ contract Commit is Modifiers {
             if (_continueChain == true) { return; }
             this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}("", sender);
         }
-        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, msg.sender);
+        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, sender);
         getMoney(_pubkey);
     }
     
