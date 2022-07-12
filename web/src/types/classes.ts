@@ -16,7 +16,6 @@ import GoshSmvClientABI from '../contracts/SMVClient.abi.json';
 import GoshSmvTokenRootABI from '../contracts/TokenRoot.abi.json';
 import {
     calculateSubtrees,
-    getGoshDaoCreator,
     getRepoTree,
     getTreeFromItems,
     getTreeItemsFromPath,
@@ -31,6 +30,7 @@ import {
     ZERO_COMMIT,
     getBlobDiffPatch,
     MAX_ONCHAIN_FILE_SIZE,
+    goshDaoCreator,
 } from '../helpers';
 import {
     IGoshTree,
@@ -80,7 +80,7 @@ export class GoshRoot implements IGoshRoot {
 
     constructor(client: TonClient, address: string) {
         this.address = address;
-        this.daoCreator = getGoshDaoCreator(client);
+        this.daoCreator = goshDaoCreator;
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
@@ -167,7 +167,7 @@ export class GoshDao implements IGoshDao {
 
     constructor(client: TonClient, address: string) {
         this.address = address;
-        this.daoCreator = getGoshDaoCreator(client);
+        this.daoCreator = goshDaoCreator;
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
