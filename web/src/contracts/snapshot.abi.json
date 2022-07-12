@@ -30,7 +30,8 @@
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diff","type":"tuple"},
-				{"name":"index","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -38,7 +39,8 @@
 		{
 			"name": "cancelDiff",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -46,7 +48,8 @@
 		{
 			"name": "approve",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 			]

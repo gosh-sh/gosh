@@ -197,13 +197,13 @@ export interface IGoshWallet extends IContract {
         repoName: string,
         branchName: string,
         commitName: string,
-        branchCommit: string
+        filesCount: number
     ): Promise<void>;
     startProposalForSetCommit(
         repoName: string,
         branchName: string,
         commitName: string,
-        branchCommit: string
+        filesCount: number
     ): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
@@ -220,7 +220,12 @@ export interface IGoshWallet extends IContract {
     tryProposalResult(proposalAddr: string): Promise<void>;
     updateHead(): Promise<void>;
     getTreeAddr(repoAddr: string, treeName: string): Promise<string>;
-    getDiffAddr(repoName: string, commitName: string, index: number): Promise<string>;
+    getDiffAddr(
+        repoName: string,
+        commitName: string,
+        index1: number,
+        index2: number
+    ): Promise<string>;
     setHead(repoName: string, branch: string): Promise<void>;
 }
 

@@ -17,7 +17,7 @@ import "diff.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "0.4.1";
+    string constant version = "0.5.0";
     
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
@@ -126,8 +126,8 @@ contract Tree is Modifiers {
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
     
-    function getShaInfoDiff(string commit, uint128 index, Request value0) public view {
-        require(checkAccessDiff(commit, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public view {
+        require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
         getMoney(_pubkey);
@@ -178,15 +178,15 @@ contract Tree is Modifiers {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
     
-    function checkAccessDiff(string commit, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeDiffStateInit(commit, _repo, index);
+    function checkAccessDiff(string commit, address sender, uint128 index1, uint128 index2) internal view returns(bool) {
+        TvmCell s1 = _composeDiffStateInit(commit, _repo, index1, index2);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
     
-    function _composeDiffStateInit(string commit, address repo, uint128 index) internal view returns(TvmCell) {
+    function _composeDiffStateInit(string commit, address repo, uint128 index1, uint128 index2) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, repo, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: commit, _index: index}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
 
