@@ -331,6 +331,7 @@ contract Commit is Modifiers {
             this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
             return;
         }
+        if (msg.value > 1 ton) { return; }
         this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(0, msg.sender);
     }
     
