@@ -168,7 +168,7 @@ contract Commit is Modifiers {
             _diffcheck = true;
             getMoney(_pubkey);
             if (_continueChain == true) { return; }
-            acceptAll(branch, branchcommit);
+            this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchcommit);
             return;
         }
         if (index >= _number) { return; }
@@ -215,7 +215,7 @@ contract Commit is Modifiers {
         getMoney(pubkey);
         _approved = 0;
         if (_continueChain == true) { return; }
-        acceptAll(branch, branchCommit);
+        this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
     
     function DiffCheckCommit(uint256 pubkey, string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
@@ -228,7 +228,7 @@ contract Commit is Modifiers {
         _diffcheck = true;
         getMoney(pubkey);
         if (_continueChain == true) { return; }
-        acceptAll(branch, branchCommit);
+        this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
     
     function ChainAccept(string name, string branchName, address branchCommit, address newC) public senderIs(branchCommit) {
@@ -239,7 +239,7 @@ contract Commit is Modifiers {
         _commitcheck = true;
         getMoney(_pubkey);
         if (_continueDiff == true) { return; }
-        acceptAll(branchName, branchCommit);
+        this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branchName, branchCommit);
     }
     
         
@@ -250,10 +250,10 @@ contract Commit is Modifiers {
         _commitcheck = false;
         getMoney(_pubkey);
         if (_continueDiff == true) { return; }
-        acceptAll(branch, branchCommit);
+        this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
     
-    function acceptAll(string branch, address branchCommit) private {
+    function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) { 
             Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number);
             _number = 0;
@@ -320,7 +320,7 @@ contract Commit is Modifiers {
             getMoney(_pubkey);
             _approved = 0;
             if (_continueChain == true) { return; }
-            acceptAll("", sender);
+            this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}("", sender);
         }
         this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, msg.sender);
         getMoney(_pubkey);
