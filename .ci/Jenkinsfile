@@ -16,9 +16,6 @@
 
 pipeline {
     agent none
-    parameters {
-        choice(name: 'APPEND_COMMIT_VERSION', choices: 'ON\nOFF', description: 'Append Git commit ID to build version?')
-    }
     options {
         // Keep the 10 most recent builds
         buildDiscarder(logRotator(numToKeepStr:'10')) 
@@ -29,7 +26,8 @@ pipeline {
                 label "linux"
             }
             steps {
-                cat tmp
+                echo 'OK'
+                sh "cat tmp"
             }
         }
     }
