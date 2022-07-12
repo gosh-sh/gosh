@@ -273,7 +273,8 @@ contract DiffC is Modifiers {
     }
     
     //Fallback/Receive
-    fallback() external pure {
+    onBounce(TvmSlice body) external pure {
+        body;
         this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
     }
     
