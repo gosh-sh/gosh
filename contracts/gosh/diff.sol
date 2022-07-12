@@ -273,7 +273,7 @@ contract DiffC is Modifiers {
     }
     
     //Fallback/Receive
-    receive() external pure {
+    fallback() external pure {
         this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
     }
     
