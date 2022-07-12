@@ -30,6 +30,7 @@ pipeline {
             }
             steps {
                 echo OK
+                cat tmp
             }
         }
     }
