@@ -8,15 +8,15 @@ import { IGoshDao, IGoshWallet } from '../types/types';
 import { classNames } from '../utils';
 
 export type TDaoLayoutOutletContext = {
-    goshDao: IGoshDao;
-    goshWallet?: IGoshWallet;
+    dao: IGoshDao;
+    wallet?: IGoshWallet;
 };
 
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom);
     const { daoName } = useParams();
-    const goshDao = useGoshDao(daoName);
-    const goshWallet = useGoshWallet(daoName);
+    const dao = useGoshDao(daoName);
+    const wallet = useGoshWallet(daoName);
     const [isReady, setIsReady] = useState<boolean>(false);
 
     const tabs = [
@@ -28,9 +28,9 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && goshWallet);
-        if (goshDao && walletAwaited) setIsReady(true);
-    }, [goshDao, userStatePersist.phrase, goshWallet]);
+            !userStatePersist.phrase || (userStatePersist.phrase && wallet);
+        if (dao && walletAwaited) setIsReady(true);
+    }, [dao, userStatePersist.phrase, wallet]);
 
     return (
         <div className="container container--full my-10">
@@ -51,7 +51,7 @@ const DaoLayout = () => {
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
                         {tabs
-                            .filter((item) => (!goshWallet ? item.public : item))
+                            .filter((item) => (!wallet ? item.public : item))
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -71,7 +71,7 @@ const DaoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ goshDao, goshWallet }} />
+                    <Outlet context={{ dao, wallet }} />
                 </>
             )}
         </div>

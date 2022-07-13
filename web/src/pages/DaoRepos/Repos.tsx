@@ -1,60 +1,64 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useGoshRoot } from '../../hooks/gosh.hooks';
 import { GoshRepository } from '../../types/classes';
-import { IGoshRepository } from '../../types/types';
-import { useQuery } from 'react-query';
+import { TGoshRepoDetails } from '../../types/types';
 import RepoListItem from './RepoListItem';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import Spinner from '../../components/Spinner';
+import { getPaginatedAccounts } from '../../helpers';
 
 const DaoRepositoriesPage = () => {
     const goshRoot = useGoshRoot();
     const { daoName } = useParams();
-    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
     const [search, setSearch] = useState<string>('');
+    const [repos, setRepos] = useState<{
+        list: TGoshRepoDetails[];
+        lastId?: string;
+        completed: boolean;
+        isFetching: boolean;
+    }>({
+        list: [],
+        completed: false,
+        isFetching: true,
+    });
 
-    const repoListQuery = useQuery(
-        ['repositoryList'],
-        async (): Promise<IGoshRepository[]> => {
-            if (!goshRoot) return [];
+    const getRepoList = useCallback(
+        async (lastId?: string) => {
+            setRepos((curr) => ({ ...curr, isFetching: true }));
 
-            // Get GoshDaoRepoCode by GoshDao address and get all repos addreses
-            const repoCode = await goshRoot.getDaoRepoCode(goshDao.address);
-            const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({
-                boc: repoCode,
+            // Get GoshRepo code and paginated repos accounts
+            const repoCode = await goshRoot.getDaoRepoCode(dao.address);
+            const accounts = await getPaginatedAccounts({
+                filters: [`code: {eq:"${repoCode}"}`],
+                limit: 10,
+                lastId,
             });
-            const reposAddrs = await goshRoot.account.client.net.query_collection({
-                collection: 'accounts',
-                filter: {
-                    code_hash: { eq: repoCodeHash.hash },
-                },
-                result: 'id',
-            });
-            console.debug('GoshRepos addreses:', reposAddrs?.result || []);
 
-            // Create GoshRepository objects
-            const repos = await Promise.all(
-                (reposAddrs?.result || []).map(async (item) => {
-                    const repo = new GoshRepository(goshRoot.account.client, item.id);
-                    await repo.load();
-                    return repo;
+            // Get repos details
+            const items = await Promise.all(
+                accounts.results.map(async ({ id }) => {
+                    const repo = new GoshRepository(goshRoot.account.client, id);
+                    return await repo.getDetails();
                 })
             );
-            console.debug('GoshRepos:', repos);
-            return repos;
+
+            setRepos((curr) => ({
+                ...curr,
+                isFetching: false,
+                list: [...curr.list, ...items],
+                lastId: accounts.lastId,
+                completed: accounts.completed,
+            }));
         },
-        {
-            enabled: !!goshRoot,
-            select: (data) => {
-                if (!search) return data;
-                const pattern = new RegExp(search, 'i');
-                return data.filter(
-                    (repo) => repo.meta && repo.meta.name.search(pattern) >= 0
-                );
-            },
-        }
+        [goshRoot, dao.address]
     );
+
+    useEffect(() => {
+        setRepos({ list: [], isFetching: true, completed: true });
+        getRepoList();
+    }, [getRepoList]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -71,7 +75,7 @@ const DaoRepositoriesPage = () => {
                     />
                 </div>
 
-                {goshWallet?.isDaoParticipant && (
+                {wallet?.isDaoParticipant && (
                     <Link
                         className="btn btn--body px-4 py-1.5 !font-normal text-center w-full sm:w-auto"
                         to={`/${daoName}/repos/create`}
@@ -82,30 +86,40 @@ const DaoRepositoriesPage = () => {
             </div>
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
-                {(repoListQuery.isIdle || repoListQuery.isLoading) && (
+                {repos.isFetching && !repos.list.length && (
                     <div className="text-sm text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading repositories...
                     </div>
                 )}
 
-                {repoListQuery.isFetched && !repoListQuery.data?.length && (
+                {!repos.isFetching && !repos.list.length && (
                     <div className="text-sm text-gray-606060 text-center">
                         There are no repositories yet
                     </div>
                 )}
 
-                {repoListQuery.data?.map(
-                    (repository, index) =>
+                {repos.list.map(
+                    (details, index) =>
                         daoName && (
-                            <RepoListItem
-                                key={index}
-                                daoName={daoName}
-                                repository={repository}
-                            />
+                            <RepoListItem key={index} daoName={daoName} item={details} />
                         )
                 )}
             </div>
+
+            {!repos.completed && (
+                <div className="text-center mt-3">
+                    <button
+                        className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
+                        type="button"
+                        disabled={repos.isFetching}
+                        onClick={() => getRepoList(repos.lastId)}
+                    >
+                        {repos.isFetching && <Spinner className="mr-2" />}
+                        Load more
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

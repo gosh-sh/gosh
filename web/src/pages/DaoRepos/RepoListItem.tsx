@@ -2,17 +2,17 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
 import CopyClipboard from '../../components/CopyClipboard';
-import { IGoshRepository } from '../../types/types';
+import { TGoshRepoDetails } from '../../types/types';
 import { shortString } from '../../utils';
 
 type TRepositoryListItemProps = {
     daoName: string;
-    repository: IGoshRepository;
     daoLink?: boolean;
+    item: TGoshRepoDetails;
 };
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
-    const { daoName, repository, daoLink = false } = props;
+    const { daoName, item, daoLink = false } = props;
 
     return (
         <div className="py-3">
@@ -30,17 +30,17 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 )}
                 <Link
                     className="text-xl font-semibold hover:underline"
-                    to={`/${daoName}/${repository.meta?.name}`}
+                    to={`/${daoName}/${item.name}`}
                 >
-                    {repository.meta?.name}
+                    {item.name}
                 </Link>
             </div>
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
 
-            {!!repository.meta?.tags && (
+            {!!item.tags && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                    {repository.meta.tags.map((tag, index) => (
+                    {item.tags.map((tag, index) => (
                         <button
                             key={index}
                             type="button"
@@ -60,7 +60,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {repository.meta?.branchCount}
+                        {item.branches.length}
                     </div>
                     {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />
@@ -69,10 +69,10 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 </div>
                 <CopyClipboard
                     componentProps={{
-                        text: repository.address,
+                        text: item.address,
                     }}
                     className="hover:text-gray-050a15"
-                    label={shortString(repository.address)}
+                    label={shortString(item.address)}
                 />
             </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Field, FieldArray, Form, Formik, FormikHelpers } from 'formik';
@@ -21,25 +21,25 @@ type TParticipantFormValues = {
 
 const DaoParticipantsPage = () => {
     const userState = useRecoilValue(userStateAtom);
-    const { goshDao } = useOutletContext<TDaoLayoutOutletContext>();
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>();
     const [participants, setParticipants] =
         useState<{ pubkey: string; smvBalance: number }[]>();
 
     const getParticipantList = useCallback(async () => {
         // Get GoshWallet code by user's pubkey and get all user's wallets
-        const walletAddrs = await goshDao.getWallets();
+        const walletAddrs = await dao.getWallets();
         console.debug('GoshWallets addreses:', walletAddrs);
 
         const participants = await Promise.all(
             walletAddrs.map(async (addr) => {
-                const wallet = new GoshWallet(goshDao.account.client, addr);
+                const wallet = new GoshWallet(dao.account.client, addr);
                 const pubkey = await wallet.getPubkey();
                 const smvBalance = await wallet.getSmvTokenBalance();
                 return { pubkey, smvBalance };
             })
         );
         setParticipants(participants);
-    }, [goshDao]);
+    }, [dao]);
 
     const onCreateParticipant = async (
         values: TParticipantFormValues,
@@ -53,15 +53,15 @@ const DaoParticipantsPage = () => {
                 values.pubkey.map(async (item) => {
                     if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
 
-                    console.debug('[DAO participants] - DAO address:', goshDao.address);
-                    const rootPubkey = await goshDao.getRootPubkey();
+                    console.debug('[DAO participants] - DAO address:', dao.address);
+                    const rootPubkey = await dao.getRootPubkey();
                     console.debug(
                         '[DAO participants] - Create root/item/keys:',
                         rootPubkey,
                         item,
                         userState.keys
                     );
-                    const walletAddr = await goshDao.deployWallet(item, userState.keys);
+                    const walletAddr = await dao.deployWallet(item, userState.keys);
                     console.debug('[DAO participants] - Create wallet addr:', walletAddr);
                 })
             );

@@ -1,8 +1,6 @@
-import React from "react";
-import { Navigate, NavLink, Outlet, useOutletContext, useParams } from "react-router-dom";
-import { classNames } from "../utils";
-import { TDaoLayoutOutletContext } from "./DaoLayout";
-
+import { Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { classNames } from '../utils';
+import { TDaoLayoutOutletContext } from './DaoLayout';
 
 const DaoSettingsLayout = () => {
     const { daoName } = useParams();
@@ -10,10 +8,10 @@ const DaoSettingsLayout = () => {
 
     const tabs = [
         { to: `/${daoName}/settings/wallet`, title: 'Wallet' },
-        { to: `/${daoName}/settings/participants`, title: 'Participants' }
+        { to: `/${daoName}/settings/participants`, title: 'Participants' },
     ];
 
-    if (!daoContext.goshWallet) return <Navigate to={`/${daoName}`} />;
+    if (!daoContext.wallet) return <Navigate to={`/${daoName}`} />;
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block px-7 py-8">
@@ -25,10 +23,12 @@ const DaoSettingsLayout = () => {
                             <NavLink
                                 key={index}
                                 to={item.to}
-                                className={({ isActive }) => classNames(
-                                    'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
-                                    isActive ? '!text-gray-050a15' : null
-                                )}
+                                className={({ isActive }) =>
+                                    classNames(
+                                        'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
+                                        isActive ? '!text-gray-050a15' : null
+                                    )
+                                }
                             >
                                 {item.title}
                             </NavLink>
@@ -41,6 +41,6 @@ const DaoSettingsLayout = () => {
             </div>
         </div>
     );
-}
+};
 
 export default DaoSettingsLayout;
