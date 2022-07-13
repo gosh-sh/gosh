@@ -21,6 +21,19 @@ export type TGoshDaoDetails = {
     supply: number;
 };
 
+export type TGoshRepoDetails = {
+    address: string;
+    name: string;
+    branches: TGoshBranch[];
+    head: string;
+    tags: TGoshTagDetails[];
+};
+
+export type TGoshTagDetails = {
+    commit: string;
+    content: string;
+};
+
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
@@ -252,6 +265,7 @@ export interface IGoshRepository extends IContract {
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
+    getHead(): Promise<string>;
     getCommitAddr(commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
     getTagCode(): Promise<string>;
@@ -311,6 +325,7 @@ export interface IGoshTag extends IContract {
     };
 
     load(): Promise<void>;
+    getCommit(): Promise<string>;
     getContent(): Promise<string>;
 }
 

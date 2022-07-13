@@ -6,7 +6,7 @@ import ReposPage from '../DaoRepos';
 
 const DaoPage = () => {
     const { daoName } = useParams();
-    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
 
     return (
         <div className="flex flex-wrap-reverse gap-x-4 gap-y-6">
@@ -19,15 +19,15 @@ const DaoPage = () => {
                 <div>
                     <p className="text-sm text-gray-606060 mb-1">DAO address</p>
                     <CopyClipboard
-                        label={shortString(goshDao.address)}
+                        label={shortString(dao.address)}
                         componentProps={{
-                            text: goshDao.address,
+                            text: dao.address,
                         }}
                     />
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    {goshWallet?.isDaoParticipant ? (
+                    {wallet?.isDaoParticipant ? (
                         <Link
                             to={`/${daoName}/settings/wallet`}
                             className="hover:underline"

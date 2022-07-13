@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner';
 import { useGoshRoot } from '../../hooks/gosh.hooks';
 import { userStateAtom } from '../../store/user.state';
 import { GoshDao, GoshRepository, GoshWallet } from '../../types/classes';
-import { IGoshRepository } from '../../types/types';
+import { TGoshRepoDetails } from '../../types/types';
 import RepoListItem from '../DaoRepos/RepoListItem';
 
 const RepositoriesPage = () => {
@@ -14,7 +14,7 @@ const RepositoriesPage = () => {
     const [search, setSearch] = useState<string>();
     const repoListQuery = useQuery(
         ['userRepositoryList'],
-        async (): Promise<{ repo: IGoshRepository; daoName?: string }[]> => {
+        async (): Promise<{ repo: TGoshRepoDetails; daoName?: string }[]> => {
             if (!goshRoot || !userState.keys) return [];
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
@@ -67,8 +67,7 @@ const RepositoriesPage = () => {
                                 goshRoot.account.client,
                                 item.id
                             );
-                            await repo.load();
-                            return repo;
+                            return await repo.getDetails();
                         })
                     );
                     return repos.map((repo) => ({ repo, daoName: dao.meta?.name }));
@@ -86,7 +85,7 @@ const RepositoriesPage = () => {
                 if (!search) return data;
                 const pattern = new RegExp(search, 'i');
                 return data.filter((item) => {
-                    return `${item.daoName}/${item.repo.meta?.name}`.search(pattern) >= 0;
+                    return `${item.daoName}/${item.repo.name}`.search(pattern) >= 0;
                 });
             },
         }
@@ -127,7 +126,7 @@ const RepositoriesPage = () => {
                             <RepoListItem
                                 key={index}
                                 daoName={daoName}
-                                repository={repo}
+                                item={repo}
                                 daoLink
                             />
                         )
