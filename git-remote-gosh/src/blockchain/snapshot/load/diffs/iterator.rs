@@ -29,6 +29,37 @@ pub struct DiffMessagesIterator {
     next: Option<NextChunk>
 }
 
+#[derive(Deserialize, Debug)]
+struct Message {
+    id: String,
+    body: String,
+    #[serde(with = "ton_sdk::json_helper::uint")]
+    created_lt: u64,
+    status: u8,
+    bounced: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct Node {
+    #[serde(rename = "node")]
+    message: Message
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PageInfo {
+    has_next_page: bool,
+    end_cursor: String
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Messages {
+    edges: Vec<Node>,
+    page_info: PageInfo
+}
+
+
 impl DiffMessagesIterator {
 
     pub fn new(snapshot_address: impl Into<String>) -> Self {
@@ -50,7 +81,7 @@ impl DiffMessagesIterator {
         self.next = match &self.next {
             None => None,
             Some(NextChunk::Snapshot(address)) => {
-                let (buffer, next_page_info) = load_messages_to(client, &address).await?;
+                let (buffer, next_page_info) = load_messages_to(client, &address, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 match next_page_info {
@@ -92,17 +123,17 @@ impl DiffMessagesIterator {
 pub async fn load_messages_to(
     context: &TonClient,
     address: &str,
+    cursor: Option<String>
 ) -> Result<(Vec<DiffMessage>, Option<String>), Box<dyn Error>> {
     let mut next_page_info: Option<String> = None;
-    let query = r#"query($addr: String!){
+    let query = r#"query($addr: String!, $after: String){
       blockchain{
         account(address:$addr) {
-          messages(msg_type:[IntIn]) {
+          messages(msg_type:[IntIn], after:$after) {
             edges {
               node{ id body created_lt status bounced }
-              cursor
             }
-            pageInfo { hasNextPage }
+            pageInfo { hasNextPage endCursor }
           }
         }
       }
@@ -113,31 +144,23 @@ pub async fn load_messages_to(
         context.clone(),
         ParamsOfQuery {
             query,
-            variables: Some(serde_json::json!({ "addr": address })),
+            variables: Some(serde_json::json!({ "addr": address, "after": cursor.unwrap_or("".to_string()) })),
             ..Default::default()
         },
     )
     .await
     .map(|r| r.result)?;
 
-    #[derive(Deserialize, Debug)]
-    struct Message {
-        id: String,
-        body: String,
-        #[serde(with = "ton_sdk::json_helper::uint")]
-        created_lt: u64,
-        status: u8,
-        bounced: bool,
+    let mut messages: Vec<DiffMessage> = Vec::new();
+    let nodes = &result["data"]["blockchain"]["account"]["messages"];
+    let edges: Messages = serde_json::from_value(nodes.clone())?;
+    if edges.page_info.has_next_page {
+        next_page_info = Some(edges.page_info.end_cursor);
     }
 
-    let mut messages: Vec<DiffMessage> = Vec::new();
-    let nodes = result["data"]["blockchain"]["account"]["messages"]["edges"]
-        .as_array()
-        .unwrap();
-
-    log::debug!("Loaded {} message(s) to {}", nodes.len(), address);
-    for message in nodes {
-        let raw_msg: Message = serde_json::from_value(message["node"].clone()).unwrap();
+    log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    for elem in edges.edges {
+        let raw_msg = elem.message;
         if raw_msg.status != 5 || raw_msg.bounced {
             continue;
         }
