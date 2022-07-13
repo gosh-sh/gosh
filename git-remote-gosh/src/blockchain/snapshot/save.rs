@@ -39,7 +39,7 @@ struct DeployDiffParams {
 #[derive(Serialize, Debug)]
 struct DeploySnapshotParams {
     #[serde(rename = "repo")]
-    repo_name: String,
+    repo_address: String,
     #[serde(rename = "branch")]
     branch_name: String,
     #[serde(rename = "commit")]
@@ -137,13 +137,17 @@ pub async fn push_initial_snapshot(
     if content.len() > 15000 {
         ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, content).await?);
     };
+    let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
+    let content: String = content.iter()
+        .map(|e| format!("{:x?}", e))
+        .collect();
 
     let args = DeploySnapshotParams {
-        repo_name: context.remote.repo.clone(),
+        repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         file_path: file_path.to_string(),
-        content: String::from_utf8(content.to_vec())?,
+        content: content,
         ipfs: Some("".to_string()),
     };
 
