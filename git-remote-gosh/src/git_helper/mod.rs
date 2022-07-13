@@ -57,6 +57,7 @@ impl GitHelper {
         .await
     }
 
+    #[instrument(level = "debug")]
     async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
@@ -83,6 +84,7 @@ impl GitHelper {
         Ok(caps)
     }
 
+    #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
         let refs = get_refs(&self.es_client, self.repo_addr.as_str()).await?;
         let mut ref_list: Vec<String> = refs.unwrap();

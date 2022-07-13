@@ -47,13 +47,13 @@ impl DiffMessagesIterator {
     }
 
     async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
-        match &self.next {
-            None => {},
+        self.next = match &self.next {
+            None => None,
             Some(NextChunk::Snapshot(address)) => {
                 let (buffer, next_page_info) = load_messages_to(client, &address).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
-                self.next = match next_page_info {
+                match next_page_info {
                     Some(next_page_info) => Some(
                         NextChunk::MessagesPage(next_page_info)
                     ),
@@ -61,15 +61,15 @@ impl DiffMessagesIterator {
                         // find last commit
                         // find what is it pointing to
                         // generate filter
-                        todo!();
+                        //todo!();
+                        None
                     }
-                };
-                
+                }
             },
             Some(NextChunk::MessagesPage(next_page_info)) => {
-                  
+                todo!(); 
             }
-        }
+        };
         Ok(())
     }
     

@@ -314,6 +314,7 @@ async fn call(
     Ok(call_result)
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn get_repo_address(
     context: &TonClient,
     gosh_root_addr: &str,

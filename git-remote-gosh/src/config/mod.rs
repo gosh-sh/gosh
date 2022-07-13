@@ -93,6 +93,7 @@ impl Config {
         return Self::load(config_reader);
     }
 
+    #[instrument(level = "debug")]
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
         return self
             .networks

@@ -132,7 +132,7 @@ impl GitHelper {
     }
 
     // find ancestor commit
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(self))]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
@@ -253,7 +253,7 @@ impl GitHelper {
         Ok(result_ok)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(self))]
     pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
