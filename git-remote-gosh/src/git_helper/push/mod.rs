@@ -108,29 +108,33 @@ impl GitHelper {
                 prev_tree_root_id,
                 &PathBuf::from(&file_path),
             )?;
-            if prev_state_blob_id.is_none() {
-                // This path is new
-                // (we're not handling renames yet)
-                self.push_new_blob(&file_path, blob_id, current_commit_id, branch_name)
-                    .await?;
-                continue;
+            match prev_state_blob_id {
+                None => {
+                    // This path is new
+                    // (we're not handling renames yet)
+                    self.push_new_blob(
+                        &file_path, 
+                        blob_id, 
+                        current_commit_id, 
+                        branch_name
+                    ).await?;
+                },
+                Some(prev_state_blob_id) => {
+                    let file_diff = utilities::generate_blob_diff(
+                        &self.local_repository().objects,
+                        &prev_state_blob_id,
+                        blob_id,
+                    ).await?;
+                    blockchain::snapshot::push_diff(
+                        self,
+                        &current_commit_id,
+                        branch_name,
+                        blob_id,
+                        &file_path,
+                        &file_diff,
+                    ).await?;
+                }
             }
-            let prev_state_blob_id = prev_state_blob_id.expect("guarded");
-            let file_diff = utilities::generate_blob_diff(
-                &self.local_repository().objects,
-                &prev_state_blob_id,
-                blob_id,
-            )
-            .await?;
-            blockchain::snapshot::push_diff(
-                self,
-                &current_commit_id,
-                branch_name,
-                blob_id,
-                &file_path,
-                &file_diff,
-            )
-            .await?;
         }
         Ok(())
     }
