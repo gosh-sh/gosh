@@ -290,7 +290,7 @@ impl GitHelper {
             &latest_commit_id, 
             branch_name, 
             statistics.diffs
-        );
+        ).await?;
 
         // 10. move HEAD
         //
