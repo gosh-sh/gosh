@@ -31,6 +31,7 @@ import {
     getBlobDiffPatch,
     MAX_ONCHAIN_FILE_SIZE,
     goshDaoCreator,
+    getPaginatedAccounts,
 } from '../helpers';
 import {
     IGoshTree,
@@ -54,6 +55,8 @@ import {
     TGoshDiff,
     IGoshDiff,
     TGoshDaoDetails,
+    TGoshTagDetails,
+    TGoshRepoDetails,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -1165,6 +1168,16 @@ export class GoshRepository implements IGoshRepository {
         };
     }
 
+    async getDetails(): Promise<TGoshRepoDetails> {
+        return {
+            address: this.address,
+            name: await this.getName(),
+            branches: await this.getBranches(),
+            head: await this.getHead(),
+            tags: await this.getTags(),
+        };
+    }
+
     async getGoshRoot(): Promise<IGoshRoot> {
         const addr = await this.getGoshAddr();
         return new GoshRoot(this.account.client, addr);
@@ -1192,6 +1205,11 @@ export class GoshRepository implements IGoshRepository {
         };
     }
 
+    async getHead(): Promise<string> {
+        const result = await this.account.runLocal('getHEAD', {});
+        return result.decoded?.output.value0;
+    }
+
     async getCommitAddr(commitSha: string): Promise<string> {
         const result = await this.account.runLocal('getCommitAddr', {
             nameCommit: commitSha,
@@ -1212,30 +1230,28 @@ export class GoshRepository implements IGoshRepository {
     }
 
     async getTags(): Promise<{ content: string; commit: string }[]> {
-        const tagCode = await this.getTagCode();
-        const tagCodeHash = await this.account.client.boc.get_boc_hash({
-            boc: tagCode,
-        });
+        // Get repo tag code and all tag accounts addresses
+        const code = await this.getTagCode();
+        const accounts: string[] = [];
+        let next: string | undefined;
+        while (true) {
+            const { results, lastId, completed } = await getPaginatedAccounts({
+                filters: [`code: {eq:"${code}"}`],
+                limit: 50,
+                lastId: next,
+            });
+            accounts.push(...results.map((item) => item.id));
+            next = lastId;
+            if (completed) break;
+        }
 
-        const result = await this.account.client.net.query_collection({
-            collection: 'accounts',
-            filter: {
-                code_hash: { eq: tagCodeHash.hash },
-            },
-            result: 'id',
-        });
-
-        const tags = await Promise.all(
-            result.result.map(async (item) => {
-                const tag = new GoshTag(this.account.client, item.id);
-                await tag.load();
-                return tag.meta;
+        // Read each tag account details
+        return await Promise.all(
+            accounts.map(async (address) => {
+                const tag = new GoshTag(this.account.client, address);
+                return await tag.getDetails();
             })
         );
-        return tags.reduce((t: any, item) => {
-            if (item) t.push(item);
-            return t;
-        }, []);
     }
 
     async getGoshAddr(): Promise<string> {
@@ -1459,6 +1475,18 @@ export class GoshTag implements IGoshTag {
         this.meta = {
             content: await this.getContent(),
         };
+    }
+
+    async getDetails(): Promise<TGoshTagDetails> {
+        return {
+            commit: await this.getCommit(),
+            content: await this.getContent(),
+        };
+    }
+
+    async getCommit(): Promise<string> {
+        const result = await this.account.runLocal('getCommit', {});
+        return result.decoded?.output.value0;
     }
 
     async getContent(): Promise<string> {

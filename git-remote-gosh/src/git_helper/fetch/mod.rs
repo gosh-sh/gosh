@@ -58,6 +58,7 @@ impl GitHelper {
         return Ok(object_id);
     }
 
+    #[instrument(level = "debug")]
     pub async fn fetch(&mut self, sha: &str, name: &str) -> Result<Vec<String>, Box<dyn Error>> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {

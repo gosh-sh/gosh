@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import TextField from '../../components/FormikForms/TextField';
@@ -36,7 +36,7 @@ type TFormValues = {
 
 const EventPage = () => {
     const { daoName, eventAddr } = useParams();
-    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
     const goshRoot = useGoshRoot();
     const [release, setRelease] = useState<boolean>(false);
     const [check, setCheck] = useState<boolean>(false);
@@ -60,10 +60,7 @@ const EventPage = () => {
         return commit;
     };
 
-    const onProposalCheck = async (
-        proposal: IGoshSmvProposal,
-        wallet: IGoshWallet
-    ) => {
+    const onProposalCheck = async (proposal: IGoshSmvProposal, wallet: IGoshWallet) => {
         try {
             if (service?.locker?.meta?.isBusy)
                 throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
@@ -83,10 +80,9 @@ const EventPage = () => {
     const onProposalSubmit = async (values: TFormValues) => {
         try {
             if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT);
-            if (!goshDao) throw new GoshError(EGoshError.NO_DAO);
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!service?.proposal)
-                throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
+            if (!dao) throw new GoshError(EGoshError.NO_DAO);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
 
             if (
                 service.proposal.meta?.time.start &&
@@ -100,9 +96,9 @@ const EventPage = () => {
                 throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 
             const smvPlatformCode = await goshRoot.getSmvPlatformCode();
-            const smvClientCode = await goshDao.getSmvClientCode();
+            const smvClientCode = await dao.getSmvClientCode();
             const choice = values.approve === 'true';
-            await goshWallet.voteFor(
+            await wallet.voteFor(
                 smvPlatformCode,
                 smvClientCode,
                 service.proposal.address,
@@ -120,12 +116,11 @@ const EventPage = () => {
 
     const onTokensRelease = async () => {
         try {
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!service?.proposal)
-                throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
 
             setRelease(true);
-            await goshWallet.updateHead();
+            await wallet.updateHead();
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
@@ -149,10 +144,7 @@ const EventPage = () => {
             }
 
             // Get repository and commit with blobs
-            const repoAddr = await root.getRepoAddr(
-                prop.meta.commit.repoName,
-                daoName
-            );
+            const repoAddr = await root.getRepoAddr(prop.meta.commit.repoName, daoName);
             const repo = new GoshRepository(root.account.client, repoAddr);
             const commit = await getCommit(repo, prop.meta.commit.commitName);
 
@@ -177,24 +169,24 @@ const EventPage = () => {
         };
 
         if (goshRoot && eventAddr && !service?.locker && !service?.proposal) {
-            getGoshPull(goshRoot, eventAddr, goshWallet);
+            getGoshPull(goshRoot, eventAddr, wallet);
         }
         let interval: any;
-        if (goshWallet && service?.locker && service?.proposal) {
+        if (wallet && service?.locker && service?.proposal) {
             interval = setInterval(async () => {
                 await service.locker?.load();
                 await service.proposal?.load();
-                const balance = await goshWallet.getSmvTokenBalance();
+                const balance = await wallet.getSmvTokenBalance();
 
                 let proposalLocked = 0;
                 try {
                     if (service.locker && service.proposal?.meta) {
-                        const smvClientAddr = await goshWallet.getSmvClientAddr(
+                        const smvClientAddr = await wallet.getSmvClientAddr(
                             service.locker.address,
                             service.proposal.meta.id
                         );
                         const client = new GoshSmvClient(
-                            goshWallet.account.client,
+                            wallet.account.client,
                             smvClientAddr
                         );
                         proposalLocked = await client.getLockedAmount();
@@ -209,14 +201,7 @@ const EventPage = () => {
         return () => {
             clearInterval(interval);
         };
-    }, [
-        eventAddr,
-        goshWallet,
-        daoName,
-        goshRoot,
-        service?.locker,
-        service?.proposal,
-    ]);
+    }, [eventAddr, wallet, daoName, goshRoot, service?.locker, service?.proposal]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -229,22 +214,18 @@ const EventPage = () => {
 
             {service?.proposal && service.repo && service.commit && (
                 <div>
-                    {goshWallet?.isDaoParticipant && (
+                    {wallet?.isDaoParticipant && (
                         <div
                             className="relative mb-5 flex px-4 py-3 rounded gap-x-6 bg-gray-100
                             flex-col items-start
                             md:flex-row md:flex-wrap md:items-center"
                         >
                             <div>
-                                <span className="font-semibold mr-2">
-                                    SMV balance:
-                                </span>
+                                <span className="font-semibold mr-2">SMV balance:</span>
                                 {service.locker?.meta?.votesTotal}
                             </div>
                             <div>
-                                <span className="font-semibold mr-2">
-                                    Locked:
-                                </span>
+                                <span className="font-semibold mr-2">Locked:</span>
                                 {service.locker?.meta?.votesLocked}
                             </div>
                             <div>
@@ -294,13 +275,12 @@ const EventPage = () => {
                             <div className="text-gray-606060 text-sm">
                                 <CopyClipboard
                                     label={`${'Commit: '}${shortString(
-                                        service.proposal.meta?.commit
-                                            .commitName || ''
+                                        service.proposal.meta?.commit.commitName || ''
                                     )}`}
                                     componentProps={{
                                         text:
-                                            service.proposal.meta?.commit
-                                                .commitName || '',
+                                            service.proposal.meta?.commit.commitName ||
+                                            '',
                                     }}
                                 />
                             </div>
@@ -308,9 +288,7 @@ const EventPage = () => {
                         <div>
                             <span className="mr-3">
                                 {service.proposal.meta?.isCompleted ? (
-                                    <span className="text-green-900">
-                                        Completed
-                                    </span>
+                                    <span className="text-green-900">Completed</span>
                                 ) : (
                                     'Running'
                                 )}
@@ -331,8 +309,8 @@ const EventPage = () => {
                                 </span>
                             </div>
                         </div>
-                        {goshWallet &&
-                            goshWallet.isDaoParticipant &&
+                        {wallet &&
+                            wallet.isDaoParticipant &&
                             !!service.proposalLocked &&
                             service.proposal.meta?.isCompleted && (
                                 <div>
@@ -340,20 +318,15 @@ const EventPage = () => {
                                         type="button"
                                         className="btn btn--body text-sm px-4 py-1.5"
                                         onClick={onTokensRelease}
-                                        disabled={
-                                            release ||
-                                            service.locker?.meta?.isBusy
-                                        }
+                                        disabled={release || service.locker?.meta?.isBusy}
                                     >
-                                        {release && (
-                                            <Spinner className="mr-2" />
-                                        )}
+                                        {release && <Spinner className="mr-2" />}
                                         Release
                                     </button>
                                 </div>
                             )}
-                        {goshWallet &&
-                            goshWallet.isDaoParticipant &&
+                        {wallet &&
+                            wallet.isDaoParticipant &&
                             !service.proposal.meta?.isCompleted && (
                                 <div>
                                     <button
@@ -361,15 +334,9 @@ const EventPage = () => {
                                         className="btn btn--body text-sm px-4 py-1.5"
                                         onClick={() =>
                                             service.proposal &&
-                                            onProposalCheck(
-                                                service.proposal,
-                                                goshWallet
-                                            )
+                                            onProposalCheck(service.proposal, wallet)
                                         }
-                                        disabled={
-                                            check ||
-                                            service.locker?.meta?.isBusy
-                                        }
+                                        disabled={check || service.locker?.meta?.isBusy}
                                     >
                                         {check && <Spinner className="mr-2" />}
                                         Re-check
@@ -385,101 +352,85 @@ const EventPage = () => {
                                 className="mx-1 underline text-green-900"
                                 to={`/${daoName}/${service.proposal.meta.commit.repoName}/commits/${service.proposal.meta.commit.branchName}/${service.proposal.meta.commit.commitName}`}
                             >
-                                {shortString(
-                                    service.proposal.meta.commit.commitName
-                                )}
+                                {shortString(service.proposal.meta.commit.commitName)}
                             </Link>
                             was accepted by SMV
                         </div>
                     )}
 
-                    {goshWallet?.isDaoParticipant &&
-                        !service.proposal.meta?.isCompleted && (
-                            <Formik
-                                initialValues={{
-                                    approve: 'true',
-                                    amount:
-                                        (service.locker?.meta?.votesTotal ??
-                                            0) -
-                                        (service.locker?.meta?.votesLocked ??
-                                            0),
-                                }}
-                                onSubmit={onProposalSubmit}
-                                validationSchema={Yup.object().shape({
-                                    amount: Yup.number()
-                                        .min(1, 'Should be a number >= 1')
-                                        .max(
-                                            (service.locker?.meta?.votesTotal ??
-                                                0) -
-                                                (service.locker?.meta
-                                                    ?.votesLocked ?? 0)
-                                        )
-                                        .required('Field is required'),
-                                })}
-                                enableReinitialize
-                            >
-                                {({ isSubmitting }) => (
-                                    <div className="mt-10">
-                                        <h3 className="text-xl font-semibold">
-                                            Vote for proposal
-                                        </h3>
-                                        <Form className="flex flex-wrap items-baseline my-4 gap-x-6 gap-y-3">
-                                            <div className="grow sm:grow-0">
+                    {wallet?.isDaoParticipant && !service.proposal.meta?.isCompleted && (
+                        <Formik
+                            initialValues={{
+                                approve: 'true',
+                                amount:
+                                    (service.locker?.meta?.votesTotal ?? 0) -
+                                    (service.locker?.meta?.votesLocked ?? 0),
+                            }}
+                            onSubmit={onProposalSubmit}
+                            validationSchema={Yup.object().shape({
+                                amount: Yup.number()
+                                    .min(1, 'Should be a number >= 1')
+                                    .max(
+                                        (service.locker?.meta?.votesTotal ?? 0) -
+                                            (service.locker?.meta?.votesLocked ?? 0)
+                                    )
+                                    .required('Field is required'),
+                            })}
+                            enableReinitialize
+                        >
+                            {({ isSubmitting }) => (
+                                <div className="mt-10">
+                                    <h3 className="text-xl font-semibold">
+                                        Vote for proposal
+                                    </h3>
+                                    <Form className="flex flex-wrap items-baseline my-4 gap-x-6 gap-y-3">
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="amount"
+                                                component={TextField}
+                                                inputProps={{
+                                                    className: '!py-1.5',
+                                                    placeholder: 'Amount of tokens',
+                                                    autoComplete: 'off',
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="mr-3">
                                                 <Field
-                                                    name="amount"
-                                                    component={TextField}
-                                                    inputProps={{
-                                                        className: '!py-1.5',
-                                                        placeholder:
-                                                            'Amount of tokens',
-                                                        autoComplete: 'off',
-                                                    }}
+                                                    type="radio"
+                                                    name="approve"
+                                                    value={'true'}
                                                 />
-                                            </div>
-                                            <div>
-                                                <label className="mr-3">
-                                                    <Field
-                                                        type="radio"
-                                                        name="approve"
-                                                        value={'true'}
-                                                    />
-                                                    <span className="ml-1">
-                                                        Accept
-                                                    </span>
-                                                </label>
-                                                <label>
-                                                    <Field
-                                                        type="radio"
-                                                        name="approve"
-                                                        value={'false'}
-                                                    />
-                                                    <span className="ml-1">
-                                                        Reject
-                                                    </span>
-                                                </label>
-                                            </div>
-                                            <button
-                                                className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
-                                                type="submit"
-                                                disabled={
-                                                    isSubmitting ||
-                                                    service.locker?.meta?.isBusy
-                                                }
-                                            >
-                                                {isSubmitting && (
-                                                    <Spinner className="mr-2" />
-                                                )}
-                                                Vote for proposal
-                                            </button>
-                                        </Form>
-                                    </div>
-                                )}
-                            </Formik>
-                        )}
+                                                <span className="ml-1">Accept</span>
+                                            </label>
+                                            <label>
+                                                <Field
+                                                    type="radio"
+                                                    name="approve"
+                                                    value={'false'}
+                                                />
+                                                <span className="ml-1">Reject</span>
+                                            </label>
+                                        </div>
+                                        <button
+                                            className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
+                                            type="submit"
+                                            disabled={
+                                                isSubmitting ||
+                                                service.locker?.meta?.isBusy
+                                            }
+                                        >
+                                            {isSubmitting && <Spinner className="mr-2" />}
+                                            Vote for proposal
+                                        </button>
+                                    </Form>
+                                </div>
+                            )}
+                        </Formik>
+                    )}
 
-                    <h3 className="mt-10 mb-4 text-xl font-semibold">
-                        Proposal diff
-                    </h3>
+                    <h3 className="mt-10 mb-4 text-xl font-semibold">Proposal diff</h3>
                     {service.commit.meta && (
                         <CommitBlobs
                             repo={service.repo}

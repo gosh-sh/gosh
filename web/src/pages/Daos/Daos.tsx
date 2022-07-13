@@ -8,13 +8,14 @@ import { getPaginatedAccounts, goshClient } from '../../helpers';
 import { useGoshRoot } from '../../hooks/gosh.hooks';
 import { userStateAtom } from '../../store/user.state';
 import { GoshDao, GoshWallet } from '../../types/classes';
+import { TGoshDaoDetails } from '../../types/types';
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom);
     const goshRoot = useGoshRoot();
     const [search, setSearch] = useState<string>('');
     const [daos, setDaos] = useState<{
-        list: any[];
+        list: TGoshDaoDetails[];
         lastId?: string;
         completed: boolean;
         isFetching: boolean;

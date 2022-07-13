@@ -31,14 +31,15 @@ struct DeployDiffParams {
     #[serde(rename = "commitName")]
     commit_id: String,
     diffs: Vec<Diff>,
-    index: String,
+    index1: String,
+    index2: String,
     last: bool
 }
 
 #[derive(Serialize, Debug)]
 struct DeploySnapshotParams {
     #[serde(rename = "repo")]
-    repo_name: String,
+    repo_address: String,
     #[serde(rename = "branch")]
     branch_name: String,
     #[serde(rename = "commit")]
@@ -55,6 +56,13 @@ struct DeploySnapshotParams {
 struct SaveRes {
     #[serde(alias = "Hash")]
     hash: String,
+}
+
+// Note: making fields verbose
+// It must be very clear what is going on
+pub struct PushDiffCoordinate {
+    pub index_of_parallel_thread: u16,
+    pub order_of_diff_in_the_parallel_thread: u16 
 }
 
 #[instrument(level = "debug")]
@@ -74,13 +82,14 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     Ok(response_body.hash)
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(diff_coordinate))]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
     file_path: &str,
+    diff_coordinate: &PushDiffCoordinate,
     diff: &Vec<u8>,
 ) -> Result<()> {
     let snapshot_addr = Snapshot::calculate_address(
@@ -105,13 +114,15 @@ pub async fn push_diff(
     };
     let diffs: Vec<Diff> = vec![diff];
 
-    let index = 0;
+    let index1 = diff_coordinate.index_of_parallel_thread;;
+    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;;
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         diffs,
-        index: format!("0x{index}"),
+        index1: format!("0x{index1}"),
+        index2: format!("0x{index2}"),
         last: true
     };
 
@@ -134,13 +145,17 @@ pub async fn push_initial_snapshot(
     if content.len() > 15000 {
         ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, content).await?);
     };
+    let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
+    let content: String = content.iter()
+        .map(|e| format!("{:x?}", e))
+        .collect();
 
     let args = DeploySnapshotParams {
-        repo_name: context.remote.repo.clone(),
+        repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         file_path: file_path.to_string(),
-        content: String::from_utf8(content.to_vec())?,
+        content: content,
         ipfs: Some("".to_string()),
     };
 
