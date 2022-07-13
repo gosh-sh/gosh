@@ -62,3 +62,24 @@ pub async fn push_commit(
     log::debug!("deployCommit result: {:?}", result);
     Ok(())
 }
+
+#[instrument(level = "debug")]
+pub async fn notify_commit(
+    context: &mut GitHelper,
+    commit_id: &ObjectId,
+    branch: &str,
+    number_of_files_changed: u64
+) -> Result<(), Box<dyn Error>> {
+    let wallet = user_wallet(context)?;
+    let params = serde_json::json!({
+        "repoName": context.remote.repo.clone(),
+        "branchName": branch.to_string(),
+        "commit": commit_id.to_string(),
+        "numberChangedFiles": number_of_files_changed
+    });
+    let result = call(&context.es_client, wallet, "setCommit", Some(params)).await?;
+    log::debug!("setCommit result: {:?}", result);
+    Ok(())
+}
+
+

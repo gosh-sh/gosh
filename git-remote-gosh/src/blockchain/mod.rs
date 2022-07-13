@@ -30,7 +30,7 @@ mod serde_number;
 pub mod snapshot;
 pub mod tree;
 mod user_wallet;
-pub use commit::push_commit;
+pub use commit::{ push_commit, notify_commit };
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;

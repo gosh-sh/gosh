@@ -16,7 +16,11 @@ use std::os;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{
+        HashSet,
+        VecDeque,
+        HashMap
+    },
     error::Error,
     str::FromStr,
     vec::Vec,
@@ -211,7 +215,14 @@ impl GitHelper {
                 None
             }
         };
-
+        let number_of_files_changed_in_commits: &mut HashMap<ObjectId, u64> = &mut HashMap::new();
+        let mut mark_file_chaned = |commit: &ObjectId, _blob_id: &ObjectId| {
+            let new_value: u64 = match number_of_files_changed_in_commits.get(commit) {
+                Some(&value) => value +1,
+                None => 1
+            };
+            number_of_files_changed_in_commits.insert(commit.clone(), new_value);
+        }; 
         // TODO: Handle deleted fules
         // Note: These files will NOT appear in the list here
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
@@ -233,6 +244,10 @@ impl GitHelper {
                                 branch_name,
                             )
                             .await?;
+                            mark_file_chaned(
+                                commit_id.as_ref().unwrap(),
+                                &object_id
+                            );
                             // branch
                             // commit_id
                             // commit_data
@@ -247,6 +262,9 @@ impl GitHelper {
             }
         }
 
+        for (commit_id, number_of_files_changed) in number_of_files_changed_in_commits.into_iter() {
+            blockchain::notify_commit(self, &commit_id, branch_name, *number_of_files_changed).await?;
+        }
         // 9. Set commit (move HEAD)
         //
         let result_ok = format!("ok {remote_ref}");
