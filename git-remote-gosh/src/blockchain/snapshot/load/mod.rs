@@ -7,6 +7,8 @@ use serde::de;
 use std::error::Error;
 use std::fmt;
 use std::option::Option;
+pub mod diffs;
+
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]

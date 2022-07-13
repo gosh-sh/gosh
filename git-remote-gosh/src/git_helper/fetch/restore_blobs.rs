@@ -180,15 +180,18 @@ impl BlobsRebuildingPlan {
 
             // TODO: convert to async iterator
             // This should download next messages seemless
-            let messages =
-                blockchain::load_messages_to(&git_helper.es_client, snapshot_address).await?;
-            let mut messages = messages.iter();
+            let mut messages =
+                blockchain::snapshot::diffs::DiffMessagesIterator::new(
+                    snapshot_address
+                );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot
                 // remove matching blob ids
                 //
-                let message = messages.next().expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
+                let message = messages.next(&git_helper.es_client)
+                    .await?
+                    .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
 
                 let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
                     load_data_from_ipfs(&git_helper.ipfs_client, &ipfs).await?
