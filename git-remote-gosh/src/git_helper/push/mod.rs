@@ -26,8 +26,28 @@ use std::{
     vec::Vec,
 };
 mod utilities;
+mod parallel_diffs_upload_support;
+use parallel_diffs_upload_support::ParallelDiffsUploadSupport;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+#[derive(Default)]
+struct PushBlobStatistics {
+    pub new_snapshots: u32,
+    pub diffs: u32,
+}
+
+impl PushBlobStatistics {
+    pub fn new() -> Self { 
+        Self { new_snapshots: 0, diffs: 0 } 
+    }
+
+    pub fn add(&mut self, another: &Self) {
+        self.new_snapshots += another.new_snapshots;
+        self.diffs += another.diffs;
+    }
+}
+
 impl GitHelper {
     #[instrument(level = "debug")]
     async fn push_new_blob(
@@ -75,14 +95,16 @@ impl GitHelper {
             .tree();
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(parallel_diffs_upload_support))]
     async fn push_blob(
         &mut self,
         blob_id: &ObjectId,
         prev_commit_id: &Option<ObjectId>,
         current_commit_id: &ObjectId,
         branch_name: &str,
-    ) -> Result<()> {
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
+    ) -> Result<PushBlobStatistics> {
+        let mut statistics = PushBlobStatistics::new();
         let prev_tree_root_id: Option<ObjectId> = {
             let buffer: Vec<u8> = Vec::new();
             match prev_commit_id {
@@ -118,6 +140,7 @@ impl GitHelper {
                         current_commit_id, 
                         branch_name
                     ).await?;
+                    statistics.new_snapshots += 1;
                 },
                 Some(prev_state_blob_id) => {
                     let file_diff = utilities::generate_blob_diff(
@@ -125,18 +148,21 @@ impl GitHelper {
                         &prev_state_blob_id,
                         blob_id,
                     ).await?;
+                    let diff_coordinate = parallel_diffs_upload_support.next_diff(&file_path);
                     blockchain::snapshot::push_diff(
                         self,
                         &current_commit_id,
                         branch_name,
                         blob_id,
                         &file_path,
+                        &diff_coordinate,
                         &file_diff,
                     ).await?;
+                    statistics.diffs += 1;
                 }
             }
         }
-        Ok(())
+        Ok(statistics)
     }
 
     // find ancestor commit
@@ -219,14 +245,8 @@ impl GitHelper {
                 None
             }
         };
-        let number_of_files_changed_in_commits: &mut HashMap<ObjectId, u64> = &mut HashMap::new();
-        let mut mark_file_chaned = |commit: &ObjectId, _blob_id: &ObjectId| {
-            let new_value: u64 = match number_of_files_changed_in_commits.get(commit) {
-                Some(&value) => value +1,
-                None => 1
-            };
-            number_of_files_changed_in_commits.insert(commit.clone(), new_value);
-        }; 
+        let mut statistics = PushBlobStatistics::new();
+        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new();
         // TODO: Handle deleted fules
         // Note: These files will NOT appear in the list here
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
@@ -241,17 +261,15 @@ impl GitHelper {
                             commit_id = Some(object_id);
                         }
                         git_object::Kind::Blob => {
-                            self.push_blob(
+                            let results = self.push_blob(
                                 &object_id,
                                 &prev_commit_id,
                                 commit_id.as_ref().unwrap(),
                                 branch_name,
+                                &mut parallel_diffs_upload_support
                             )
                             .await?;
-                            mark_file_chaned(
-                                commit_id.as_ref().unwrap(),
-                                &object_id
-                            );
+                            statistics.add(&results);
                             // branch
                             // commit_id
                             // commit_data
@@ -265,11 +283,16 @@ impl GitHelper {
                 None => break,
             }
         }
-
-        for (commit_id, number_of_files_changed) in number_of_files_changed_in_commits.into_iter() {
-            blockchain::notify_commit(self, &commit_id, branch_name, *number_of_files_changed).await?;
-        }
+        
         // 9. Set commit (move HEAD)
+        blockchain::notify_commit(
+            self, 
+            &latest_commit_id, 
+            branch_name, 
+            statistics.diffs
+        );
+
+        // 10. move HEAD
         //
         let result_ok = format!("ok {remote_ref}\n");
         Ok(result_ok)
