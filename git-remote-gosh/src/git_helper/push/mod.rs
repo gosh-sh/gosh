@@ -267,7 +267,7 @@ impl GitHelper {
         }
         // 9. Set commit (move HEAD)
         //
-        let result_ok = format!("ok {remote_ref}");
+        let result_ok = format!("ok {remote_ref}\n");
         Ok(result_ok)
     }
 
