@@ -31,7 +31,8 @@ struct DeployDiffParams {
     #[serde(rename = "commitName")]
     commit_id: String,
     diffs: Vec<Diff>,
-    index: String,
+    index1: String,
+    index2: String,
     last: bool
 }
 
@@ -105,13 +106,15 @@ pub async fn push_diff(
     };
     let diffs: Vec<Diff> = vec![diff];
 
-    let index = 0;
+    let index1 = 0;
+    let index2 = 0;
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         diffs,
-        index: format!("0x{index}"),
+        index1: format!("0x{index1}"),
+        index2: format!("0x{index2}"),
         last: true
     };
 
