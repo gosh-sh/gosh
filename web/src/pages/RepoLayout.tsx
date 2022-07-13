@@ -38,14 +38,14 @@ const RepoLayout = () => {
     ];
 
     useEffect(() => {
-        const init = async (repo: IGoshRepository) => {
+        const init = async () => {
             await updateBranches();
             setIsFetched(true);
         };
 
         const walletAwaited =
             !userStatePersist.phrase || (userStatePersist.phrase && goshWallet);
-        if (goshRepo && walletAwaited) init(goshRepo);
+        if (goshRepo && walletAwaited) init();
     }, [goshRepo, goshWallet, userStatePersist.phrase, updateBranches]);
 
     return (

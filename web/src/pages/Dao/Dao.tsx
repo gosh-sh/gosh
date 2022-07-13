@@ -1,12 +1,11 @@
-import React from "react";
-import { Link, useOutletContext } from "react-router-dom";
-import CopyClipboard from "../../components/CopyClipboard";
-import { shortString } from "../../utils";
-import { TDaoLayoutOutletContext } from "../DaoLayout";
-import ReposPage from "../DaoRepos";
-
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import CopyClipboard from '../../components/CopyClipboard';
+import { shortString } from '../../utils';
+import { TDaoLayoutOutletContext } from '../DaoLayout';
+import ReposPage from '../DaoRepos';
 
 const DaoPage = () => {
+    const { daoName } = useParams();
     const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
 
     return (
@@ -22,26 +21,26 @@ const DaoPage = () => {
                     <CopyClipboard
                         label={shortString(goshDao.address)}
                         componentProps={{
-                            text: goshDao.address
+                            text: goshDao.address,
                         }}
                     />
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    {goshWallet?.isDaoParticipant
-                        ? (
-                            <Link
-                                to={`/${goshDao.meta?.name}/settings/wallet`}
-                                className="hover:underline"
-                            >
-                                Setup git remote
-                            </Link>
-                        )
-                        : <p className="text-sm text-rose-400">Not a DAO participant</p>}
+                    {goshWallet?.isDaoParticipant ? (
+                        <Link
+                            to={`/${daoName}/settings/wallet`}
+                            className="hover:underline"
+                        >
+                            Setup git remote
+                        </Link>
+                    ) : (
+                        <p className="text-sm text-rose-400">Not a DAO participant</p>
+                    )}
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default DaoPage;
