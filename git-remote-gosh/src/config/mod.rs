@@ -41,7 +41,7 @@ pub struct Config {
 impl fmt::Debug for UserWalletConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UserWalletConfig")
-            .field("address", &self.address)
+            .field("pubkey", &self.pubkey)
             .finish_non_exhaustive()
     }
 }
