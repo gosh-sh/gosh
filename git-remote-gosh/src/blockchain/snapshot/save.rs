@@ -105,7 +105,7 @@ pub async fn push_diff(
         // push to ipfs
         todo!();
     }
-
+    let diff = ton_client::utils::compress_zstd(diff, None)?;
     let diff = Diff {
         snapshot_addr,
         commit_id: commit_id.to_string(),
