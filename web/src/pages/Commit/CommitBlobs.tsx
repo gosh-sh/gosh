@@ -141,57 +141,6 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         return { msgs, prevcommit: commit };
     };
 
-    // const applyMessages = async (
-    //     client: TonClient,
-    //     commit: string,
-    //     messages: any[],
-    //     blob: any
-    // ) => {
-    //     let _reached = false;
-    //     for (let i = 0; i < messages.length; i++) {
-    //         const item = messages[i];
-    //         if (!_reached && item.namecommit === commit) _reached = true;
-
-    //         if (item.diff.ipfs) {
-    //             const compressed = (await loadFromIPFS(item.diff.ipfs)).toString();
-    //             const decompressed = await zstd.decompress(client, compressed, true);
-    //             console.debug(decompressed);
-    //             if (!_reached) blob.curr = decompressed;
-    //             else blob.prev = decompressed;
-
-    //             console.debug('ipfs blob', blob);
-    //         } else {
-    //             const prevItem = i > 0 ? messages[i - 1] : null;
-    //             if (prevItem && prevItem.diff.ipfs) {
-    //                 if (prevItem.namecommit === commit) {
-    //                     blob.curr = blob.prev;
-    //                     blob.prev = blob.snapdata.patched;
-    //                     continue;
-    //                 } else blob.curr = blob.snapdata.patched;
-    //             }
-
-    //             if (prevItem && !prevItem.diff.ipfs) {
-    //                 if (prevItem.namecommit === commit) continue;
-    //             }
-
-    //             const patch = await zstd.decompress(
-    //                 repo.account.client,
-    //                 Buffer.from(item.diff.patch, 'hex').toString('base64'),
-    //                 true
-    //             );
-
-    //             const reversedPatch = reversePatch(patch);
-    //             const reversed = Diff.applyPatch(blob.curr, reversedPatch);
-    //             if (!_reached) blob.curr = reversed;
-    //             else blob.prev = reversed;
-
-    //             console.debug('patch blob', blob);
-    //         }
-    //     }
-
-    //     return blob;
-    // };
-
     const getBlobAtCommit = async (
         client: TonClient,
         snapaddr: string,

@@ -437,10 +437,7 @@ export class GoshWallet implements IGoshWallet {
                             item.path === pathItem.path && item.name === pathItem.name
                     );
                     if (itemIndex >= 0) items[itemIndex] = pathItem;
-                    else {
-                        items.push(pathItem);
-                        processedBlob.created = true;
-                    }
+                    else items.push(pathItem);
                 });
 
                 processedBlobs.push(processedBlob);
@@ -470,27 +467,18 @@ export class GoshWallet implements IGoshWallet {
         // Deploy snapshots and update diffs
         await Promise.all(
             processedBlobs.map(async (blob) => {
-                let snapdata = '';
-                if (!blob.diff.ipfs) {
-                    snapdata = await zstd.compress(this.account.client, blob.modified);
-                    snapdata = Buffer.from(snapdata, 'base64').toString('hex');
-                }
-
                 const snapAddr = await this.deployNewSnapshot(
                     repo.address,
                     branch.name,
-                    futureCommit.name,
+                    '',
                     blob.name,
-                    snapdata,
-                    blob.diff.ipfs
+                    '',
+                    null
                 );
                 console.debug('Snap addr:', snapAddr);
 
-                if (blob.created) blob.diff = null;
-                else {
-                    blob.diff.snap = snapAddr;
-                    blob.diff.commit = futureCommit.name;
-                }
+                blob.diff.snap = snapAddr;
+                blob.diff.commit = futureCommit.name;
             })
         );
         console.debug('Processed blobs', processedBlobs);
@@ -510,9 +498,6 @@ export class GoshWallet implements IGoshWallet {
         !!callback && callback({ treeDeploy: true });
 
         // Deploy commit
-        const cleanDiffs = processedBlobs
-            .map(({ diff }) => diff)
-            .filter((item) => !!item);
         await this.deployCommit(
             repo,
             branch,
@@ -520,7 +505,7 @@ export class GoshWallet implements IGoshWallet {
             futureCommit.content,
             futureCommit.parents,
             treeRootAddr,
-            cleanDiffs
+            processedBlobs.map(({ diff }) => diff)
         );
         !!callback && callback({ commitDeploy: true });
         console.debug('[Create commit] - Commit name:', futureCommit.name);
@@ -545,7 +530,7 @@ export class GoshWallet implements IGoshWallet {
                 repo.meta.name,
                 branch.name,
                 futureCommit.name,
-                cleanDiffs.length
+                processedBlobs.length
             );
             await new Promise<void>((resolve) => {
                 const interval = setInterval(async () => {
@@ -562,7 +547,7 @@ export class GoshWallet implements IGoshWallet {
                 repo.meta.name,
                 branch.name,
                 futureCommit.name,
-                cleanDiffs.length
+                processedBlobs.length
             );
         }
         !!callback && callback({ completed: true });
