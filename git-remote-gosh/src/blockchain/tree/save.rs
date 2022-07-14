@@ -59,6 +59,7 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
     .to_owned()
 }
 
+
 fn sha256of(objects: &git_odb::Handle, entry: &tree::EntryRef) -> String {
     let mut buffer: Vec<u8> = Vec::new();
     let obj = objects.try_find(entry.oid, &mut buffer);
@@ -88,8 +89,16 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
                 if e.mode == git_object::tree::EntryMode::Tree {
                     to_deploy.push_back(e.oid.into());
                 }
-                let hash = sha256of(&context.local_repository().objects, &e);
-                (format!("0x{hash}"), TreeNode::from((hash, e)))
+                let content_hash = sha256::digest_bytes(&e.filename);
+                let file_name = e.filename.to_string();
+                let tree_node = TreeNode::from((content_hash, e));
+                let type_obj = &tree_node.type_obj;
+                let key = sha256::digest(format!(
+                    "{}:{}", 
+                    type_obj, 
+                    file_name
+                ));
+                (format!("0x{}", key), tree_node)
             })
             .collect();
         let params = DeployTreeArgs {
