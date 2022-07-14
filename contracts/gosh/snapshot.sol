@@ -16,9 +16,10 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string version = "0.5.0";
+    string version = "0.5.1";
     
     string _baseCommit;
+    string _basemaybe = "";
     uint256 _pubkey;
     address _rootRepo;
     bytes _snapshot;
@@ -76,6 +77,13 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _baseCommit = commit;
+        if (_baseCommit.empty()) { 
+            require(data.empty(), ERR_NOT_EMPTY_DATA);
+            require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
+        }
+        else {
+            //TODO CHECK
+        }
         Commit(_buildCommitAddr(_oldcommits))
             .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
     }
@@ -111,6 +119,7 @@ contract Snapshot is Modifiers {
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
+        if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
         uint256 empty;
         if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
@@ -150,6 +159,7 @@ contract Snapshot is Modifiers {
     function cancelDiff(uint128 index1, uint128 index2) public {
         require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        _basemaybe = "";
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
         _commits = _oldcommits;
@@ -159,6 +169,10 @@ contract Snapshot is Modifiers {
     function approve(uint128 index1, uint128 index2) public {
         require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        if (_baseCommit.empty()) { 
+            _baseCommit = _basemaybe; 
+            _basemaybe = "";  
+        }
         _oldsnapshot = _snapshot;
         _oldcommits = _commits;
         _ipfsold = _ipfs;
