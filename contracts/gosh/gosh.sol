@@ -16,7 +16,7 @@ import "tree.sol";
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
     string constant version = "0.5.0";
-    
+
     address _creator;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -72,7 +72,7 @@ contract Gosh is Modifiers, Upgradable {
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
-    
+
     function _composeDaoStateInit(string name) internal view returns(TvmCell) {
         TvmBuilder b;
         b.store(address(this));
@@ -88,21 +88,37 @@ contract Gosh is Modifiers, Upgradable {
             varInit: {}
         });
     }
-    
+
     function deployDao(string name, uint256 root_pubkey) public minValue(91 ton) {
         tvm.accept();
         TvmCell s1 = _composeDaoStateInit(name);
         _lastGoshDao = new GoshDao {stateInit: s1, value: 90 ton, wid: 0}(
-            address(this), _creator, root_pubkey, name, m_CommitCode, m_RepositoryCode, m_WalletCode, m_codeTag, m_codeSnapshot, m_codeTree, m_codeDiff,
-            m_TokenLockerCode, m_SMVPlatformCode, m_SMVClientCode, m_SMVProposalCode, m_TokenRootCode, m_TokenWalletCode);
+            address(this),
+            _creator,
+            root_pubkey
+            name,
+            m_CommitCode,
+            m_RepositoryCode,
+            m_WalletCode,
+            m_codeTag,
+            m_codeSnapshot,
+            m_codeTree,
+            m_codeDiff,
+            m_TokenLockerCode,
+            m_SMVPlatformCode,
+            m_SMVClientCode,
+            m_SMVProposalCode,
+            m_TokenRootCode,
+            m_TokenWalletCode
+        );
     }
-    
+
     function _composeTreeStateInit(string shaTree, address repo) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: repo}});
         return stateInit;
     }
-    
+
     function _composeCommitStateInit(string _commit, address repo) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
@@ -154,7 +170,7 @@ contract Gosh is Modifiers, Upgradable {
         tvm.accept();
         m_codeDiff = code;
     }
-    
+
     function setRepository(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_RepositoryCode = code;
@@ -164,7 +180,7 @@ contract Gosh is Modifiers, Upgradable {
         tvm.accept();
         m_CommitCode = code;
     }
-    
+
     function setSnapshot(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeSnapshot = code;
@@ -174,17 +190,17 @@ contract Gosh is Modifiers, Upgradable {
         tvm.accept();
         m_WalletCode = code;
     }
-    
+
     function setDao(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeDao = code;
     }
-    
+
     function setTree(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeTree = code;
     }
-    
+
     function setTag(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeTag = code;
@@ -196,23 +212,23 @@ contract Gosh is Modifiers, Upgradable {
         TvmCell s1 = _composeRepoStateInit(name, address.makeAddrStd(0, tvm.hash(_composeDaoStateInit(dao))));
         return address.makeAddrStd(0, tvm.hash(s1));
     }
-    
+
     function getAddrDao(string name) external view returns(address) {
         TvmCell s1 = _composeDaoStateInit(name);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
-    
+
     function getRepoDaoCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildRepositoryCode(
             m_RepositoryCode, address(this), dao, version
         );
     }
-    
+
     function getTreeAddr(address repo, string treeName) external view returns(address) {
         TvmCell s1 = _composeTreeStateInit(treeName, repo);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
-    
+
     function getDaoWalletCode(uint256 pubkey) external view returns(TvmCell) {
         return GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
     }
@@ -220,7 +236,7 @@ contract Gosh is Modifiers, Upgradable {
     function getSMVProposalCode() external view returns(TvmCell) {
         return m_SMVProposalCode;
     }
-    
+
     function getSMVPlatformCode() external view returns(TvmCell) {
         return m_SMVPlatformCode;
     }
@@ -236,11 +252,11 @@ contract Gosh is Modifiers, Upgradable {
     function getCommitCode() external view returns(TvmCell) {
         return m_CommitCode;
     }
-    
+
     function getSnapshotCode() external view returns(TvmCell) {
         return m_codeSnapshot;
     }
-    
+
     function getTagCode() external view returns(TvmCell) {
         return m_codeTag;
     }
@@ -248,7 +264,7 @@ contract Gosh is Modifiers, Upgradable {
     function getVersion() external pure returns(string) {
         return version;
     }
-    
+
     // Upgradable
     function onCodeUpgrade() internal override {
         tvm.resetStorage();
