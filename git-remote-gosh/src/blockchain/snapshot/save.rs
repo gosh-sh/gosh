@@ -114,8 +114,8 @@ pub async fn push_diff(
     };
     let diffs: Vec<Diff> = vec![diff];
 
-    let index1 = diff_coordinate.index_of_parallel_thread;;
-    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;;
+    let index1 = diff_coordinate.index_of_parallel_thread;
+    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
@@ -123,7 +123,8 @@ pub async fn push_diff(
         diffs,
         index1: format!("0x{index1}"),
         index2: format!("0x{index2}"),
-        last: true
+        // TODO
+        last: todo!()
     };
 
     let wallet = user_wallet(context)?;
@@ -134,7 +135,7 @@ pub async fn push_diff(
 }
 
 #[instrument(level = "debug")]
-pub async fn push_initial_snapshot(
+pub async fn push_new_branch_snapshot(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
@@ -157,6 +158,28 @@ pub async fn push_initial_snapshot(
         file_path: file_path.to_string(),
         content: content,
         ipfs: Some("".to_string()),
+    };
+
+    let wallet = user_wallet(context)?;
+    let params = serde_json::to_value(args)?;
+    let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
+    log::debug!("deployNewSnapshot result: {:?}", result);
+    Ok(()) 
+}
+
+#[instrument(level = "debug")]
+pub async fn push_initial_snapshot(
+    context: &mut GitHelper,
+    branch_name: &str,
+    file_path: &str,
+) -> Result<()> {
+    let args = DeploySnapshotParams {
+        repo_address: context.repo_addr.clone(),
+        branch_name: branch_name.to_string(),
+        commit_id: "".to_string(),
+        file_path: file_path.to_string(),
+        content: "".to_string(),
+        ipfs: None,
     };
 
     let wallet = user_wallet(context)?;

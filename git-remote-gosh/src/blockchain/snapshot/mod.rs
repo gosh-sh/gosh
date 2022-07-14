@@ -7,5 +7,6 @@ pub use load::{
 pub use save::{
     push_diff,
     PushDiffCoordinate,
-    push_initial_snapshot
+    push_initial_snapshot,
+    push_new_branch_snapshot
 };

@@ -64,7 +64,7 @@ impl<'a> CreateBranchOperation<'a> {
             .as_blob()
             .expect("It must be a blob object")
             .data; 
-        blockchain::snapshot::push_initial_snapshot(
+        blockchain::snapshot::push_new_branch_snapshot(
             self.context,
             &self.ancestor_commit,
             &self.new_branch,
