@@ -21,7 +21,7 @@ export type TRepoLayoutOutletContext = {
 
 const RepoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const { daoName, repoName } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const goshRepo = useGoshRepo(daoName, repoName);
     const dao = useGoshDao(daoName);
     const goshWallet = useGoshWallet(dao);
@@ -30,7 +30,7 @@ const RepoLayout = () => {
 
     const tabs = [
         {
-            to: `/${daoName}/${repoName}`,
+            to: `/${daoName}/${repoName}/tree/${branchName}`,
             title: 'Code',
             icon: faCode,
             public: true,
