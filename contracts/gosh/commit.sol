@@ -203,7 +203,7 @@ contract Commit is Modifiers {
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit); return; }
-            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , address(this));
+            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , newC);
         }
         getMoney(pubkey);
     }     
