@@ -1,11 +1,43 @@
+use super::Result;
 use std::collections::HashMap;
-use crate::blockchain::snapshot::PushDiffCoordinate;
+use crate::blockchain::{
+    self,
+    snapshot::PushDiffCoordinate
+};
+use crate::git_helper::GitHelper;
 
 
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u16>,
     next_index: HashMap<String, u16>,
+    dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u16
+}
+
+pub struct ParallelDiff {
+    commit_id: git_hash::ObjectId,
+    branch_name: String,
+    blob_id: git_hash::ObjectId,
+    file_path: String,
+    diff: Vec<u8>
+}
+
+impl ParallelDiff {
+    pub fn new(
+        commit_id: git_hash::ObjectId,
+        branch_name: String,
+        blob_id: git_hash::ObjectId,
+        file_path: String,
+        diff: Vec<u8>
+    ) -> Self {
+        Self {
+            commit_id,
+            branch_name,
+            blob_id,
+            file_path,
+            diff
+        }
+    }
 }
 
 impl ParallelDiffsUploadSupport {
@@ -13,11 +45,65 @@ impl ParallelDiffsUploadSupport {
         Self {
             parallels: HashMap::new(),
             next_index: HashMap::new(),
+            dangling_diffs: HashMap::new(),
             next_parallel_index: 0
         }
     }
 
-    pub fn next_diff(&mut self, file_path: &str) -> PushDiffCoordinate {
+    pub async fn push_dangling(&mut self, context: &mut GitHelper) -> Result<()> {
+        for (diff_coordinates, ParallelDiff {
+                commit_id,
+                branch_name,
+                blob_id,
+                file_path,
+                diff
+            }) in self.dangling_diffs.values().into_iter() {
+            blockchain::snapshot::push_diff(
+                context,
+                &commit_id,
+                &branch_name,
+                &blob_id,
+                &file_path,
+                &diff_coordinates,
+                true, // <- It is known now
+                diff
+            ).await?;
+        } 
+        Ok(())
+    }
+    
+    pub async fn push(&mut self, context: &mut GitHelper, diff: ParallelDiff) -> Result<()>
+    {
+        match self.dangling_diffs.get(&diff.file_path) {
+            None => {},
+            Some((diff_coordinates, ParallelDiff {
+                commit_id,
+                branch_name,
+                blob_id,
+                file_path,
+                diff 
+            })) => {
+                blockchain::snapshot::push_diff(
+                    context,
+                    &commit_id,
+                    &branch_name,
+                    &blob_id,
+                    &file_path,
+                    &diff_coordinates,
+                    false, // <- It is known now
+                    diff
+                ).await?;
+            }
+        }
+        let diff_coordinates = self.next_diff(&diff.file_path);
+        self.dangling_diffs.insert(
+            diff.file_path.clone(), 
+            (diff_coordinates, diff)
+        ); 
+        Ok(())
+    }
+
+    fn next_diff(&mut self, file_path: &str) -> PushDiffCoordinate {
         if !self.parallels.contains_key(file_path) {
             self.parallels.insert(
                 file_path.to_string(), 

@@ -62,7 +62,7 @@ struct SaveRes {
 // It must be very clear what is going on
 pub struct PushDiffCoordinate {
     pub index_of_parallel_thread: u16,
-    pub order_of_diff_in_the_parallel_thread: u16 
+    pub order_of_diff_in_the_parallel_thread: u16,
 }
 
 #[instrument(level = "debug")]
@@ -90,6 +90,7 @@ pub async fn push_diff(
     blob_id: &git_hash::ObjectId,
     file_path: &str,
     diff_coordinate: &PushDiffCoordinate,
+    is_last: bool,
     diff: &Vec<u8>,
 ) -> Result<()> {
     let snapshot_addr = Snapshot::calculate_address(
@@ -123,8 +124,7 @@ pub async fn push_diff(
         diffs,
         index1: format!("0x{index1}"),
         index2: format!("0x{index2}"),
-        // TODO
-        last: todo!()
+        last: is_last
     };
 
     let wallet = user_wallet(context)?;

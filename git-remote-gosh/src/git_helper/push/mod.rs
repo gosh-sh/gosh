@@ -27,7 +27,10 @@ use std::{
 };
 mod utilities;
 mod parallel_diffs_upload_support;
-use parallel_diffs_upload_support::ParallelDiffsUploadSupport;
+use parallel_diffs_upload_support::{
+    ParallelDiffsUploadSupport,
+    ParallelDiff
+};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -70,15 +73,16 @@ impl GitHelper {
             None,
             blob_id,
         ).await?;
-        let diff_coordinate = parallel_diffs_upload_support.next_diff(&file_path);
-        blockchain::snapshot::push_diff(
+        let diff = ParallelDiff::new(
+            commit_id.clone(),
+            branch_name.to_string(),
+            blob_id.clone(),
+            file_path.to_string(),
+            file_diff.clone()
+        );
+        parallel_diffs_upload_support.push(
             self,
-            &commit_id,
-            branch_name,
-            blob_id,
-            &file_path,
-            &diff_coordinate,
-            &file_diff,
+            diff
         ).await?;
         statistics.new_snapshots += 1;
         statistics.diffs += 1;
@@ -155,15 +159,16 @@ impl GitHelper {
                         Some(&prev_state_blob_id),
                         blob_id,
                     ).await?;
-                    let diff_coordinate = parallel_diffs_upload_support.next_diff(&file_path);
-                    blockchain::snapshot::push_diff(
+                    let diff = ParallelDiff::new(
+                        current_commit_id.clone(),
+                        branch_name.to_string(),
+                        blob_id.clone(),
+                        file_path.clone(),
+                        file_diff.clone() 
+                    );
+                    parallel_diffs_upload_support.push(
                         self,
-                        &current_commit_id,
-                        branch_name,
-                        blob_id,
-                        &file_path,
-                        &diff_coordinate,
-                        &file_diff,
+                        diff
                     ).await?;
                     statistics.diffs += 1;
                 }
@@ -290,7 +295,7 @@ impl GitHelper {
                 None => break,
             }
         }
-        
+        parallel_diffs_upload_support.push_dangling(self).await?; 
         // 9. Set commit (move HEAD)
         blockchain::notify_commit(
             self, 
