@@ -1,8 +1,10 @@
-use std::iter::Iterator;
-use std::error::Error;
+use std::{error::Error, iter::Iterator};
 use crate::blockchain::{
+    get_commit_address,
+    get_commit_by_addr,
+    snapshot::diffs::Diff,
+    Snapshot,
     TonClient,
-    snapshot::diffs::Diff
 };
 use ton_client::net::ParamsOfQuery;
 use ton_client::abi::{
@@ -15,6 +17,7 @@ use crate::abi as gosh_abi;
 #[derive(Debug, Clone)]
 pub struct DiffMessage {
     pub diff: Diff,
+    pub created_at: u64,
     pub created_lt: u64,
 }
 
@@ -23,6 +26,7 @@ enum NextChunk {
 }
 
 pub struct DiffMessagesIterator {
+    repo_addr: String,
     buffer: Vec<DiffMessage>,
     buffer_cursor: usize,
     next: Option<NextChunk>
@@ -33,6 +37,7 @@ struct Message {
     id: String,
     body: String,
     #[serde(with = "ton_sdk::json_helper::uint")]
+    created_at: u64,
     created_lt: u64,
     status: u8,
     bounced: bool,
@@ -61,8 +66,9 @@ struct Messages {
 
 impl DiffMessagesIterator {
 
-    pub fn new(snapshot_address: impl Into<String>) -> Self {
-        Self { 
+    pub fn new(snapshot_address: impl Into<String>, repo_addr: String) -> Self {
+        Self {
+            repo_addr,
             buffer: vec![], 
             buffer_cursor: 0,
             next: Some(NextChunk::MessagesPage(snapshot_address.into(), None))
@@ -80,7 +86,7 @@ impl DiffMessagesIterator {
         self.next = match &self.next {
             None => None,
             Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, next_page_info) = load_messages_to(client, &address, cursor).await?;
+                let (buffer, next_page_info, stop_on) = load_messages_to(client, &address, cursor, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 match next_page_info {
@@ -92,10 +98,28 @@ impl DiffMessagesIterator {
                     ),
                     None => {
                         // find last commit
+                        let Snapshot { original_commit, .. } = Snapshot::load(client, &address).await?;
+                        let file_path = Snapshot::get_file_path(client, &address).await?;
+                        let commit_addr = get_commit_address(client, &self.repo_addr, &original_commit).await?;
+                        let commit_data = get_commit_by_addr(client, &commit_addr)
+                            .await?
+                            .expect("commit data should be here");
+                        let original_branch = commit_data.branch;
                         // find what is it pointing to
+                        let originsl_snapshot = Snapshot::calculate_address(
+                            client,
+                            &self.repo_addr,
+                            &original_branch,
+                            &file_path
+                        ).await?;
+
                         // generate filter
-                        //todo!();
-                        None
+                        let (buffer, next_page_info, stop_on) = load_messages_to(client, &address, cursor, stop_on).await?;
+                        self.buffer = buffer;
+                        self.buffer_cursor = 0;
+                        Some(
+                            NextChunk::MessagesPage(address.to_string(), next_page_info)
+                        )
                     }
                 }
             },
@@ -122,15 +146,16 @@ impl DiffMessagesIterator {
 pub async fn load_messages_to(
     context: &TonClient,
     address: &str,
-    cursor: &Option<String>
-) -> Result<(Vec<DiffMessage>, Option<String>), Box<dyn Error>> {
+    cursor: &Option<String>,
+    stop_on: Option<u64>,
+) -> Result<(Vec<DiffMessage>, Option<String>, Option<u64>), Box<dyn Error>> {
     let mut next_page_info: Option<String> = None;
     let query = r#"query($addr: String!, $after: String){
       blockchain{
         account(address:$addr) {
           messages(msg_type:[IntIn], after:$after) {
             edges {
-              node{ id body created_lt status bounced }
+              node{ id body created_at created_lt status bounced }
             }
             pageInfo { hasNextPage endCursor }
           }
@@ -168,6 +193,10 @@ pub async fn load_messages_to(
     log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
     for elem in edges.edges {
         let raw_msg = elem.message;
+        if Some(raw_msg.created_at) >= stop_on {
+            next_page_info = None;
+            break;
+        }
         if raw_msg.status != 5 || raw_msg.bounced {
             continue;
         }
@@ -191,11 +220,16 @@ pub async fn load_messages_to(
                 0,
                 DiffMessage {
                     diff,
+                    created_at: raw_msg.created_at,
                     created_lt: raw_msg.created_lt,
                 },
             );
         }
     }
 
-    Ok((messages, next_page_info))
+    let oldest_timestamp = match messages.len() {
+        0 => None,
+        n => Some(messages[n - 1].created_at)
+    };
+    Ok((messages, next_page_info, oldest_timestamp))
 }

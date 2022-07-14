@@ -44,6 +44,12 @@ struct GetSnapshotAddrResult {
     pub address: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetSnapshotFilePath {
+    #[serde(rename = "value0")]
+    pub file_path: String,
+}
+
 impl Snapshot {
     pub async fn calculate_address(
         context: &TonClient,
@@ -60,6 +66,14 @@ impl Snapshot {
             .run_local(context, "getSnapshotAddr", Some(params))
             .await?;
         return Ok(result.address);
+    }
+
+    pub async fn get_file_path(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
+        let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
+        let result: GetSnapshotFilePath = snapshot
+            .run_local(context, "getName", None)
+            .await?;
+        return Ok(result.file_path);
     }
 }
 
