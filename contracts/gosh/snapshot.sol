@@ -82,10 +82,10 @@ contract Snapshot is Modifiers {
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
         }
         else {
+            Commit(_buildCommitAddr(_oldcommits))
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
             //TODO CHECK
         }
-        Commit(_buildCommitAddr(_oldcommits))
-            .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
     }
 
     function _buildCommitAddr(
