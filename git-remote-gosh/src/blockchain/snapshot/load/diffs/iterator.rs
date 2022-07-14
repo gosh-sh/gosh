@@ -110,7 +110,7 @@ impl DiffMessagesIterator {
                             .expect("commit data should be here");
                         let original_branch = commit_data.branch;
                         // find what is it pointing to
-                        let originsl_snapshot = Snapshot::calculate_address(
+                        let original_snapshot = Snapshot::calculate_address(
                             client,
                             &self.repo_addr,
                             &original_branch,
@@ -118,11 +118,8 @@ impl DiffMessagesIterator {
                         ).await?;
 
                         // generate filter
-                        let (buffer, next_page_info, stop_on) = load_messages_to(client, &originsl_snapshot, cursor, stop_on).await?;
-                        self.buffer = buffer;
-                        self.buffer_cursor = 0;
                         Some(
-                            NextChunk::MessagesPage(originsl_snapshot, next_page_info)
+                            NextChunk::MessagesPage(original_snapshot, None)
                         )
                     }
                 }
