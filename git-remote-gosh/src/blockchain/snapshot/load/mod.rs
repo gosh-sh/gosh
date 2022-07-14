@@ -51,6 +51,7 @@ struct GetSnapshotFilePath {
 }
 
 impl Snapshot {
+    #[instrument(level = "debug", skip(context))]
     pub async fn calculate_address(
         context: &TonClient,
         repository_address: &str,
@@ -68,11 +69,13 @@ impl Snapshot {
         return Ok(result.address);
     }
 
+    #[instrument(level = "debug", skip(context))]
     pub async fn get_file_path(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot
             .run_local(context, "getName", None)
             .await?;
+        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}", );
         return Ok(result.file_path);
     }
 }

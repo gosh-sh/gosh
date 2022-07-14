@@ -21,10 +21,12 @@ pub struct DiffMessage {
     pub created_lt: u64,
 }
 
+#[derive(Debug)]
 enum NextChunk {
     MessagesPage(String, Option<String>)
 }
 
+#[derive(Debug)]
 pub struct DiffMessagesIterator {
     repo_addr: String,
     buffer: Vec<DiffMessage>,
@@ -65,7 +67,7 @@ struct Messages {
 
 
 impl DiffMessagesIterator {
-
+    #[instrument(level = "debug", skip(snapshot_address))]
     pub fn new(snapshot_address: impl Into<String>, repo_addr: String) -> Self {
         Self {
             repo_addr,
@@ -75,6 +77,7 @@ impl DiffMessagesIterator {
         }
     }
 
+    #[instrument(level = "debug", skip(client))]
     pub async fn next(&mut self, client: &TonClient) -> Result<Option<DiffMessage>, Box<dyn Error>> {
         if !self.is_buffer_ready() {
             self.try_load_next_chunk(client).await?;
@@ -82,6 +85,7 @@ impl DiffMessagesIterator {
         return Ok(self.try_take_next_item());
     }
 
+    #[instrument(level = "debug", skip(client))]
     async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
         self.next = match &self.next {
             None => None,
@@ -114,11 +118,11 @@ impl DiffMessagesIterator {
                         ).await?;
 
                         // generate filter
-                        let (buffer, next_page_info, stop_on) = load_messages_to(client, &address, cursor, stop_on).await?;
+                        let (buffer, next_page_info, stop_on) = load_messages_to(client, &originsl_snapshot, cursor, stop_on).await?;
                         self.buffer = buffer;
                         self.buffer_cursor = 0;
                         Some(
-                            NextChunk::MessagesPage(address.to_string(), next_page_info)
+                            NextChunk::MessagesPage(originsl_snapshot, next_page_info)
                         )
                     }
                 }
@@ -126,11 +130,13 @@ impl DiffMessagesIterator {
         };
         Ok(())
     }
-    
+
+    #[instrument(level = "debug")]
     fn is_buffer_ready(&self) -> bool {
         return self.buffer_cursor < self.buffer.len();
     }
 
+    #[instrument(level = "debug")]
     fn try_take_next_item(&mut self) -> Option<DiffMessage> {
         if self.buffer_cursor >= self.buffer.len() {
             return None;
@@ -194,7 +200,7 @@ pub async fn load_messages_to(
     log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
     for elem in edges.edges {
         let raw_msg = elem.message;
-        if Some(raw_msg.created_at) >= stop_on {
+        if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
             next_page_info = None;
             break;
         }

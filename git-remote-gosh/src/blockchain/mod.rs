@@ -374,6 +374,7 @@ pub async fn remote_rev_parse(
     }
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
     context: &TonClient,
     repository_address: &str,
@@ -390,6 +391,7 @@ pub async fn get_commit_address(
     return Ok(result.address);
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn get_commit_by_addr(
     context: &TonClient,
     address: &str,
