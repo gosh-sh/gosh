@@ -1,64 +1,118 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useGoshRoot } from '../../hooks/gosh.hooks';
 import { GoshRepository } from '../../types/classes';
-import { TGoshRepoDetails } from '../../types/types';
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types';
 import RepoListItem from './RepoListItem';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import Spinner from '../../components/Spinner';
-import { getPaginatedAccounts } from '../../helpers';
+import { getPaginatedAccounts, goshClient } from '../../helpers';
+import { sleep } from '../../utils';
 
 const DaoRepositoriesPage = () => {
+    const pageSize = 10;
+
     const goshRoot = useGoshRoot();
     const { daoName } = useParams();
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
     const [search, setSearch] = useState<string>('');
     const [repos, setRepos] = useState<{
-        list: TGoshRepoDetails[];
-        lastId?: string;
-        completed: boolean;
+        items: (Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
+            branches?: TGoshBranch[];
+            head?: string;
+            tags?: TGoshTagDetails[];
+            isBusy?: boolean;
+        })[];
         isFetching: boolean;
+        filtered: string[];
+        page: number;
     }>({
-        list: [],
-        completed: false,
+        items: [],
         isFetching: true,
+        filtered: [],
+        page: 1,
     });
 
-    const getRepoList = useCallback(
-        async (lastId?: string) => {
-            setRepos((curr) => ({ ...curr, isFetching: true }));
+    /** Load next chunk of repo list items */
+    const onLoadMore = () => {
+        setRepos((state) => ({ ...state, page: state.page + 1 }));
+    };
 
-            // Get GoshRepo code and paginated repos accounts
-            const repoCode = await goshRoot.getDaoRepoCode(dao.address);
-            const accounts = await getPaginatedAccounts({
-                filters: [`code: {eq:"${repoCode}"}`],
-                limit: 10,
-                lastId,
-            });
+    /** Load repo details and update corresponging list item */
+    const setRepoDetails = async (address: string) => {
+        setRepos((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address === repo.address) return { ...item, isBusy: true };
+                return item;
+            }),
+        }));
 
-            // Get repos details
-            const items = await Promise.all(
-                accounts.results.map(async ({ id }) => {
-                    const repo = new GoshRepository(goshRoot.account.client, id);
-                    return await repo.getDetails();
-                })
-            );
+        const repo = new GoshRepository(goshClient, address);
+        const details = await repo.getDetails();
 
-            setRepos((curr) => ({
-                ...curr,
-                isFetching: false,
-                list: [...curr.list, ...items],
-                lastId: accounts.lastId,
-                completed: accounts.completed,
-            }));
-        },
-        [goshRoot, dao.address]
-    );
+        setRepos((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address === repo.address) return details;
+                return item;
+            }),
+        }));
+    };
 
+    /** Initial load of all repo accounts with repo names */
     useEffect(() => {
-        setRepos({ list: [], isFetching: true, completed: true });
+        const getRepoList = async () => {
+            setRepos({ items: [], isFetching: true, filtered: [], page: 1 });
+
+            // Get GoshRepo code and all repos accounts
+            const repoCode = await goshRoot.getDaoRepoCode(dao.address);
+            const list: any[] = [];
+            let next: string | undefined;
+            while (true) {
+                const accounts = await getPaginatedAccounts({
+                    filters: [`code: {eq:"${repoCode}"}`],
+                    limit: 50,
+                    lastId: next,
+                });
+                const items = await Promise.all(
+                    accounts.results.map(async ({ id }) => {
+                        const repo = new GoshRepository(goshRoot.account.client, id);
+                        return { address: repo.address, name: await repo.getName() };
+                    })
+                );
+                list.push(...items);
+                next = accounts.lastId;
+
+                if (accounts.completed) break;
+                await sleep(200);
+            }
+            setRepos({
+                items: list,
+                isFetching: false,
+                filtered: list.map((item) => item.address),
+                page: 1,
+            });
+        };
+
         getRepoList();
-    }, [getRepoList]);
+    }, [goshRoot, dao.address]);
+
+    /** Update filtered items and page depending on search */
+    useEffect(() => {
+        setRepos((state) => {
+            return {
+                ...state,
+                page: search ? 1 : state.page,
+                filtered: state.items
+                    .filter((item) => {
+                        const pattern = new RegExp(search, 'i');
+                        return !search || item.name.search(pattern) >= 0;
+                    })
+                    .map((item) => item.address),
+            };
+        });
+    }, [search]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -66,12 +120,11 @@ const DaoRepositoriesPage = () => {
             <div className="flex flex-wrap gap-4 items-center justify-between">
                 <div className="input grow">
                     <input
-                        type="text"
+                        type="search"
                         autoComplete="off"
-                        placeholder="Search repository... (not available now)"
+                        placeholder="Search repository..."
                         className="element !py-1.5"
                         value={search}
-                        disabled={true}
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
@@ -87,34 +140,47 @@ const DaoRepositoriesPage = () => {
             </div>
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
-                {repos.isFetching && !repos.list.length && (
+                {repos.isFetching && (
                     <div className="text-sm text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading repositories...
                     </div>
                 )}
 
-                {!repos.isFetching && !repos.list.length && (
+                {!repos.isFetching && !repos.filtered.length && (
                     <div className="text-sm text-gray-606060 text-center">
                         There are no repositories yet
                     </div>
                 )}
 
-                {repos.list.map(
-                    (details, index) =>
-                        daoName && (
-                            <RepoListItem key={index} daoName={daoName} item={details} />
-                        )
-                )}
+                {repos.items
+                    .filter((item) => {
+                        return repos.filtered.indexOf(item.address) >= 0;
+                    })
+                    .slice(0, repos.page * pageSize)
+                    .map((details, index) => {
+                        const { branches, isBusy } = details;
+                        if (!branches && !isBusy) setRepoDetails(details.address);
+                        if (daoName) {
+                            return (
+                                <RepoListItem
+                                    key={index}
+                                    daoName={daoName}
+                                    item={details}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
             </div>
 
-            {!repos.completed && (
+            {repos.page * pageSize < repos.filtered.length && (
                 <div className="text-center mt-3">
                     <button
                         className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                         type="button"
                         disabled={repos.isFetching}
-                        onClick={() => getRepoList(repos.lastId)}
+                        onClick={onLoadMore}
                     >
                         {repos.isFetching && <Spinner className="mr-2" />}
                         Load more

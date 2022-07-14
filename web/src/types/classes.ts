@@ -833,7 +833,7 @@ export class GoshWallet implements IGoshWallet {
         // Deploy tree and get address
         const datatree: any = {};
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = SHA256(name).toString();
+            const key = SHA256(`${type}:${name}`).toString();
             datatree[`0x${key}`] = {
                 flags: flags.toString(),
                 mode,

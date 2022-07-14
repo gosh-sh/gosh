@@ -135,6 +135,7 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug")]
     fn try_take_next_item(&mut self) -> Option<DiffMessage> {
+        log::debug!("try_take_next_item = {:?}", self);
         if self.buffer_cursor >= self.buffer.len() {
             return None;
         }

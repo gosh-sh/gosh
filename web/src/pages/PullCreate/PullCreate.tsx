@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { faArrowRight, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMonaco } from '@monaco-editor/react';
@@ -139,52 +139,63 @@ const PullCreatePage = () => {
                     count: 0,
                     total: intersected.length + added.length,
                 });
+
                 // Merge intersected and added and generate compare list
                 const compare: {
                     to?: { item: TGoshTreeItem; blob: any };
                     from: { item: TGoshTreeItem; blob: any };
                     showDiff?: boolean;
                 }[] = [];
-                for (let i = 0; i < intersected.length; i++) {
-                    const item = intersected[i];
-                    const from = fromTreeItems.find(
-                        (fItem) => fItem.path === item.path && fItem.name === item.name
-                    );
-                    const to = toTreeItems.find(
-                        (tItem) => tItem.path === item.path && tItem.name === item.name
-                    );
-                    if (from && to) {
-                        const fromBlob = await getBlob(wallet, repo, branchFrom, from);
-                        const toBlob = await getBlob(wallet, repo, branchTo, to);
+
+                await Promise.all(
+                    intersected.map(async (item) => {
+                        const from = fromTreeItems.find(
+                            (fItem) =>
+                                fItem.path === item.path && fItem.name === item.name
+                        );
+                        const to = toTreeItems.find(
+                            (tItem) =>
+                                tItem.path === item.path && tItem.name === item.name
+                        );
+                        if (from && to) {
+                            const fromBlob = await getBlob(
+                                wallet,
+                                repo,
+                                branchFrom,
+                                from
+                            );
+                            const toBlob = await getBlob(wallet, repo, branchTo, to);
+                            compare.push({
+                                to: { item: to, blob: toBlob },
+                                from: { item: from, blob: fromBlob },
+                                showDiff:
+                                    compare.length < 10 ||
+                                    Buffer.isBuffer(toBlob) ||
+                                    Buffer.isBuffer(fromBlob),
+                            });
+                        }
+                        setBlobProgress((currVal) => ({
+                            ...currVal,
+                            count: currVal?.count + 1,
+                        }));
+                    })
+                );
+
+                await Promise.all(
+                    added.map(async (item) => {
+                        const fromBlob = await getBlob(wallet, repo, branchFrom, item);
                         compare.push({
-                            to: { item: to, blob: toBlob },
-                            from: { item: from, blob: fromBlob },
-                            showDiff:
-                                compare.length < 10 ||
-                                Buffer.isBuffer(toBlob) ||
-                                Buffer.isBuffer(fromBlob),
+                            to: undefined,
+                            from: { item, blob: fromBlob },
+                            showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
                         });
-                    }
-                    setBlobProgress((currVal) => ({
-                        ...currVal,
-                        count: currVal?.count + 1,
-                    }));
-                    await new Promise((resolve) => setInterval(resolve, 200));
-                }
-                for (let i = 0; i < added.length; i++) {
-                    const item = added[i];
-                    const fromBlob = await getBlob(wallet, repo, branchFrom, item);
-                    compare.push({
-                        to: undefined,
-                        from: { item, blob: fromBlob },
-                        showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
-                    });
-                    setBlobProgress((currVal) => ({
-                        ...currVal,
-                        count: currVal?.count + 1,
-                    }));
-                    await new Promise((resolve) => setInterval(resolve, 200));
-                }
+                        setBlobProgress((currVal) => ({
+                            ...currVal,
+                            count: currVal?.count + 1,
+                        }));
+                    })
+                );
+
                 console.debug('[Pull create] - Compare list:', compare);
                 setCompare(compare);
                 setBlobProgress({ count: 0, total: 0 });

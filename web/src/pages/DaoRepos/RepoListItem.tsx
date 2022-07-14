@@ -2,13 +2,17 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
 import CopyClipboard from '../../components/CopyClipboard';
-import { TGoshRepoDetails } from '../../types/types';
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types';
 import { shortString } from '../../utils';
 
 type TRepositoryListItemProps = {
     daoName: string;
     daoLink?: boolean;
-    item: TGoshRepoDetails;
+    item: Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
+        branches?: TGoshBranch[];
+        head?: string;
+        tags?: TGoshTagDetails[];
+    };
 };
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
@@ -38,7 +42,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
 
-            {!!item.tags && (
+            {!!item?.tags && (
                 <div className="flex flex-wrap gap-1 mt-2">
                     {item.tags.map((tag, index) => (
                         <button
@@ -60,7 +64,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches.length}
+                        {item.branches?.length}
                     </div>
                     {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />
