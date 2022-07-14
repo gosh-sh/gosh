@@ -19,8 +19,7 @@ pub struct DiffMessage {
 }
 
 enum NextChunk {
-    Snapshot(String),
-    MessagesPage(String)
+    MessagesPage(String, Option<String>)
 }
 
 pub struct DiffMessagesIterator {
@@ -66,7 +65,7 @@ impl DiffMessagesIterator {
         Self { 
             buffer: vec![], 
             buffer_cursor: 0,
-            next: Some(NextChunk::Snapshot(snapshot_address.into()))
+            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None))
         }
     }
 
@@ -80,13 +79,16 @@ impl DiffMessagesIterator {
     async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
         self.next = match &self.next {
             None => None,
-            Some(NextChunk::Snapshot(address)) => {
-                let (buffer, next_page_info) = load_messages_to(client, &address, None).await?;
+            Some(NextChunk::MessagesPage(address, cursor)) => {
+                let (buffer, next_page_info) = load_messages_to(client, &address, cursor).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 match next_page_info {
                     Some(next_page_info) => Some(
-                        NextChunk::MessagesPage(next_page_info)
+                        NextChunk::MessagesPage(
+                            address.to_string(),
+                            Some(next_page_info)
+                        )
                     ),
                     None => {
                         // find last commit
@@ -97,9 +99,6 @@ impl DiffMessagesIterator {
                     }
                 }
             },
-            Some(NextChunk::MessagesPage(next_page_info)) => {
-                todo!(); 
-            }
         };
         Ok(())
     }
@@ -123,7 +122,7 @@ impl DiffMessagesIterator {
 pub async fn load_messages_to(
     context: &TonClient,
     address: &str,
-    cursor: Option<String>
+    cursor: &Option<String>
 ) -> Result<(Vec<DiffMessage>, Option<String>), Box<dyn Error>> {
     let mut next_page_info: Option<String> = None;
     let query = r#"query($addr: String!, $after: String){
@@ -140,11 +139,19 @@ pub async fn load_messages_to(
     }"#
     .to_string();
 
+    let after = match cursor.as_ref() {
+        Some(page_info) => page_info,
+        None => ""
+    };
+
     let result = ton_client::net::query(
         context.clone(),
         ParamsOfQuery {
             query,
-            variables: Some(serde_json::json!({ "addr": address, "after": cursor.unwrap_or("".to_string()) })),
+            variables: Some(serde_json::json!({ 
+                "addr": address, 
+                "after": after
+            })),
             ..Default::default()
         },
     )
