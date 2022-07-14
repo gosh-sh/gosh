@@ -113,6 +113,8 @@ pub async fn push_diff(
         ipfs,
         sha1: blob_id.to_string(),
     };
+
+    log::trace!("push_diff: {:?}", diff);
     let diffs: Vec<Diff> = vec![diff];
 
     let index1 = diff_coordinate.index_of_parallel_thread;
@@ -127,7 +129,7 @@ pub async fn push_diff(
         last: is_last
     };
 
-    let wallet = user_wallet(context)?;
+    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
@@ -160,7 +162,7 @@ pub async fn push_new_branch_snapshot(
         ipfs: Some("".to_string()),
     };
 
-    let wallet = user_wallet(context)?;
+    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
     log::debug!("deployNewSnapshot result: {:?}", result);
@@ -182,7 +184,7 @@ pub async fn push_initial_snapshot(
         ipfs: None,
     };
 
-    let wallet = user_wallet(context)?;
+    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
     log::debug!("deployNewSnapshot result: {:?}", result);

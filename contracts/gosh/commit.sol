@@ -338,6 +338,16 @@ contract Commit is Modifiers {
         this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(0, msg.sender);
     }
     
+    fallback() external view {
+        tvm.accept();
+        if ((msg.sender == _parents[0]) ||  (msg.sender == _tree)) {
+            this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
+            return;
+        }
+        if (msg.value > 1 ton) { return; }
+        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(0, msg.sender);
+    }
+    
     //Selfdestruct
     function destroy(uint128 index) public {
         require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);

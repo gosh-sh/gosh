@@ -37,7 +37,7 @@ impl<'a> CreateBranchOperation<'a> {
     }
 
     async fn preinit_branch(&mut self) -> Result<()> {
-        let wallet_contract = blockchain::user_wallet(self.context)?;
+        let wallet_contract = blockchain::user_wallet(self.context).await?;
         let params = serde_json::json!({
             "repoName": self.context.remote.repo, 
             "newName": self.new_branch,

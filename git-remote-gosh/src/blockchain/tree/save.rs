@@ -100,7 +100,7 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
         };
         let params: serde_json::Value = serde_json::to_value(params)?;
 
-        let user_wallet_contract = blockchain::user_wallet(context)?;
+        let user_wallet_contract = blockchain::user_wallet(context).await?;
 
         blockchain::call(
             &context.es_client,

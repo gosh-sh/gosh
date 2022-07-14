@@ -278,6 +278,10 @@ contract DiffC is Modifiers {
         this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
     }
     
+    fallback() external pure {
+        this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
+    }
+    
     //Selfdestruct
     function destroy(uint128 index) public {
         require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);

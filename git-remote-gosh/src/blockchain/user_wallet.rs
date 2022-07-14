@@ -6,13 +6,31 @@ use ton_client::crypto::KeyPair;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
+#[derive(Deserialize, Debug)]
+struct GetAddrWalletResult {
+    #[serde(rename = "value0")]
+    pub address: String,
+}
+
+pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     let config = user_wallet_config(context);
     if config.is_none() {
         return Err("User wallet config must be set".into());
     }
     let config = config.expect("Guarded");
-    let user_wallet_address = config.address;
+    let dao_contract = GoshContract::new(
+        &context.remote.gosh,
+        abi::DAO
+    );
+    let result: GetAddrWalletResult = dao_contract.run_local(
+        &context.es_client, 
+        "getAddrWallet",
+        Some(serde_json::json!({
+            "pubkey": config.pubkey,
+            "index": 0
+        }))
+    ).await?;
+    let user_wallet_address = result.address; 
     let secrets = KeyPair::new(config.pubkey, config.secret);
 
     let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
