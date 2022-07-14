@@ -185,8 +185,9 @@ export class GoshDao implements IGoshDao {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr();
         const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr);
         return {
+            address: this.address,
             name: await this.getName(),
-            participants: (await this.getWallets()).length,
+            participants: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
         };
     }

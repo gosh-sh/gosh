@@ -16,9 +16,16 @@ export type TUserState = TUserStatePersist & {
 };
 
 export type TGoshDaoDetails = {
+    address: string;
     name: string;
-    participants: number;
+    participants: string[];
     supply: number;
+};
+
+export type TGoshWalletDetails = {
+    address: string;
+    keys?: KeyPair;
+    daoAddress: string;
 };
 
 export type TGoshRepoDetails = {

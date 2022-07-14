@@ -81,9 +81,10 @@ const DaosPage = () => {
                     <input
                         className="element !py-1.5"
                         type="text"
-                        placeholder="Search orgranization..."
+                        placeholder="Search orgranization... (not available now)"
                         autoComplete="off"
                         value={search}
+                        disabled={true}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
@@ -120,7 +121,7 @@ const DaosPage = () => {
                             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-gray-606060 text-sm mt-1">
                                 <div>
                                     <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                                    Participants: {item.participants}
+                                    Participants: {item.participants.length}
                                 </div>
                                 <div>
                                     <FontAwesomeIcon icon={faCoins} className="mr-2" />
