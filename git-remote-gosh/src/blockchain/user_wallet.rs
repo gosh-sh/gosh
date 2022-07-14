@@ -30,8 +30,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         &context.remote.gosh,
         abi::DAO
     );
-    let pubkey = U256::from_str_radix(&config.pubkey, 16)?;
-    let pubkey = pubkey.to_string(); 
+    let pubkey = format!("0x{}", config.pubkey);
     let result: GetAddrWalletResult = dao_contract.run_local(
         &context.es_client, 
         "getAddrWallet",
