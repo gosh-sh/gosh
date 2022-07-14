@@ -8,10 +8,11 @@ use crate::git_helper::GitHelper;
 
 
 pub struct ParallelDiffsUploadSupport {
-    parallels: HashMap<String, u16>,
-    next_index: HashMap<String, u16>,
+    parallels: HashMap<String, u32>,
+    next_index: HashMap<String, u32>,
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
-    next_parallel_index: u16
+    next_parallel_index: u32,
+    last_commit_id: git_hash::ObjectId 
 }
 
 pub struct ParallelDiff {
@@ -41,12 +42,16 @@ impl ParallelDiff {
 }
 
 impl ParallelDiffsUploadSupport {
-    pub fn new() -> Self {
+    pub fn get_parallels_number(&self) -> u32 {
+        self.next_parallel_index
+    }
+    pub fn new(last_commit_id: &git_hash::ObjectId) -> Self {
         Self {
             parallels: HashMap::new(),
             next_index: HashMap::new(),
             dangling_diffs: HashMap::new(),
-            next_parallel_index: 0
+            next_parallel_index: 0,
+            last_commit_id: last_commit_id.clone()
         }
     }
 
@@ -65,6 +70,7 @@ impl ParallelDiffsUploadSupport {
                 &blob_id,
                 &file_path,
                 &diff_coordinates,
+                &self.last_commit_id,
                 true, // <- It is known now
                 diff
             ).await?;
@@ -90,6 +96,7 @@ impl ParallelDiffsUploadSupport {
                     &blob_id,
                     &file_path,
                     &diff_coordinates,
+                    &self.last_commit_id,
                     false, // <- It is known now
                     diff
                 ).await?;

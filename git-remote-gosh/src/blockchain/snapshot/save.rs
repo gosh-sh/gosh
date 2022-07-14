@@ -61,8 +61,8 @@ struct SaveRes {
 // Note: making fields verbose
 // It must be very clear what is going on
 pub struct PushDiffCoordinate {
-    pub index_of_parallel_thread: u16,
-    pub order_of_diff_in_the_parallel_thread: u16,
+    pub index_of_parallel_thread: u32,
+    pub order_of_diff_in_the_parallel_thread: u32,
 }
 
 #[instrument(level = "debug")]
@@ -90,6 +90,7 @@ pub async fn push_diff(
     blob_id: &git_hash::ObjectId,
     file_path: &str,
     diff_coordinate: &PushDiffCoordinate,
+    last_commit_id: &git_hash::ObjectId,
     is_last: bool,
     diff: &Vec<u8>,
 ) -> Result<()> {
@@ -122,7 +123,7 @@ pub async fn push_diff(
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
-        commit_id: commit_id.to_string(),
+        commit_id: last_commit_id.to_string(),
         diffs,
         index1: format!("0x{index1}"),
         index2: format!("0x{index2}"),

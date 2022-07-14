@@ -258,7 +258,7 @@ impl GitHelper {
             }
         };
         let mut statistics = PushBlobStatistics::new();
-        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new();
+        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
         // TODO: Handle deleted fules
         // Note: These files will NOT appear in the list here
         for line in String::from_utf8(cmd_out.stdout)?.lines() {
@@ -301,7 +301,7 @@ impl GitHelper {
             self, 
             &latest_commit_id, 
             branch_name, 
-            statistics.diffs
+            parallel_diffs_upload_support.get_parallels_number() 
         ).await?;
 
         // 10. move HEAD
