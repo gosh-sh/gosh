@@ -36,8 +36,8 @@ pub struct DiffMessagesIterator {
 struct Message {
     id: String,
     body: String,
-    #[serde(with = "ton_sdk::json_helper::uint")]
     created_at: u64,
+    #[serde(with = "ton_sdk::json_helper::uint")]
     created_lt: u64,
     status: u8,
     bounced: bool,
@@ -168,7 +168,7 @@ pub async fn load_messages_to(
         Some(page_info) => page_info,
         None => ""
     };
-
+    
     let result = ton_client::net::query(
         context.clone(),
         ParamsOfQuery {
@@ -185,6 +185,7 @@ pub async fn load_messages_to(
 
     let mut messages: Vec<DiffMessage> = Vec::new();
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
+    log::trace!("trying to decode: {:?}", nodes);
     let edges: Messages = serde_json::from_value(nodes.clone())?;
     if edges.page_info.has_next_page {
         next_page_info = Some(edges.page_info.end_cursor);
