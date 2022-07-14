@@ -19,6 +19,12 @@ struct GetAddrWalletResult {
     pub address: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetAddrDaoResult {
+    #[serde(rename = "value0")]
+    pub address: String,
+}
+
 
 pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     let config = user_wallet_config(context);
@@ -26,12 +32,23 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         return Err("User wallet config must be set".into());
     }
     let config = config.expect("Guarded");
-    let dao_contract = GoshContract::new(
+    let gosh_root_contract = GoshContract::new(
         &context.remote.gosh,
+        abi::GOSH
+    );
+     
+    let dao_address: GetAddrDaoResult = gosh_root_contract.run_local(
+        &context.es_client,
+        "getAddrDao",
+        Some(serde_json::json!({
+            "name": context.remote.dao
+        }))
+    ).await?;
+    let dao_contract = GoshContract::new(
+        &dao_address.address,
         abi::DAO
     );
-    let pubkey = U256::from_str_radix(&config.pubkey, 16)?;
-    let pubkey = pubkey.to_string(); 
+    let pubkey = format!("0x{}", config.pubkey);
     let result: GetAddrWalletResult = dao_contract.run_local(
         &context.es_client, 
         "getAddrWallet",
