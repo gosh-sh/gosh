@@ -121,6 +121,7 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"version","type":"string"},
 		{"name":"_baseCommit","type":"string"},
+		{"name":"_basemaybe","type":"string"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
