@@ -16,7 +16,7 @@ const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom);
     const { daoName } = useParams();
     const dao = useGoshDao(daoName);
-    const wallet = useGoshWallet(daoName);
+    const wallet = useGoshWallet(dao);
     const [isReady, setIsReady] = useState<boolean>(false);
 
     const tabs = [

@@ -5,9 +5,11 @@ import { getRepoTree, goshRoot } from '../helpers';
 import {
     goshBranchesAtom,
     goshCurrBranchSelector,
+    goshDaoAtom,
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
+    goshWalletAtom,
 } from '../store/gosh.state';
 import { userStateAtom } from '../store/user.state';
 import { GoshDao, GoshWallet, GoshRepository } from '../types/classes';
@@ -36,47 +38,84 @@ export const useGoshRoot = () => {
 };
 
 export const useGoshDao = (name?: string) => {
-    const goshRoot = useGoshRoot();
-    const [goshDao, setGoshDao] = useState<IGoshDao>();
+    const [details, setDetails] = useRecoilState(goshDaoAtom);
+    const [dao, setDao] = useState<IGoshDao>();
 
     useEffect(() => {
-        const createDao = async (goshRoot: IGoshRoot, daoName: string) => {
-            const daoAddr = await goshRoot.getDaoAddr(daoName);
-            const dao = new GoshDao(goshRoot.account.client, daoAddr);
-            setGoshDao(dao);
+        const getDao = async (
+            _name: string,
+            state: { name?: string; address?: string }
+        ) => {
+            if (!state.address || state.name !== _name) {
+                console.debug('Get dao hook (blockchain)');
+                const address = await goshRoot.getDaoAddr(_name);
+                const dao = new GoshDao(goshRoot.account.client, address);
+                const details = await dao.getDetails();
+                setDao(dao);
+                setDetails(details);
+            } else {
+                console.debug('Get dao hook (from state)');
+                setDao(new GoshDao(goshRoot.account.client, state.address));
+            }
         };
 
-        if (goshRoot && name) createDao(goshRoot, name);
-    }, [goshRoot, name]);
+        if (name) getDao(name, { name: details?.name, address: details?.address });
+    }, [name, details?.name, details?.address, setDetails]);
 
-    return goshDao;
+    return dao;
 };
 
-export const useGoshWallet = (daoName?: string) => {
+export const useGoshWallet = (dao?: IGoshDao) => {
     const userState = useRecoilValue(userStateAtom);
-    const goshDao = useGoshDao(daoName);
-    const [goshWallet, setGoshWallet] = useState<IGoshWallet>();
+    const [details, setDetails] = useRecoilState(goshWalletAtom);
+    const [wallet, setWallet] = useState<IGoshWallet>();
 
     useEffect(() => {
-        const createWallet = async (goshDao: IGoshDao, keys: KeyPair) => {
-            const goshWalletAddr = await goshDao.getWalletAddr(`0x${keys.public}`, 0);
-            const goshWallet = new GoshWallet(
-                goshDao.account.client,
-                goshWalletAddr,
-                keys
-            );
+        const getWallet = async (
+            _dao: IGoshDao,
+            _keys: KeyPair,
+            state: { address?: string; daoAddress?: string }
+        ) => {
+            const { address, daoAddress } = state;
 
-            const daoParticipants = await goshDao.getWallets();
-            goshWallet.isDaoParticipant =
-                daoParticipants.indexOf(goshWallet.address) >= 0;
+            let _wallet;
+            if (!address || daoAddress !== _dao.address) {
+                console.debug('Get wallet hook (blockchain)');
+                const _address = await _dao.getWalletAddr(`0x${_keys.public}`, 0);
+                _wallet = new GoshWallet(_dao.account.client, _address, _keys);
+            } else {
+                console.debug('Get wallet hook (from state)');
+                _wallet = new GoshWallet(_dao.account.client, address, _keys);
 
-            setGoshWallet(goshWallet);
+                /**
+                 * Get DAO participants list and check if wallet is a member only
+                 * in case of reading wallet from state, because hook works twice
+                 * in case of reading from blockchain (blockchain then state).
+                 *
+                 * TODO: Create subscription for DAO messages (add member message)
+                 * and apply it in this hook
+                 */
+                const _daoParticipants = await _dao.getWallets();
+                _wallet.isDaoParticipant = _daoParticipants.indexOf(_wallet.address) >= 0;
+            }
+
+            setWallet(_wallet);
+            setDetails({
+                address: _wallet.address,
+                keys: _keys,
+                daoAddress: _dao.address,
+            });
         };
 
-        if (goshDao && userState.keys) createWallet(goshDao, userState.keys);
-    }, [goshDao, userState.keys]);
+        if (dao && userState.keys) {
+            getWallet(dao, userState.keys, {
+                address: details?.address,
+                daoAddress: details?.daoAddress,
+            });
+        }
+    }, [dao, details?.address, details?.daoAddress, userState.keys, setDetails]);
 
-    return goshWallet;
+    return wallet;
 };
 
 /** Create GoshRepository object */
