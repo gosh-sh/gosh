@@ -100,6 +100,7 @@ impl GitHelper {
                 }
             }
         }
+        log::trace!("list: {:?}", ref_list);
         ref_list.push("".to_owned());
         Ok(ref_list)
     }

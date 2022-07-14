@@ -98,6 +98,7 @@ impl GoshContract {
         T: de::DeserializeOwned,
     {
         let result = run_local(context, self, function_name, args).await?;
+        log::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
 }
@@ -330,6 +331,7 @@ pub async fn get_repo_address(
     Ok(result.address)
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn branch_list(
     context: &TonClient,
     repo_addr: &str,

@@ -12,7 +12,6 @@ mod defaults;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
-    pub address: String,
     pub pubkey: String,
     pub secret: String,
 }

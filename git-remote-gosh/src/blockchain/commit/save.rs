@@ -56,7 +56,7 @@ pub async fn push_commit(
     };
     log::debug!("deployCommit params: {:?}", args);
 
-    let wallet = user_wallet(context)?;
+    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployCommit", Some(params)).await?;
     log::debug!("deployCommit result: {:?}", result);
@@ -70,7 +70,7 @@ pub async fn notify_commit(
     branch: &str,
     number_of_files_changed: u32
 ) -> Result<(), Box<dyn Error>> {
-    let wallet = user_wallet(context)?;
+    let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
         "repoName": context.remote.repo.clone(),
         "branchName": branch.to_string(),
