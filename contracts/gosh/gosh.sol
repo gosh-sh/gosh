@@ -95,7 +95,7 @@ contract Gosh is Modifiers, Upgradable {
         _lastGoshDao = new GoshDao {stateInit: s1, value: 90 ton, wid: 0}(
             address(this),
             _creator,
-            root_pubkey
+            root_pubkey,
             name,
             m_CommitCode,
             m_RepositoryCode,
