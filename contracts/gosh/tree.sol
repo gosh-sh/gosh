@@ -156,17 +156,17 @@ contract Tree is Modifiers {
                 Tree(getTreeAddr(_tree[tvm.hash(nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree, tvm.hash("tree:" + value0.lastPath));
             }
             getMoney(_pubkey);
             return;
         }
         else {
             if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == false) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree, tvm.hash("blob:" + value0.lastPath));
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree, tvm.hash("blob:" + value0.lastPath));
             }
             getMoney(_pubkey);
             return;
