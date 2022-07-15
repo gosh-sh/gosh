@@ -31,7 +31,8 @@
 			"inputs": [
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value1","type":"optional(tuple)"},
-				{"name":"sha","type":"string"}
+				{"name":"sha","type":"string"},
+				{"name":"ggg","type":"uint256"}
 			],
 			"outputs": [
 			]
