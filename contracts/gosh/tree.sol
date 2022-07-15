@@ -162,7 +162,7 @@ contract Tree is Modifiers {
             return;
         }
         else {
-            if (_tree.exists(tvm.hash("blob:" + value0.lastPath))) {
+            if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == false) {
                 Snapshot(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
             }
             else {
