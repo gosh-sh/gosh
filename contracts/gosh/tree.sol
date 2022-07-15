@@ -56,7 +56,7 @@ contract Tree is Modifiers {
         _rootGosh = rootGosh;
         _goshdao = goshdao;
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
-        _ipfs = ipfs;
+        _ipfs = ipfs;      
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
@@ -133,33 +133,39 @@ contract Tree is Modifiers {
         getMoney(_pubkey);
     }    
     
+    function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
+        tvm.accept();
+        getShaInfo(value0);
+        getMoney(_pubkey);
+    }    
+    
     function getShaInfoTree(string sha, Request value0) public view {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
         getMoney(_pubkey);
-    }
+    }    
     
     function getShaInfo(Request value0) private view {
         optional(uint32) pos = value0.lastPath.find(byte('\''));
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get() - 1);
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
-            if (_tree.exists(tvm.hash(nowPath))) {
+            if (_tree.exists(tvm.hash("tree:" + nowPath))) {
                 Tree(getTreeAddr(_tree[tvm.hash(nowPath)].sha1)).getShaInfoTree(_shaTree, value0);
             }
             else {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null);
+                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
             }
             getMoney(_pubkey);
             return;
         }
         else {
-            if (_tree.exists(tvm.hash(value0.lastPath))) {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null);
+            if (_tree.exists(tvm.hash("blob:" + value0.lastPath))) {
+                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
             }
             else {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, _tree[tvm.hash(value0.lastPath)]);
+                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
             }
             getMoney(_pubkey);
             return;

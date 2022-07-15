@@ -105,7 +105,7 @@
 			"inputs": [
 				{"name":"value0","type":"bytes"},
 				{"name":"value1","type":"optional(string)"},
-				{"name":"name","type":"string"}
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]

@@ -182,15 +182,16 @@ contract Commit is Modifiers {
         getMoney(_pubkey);
     }
     
-    function getAcceptedContent(bytes value0, optional(string) value1, string name) public view senderIs(getSnapshotAddr(name)){
-        value0;
-        value1;
+    function getAcceptedContent(bytes value0, optional(string) value1, string path) public view senderIs(getSnapshotAddr(path)){
         getMoney(_pubkey);
+        tvm.accept();
+        if (value1.hasValue()) { return; }
+        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
     }
     
     function getSnapshotAddr(string name) private view returns(address) {
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _rootRepo, _nameBranch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: _nameBranch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
         

@@ -34,6 +34,7 @@ contract Snapshot is Modifiers {
     TvmCell m_CommitCode;
     TvmCell m_codeDiff;
     TvmCell m_WalletCode;
+    TvmCell m_codeTree;
     string static NameOfFile;
     bool _applying = false;
     string _name; 
@@ -49,6 +50,7 @@ contract Snapshot is Modifiers {
         TvmCell codeCommit,
         TvmCell codeDiff,
         TvmCell WalletCode,
+        TvmCell codeTree,
         string branch,
         string name,
         uint128 index,
@@ -77,6 +79,7 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _baseCommit = commit;
+        m_codeTree = codeTree;
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
@@ -98,6 +101,19 @@ contract Snapshot is Modifiers {
             varInit: {_nameCommit: commit}
         });
         return address(tvm.hash(state));
+    }
+    
+    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
+        if (value1.hasValue() == false) { selfdestruct(_rootRepo); }
+        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); }
+        return;
+    }
+    
+    function getTreeAddr(string shaTree) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
+        //return tvm.insertPubkey(stateInit, pubkey);
+        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -199,6 +215,10 @@ contract Snapshot is Modifiers {
             varInit: {_nameCommit: commit, _index1: index1, _index2: index2}
         });
         return address(tvm.hash(state));
+    }
+    
+    fallback() external {
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
     }
 
     //Selfdestruct

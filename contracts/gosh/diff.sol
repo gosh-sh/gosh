@@ -107,9 +107,9 @@ contract DiffC is Modifiers {
     }
     
     //Tree part
-    function TreeAnswer(Request value0, optional(TreeObject) value1) public pure {
+    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public pure {
         tvm.accept();    
-        value0; value1;
+        value0; value1; sha;
     }
     
     //Commit part
