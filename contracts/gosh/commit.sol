@@ -202,7 +202,7 @@ contract Commit is Modifiers {
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit, newC);
         }
         else {
-            if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit); return; }
+            if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
             Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , newC);
         }
         getMoney(pubkey);
@@ -243,8 +243,8 @@ contract Commit is Modifiers {
     }
     
         
-    function NotCorrect(string branch, address branchCommit) public {
-        if ((branchCommit != msg.sender) && (msg.sender != _buildCommitAddr("0000000000000000000000000000000000000000"))){ return; }
+    function NotCorrect(string branch, address branchCommit, string commit) public {
+        if (msg.sender != _buildCommitAddr(commit)){ return; }
         tvm.accept();
         _continueChain = false;
         _commitcheck = false;
