@@ -186,9 +186,9 @@ contract Commit is Modifiers {
         getMoney(_pubkey);
         tvm.accept();
         if (value1.hasValue()) { 
-            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
+            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, sha256(value1.get()))); return;
         }
-        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
+        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, sha256(gosh.unzip(value0))));
     }
     
     function getSnapshotAddr(string branch, string name) private view returns(address) {
