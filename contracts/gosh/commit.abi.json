@@ -158,7 +158,8 @@
 			"name": "NotCorrect",
 			"inputs": [
 				{"name":"branch","type":"string"},
-				{"name":"branchCommit","type":"address"}
+				{"name":"branchCommit","type":"address"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
