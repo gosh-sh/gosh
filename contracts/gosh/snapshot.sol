@@ -104,7 +104,7 @@ contract Snapshot is Modifiers {
     }
     
     function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
-        if (value1.hasValue() == false) { selfdestruct(_rootRepo); }
+        if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
         if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); }
         return;
     }
