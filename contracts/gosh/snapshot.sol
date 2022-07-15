@@ -217,6 +217,11 @@ contract Snapshot is Modifiers {
         return address(tvm.hash(state));
     }
     
+    onBounce(TvmSlice body) external {
+        body;
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+    }
+    
     fallback() external {
         if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
     }
