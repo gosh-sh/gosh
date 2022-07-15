@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import BranchSelect from '../../components/BranchSelect';
-import { IGoshRepository, IGoshWallet, TGoshTreeItem } from '../../types/types';
+import { IGoshRepository, TGoshTreeItem } from '../../types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { useMonaco } from '@monaco-editor/react';
-import { getCodeLanguageFromFilename, isMainBranch } from '../../helpers';
+import { getCodeLanguageFromFilename, isMainBranch, ZERO_COMMIT } from '../../helpers';
 import BlobPreview from '../../components/Blob/Preview';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -30,37 +30,38 @@ const BlobPage = () => {
     const monaco = useMonaco();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
-    const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
+    const { tree, getTreeItem } = useGoshRepoTree(goshRepo, branch, pathName);
+    const treeItem = useRecoilValue(getTreeItem(pathName));
     const [blob, setBlob] = useState<any>();
 
     useEffect(() => {
         const getBlob = async (
-            wallet: IGoshWallet,
             repo: IGoshRepository,
-            branchName: string,
             commitAddr: string,
+            branchName: string,
             treeItem: TGoshTreeItem
         ) => {
             setBlob(undefined);
 
-            const commit = new GoshCommit(wallet.account.client, commitAddr);
+            const commit = new GoshCommit(repo.account.client, commitAddr);
             const commitName = await commit.getName();
+            if (commitName === ZERO_COMMIT) return;
 
             let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
             filepath = `${filepath}${treeItem.name}`;
 
             const snapAddr = await repo.getSnapshotAddr(branchName, filepath);
             console.debug('Snap addr', snapAddr);
-            const snap = new GoshSnapshot(wallet.account.client, snapAddr);
+            const snap = new GoshSnapshot(repo.account.client, snapAddr);
             const data = await snap.getSnapshot(commitName, treeItem);
             setBlob({ content: data.content });
         };
 
-        if (goshWallet && goshRepo && branch?.name && branch.commitAddr && treeItem) {
-            getBlob(goshWallet, goshRepo, branch.name, branch.commitAddr, treeItem);
+        console.debug('Branch commit', branch?.commitAddr);
+        if (goshRepo && branch?.commitAddr && treeItem) {
+            getBlob(goshRepo, branch?.commitAddr, branch.name, treeItem);
         }
-    }, [goshWallet, goshRepo, branch?.name, branch?.commitAddr, treeItem]);
+    }, [goshRepo, branch?.commitAddr, branch?.name, treeItem]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -95,10 +96,10 @@ const BlobPage = () => {
                 </div>
             </div>
 
-            {goshRepoTree.tree && !treeItem && (
+            {tree?.tree && !treeItem && (
                 <div className="text-gray-606060 text-sm">File not found</div>
             )}
-            {(!goshRepoTree.tree || (treeItem && !blob)) && (
+            {(!tree?.tree || (treeItem && !blob)) && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading file...
