@@ -423,7 +423,7 @@ export class GoshWallet implements IGoshWallet {
 
                 const blobPathItems = getTreeItemsFromPath(
                     blob.name,
-                    blob.modified,
+                    ipfs || blob.modified,
                     flags
                 );
                 blobPathItems.forEach((pathItem) => {
@@ -824,6 +824,7 @@ export class GoshWallet implements IGoshWallet {
 
         // Check if not deployed
         const addr = await this.getTreeAddr(repo.address, sha);
+        console.debug('Tree addr', addr);
         const blob = new GoshTree(this.account.client, addr);
         const blobAcc = await blob.account.getAccount();
         if (blobAcc.acc_type === AccountType.active) {

@@ -171,7 +171,13 @@ export const getTreeItemsFromPath = (
     // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(filePath);
     const sha = sha1(fileContent, 'blob', 'sha1');
-    const sha256 = sha1(fileContent, 'blob', 'sha256');
+
+    // const sha256 = sha1(fileContent, 'blob', 'sha256');
+    const words = Buffer.isBuffer(fileContent)
+        ? cryptoJs.enc.Hex.parse(fileContent.toString('hex'))
+        : cryptoJs.enc.Utf8.parse(fileContent);
+    const sha256 = `0x${SHA256(words).toString()}`;
+
     items.push({ flags, mode: '100644', type: 'blob', sha1: sha, sha256, path, name });
 
     // Parse blob path and push subtrees to items
@@ -294,7 +300,8 @@ export const calculateSubtrees = (tree: TGoshTree) => {
             );
             if (found) {
                 found.sha1 = sha1Tree(tree[key], 'sha1');
-                found.sha256 = sha1Tree(tree[key], 'sha256');
+                // found.sha256 = sha1Tree(tree[key], 'sha256');
+                found.sha256 = `0x${sha1Tree(tree[key], 'sha256')}`;
             }
         });
 };
