@@ -193,23 +193,6 @@ export const getTreeItemsFromPath = (
     return items;
 };
 
-// const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
-//     return content.split('\n').map((entry: string) => {
-//         const [head, fname] = entry.split('\t');
-//         const [flags, mode, type, sha] = head.split(' ');
-//         const lastSlash = fname.lastIndexOf('/');
-//         const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : '';
-//         return {
-//             flags: +flags,
-//             mode: mode as TGoshTreeItem['mode'],
-//             type: type as TGoshTreeItem['type'],
-//             sha,
-//             path,
-//             name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
-//         };
-//     });
-// };
-
 /** Build grouped by path tree from TGoshTreeItem[] */
 export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     const isTree = (i: TGoshTreeItem) => i.type === 'tree';
@@ -292,16 +275,6 @@ export const getRepoTree = async (
         const rootTree = new GoshTree(repo.account.client, rootTreeAddr);
         const { tree } = await rootTree.getTree();
         items = tree;
-        // await new Promise<void>((resolve) =>
-        //     setInterval(async () => {
-        //         const { tree, ready } = await rootTree.getTree();
-        //         console.debug('Tree ready', ready);
-        //         if (ready) {
-        //             items = tree;
-        //             resolve();
-        //         }
-        //     }, 2000)
-        // );
     }
     if (filterPath !== '') await blobTreeWalker('', items);
 
@@ -336,6 +309,7 @@ export const getBlobDiffPatch = (
     modified: string,
     original: string
 ) => {
+    /** Git like patch representation */
     // let patch = Diff.createTwoFilesPatch(
     //     `a/${filename}`,
     //     `b/${filename}`,
@@ -351,6 +325,8 @@ export const getBlobDiffPatch = (
 
     // if (!original) patch = patch.replace(`a/${filename}`, '/dev/null');
     // if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
+
+    /** Gosh snapshot recommended patch representation */
     const patch = Diff.createPatch(filename, original, modified);
     return patch.split('\n').slice(4).join('\n');
 };
