@@ -86,7 +86,7 @@ contract Snapshot is Modifiers {
         }
         else {
             Commit(_buildCommitAddr(_oldcommits))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, NameOfFile);
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
             //TODO CHECK
         }
     }
