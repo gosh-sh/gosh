@@ -246,11 +246,10 @@ export const getRepoTree = async (
 
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i];
-            const treeAddr = await root.getTreeAddr(repo.address, tree.sha1);
-            const treeBlob = new GoshTree(repo.account.client, treeAddr);
+            const treeAddr = await goshRoot.getTreeAddr(repo.address, tree.sha1);
+            const treeBlob = new GoshTree(goshClient, treeAddr);
 
-            const gettree = await treeBlob.getTree();
-            const treeItems = gettree.tree;
+            const treeItems = (await treeBlob.getTree()).tree;
             const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
             treeItems.forEach((item) => (item.path = treePath));
@@ -260,21 +259,17 @@ export const getRepoTree = async (
         }
     };
 
-    // Gosh root
-    const root = await repo.getGoshRoot();
-
     // Get latest branch commit
     if (!commitAddr) return { tree: { '': [] }, items: [] };
-    const commit = new GoshCommit(repo.account.client, commitAddr);
-    await commit.load();
+    const commit = new GoshCommit(goshClient, commitAddr);
+    const commitName = await commit.getName();
 
     // Get root tree items and recursively get subtrees
     let items: TGoshTreeItem[] = [];
-    if (commit.meta?.sha !== ZERO_COMMIT) {
+    if (commitName !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree();
-        const rootTree = new GoshTree(repo.account.client, rootTreeAddr);
-        const { tree } = await rootTree.getTree();
-        items = tree;
+        const rootTree = new GoshTree(goshClient, rootTreeAddr);
+        items = (await rootTree.getTree()).tree;
     }
     if (filterPath !== '') await blobTreeWalker('', items);
 

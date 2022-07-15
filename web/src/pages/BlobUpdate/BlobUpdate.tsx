@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -11,7 +11,7 @@ import BlobEditor from '../../components/Blob/Editor';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import { useMonaco } from '@monaco-editor/react';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { IGoshRepository, IGoshWallet, TGoshTreeItem } from '../../types/types';
+import { IGoshRepository, TGoshTreeItem } from '../../types/types';
 import { getCodeLanguageFromFilename, splitByPath, isMainBranch } from '../../helpers';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
@@ -103,22 +103,21 @@ const BlobUpdatePage = () => {
 
     useEffect(() => {
         const getBlob = async (
-            wallet: IGoshWallet,
             repo: IGoshRepository,
-            branch: string,
+            branchName: string,
             treeItem: TGoshTreeItem,
             commitAddr: string
         ) => {
             let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
             filepath = `${filepath}${treeItem.name}`;
 
-            const snapAddr = await repo.getSnapshotAddr(branch, filepath);
+            const snapAddr = await repo.getSnapshotAddr(branchName, filepath);
             console.debug(snapAddr);
 
-            const commit = new GoshCommit(wallet.account.client, commitAddr);
+            const commit = new GoshCommit(repo.account.client, commitAddr);
             const commitName = await commit.getName();
 
-            const snap = new GoshSnapshot(wallet.account.client, snapAddr);
+            const snap = new GoshSnapshot(repo.account.client, snapAddr);
             const data = await snap.getSnapshot(commitName, treeItem);
             if (Buffer.isBuffer(data.content)) {
                 toast.error(EGoshError.FILE_BINARY);
@@ -126,18 +125,10 @@ const BlobUpdatePage = () => {
             } else setBlob(data);
         };
 
-        if (goshWallet && goshRepo && branch?.name && branch.commitAddr && treeItem) {
-            getBlob(goshWallet, goshRepo, branch.name, treeItem, branch.commitAddr);
+        if (goshRepo && branch?.name && branch.commitAddr && treeItem) {
+            getBlob(goshRepo, branch.name, treeItem, branch.commitAddr);
         }
-    }, [
-        goshRepo,
-        goshWallet,
-        branch?.name,
-        branch?.commitAddr,
-        treeItem,
-        urlBack,
-        navigate,
-    ]);
+    }, [goshRepo, branch?.name, branch?.commitAddr, treeItem, urlBack, navigate]);
 
     useEffect(() => {
         if (monaco && pathName) {
