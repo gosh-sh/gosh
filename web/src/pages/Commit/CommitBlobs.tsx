@@ -120,9 +120,9 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     if (reached)
                         return {
                             msgs,
-                            prevcommit: decoded.value.namecommit,
+                            prevcommit: decoded.value.diff.commit,
                         };
-                    if (decoded.value.namecommit === commit) reached = true;
+                    if (decoded.value.diff.commit === commit) reached = true;
                 }
             } catch {}
         }
@@ -159,15 +159,10 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         let content = snapdata.content;
         let deployed = false;
         for (const message of msgs) {
-            const msgcommit = message.diff ? message.namecommit : message.commit;
+            const msgcommit = message.diff ? message.diff.commit : message.commit;
             const msgipfs = message.diff ? message.diff.ipfs : message.ipfsdata;
             const msgpatch = message.diff ? message.diff.patch : null;
             const msgdata = message.diff ? null : message.data;
-
-            console.debug('Message commit', msgcommit);
-            console.debug('Message ipfs', msgipfs);
-            console.debug('Message patch', msgpatch);
-            console.debug('Message data', msgdata);
 
             if (msgipfs) {
                 const compressed = (await loadFromIPFS(msgipfs)).toString();
