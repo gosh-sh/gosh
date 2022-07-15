@@ -41,6 +41,7 @@ use crate::abi as gosh_abi;
 use crate::config::Config;
 
 pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
+pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 
 #[repr(u8)]

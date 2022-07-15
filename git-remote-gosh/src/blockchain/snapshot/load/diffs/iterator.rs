@@ -118,9 +118,7 @@ impl DiffMessagesIterator {
                         ).await?;
 
                         // generate filter
-                        Some(
-                            NextChunk::MessagesPage(original_snapshot, None)
-                        )
+                        Some(NextChunk::MessagesPage(original_snapshot, None))
                     }
                 }
             },

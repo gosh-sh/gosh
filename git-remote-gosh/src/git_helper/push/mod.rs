@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
+use crate::blockchain::{CreateBranchOperation, ZERO_SHA};
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use git2::Repository;
 use git_diff;
@@ -200,7 +201,11 @@ impl GitHelper {
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            // todo!();
+            // create branch from zero-commmit
+            // but we should discover which commit is point of branching
+            let zero_commit = git_hash::ObjectId::from_str(ZERO_SHA)?;
+            let mut create_branch_op = CreateBranchOperation::new(zero_commit, branch_name, self);
+            create_branch_op.run().await;
             "".to_owned()
         } else {
             let remote_commit_addr = parsed_remote_ref.unwrap();

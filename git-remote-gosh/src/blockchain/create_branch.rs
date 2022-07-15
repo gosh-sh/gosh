@@ -7,6 +7,7 @@ use crate::blockchain;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+#[derive(Debug)]
 pub struct CreateBranchOperation<'a> {
     ancestor_commit: ObjectId,
     new_branch: String,
@@ -36,6 +37,7 @@ impl<'a> CreateBranchOperation<'a> {
         Ok(())
     }
 
+    #[instrument(level = "debug")]
     async fn preinit_branch(&mut self) -> Result<()> {
         let wallet_contract = blockchain::user_wallet(self.context).await?;
         let params = serde_json::json!({
@@ -52,6 +54,7 @@ impl<'a> CreateBranchOperation<'a> {
         Ok(())
     }
 
+    #[instrument(level = "debug")]
     async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
         let content = self
@@ -74,6 +77,7 @@ impl<'a> CreateBranchOperation<'a> {
         Ok(())
     }
 
+    #[instrument(level = "debug")]
     async fn push_initial_snapshots(&mut self) -> Result<()> {
         let all_files:Vec<recorder::Entry> = {
             self.context
@@ -90,8 +94,7 @@ impl<'a> CreateBranchOperation<'a> {
         let snapshots_to_deploy: Vec<recorder::Entry> = all_files
             .into_iter()
             .filter(|e| match e.mode {
-                tree::EntryMode::Blob 
-                | tree::EntryMode::BlobExecutable => true,
+                tree::EntryMode::Blob | tree::EntryMode::BlobExecutable => true,
                 tree::EntryMode::Link => true,
                 tree::EntryMode::Tree => false,
                 tree::EntryMode::Commit => {
@@ -99,7 +102,7 @@ impl<'a> CreateBranchOperation<'a> {
                 }
             })
             .collect();
-        
+
         for entry in snapshots_to_deploy {
             let full_path = entry.filepath.to_string();
             self.deploy_snapshot(&full_path, &entry.oid);
@@ -107,12 +110,14 @@ impl<'a> CreateBranchOperation<'a> {
         Ok(())
     }
 
+    #[instrument(level = "debug")]
     async fn wait_branch_ready(&mut self) -> Result<()> {
         // Ensure repository contract state
         // Ping Sergey Horelishev for details
         todo!();
     }
 
+    #[instrument(level = "debug")]
     pub async fn run(&mut self) -> Result<()> {
         self.prepare_commit_for_branching().await?;
         self.preinit_branch().await?;
