@@ -13,6 +13,7 @@ import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "commit.sol";
 import "tree.sol";
+import "snapshot.sol";
 import "diff.sol";
 
 /* Root contract of Tree */
@@ -155,17 +156,17 @@ contract Tree is Modifiers {
                 Tree(getTreeAddr(_tree[tvm.hash(nowPath)].sha1)).getShaInfoTree(_shaTree, value0);
             }
             else {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
             }
             getMoney(_pubkey);
             return;
         }
         else {
             if (_tree.exists(tvm.hash("blob:" + value0.lastPath))) {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, null, _shaTree);
             }
             else {
-                DiffC(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.2 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
             }
             getMoney(_pubkey);
             return;
