@@ -185,7 +185,9 @@ contract Commit is Modifiers {
     function getAcceptedContent(bytes value0, optional(string) value1, string path) public view senderIs(getSnapshotAddr(path)){
         getMoney(_pubkey);
         tvm.accept();
-        if (value1.hasValue()) { return; }
+        if (value1.hasValue()) { 
+            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
+        }
         Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
     }
     
