@@ -193,7 +193,7 @@ contract Commit is Modifiers {
     
     function getSnapshotAddr(string branch, string name) private view returns(address) {
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _rootRepo, branch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: _nameBranch + "/" + name}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
         
