@@ -195,20 +195,10 @@ impl GitHelper {
             blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name).await?;
 
         // 2. Find ancestor commit in local repo
-        let ancestor_commit_id = if parsed_remote_ref == None {
-            // 3. If branch needs to be created do so
-            //    ---
-            //    Otherwise check if a head of the branch
-            //    is pointing to the ancestor commit. Fail
-            //    if it doesn't
-            // create branch from zero-commmit
-            // but we should discover which commit is point of branching
-            let zero_commit = git_hash::ObjectId::from_str(ZERO_SHA)?;
-            let mut create_branch_op = CreateBranchOperation::new(zero_commit, branch_name, self);
-            create_branch_op.run().await;
+        let mut ancestor_commit_id = if parsed_remote_ref == None {
             "".to_owned()
         } else {
-            let remote_commit_addr = parsed_remote_ref.unwrap();
+            let remote_commit_addr = parsed_remote_ref.clone().unwrap();
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?
                 .unwrap();
@@ -225,7 +215,6 @@ impl GitHelper {
         log::debug!("latest commit id {latest_commit_id}");
 
         // TODO: git rev-list?
-
         let mut cmd_args: Vec<&str> = vec![
             "rev-list",
             "--objects",
@@ -235,9 +224,11 @@ impl GitHelper {
         ];
 
         let exclude;
+        let mut commit_id: Option<ObjectId> = None;
         if ancestor_commit_id != "" {
             exclude = format!("^{}", ancestor_commit_id);
             cmd_args.push(&exclude);
+            commit_id = Some(ObjectId::from_str(&ancestor_commit_id)?);
         }
 
         let cmd = Command::new("git")
@@ -255,18 +246,26 @@ impl GitHelper {
         // 8. Deploy all commit objects
 
         let mut prev_commit_id: Option<ObjectId> = None;
-        let mut commit_id: Option<ObjectId> = {
-            if ancestor_commit_id != "" {
-                Some(ObjectId::from_str(&ancestor_commit_id)?)
-            } else {
-                None
-            }
-        };
         let mut statistics = PushBlobStatistics::new();
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
         // TODO: Handle deleted fules
         // Note: These files will NOT appear in the list here
-        for line in String::from_utf8(cmd_out.stdout)?.lines() {
+        let out = String::from_utf8(cmd_out.stdout)?;
+        // 3. If branch needs to be created do so
+        if parsed_remote_ref == None {
+            //    ---
+            //    Otherwise check if a head of the branch
+            //    is pointing to the ancestor commit. Fail
+            //    if it doesn't
+            if ancestor_commit_id == "" {
+                ancestor_commit_id = out.lines().next().unwrap().to_string();
+            }
+            let originate_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
+            let mut create_branch_op = CreateBranchOperation::new(originate_commit, branch_name, self);
+            create_branch_op.run().await;
+        }
+
+        for line in out.lines() {
             match line.split_ascii_whitespace().nth(0) {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;

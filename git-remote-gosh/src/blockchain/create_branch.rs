@@ -114,7 +114,8 @@ impl<'a> CreateBranchOperation<'a> {
     async fn wait_branch_ready(&mut self) -> Result<()> {
         // Ensure repository contract state
         // Ping Sergey Horelishev for details
-        todo!();
+        // todo!();
+        Ok(())
     }
 
     #[instrument(level = "debug")]
