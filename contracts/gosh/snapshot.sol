@@ -39,6 +39,7 @@ contract Snapshot is Modifiers {
     bool _applying = false;
     string _name; 
     string _branch;
+    bool _ready = false;
 
     constructor(
         uint256 pubkeysender,
@@ -83,6 +84,7 @@ contract Snapshot is Modifiers {
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
+            _ready = true;
         }
         else {
             Commit(_buildCommitAddr(_oldcommits))
@@ -105,8 +107,8 @@ contract Snapshot is Modifiers {
     
     function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
         if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
-        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); }
-        return;
+        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); return; }
+        _ready = true;
     }
     
     function getTreeAddr(string shaTree) internal view returns(address) {
@@ -135,6 +137,7 @@ contract Snapshot is Modifiers {
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
+        require(_ready == true, ERR_SNAPSHOT_NOT_READY);
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
         uint256 empty;
@@ -234,9 +237,9 @@ contract Snapshot is Modifiers {
 
     //Getters
     function getSnapshot() external view
-        returns(string, bytes, optional(string), string, bytes, optional(string), string)
+        returns(string, bytes, optional(string), string, bytes, optional(string), string, bool)
     {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
 
     function getName() external view returns(string) {
