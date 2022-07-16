@@ -148,7 +148,7 @@ contract Tree is Modifiers {
     }    
     
     function getShaInfo(Request value0) private view {
-        optional(uint32) pos = value0.lastPath.find(byte('\''));
+        optional(uint32) pos = value0.lastPath.find(byte('/'));
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get() - 1);
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
