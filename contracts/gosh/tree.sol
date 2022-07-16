@@ -152,8 +152,8 @@ contract Tree is Modifiers {
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get() - 1);
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
-            if (_tree.exists(sha256("tree:" + nowPath))) {
-                Tree(getTreeAddr(_tree[sha256(nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
+            if (_tree.exists(tvm.hash("tree:" + nowPath))) {
+                Tree(getTreeAddr(_tree[tvm.hash(nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
             }
             else {
                 Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
@@ -162,11 +162,11 @@ contract Tree is Modifiers {
             return;
         }
         else {
-            if (_tree.exists(sha256("blob:" + value0.lastPath)) == false) {
+            if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == false) {
                 Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[sha256("blob:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
             }
             getMoney(_pubkey);
             return;
