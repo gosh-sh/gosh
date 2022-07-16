@@ -32,6 +32,7 @@ import {
     MAX_ONCHAIN_FILE_SIZE,
     goshDaoCreator,
     getPaginatedAccounts,
+    tvmHash,
 } from '../helpers';
 import {
     IGoshTree,
@@ -60,7 +61,6 @@ import {
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
-import { SHA256 } from 'crypto-js';
 
 export class GoshDaoCreator implements IGoshDaoCreator {
     abi: any = GoshDaoCreatorABI;
@@ -421,10 +421,11 @@ export class GoshWallet implements IGoshWallet {
                     },
                 };
 
-                const blobPathItems = getTreeItemsFromPath(
+                const blobPathItems = await getTreeItemsFromPath(
                     blob.name,
-                    ipfs || blob.modified,
-                    flags
+                    blob.modified,
+                    flags,
+                    ipfs
                 );
                 blobPathItems.forEach((pathItem) => {
                     const pathIndex = updatedPaths.findIndex(
@@ -614,18 +615,6 @@ export class GoshWallet implements IGoshWallet {
         const branch = await repo.getBranch(newName);
         if (branch.name === newName) return;
 
-        // Deploy new branch
-        console.debug('Deploy branch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-        await this.run('deployBranch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-
         // Get all snapshots from branch `from` and deploy to branch `to`
         const snapCode = await this.getSnapshotCode(fromName, repo.address);
         const snaps = await this.account.client.net.query_collection({
@@ -657,6 +646,18 @@ export class GoshWallet implements IGoshWallet {
         if (snaps.result.length !== treeSnaps.length) {
             throw new Error('Tree inconsistent');
         }
+
+        // Deploy new branch
+        console.debug('Deploy branch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
+        await this.run('deployBranch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
 
         // Deploy snapshots
         await Promise.all(
@@ -834,7 +835,7 @@ export class GoshWallet implements IGoshWallet {
         // Deploy tree and get address
         const datatree: any = {};
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = SHA256(`${type}:${name}`).toString();
+            const key = await tvmHash(`${type}:${name}`);
             datatree[`0x${key}`] = {
                 flags: flags.toString(),
                 mode,

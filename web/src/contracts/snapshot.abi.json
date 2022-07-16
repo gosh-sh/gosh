@@ -85,7 +85,8 @@
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"bytes"},
 				{"name":"value5","type":"optional(string)"},
-				{"name":"value6","type":"string"}
+				{"name":"value6","type":"string"},
+				{"name":"value7","type":"bool"}
 			]
 		},
 		{
@@ -151,6 +152,7 @@
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
-		{"name":"_branch","type":"string"}
+		{"name":"_branch","type":"string"},
+		{"name":"_ready","type":"bool"}
 	]
 }
