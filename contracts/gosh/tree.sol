@@ -152,6 +152,9 @@ contract Tree is Modifiers {
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get() - 1);
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
+
+            value0.lastPath = nowPath;
+
             if (_tree.exists(tvm.hash("tree:" + nowPath))) {
                 Tree(getTreeAddr(_tree[tvm.hash("tree:" + nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
             }
