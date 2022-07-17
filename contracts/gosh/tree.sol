@@ -81,7 +81,7 @@ contract Tree is Modifiers {
             (index, obj) = res.get();
             _ready[tvm.hash(branch)].value0 += 1; 
             if (obj.mode == "040000") {
-                Tree(getTreeAddr(obj.sha1)).checkBranchTree(branch, commit, _shaTree, path + obj.name + "/"); 
+                Tree(getTreeAddr(obj.sha1)).checkBranchTree{value: 0.7 ton, flag: 1}(branch, commit, _shaTree, path + obj.name + "/"); 
             }
             else { Snapshot(getSnapshotAddr(branch, path + obj.name)).isReady{value: 0.4 ton, flag: 1}(commit, _shaTree); }
             this.check{value: 0.2 ton, flag: 1}(branch, commit, index + 1, path);
