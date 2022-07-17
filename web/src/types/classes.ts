@@ -61,6 +61,7 @@ import {
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
 import { SHA256 } from 'crypto-js';
+import { sleep } from '../utils';
 
 export class GoshDaoCreator implements IGoshDaoCreator {
     abi: any = GoshDaoCreatorABI;
@@ -383,6 +384,17 @@ export class GoshWallet implements IGoshWallet {
             blobs.map(async (blob) => {
                 const { name, modified, original, isIpfs = false } = blob;
 
+                // Deploy empty snapshot
+                const snap = await this.deployNewSnapshot(
+                    repo.address,
+                    branch.name,
+                    '',
+                    name,
+                    '',
+                    null
+                );
+
+                // Generate patch or upload to ipfs
                 let flags = 0;
                 let patch: string = '';
                 let ipfs = null;
@@ -409,18 +421,20 @@ export class GoshWallet implements IGoshWallet {
                     content = await zstd.compress(this.account.client, content);
                     ipfs = await saveToIPFS(content);
                 }
-                const processedBlob = {
+
+                processedBlobs.push({
                     ...blob,
                     created: false,
                     diff: {
-                        snap: '',
+                        snap,
                         patch: ipfs ? null : patch,
                         ipfs,
                         commit: '',
                         sha1: sha1(modified, 'blob', 'sha1'),
                     },
-                };
+                });
 
+                // Update tree
                 const blobPathItems = getTreeItemsFromPath(
                     blob.name,
                     blob.modified,
@@ -439,20 +453,22 @@ export class GoshWallet implements IGoshWallet {
                     if (itemIndex >= 0) items[itemIndex] = pathItem;
                     else items.push(pathItem);
                 });
-
-                processedBlobs.push(processedBlob);
             })
         );
-        console.debug('[Create commit] - New tree items:', items);
-        console.debug('[Create commit] - Updated paths:', updatedPaths);
+        console.debug('New tree items', items);
+        console.debug('Updated paths', updatedPaths);
         console.debug('Processed blobs', processedBlobs);
 
         // Build updated tree and updated hashes
         const updatedTree = getTreeFromItems(items);
         calculateSubtrees(updatedTree);
         const updatedTreeRootSha = sha1Tree(updatedTree[''], 'sha1');
+        const updatedTreeRootAddr = await this.getTreeAddr(
+            repo.address,
+            updatedTreeRootSha
+        );
         !!callback && callback({ diffsPrepare: true, treePrepare: true });
-        console.debug('[Create commit] - Updated tree:', updatedTree);
+        console.debug('Updated tree', updatedTree);
 
         // Prepare commit
         const futureCommit = await this.prepareCommit(
@@ -462,66 +478,45 @@ export class GoshWallet implements IGoshWallet {
             message,
             parentBranch
         );
-        console.debug('Future commit:', futureCommit);
+        console.debug('Future commit', futureCommit);
 
-        // Deploy snapshots and update diffs
-        await Promise.all(
-            processedBlobs.map(async (blob) => {
-                const snapAddr = await this.deployNewSnapshot(
-                    repo.address,
-                    branch.name,
-                    '',
-                    blob.name,
-                    '',
-                    null
+        // Deploy trees, commit, tags in parallel
+        await Promise.all([
+            (async () => {
+                await Promise.all(
+                    updatedPaths.map(async (path) => {
+                        const subtree = updatedTree[path];
+                        const addr = await this.deployTree(repo, subtree);
+                        console.debug('Subtree addr', addr);
+                    })
                 );
-                console.debug('Snap addr:', snapAddr);
-
-                blob.diff.snap = snapAddr;
-                blob.diff.commit = futureCommit.name;
-            })
-        );
-        console.debug('Processed blobs', processedBlobs);
-
-        // Deploy tree blobs
-        const treeRootAddr = await this.deployTree(repo, updatedTree['']);
-        console.debug('Root tree addr:', treeRootAddr);
-        await Promise.all(
-            updatedPaths
-                .filter((path) => path !== '')
-                .map(async (path) => {
-                    const subtree = updatedTree[path];
-                    const addr = await this.deployTree(repo, subtree);
-                    console.debug('Subtree addr:', addr);
-                })
-        );
-        !!callback && callback({ treeDeploy: true });
-
-        // Deploy commit
-        await this.deployCommit(
-            repo,
-            branch,
-            futureCommit.name,
-            futureCommit.content,
-            futureCommit.parents,
-            treeRootAddr,
-            processedBlobs.map(({ diff }) => diff)
-        );
-        !!callback && callback({ commitDeploy: true });
-        console.debug('[Create commit] - Commit name:', futureCommit.name);
-
-        // Deploy tags
-        const tagsList = tags ? tags.split(' ') : [];
-        await Promise.all(
-            tagsList.map(async (tag) => {
-                console.debug('[Create commit] - Deploy tag:', tag);
-                await this.deployTag(repo, futureCommit.name, tag);
-            })
-        );
-        !!callback && callback({ tagsDeploy: true });
+                !!callback && callback({ treeDeploy: true });
+            })(),
+            (async () => {
+                await this.deployCommit(
+                    repo,
+                    branch,
+                    futureCommit.name,
+                    futureCommit.content,
+                    futureCommit.parents,
+                    updatedTreeRootAddr,
+                    processedBlobs.map(({ diff }) => diff)
+                );
+                !!callback && callback({ commitDeploy: true });
+            })(),
+            (async () => {
+                const tagsList = tags ? tags.split(' ') : [];
+                await Promise.all(
+                    tagsList.map(async (tag) => {
+                        await this.deployTag(repo, futureCommit.name, tag);
+                    })
+                );
+                !!callback && callback({ tagsDeploy: true });
+            })(),
+        ]);
 
         // Set tree
-        await this.setTree(repo.meta.name, futureCommit.name, treeRootAddr);
+        await this.setTree(repo.meta.name, futureCommit.name, updatedTreeRootAddr);
         !!callback && callback({ treeSet: true });
 
         // Set repo commit if not proposal or start new proposal
@@ -532,16 +527,13 @@ export class GoshWallet implements IGoshWallet {
                 futureCommit.name,
                 processedBlobs.length
             );
-            await new Promise<void>((resolve) => {
-                const interval = setInterval(async () => {
-                    const upd = await repo.getBranch(branch.name);
-                    console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
-                    if (upd.commitAddr !== branch.commitAddr) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 1500);
-            });
+
+            while (true) {
+                const upd = await repo.getBranch(branch.name);
+                console.debug('Branches (curr/upd)', branch, upd);
+                if (upd.commitAddr !== branch.commitAddr) break;
+                await sleep(5000);
+            }
         } else {
             await this.startProposalForSetCommit(
                 repo.meta.name,
@@ -614,18 +606,6 @@ export class GoshWallet implements IGoshWallet {
         const branch = await repo.getBranch(newName);
         if (branch.name === newName) return;
 
-        // Deploy new branch
-        console.debug('Deploy branch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-        await this.run('deployBranch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-
         // Get all snapshots from branch `from` and deploy to branch `to`
         const snapCode = await this.getSnapshotCode(fromName, repo.address);
         const snaps = await this.account.client.net.query_collection({
@@ -657,6 +637,18 @@ export class GoshWallet implements IGoshWallet {
         if (snaps.result.length !== treeSnaps.length) {
             throw new Error('Tree inconsistent');
         }
+
+        // Deploy new branch
+        console.debug('Deploy branch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
+        await this.run('deployBranch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
 
         // Deploy snapshots
         await Promise.all(
@@ -762,22 +754,22 @@ export class GoshWallet implements IGoshWallet {
 
         const repoName = repo.meta.name;
         console.debug('Commit addr', await repo.getCommitAddr(commitName));
-        console.debug('Commit diffs:', diffs);
 
         // Deploy diffs
         await Promise.all(
             diffs.map(async (diff, index) => {
-                console.debug('Deploy diff', {
-                    repoName,
-                    branchName: branch.name,
-                    commitName,
-                    diffs: [diff],
-                    index1: index,
-                    index2: 0,
-                    last: true,
-                });
+                diff.commit = commitName;
                 console.debug(
-                    'Diff addr',
+                    'Deploy diff',
+                    {
+                        repoName,
+                        branchName: branch.name,
+                        commitName,
+                        diffs: [diff],
+                        index1: index,
+                        index2: 0,
+                        last: true,
+                    },
                     await this.getDiffAddr(repoName, commitName, index, 0)
                 );
                 await this.run('deployDiff', {
@@ -865,6 +857,13 @@ export class GoshWallet implements IGoshWallet {
         content: string
     ): Promise<void> {
         const commitAddr = await repo.getCommitAddr(commitName);
+        console.debug('Deploy tag', {
+            repoName: repo.meta?.name,
+            nametag: `tag ${sha1(content, 'tag', 'sha1')}`,
+            nameCommit: commitName,
+            content,
+            commit: commitAddr,
+        });
         await this.run('deployTag', {
             repoName: repo.meta?.name,
             nametag: `tag ${sha1(content, 'tag', 'sha1')}`,
