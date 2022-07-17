@@ -71,28 +71,28 @@ contract Tree is Modifiers {
         require(_ready.exists(tvm.hash(branch)) == false, ERR_PROCCESS_IS_EXIST);
         _readyAddr[tvm.hash(branch)] = msg.sender;
         _ready[tvm.hash(branch)] = Compare(0, 0);
-        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0);
+        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0, "");
     }
     
-    function check(string branch, string commit, uint256 index) public senderIs(address(this)) {
+    function check(string branch, string commit, uint256 index, string path) public senderIs(address(this)) {
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
             _ready[tvm.hash(branch)].value0 += 1; 
             if (obj.mode == "040000") {
-                Tree(getTreeAddr(obj.sha1)).checkBranchTree(branch, commit, _shaTree); 
+                Tree(getTreeAddr(obj.sha1)).checkBranchTree(branch, commit, _shaTree, path + obj.name + "/"); 
             }
-            else { Snapshot(getSnapshotAddr(branch, obj.name)).isReady{value: 0.4 ton, flag: 1}(commit, _shaTree); }
-            this.check{value: 0.2 ton, flag: 1}(branch, commit, index + 1);
+            else { Snapshot(getSnapshotAddr(branch, path + obj.name)).isReady{value: 0.4 ton, flag: 1}(commit, _shaTree); }
+            this.check{value: 0.2 ton, flag: 1}(branch, commit, index + 1, path);
         }
         getMoney(_pubkey);
     }
     
-    function checkBranchTree(string branch, string commit, string sha) public senderIs(getTreeAddr(sha)) {
+    function checkBranchTree(string branch, string commit, string sha, string path) public senderIs(getTreeAddr(sha)) {
         _readyAddr[tvm.hash(branch)] = msg.sender;
         require(_ready.exists(tvm.hash(branch)) == false, ERR_PROCCESS_IS_EXIST);
-        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0);
+        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0, path);
     }
     
     function answerSnap(string branch, string name, string commit, bool res) public senderIs(getSnapshotAddr(branch, name)) {

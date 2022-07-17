@@ -36,7 +36,8 @@
 			"inputs": [
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"index","type":"uint256"}
+				{"name":"index","type":"uint256"},
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]
@@ -46,7 +47,8 @@
 			"inputs": [
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"sha","type":"string"}
+				{"name":"sha","type":"string"},
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]
