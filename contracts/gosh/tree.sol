@@ -223,6 +223,10 @@ contract Tree is Modifiers {
     
     //Getters
     
+    function getready() external view returns(mapping(uint256 => Compare)) {
+        return _ready;
+    }
+    
     function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
         return (_tree, _ipfs);
     }

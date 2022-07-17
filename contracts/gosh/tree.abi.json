@@ -111,6 +111,14 @@
 			]
 		},
 		{
+			"name": "getready",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"value0","type":"uint128"},{"name":"value1","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
+			]
+		},
+		{
 			"name": "gettree",
 			"inputs": [
 			],

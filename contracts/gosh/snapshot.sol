@@ -201,7 +201,7 @@ contract Snapshot is Modifiers {
         tvm.accept();
         bool res = false;
         if (commit == _oldcommits) { res = true; }
-        Tree(msg.sender).answerSnap(_branch, _name, commit, res);
+        Tree(msg.sender).answerSnap{value: 0.19 ton, flag: 1}(_branch, _name, commit, res);
     }
 
     //Private getters
