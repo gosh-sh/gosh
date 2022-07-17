@@ -70,6 +70,7 @@ contract Tree is Modifiers {
         tvm.accept();
         require(_ready.exists(tvm.hash(branch)) == false, ERR_PROCCESS_IS_EXIST);
         _readyAddr[tvm.hash(branch)] = msg.sender;
+        _ready[tvm.hash(branch)] = Compare(0, 0);
         this.check{value: 0.2 ton, flag: 1}(branch, commit, 0);
     }
     
