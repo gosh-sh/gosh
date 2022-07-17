@@ -66,6 +66,15 @@
 			]
 		},
 		{
+			"name": "isReady",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"name":"sha","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 				{"name":"value","type":"uint256"},

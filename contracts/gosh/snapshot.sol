@@ -89,7 +89,6 @@ contract Snapshot is Modifiers {
         else {
             Commit(_buildCommitAddr(_oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
-            //TODO CHECK
         }
     }
 
@@ -196,6 +195,13 @@ contract Snapshot is Modifiers {
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
+    }
+    
+    function isReady(string commit,string sha) public view senderIs(getTreeAddr(sha)) {
+        tvm.accept();
+        bool res = false;
+        if (commit == _oldcommits) { res = true; }
+        Tree(msg.sender).answerSnap(_branch, _name, commit, res);
     }
 
     //Private getters

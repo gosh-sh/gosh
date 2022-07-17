@@ -36,8 +36,6 @@ contract Commit is Modifiers {
     address _tree;
     string _branchName;
     address _branchCommit;
-    uint128 _count;
-    bool _countready = false;
     mapping(address => int128) _check;
     bool _diffcheck = false;
     bool _commitcheck = false;
@@ -103,6 +101,16 @@ contract Commit is Modifiers {
             varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
+    }
+    
+    function checkBranch(string branch) public view senderIs(_rootRepo) {
+        tvm.accept();
+        Tree(_tree).checkBranch{value : 0.21 ton, flag: 1}(branch, _nameCommit);
+    }
+    
+    function branchAccept(string branch) public view senderIs(_tree) {
+        tvm.accept();
+        Repository(_rootRepo).completeBranch{value : 0.6 ton, flag: 1}(branch, _nameCommit);
     }
     
     function getTreeSha(string commit, uint128 index1, uint128 index2) public view senderIs(getDiffAddress(commit, index1, index2)) {
@@ -308,11 +316,6 @@ contract Commit is Modifiers {
         return stateInit;
     }
     
-    function gotCount(uint128 count) public senderIs(_tree) {
-        _count = count;
-        _countready = true;
-        getMoney(_pubkey);
-    }
     
     function checkFallbackDiff (uint128 index, address sender) public senderIs(address(this)){
         tvm.accept();
@@ -411,10 +414,6 @@ contract Commit is Modifiers {
         string content
     ) {
         return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit);
-    }
-     
-    function getCount() external view returns(uint128, bool) {
-        return (_count, _countready);
     }
 
     function getVersion() external pure returns(string) {

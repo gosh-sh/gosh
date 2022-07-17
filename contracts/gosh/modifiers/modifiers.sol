@@ -43,6 +43,11 @@ struct Item {
     address value;
 }
 
+struct Compare {
+    uint128 value0;
+    uint128 value1;
+}
+
 struct GlobalConfig {
         address goshAddr;
 }

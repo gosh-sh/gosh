@@ -16,58 +16,59 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeCommit","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "countAll",
+			"name": "checkBranch",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"index","type":"uint128"}
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "count",
+			"name": "check",
 			"inputs": [
-				{"name":"index","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "gotCount",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"res","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendRequests",
-			"inputs": [
-				{"name":"index","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getCountCommit",
-			"inputs": [
+				{"name":"branch","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"repo","type":"address"}
+				{"name":"index","type":"uint256"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "getCountTree",
+			"name": "checkBranchTree",
 			"inputs": [
-				{"name":"name","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"sha","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "answerSnap",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "answerTree",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"sha","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"res","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -110,14 +111,6 @@
 			]
 		},
 		{
-			"name": "getCount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
-			]
-		},
-		{
 			"name": "gettree",
 			"inputs": [
 			],
@@ -156,6 +149,8 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"_shaTreeLocal","type":"uint256"},
 		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"components":[{"name":"value0","type":"uint128"},{"name":"value1","type":"uint128"}],"name":"_ready","type":"map(uint256,tuple)"},
+		{"name":"_readyAddr","type":"map(uint256,address)"},
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
 		{"name":"_ipfs","type":"optional(string)"},
@@ -166,10 +161,7 @@
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeCommit","type":"cell"},
-		{"name":"_countFiles","type":"uint128"},
-		{"name":"_needAnswer","type":"uint128"},
-		{"name":"_count","type":"bool"},
-		{"name":"_countend","type":"bool"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"}
 	]
 }

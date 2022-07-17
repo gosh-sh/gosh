@@ -32,6 +32,15 @@
 			]
 		},
 		{
+			"name": "completeBranch",
+			"inputs": [
+				{"name":"newname","type":"string"},
+				{"name":"fromcommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deleteBranch",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},

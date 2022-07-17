@@ -22,6 +22,8 @@ contract Tree is Modifiers {
     
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
+    mapping(uint256 => Compare) _ready;
+    mapping(uint256 => address) _readyAddr;
     string static _shaTree;
     address static _repo;
     optional(string) _ipfs;
@@ -32,10 +34,7 @@ contract Tree is Modifiers {
     TvmCell m_codeDiff;
     TvmCell m_codeTree;
     TvmCell m_codeCommit;
-    uint128 _countFiles = 0;
-    uint128 _needAnswer = 0;
-    bool _count = false;
-    bool _countend = false;
+    TvmCell m_SnapshotCode;
     TreeAnswer[] request;
     
     constructor(
@@ -49,6 +48,7 @@ contract Tree is Modifiers {
         TvmCell codeDiff,
         TvmCell codeTree,
         TvmCell codeCommit,
+        TvmCell SnapshotCode,
         uint128 index) public {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
@@ -61,66 +61,58 @@ contract Tree is Modifiers {
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
+        m_SnapshotCode = SnapshotCode;
         _tree = data;
         getMoney(_pubkey);
     }    
     
-    function countAll(uint256 pubkey, uint128 index) public {
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
-        require(_count == false, ERR_PROCCESS_IS_EXIST);
-        _count = true;
-        getMoney(_pubkey);
-        this.count{value: 0.2 ton, flag: 1}(0);
+    function checkBranch(string branch, string commit) public senderIs(getCommitAddr(commit)) {
+        tvm.accept();
+        require(_ready.exists(tvm.hash(branch)) == false, ERR_PROCCESS_IS_EXIST);
+        _readyAddr[tvm.hash(branch)] = msg.sender;
+        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0);
     }
     
-    function count(uint256 index) public senderIs(address(this)) {
+    function check(string branch, string commit, uint256 index) public senderIs(address(this)) {
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
-            if (obj.mode == "040000") { _needAnswer += 1; Tree(getTreeAddr(obj.sha1)).getCountTree(_shaTree); }
-            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
-            this.count{value: 0.2 ton, flag: 1}(index + 1);
+            _ready[tvm.hash(branch)].value0 += 1; 
+            if (obj.mode == "040000") {
+                Tree(getTreeAddr(obj.sha1)).checkBranchTree(branch, commit, _shaTree); 
+            }
+            else { Snapshot(getSnapshotAddr(branch, obj.name)).isReady{value: 0.4 ton, flag: 1}(commit, _shaTree); }
+            this.check{value: 0.2 ton, flag: 1}(branch, commit, index + 1);
         }
         getMoney(_pubkey);
     }
     
-    function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
+    function checkBranchTree(string branch, string commit, string sha) public senderIs(getTreeAddr(sha)) {
+        _readyAddr[tvm.hash(branch)] = msg.sender;
+        require(_ready.exists(tvm.hash(branch)) == false, ERR_PROCCESS_IS_EXIST);
+        this.check{value: 0.2 ton, flag: 1}(branch, commit, 0);
+    }
+    
+    function answerSnap(string branch, string name, string commit, bool res) public senderIs(getSnapshotAddr(branch, name)) {
         tvm.accept();
-        require(_countend == true, ERR_PROCCESS_END);
-        require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
-        _countFiles += res;
-        _needAnswer -= 1;
-        if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
-        getMoney(_pubkey);
+        if (res == true) { _ready[tvm.hash(branch)].value1 += 1; } 
+        if (_ready[tvm.hash(branch)].value0 == _ready[tvm.hash(branch)].value1) { 
+            if (getCommitAddr(commit) == _readyAddr[tvm.hash(branch)]) { Commit(getCommitAddr(commit)).branchAccept{value: 0.2 ton, flag:1}(branch); }
+            else { Tree(_readyAddr[tvm.hash(branch)]).answerTree{value: 0.2 ton, flag:1}(branch, _shaTree, commit, true); }
+        }
     }
     
-    function sendRequests(uint256 index) public senderIs(address(this)) {
-        require(index < request.length, NOT_ERR);
-        if (request[index].isCommit == true) { Commit(msg.sender).gotCount(_countFiles); }
-        else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
-        if (index == request.length - 1) { delete request; return; }
-        this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
-        getMoney(_pubkey);
-    }
-    
-    function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
+    function answerTree(string branch, string sha, string commit, bool res) public senderIs(getTreeAddr(sha)) {
         tvm.accept();
-        if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
-        request.push(TreeAnswer(msg.sender, true));
-        getMoney(_pubkey);
-        return;
+        if (res == true) { _ready[tvm.hash(branch)].value1 += 1; } 
+        if (_ready[tvm.hash(branch)].value0 == _ready[tvm.hash(branch)].value1) { 
+            if (getCommitAddr(commit) == _readyAddr[tvm.hash(branch)]) { Commit(getCommitAddr(commit)).branchAccept{value: 0.2 ton, flag:1}(branch); }
+            else { Tree(_readyAddr[tvm.hash(branch)]).answerTree{value: 0.2 ton, flag:1}(branch, _shaTree, commit, true); }
+        }
     }
     
-    function getCountTree(string name) public senderIs(getTreeAddr(name)) {
-        tvm.accept();
-        if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
-        request.push(TreeAnswer(msg.sender, false));
-        getMoney(_pubkey);
-        return;
-    }
-    
-    function getMoney(uint256 pubkey) private view{
+    function getMoney(uint256 pubkey) private view {
         TvmCell s1 = _composeWalletStateInit(pubkey, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         if (address(this).balance > 80 ton) { return; }
@@ -134,7 +126,7 @@ contract Tree is Modifiers {
         getMoney(_pubkey);
     }    
     
-    function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
+    function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit)) {
         tvm.accept();
         getShaInfo(value0);
         getMoney(_pubkey);
@@ -172,9 +164,15 @@ contract Tree is Modifiers {
             return;
         }
     }
+    
+    function getSnapshotAddr(string branch, string name) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _repo, branch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
      
-    function getCommitAddr(string commit, address repo) internal view returns(address) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_codeCommit, repo, version);
+    function getCommitAddr(string commit) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildCommitCode(m_codeCommit, _repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: commit}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
@@ -220,10 +218,6 @@ contract Tree is Modifiers {
     }
     
     //Getters
-         
-    function getCount() external view returns(uint128) {
-        return _countFiles;
-    }
     
     function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
         return (_tree, _ipfs);
