@@ -98,8 +98,10 @@ contract Tree is Modifiers {
         tvm.accept();
         if (res == true) { _ready[tvm.hash(branch)].value1 += 1; } 
         if (_ready[tvm.hash(branch)].value0 == _ready[tvm.hash(branch)].value1) { 
-            if (getCommitAddr(commit) == _readyAddr[tvm.hash(branch)]) { Commit(getCommitAddr(commit)).branchAccept{value: 0.2 ton, flag:1}(branch); }
+            if (getCommitAddr(commit) == _readyAddr[tvm.hash(branch)]) { Commit(getCommitAddr(commit)).branchAccept{value: 0.2 ton, flag:1}(branch);  }
             else { Tree(_readyAddr[tvm.hash(branch)]).answerTree{value: 0.2 ton, flag:1}(branch, _shaTree, commit, true); }
+            delete _readyAddr[tvm.hash(branch)];
+            delete _ready[tvm.hash(branch)];
         }
     }
     
@@ -109,6 +111,8 @@ contract Tree is Modifiers {
         if (_ready[tvm.hash(branch)].value0 == _ready[tvm.hash(branch)].value1) { 
             if (getCommitAddr(commit) == _readyAddr[tvm.hash(branch)]) { Commit(getCommitAddr(commit)).branchAccept{value: 0.2 ton, flag:1}(branch); }
             else { Tree(_readyAddr[tvm.hash(branch)]).answerTree{value: 0.2 ton, flag:1}(branch, _shaTree, commit, true); }
+            delete _readyAddr[tvm.hash(branch)];
+            delete _ready[tvm.hash(branch)];
         }
     }
     
