@@ -67,7 +67,7 @@ contract Repository is Modifiers{
             _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
             return;
         }
-        Commit(getCommitAddr(fromcommit)).checkBranch(newname);
+        Commit(getCommitAddr(fromcommit)).checkBranch{value: 0.17 ton, flag:1 }(newname);
     }
     
     function completeBranch(string newname, string fromcommit)  public minValue(0.5 ton) {
