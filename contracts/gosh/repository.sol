@@ -59,10 +59,14 @@ contract Repository is Modifiers{
     }
 
     //Branch part  
-    function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
+    function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
+        if (fromcommit == "0000000000000000000000000000000000000000") {
+            _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
+            return;
+        }
         Commit(getCommitAddr(fromcommit)).checkBranch(newname);
     }
     
