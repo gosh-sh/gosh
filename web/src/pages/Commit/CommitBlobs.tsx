@@ -8,6 +8,7 @@ import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { GoshCommit, GoshSnapshot } from '../../types/classes';
 import GoshSnapshotAbi from '../../contracts/snapshot.abi.json';
 import * as Diff from 'diff';
+import { sleep } from '../../utils';
 
 type TCommitBlobsType = {
     className?: string;
@@ -104,7 +105,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     retry &&
                     ['constructor', 'approve', 'cancelDiff'].indexOf(decoded.name) < 0
                 ) {
-                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    await sleep(5000);
                     return await getMessages(addr, commit);
                 } else retry = false;
 
