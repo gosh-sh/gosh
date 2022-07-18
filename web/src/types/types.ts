@@ -254,6 +254,8 @@ export interface IGoshWallet extends IContract {
         index2: number
     ): Promise<string>;
     setHead(repoName: string, branch: string): Promise<void>;
+    addProtectedBranch(repoName: string, branchName: string): Promise<void>;
+    deleteProtectedBranch(repoName: string, branchName: string): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {

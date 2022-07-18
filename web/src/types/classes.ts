@@ -1131,6 +1131,14 @@ export class GoshWallet implements IGoshWallet {
         prepared = await zstd.compress(this.account.client, prepared);
         return { sha: contentSha, prepared };
     }
+
+    async addProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        await this.run('addProtectedBranch', { repo: repoName, branch: branchName });
+    }
+
+    async deleteProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        await this.run('deleteProtectedBranch', { repo: repoName, branch: branchName });
+    }
 }
 
 export class GoshRepository implements IGoshRepository {
