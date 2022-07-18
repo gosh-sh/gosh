@@ -177,7 +177,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function isProtected(uint256 pubkey, string reponame, string branch, string commit, uint128 number) public view senderIs(getAddrWalletIn(pubkey, 0)) {
         tvm.accept();
-        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == true) { 
+        if (_protectedBranch.exists(tvm.hash(reponame + "//" + branch)) == false) { 
+            GoshWallet(msg.sender).isProtectedBranch{value: 0.23 ton, flag: 1}(reponame, branch, commit, number); 
+        }
+        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == false) { 
             GoshWallet(msg.sender).isProtectedBranch{value: 0.23 ton, flag: 1}(reponame, branch, commit, number); 
         }
     }
