@@ -18,6 +18,7 @@ import "tag.sol";
 import "daocreator.sol";
 import "tree.sol";
 import "goshwallet.sol";
+import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
 import "../smv/Libraries/SMVConstants.sol";
@@ -329,13 +330,11 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles
     ) public onlyOwner {
-//        require(!isProposalNeeded (repoName, branchName, commit, numberChangedFiles), SMVErrors.error_proposol_is_needed);
+        isProposalNeeded(repoName, branchName, commit, numberChangedFiles);
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
         tvm.accept();
         _saveMsg();
-
-        _setCommit(repoName, branchName, commit, numberChangedFiles);
         getMoney();
     }
     
@@ -463,24 +462,46 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         return stateInit;
     }
     
-    //SMV part    
+
     function isProposalNeeded(
         string repoName,
         string branchName,
         string commit,
         uint128 numberChangedFiles
-    ) internal pure returns(bool) {
-       repoName; commit; numberChangedFiles;
-       return ((branchName == "main") || (branchName == "master"));
+    ) internal view  {
+       GoshDao(_goshdao).isProtected{value:0.31 ton, flag: 1}(tvm.pubkey(), repoName, branchName, commit, numberChangedFiles);
     }
     
+    function isProtectedBranch(
+        string repoName,
+        string branchName,
+        string commit,
+        uint128 numberChangedFiles
+    ) public view senderIs(_goshdao) {
+        _setCommit(repoName, branchName, commit, numberChangedFiles);
+    }
+    
+    function addProtectedBranch(
+        string repo,
+        string branch
+    ) public view onlyOwner accept saveMsg {
+        GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
+    }
+    
+    function deleteProtectedBranch(
+        string repo,
+        string branch
+    ) public view onlyOwner accept saveMsg {
+        GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
+    }
+    
+    //SMV part       
     function startProposalForSetCommit(
         string repoName,
         string branchName,
         string commit,
         uint128 numberChangedFiles
     ) public onlyOwner {
-        require(isProposalNeeded(repoName, branchName, commit, numberChangedFiles), SMVErrors.error_proposol_is_not_needed);
         tvm.accept();
         _saveMsg();
 
