@@ -24,7 +24,7 @@ import { shortString } from '../../utils';
 
 const RepoPage = () => {
     const pathName = useParams()['*'] || '';
-    const { daoName, repoName, branchName } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
     const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { branches, branch, updateBranch } = useGoshRepoBranches(goshRepo, branchName);
