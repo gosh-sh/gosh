@@ -1,4 +1,4 @@
-import { NetworkQueriesProtocol, TonClient } from '@eversdk/core';
+import { builderOpBitString, NetworkQueriesProtocol, TonClient } from '@eversdk/core';
 import { toast } from 'react-toastify';
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
@@ -161,18 +161,30 @@ export const sha1Tree = (items: TGoshTreeItem[], mode: 'sha1' | 'sha256') => {
     return sha1(buffer, 'tree', mode);
 };
 
-export const getTreeItemsFromPath = (
-    filePath: string,
-    fileContent: string | Buffer,
-    flags: number
-): TGoshTreeItem[] => {
+export const getTreeItemsFromPath = async (
+    fullpath: string,
+    content: string | Buffer,
+    flags: number,
+    ipfs: string | null
+): Promise<TGoshTreeItem[]> => {
     const items: TGoshTreeItem[] = [];
 
     // Get blob sha, path and name and push it to items
-    let [path, name] = splitByPath(filePath);
-    const sha = sha1(fileContent, 'blob', 'sha1');
-    const sha256 = sha1(fileContent, 'blob', 'sha256');
-    items.push({ flags, mode: '100644', type: 'blob', sha1: sha, sha256, path, name });
+    let [path, name] = splitByPath(fullpath);
+    const sha = sha1(content, 'blob', 'sha1');
+
+    // const sha256 = sha1(fileContent, 'blob', 'sha256');
+    const sha256 = await tvmHash(ipfs || (content as string));
+
+    items.push({
+        flags,
+        mode: '100644',
+        type: 'blob',
+        sha1: sha,
+        sha256: `0x${sha256}`,
+        path,
+        name,
+    });
 
     // Parse blob path and push subtrees to items
     while (path !== '') {
@@ -294,7 +306,8 @@ export const calculateSubtrees = (tree: TGoshTree) => {
             );
             if (found) {
                 found.sha1 = sha1Tree(tree[key], 'sha1');
-                found.sha256 = sha1Tree(tree[key], 'sha256');
+                // found.sha256 = sha1Tree(tree[key], 'sha256');
+                found.sha256 = `0x${sha1Tree(tree[key], 'sha256')}`;
             }
         });
 };
@@ -471,6 +484,14 @@ export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
     if (!response.ok)
         throw new Error(`Error while uploading (${JSON.stringify(response)})`);
     return Buffer.from(await response.arrayBuffer());
+};
+
+export const tvmHash = async (data: string): Promise<string> => {
+    const boc = await goshClient.boc.encode_boc({
+        builder: [builderOpBitString(Buffer.from(data).toString('hex'))],
+    });
+    const hash = await goshClient.boc.get_boc_hash({ boc: boc.boc });
+    return hash.hash;
 };
 
 /**

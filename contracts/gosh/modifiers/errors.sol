@@ -41,4 +41,5 @@ abstract contract Errors {
     uint constant ERR_NO_NEED_ANSWER = 230;
     uint constant ERR_WRONG_DATA = 231;
     uint constant ERR_NOT_EMPTY_DATA = 232;
+    uint constant ERR_SNAPSHOT_NOT_READY = 233;
 }

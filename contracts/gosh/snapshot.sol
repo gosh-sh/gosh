@@ -34,10 +34,12 @@ contract Snapshot is Modifiers {
     TvmCell m_CommitCode;
     TvmCell m_codeDiff;
     TvmCell m_WalletCode;
+    TvmCell m_codeTree;
     string static NameOfFile;
     bool _applying = false;
     string _name; 
     string _branch;
+    bool _ready = false;
 
     constructor(
         uint256 pubkeysender,
@@ -49,6 +51,7 @@ contract Snapshot is Modifiers {
         TvmCell codeCommit,
         TvmCell codeDiff,
         TvmCell WalletCode,
+        TvmCell codeTree,
         string branch,
         string name,
         uint128 index,
@@ -77,13 +80,15 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _baseCommit = commit;
+        m_codeTree = codeTree;
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
+            _ready = true;
         }
         else {
             Commit(_buildCommitAddr(_oldcommits))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
             //TODO CHECK
         }
     }
@@ -98,6 +103,19 @@ contract Snapshot is Modifiers {
             varInit: {_nameCommit: commit}
         });
         return address(tvm.hash(state));
+    }
+    
+    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
+        if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
+        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); return; }
+        _ready = true;
+    }
+    
+    function getTreeAddr(string shaTree) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
+        //return tvm.insertPubkey(stateInit, pubkey);
+        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -119,6 +137,7 @@ contract Snapshot is Modifiers {
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
+        require(_ready == true, ERR_SNAPSHOT_NOT_READY);
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
         uint256 empty;
@@ -200,6 +219,15 @@ contract Snapshot is Modifiers {
         });
         return address(tvm.hash(state));
     }
+    
+    onBounce(TvmSlice body) external {
+        body;
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+    }
+    
+    fallback() external {
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+    }
 
     //Selfdestruct
     function destroy(uint256 value, uint128 index) public {
@@ -209,9 +237,9 @@ contract Snapshot is Modifiers {
 
     //Getters
     function getSnapshot() external view
-        returns(string, bytes, optional(string), string, bytes, optional(string), string)
+        returns(string, bytes, optional(string), string, bytes, optional(string), string, bool)
     {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit);
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
 
     function getName() external view returns(string) {

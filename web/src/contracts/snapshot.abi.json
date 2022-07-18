@@ -15,12 +15,23 @@
 				{"name":"codeCommit","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
+				{"name":"codeTree","type":"cell"},
 				{"name":"branch","type":"string"},
 				{"name":"name","type":"string"},
 				{"name":"index","type":"uint128"},
 				{"name":"data","type":"bytes"},
 				{"name":"ipfsdata","type":"optional(string)"},
 				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "TreeAnswer",
+			"inputs": [
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value1","type":"optional(tuple)"},
+				{"name":"sha","type":"string"}
 			],
 			"outputs": [
 			]
@@ -74,7 +85,8 @@
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"bytes"},
 				{"name":"value5","type":"optional(string)"},
-				{"name":"value6","type":"string"}
+				{"name":"value6","type":"string"},
+				{"name":"value7","type":"bool"}
 			]
 		},
 		{
@@ -136,9 +148,11 @@
 		{"name":"m_CommitCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
+		{"name":"m_codeTree","type":"cell"},
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
-		{"name":"_branch","type":"string"}
+		{"name":"_branch","type":"string"},
+		{"name":"_ready","type":"bool"}
 	]
 }

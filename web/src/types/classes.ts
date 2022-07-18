@@ -32,6 +32,7 @@ import {
     MAX_ONCHAIN_FILE_SIZE,
     goshDaoCreator,
     getPaginatedAccounts,
+    tvmHash,
 } from '../helpers';
 import {
     IGoshTree,
@@ -60,7 +61,6 @@ import {
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
-import { SHA256 } from 'crypto-js';
 import { sleep } from '../utils';
 
 export class GoshDaoCreator implements IGoshDaoCreator {
@@ -435,10 +435,11 @@ export class GoshWallet implements IGoshWallet {
                 });
 
                 // Update tree
-                const blobPathItems = getTreeItemsFromPath(
+                const blobPathItems = await getTreeItemsFromPath(
                     blob.name,
                     blob.modified,
-                    flags
+                    flags,
+                    ipfs
                 );
                 blobPathItems.forEach((pathItem) => {
                     const pathIndex = updatedPaths.findIndex(
@@ -816,6 +817,7 @@ export class GoshWallet implements IGoshWallet {
 
         // Check if not deployed
         const addr = await this.getTreeAddr(repo.address, sha);
+        console.debug('Tree addr', addr);
         const blob = new GoshTree(this.account.client, addr);
         const blobAcc = await blob.account.getAccount();
         if (blobAcc.acc_type === AccountType.active) {
@@ -825,7 +827,7 @@ export class GoshWallet implements IGoshWallet {
         // Deploy tree and get address
         const datatree: any = {};
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = SHA256(`${type}:${name}`).toString();
+            const key = await tvmHash(`${type}:${name}`);
             datatree[`0x${key}`] = {
                 flags: flags.toString(),
                 mode,

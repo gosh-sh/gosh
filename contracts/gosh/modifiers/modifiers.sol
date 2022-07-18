@@ -18,7 +18,7 @@ struct Request {
     address answer;
     string fullPath;
     string lastPath;
-    string sha;
+    uint256 sha;
 }
 
 struct TreeObject {
@@ -27,7 +27,7 @@ struct TreeObject {
     string typeObj;
     string name;
     string sha1;
-    string sha256;
+    uint256 sha256;
 }
 
 struct Diff {
