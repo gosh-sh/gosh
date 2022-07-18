@@ -172,7 +172,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function _deleteProtectedBranch(string reponame, string branch) private {
-        _protectedBranch[tvm.hash(reponame + "//" + branch)] = true;
+        delete _protectedBranch[tvm.hash(reponame + "//" + branch)];
     }
     
     function isProtected(uint256 pubkey, string reponame, string branch, string commit, uint128 number) public view senderIs(getAddrWalletIn(pubkey, 0)) {
