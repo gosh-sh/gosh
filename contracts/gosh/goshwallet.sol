@@ -330,6 +330,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles
     ) public onlyOwner {
+        tvm.accept();
         isProposalNeeded(repoName, branchName, commit, numberChangedFiles);
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
@@ -478,6 +479,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles
     ) public view senderIs(_goshdao) {
+        tvm.accept();
         _setCommit(repoName, branchName, commit, numberChangedFiles);
     }
     
@@ -485,6 +487,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repo,
         string branch
     ) public view onlyOwner accept saveMsg {
+        tvm.accept();
         GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
     }
     
@@ -492,6 +495,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repo,
         string branch
     ) public view onlyOwner accept saveMsg {
+        tvm.accept();
         GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
     }
     
