@@ -117,8 +117,10 @@ export const fromEvers = (value: number): number => {
     return value * 10 ** 9;
 };
 
-export const isMainBranch = (branch: string = 'main'): boolean =>
-    ['master', 'main'].indexOf(branch) >= 0;
+export const isMainBranch = (branch: string = 'main'): boolean => {
+    return false;
+    // return ['master', 'main'].indexOf(branch) >= 0;
+};
 
 export const sha1 = (
     data: string | Buffer,
