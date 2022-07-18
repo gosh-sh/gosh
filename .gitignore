@@ -12,3 +12,7 @@ Cargo.lock
 .DS_Store
 .vscode
 *.tvc
+
+*.seed
+*.keys.json
+*.addr
