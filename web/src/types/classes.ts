@@ -1133,10 +1133,12 @@ export class GoshWallet implements IGoshWallet {
     }
 
     async addProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        console.debug('Add protected branch', { repo: repoName, branch: branchName });
         await this.run('addProtectedBranch', { repo: repoName, branch: branchName });
     }
 
     async deleteProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        console.debug('Delete protected branch', { repo: repoName, branch: branchName });
         await this.run('deleteProtectedBranch', { repo: repoName, branch: branchName });
     }
 }
