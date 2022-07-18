@@ -639,18 +639,6 @@ export class GoshWallet implements IGoshWallet {
             throw new Error('Tree inconsistent');
         }
 
-        // Deploy new branch
-        console.debug('Deploy branch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-        await this.run('deployBranch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-
         // Deploy snapshots
         await Promise.all(
             treeSnaps.map(async (item) => {
@@ -680,6 +668,18 @@ export class GoshWallet implements IGoshWallet {
                 );
             })
         );
+
+        // Deploy new branch
+        console.debug('Deploy branch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
+        await this.run('deployBranch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
 
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
