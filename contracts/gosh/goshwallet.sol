@@ -329,7 +329,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles
     ) public onlyOwner {
-        require(!isProposalNeeded (repoName, branchName, commit, numberChangedFiles), SMVErrors.error_proposol_is_needed);
+//        require(!isProposalNeeded (repoName, branchName, commit, numberChangedFiles), SMVErrors.error_proposol_is_needed);
         counter += 1;
         if (counter == _limit_messages) { checkDeployWallets(); }
         tvm.accept();
