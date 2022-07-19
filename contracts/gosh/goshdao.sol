@@ -192,6 +192,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     //Getters
     
+    function isBranchProtected(string reponame, string branch) external view returns(bool) {
+        if (_protectedBranch.exists(tvm.hash(reponame + "//" + branch)) == false) { 
+            return false; 
+        }
+        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == false) { 
+            return false;
+        }
+        return true;
+    }
+    
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
         return _protectedBranch;
     }
