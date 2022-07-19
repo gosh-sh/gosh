@@ -94,7 +94,7 @@ contract DaoCreator is Modifiers, Upgradable{
         m_WalletCode = code;
     }
     
-    function setcodeDao(TvmCell code) public  onlyOwner {
+    function setDaoCode(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeDao = code;
     }
