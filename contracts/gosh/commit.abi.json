@@ -26,6 +26,22 @@
 			]
 		},
 		{
+			"name": "checkBranch",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "branchAccept",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getTreeSha",
 			"inputs": [
 				{"name":"commit","type":"string"},
@@ -204,14 +220,6 @@
 			]
 		},
 		{
-			"name": "gotCount",
-			"inputs": [
-				{"name":"count","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "checkFallbackDiff",
 			"inputs": [
 				{"name":"index","type":"uint128"},
@@ -301,15 +309,6 @@
 			]
 		},
 		{
-			"name": "getCount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"},
-				{"name":"value1","type":"bool"}
-			]
-		},
-		{
 			"name": "getVersion",
 			"inputs": [
 			],
@@ -344,8 +343,6 @@
 		{"name":"_tree","type":"address"},
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchCommit","type":"address"},
-		{"name":"_count","type":"uint128"},
-		{"name":"_countready","type":"bool"},
 		{"name":"_check","type":"map(address,int128)"},
 		{"name":"_diffcheck","type":"bool"},
 		{"name":"_commitcheck","type":"bool"},

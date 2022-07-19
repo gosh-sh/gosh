@@ -63,6 +63,17 @@ contract Repository is Modifiers{
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
+        if (fromcommit == "0000000000000000000000000000000000000000") {
+            _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
+            return;
+        }
+        Commit(getCommitAddr(fromcommit)).checkBranch{value: 0.17 ton, flag:1 }(newname);
+    }
+    
+    function completeBranch(string newname, string fromcommit)  public minValue(0.5 ton) {
+        require(msg.sender == getCommitAddr(fromcommit), ERR_SENDER_NO_ALLOWED);
+        require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
+        tvm.accept();
         _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
     }
     
