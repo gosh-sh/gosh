@@ -639,18 +639,6 @@ export class GoshWallet implements IGoshWallet {
             throw new Error('Tree inconsistent');
         }
 
-        // Deploy new branch
-        console.debug('Deploy branch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-        await this.run('deployBranch', {
-            repoName: repo.meta.name,
-            newName,
-            fromCommit,
-        });
-
         // Deploy snapshots
         await Promise.all(
             treeSnaps.map(async (item) => {
@@ -680,6 +668,18 @@ export class GoshWallet implements IGoshWallet {
                 );
             })
         );
+
+        // Deploy new branch
+        console.debug('Deploy branch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
+        await this.run('deployBranch', {
+            repoName: repo.meta.name,
+            newName,
+            fromCommit,
+        });
 
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
@@ -1130,6 +1130,16 @@ export class GoshWallet implements IGoshWallet {
         let prepared = Buffer.isBuffer(content) ? content.toString('base64') : content;
         prepared = await zstd.compress(this.account.client, prepared);
         return { sha: contentSha, prepared };
+    }
+
+    async addProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        console.debug('Add protected branch', { repo: repoName, branch: branchName });
+        await this.run('addProtectedBranch', { repo: repoName, branch: branchName });
+    }
+
+    async deleteProtectedBranch(repoName: string, branchName: string): Promise<void> {
+        console.debug('Delete protected branch', { repo: repoName, branch: branchName });
+        await this.run('deleteProtectedBranch', { repo: repoName, branch: branchName });
     }
 }
 

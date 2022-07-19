@@ -6,9 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"goshaddr","type":"address"},
-				{"name":"WalletCode","type":"cell"},
-				{"name":"codeDao","type":"cell"}
+				{"name":"goshaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -39,6 +37,22 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setWalletCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setcodeDao",
+			"inputs": [
+				{"name":"code","type":"cell"}
 			],
 			"outputs": [
 			]
