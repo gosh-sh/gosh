@@ -51,7 +51,7 @@ abstract contract Modifiers is Errors {
     string constant versionModifiers = "0.5.1";
     
     //Deploy constants
-    uint128 constant FEE_DEPLOY_DAO = 200 ton;
+    uint128 constant FEE_DEPLOY_DAO = 11000 ton;
     uint128 constant FEE_DEPLOY_REPO = 15 ton;
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
