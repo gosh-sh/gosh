@@ -43,7 +43,7 @@ const DaoRepositoriesPage = () => {
         setRepos((state) => ({
             ...state,
             items: state.items.map((item) => {
-                if (item.address === repo.address) return { ...item, isBusy: true };
+                if (item.address === address) return { ...item, isBusy: true };
                 return item;
             }),
         }));
@@ -54,7 +54,7 @@ const DaoRepositoriesPage = () => {
         setRepos((state) => ({
             ...state,
             items: state.items.map((item) => {
-                if (item.address === repo.address) return details;
+                if (item.address === address) return details;
                 return item;
             }),
         }));

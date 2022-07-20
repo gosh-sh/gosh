@@ -58,6 +58,8 @@ import {
     TGoshDaoDetails,
     TGoshTagDetails,
     TGoshRepoDetails,
+    TGoshEventDetails,
+    TGoshCommitDetails,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -521,6 +523,12 @@ export class GoshWallet implements IGoshWallet {
         !!callback && callback({ treeSet: true });
 
         // Set repo commit if not proposal or start new proposal
+        // await this.startProposalForSetCommit(
+        //     repo.meta.name,
+        //     branch.name,
+        //     futureCommit.name,
+        //     processedBlobs.length
+        // );
         if (!isMainBranch(branch.name)) {
             await this.setCommit(
                 repo.meta.name,
@@ -1292,6 +1300,23 @@ export class GoshCommit implements IGoshCommit {
         };
     }
 
+    async getDetails(): Promise<TGoshCommitDetails> {
+        const meta = await this.getCommit();
+        const commitData = {
+            address: this.address,
+            repoAddress: meta.repo,
+            branch: meta.branch,
+            name: meta.sha,
+            content: meta.content,
+            parents: meta.parents,
+        };
+
+        return {
+            ...commitData,
+            content: GoshCommit.parseContent(commitData.content),
+        };
+    }
+
     async getCommit(): Promise<any> {
         const result = await this.account.runLocal('getCommit', {});
         return result.decoded?.output;
@@ -1317,8 +1342,8 @@ export class GoshCommit implements IGoshCommit {
         return result.decoded?.output.value0;
     }
 
-    async getNextAddr(): Promise<string> {
-        const result = await this.account.runLocal('getNextAdress', {});
+    async getDiffAddr(index1: number, index2: number): Promise<string> {
+        const result = await this.account.runLocal('getDiffAdress', { index1, index2 });
         return result.decoded?.output.value0;
     }
 
@@ -1357,6 +1382,11 @@ export class GoshDiff implements IGoshDiff {
         const result = await this.account.runLocal('getNextAdress', {});
         return result.decoded?.output.value0;
     }
+
+    async getDiffs(): Promise<TGoshDiff[]> {
+        const result = await this.account.runLocal('getdiffs', {});
+        return result.decoded?.output.value0;
+    }
 }
 
 export class GoshSnapshot implements IGoshSnapshot {
@@ -1391,6 +1421,8 @@ export class GoshSnapshot implements IGoshSnapshot {
             patched = value4;
             ipfs = value5;
         }
+
+        if (!patched && !ipfs) return { content: '', patched: '', isIpfs: false };
 
         // Always read patch (may be needed for commit history)
         let patchedRaw = '';
@@ -1523,6 +1555,22 @@ export class GoshSmvProposal implements IGoshSmvProposal {
         };
     }
 
+    async getDetails(): Promise<TGoshEventDetails> {
+        const isCompleted = await this.isCompleted();
+
+        return {
+            address: this.address,
+            id: await this.getId(),
+            params: await this.getGoshSetCommitProposalParams(),
+            time: await this.getTime(),
+            votes: await this.getVotes(),
+            status: {
+                completed: isCompleted !== null,
+                accepted: !!isCompleted,
+            },
+        };
+    }
+
     async getId(): Promise<string> {
         const result = await this.account.runLocal('propId', {});
         return result.decoded?.output.propId;
@@ -1530,7 +1578,11 @@ export class GoshSmvProposal implements IGoshSmvProposal {
 
     async getGoshSetCommitProposalParams(): Promise<any> {
         const result = await this.account.runLocal('getGoshSetCommitProposalParams', {});
-        return result.decoded?.output;
+        const decoded = result.decoded?.output;
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        };
     }
 
     async getVotes(): Promise<{ yes: number; no: number }> {
@@ -1551,9 +1603,9 @@ export class GoshSmvProposal implements IGoshSmvProposal {
         };
     }
 
-    async isCompleted(): Promise<boolean> {
+    async isCompleted(): Promise<boolean | null> {
         const result = await this.account.runLocal('_isCompleted', {});
-        return !!result.decoded?.output.value0;
+        return result.decoded?.output.value0;
     }
 
     async getLockerAddr(): Promise<string> {
@@ -1580,6 +1632,14 @@ export class GoshSmvLocker implements IGoshSmvLocker {
             votesLocked: votes.locked,
             votesTotal: votes.total,
             isBusy,
+        };
+    }
+
+    async getDetails(): Promise<any> {
+        return {
+            address: this.address,
+            tokens: await this.getVotes(),
+            isBusy: await this.getIsBusy(),
         };
     }
 

@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import { useOutletContext } from 'react-router-dom';
 import TextField from '../../components/FormikForms/TextField';
 import Spinner from '../../components/Spinner';
-import { GoshSmvLocker } from '../../types/classes';
-import { IGoshSmvLocker, IGoshWallet } from '../../types/types';
 import * as Yup from 'yup';
 import { useRecoilValue } from 'recoil';
 import { userStateAtom } from '../../store/user.state';
@@ -12,6 +9,8 @@ import CopyClipboard from '../../components/CopyClipboard';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import { EGoshError, GoshError } from '../../types/errors';
 import { toast } from 'react-toastify';
+import SmvBalance from '../../components/SmvBalance/SmvBalance';
+import { useSmvBalance } from '../../hooks/gosh.hooks';
 
 type TMoveBalanceFormValues = {
     amount: number;
@@ -20,13 +19,7 @@ type TMoveBalanceFormValues = {
 const DaoWalletPage = () => {
     const userState = useRecoilValue(userStateAtom);
     const { wallet } = useOutletContext<TDaoLayoutOutletContext>();
-
-    const [data, setData] = useState<{
-        locker?: IGoshSmvLocker;
-        balance?: number;
-        smvBalance?: number;
-        smvLocked?: number;
-    }>();
+    const smvBalance = useSmvBalance(wallet);
 
     const gitRemoteCredentials = {
         'my-wallet': {
@@ -44,7 +37,7 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await wallet.lockVoting(values.amount);
-            toast.success('Submitted. Balances will be updated soon');
+            toast.success('Submitted, balance will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
@@ -57,7 +50,7 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await wallet.unlockVoting(values.amount);
-            toast.success('Submitted. Balances will be updated soon');
+            toast.success('Submitted, balance will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
@@ -69,46 +62,12 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await wallet.updateHead();
-            toast.success('Release submitted. Available tokens will be released soon');
+            toast.success('Release submitted, tokens will be released soon');
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
         }
     };
-
-    useEffect(() => {
-        const getWalletData = async (wallet: IGoshWallet) => {
-            const balance = await wallet.getSmvTokenBalance();
-            const lockerAddr = await wallet.getSmvLockerAddr();
-            const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
-            await locker.load();
-            setData({
-                locker,
-                balance,
-                smvBalance: locker.meta?.votesTotal,
-                smvLocked: locker.meta?.votesLocked,
-            });
-        };
-
-        if (wallet && !data?.locker) getWalletData(wallet);
-        let interval: any;
-        if (wallet && data?.locker) {
-            interval = setInterval(async () => {
-                const balance = await wallet.getSmvTokenBalance();
-                await data.locker?.load();
-                setData((prev) => ({
-                    ...prev,
-                    balance,
-                    smvBalance: data.locker?.meta?.votesTotal,
-                    smvLocked: data.locker?.meta?.votesLocked,
-                }));
-            }, 5000);
-        }
-
-        return () => {
-            clearInterval(interval);
-        };
-    }, [wallet, data?.locker]);
 
     if (!wallet)
         return (
@@ -119,24 +78,7 @@ const DaoWalletPage = () => {
         );
     return (
         <>
-            <div
-                className="flex gap-x-6 mb-4
-                flex-col items-start
-                md:flex-row md:flex-wrap md:items-center"
-            >
-                <div>
-                    <span className="font-semibold mr-2">Wallet balance:</span>
-                    {data?.balance}
-                </div>
-                <div>
-                    <span className="font-semibold mr-2">SMV balance:</span>
-                    {data?.smvBalance}
-                </div>
-                <div>
-                    <span className="font-semibold mr-2">Locked:</span>
-                    {data?.smvLocked}
-                </div>
-            </div>
+            <SmvBalance details={smvBalance} wallet={wallet} className="mb-4 !px-0" />
 
             <div className="divide-y divide-gray-200">
                 <div className="py-5">
@@ -146,12 +88,12 @@ const DaoWalletPage = () => {
                         to create new proposals and vote
                     </p>
                     <Formik
-                        initialValues={{ amount: data?.balance || 0 }}
+                        initialValues={{ amount: smvBalance.balance }}
                         onSubmit={onMoveBalanceToSmvBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(data?.balance || 0)
+                                .max(smvBalance.balance)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -189,13 +131,13 @@ const DaoWalletPage = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            amount: (data?.smvBalance ?? 0) - (data?.smvLocked ?? 0),
+                            amount: smvBalance.smvBalance - smvBalance.smvLocked,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max((data?.smvBalance ?? 0) - (data?.smvLocked ?? 0))
+                                .max(smvBalance.smvBalance - smvBalance.smvLocked)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -242,7 +184,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2"
                                     type="submit"
-                                    disabled={isSubmitting || !data?.smvLocked}
+                                    disabled={isSubmitting || !smvBalance.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Release locked tokens

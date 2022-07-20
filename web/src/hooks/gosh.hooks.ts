@@ -1,7 +1,7 @@
 import { KeyPair } from '@eversdk/core';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { getRepoTree, goshRoot } from '../helpers';
+import { getRepoTree, goshClient, goshRoot } from '../helpers';
 import {
     goshBranchesAtom,
     goshCurrBranchSelector,
@@ -12,7 +12,7 @@ import {
     goshWalletAtom,
 } from '../store/gosh.state';
 import { userStateAtom } from '../store/user.state';
-import { GoshDao, GoshWallet, GoshRepository } from '../types/classes';
+import { GoshDao, GoshWallet, GoshRepository, GoshSmvLocker } from '../types/classes';
 import {
     IGoshDao,
     IGoshRepository,
@@ -20,6 +20,7 @@ import {
     IGoshWallet,
     TCreateCommitCallbackParams,
     TGoshBranch,
+    TSmvBalanceDetails,
 } from '../types/types';
 // import { useEverClient } from './ever.hooks';
 
@@ -202,4 +203,42 @@ export const useCommitProgress = () => {
     };
 
     return { progress, progressCallback };
+};
+
+export const useSmvBalance = (wallet?: IGoshWallet) => {
+    const [details, setDetails] = useState<TSmvBalanceDetails>({
+        balance: 0,
+        smvBalance: 0,
+        smvLocked: 0,
+        smvBusy: false,
+    });
+
+    useEffect(() => {
+        const getDetails = async () => {
+            if (!wallet || !wallet.isDaoParticipant) return;
+
+            const balance = await wallet.getSmvTokenBalance();
+            const lockerAddr = await wallet.getSmvLockerAddr();
+            const locker = new GoshSmvLocker(goshClient, lockerAddr);
+            const details = await locker.getDetails();
+            setDetails((state) => ({
+                ...state,
+                balance,
+                smvBalance: details.tokens.total,
+                smvLocked: details.tokens.locked,
+                smvBusy: details.isBusy,
+            }));
+        };
+
+        getDetails();
+        const interval = setInterval(async () => {
+            await getDetails();
+        }, 5000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [wallet]);
+
+    return details;
 };
