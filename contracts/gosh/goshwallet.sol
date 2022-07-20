@@ -560,10 +560,11 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
-    function tryProposalResult(address proposal) public pure onlyOwner accept saveMsg{
+    function tryProposalResult(address proposal) public onlyOwner accept saveMsg{
         ISMVProposal(proposal).isCompleted{
             value: SMVConstants.VOTING_COMPLETION_FEE + SMVConstants.EPSILON_FEE
         }();
+        getMoney();
     }
 
     function calcClientAddress(uint256 _platform_id, address _tokenLocker) internal view returns(uint256) {
