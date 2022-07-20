@@ -82,6 +82,55 @@
 			]
 		},
 		{
+			"name": "addProtectedBranch",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteProtectedBranch",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isNotProtected",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"number","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isBranchProtected",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getProtectedBranch",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,bool)"}
+			]
+		},
+		{
 			"name": "getSnapCode",
 			"inputs": [
 				{"name":"branch","type":"string"}
@@ -201,6 +250,7 @@
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_head","type":"string"},
-		{"name":"_Branches","type":"optional(cell)"}
+		{"name":"_Branches","type":"optional(cell)"},
+		{"name":"_protectedBranch","type":"map(uint256,bool)"}
 	]
 }

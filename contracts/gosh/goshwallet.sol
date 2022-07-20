@@ -470,10 +470,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles
     ) internal view  {
-       GoshDao(_goshdao).isProtected{value:0.31 ton, flag: 1}(tvm.pubkey(), repoName, branchName, commit, numberChangedFiles);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:0.31 ton, flag: 1}(tvm.pubkey(), branchName, commit, numberChangedFiles, _index);
     }
     
-    function isProtectedBranch(
+    function isNotProtectedBranch(
         string repoName,
         string branchName,
         string commit,
@@ -484,7 +484,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     //SMV part       
-    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime) internal
+    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime) internal view
     {
         uint256 prop_id = tvm.hash(dataCell); 
         uint32 startTime = now + startTimeAfter;
@@ -510,14 +510,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
         getMoney();
     }
-
-    /* function addProtectedBranch(
-        string repo,
-        string branch
-    ) public view onlyOwner accept saveMsg {
-        tvm.accept();
-        GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
-    } */
     
     function startProposalForAddProtectedBranch(
         string repoName,
@@ -535,15 +527,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
         getMoney();
     }
-
-
-    /* function deleteProtectedBranch(
-        string repo,
-        string branch
-    ) public view onlyOwner accept saveMsg {
-        tvm.accept();
-        GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
-    } */
 
     function startProposalForDeleteProtectedBranch(
         string repoName,
@@ -610,11 +593,11 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 (string repoName, string branchName) = s.decode(string, string);
-                GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repoName, branchName);
+                Repository(_buildRepositoryAddr(repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), branchName, _index);
             } else 
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 (string repoName, string branchName) = s.decode(string, string);
-                GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repoName, branchName);
+                Repository(_buildRepositoryAddr(repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), branchName, _index);
             }  
         }
     }

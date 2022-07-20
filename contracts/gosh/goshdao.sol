@@ -34,8 +34,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
     string _nameDao;
     mapping(uint256 => address  ) _wallets;
     
-    mapping(uint256 => bool) _protectedBranch;
-    
     //added for SMV
     TvmCell m_TokenLockerCode;
     TvmCell m_SMVPlatformCode;
@@ -154,58 +152,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function addProtectedBranch(uint256 pubkey, string reponame, string branch) public senderIs(getAddrWalletIn(pubkey, 0)) {
-        tvm.accept();
-        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == true) { return; }
-        _addProtectedBranch(reponame, branch);
-    }
-    
-    function deleteProtectedBranch(uint256 pubkey, string reponame, string branch) public senderIs(getAddrWalletIn(pubkey, 0)) {
-        tvm.accept();
-        if (_protectedBranch.exists(tvm.hash(reponame + "//" + branch)) == false) { return; }
-        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == false) { return; }
-        _deleteProtectedBranch(reponame, branch);
-    }
-    
-    function _addProtectedBranch(string reponame, string branch) private {
-        _protectedBranch[tvm.hash(reponame + "//" + branch)] = true;
-    }
-    
-    function _deleteProtectedBranch(string reponame, string branch) private {
-        delete _protectedBranch[tvm.hash(reponame + "//" + branch)];
-    }
-    
-    function isProtected(uint256 pubkey, string reponame, string branch, string commit, uint128 number) public view senderIs(getAddrWalletIn(pubkey, 0)) {
-        tvm.accept();
-        if (_protectedBranch.exists(tvm.hash(reponame + "//" + branch)) == false) { 
-            GoshWallet(msg.sender).isProtectedBranch{value: 0.23 ton, flag: 1}(reponame, branch, commit, number); 
-        }
-        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == false) { 
-            GoshWallet(msg.sender).isProtectedBranch{value: 0.23 ton, flag: 1}(reponame, branch, commit, number); 
-        }
-    }
-    
     function getAddrWalletIn(uint256 pubkey, uint128 index) private view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    //Getters
-    
-    function isBranchProtected(string reponame, string branch) external view returns(bool) {
-        if (_protectedBranch.exists(tvm.hash(reponame + "//" + branch)) == false) { 
-            return false; 
-        }
-        if (_protectedBranch[tvm.hash(reponame + "//" + branch)] == false) { 
-            return false;
-        }
-        return true;
-    }
-    
-    function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
-        return _protectedBranch;
-    }
-    
+    //Getters    
     function getAddrWallet(uint256 pubkey, uint128 index) external view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         return address.makeAddrStd(0, tvm.hash(s1));
