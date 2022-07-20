@@ -483,22 +483,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _setCommit(repoName, branchName, commit, numberChangedFiles);
     }
     
-    function addProtectedBranch(
-        string repo,
-        string branch
-    ) public view onlyOwner accept saveMsg {
-        tvm.accept();
-        GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
-    }
-    
-    function deleteProtectedBranch(
-        string repo,
-        string branch
-    ) public view onlyOwner accept saveMsg {
-        tvm.accept();
-        GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
-    }
-    
     //SMV part       
     function startProposalForSetCommit(
         string repoName,
@@ -516,6 +500,61 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 prop_id = tvm.hash(c); 
         uint32 startTime = now + SETCOMMIT_PROPOSAL_START_AFTER;
         uint32 finishTime = now + SETCOMMIT_PROPOSAL_START_AFTER + SETCOMMIT_PROPOSAL_DURATION;
+        startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
+
+        getMoney();
+    }
+
+    /* function addProtectedBranch(
+        string repo,
+        string branch
+    ) public view onlyOwner accept saveMsg {
+        tvm.accept();
+        GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
+    } */
+    
+    function startProposalForAddProtectedBranch(
+        string repoName,
+        string branchName
+    ) public onlyOwner {
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, repoName, branchName);
+        TvmCell c = proposalBuilder.toCell();
+        uint256 prop_id = tvm.hash(c); 
+        uint32 startTime = now + ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER;
+        uint32 finishTime = now + ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER + ADD_PROTECTED_BRANCH_PROPOSAL_DURATION;
+        startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
+
+        getMoney();
+    }
+
+
+    /* function deleteProtectedBranch(
+        string repo,
+        string branch
+    ) public view onlyOwner accept saveMsg {
+        tvm.accept();
+        GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repo, branch);
+    } */
+
+    function startProposalForDeleteProtectedBranch(
+        string repoName,
+        string branchName
+    ) public onlyOwner {
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, repoName, branchName);
+        TvmCell c = proposalBuilder.toCell();
+        uint256 prop_id = tvm.hash(c); 
+        uint32 startTime = now + DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER;
+        uint32 finishTime = now + DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER + DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION;
         startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
 
         getMoney();
@@ -560,11 +599,20 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         if (res.hasValue() && res.get()) {
             TvmSlice s = propData.toSlice();
             uint256 kind = s.decode(uint256);
+
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
-                (string repoName, string branchname, string commit, uint128 numberChangedFiles) =
+                (string repoName, string branchName, string commit, uint128 numberChangedFiles) =
                     s.decode(string, string, string, uint128);
-                _setCommit(repoName, branchname, commit, numberChangedFiles);
-            }
+                _setCommit(repoName, branchName, commit, numberChangedFiles);
+            } else
+            if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
+                (string repoName, string branchName) = s.decode(string, string);
+                GoshDao(_goshdao).addProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repoName, branchName);
+            } else 
+            if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
+                (string repoName, string branchName) = s.decode(string, string);
+                GoshDao(_goshdao).deleteProtectedBranch{value:0.19 ton, flag: 1}(tvm.pubkey(), repoName, branchName);
+            }  
         }
     }
     
