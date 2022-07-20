@@ -1,33 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import TextField from '../../components/FormikForms/TextField';
 import Spinner from '../../components/Spinner';
-import {
-    GoshCommit,
-    GoshRepository,
-    GoshSmvClient,
-    GoshSmvLocker,
-    GoshSmvProposal,
-} from '../../types/classes';
-import {
-    IGoshCommit,
-    IGoshRepository,
-    IGoshRoot,
-    IGoshSmvLocker,
-    IGoshSmvProposal,
-    IGoshWallet,
-} from '../../types/types';
+import { GoshSmvProposal } from '../../types/classes';
+import { EEventType, TGoshEventDetails } from '../../types/types';
 import * as Yup from 'yup';
 import CopyClipboard from '../../components/CopyClipboard';
-import { classNames, shortString } from '../../utils';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { shortString } from '../../utils';
+import { useGoshRoot, useSmvBalance } from '../../hooks/gosh.hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
+import PREvent from './PREvent';
+import SmvBalance from '../../components/SmvBalance/SmvBalance';
+import { eventTypes, goshClient } from '../../helpers';
 import { EGoshError, GoshError } from '../../types/errors';
 import { toast } from 'react-toastify';
-import CommitBlobs from '../Commit/CommitBlobs';
 
 type TFormValues = {
     approve: string;
@@ -37,38 +26,25 @@ type TFormValues = {
 const EventPage = () => {
     const { daoName, eventAddr } = useParams();
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
-    const goshRoot = useGoshRoot();
-    const [release, setRelease] = useState<boolean>(false);
+    const root = useGoshRoot();
+    const smvBalance = useSmvBalance(wallet);
     const [check, setCheck] = useState<boolean>(false);
-    const [service, setService] = useState<{
-        proposal?: IGoshSmvProposal;
-        proposalLocked: number;
-        locker?: IGoshSmvLocker;
-        balance: number;
-        repo?: IGoshRepository;
-        commit?: IGoshCommit;
-    }>();
+    const [event, setEvent] = useState<{
+        details?: TGoshEventDetails;
+        isFetching: boolean;
+    }>({
+        isFetching: true,
+    });
 
-    const getCommit = async (
-        repo: IGoshRepository,
-        name: string
-    ): Promise<IGoshCommit> => {
-        // Get commit data
-        const address = await repo.getCommitAddr(name);
-        const commit = new GoshCommit(repo.account.client, address);
-        await commit.load();
-        return commit;
-    };
-
-    const onProposalCheck = async (proposal: IGoshSmvProposal, wallet: IGoshWallet) => {
+    /** Send check trigger to event */
+    const onProposalCheck = async () => {
         try {
-            if (service?.locker?.meta?.isBusy)
-                throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
             setCheck(true);
-            await wallet.tryProposalResult(proposal.address);
-            toast.success(
-                'Re-check submitted. Please, wait a bit for data to be updated or check status later'
-            );
+            await wallet.tryProposalResult(event.details.address);
+            toast.success('Re-check submitted, event details will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
@@ -77,312 +53,170 @@ const EventPage = () => {
         }
     };
 
+    /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT);
+            if (!root) throw new GoshError(EGoshError.NO_ROOT);
             if (!dao) throw new GoshError(EGoshError.NO_DAO);
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
-
+            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
             if (
-                service.proposal.meta?.time.start &&
-                Date.now() < service.proposal.meta?.time.start.getTime()
+                event.details.time.start &&
+                Date.now() < event.details.time.start.getTime()
             ) {
                 throw new GoshError(EGoshError.SMV_NO_START, {
-                    start: service.proposal.meta?.time.start.getTime(),
+                    start: event.details.time.start.getTime(),
                 });
             }
-            if (service.locker?.meta?.isBusy)
-                throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
-
-            const smvPlatformCode = await goshRoot.getSmvPlatformCode();
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            const smvPlatformCode = await root.getSmvPlatformCode();
             const smvClientCode = await dao.getSmvClientCode();
             const choice = values.approve === 'true';
             await wallet.voteFor(
                 smvPlatformCode,
                 smvClientCode,
-                service.proposal.address,
+                event.details.address,
                 choice,
                 values.amount
             );
-            toast.success(
-                'Vote accepted. Please, wait a bit for data to be updated or check status later'
-            );
+            toast.success('Vote accepted, event details will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);
-        }
-    };
-
-    const onTokensRelease = async () => {
-        try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
-
-            setRelease(true);
-            await wallet.updateHead();
-        } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
-        } finally {
-            setRelease(false);
         }
     };
 
     useEffect(() => {
-        const getGoshPull = async (
-            root: IGoshRoot,
-            eventAddr: string,
-            wallet?: IGoshWallet
-        ) => {
-            // Get GoshProposal object
-            const prop = new GoshSmvProposal(root.account.client, eventAddr);
-            await prop.load();
-            if (!prop.meta || !daoName || !goshRoot) {
-                toast.error('Error loading proposal');
-                return;
-            }
+        const getEvent = async () => {
+            if (!eventAddr) return;
 
-            // Get repository and commit with blobs
-            const repoAddr = await root.getRepoAddr(prop.meta.commit.repoName, daoName);
-            const repo = new GoshRepository(root.account.client, repoAddr);
-            const commit = await getCommit(repo, prop.meta.commit.commitName);
-
-            // Get SMVLocker
-            let locker: IGoshSmvLocker | undefined;
-            let balance = 0;
-            if (wallet?.isDaoParticipant) {
-                const lockerAddr = await wallet.getSmvLockerAddr();
-                locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
-                await locker.load();
-                balance = await wallet.getSmvTokenBalance();
-            }
-
-            setService({
-                proposal: prop,
-                proposalLocked: 0,
-                locker,
-                balance,
-                repo,
-                commit,
-            });
+            const event = new GoshSmvProposal(goshClient, eventAddr);
+            const details = await event.getDetails();
+            setEvent((state) => ({ ...state, details, isFetching: false }));
         };
 
-        if (goshRoot && eventAddr && !service?.locker && !service?.proposal) {
-            getGoshPull(goshRoot, eventAddr, wallet);
-        }
-        let interval: any;
-        if (wallet && service?.locker && service?.proposal) {
-            interval = setInterval(async () => {
-                await service.locker?.load();
-                await service.proposal?.load();
-                const balance = await wallet.getSmvTokenBalance();
+        setEvent({ details: undefined, isFetching: true });
+        getEvent();
 
-                let proposalLocked = 0;
-                try {
-                    if (service.locker && service.proposal?.meta) {
-                        const smvClientAddr = await wallet.getSmvClientAddr(
-                            service.locker.address,
-                            service.proposal.meta.id
-                        );
-                        const client = new GoshSmvClient(
-                            wallet.account.client,
-                            smvClientAddr
-                        );
-                        proposalLocked = await client.getLockedAmount();
-                    }
-                } catch {}
-
-                console.debug('[Locker] - Busy:', service.locker?.meta?.isBusy);
-                setService((prev) => ({ ...prev, balance, proposalLocked }));
-            }, 5000);
-        }
+        const interval = setInterval(async () => {
+            console.debug('Event details reload');
+            await getEvent();
+        }, 10000);
 
         return () => {
             clearInterval(interval);
         };
-    }, [eventAddr, wallet, daoName, goshRoot, service?.locker, service?.proposal]);
+    }, [eventAddr]);
 
     return (
         <div className="bordered-block px-7 py-8">
-            {!service?.proposal && (
+            <SmvBalance
+                details={smvBalance}
+                wallet={wallet}
+                className="mb-5 bg-gray-100"
+            />
+
+            {event.isFetching && (
                 <div className="text-gray-606060">
                     <Spinner className="mr-3" />
                     Loading proposal...
                 </div>
             )}
 
-            {service?.proposal && service.repo && service.commit && (
+            {!event.isFetching && event.details && (
                 <div>
-                    {wallet?.isDaoParticipant && (
-                        <div
-                            className="relative mb-5 flex px-4 py-3 rounded gap-x-6 bg-gray-100
-                            flex-col items-start
-                            md:flex-row md:flex-wrap md:items-center"
-                        >
-                            <div>
-                                <span className="font-semibold mr-2">SMV balance:</span>
-                                {service.locker?.meta?.votesTotal}
-                            </div>
-                            <div>
-                                <span className="font-semibold mr-2">Locked:</span>
-                                {service.locker?.meta?.votesLocked}
-                            </div>
-                            <div>
-                                <span className="font-semibold mr-2">
-                                    Wallet balance:
-                                </span>
-                                {service.balance}
-                            </div>
-                            <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
-                                <FontAwesomeIcon
-                                    icon={faCircle}
-                                    className={classNames(
-                                        'ml-2',
-                                        service.locker?.meta?.isBusy
-                                            ? 'text-rose-600'
-                                            : 'text-green-900'
-                                    )}
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-2">
-                        <h3 className="basis-full text-xl font-semibold">
-                            {service.commit?.meta?.content.title}
-                        </h3>
                         <div>
-                            <div className="text-gray-606060 text-sm">
-                                <CopyClipboard
-                                    label={`${'Proposal: '}${shortString(
-                                        service.proposal.meta?.id || ''
-                                    )}`}
-                                    componentProps={{
-                                        text: service.proposal.meta?.id || '',
-                                    }}
-                                />
-                            </div>
-                            <div className="text-xs text-gray-606060 mt-1">
-                                {service.proposal.meta?.time.start.toLocaleString()}
-                                <span className="mx-1">-</span>
-                                {service.proposal.meta?.time.finish.toLocaleString()}
-                            </div>
+                            <h3 className="basis-full text-xl font-semibold mb-2">
+                                {eventTypes[event.details.params.proposalKind]}
+                            </h3>
+                            <CopyClipboard
+                                className="text-gray-606060 text-sm"
+                                label={
+                                    <>
+                                        <FontAwesomeIcon
+                                            icon={faHashtag}
+                                            size="sm"
+                                            className="mr-2"
+                                        />
+                                        {shortString(event.details.id || '')}
+                                    </>
+                                }
+                                componentProps={{
+                                    text: event.details.id || '',
+                                }}
+                            />
                         </div>
                         <div>
-                            {service.proposal.meta?.commit.repoName}:
-                            {service.proposal.meta?.commit.branchName}
-                            <div className="text-gray-606060 text-sm">
-                                <CopyClipboard
-                                    label={`${'Commit: '}${shortString(
-                                        service.proposal.meta?.commit.commitName || ''
-                                    )}`}
-                                    componentProps={{
-                                        text:
-                                            service.proposal.meta?.commit.commitName ||
-                                            '',
-                                    }}
-                                />
-                            </div>
+                            <FontAwesomeIcon icon={faCalendarDays} className="mr-2" />
+                            {event.details.time.start.toLocaleString()}
+                            <span className="mx-1">-</span>
+                            {event.details.time.finish.toLocaleString()}
                         </div>
                         <div>
                             <span className="mr-3">
-                                {service.proposal.meta?.isCompleted ? (
-                                    <span className="text-green-900">Completed</span>
+                                {!event.details.status.completed ? (
+                                    <>
+                                        <Spinner size="sm" className="mr-2" />
+                                        Running
+                                    </>
+                                ) : event.details.status.accepted ? (
+                                    <span className="text-green-900">Accepted</span>
                                 ) : (
-                                    'Running'
+                                    <span className="text-rose-600">Rejected</span>
                                 )}
                             </span>
                             <div>
                                 <span className="text-green-900 text-xs">
                                     Accepted
                                     <span className="text-xl ml-2">
-                                        {service.proposal.meta?.votes.yes}
+                                        {event.details.votes.yes}
                                     </span>
                                 </span>
                                 <span className="mx-1">/</span>
                                 <span className="text-rose-600 text-xs">
                                     <span className="text-xl mr-2">
-                                        {service.proposal.meta?.votes.no}
+                                        {event.details.votes.no}
                                     </span>
                                     Rejected
                                 </span>
                             </div>
                         </div>
-                        {wallet &&
-                            wallet.isDaoParticipant &&
-                            !!service.proposalLocked &&
-                            service.proposal.meta?.isCompleted && (
-                                <div>
-                                    <button
-                                        type="button"
-                                        className="btn btn--body text-sm px-4 py-1.5"
-                                        onClick={onTokensRelease}
-                                        disabled={release || service.locker?.meta?.isBusy}
-                                    >
-                                        {release && <Spinner className="mr-2" />}
-                                        Release
-                                    </button>
-                                </div>
-                            )}
-                        {wallet &&
-                            wallet.isDaoParticipant &&
-                            !service.proposal.meta?.isCompleted && (
-                                <div>
-                                    <button
-                                        type="button"
-                                        className="btn btn--body text-sm px-4 py-1.5"
-                                        onClick={() =>
-                                            service.proposal &&
-                                            onProposalCheck(service.proposal, wallet)
-                                        }
-                                        disabled={check || service.locker?.meta?.isBusy}
-                                    >
-                                        {check && <Spinner className="mr-2" />}
-                                        Re-check
-                                    </button>
-                                </div>
-                            )}
+                        {wallet?.isDaoParticipant && !event.details.status.completed && (
+                            <div>
+                                <button
+                                    type="button"
+                                    className="btn btn--body text-sm px-4 py-1.5"
+                                    onClick={onProposalCheck}
+                                    disabled={check || smvBalance.smvBusy}
+                                >
+                                    {check && <Spinner className="mr-2" />}
+                                    Re-check
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {service.proposal.meta?.isCompleted && (
-                        <div className="text-green-700 mt-6">
-                            Commit proposal
-                            <Link
-                                className="mx-1 underline text-green-900"
-                                to={`/${daoName}/${service.proposal.meta.commit.repoName}/commits/${service.proposal.meta.commit.branchName}/${service.proposal.meta.commit.commitName}`}
-                            >
-                                {shortString(service.proposal.meta.commit.commitName)}
-                            </Link>
-                            was accepted by SMV
-                        </div>
-                    )}
-
-                    {wallet?.isDaoParticipant && !service.proposal.meta?.isCompleted && (
+                    {wallet?.isDaoParticipant && !event.details?.status.completed && (
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount:
-                                    (service.locker?.meta?.votesTotal ?? 0) -
-                                    (service.locker?.meta?.votesLocked ?? 0),
+                                amount: smvBalance.smvBalance - smvBalance.smvLocked,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(
-                                        (service.locker?.meta?.votesTotal ?? 0) -
-                                            (service.locker?.meta?.votesLocked ?? 0)
-                                    )
+                                    .max(smvBalance.smvBalance - smvBalance.smvLocked)
                                     .required('Field is required'),
                             })}
                             enableReinitialize
                         >
                             {({ isSubmitting }) => (
                                 <div className="mt-10">
-                                    <h3 className="text-xl font-semibold">
+                                    <h4 className="text-lg font-semibold">
                                         Vote for proposal
-                                    </h3>
+                                    </h4>
                                     <Form className="flex flex-wrap items-baseline my-4 gap-x-6 gap-y-3">
                                         <div className="grow sm:grow-0">
                                             <Field
@@ -416,10 +250,7 @@ const EventPage = () => {
                                         <button
                                             className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
                                             type="submit"
-                                            disabled={
-                                                isSubmitting ||
-                                                service.locker?.meta?.isBusy
-                                            }
+                                            disabled={isSubmitting || smvBalance.smvBusy}
                                         >
                                             {isSubmitting && <Spinner className="mr-2" />}
                                             Vote for proposal
@@ -430,15 +261,22 @@ const EventPage = () => {
                         </Formik>
                     )}
 
-                    <h3 className="mt-10 mb-4 text-xl font-semibold">Proposal diff</h3>
-                    {service.commit.meta && (
-                        <CommitBlobs
-                            repo={service.repo}
-                            commit={service.commit.meta.sha}
-                            branch={service.commit.meta.branchName}
-                        />
+                    {event.details.status.completed && !event.details.status.accepted && (
+                        <div className="bg-rose-600 text-white mt-6 px-4 py-3 rounded">
+                            Proposal was rejected by SMV
+                        </div>
                     )}
                 </div>
+            )}
+
+            {event.details?.params.proposalKind === EEventType.PR && (
+                <PREvent
+                    daoName={daoName}
+                    repoName={event.details.params.repoName}
+                    commitName={event.details.params.commit}
+                    branchName={event.details.params.branchName}
+                    status={event.details.status}
+                />
             )}
         </div>
     );

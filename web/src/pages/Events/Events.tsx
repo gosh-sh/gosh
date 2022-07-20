@@ -1,251 +1,162 @@
 import { useEffect, useState } from 'react';
-import { faCircle } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
+import { useOutletContext, useParams } from 'react-router-dom';
 import Spinner from '../../components/Spinner';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
-import {
-    GoshCommit,
-    GoshRepository,
-    GoshSmvClient,
-    GoshSmvLocker,
-    GoshSmvProposal,
-} from '../../types/classes';
-import {
-    IGoshCommit,
-    IGoshDao,
-    IGoshRoot,
-    IGoshSmvLocker,
-    IGoshSmvProposal,
-    IGoshWallet,
-} from '../../types/types';
-import { classNames, shortString } from '../../utils';
+import { GoshSmvProposal } from '../../types/classes';
+import { sleep } from '../../utils';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
+import { getPaginatedAccounts } from '../../helpers';
+import SmvBalance from '../../components/SmvBalance/SmvBalance';
+import EventListItem from './ListItem';
+import { useSmvBalance } from '../../hooks/gosh.hooks';
 
 const EventsPage = () => {
-    const goshRoot = useGoshRoot();
+    const pageSize = 10;
+
     const { daoName } = useParams();
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
-    const [proposals, setProposals] =
-        useState<{ prop: IGoshSmvProposal; commit?: IGoshCommit; locked: number }[]>();
-    const [service, setService] = useState<{
-        locker?: IGoshSmvLocker;
-        balance?: number;
-    }>();
+    const smvBalance = useSmvBalance(wallet);
+    const [events, setEvents] = useState<{
+        items: any[];
+        isFetching: boolean;
+        page: number;
+    }>({
+        items: [],
+        isFetching: true,
+        page: 1,
+    });
 
+    /** Load next chunk of events list items */
+    const onLoadMore = () => {
+        setEvents((state) => ({ ...state, page: state.page + 1 }));
+    };
+
+    /** Load event details and update corresponging list item */
+    const setEventDetails = async (address: string) => {
+        console.debug('Set event for', address);
+        setEvents((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address === address) return { ...item, isBusy: true };
+                return item;
+            }),
+        }));
+
+        const event = new GoshSmvProposal(dao.account.client, address);
+        const details = await event.getDetails();
+
+        setEvents((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address === address) return { ...item, ...details };
+                return item;
+            }),
+        }));
+    };
+
+    /** Load events list */
     useEffect(() => {
-        const getPullList = async (
-            root: IGoshRoot,
-            dao: IGoshDao,
-            wallet?: IGoshWallet
-        ) => {
-            // Get SMVProposal code
-            const proposalCode = await dao.getSmvProposalCode();
-            const proposalssAddrs = await dao.account.client.net.query_collection({
-                collection: 'accounts',
-                filter: {
-                    code: { eq: proposalCode },
-                },
-                result: 'id',
-            });
+        const getEventList = async () => {
+            // Get events accounts by code
+            const code = await dao.getSmvProposalCode();
+            const list: any[] = [];
+            let next: string | undefined;
+            while (true) {
+                const accounts = await getPaginatedAccounts({
+                    filters: [`code: {eq:"${code}"}`],
+                    limit: 50,
+                    lastId: next,
+                });
+                const items = await Promise.all(
+                    accounts.results.map(async ({ id }) => {
+                        const event = new GoshSmvProposal(dao.account.client, id);
+                        return {
+                            address: event.address,
+                            params: await event.getGoshSetCommitProposalParams(),
+                            isCompleted: await event.isCompleted(),
+                        };
+                    })
+                );
+                list.push(...items);
+                next = accounts.lastId;
 
-            const proposals = await Promise.all(
-                (proposalssAddrs?.result || []).map(async (item: any) => {
-                    // Get GoshProposal object
-                    const proposal = new GoshSmvProposal(dao.account.client, item.id);
-                    await proposal.load();
+                if (accounts.completed) break;
+                await sleep(200);
+            }
 
-                    // Get commit
-                    let commit = undefined;
-                    if (proposal.meta?.commit && dao.meta) {
-                        const repoAddr = await root.getRepoAddr(
-                            proposal.meta.commit.repoName,
-                            dao.meta.name
-                        );
-                        const repo = new GoshRepository(dao.account.client, repoAddr);
-                        const commitAddr = await repo.getCommitAddr(
-                            proposal.meta.commit.commitName
-                        );
-                        commit = new GoshCommit(dao.account.client, commitAddr);
-                        await commit.load();
-                    }
-
-                    // Get amount of user's locked tokens in proposal
-                    let locked = 0;
-                    if (proposal.meta && wallet && wallet.isDaoParticipant) {
-                        const propLockerAddr = await proposal.getLockerAddr();
-                        const smvClientAddr = await wallet.getSmvClientAddr(
-                            propLockerAddr,
-                            proposal.meta.id
-                        );
-                        try {
-                            const smvClient = new GoshSmvClient(
-                                wallet.account.client,
-                                smvClientAddr
-                            );
-                            locked = await smvClient.getLockedAmount();
-                        } catch {}
-                    }
-
-                    return { prop: proposal, commit, locked };
-                })
-            );
-            console.debug('[Events] - Proposals:', proposals);
-            setProposals(proposals);
+            setEvents((state) => ({
+                ...state,
+                items: list.map((item) => {
+                    const found = state.items.find(
+                        ({ address }) => address === item.address
+                    );
+                    if (found) return { ...found, isBusy: found.isCompleted !== null };
+                    return item;
+                }),
+                isFetching: false,
+            }));
         };
 
-        if (goshRoot && dao) getPullList(goshRoot, dao, wallet);
-    }, [goshRoot, dao, wallet]);
+        setEvents({ items: [], isFetching: true, page: 1 });
+        getEventList();
 
-    useEffect(() => {
-        const initService = async (wallet: IGoshWallet) => {
-            const lockerAddr = await wallet.getSmvLockerAddr();
-            const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
-            await locker.load();
-            const balance = await wallet.getSmvTokenBalance();
-            setService({ locker, balance });
-        };
-
-        if (wallet && wallet.isDaoParticipant && !service?.locker) initService(wallet);
-
-        let interval: any;
-        if (wallet && wallet.isDaoParticipant && service?.locker) {
-            interval = setInterval(async () => {
-                await service.locker?.load();
-                const balance = await wallet.getSmvTokenBalance();
-                console.debug('[Events] - Locker busy:', service.locker?.meta?.isBusy);
-                setService((prev) => ({ ...prev, balance }));
-            }, 5000);
-        }
+        const interval = setInterval(async () => {
+            console.debug('Event list reload');
+            await getEventList();
+        }, 15000);
 
         return () => {
             clearInterval(interval);
         };
-    }, [wallet, service?.locker]);
+    }, [dao]);
 
     return (
         <div className="bordered-block px-7 py-8">
             <div>
-                {wallet?.isDaoParticipant && (
-                    <div
-                        className="relative mb-5 flex px-4 py-3 rounded gap-x-6 bg-gray-100
-                        flex-col items-start
-                        md:flex-row md:flex-wrap md:items-center"
-                    >
-                        <div>
-                            <span className="font-semibold mr-2">SMV balance:</span>
-                            {service?.locker?.meta?.votesTotal}
-                        </div>
-                        <div>
-                            <span className="font-semibold mr-2">Locked:</span>
-                            {service?.locker?.meta?.votesLocked}
-                        </div>
-                        <div>
-                            <span className="font-semibold mr-2">Wallet balance:</span>
-                            {service?.balance}
-                        </div>
-                        <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
-                            <FontAwesomeIcon
-                                icon={faCircle}
-                                className={classNames(
-                                    'ml-2',
-                                    service?.locker?.meta?.isBusy
-                                        ? 'text-rose-600'
-                                        : 'text-green-900'
-                                )}
-                            />
-                        </div>
+                <SmvBalance
+                    details={smvBalance}
+                    wallet={wallet}
+                    className="mb-5 bg-gray-100"
+                />
+
+                {events.isFetching && (
+                    <div className="text-gray-606060">
+                        <Spinner className="mr-3" />
+                        Loading events...
                     </div>
                 )}
 
-                {proposals === undefined && (
-                    <div className="text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading proposals...
-                    </div>
-                )}
-                {proposals && !proposals?.length && (
+                {!events.isFetching && !events.items.length && (
                     <div className="text-gray-606060 text-center">
-                        There are no proposals yet
+                        There are no events yet
                     </div>
                 )}
 
                 <div className="divide-y divide-gray-c4c4c4">
-                    {proposals?.map((item, index) => (
-                        <div
-                            key={index}
-                            className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-3"
-                        >
-                            <div className="w-full">
-                                <Link
-                                    to={`/${daoName}/events/${item.prop.address}`}
-                                    className="text-lg font-semibold hover:underline"
-                                >
-                                    {item.commit?.meta?.content.title}
-                                </Link>
-                            </div>
-                            <div>
-                                <div className="text-gray-606060 text-sm">
-                                    <CopyClipboard
-                                        label={`${'Proposal: '}${shortString(
-                                            item.prop.meta?.id || ''
-                                        )}`}
-                                        componentProps={{
-                                            text: item.prop.meta?.id || '',
-                                        }}
-                                    />
-                                </div>
-                                <div className="text-xs text-gray-606060 mt-1">
-                                    {item.prop.meta?.time.start.toLocaleString()}
-                                    <span className="mx-1">-</span>
-                                    {item.prop.meta?.time.finish.toLocaleString()}
-                                </div>
-                            </div>
-                            <div>
-                                {item.prop.meta?.commit.repoName}:
-                                {item.prop.meta?.commit.branchName}
-                                <div className="text-gray-606060 text-sm">
-                                    <CopyClipboard
-                                        label={`${'Commit: '}${shortString(
-                                            item.prop.meta?.commit.commitName || ''
-                                        )}`}
-                                        componentProps={{
-                                            text: item.prop.meta?.commit.commitName || '',
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="mr-3">
-                                    {item.prop.meta?.isCompleted ? (
-                                        <span className="text-green-900">Completed</span>
-                                    ) : (
-                                        'Running'
-                                    )}
-                                </span>
-                                <span className="text-green-900 text-xl">
-                                    {item.prop.meta?.votes.yes}
-                                </span>
-                                <span className="mx-1">/</span>
-                                <span className="text-rose-600 text-xl">
-                                    {item.prop.meta?.votes.no}
-                                </span>
-                            </div>
-                            {/* {!!item.locked && item.prop.isCompleted && (
-                                <div>
-                                    <button
-                                        type="button"
-                                        className="btn btn--body text-sm px-4 py-1.5"
-                                        onClick={() => { }}
-                                    >
-                                        Release
-                                    </button>
-                                </div>
-                            )} */}
-                        </div>
-                    ))}
+                    {events.items.slice(0, events.page * pageSize).map((event, index) => {
+                        if (!event.isBusy) setEventDetails(event.address);
+                        return (
+                            <EventListItem
+                                key={index}
+                                daoName={daoName || ''}
+                                event={event}
+                            />
+                        );
+                    })}
                 </div>
+
+                {events.page * pageSize < events.items.length && (
+                    <div className="text-center mt-3">
+                        <button
+                            className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
+                            type="button"
+                            disabled={events.isFetching}
+                            onClick={onLoadMore}
+                        >
+                            {events.isFetching && <Spinner className="mr-2" />}
+                            Load more
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

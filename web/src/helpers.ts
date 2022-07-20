@@ -1,10 +1,23 @@
-import { builderOpBitString, NetworkQueriesProtocol, TonClient } from '@eversdk/core';
+import {
+    abiSerialized,
+    builderOpBitString,
+    NetworkQueriesProtocol,
+    TonClient,
+} from '@eversdk/core';
 import { toast } from 'react-toastify';
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
-import { GoshTree, GoshCommit, GoshDaoCreator, GoshRoot } from './types/classes';
+import {
+    GoshTree,
+    GoshCommit,
+    GoshDaoCreator,
+    GoshRoot,
+    GoshSnapshot,
+} from './types/classes';
 import { IGoshRepository, TGoshCommit, TGoshTree, TGoshTreeItem } from './types/types';
 import * as Diff from 'diff';
+import GoshSnapshotAbi from './contracts/snapshot.abi.json';
+import { sleep } from './utils';
 // import LightningFS from '@isomorphic-git/lightning-fs';
 // import { EGoshError, GoshError } from './types/errors';
 
@@ -27,6 +40,10 @@ export const goshDaoCreator = new GoshDaoCreator(
     process.env.REACT_APP_CREATOR_ADDR || ''
 );
 export const goshRoot = new GoshRoot(goshClient, process.env.REACT_APP_GOSH_ADDR || '');
+
+export const eventTypes: { [key: number]: string } = {
+    1: 'Pull request',
+};
 
 export const getPaginatedAccounts = async (params: {
     filters?: string[];
@@ -339,6 +356,190 @@ export const getBlobDiffPatch = (
     /** Gosh snapshot recommended patch representation */
     const patch = Diff.createPatch(filename, original, modified);
     return patch.split('\n').slice(4).join('\n');
+};
+
+export const reverseBlobDiffPatch = (patch: string) => {
+    const parsedDiff = Diff.parsePatch(patch)[0];
+
+    const { oldFileName, newFileName, oldHeader, newHeader, hunks } = parsedDiff;
+
+    parsedDiff.oldFileName = newFileName;
+    parsedDiff.oldHeader = newHeader;
+    parsedDiff.newFileName = oldFileName;
+    parsedDiff.newHeader = oldHeader;
+
+    for (const hunk of hunks) {
+        const { oldLines, oldStart, newLines, newStart, lines } = hunk;
+        hunk.oldLines = newLines;
+        hunk.oldStart = newStart;
+        hunk.newLines = oldLines;
+        hunk.newStart = oldStart;
+
+        hunk.lines = lines.map((l) => {
+            if (l.startsWith('-')) return `+${l.slice(1)}`;
+            if (l.startsWith('+')) return `-${l.slice(1)}`;
+            return l;
+        });
+    }
+
+    return parsedDiff;
+};
+
+export const getBlobAtCommit = async (
+    repo: IGoshRepository,
+    snapaddr: string,
+    commit: string,
+    treeitem: TGoshTreeItem
+) => {
+    /** Get all incoming internal messages to snapshot */
+    const getMessages = async (
+        _addr: string,
+        _commit: string,
+        _retry: boolean = true,
+        _reached: boolean = false,
+        _approved: boolean = false,
+        _cursor: string = '',
+        _msgs: any[] = []
+    ): Promise<any> => {
+        const queryString = `
+        query{
+            blockchain{
+                account(
+                  address:"${_addr}"
+                ) {
+                messages(msg_type:IntIn, last:50, before:"${_cursor}") {
+                  edges{
+                    node{
+                      boc
+                      created_at
+                    }
+                    cursor
+                  }
+                  pageInfo{
+                    hasPreviousPage
+                    startCursor
+                  }
+                }
+              }
+            }
+          }`;
+        const query = await repo.account.client.net.query({
+            query: queryString,
+        });
+        const messages = query.result.data.blockchain.account.messages;
+        messages.edges.sort(
+            (a: any, b: any) =>
+                //@ts-ignore
+                (a.node.created_at < b.node.created_at) -
+                //@ts-ignore
+                (a.node.created_at > b.node.created_at)
+        );
+        for (const item of messages.edges) {
+            try {
+                const decoded = await repo.account.client.abi.decode_message({
+                    abi: abiSerialized(GoshSnapshotAbi),
+                    message: item.node.boc,
+                    allow_partial: true,
+                });
+                console.debug('Decoded', decoded);
+
+                // Retry reading messages if needed message not found
+                if (
+                    _retry &&
+                    ['constructor', 'approve', 'cancelDiff'].indexOf(decoded.name) < 0
+                ) {
+                    await sleep(5000);
+                    return await getMessages(_addr, _commit);
+                } else _retry = false;
+
+                // Process message by type
+                if (decoded.name === 'constructor') {
+                    _msgs.push(decoded.value);
+                    return { msgs: _msgs, prevcommit: decoded.value.commit };
+                } else if (decoded.name === 'approve') {
+                    _approved = true;
+                } else if (decoded.name === 'cancelDiff') {
+                    _approved = false;
+                } else if (decoded.name === 'destroy') {
+                    return { msgs: _msgs, prevcommit: _commit };
+                } else if (_approved && decoded.name === 'applyDiff') {
+                    _msgs.push(decoded.value);
+                    if (_reached)
+                        return {
+                            msgs: _msgs,
+                            prevcommit: decoded.value.diff.commit,
+                        };
+                    if (decoded.value.diff.commit === _commit) _reached = true;
+                }
+            } catch {}
+        }
+
+        if (messages.pageInfo.hasPreviousPage) {
+            await sleep(300);
+            return await getMessages(
+                _addr,
+                _commit,
+                _retry,
+                _reached,
+                _approved,
+                messages.pageInfo.startCursor,
+                _msgs
+            );
+        }
+        return { msgs: _msgs, prevcommit: _commit };
+    };
+
+    /** Get snapshot content and messages and revert snapshot to commit */
+    const snap = new GoshSnapshot(repo.account.client, snapaddr);
+    const snapdata = await snap.getSnapshot(commit, treeitem);
+    console.debug('Snap data', snapdata);
+    if (Buffer.isBuffer(snapdata.content))
+        return { content: snapdata.content, deployed: true };
+
+    const { msgs, prevcommit } = await getMessages(snapaddr, commit);
+    console.debug('Snap messages', msgs, prevcommit);
+
+    let content = snapdata.content;
+    let deployed = false;
+    for (const message of msgs) {
+        const msgcommit = message.diff ? message.diff.commit : message.commit;
+        const msgipfs = message.diff ? message.diff.ipfs : message.ipfsdata;
+        const msgpatch = message.diff ? message.diff.patch : null;
+        const msgdata = message.diff ? null : message.data;
+
+        if (msgipfs) {
+            const compressed = (await loadFromIPFS(msgipfs)).toString();
+            const decompressed = await zstd.decompress(goshClient, compressed, true);
+            content = decompressed;
+            if (message.ipfsdata) deployed = true;
+        } else if (msgdata) {
+            const compressed = Buffer.from(msgdata, 'hex').toString('base64');
+            const decompressed = await zstd.decompress(goshClient, compressed, true);
+            content = decompressed;
+            deployed = true;
+        } else if (msgpatch && msgcommit !== commit) {
+            const patch = await zstd.decompress(
+                repo.account.client,
+                Buffer.from(msgpatch, 'hex').toString('base64'),
+                true
+            );
+            const reversedPatch = reverseBlobDiffPatch(patch);
+            const reversed = Diff.applyPatch(content, reversedPatch);
+            content = reversed;
+        }
+
+        if (msgcommit === commit) break;
+        if (msgcommit) {
+            const msgcommitAddr = await repo.getCommitAddr(msgcommit);
+            const msgcommitObj = new GoshCommit(goshClient, msgcommitAddr);
+            const msgcommitParents = await msgcommitObj.getParents();
+            const parent = new GoshCommit(goshClient, msgcommitParents[0]);
+            const parentName = await parent.getName();
+            if (parentName === commit) break;
+        }
+    }
+    console.debug('Result content', content);
+    return { content, deployed, prevcommit };
 };
 
 export const getCommit = async (

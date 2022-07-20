@@ -41,6 +41,22 @@ export type TGoshTagDetails = {
     content: string;
 };
 
+export type TSmvBalanceDetails = {
+    balance: number;
+    smvBalance: number;
+    smvLocked: number;
+    smvBusy: boolean;
+};
+
+export type TGoshEventDetails = {
+    address: string;
+    id: string;
+    params: any;
+    time: { start: Date; finish: Date };
+    votes: { yes: number; no: number };
+    status: { completed: boolean; accepted: boolean };
+};
+
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
@@ -57,6 +73,15 @@ export type TGoshCommitContent = {
 export type TGoshCommit = {
     addr: string;
     addrRepo: string;
+    branch: string;
+    name: string;
+    content: TGoshCommitContent;
+    parents: string[];
+};
+
+export type TGoshCommitDetails = {
+    address: string;
+    repoAddress: string;
     branch: string;
     name: string;
     content: TGoshCommitContent;
@@ -103,6 +128,10 @@ export enum EGoshBlobFlag {
     BINARY = 1,
     COMPRESSED = 2,
     IPFS = 4,
+}
+
+export enum EEventType {
+    PR = 1,
 }
 
 interface IContract {
@@ -295,18 +324,20 @@ export interface IGoshCommit extends IContract {
     };
 
     load(): Promise<void>;
+    getDetails(): Promise<TGoshCommitDetails>;
     getCommit(): Promise<any>;
     getName(): Promise<string>;
     getParents(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
     getTree(): Promise<string>;
-    getNextAddr(): Promise<string>;
+    getDiffAddr(index1: number, index2: number): Promise<string>;
 }
 
 export interface IGoshDiff extends IContract {
     address: string;
 
     getNextAddr(): Promise<string>;
+    getDiffs(): Promise<TGoshDiff[]>;
 }
 
 export interface IGoshSnapshot extends IContract {
@@ -344,7 +375,7 @@ export interface IGoshSmvProposal extends IContract {
         id: string;
         votes: { yes: number; no: number };
         time: { start: Date; finish: Date };
-        isCompleted: boolean;
+        isCompleted: boolean | null;
         commit: {
             kind: string;
             repoName: string;
@@ -354,12 +385,13 @@ export interface IGoshSmvProposal extends IContract {
     };
 
     load(): Promise<void>;
+    getDetails(): Promise<TGoshEventDetails>;
     getId(): Promise<string>;
     getVotes(): Promise<{ yes: number; no: number }>;
     getTime(): Promise<{ start: Date; finish: Date }>;
     getGoshSetCommitProposalParams(): Promise<any>;
     getLockerAddr(): Promise<string>;
-    isCompleted(): Promise<boolean>;
+    isCompleted(): Promise<boolean | null>;
 }
 
 export interface IGoshSmvLocker extends IContract {
