@@ -16,4 +16,7 @@ build: copy_abi clear_screen
 test: copy_abi clear_screen
 	cargo test
 
+bench: copy_abi
+	docker buildx build -t git-remote-gosh .
+
 .PHONY: build clear_abi copy_abi clear_screen test

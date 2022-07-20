@@ -86,6 +86,16 @@
 			]
 		},
 		{
+			"name": "isBranchProtected",
+			"inputs": [
+				{"name":"reponame","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "getProtectedBranch",
 			"inputs": [
 			],

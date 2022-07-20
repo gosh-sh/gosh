@@ -92,7 +92,7 @@ contract Gosh is Modifiers, Upgradable {
     function deployDao(string name, uint256 root_pubkey) public minValue(91 ton) {
         tvm.accept();
         TvmCell s1 = _composeDaoStateInit(name);
-        _lastGoshDao = new GoshDao {stateInit: s1, value: 90 ton, wid: 0}(
+        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO - 5 ton, wid: 0, flag: 1}(
             address(this),
             _creator,
             root_pubkey,
