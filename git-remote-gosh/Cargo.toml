@@ -5,6 +5,10 @@ name = 'git-remote-gosh'
 version = '0.1.0'
 resolver = "2"
 
+[profile.profiling]
+inherits = "release"
+debug = 1
+
 [dependencies]
 git2 = '^0'
 indexmap = '^1'
