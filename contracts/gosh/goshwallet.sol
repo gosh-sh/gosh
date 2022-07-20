@@ -484,6 +484,14 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     //SMV part       
+    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime) internal
+    {
+        uint256 prop_id = tvm.hash(dataCell); 
+        uint32 startTime = now + startTimeAfter;
+        uint32 finishTime = now + startTimeAfter + durationTime;
+        startProposal(m_SMVPlatformCode, m_SMVProposalCode, prop_id, dataCell, startTime, finishTime);
+    }
+
     function startProposalForSetCommit(
         string repoName,
         string branchName,
@@ -497,10 +505,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles);
         TvmCell c = proposalBuilder.toCell();
-        uint256 prop_id = tvm.hash(c); 
-        uint32 startTime = now + SETCOMMIT_PROPOSAL_START_AFTER;
-        uint32 finishTime = now + SETCOMMIT_PROPOSAL_START_AFTER + SETCOMMIT_PROPOSAL_DURATION;
-        startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
+
+        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION);
 
         getMoney();
     }
@@ -524,10 +530,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, repoName, branchName);
         TvmCell c = proposalBuilder.toCell();
-        uint256 prop_id = tvm.hash(c); 
-        uint32 startTime = now + ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER;
-        uint32 finishTime = now + ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER + ADD_PROTECTED_BRANCH_PROPOSAL_DURATION;
-        startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
+
+        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION);
 
         getMoney();
     }
@@ -552,10 +556,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, repoName, branchName);
         TvmCell c = proposalBuilder.toCell();
-        uint256 prop_id = tvm.hash(c); 
-        uint32 startTime = now + DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER;
-        uint32 finishTime = now + DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER + DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION;
-        startProposal (m_SMVPlatformCode, m_SMVProposalCode, prop_id, c, startTime, finishTime);
+
+        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION);
 
         getMoney();
     }
