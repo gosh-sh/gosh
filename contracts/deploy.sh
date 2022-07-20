@@ -12,12 +12,12 @@ set -e
 #EVERDEV_SOL_COMPILER_VERSION=latest
 #EVERDEV_TVM_LINKER_VERSION=latest
 #EVERDEV_TONOS_CLI_VERSION=latest
-GOSH_REPO_ROOT_PATH=/opt/gosh
+GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
 GIVER_WALLET_KEYS_PATH=/tmp/giver.keys.json
 
 # Script envs
-GOSH_PATH="./contracts/gosh"
-SMV_PATH="./contracts/smv"
+GOSH_PATH="./gosh"
+SMV_PATH="./smv"
 CREATOR_ABI="$GOSH_PATH/daocreator.abi.json"
 GOSH_ABI="$GOSH_PATH/gosh.abi.json"
 
@@ -43,10 +43,10 @@ everdev signer add GOSHRootSigner "$seed"
 # Contracts compilation
 echo "========== Run contracts compilation"
 cd $SMV_PATH && bash ./compile_really_all.sh || true
-cd ../../
+cd ..
 cd $GOSH_PATH
 make build
-cd ../../
+cd ..
 
 # Prepare GIVER_WALLET
 curl https://raw.githubusercontent.com/tonlabs/ton-labs-contracts/master/solidity/safemultisig/SafeMultisigWallet.abi.json -O -s
@@ -132,7 +132,11 @@ everdev contract run $GOSH_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --addre
 # Send tokens to GoshDaoCreator and deploy
 echo "========== Send $CREATOR_BALANCE tons to GoshDaoCreator"
 everdev contract run $GIVER_WALLET_ABI submitTransaction --input "{\"dest\": \"$CREATOR_ADDR\", \"value\": $CREATOR_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer GiverWalletSigner --address $GIVER_WALLET_ADDR > /dev/null || exit 1
-
-# Deploy GoshDaoCreator
 echo "========== Deploy GoshDaoCreator contract"
-everdev contract deploy $CREATOR_ABI "constructor" --input "{\"goshaddr\": \"$GOSH_ROOT_ADDR\", \"WalletCode\": \"$WALLET_CODE\", \"codeDao\": \"$DAO_CODE\"}" --network $NETWORK --signer GOSHRootSigner > /dev/null || exit 1
+everdev contract deploy $CREATOR_ABI "constructor" --input "{\"goshaddr\": \"$GOSH_ROOT_ADDR\"}" --network $NETWORK --signer GOSHRootSigner $SIGNER > /dev/null || exit 1
+
+# Deploy GoshDaoCreator (setters)
+echo "========== Run setWalletCode"
+everdev contract run $CREATOR_ABI setWalletCode --input "{\"code\":\"$WALLET_CODE\"}" --address $CREATOR_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
+echo "========== Run setDaoCode"
+everdev contract run $CREATOR_ABI setDaoCode --input "{\"code\":\"$DAO_CODE\"}" --address $CREATOR_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1

@@ -16,3 +16,4 @@ Cargo.lock
 *.seed
 *.keys.json
 *.addr
+SafeMultisigWallet.abi.json
