@@ -17,7 +17,7 @@ import {
 } from 'web-common/lib/types/types';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { GoshCommit, GoshDiff, GoshRepository } from 'web-common/lib/types/classes';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
 import { AccountType } from '@eversdk/appkit';
 import { Buffer } from 'buffer';
 import * as Diff from 'diff';

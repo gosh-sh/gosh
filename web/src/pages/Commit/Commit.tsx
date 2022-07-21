@@ -7,7 +7,7 @@ import CopyClipboard from '../../components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
 import Spinner from '../../components/Spinner';
 import CommitBlobs from './CommitBlobs';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
+import { useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
 
 const CommitPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();

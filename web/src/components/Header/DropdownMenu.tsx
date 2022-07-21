@@ -3,7 +3,7 @@ import { Menu, Transition } from '@headlessui/react';
 import { Link } from 'react-router-dom';
 import { classNames } from 'web-common/lib/utils';
 import { useResetRecoilState } from 'recoil';
-import { userStateAtom, userStatePersistAtom } from '../../store/user.state';
+import { userStateAtom, userStatePersistAtom } from 'web-common/lib/store/user.state';
 
 const DropdownMenu = () => {
     const resetUserState = useResetRecoilState(userStateAtom);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import BranchSelect from '../../components/BranchSelect';
-import { IGoshRepository, TGoshTreeItem } from 'web-common/lib/types/types';
+import { IGoshRepository, TGoshBranch, TGoshTreeItem } from 'web-common/lib/types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { useMonaco } from '@monaco-editor/react';
 import {
@@ -19,10 +19,13 @@ import {
 import CopyClipboard from '../../components/CopyClipboard';
 import Spinner from '../../components/Spinner';
 import { useRecoilValue } from 'recoil';
-import { goshBranchesAtom, goshCurrBranchSelector } from '../../store/gosh.state';
+import {
+    goshBranchesAtom,
+    goshCurrBranchSelector,
+} from 'web-common/lib/store/gosh.state';
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
 import { GoshCommit, GoshSnapshot } from 'web-common/lib/types/classes';
-import { useGoshRepoTree } from '../../hooks/gosh.hooks';
+import { useGoshRepoTree } from 'web-common/lib/hooks/gosh.hooks';
 import { Buffer } from 'buffer';
 import FileDownload from '../../components/FileDownload';
 
@@ -32,10 +35,12 @@ const BlobPage = () => {
     const navigate = useNavigate();
     const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
-    const branches = useRecoilValue(goshBranchesAtom);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const branches = useRecoilValue<TGoshBranch[]>(goshBranchesAtom);
+    const branch = useRecoilValue<TGoshBranch | undefined>(
+        goshCurrBranchSelector(branchName)
+    );
     const { tree, getTreeItem } = useGoshRepoTree(goshRepo, branch, pathName);
-    const treeItem = useRecoilValue(getTreeItem(pathName));
+    const treeItem = useRecoilValue<TGoshTreeItem | undefined>(getTreeItem(pathName));
     const [blob, setBlob] = useState<any>();
 
     useEffect(() => {

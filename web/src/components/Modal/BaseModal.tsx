@@ -1,9 +1,9 @@
 import { Dialog } from '@headlessui/react';
 import { useRecoilState } from 'recoil';
-import { appModalStateAtom } from '../../store/app.state';
+import { appModalStateAtom } from 'web-common/lib/store/app.state';
 
 const BaseModal = () => {
-    const [modal, setModal] = useRecoilState(appModalStateAtom);
+    const [modal, setModal] = useRecoilState<any>(appModalStateAtom);
 
     return (
         <Dialog

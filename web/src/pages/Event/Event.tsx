@@ -8,7 +8,7 @@ import { EEventType, TGoshEventDetails } from 'web-common/lib/types/types';
 import * as Yup from 'yup';
 import CopyClipboard from '../../components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
-import { useGoshRoot, useSmvBalance } from '../../hooks/gosh.hooks';
+import { useGoshRoot, useSmvBalance } from 'web-common/lib/hooks/gosh.hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TDaoLayoutOutletContext } from '../DaoLayout';

@@ -5,7 +5,7 @@ import {
     TGoshTree,
     TGoshTreeItem,
     TGoshWalletDetails,
-} from 'web-common/lib/types/types';
+} from '../types/types';
 
 export const goshDaoAtom = atom<TGoshDaoDetails | undefined>({
     key: 'GoshDaoAtom',
@@ -22,7 +22,7 @@ export const goshBranchesAtom = atom<TGoshBranch[]>({
     default: [],
 });
 
-export const goshCurrBranchSelector = selectorFamily({
+export const goshCurrBranchSelector = selectorFamily<TGoshBranch | undefined, string>({
     key: 'GoshCurrBranchSelector',
     get:
         (branchName: string) =>
@@ -39,7 +39,7 @@ export const goshRepoTreeAtom = atom<
     default: undefined,
 });
 
-export const goshRepoTreeSelector = selectorFamily({
+export const goshRepoTreeSelector = selectorFamily<TGoshTreeItem[] | undefined, any>({
     key: 'GoshRepoTreeSelector',
     get:
         (params: { type: 'tree' | 'items'; path?: string }) =>
@@ -63,7 +63,10 @@ export const goshRepoTreeSelector = selectorFamily({
         },
 });
 
-export const goshRepoBlobSelector = selectorFamily({
+export const goshRepoBlobSelector = selectorFamily<
+    TGoshTreeItem | undefined,
+    string | undefined
+>({
     key: 'GoshRepoBlobSelector',
     get:
         (path: string | undefined) =>

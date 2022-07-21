@@ -6,7 +6,7 @@ import { useRecoilValue } from 'recoil';
 import CopyClipboard from '../../components/CopyClipboard';
 import TextField from '../../components/FormikForms/TextField';
 import Spinner from '../../components/Spinner';
-import { userStateAtom } from '../../store/user.state';
+import { userStateAtom } from 'web-common/lib/store/user.state';
 import { GoshWallet } from 'web-common/lib/types/classes';
 import { shortString } from 'web-common/lib/utils';
 import * as Yup from 'yup';
@@ -14,13 +14,14 @@ import { useOutletContext } from 'react-router-dom';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
+import { TUserState } from 'web-common/lib/types/types';
 
 type TParticipantFormValues = {
     pubkey: string[];
 };
 
 const DaoParticipantsPage = () => {
-    const userState = useRecoilValue(userStateAtom);
+    const userState = useRecoilValue<TUserState>(userStateAtom);
     const { dao } = useOutletContext<TDaoLayoutOutletContext>();
     const [participants, setParticipants] =
         useState<{ pubkey: string; smvBalance: number }[]>();

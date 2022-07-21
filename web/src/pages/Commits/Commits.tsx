@@ -5,9 +5,9 @@ import BranchSelect from '../../components/BranchSelect';
 import CopyClipboard from '../../components/CopyClipboard';
 import Spinner from '../../components/Spinner';
 import { getCommit, getCommitTime, ZERO_COMMIT } from 'web-common/lib/helpers';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { IGoshRepository, TGoshCommit } from 'web-common/lib/types/types';
+import { useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
+import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
+import { IGoshRepository, TGoshBranch, TGoshCommit } from 'web-common/lib/types/types';
 import { shortString } from 'web-common/lib/utils';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 
@@ -15,7 +15,9 @@ const CommitsPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
     const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const branch = useRecoilValue<TGoshBranch | undefined>(
+        goshCurrBranchSelector(branchName)
+    );
     const navigate = useNavigate();
     const [commits, setCommits] = useState<{
         list: TGoshCommit[];

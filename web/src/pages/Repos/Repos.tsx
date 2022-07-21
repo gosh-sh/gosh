@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useRecoilValue } from 'recoil';
 import Spinner from '../../components/Spinner';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
-import { userStateAtom } from '../../store/user.state';
+import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
+import { userStateAtom } from 'web-common/lib/store/user.state';
 import { GoshDao, GoshRepository, GoshWallet } from 'web-common/lib/types/classes';
-import { TGoshRepoDetails } from 'web-common/lib/types/types';
+import { TGoshRepoDetails, TUserState } from 'web-common/lib/types/types';
 import RepoListItem from '../DaoRepos/RepoListItem';
 
 const RepositoriesPage = () => {
-    const userState = useRecoilValue(userStateAtom);
+    const userState = useRecoilValue<TUserState>(userStateAtom);
     const goshRoot = useGoshRoot();
     const [search, setSearch] = useState<string>();
     const repoListQuery = useQuery(

@@ -17,19 +17,20 @@ import {
     getRepoTree,
     isMainBranch,
 } from 'web-common/lib/helpers';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
+import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import * as Yup from 'yup';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import Spinner from '../../components/Spinner';
 import SwitchField from '../../components/FormikForms/SwitchField';
-import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks';
-import { userStateAtom } from '../../store/user.state';
+import { useCommitProgress, useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
+import { userStateAtom } from 'web-common/lib/store/user.state';
 import {
     IGoshRepository,
     IGoshWallet,
     TGoshBranch,
     TGoshTreeItem,
+    TUserState,
 } from 'web-common/lib/types/types';
 import BranchSelect from '../../components/BranchSelect';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
@@ -46,7 +47,7 @@ type TCommitFormValues = {
 
 const PullCreatePage = () => {
     const [searchParams] = useSearchParams();
-    const userState = useRecoilValue(userStateAtom);
+    const userState = useRecoilValue<TUserState>(userStateAtom);
     const { daoName, repoName } = useParams();
     const navigate = useNavigate();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
@@ -65,10 +66,12 @@ const PullCreatePage = () => {
     }>({ count: 0, total: 0 });
 
     const compareParam = searchParams.get('compare') || 'main...main';
-    const branchFrom = useRecoilValue(
+    const branchFrom = useRecoilValue<TGoshBranch | undefined>(
         goshCurrBranchSelector(compareParam.split('...')[0])
     );
-    const branchTo = useRecoilValue(goshCurrBranchSelector(compareParam.split('...')[1]));
+    const branchTo = useRecoilValue<TGoshBranch | undefined>(
+        goshCurrBranchSelector(compareParam.split('...')[1])
+    );
     const [localBranches, setlocalBranches] = useState<{
         from?: TGoshBranch;
         to?: TGoshBranch;

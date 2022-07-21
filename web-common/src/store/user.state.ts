@@ -1,6 +1,6 @@
 import { atom } from 'recoil';
 import { recoilPersist } from 'recoil-persist';
-import { TUserState, TUserStatePersist } from 'web-common/lib/types/types';
+import { TUserState, TUserStatePersist } from '../types/types';
 
 const { persistAtom } = recoilPersist({ key: 'recoil' });
 

@@ -11,21 +11,26 @@ import BlobEditor from '../../components/Blob/Editor';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import { useMonaco } from '@monaco-editor/react';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { IGoshRepository, TGoshTreeItem } from 'web-common/lib/types/types';
+import {
+    IGoshRepository,
+    TGoshBranch,
+    TGoshTreeItem,
+    TUserState,
+} from 'web-common/lib/types/types';
 import {
     getCodeLanguageFromFilename,
     splitByPath,
     isMainBranch,
 } from 'web-common/lib/helpers';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
+import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
 import { useRecoilValue } from 'recoil';
 import {
     useCommitProgress,
     useGoshRepoBranches,
     useGoshRepoTree,
-} from '../../hooks/gosh.hooks';
-import { userStateAtom } from '../../store/user.state';
+} from 'web-common/lib/hooks/gosh.hooks';
+import { userStateAtom } from 'web-common/lib/store/user.state';
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
@@ -47,11 +52,15 @@ const BlobUpdatePage = () => {
     const navigate = useNavigate();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
-    const userState = useRecoilValue(userStateAtom);
+    const userState = useRecoilValue<TUserState>(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const branch = useRecoilValue<TGoshBranch | undefined>(
+        goshCurrBranchSelector(branchName)
+    );
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
-    const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
+    const treeItem = useRecoilValue<TGoshTreeItem | undefined>(
+        goshRepoTree.getTreeItem(pathName)
+    );
     const [activeTab, setActiveTab] = useState<number>(0);
     const [blob, setBlob] = useState<{ content: string | Buffer; isIpfs: boolean }>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import Spinner from '../components/Spinner';
-import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks';
-import { userStatePersistAtom } from '../store/user.state';
-import { IGoshDao, IGoshWallet } from 'web-common/lib/types/types';
+import { useGoshDao, useGoshWallet } from 'web-common/lib/hooks/gosh.hooks';
+import { userStatePersistAtom } from 'web-common/lib/store/user.state';
+import { IGoshDao, IGoshWallet, TUserStatePersist } from 'web-common/lib/types/types';
 import { classNames } from 'web-common/lib/utils';
 
 export type TDaoLayoutOutletContext = {
@@ -13,7 +13,7 @@ export type TDaoLayoutOutletContext = {
 };
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
+    const userStatePersist = useRecoilValue<TUserStatePersist>(userStatePersistAtom);
     const { daoName } = useParams();
     const dao = useGoshDao(daoName);
     const wallet = useGoshWallet(dao);

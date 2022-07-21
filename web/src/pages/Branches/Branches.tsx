@@ -11,8 +11,8 @@ import { TGoshBranch } from 'web-common/lib/types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import * as Yup from 'yup';
 import { useRecoilValue } from 'recoil';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
+import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
+import { useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
 import { isMainBranch } from 'web-common/lib/helpers';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
@@ -28,7 +28,9 @@ export const BranchesPage = () => {
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const [branchName, setBranchName] = useState<string>('main');
     const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const branch = useRecoilValue<TGoshBranch | undefined>(
+        goshCurrBranchSelector(branchName)
+    );
     const [search, setSearch] = useState<string>('');
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
     const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);

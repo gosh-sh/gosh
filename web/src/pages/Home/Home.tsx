@@ -1,17 +1,10 @@
 import { Link } from 'react-router-dom';
-import { atom, atomFamily, RecoilState, useRecoilValue } from 'recoil';
-import { userStatePersistAtom } from '../../store/user.state';
-import { testAtom } from 'web-common/lib/store/test.state';
-
-const a = atomFamily({ key: 'test', default: [] })('keey');
-const b = testAtom();
+import { useRecoilValue } from 'recoil';
+import { userStatePersistAtom } from 'web-common/lib/store/user.state';
+import { TUserStatePersist } from 'web-common/lib/types/types';
 
 const HomePage = () => {
-    console.debug('works', userStatePersistAtom);
-    console.debug('a', a);
-    console.debug('b', b.t);
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const test = useRecoilValue(b.t);
+    const userStatePersist = useRecoilValue<TUserStatePersist>(userStatePersistAtom);
 
     return (
         <div className="container pt-16">

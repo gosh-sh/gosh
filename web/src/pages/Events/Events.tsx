@@ -7,7 +7,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout';
 import { getPaginatedAccounts } from 'web-common/lib/helpers';
 import SmvBalance from '../../components/SmvBalance/SmvBalance';
 import EventListItem from './ListItem';
-import { useSmvBalance } from '../../hooks/gosh.hooks';
+import { useSmvBalance } from 'web-common/lib/hooks/gosh.hooks';
 
 const EventsPage = () => {
     const pageSize = 10;

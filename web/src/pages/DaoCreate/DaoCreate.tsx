@@ -1,15 +1,16 @@
 import { Field, FieldArray, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import TextField from '../../components/FormikForms/TextField';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { userStateAtom } from '../../store/user.state';
+import { userStateAtom } from 'web-common/lib/store/user.state';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import Spinner from '../../components/Spinner';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
+import { TUserState } from 'web-common/lib/types/types';
 
 type TFormValues = {
     name: string;
@@ -19,7 +20,7 @@ type TFormValues = {
 const DaoCreatePage = () => {
     const goshRoot = useGoshRoot();
     const navigate = useNavigate();
-    const userState = useRecoilValue(userStateAtom);
+    const userState = useRecoilValue<TUserState>(userStateAtom);
 
     const onDaoCreate = async (values: TFormValues) => {
         try {

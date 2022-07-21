@@ -1,14 +1,15 @@
 import { Disclosure } from '@headlessui/react';
 import { Link, useLocation } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { userStatePersistAtom } from '../../store/user.state';
+import { userStatePersistAtom } from 'web-common/lib/store/user.state';
 import logoBlack from '../../assets/images/logo-black.svg';
 import DropdownMenu from './DropdownMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
+import { TUserStatePersist } from 'web-common/lib/types/types';
 
 const Header = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
+    const userStatePersist = useRecoilValue<TUserStatePersist>(userStatePersistAtom);
     const location = useLocation();
 
     return (
