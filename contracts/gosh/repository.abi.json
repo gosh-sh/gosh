@@ -44,6 +44,16 @@
 		{
 			"name": "SendDiff",
 			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "SendDiffSmv",
+			"inputs": [
 				{"name":"value1","type":"uint256"},
 				{"name":"index","type":"uint128"},
 				{"name":"branch","type":"string"},
@@ -106,7 +116,7 @@
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"branch","type":"string"},
-				{"name":"commit","type":"string"},
+				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
