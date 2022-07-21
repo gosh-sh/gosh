@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 import { TonClient, BinaryLibrary } from '@eversdk/core';
-import { libWeb } from '@eversdk/lib-web';
+import { libWeb, libWebSetup } from '@eversdk/lib-web';
 import App from './App';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -21,9 +21,9 @@ const root = createRoot(container!);
 root.render(
     <RecoilRoot>
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
+            <HashRouter>
                 <App />
-            </BrowserRouter>
+            </HashRouter>
         </QueryClientProvider>
     </RecoilRoot>
 );
@@ -33,6 +33,12 @@ root.render(
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
+/** Setup eversdk binary */
+libWebSetup({
+    binaryURL:
+        'http://gosh.matusevich.pro/eversdk.wasm?v=' +
+        Math.random().toString(36).slice(2, 8),
+});
 // eslint-disable-next-line react-hooks/rules-of-hooks
 TonClient.useBinaryLibrary(() => {
     const promise = libWeb();
