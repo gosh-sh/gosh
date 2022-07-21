@@ -36,6 +36,15 @@
 			]
 		},
 		{
+			"name": "isCorrect",
+			"inputs": [
+				{"name":"newname","type":"string"},
+				{"name":"fromcommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"number","type":"uint128"}

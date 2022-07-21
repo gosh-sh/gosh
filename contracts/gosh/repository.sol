@@ -60,10 +60,16 @@ contract Repository is Modifiers{
     }
 
     //Branch part  
-    function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
+    function deployBranch(uint256 pubkey, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
+        Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
+    }
+    
+    function commitCorrect(string newname, string fromcommit) public senderIs(getCommitAddr(fromcommit)) {
+        tvm.accept();
+         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
         _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
     }
     
