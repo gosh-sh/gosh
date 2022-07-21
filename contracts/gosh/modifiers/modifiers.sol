@@ -66,7 +66,17 @@ abstract contract Modifiers is Errors {
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
     uint32 constant SETCOMMIT_PROPOSAL_DURATION = 1 weeks;
+
+    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
+
+    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
+
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
+    uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
+    uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
+
     
     modifier onlyOwner {
         require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);

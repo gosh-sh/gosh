@@ -29,6 +29,7 @@ contract Repository is Modifiers{
     address _goshdao;
     string _head;
     mapping(string => Item) _Branches;
+    mapping(uint256 => bool) _protectedBranch;
 
     constructor(
         uint256 pubkey, 
@@ -128,8 +129,58 @@ contract Repository is Modifiers{
         tvm.accept();
         _head = nameBranch;
     }
+    
+    //Protected branch
+        
+    function addProtectedBranch(uint256 pubkey, string branch, uint128 index) public {
+        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        if (_protectedBranch[tvm.hash(branch)] == true) { return; }
+        _addProtectedBranch(branch);
+    }
+    
+    function deleteProtectedBranch(uint256 pubkey, string branch, uint128 index) public {
+        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        if (_protectedBranch.exists(tvm.hash(branch)) == false) { return; }
+        if (_protectedBranch[tvm.hash(branch)] == false) { return; }
+        _deleteProtectedBranch(branch);
+    }
+    
+    function _addProtectedBranch(string branch) private {
+        _protectedBranch[tvm.hash(branch)] = true;
+    }
+    
+    function _deleteProtectedBranch(string branch) private {
+        delete _protectedBranch[tvm.hash(branch)];
+    }
+    
+    function isNotProtected(uint256 pubkey, string branch, string commit, uint128 number, uint128 index) public view {
+        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        if (_protectedBranch.exists(tvm.hash(branch)) == false) { 
+            GoshWallet(msg.sender).isNotProtectedBranch{value: 0.23 ton, flag: 1}(_name, branch, commit, number); 
+        }
+        if (_protectedBranch[tvm.hash(branch)] == false) { 
+            GoshWallet(msg.sender).isNotProtectedBranch{value: 0.23 ton, flag: 1}(_name, branch, commit, number); 
+        }
+    }
 
     //Getters
+        
+    function isBranchProtected(string branch) external view returns(bool) {
+        if (_protectedBranch.exists(tvm.hash(branch)) == false) { 
+            return false; 
+        }
+        if (_protectedBranch[tvm.hash(branch)] == false) { 
+            return false;
+        }
+        return true;
+    }
+    
+    function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
+        return _protectedBranch;
+    }
 
     function getSnapCode(string branch) external view returns(TvmCell) {
         return GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);

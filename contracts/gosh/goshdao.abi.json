@@ -54,56 +54,6 @@
 			]
 		},
 		{
-			"name": "addProtectedBranch",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"reponame","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deleteProtectedBranch",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"reponame","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "isProtected",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"reponame","type":"string"},
-				{"name":"branch","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"number","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "isBranchProtected",
-			"inputs": [
-				{"name":"reponame","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
-			]
-		},
-		{
-			"name": "getProtectedBranch",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"map(uint256,bool)"}
-			]
-		},
-		{
 			"name": "getAddrWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
@@ -287,7 +237,6 @@
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_wallets","type":"map(uint256,address)"},
-		{"name":"_protectedBranch","type":"map(uint256,bool)"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
