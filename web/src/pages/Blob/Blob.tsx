@@ -4,7 +4,7 @@ import BranchSelect from '../../components/BranchSelect';
 import { IGoshRepository, TGoshTreeItem } from '../../types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { useMonaco } from '@monaco-editor/react';
-import { getCodeLanguageFromFilename, isMainBranch, ZERO_COMMIT } from '../../helpers';
+import { getCodeLanguageFromFilename, ZERO_COMMIT } from '../../helpers';
 import BlobPreview from '../../components/Blob/Preview';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -119,15 +119,14 @@ const BlobPage = () => {
                                         size: 'sm',
                                     }}
                                 />
-                                {!isMainBranch(branchName) &&
-                                    goshWallet?.isDaoParticipant && (
-                                        <Link
-                                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
-                                            className="text-extblack/60 hover:text-extblack p-1 ml-2"
-                                        >
-                                            <FontAwesomeIcon icon={faPencil} size="sm" />
-                                        </Link>
-                                    )}
+                                {!branch?.isProtected && goshWallet?.isDaoParticipant && (
+                                    <Link
+                                        to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
+                                        className="text-extblack/60 hover:text-extblack p-1 ml-2"
+                                    >
+                                        <FontAwesomeIcon icon={faPencil} size="sm" />
+                                    </Link>
+                                )}
                             </>
                         ) : (
                             <FileDownload

@@ -131,13 +131,13 @@ const DaoWalletPage = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            amount: smvBalance.smvBalance - smvBalance.smvLocked,
+                            amount: smvBalance.smvAvailable,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.smvBalance - smvBalance.smvLocked)
+                                .max(smvBalance.smvAvailable)
                                 .required('Field is required'),
                         })}
                         enableReinitialize

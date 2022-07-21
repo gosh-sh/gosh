@@ -17,6 +17,7 @@ import SmvBalance from '../../components/SmvBalance/SmvBalance';
 import { eventTypes, goshClient } from '../../helpers';
 import { EGoshError, GoshError } from '../../types/errors';
 import { toast } from 'react-toastify';
+import BranchEvent from './BranchEvent';
 
 type TFormValues = {
     approve: string;
@@ -116,6 +117,8 @@ const EventPage = () => {
                 className="mb-5 bg-gray-100"
             />
 
+            <div className="mb-4">Event details are reloaded automatically</div>
+
             {event.isFetching && (
                 <div className="text-gray-606060">
                     <Spinner className="mr-3" />
@@ -201,13 +204,13 @@ const EventPage = () => {
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount: smvBalance.smvBalance - smvBalance.smvLocked,
+                                amount: smvBalance.smvAvailable,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(smvBalance.smvBalance - smvBalance.smvLocked)
+                                    .max(smvBalance.smvAvailable)
                                     .required('Field is required'),
                             })}
                             enableReinitialize
@@ -277,6 +280,10 @@ const EventPage = () => {
                     branchName={event.details.params.branchName}
                     status={event.details.status}
                 />
+            )}
+            {(event.details?.params.proposalKind === EEventType.BRANCH_LOCK ||
+                event.details?.params.proposalKind === EEventType.BRANCH_UNLOCK) && (
+                <BranchEvent daoName={daoName} details={event.details} />
             )}
         </div>
     );

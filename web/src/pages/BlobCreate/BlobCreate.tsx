@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import TextField from '../../components/FormikForms/TextField';
 import { useMonaco } from '@monaco-editor/react';
-import { getCodeLanguageFromFilename, isMainBranch } from '../../helpers';
+import { getCodeLanguageFromFilename } from '../../helpers';
 import * as Yup from 'yup';
 import { Tab } from '@headlessui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -57,7 +57,7 @@ const BlobCreatePage = () => {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
             if (!repoName) throw new GoshError(EGoshError.NO_REPO);
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH);
-            if (isMainBranch(branchName))
+            if (branch.isProtected)
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 });

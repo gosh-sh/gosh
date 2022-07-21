@@ -109,6 +109,26 @@
 			]
 		},
 		{
+			"name": "getGoshAddProtectedBranchProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeleteProtectedBranchProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}

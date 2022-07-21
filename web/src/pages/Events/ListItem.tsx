@@ -26,31 +26,34 @@ const EventListItem = (props: TEventListItemProps) => {
                         {eventTypes[event.params.proposalKind]}
                     </Link>
                 </div>
-                <CopyClipboard
-                    className="text-gray-606060 text-sm"
-                    label={
-                        <>
-                            <FontAwesomeIcon
-                                icon={faHashtag}
-                                size="sm"
-                                className="mr-2"
-                            />
-                            {shortString(event.id || '')}
-                        </>
-                    }
-                    componentProps={{
-                        text: event.id || '',
-                    }}
-                />
-            </div>
-            {event.time && (
-                <div className="text-sm text-gray-606060 mt-1">
-                    <FontAwesomeIcon icon={faCalendarDays} className="mr-2" />
-                    {event.time.start.toLocaleString()}
-                    <span className="mx-1">-</span>
-                    {event.time.finish.toLocaleString()}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <CopyClipboard
+                        className="text-gray-606060 text-sm"
+                        label={
+                            <>
+                                <FontAwesomeIcon
+                                    icon={faHashtag}
+                                    size="sm"
+                                    className="mr-2"
+                                />
+                                {shortString(event.id || '')}
+                            </>
+                        }
+                        componentProps={{
+                            text: event.id || '',
+                        }}
+                    />
+
+                    {event.time && (
+                        <div className="text-sm text-gray-606060">
+                            <FontAwesomeIcon icon={faCalendarDays} className="mr-2" />
+                            {event.time.start.toLocaleString()}
+                            <span className="mx-1">-</span>
+                            {event.time.finish.toLocaleString()}
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
             <div>
                 {event.status && (
                     <span className="mr-3">

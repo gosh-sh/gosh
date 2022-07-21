@@ -12,14 +12,18 @@ import {
 } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
-import { getCodeLanguageFromFilename, getRepoTree, isMainBranch } from '../../helpers';
+import { getCodeLanguageFromFilename, getRepoTree } from '../../helpers';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import * as Yup from 'yup';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import Spinner from '../../components/Spinner';
 import SwitchField from '../../components/FormikForms/SwitchField';
-import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks';
+import {
+    useCommitProgress,
+    useGoshRepoBranches,
+    useSmvBalance,
+} from '../../hooks/gosh.hooks';
 import { userStateAtom } from '../../store/user.state';
 import {
     IGoshRepository,
@@ -47,6 +51,7 @@ const PullCreatePage = () => {
     const navigate = useNavigate();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
+    const smvBalance = useSmvBalance(goshWallet);
     const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
     const [compare, setCompare] = useState<
         {
@@ -234,11 +239,8 @@ const PullCreatePage = () => {
             });
             console.debug('Blobs', blobs);
 
-            if (isMainBranch(branchTo.name)) {
-                const smvLocker = await goshWallet.getSmvLocker();
-                const smvBalance = smvLocker.meta?.votesTotal || 0;
-                if (smvBalance < 20)
-                    throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
+            if (branchTo.isProtected && smvBalance.smvAvailable < 20) {
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
             }
 
             const message = [values.title, values.message]
@@ -260,7 +262,7 @@ const PullCreatePage = () => {
                 await goshWallet.deleteBranch(goshRepo, branchFrom.name);
             await updateBranches();
             navigate(
-                isMainBranch(branchTo.name)
+                branchTo.isProtected
                     ? `/${daoName}/events`
                     : `/${daoName}/${repoName}/tree/${branchTo.name}`,
                 { replace: true }
@@ -390,7 +392,7 @@ const PullCreatePage = () => {
                                             isDisabled={!monaco || isSubmitting}
                                             isSubmitting={isSubmitting}
                                             extraButtons={
-                                                !isMainBranch(branchFrom?.name) && (
+                                                !branchFrom?.isProtected && (
                                                     <Field
                                                         name="deleteBranch"
                                                         component={SwitchField}
