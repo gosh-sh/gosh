@@ -478,7 +478,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commit,
         uint128 numberChangedFiles
-    ) public view senderIs(_goshdao) {
+    ) public view senderIs(_buildRepositoryAddr(repoName)) {
         tvm.accept();
         _setCommit(repoName, branchName, commit, numberChangedFiles);
     }

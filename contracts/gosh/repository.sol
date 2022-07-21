@@ -158,11 +158,9 @@ contract Repository is Modifiers{
     function isNotProtected(uint256 pubkey, string branch, string commit, uint128 number, uint128 index) public view {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (_protectedBranch.exists(tvm.hash(branch)) == false) { 
-            GoshWallet(msg.sender).isNotProtectedBranch{value: 0.23 ton, flag: 1}(_name, branch, commit, number); 
-        }
         if (_protectedBranch[tvm.hash(branch)] == false) { 
             GoshWallet(msg.sender).isNotProtectedBranch{value: 0.23 ton, flag: 1}(_name, branch, commit, number); 
+            return;
         }
     }
 
