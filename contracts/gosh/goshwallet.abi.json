@@ -216,17 +216,6 @@
 			]
 		},
 		{
-			"name": "isNotProtectedBranch",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},

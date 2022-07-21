@@ -99,7 +99,13 @@ contract Repository is Modifiers{
     }
 
     //Diff part
-    function SendDiff(uint256 value1, uint128 index, string branch, address commit, uint128 number) public view {
+    function SendDiff(string branch, address commit, uint128 number) public view senderIs(address(this)){
+        tvm.accept();
+        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value, number);
+    }
+    
+    function SendDiffSmv(uint256 value1, uint128 index, string branch, address commit, uint128 number) public view {
         tvm.accept();
         require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -155,11 +161,11 @@ contract Repository is Modifiers{
         delete _protectedBranch[tvm.hash(branch)];
     }
     
-    function isNotProtected(uint256 pubkey, string branch, string commit, uint128 number, uint128 index) public view {
+    function isNotProtected(uint256 pubkey, string branch, address commit, uint128 number, uint128 index) public view {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (_protectedBranch[tvm.hash(branch)] == false) { 
-            GoshWallet(msg.sender).isNotProtectedBranch{value: 0.23 ton, flag: 1}(_name, branch, commit, number); 
+        if (_protectedBranch[tvm.hash(branch)] == false) {
+            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number); 
             return;
         }
     }
