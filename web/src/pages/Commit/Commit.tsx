@@ -3,9 +3,9 @@ import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { IGoshRepository, TGoshCommit } from 'web-common/lib/types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { getCommit, getCommitTime } from 'web-common/lib/helpers';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import CommitBlobs from './CommitBlobs';
 import { useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
 

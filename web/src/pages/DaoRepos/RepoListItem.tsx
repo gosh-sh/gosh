@@ -1,7 +1,7 @@
 import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import {
     TGoshBranch,
     TGoshRepoDetails,

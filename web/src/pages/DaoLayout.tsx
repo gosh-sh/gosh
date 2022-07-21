@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import Spinner from '../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { useGoshDao, useGoshWallet } from 'web-common/lib/hooks/gosh.hooks';
 import { userStatePersistAtom } from 'web-common/lib/store/user.state';
 import { IGoshDao, IGoshWallet, TUserStatePersist } from 'web-common/lib/types/types';

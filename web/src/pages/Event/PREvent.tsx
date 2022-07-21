@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import {
     getBlobAtCommit,
     getCommitTime,
@@ -15,13 +15,13 @@ import {
     TGoshDiff,
     TGoshTreeItem,
 } from 'web-common/lib/types/types';
-import BlobDiffPreview from '../../components/Blob/DiffPreview';
+import BlobDiffPreview from 'web-common/lib/components/Blob/DiffPreview';
 import { GoshCommit, GoshDiff, GoshRepository } from 'web-common/lib/types/classes';
 import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
 import { AccountType } from '@eversdk/appkit';
 import { Buffer } from 'buffer';
 import * as Diff from 'diff';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
 import { Link } from 'react-router-dom';
 

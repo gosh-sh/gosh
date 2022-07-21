@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import TextField from '../../components/FormikForms/TextField';
+import TextField from 'web-common/lib/components/FormikForms/TextField';
 import { Tab } from '@headlessui/react';
 import { classNames } from 'web-common/lib/utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons';
-import BlobEditor from '../../components/Blob/Editor';
+import BlobEditor from 'web-common/lib/components/Blob/Editor';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import { useMonaco } from '@monaco-editor/react';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
@@ -22,7 +22,7 @@ import {
     splitByPath,
     isMainBranch,
 } from 'web-common/lib/helpers';
-import BlobDiffPreview from '../../components/Blob/DiffPreview';
+import BlobDiffPreview from 'web-common/lib/components/Blob/DiffPreview';
 import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
 import { useRecoilValue } from 'recoil';
 import {
@@ -31,10 +31,10 @@ import {
     useGoshRepoTree,
 } from 'web-common/lib/hooks/gosh.hooks';
 import { userStateAtom } from 'web-common/lib/store/user.state';
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
+import RepoBreadcrumbs from 'web-common/lib/components/Repo/Breadcrumbs';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { Buffer } from 'buffer';
 import { GoshCommit, GoshSnapshot } from 'web-common/lib/types/classes';
 
@@ -260,6 +260,7 @@ const BlobUpdatePage = () => {
                                     <Tab.Panels className="-mt-[1px] border-t">
                                         <Tab.Panel>
                                             <BlobEditor
+                                                containerClassName="min-h-[500px]"
                                                 language={blobCodeLanguage}
                                                 value={values.content}
                                                 onChange={(value) =>

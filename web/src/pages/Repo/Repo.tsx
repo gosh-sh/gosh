@@ -15,11 +15,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useRecoilValue } from 'recoil';
 import { useGoshRepoBranches, useGoshRepoTree } from 'web-common/lib/hooks/gosh.hooks';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { isMainBranch, splitByPath } from 'web-common/lib/helpers';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Menu, Transition } from '@headlessui/react';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
 import { TGoshTreeItem } from 'web-common/lib/types/types';
 

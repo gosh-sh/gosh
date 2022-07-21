@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useRecoilValue } from 'recoil';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
 import { userStateAtom } from 'web-common/lib/store/user.state';
 import { GoshDao, GoshRepository, GoshWallet } from 'web-common/lib/types/classes';

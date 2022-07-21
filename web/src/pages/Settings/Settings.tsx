@@ -1,5 +1,5 @@
 import { useRecoilValue } from 'recoil';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { userStateAtom } from 'web-common/lib/store/user.state';
 import { shortString } from 'web-common/lib/utils';
 import { TUserState } from 'web-common/lib/types/types';

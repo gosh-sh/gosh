@@ -1,5 +1,5 @@
 import { ErrorMessage, FieldProps } from 'formik';
-import { classNames } from 'web-common/lib/utils';
+import { classNames } from '../../utils';
 
 export interface IBaseFieldProps extends FieldProps {
     className?: string;

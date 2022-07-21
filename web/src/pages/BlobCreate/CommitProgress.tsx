@@ -1,4 +1,4 @@
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { TCreateCommitCallbackParams } from 'web-common/lib/types/types';
 
 const Result = (props: any) => {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
-import Spinner from '../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import {
     useGoshRepo,
     useGoshWallet,

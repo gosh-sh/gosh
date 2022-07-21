@@ -9,7 +9,7 @@ import {
 } from 'web-common/lib/types/types';
 import RepoListItem from './RepoListItem';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { getPaginatedAccounts, goshClient } from 'web-common/lib/helpers';
 import { sleep } from 'web-common/lib/utils';
 

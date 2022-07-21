@@ -1,6 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
-
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 type TRepoPathProps = {
     daoName?: string;
@@ -9,7 +8,7 @@ type TRepoPathProps = {
     pathName?: string;
     pathOnly?: boolean;
     isBlob?: boolean;
-}
+};
 
 const RepoBreadcrumbs = (props: TRepoPathProps) => {
     const {
@@ -18,7 +17,7 @@ const RepoBreadcrumbs = (props: TRepoPathProps) => {
         branchName = 'main',
         pathName = '',
         pathOnly = false,
-        isBlob = true
+        isBlob = true,
     } = props;
 
     let path = pathName.split('/');
@@ -29,15 +28,18 @@ const RepoBreadcrumbs = (props: TRepoPathProps) => {
             {[repoName, ...path].map((path, index, array) => {
                 const part = index > 0 ? array.slice(1, index + 1).join('/') : '';
                 if (index > 0 && !path) return null;
-                if (!pathOnly && isBlob && index === array.length - 1) return (
-                    <React.Fragment key={index}>
-                        <span className="font-medium">{path}</span>
-                    </React.Fragment>
-                );
+                if (!pathOnly && isBlob && index === array.length - 1)
+                    return (
+                        <React.Fragment key={index}>
+                            <span className="font-medium">{path}</span>
+                        </React.Fragment>
+                    );
                 return (
                     <React.Fragment key={index}>
                         <Link
-                            to={`/${daoName}/${repoName}/tree/${branchName}${part && `/${part}`}`}
+                            to={`/${daoName}/${repoName}/tree/${branchName}${
+                                part && `/${part}`
+                            }`}
                             className="text-extblue font-medium hover:underline"
                         >
                             {path}
@@ -48,6 +50,6 @@ const RepoBreadcrumbs = (props: TRepoPathProps) => {
             })}
         </>
     );
-}
+};
 
 export default RepoBreadcrumbs;

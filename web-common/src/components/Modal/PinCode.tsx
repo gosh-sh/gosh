@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil';
-import { userStateAtom, userStatePersistAtom } from 'web-common/lib/store/user.state';
+import { userStateAtom, userStatePersistAtom } from '../../store/user.state';
 import { SHA256 } from 'crypto-js';
 import { Buffer } from 'buffer';
-import { chacha20, generateRandomBytes, goshClient } from 'web-common/lib/helpers';
-import { appModalStateAtom } from 'web-common/lib/store/app.state';
-import { TUserStatePersist } from 'web-common/lib/types/types';
+import { chacha20, generateRandomBytes, goshClient } from '../../helpers';
+import { appModalStateAtom } from '../../store/app.state';
 import { toast } from 'react-toastify';
 
 type TPinCodeModalProps = {
@@ -19,8 +18,7 @@ type TPinCodeModalProps = {
 const PinCodeModal = (props: TPinCodeModalProps) => {
     const { phrase, unlock, onUnlock } = props;
 
-    const [userStatePersist, setUserStatePersist] =
-        useRecoilState<TUserStatePersist>(userStatePersistAtom);
+    const [userStatePersist, setUserStatePersist] = useRecoilState(userStatePersistAtom);
     const setUserState = useSetRecoilState(userStateAtom);
     const setModal = useSetRecoilState(appModalStateAtom);
     const resetUserStatePersist = useResetRecoilState(userStatePersistAtom);
@@ -72,7 +70,16 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 onUnlock && onUnlock();
             }
         },
-        [phrase, unlock, tmp, onUnlock, setModal, setUserState, setUserStatePersist]
+        [
+            goshClient,
+            phrase,
+            unlock,
+            tmp,
+            onUnlock,
+            setModal,
+            setUserState,
+            setUserStatePersist,
+        ]
     );
 
     useEffect(() => {

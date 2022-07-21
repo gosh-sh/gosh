@@ -1,9 +1,9 @@
 import { Form, Formik, Field, ErrorMessage, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import TextareaField from '../../components/FormikForms/TextareaField';
+import TextareaField from 'web-common/lib/components/FormikForms/TextareaField';
 import { useResetRecoilState, useSetRecoilState } from 'recoil';
 import { useNavigate } from 'react-router-dom';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { appModalStateAtom } from 'web-common/lib/store/app.state';
 import PinCodeModal from '../../components/Modal/PinCode';
 import { userStatePersistAtom } from 'web-common/lib/store/user.state';

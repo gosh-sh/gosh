@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { getPaginatedAccounts, goshClient } from 'web-common/lib/helpers';
 import { useGoshRoot } from 'web-common/lib/hooks/gosh.hooks';
 import { userStateAtom } from 'web-common/lib/store/user.state';

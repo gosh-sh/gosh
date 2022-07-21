@@ -9,25 +9,25 @@ import {
     isMainBranch,
     ZERO_COMMIT,
 } from 'web-common/lib/helpers';
-import BlobPreview from '../../components/Blob/Preview';
+import BlobPreview from 'web-common/lib/components/Blob/Preview';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faMagnifyingGlass,
     faPencil,
     faFloppyDisk,
 } from '@fortawesome/free-solid-svg-icons';
-import CopyClipboard from '../../components/CopyClipboard';
-import Spinner from '../../components/Spinner';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
+import Spinner from 'web-common/lib/components/Spinner';
 import { useRecoilValue } from 'recoil';
 import {
     goshBranchesAtom,
     goshCurrBranchSelector,
 } from 'web-common/lib/store/gosh.state';
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
+import RepoBreadcrumbs from 'web-common/lib/components/Repo/Breadcrumbs';
 import { GoshCommit, GoshSnapshot } from 'web-common/lib/types/classes';
 import { useGoshRepoTree } from 'web-common/lib/hooks/gosh.hooks';
 import { Buffer } from 'buffer';
-import FileDownload from '../../components/FileDownload';
+import FileDownload from 'web-common/lib/components/FileDownload';
 
 const BlobPage = () => {
     const pathName = useParams()['*'];

@@ -1,15 +1,15 @@
 import { Field, Form, Formik } from 'formik';
 import { useOutletContext } from 'react-router-dom';
-import TextField from '../../components/FormikForms/TextField';
-import Spinner from '../../components/Spinner';
+import TextField from 'web-common/lib/components/FormikForms/TextField';
+import Spinner from 'web-common/lib/components/Spinner';
 import * as Yup from 'yup';
 import { useRecoilValue } from 'recoil';
 import { userStateAtom } from 'web-common/lib/store/user.state';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
-import SmvBalance from '../../components/SmvBalance/SmvBalance';
+import SmvBalance from 'web-common/lib/components/SmvBalance/SmvBalance';
 import { useSmvBalance } from 'web-common/lib/hooks/gosh.hooks';
 import { TUserState } from 'web-common/lib/types/types';
 

@@ -34,7 +34,7 @@ import EventPage from './pages/Event';
 
 import './assets/scss/style.scss';
 import BaseModal from './components/Modal/BaseModal';
-import Spinner from './components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { goshClient, ToastOptionsShortcuts } from 'web-common/lib/helpers';
 import { shortString } from 'web-common/lib/utils';
 

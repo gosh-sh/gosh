@@ -11,7 +11,7 @@ import {
     useSearchParams,
 } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import BlobDiffPreview from '../../components/Blob/DiffPreview';
+import BlobDiffPreview from 'web-common/lib/components/Blob/DiffPreview';
 import {
     getCodeLanguageFromFilename,
     getRepoTree,
@@ -21,8 +21,8 @@ import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import * as Yup from 'yup';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
-import Spinner from '../../components/Spinner';
-import SwitchField from '../../components/FormikForms/SwitchField';
+import Spinner from 'web-common/lib/components/Spinner';
+import SwitchField from 'web-common/lib/components/FormikForms/SwitchField';
 import { useCommitProgress, useGoshRepoBranches } from 'web-common/lib/hooks/gosh.hooks';
 import { userStateAtom } from 'web-common/lib/store/user.state';
 import {

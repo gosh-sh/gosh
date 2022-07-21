@@ -1,8 +1,8 @@
 import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
-import Spinner from '../../components/Spinner';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
+import Spinner from 'web-common/lib/components/Spinner';
 import { eventTypes } from 'web-common/lib/helpers';
 import { TGoshEventDetails } from 'web-common/lib/types/types';
 import { shortString } from 'web-common/lib/utils';

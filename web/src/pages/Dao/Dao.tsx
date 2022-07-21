@@ -1,5 +1,5 @@
 import { Link, useOutletContext, useParams } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
+import CopyClipboard from 'web-common/lib/components/CopyClipboard';
 import { shortString } from 'web-common/lib/utils';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import ReposPage from '../DaoRepos';

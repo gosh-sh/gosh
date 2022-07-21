@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Field, Form, Formik } from 'formik';
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import TextField from '../../components/FormikForms/TextField';
+import TextField from 'web-common/lib/components/FormikForms/TextField';
 import { useMonaco } from '@monaco-editor/react';
 import { getCodeLanguageFromFilename, isMainBranch } from 'web-common/lib/helpers';
 import * as Yup from 'yup';
@@ -10,8 +10,8 @@ import { Tab } from '@headlessui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons';
 import { classNames } from 'web-common/lib/utils';
-import BlobEditor from '../../components/Blob/Editor';
-import BlobPreview from '../../components/Blob/Preview';
+import BlobEditor from 'web-common/lib/components/Blob/Editor';
+import BlobPreview from 'web-common/lib/components/Blob/Preview';
 import FormCommitBlock from './FormCommitBlock';
 import { useRecoilValue } from 'recoil';
 import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
@@ -21,7 +21,7 @@ import {
     useGoshRepoTree,
 } from 'web-common/lib/hooks/gosh.hooks';
 import { userStateAtom } from 'web-common/lib/store/user.state';
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
+import RepoBreadcrumbs from 'web-common/lib/components/Repo/Breadcrumbs';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';
 import { TGoshBranch, TUserState } from 'web-common/lib/types/types';
@@ -217,6 +217,7 @@ const BlobCreatePage = () => {
                                 <Tab.Panels className="-mt-[1px] border-t">
                                     <Tab.Panel>
                                         <BlobEditor
+                                            containerClassName="min-h-[500px]"
                                             language={blobCodeLanguage}
                                             value={values.content}
                                             onChange={(value) =>

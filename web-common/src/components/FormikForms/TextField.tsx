@@ -1,4 +1,4 @@
-import { classNames } from 'web-common/lib/utils';
+import { classNames } from '../../utils';
 import BaseField, { IBaseFieldProps } from './BaseField';
 
 interface ITextFieldProps extends IBaseFieldProps {

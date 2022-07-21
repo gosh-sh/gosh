@@ -1,8 +1,8 @@
 import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import TextField from '../../components/FormikForms/TextField';
+import TextField from 'web-common/lib/components/FormikForms/TextField';
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { TDaoLayoutOutletContext } from '../DaoLayout';
 import { EGoshError, GoshError } from 'web-common/lib/types/errors';
 import { toast } from 'react-toastify';

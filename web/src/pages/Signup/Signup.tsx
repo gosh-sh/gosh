@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Form, Formik, Field } from 'formik';
 import * as Yup from 'yup';
-import TextareaField from '../../components/FormikForms/TextareaField';
-import SwitchField from '../../components/FormikForms/SwitchField';
+import TextareaField from 'web-common/lib/components/FormikForms/TextareaField';
+import SwitchField from 'web-common/lib/components/FormikForms/SwitchField';
 import { useResetRecoilState, useSetRecoilState } from 'recoil';
 import { useNavigate } from 'react-router-dom';
 import { appModalStateAtom } from 'web-common/lib/store/app.state';

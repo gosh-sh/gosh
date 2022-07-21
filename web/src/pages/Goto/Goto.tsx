@@ -6,7 +6,7 @@ import { useRecoilValue } from 'recoil';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { useGoshRepoTree } from 'web-common/lib/hooks/gosh.hooks';
 import { goshCurrBranchSelector } from 'web-common/lib/store/gosh.state';
-import Spinner from '../../components/Spinner';
+import Spinner from 'web-common/lib/components/Spinner';
 import { TGoshBranch, TGoshTreeItem } from 'web-common/lib/types/types';
 
 const GotoPage = () => {

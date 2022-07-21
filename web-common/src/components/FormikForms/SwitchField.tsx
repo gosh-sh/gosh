@@ -1,7 +1,7 @@
 import { Switch } from '@headlessui/react';
 
 import { IBaseFieldProps } from './BaseField';
-import { classNames } from 'web-common/lib/utils';
+import { classNames } from '../../utils';
 import { ErrorMessage } from 'formik';
 
 const SwitchField = (props: IBaseFieldProps) => {
