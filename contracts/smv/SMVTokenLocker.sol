@@ -24,6 +24,8 @@ address public static tokenRoot;
 /* uint256 public static nonce; */
 
 bool public lockerBusy;
+bool public platformIsInitializedFailed;
+bool public platformConstructorFailed;
 optional (address) public clientHead;
 uint128 public total_votes;
 uint128 public votes_locked;
@@ -85,6 +87,8 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     tvm.accept();
 
     lockerBusy = true;
+    platformIsInitializedFailed  = false;
+    platformConstructorFailed = false;
 
     TvmCell _dataInitCell = tvm.buildDataInit ( {contr: LockerPlatform,
                                                  varInit: {  tokenLocker: address(this),
@@ -268,6 +272,29 @@ function updateHead() external override check_account
         LockableBase(clientHead.get()).updateHead {value: 
                                      5*SMVConstants.VOTING_COMPLETION_FEE +                              
                                      3*SMVConstants.ACTION_FEE, flag: 1} ();
+    }
+}
+
+onBounce(TvmSlice body) external  {
+    uint32 functionId = body.decode(uint32);
+    if (functionId == tvm.functionId(LockableBase.isInitialized)) 
+    {
+       platformIsInitializedFailed = true;
+       if (platformConstructorFailed)
+       {
+            lockerBusy = false;
+            returnAllButInitBalance();
+       }
+    }
+    else
+    if (functionId == tvm.functionId(LockableBase))
+    {
+       platformConstructorFailed = true;
+       if (platformIsInitializedFailed)
+       {
+            lockerBusy = false;
+            returnAllButInitBalance();
+       }
     }
 }
 
