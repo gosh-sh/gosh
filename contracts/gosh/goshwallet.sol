@@ -501,7 +501,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName);
+        proposalBuilder.store(proposalKind, repoName, branchName, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION);
@@ -518,7 +518,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName);
+        proposalBuilder.store(proposalKind, repoName, branchName, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION);
