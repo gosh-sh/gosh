@@ -275,11 +275,10 @@ export const BranchesPage = () => {
                                         }}
                                         disabled={
                                             smvBalance.smvBusy ||
-                                            branchesBusy[branch.name].busy
+                                            branchesBusy[branch.name]?.busy
                                         }
                                     >
-                                        {smvBalance.smvBusy ||
-                                        branchesBusy[branch.name].lock ? (
+                                        {branchesBusy[branch.name]?.lock ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon
@@ -302,10 +301,11 @@ export const BranchesPage = () => {
                                         onClick={() => onBranchDelete(branch.name)}
                                         disabled={
                                             branch.isProtected ||
-                                            branchesBusy[branch.name].busy
+                                            branchesBusy[branch.name]?.busy ||
+                                            ['main', 'master'].indexOf(branch.name) >= 0
                                         }
                                     >
-                                        {branchesBusy[branch.name].delete ? (
+                                        {branchesBusy[branch.name]?.delete ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon icon={faTrash} size="sm" />
