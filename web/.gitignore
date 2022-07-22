@@ -25,4 +25,4 @@ yarn-error.log*
 contracts*.sh
 
 node_modules
-*cache*
+rim.cache.json
