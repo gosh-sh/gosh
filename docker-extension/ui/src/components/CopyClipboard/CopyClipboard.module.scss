@@ -1,0 +1,23 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.flex {
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.close {
+    margin-top: -5px !important;
+    margin-right: -8px !important;
+    margin-left: .5rem !important;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+.toast {
+    &, & > *, & > * > * {
+        margin-left: auto;
+    }   
+}

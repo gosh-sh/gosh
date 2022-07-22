@@ -16,7 +16,7 @@ import "../smv/TokenRootOwner.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "0.4.1";
+    string constant version = "0.5.1";
     
     uint128 _limit_wallets = 1;
     uint128 _limit_time = 30;
@@ -151,8 +151,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _limit_messages = limit_messages;
         getMoney();
     }
+    
+    function getAddrWalletIn(uint256 pubkey, uint128 index) private view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
-    //Getters
+    //Getters    
     function getAddrWallet(uint256 pubkey, uint128 index) external view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         return address.makeAddrStd(0, tvm.hash(s1));

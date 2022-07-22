@@ -1,0 +1,161 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.toast-container {
+  position: fixed !important;
+  bottom: 0;
+  right: 0;
+  z-index: 100;
+
+  .toast {
+    z-index: 1000;
+    min-width: 250px;
+    max-width: 100%;
+    font-size: 0.875rem;
+    pointer-events: auto;
+    background-clip: padding-box;
+    border: none;
+    border-radius: 1rem;
+    @include transition(0.3s);
+    background: rgba($gray, 80%);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+
+    * {
+      text-align: left;
+    }
+
+    .qr-code > svg {
+      height: 100%;
+      width: auto;
+      margin-right: 1rem;
+    }
+
+    &.toast-primary {
+      background: rgba($main, 95%);
+      color: white;
+
+      button {
+        background-color: #ffffff;
+        color: $main;
+
+        svg {
+          color: $main;
+        }
+      }
+    }
+
+    &.toast-light {
+      background: rgba($white, 85%);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      color: $dark;
+
+      button {
+        &, &:focus, &:active {
+          &, &:hover, &:focus, &:active {
+            @include transition(0.15s);
+            background-color: $dark;
+            color: $white;
+          }
+        }
+        &:hover {
+          &, &:hover, &:focus, &:active {
+            @include transition(0.3s);
+            background-color: $main;
+            color: $white;
+          }
+        }
+
+        svg {
+          color: $white;
+        }
+      }
+    }
+
+    &.toast-dark {
+      background: rgba($dark, 85%);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      color: white;
+
+      button {
+        &, &:focus, &:active {
+          &, &:hover, &:focus, &:active {
+            @include transition(0.15s);
+            background-color: $white;
+            color: $dark;
+          }
+        }
+        &:hover {
+          &, &:hover, &:focus, &:active {
+            @include transition(0.3s);
+            background-color: $main;
+            color: $dark;
+          }
+        }
+
+        svg {
+          color: $dark;
+        }
+      }
+    }
+
+    .toast-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      background: none !important;
+      background-clip: padding-box;
+      border: none;
+      color: inherit;
+      padding: 0;
+
+      span {
+        flex-grow: 10;
+      }
+
+      button {
+        flex-grow: 0;
+        padding: 0;
+        line-height: 1rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: .5rem;
+        line-height: .75rem;
+        margin-left: 1.25rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+
+        svg {
+          width: .53rem;
+          height: .53rem;
+
+          * {
+            stroke-width: 3px;
+          }
+        }
+
+        &, &:hover, &:focus, &:active {
+          &, &:hover, &:focus, &:active {
+            border: none !important;
+            outline: none !important;
+          }
+        }
+      }
+    }
+    .toast-body {
+      padding: 0;
+      padding-top: .3rem;
+      word-wrap: break-word;
+
+      a {
+        color: inherit;
+      }
+    }
+  }
+}

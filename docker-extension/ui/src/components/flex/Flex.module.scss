@@ -1,0 +1,18 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+
+.flex-container {
+  display: flex;
+  flex-direction: row;
+
+  &.flex-container-row {
+    flex-direction: row;
+  }
+  &.flex-container-column {
+    flex-direction: column;
+  }
+  &.flex-container-column {
+    flex-direction: column;
+  }
+}

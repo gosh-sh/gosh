@@ -1,0 +1,58 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.modal-branches {
+    min-height: 400px;
+    font-weight: 700;
+}
+.branch-name {
+    height: 24px;
+    padding: 0.375rem .875rem;
+    background-color: $white;
+    width: auto !important;
+}
+.branch-fork {
+    z-index: 200;
+
+    & > div {
+        height: 32px;
+        font-weight: 500;
+    }
+    & > ul {
+        top: 52px !important;
+    }
+}
+.branch-chevron {
+    margin: 0 .25rem;
+    &, * {
+        fill: #9a9db1;
+        color: #9a9db1;
+    }
+}
+.branch-button {
+    margin-left: 1rem !important;
+    height: 38px;
+
+    svg {
+        width: 40px;
+        height: 40px;
+        transform: scale(.6);
+    }
+}
+.new-branch {
+    margin-bottom: 1rem;
+}
+.branches-list {
+    margin-top: .75rem;
+    
+    & > * {
+        padding: .75rem 0;
+    }
+    .branches-list-branch {
+        font-weight: 500;
+        * {
+
+            color: $dark;
+        }
+    }
+}

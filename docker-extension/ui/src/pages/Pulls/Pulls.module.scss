@@ -1,0 +1,48 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.repository-actions {
+  & > * {
+    margin-right: 1rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+  .repository-action {
+    color: rgba($dark, 0.7);
+
+    * {
+      display: inline-block;
+    }
+
+    span {
+      color: $dark;
+      font-size1: 14px;
+      font-weight: 600;
+      margin-right: .25rem;
+      
+      svg {
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
+        margin-top: -2px;
+        stroke-width: 0.15rem;
+      }
+      .my-icon {
+        &, * {
+          stroke-width: 0.13rem;
+        }
+      }
+    }
+  }
+}
+.tree {
+  padding-top: 24px;
+  flex-grow: 1;
+}
+.button-create {
+  &:disabled {
+    background-color: #65688833 !important;
+  }
+}

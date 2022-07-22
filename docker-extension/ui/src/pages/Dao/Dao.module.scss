@@ -1,0 +1,30 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.address {
+    margin-top: .75rem;
+    font-weight: 700;
+}
+.wallet-address {
+    margin-top: 1.75rem;
+    position: relative;
+}
+.wallet-address-copy-wrapper {
+    position: relative;
+
+    div:first-child {
+        background-color: #e9ecf0 !important;
+        margin-top: .5rem;
+    }
+    input {
+        color: $dark !important;
+        padding-right: 25px;
+        -webkit-text-fill-color: $dark !important;
+    }
+
+    button {
+        position: absolute;
+        top: 1.0625rem;
+        right: .75rem;
+    }
+}

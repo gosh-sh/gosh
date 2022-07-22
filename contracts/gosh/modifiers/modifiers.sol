@@ -9,11 +9,16 @@ pragma ton-solidity >=0.61.2;
 import "errors.sol";
 
 //Structs
+struct TreeAnswer {
+    address sender;
+    bool isCommit;
+}
+
 struct Request {
     address answer;
     string fullPath;
     string lastPath;
-    string sha;
+    uint256 sha;
 }
 
 struct TreeObject {
@@ -22,6 +27,7 @@ struct TreeObject {
     string typeObj;
     string name;
     string sha1;
+    uint256 sha256;
 }
 
 struct Diff {
@@ -29,13 +35,12 @@ struct Diff {
     string commit;
     optional(bytes) patch;
     optional(string) ipfs;
+    string sha1;
 }
 
 struct Item {
     string key;
     address value;
-    uint128 deployed;
-    uint128 need;
 }
 
 struct GlobalConfig {
@@ -43,10 +48,10 @@ struct GlobalConfig {
 }
 
 abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.4.1";
+    string constant versionModifiers = "0.5.1";
     
     //Deploy constants
-    uint128 constant FEE_DEPLOY_DAO = 100 ton;
+    uint128 constant FEE_DEPLOY_DAO = 11000 ton;
     uint128 constant FEE_DEPLOY_REPO = 15 ton;
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
@@ -56,12 +61,22 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
-    uint128 constant FEE_DEPLOY_TREE = 1.7 ton;
+    uint128 constant FEE_DEPLOY_TREE = 18 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
     uint32 constant SETCOMMIT_PROPOSAL_DURATION = 1 weeks;
+
+    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
+
+    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
+
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
+    uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
+    uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
+
     
     modifier onlyOwner {
         require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);

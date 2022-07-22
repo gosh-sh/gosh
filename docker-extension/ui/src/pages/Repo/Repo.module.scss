@@ -1,0 +1,131 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.repository-actions {
+  margin-top: -2.5px;
+
+  & > * {
+    margin-right: 1.5rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+  .repository-action {
+    color: rgba($dark, 0.7);
+
+    * {
+      display: inline-block;
+    }
+
+    span {
+      color: $dark;
+      font-size1: 14px;
+      font-weight: 600;
+      margin-right: .25rem;
+      
+      svg {
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
+        margin-top: -2px;
+        stroke-width: 0.15rem;
+      }
+      .my-icon {
+        &, * {
+          stroke-width: 0.13rem;
+        }
+      }
+    }
+  }
+}
+.tree {
+  padding-top: 24px;
+  flex-grow: 1;
+}
+.tree-files {
+  border-radius: 5px;
+  border: 0.07rem solid #e8e9ee;
+
+  .tree-files-item {
+    padding: .375rem .5rem;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 0.07rem solid #e8e9ee;
+    @include transition(0.2s);
+
+    a {
+      color: $dark;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: $surf-gray-background-alt;
+
+      a {
+        color: $main;
+      }
+    }
+  }
+}
+.button-actions {
+  & > * {
+    display: inline-block;
+    margin-left: .75rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+  .button-default {
+    background-color: #e8e9ee;
+    color: $dark;
+
+    svg {
+      color: $main;
+    }
+  }
+}
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+  top: 40px;
+  right: 0;
+
+  .gosh-clone-paper {
+    padding: 16px;
+    background-color: $white;
+    border-radius: 6px !important;
+    overflow: hidden;
+    box-shadow: 0px 7px 9px -4px rgb(0 0 30 / 10%), 0px 14px 21px 2px rgb(0 0 30 / 7%), 0px 15px 26px 4px rgb(0 0 40 / 8%);
+    position: relative;
+
+    button {
+      position: absolute;
+      top: 1.75rem;
+      right: 2rem;
+    }
+    .clone-field textarea {
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      border-radius: 5px !important;
+      border: 1px solid #e3e4e9;
+      background-color: #f1f1f5;
+      padding: 12px 16px;
+      width: 300px;
+      word-wrap: break-word;
+      text-align: left;
+      font-size: 14px;
+      min-height: 94px;
+      overflow: hidden;
+      resize: none;
+      -webkit-resize: none;
+      height: min-content;
+      outline: none !important;
+    }
+  }
+}

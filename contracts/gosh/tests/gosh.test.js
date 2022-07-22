@@ -50,7 +50,7 @@ describe('Gosh contract test', function () {
             dao1.keys = keys;
         });
 
-        it('dao1 Create goshWallet. @deploy', async function () {
+        it('dao1 create goshWallet. @deploy', async function () {
             // keys user
             const keys = await helper.makeKeypair();
             wallet1 = await helper.deployWallet(dao1, keys.public);
@@ -86,7 +86,7 @@ describe('Gosh contract test', function () {
             assert.equal(commitData.content, '');
         });
 
-        it('Testing push data into repo (commit-tree-blob)', async function () {
+        it('Testing push data into repo (commit-tree-snapshot/diff)', async function () {
             // replenishment of the wallet-contract balance
             await helper.sendGrams(wallet1.address, 1000e9);
             assert(1000 <= (await helper.getBalance(wallet1.address)));
@@ -116,46 +116,6 @@ describe('Gosh contract test', function () {
             assert.equal(objects.commit1.content, rezCommit1.content);
             assert(objects.commit1.parents, rezCommit1.parents);
 
-            const tree1_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.tree1_1.commit,
-                branch,
-                objects.tree1_1.blobName,
-                objects.tree1_1.fullBlob,
-                objects.tree1_1.ipfsBlob,
-                objects.tree1_1.prevSha,
-                objects.tree1_1.flags
-            );
-
-            // ? verify push data
-            const rezTree1_1 = await helper.getBlob(tree1_1)
-            assert.equal(objects.tree1_1.blobName, rezTree1_1.output.sha);
-            assert.equal(objects.tree1_1.fullBlob, rezTree1_1.output.content);
-            assert.equal(objects.tree1_1.ipfsBlob, rezTree1_1.output.ipfs);
-            assert.equal(objects.tree1_1.prevSha, (await helper.getprevSha(tree1_1)).output.value0);
-
-            const blob1_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.blob1_1.commit,
-                branch,
-                objects.blob1_1.blobName,
-                objects.blob1_1.fullBlob,
-                objects.blob1_1.ipfsBlob,
-                objects.blob1_1.prevSha,
-                objects.blob1_1.flags
-            );
-
-            // ? verify push data
-            const rezBlob1_1 = await helper.getBlob(blob1_1)
-            assert.equal(objects.blob1_1.blobName, rezBlob1_1.output.sha);
-            assert.equal(objects.blob1_1.fullBlob, rezBlob1_1.output.content);
-            assert.equal(objects.blob1_1.ipfsBlob, rezBlob1_1.output.ipfs);
-            assert.equal(objects.blob1_1.prevSha, (await helper.getprevSha(blob1_1)).output.value0);
-
             const commit2 = await helper.deployCommit(
                 wallet1,
                 repo1,
@@ -172,46 +132,6 @@ describe('Gosh contract test', function () {
             assert.equal(objects.commit2.content, rezCommit2.content);
             assert(objects.commit2.parents, rezCommit2.parents);
 
-            const tree2_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.tree2_1.commit,
-                branch,
-                objects.tree2_1.blobName,
-                objects.tree2_1.fullBlob,
-                objects.tree2_1.ipfsBlob,
-                objects.tree2_1.prevSha,
-                objects.tree2_1.flags
-            );
-
-            // ? verify push data
-            const rezTree2_1 = await helper.getBlob(tree2_1)
-            assert.equal(objects.tree2_1.blobName, rezTree2_1.output.sha);
-            assert.equal(objects.tree2_1.fullBlob, rezTree2_1.output.content);
-            assert.equal(objects.tree2_1.ipfsBlob, rezTree2_1.output.ipfs);
-            assert.equal(objects.tree2_1.prevSha, (await helper.getprevSha(tree2_1)).output.value0);
-
-            const blob2_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.blob2_1.commit,
-                branch,
-                objects.blob2_1.blobName,
-                objects.blob2_1.fullBlob,
-                objects.blob2_1.ipfsBlob,
-                objects.blob2_1.prevSha,
-                objects.tree2_1.flags
-            );
-
-            // ? verify push data
-            const rezBlob2_1 = await helper.getBlob(blob2_1)
-            assert.equal(objects.blob2_1.blobName, rezBlob2_1.output.sha);
-            assert.equal(objects.blob2_1.fullBlob, rezBlob2_1.output.content);
-            assert.equal(objects.blob2_1.ipfsBlob, rezBlob2_1.output.ipfs);
-            assert.equal(objects.blob2_1.prevSha, (await helper.getprevSha(blob2_1)).output.value0);
-
             const commit3 = await helper.deployCommit(
                 wallet1,
                 repo1,
@@ -227,46 +147,6 @@ describe('Gosh contract test', function () {
             assert.equal(objects.commit3.sha, rezCommit3.sha);
             assert.equal(objects.commit3.content, rezCommit3.content);
             assert(objects.commit3.parents, rezCommit3.parents);
-
-            const tree3_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.tree3_1.commit,
-                branch,
-                objects.tree3_1.blobName,
-                objects.tree3_1.fullBlob,
-                objects.tree3_1.ipfsBlob,
-                objects.tree3_1.prevSha,
-                objects.tree3_1.flags
-            );
-
-            // ? verify push data
-            const rezTree3_1 = await helper.getBlob(tree3_1)
-            assert.equal(objects.tree3_1.blobName, rezTree3_1.output.sha);
-            assert.equal(objects.tree3_1.fullBlob, rezTree3_1.output.content);
-            assert.equal(objects.tree3_1.ipfsBlob, rezTree3_1.output.ipfs);
-            assert.equal(objects.tree3_1.prevSha, (await helper.getprevSha(tree3_1)).output.value0);
-
-            const blob3_1 = await helper.deployBlob(
-                wallet1,
-                repo1,
-                repo1.name,
-                objects.blob3_1.commit,
-                branch,
-                objects.blob3_1.blobName,
-                objects.blob3_1.fullBlob,
-                objects.blob3_1.ipfsBlob,
-                objects.blob3_1.prevSha,
-                objects.tree2_1.flags
-            );
-
-            // ? verify push data
-            const rezBlob3_1 = await helper.getBlob(blob3_1)
-            assert.equal(objects.blob3_1.blobName, rezBlob3_1.output.sha);
-            assert.equal(objects.blob3_1.fullBlob, rezBlob3_1.output.content);
-            assert.equal(objects.blob3_1.ipfsBlob, rezBlob3_1.output.ipfs);
-            assert.equal(objects.blob3_1.prevSha, (await helper.getprevSha(blob3_1)).output.value0);
         });
 
         it('test: create and delete a repository, check the balance at each step', async function () {
@@ -344,8 +224,8 @@ describe('Gosh contract test', function () {
         });
     });
 
-    describe('Print data for testing', function () {
-        it('Print data for testing. @deploy', async function () {
+    describe('Print data', function () {
+        it('Print data. @deploy', async function () {
             console.log('*******************************************************************************************')
             console.log('Gosh address:', gosh.address);
             console.log('Gosh keys:', gosh.keys);
@@ -358,7 +238,7 @@ describe('Gosh contract test', function () {
                 address: wallet1.address,
                 keys: wallet1.keys
             }
-            console.log(JSON.stringify(wallet ));
+            console.log(JSON.stringify(wallet));
             console.log('repository:', repo1.address);
         });
     });

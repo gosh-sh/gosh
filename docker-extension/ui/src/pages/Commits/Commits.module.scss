@@ -1,0 +1,99 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.repository-actions {
+  margin-top: .5px;
+
+  & > * {
+    margin-right: 1.5rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+  .repository-action {
+    color: rgba($dark, 0.7);
+
+    * {
+      display: inline-block;
+    }
+
+    span {
+      color: $dark;
+      font-size1: 14px;
+      font-weight: 600;
+      margin-right: .25rem;
+      
+      svg {
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
+        margin-top: -2px;
+        stroke-width: 0.15rem;
+      }
+      .my-icon {
+        &, * {
+          stroke-width: 0.13rem;
+        }
+      }
+    }
+  }
+}
+.tree {
+  padding-top: 24px;
+  flex-grow: 1;
+}
+.commit {
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 5px;
+    border: 0.07rem solid #e8e9ee;
+    @include transition(0.2s);
+
+    &:hover {
+
+    }
+}
+.commit-meta {
+    display: flex;
+    margin-top: .25rem;
+    flex-direction: row;
+    font-size: 14px;
+
+    & > * {
+        margin-right: .7rem;
+    }
+
+    span {
+        margin-right: .5rem;
+    }
+    button {
+        transform: translateX(-5px);
+        width: 28px;
+        height: 28px;
+
+        svg {
+            transform: scale(1.3);
+        }
+    }
+}
+.commit-meta-right {
+    a {
+        color: $dark;
+    }
+    button {
+        transform: translateX(-2px) translateY(2px);
+        width: 28px;
+        height: 28px;
+
+        svg {
+            transform: scale(1.3);
+        }
+    }
+}
+.commit-title {
+    font-size: 15px;
+    font-weight: 600;
+}

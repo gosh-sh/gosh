@@ -1,0 +1,34 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.close {
+    position: absolute !important;
+    right: 18px !important;
+    top: 18px !important;
+}
+.modal {
+    min-width: 400px;
+    border-radius1: 0.75rem !important;
+
+    [role="dialog"] {
+        min-width: 400px;
+        padding: 2rem;
+        border-radius: 0.75rem !important;
+        box-sizing: border-box;
+    }
+    button[aria-label="close"] {
+        margin-top1: 2rem;
+    }
+}
+.modal-wide {
+    [role="dialog"] {
+        min-width: 500px;
+    }
+}
+.modal-fullscreen {
+    [role="dialog"] {
+        padding: 1.5rem;
+        padding-top: 3rem;
+        border-radius: 0 !important;
+    }
+}

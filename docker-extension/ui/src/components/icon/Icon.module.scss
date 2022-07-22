@@ -1,0 +1,132 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.btn {
+  height: 40px;
+  padding: 0.4rem 0.75rem;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.btn-icon {
+  padding-right: 2rem;
+
+  &:after {
+    content: '';
+    background-repeat: no-repeat;
+    background-position: center -2px;
+    width: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    height: 16px;
+    margin-left: 8px;
+    @include transition(0.15s);
+  }
+}
+.btn-primary {
+  background-color: $surf-cobalt;
+  border-color: $surf-cobalt;
+  &:hover {
+   background-color: desaturate(darken($surf-cobalt, 10), 15);
+   border-color: desaturate(darken($surf-cobalt, 10), 15);
+  }
+  &:focus, &:active {
+    &, &:hover, &:focus, &:active {
+      background-color: desaturate(darken($surf-cobalt, 10), 15);
+      border-color: desaturate(darken($surf-cobalt, 10), 15);
+    }
+  }
+  &, &:hover, &:focus, &:active {
+  }
+}
+.btn-default {
+  background-color: $gray-200;
+  border-color: $gray-200;
+  font-size: 20px;
+  font-weight: 600;
+
+  &:hover {
+   background-color: desaturate(darken($gray-200, 10), 15);
+   border-color: desaturate(darken($gray-200, 10), 15);
+  }
+}
+.btn-icon-arrow-right {
+  &:after {
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.75 8H13.25' stroke='%23FDFDFD' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M8 2.75L13.25 8L8 13.25' stroke='%23FDFDFD' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+  }
+  &:hover:after {
+    @include transition(0.35s);
+    transform: translateX(3px);
+  }
+}
+.btn-icon-arrow-up-right {
+  &:after {
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.5 4.5L4.5 11.5' stroke='%2320262A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M11.5 11.5V4.5H4.5' stroke='%2320262A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+  }
+  &:hover:after {
+    @include transition(0.35s);
+    transform: translateX(-3px);
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.5 4.5L4.5 11.5' stroke='%233888FF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M11.5 11.5V4.5H4.5' stroke='%233888FF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+  }
+}
+
+.dropdown-toggle {
+  &:after {
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 6L8 11L13 6' stroke='%2320262A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+    content: '';
+    background-repeat: no-repeat;
+    background-position: center -2px;
+    width: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    height: 16px;
+    margin-left: 8px;
+    @include transition(0.15s);
+    border: none;
+  }
+
+  &:hover:after {
+    @include transition(0.35s);
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 6L8 11L13 6' stroke='%233888FF' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+  }
+}
+
+.dropdown-menu {
+  border-radius: 10px;
+  border: none;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: 0 1px 2px 0 rgba(61,75,91,0.03),  0 2px 5px 0 rgba(61,75,91,0.05), 0 5px 12px 0 rgba(33,39,56,0.06), 0 15px 30px 0 rgba(33,39,56,0.1);
+
+  .dropdown-item {
+    padding: 0.5rem 1rem;
+
+    &:first-child {
+      padding-top: 0.75rem;
+    }
+
+    &:last-child {
+      padding-bottom: 0.75rem;
+    }
+    
+    &:hover {
+      background-color: #F7F8FA;
+    }
+  }
+}
+
+.btn-lg {
+  height: 56px;
+  min-width: 132px;
+  font-size: 1.075rem;
+  letter-spacing: -.02rem;
+  border-radius: 12px;
+}
+
+.btn-xl {
+  height: 62px;
+  min-width: 180px;
+  font-size: 1.075rem;
+  letter-spacing: -.02rem;
+  border-radius: 12px;
+}

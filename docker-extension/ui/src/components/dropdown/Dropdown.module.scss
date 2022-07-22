@@ -1,0 +1,88 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+
+.dropdown {
+  position: relative; 
+  padding: 0.5rem;
+
+  &.nav-dropdown {
+    & > a {
+      color: white;
+      @include transition(0.15s);
+
+      &:after {
+        content: none;
+      }
+
+      &:hover {
+        &, &:focus, &:active, &:hover {
+          color: rgba($white, .7);
+        }
+      }
+
+      &, &:focus, &:active, &:hover {
+        outline: none;
+      }
+      &[aria-expanded="true"] {
+        color: transparent;
+        @include transition(0.05s);
+      }
+    }
+    [aria-disabled="true"], .disabled {
+      &, &:focus, &:active, &:hover {
+        color: rgba($white, .3);
+        cursor: default;
+      }
+    }
+    .disabled {
+      color: rgba($white, .3);
+    }
+    & > div {
+      background-color: transparent;
+      box-shadow: none;
+      border: none;
+      margin-top: 0;
+      margin: 0;
+      top: -.25rem;
+      left: -.5rem;
+      box-shadow1: 0px 32px 48px rgba(22, 26, 29, 0.5);
+      padding: .75rem .75rem 0;
+      background1: lighten($dark-alt, 0%);
+      border-radius: 1rem;
+
+      &, * {
+        color: white;
+      }
+
+      & > * {
+        margin-bottom: 1rem;
+        padding: 0 .25rem;
+        border-radius: .125rem;
+
+
+
+        &:focus, &:focus-visible {
+          &, &:focus, &:active, &:hover {
+            background-color: transparent;
+            border-width: 0;
+            outline: 2px solid rgba($main, 0.5);
+          }
+        }
+        &:active {
+          &, &:focus, &:active, &:hover {
+            background-color: transparent;
+            color: rgba($white, .7);
+            outline: none;
+          }
+        }
+        &:hover {
+          &, &:focus, &:active, &:hover {
+            background-color: transparent;
+            color: rgba($white, .7);
+          }
+        }
+      }
+    }
+  }
+}

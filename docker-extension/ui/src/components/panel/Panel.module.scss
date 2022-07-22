@@ -1,0 +1,44 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.panel {
+  flex-grow: 1;
+  min-height: 175px;
+  background: $dark-alt;
+  border-radius: 1rem;
+  text-align: left;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  .panel-header {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 2rem 2rem 0;
+    line-height: 1.5rem !important;
+    height: 56px;
+    color: $white;
+
+    a {
+      color: $gray;
+
+      &:hover, &:active {
+        color: $white;
+      }
+    }
+    svg {
+      vertical-align: middle;
+    }
+  }
+
+  .panel-body {
+    padding: 2rem;
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header + .panel-body {
+    padding-top: 1.75rem;
+  }
+}

@@ -1,0 +1,51 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.skeleton {
+  height: 10px;
+  border-radius: 5px;
+  width: auto;
+  display: inline-block;
+
+  &.skeleton-normal {
+    background-color: rgba($dark-gray, .4);
+  }
+  &.skeleton-primary {
+    background-color: rgba($dark-gray, .8);
+  }
+  &.skeleton-green {
+    background-color: rgba($green, .3);
+  }
+  &.skeleton-red {
+    background-color: rgba($red, .3);
+  }
+
+  &.skeleton-height-large {
+    height: 15px;
+    border-radius: 8px;
+  }
+
+  &.skeleton-width-normal {
+    width: 90px;
+
+    @media (max-width: 300px) {
+      width: 70px;
+    }
+  }
+
+  &.skeleton-width-half {
+    width: 50px;
+
+    @media (max-width: 300px) {
+      width: 40px;
+    }
+  }
+
+  &.skeleton-width-triplet {
+    width: 30px;
+    
+    @media (max-width: 300px) {
+      width: 20px;
+    }
+  }
+}
