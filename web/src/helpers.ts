@@ -32,7 +32,10 @@ export const MAX_ONCHAIN_DIFF_SIZE = 15000;
 export const goshClient = new TonClient({
     network: {
         endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
-        queries_protocol: NetworkQueriesProtocol.WS,
+        queries_protocol:
+            process.env.REACT_APP_ISDOCKEREXT === 'true'
+                ? NetworkQueriesProtocol.HTTP
+                : NetworkQueriesProtocol.WS,
     },
 });
 export const goshDaoCreator = new GoshDaoCreator(
