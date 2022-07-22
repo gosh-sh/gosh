@@ -7,8 +7,8 @@
         "start": "react-scripts start",
         "build:dev": "dotenv -e .env.development react-scripts build",
         "build:prod": "dotenv -e .env.production react-scripts build",
-        "build:dockerdev": "dotenv -e .env.docker.development react-scripts build",
-        "build:dockerprod": "dotenv -e .env.docker.production react-scripts build",
+        "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.development' -s 'rim.cache.json' dotenv -e .env.docker.development react-scripts build",
+        "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
