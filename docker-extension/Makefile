@@ -1,6 +1,6 @@
-IMAGE?=teamgosh/docker-extension
+IMAGE?=teamgosh-docker-extension
 #IMAGE?=teamgosh-docker-extension
-TAG?=1.0.2
+TAG?=2.0.2
 LOCAL_TEMP_DIR=./.tmp
 
 PLATFORM             ?= linux/amd64,linux/arm/v7,linux/arm64
