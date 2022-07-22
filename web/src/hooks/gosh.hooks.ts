@@ -211,7 +211,6 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
         smvBalance: 0,
         smvLocked: 0,
         smvBusy: false,
-        smvAvailable: 0,
     });
 
     useEffect(() => {
@@ -225,10 +224,9 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
             setDetails((state) => ({
                 ...state,
                 balance,
-                smvBalance: details.tokens.total,
+                smvBalance: details.tokens.total - details.tokens.locked,
                 smvLocked: details.tokens.locked,
                 smvBusy: details.isBusy,
-                smvAvailable: details.tokens.total - details.tokens.locked,
             }));
         };
 

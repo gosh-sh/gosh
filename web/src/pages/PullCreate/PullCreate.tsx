@@ -239,8 +239,10 @@ const PullCreatePage = () => {
             });
             console.debug('Blobs', blobs);
 
-            if (branchTo.isProtected && smvBalance.smvAvailable < 20) {
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
+            if (branchTo.isProtected) {
+                if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+                if (smvBalance.smvBalance < 20)
+                    throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
             }
 
             const message = [values.title, values.message]

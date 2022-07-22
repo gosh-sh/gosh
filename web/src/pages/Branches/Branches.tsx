@@ -53,7 +53,7 @@ export const BranchesPage = () => {
             if (!repoName) throw new GoshError(EGoshError.NO_REPO);
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
-            if (smvBalance.smvAvailable < 20)
+            if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
 
             await goshWallet.startProposalForAddProtectedBranch(repoName, name);
@@ -82,7 +82,7 @@ export const BranchesPage = () => {
             if (!repoName) throw new GoshError(EGoshError.NO_REPO);
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
-            if (smvBalance.smvAvailable < 20)
+            if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
 
             await goshWallet.startProposalForDeleteProtectedBranch(repoName, name);
