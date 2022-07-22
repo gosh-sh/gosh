@@ -5,8 +5,6 @@ use crate::{
     ipfs::{IpfsService},
 };
 use git_hash;
-use git_object::bstr::ByteSlice;
-
 use reqwest::multipart;
 use snapshot::Snapshot;
 
@@ -82,7 +80,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     Ok(response_body.hash)
 }
 
-#[instrument(level = "debug", skip(diff_coordinate))]
+#[instrument(level = "debug", skip(diff_coordinate, diff))]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
@@ -101,16 +99,20 @@ pub async fn push_diff(
         file_path
     ).await?;
 
-    let ipfs = None;
-    if diff.len() > 15000 /* crate::config::defaults::IPFS_THRESHOLD */ {
-        // push to ipfs
-        todo!();
-    }
     let diff = ton_client::utils::compress_zstd(diff, None)?;
+    log::debug!("compressed to {} size", diff.len());
+
+    let (patch, ipfs) = if diff.len() > 15000 /* crate::config::defaults::IPFS_THRESHOLD */ {
+        let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
+        (None, ipfs)
+    } else {
+        (Some(hex::encode(diff)), None)
+    };
+
     let diff = Diff {
         snapshot_addr,
         commit_id: commit_id.to_string(),
-        patch: Some(hex::encode(diff)),
+        patch,
         ipfs,
         sha1: blob_id.to_string(),
     };
@@ -145,29 +147,34 @@ pub async fn push_new_branch_snapshot(
     file_path: &str,
     content: &[u8],
 ) -> Result<()> {
-    let mut ipfs = None;
-    if content.len() > 15000 {
-        ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, content).await?);
-    };
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
-    let content: String = content.iter()
-        .map(|e| format!("{:x?}", e))
-        .collect();
+    log::debug!("compressed to {} size", content.len());
+
+    let (content, ipfs) = if content.len() > 15000 {
+        let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &content).await?);
+        ("".to_string(), ipfs)
+    } else {
+        let content: String = content.iter()
+            .map(|e| format!("{:x?}", e))
+            .collect();
+        (content, None)
+    };
+
 
     let args = DeploySnapshotParams {
         repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
         commit_id: commit_id.to_string(),
         file_path: file_path.to_string(),
-        content: content,
-        ipfs: Some("".to_string()),
+        content,
+        ipfs,
     };
 
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
     log::debug!("deployNewSnapshot result: {:?}", result);
-    Ok(()) 
+    Ok(())
 }
 
 #[instrument(level = "debug")]

@@ -1,9 +1,13 @@
+use std::str::FromStr;
+
 use crate::git_helper::GitHelper;
-use git_hash::{ oid, ObjectId };
+use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 use crate::blockchain;
+
+use super::ZERO_SHA;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -98,15 +102,15 @@ impl<'a> CreateBranchOperation<'a> {
                 tree::EntryMode::Link => true,
                 tree::EntryMode::Tree => false,
                 tree::EntryMode::Commit => {
-                    panic!("Commits of git submodules are not  supported yet");
+                    panic!("Commits of git submodules are not supported yet");
                 }
             })
             .collect();
 
         for entry in snapshots_to_deploy {
             let full_path = entry.filepath.to_string();
-            self.deploy_snapshot(&full_path, &entry.oid);
-        }  
+            self.deploy_snapshot(&full_path, &entry.oid).await?;
+        }
         Ok(())
     }
 
@@ -122,7 +126,9 @@ impl<'a> CreateBranchOperation<'a> {
     pub async fn run(&mut self) -> Result<()> {
         self.prepare_commit_for_branching().await?;
         self.preinit_branch().await?;
-        self.push_initial_snapshots().await?;
+        if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
+            self.push_initial_snapshots().await?;
+        }
         self.wait_branch_ready().await?;
         Ok(())
     }

@@ -5,8 +5,6 @@ use diffy;
 use git_hash;
 use git_hash::ObjectId;
 use git_object;
-use git_odb;
-use git_odb::Find;
 use lru::LruCache;
 use std::collections::{hash_map, HashMap, HashSet};
 
@@ -57,6 +55,7 @@ impl BlobsRebuildingPlan {
         }
     }
 
+    #[instrument(level = "debug", skip(self))]
     pub fn mark_blob_to_restore(
         &mut self,
         appeared_at_snapshot_address: String,

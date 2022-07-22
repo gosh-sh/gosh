@@ -2,11 +2,10 @@
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::Deserializer;
 use serde::{de, Deserialize};
 use serde_json;
 
-use std::{env, error::Error, fmt, sync::Arc};
+use std::{env, fmt, sync::Arc};
 
 mod error;
 use error::RunLocalError;
@@ -14,12 +13,13 @@ mod create_branch;
 pub use create_branch::CreateBranchOperation;
 
 use ton_client::{
-    abi::{
-        decode_message_body, encode_message, Abi, CallSet, ParamsOfDecodeMessageBody,
-        ParamsOfEncodeMessage, Signer,
+    abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
+    boc::{
+        encode_boc, get_boc_hash, BuilderOp, ParamsOfEncodeBoc, ParamsOfGetBocHash,
+        ResultOfEncodeBoc, ResultOfGetBocHash
     },
     crypto::KeyPair,
-    net::{query_collection, NetworkQueriesProtocol, ParamsOfQuery, ParamsOfQueryCollection},
+    net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientConfig, ClientContext,
@@ -94,7 +94,7 @@ impl GoshContract {
         context: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T, Box<dyn Error>>
+    ) -> Result<T>
     where
         T: de::DeserializeOwned,
     {
@@ -138,6 +138,12 @@ struct GetCommitAddrResult {
 }
 
 #[derive(Deserialize, Debug)]
+struct GetBoolResult {
+    #[serde(rename = "value0")]
+    pub is_ok: bool,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct BranchRef {
     #[serde(rename = "key")]
     pub branch_name: String,
@@ -165,10 +171,11 @@ struct GetHeadResult {
 }
 
 pub type TonClient = Arc<ClientContext>;
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[instrument(level = "debug")]
-pub fn create_client(config: &Config, network: &str) -> Result<TonClient, String> {
-    let endpoints = config.find_network_endpoints(network).unwrap();
+pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonClient, String> {
+    let endpoints = config.find_network_endpoints(network).expect("Unknown network");
     let proto = env::var("GOSH_PROTO")
         .unwrap_or(".git".to_string())
         .to_lowercase();
@@ -205,7 +212,7 @@ async fn run_local(
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
-) -> Result<serde_json::Value, Box<dyn Error>> {
+) -> Result<serde_json::Value> {
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));
@@ -278,7 +285,7 @@ async fn call(
     contract: GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
-) -> Result<CallResult, String> {
+) -> Result<CallResult> {
     let call_set = match args {
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),
@@ -322,7 +329,7 @@ pub async fn get_repo_address(
     gosh_root_addr: &str,
     dao: &str,
     repo: &str,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String> {
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
@@ -336,11 +343,26 @@ pub async fn get_repo_address(
 pub async fn branch_list(
     context: &TonClient,
     repo_addr: &str,
-) -> Result<GetAllAddressResult, Box<dyn Error>> {
+) -> Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.run_local(context, "getAllAddress", None).await?;
     Ok(result)
+}
+
+#[instrument(level = "debug", skip(context))]
+pub async fn is_branch_protected(
+    context: &TonClient,
+    repo_addr: &str,
+    branch_name: &str
+) -> Result<bool> {
+    let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
+
+    let params = serde_json::json!({ "branch": branch_name });
+    let result: GetBoolResult = contract
+        .run_local(context, "isBranchProtected", Some(params))
+        .await?;
+    Ok(result.is_ok)
 }
 
 pub async fn set_head(
@@ -349,7 +371,7 @@ pub async fn set_head(
     repo_name: &str,
     new_head: &str,
     keys: KeyPair,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
     let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
     let result = call(context, contract, "setHEAD", Some(args)).await?;
@@ -362,7 +384,7 @@ pub async fn remote_rev_parse(
     context: &TonClient,
     repository_address: &str,
     rev: &str,
-) -> Result<Option<String>, Box<dyn Error>> {
+) -> Result<Option<String>> {
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
     let args = serde_json::json!({ "name": rev });
     let result: GetAddrBranchResult = contract
@@ -380,7 +402,7 @@ pub async fn get_commit_address(
     context: &TonClient,
     repository_address: &str,
     sha: &str,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String> {
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
     let result: GetCommitAddrResult = contract
         .run_local(
@@ -396,15 +418,30 @@ pub async fn get_commit_address(
 pub async fn get_commit_by_addr(
     context: &TonClient,
     address: &str,
-) -> Result<Option<GoshCommit>, Box<dyn Error>> {
+) -> Result<Option<GoshCommit>> {
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
 
-pub async fn get_head(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
+pub async fn get_head(context: &TonClient, address: &str) -> Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
     return Ok(result.head);
+}
+
+pub async fn tvm_hash(context: &TonClient, data: String) -> Result<String> {
+    let builder = BuilderOp::BitString { value: hex::encode(data) };
+    let params = ParamsOfEncodeBoc {
+        builder: vec![builder],
+        ..Default::default()
+    };
+    let ResultOfEncodeBoc { boc } = encode_boc(context.clone(), params).await?;
+    let ResultOfGetBocHash { hash } = get_boc_hash(
+        context.clone(),
+        ParamsOfGetBocHash { boc }
+    ).await?;
+
+    Ok(hash)
 }
 
 #[cfg(test)]
@@ -465,6 +502,15 @@ mod tests {
                 49, 98, 9, 115, 97, 109, 112, 108, 101, 46, 116, 120, 116
             ]
         );
+    }
+
+    #[tokio::test]
+    async fn ensure_calculate_tvm_hash_correctly() {
+        let te = TestEnv::new();
+        let data_to_hash = "Vasily".to_string();
+        let expected_hash = "530d506c1d3dcf478264f48123f56407b92e169fdc00be6062f4e53f2f8b0d07";
+        let hash = tvm_hash(&te.client, data_to_hash).await.unwrap();
+        assert_eq!(expected_hash, hash);
     }
 
     // TODO:

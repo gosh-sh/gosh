@@ -2,12 +2,10 @@ use crate::git_helper::GitHelper;
 
 use ::git_object;
 
-use crate::blockchain::{self, GoshBlobBitFlags};
+use crate::blockchain::{self, GoshBlobBitFlags, tvm_hash, TonClient};
 use git_hash::ObjectId;
-use git_object::tree;
-use git_odb;
-use git_odb::Find;
-use sha256;
+use git_object::tree::{self, EntryRef};
+use git_odb::{self, Find};
 use std::collections::{HashSet, VecDeque, HashMap};
 use std::error::Error;
 use std::vec::Vec;
@@ -44,7 +42,7 @@ impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
             type_obj: convert_to_type_obj(entry.mode),
             name: entry.filename.to_string(),
             sha1: entry.oid.to_hex().to_string(),
-            sha256: sha256,
+            sha256,
         }
     }
 }
@@ -59,13 +57,20 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
     .to_owned()
 }
 
-
-fn sha256of(objects: &git_odb::Handle, entry: &tree::EntryRef) -> String {
-    let mut buffer: Vec<u8> = Vec::new();
-    let obj = objects.try_find(entry.oid, &mut buffer);
-    return sha256::digest_bytes(&buffer);
+#[instrument(level = "debug", skip(context))]
+async fn construct_tree_node(context: &TonClient, e: &EntryRef<'_>) -> Result<(String, TreeNode), Box<dyn Error>> {
+    let content_hash = tvm_hash(&context, hex::encode(&e.filename)).await?;
+    let file_name = e.filename.to_string();
+    let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
+    let type_obj = &tree_node.type_obj;
+    let key = tvm_hash(
+        &context,
+        format!("{}:{}", type_obj, file_name)
+    ).await?;
+    Ok((format!("0x{}", key), tree_node))
 }
 
+#[instrument(level = "debug", skip(context))]
 pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<(), Box<dyn Error>> {
     let mut visited = HashSet::new();
     let mut to_deploy = VecDeque::new();
@@ -76,31 +81,24 @@ pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<()
         }
         visited.insert(tree_id);
         let mut buffer: Vec<u8> = Vec::new();
-        let tree_nodes: HashMap<String, TreeNode> = context
+        let entry_ref_iter = context
             .local_repository()
             .objects
             .try_find(tree_id, &mut buffer)?
             .expect("Local object must be there")
             .try_into_tree_iter()
             .unwrap()
-            .entries()?
-            .iter()
-            .map(|e| {
-                if e.mode == git_object::tree::EntryMode::Tree {
-                    to_deploy.push_back(e.oid.into());
-                }
-                let content_hash = sha256::digest_bytes(&e.filename);
-                let file_name = e.filename.to_string();
-                let tree_node = TreeNode::from((content_hash, e));
-                let type_obj = &tree_node.type_obj;
-                let key = sha256::digest(format!(
-                    "{}:{}", 
-                    type_obj, 
-                    file_name
-                ));
-                (format!("0x{}", key), tree_node)
-            })
-            .collect();
+            .entries()?;
+
+        let mut tree_nodes: HashMap<String, TreeNode> = HashMap::new();
+
+        for e in entry_ref_iter.iter() {
+            if e.mode == git_object::tree::EntryMode::Tree {
+                to_deploy.push_back(e.oid.into());
+            }
+            let (hash, tree_node) = construct_tree_node(&context.es_client, e).await?;
+            tree_nodes.insert(hash, tree_node);
+        }
         let params = DeployTreeArgs {
             sha: tree_id.to_hex().to_string(),
             repo_name: context.remote.repo.clone(),

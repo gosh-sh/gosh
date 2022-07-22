@@ -1,6 +1,4 @@
 use std::iter::Iterator;
-use crate::blockchain::TonClient;
-
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Diff {
