@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := test
 
+TARGET_DIR := $(abspath $(target-dir))
+
 clear_screen:
 	-clear && printf '\e[3J'
 
@@ -11,7 +13,8 @@ copy_abi: clear_abi
 	-cp ../contracts/gosh/*.abi.json ./resources/
 
 build: copy_abi clear_screen
-	cargo build
+	cargo build --release
+	cp ./target/release/git-remote-gosh $(TARGET_DIR)/git-remote-gosh
 
 test: copy_abi clear_screen
 	cargo test
