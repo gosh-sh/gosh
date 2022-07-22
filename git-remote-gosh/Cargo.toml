@@ -33,9 +33,13 @@ data-contract-macro-derive = { path = "crates/data-contract-macro-derive" }
 diffy = { path = "crates/diffy-patched" }
 hex = "0.4"
 
+[dependencies.libz-sys]
+features = ['static']
+version = '^1.1.8'
+
 [dependencies.tracing]
 features = ['log', 'attributes', 'std']
-version = "^0.1.35"
+version = '^0.1.35'
 
 [dependencies.reqwest]
 features = ['multipart', 'stream', 'json']
