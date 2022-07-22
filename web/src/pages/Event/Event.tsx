@@ -204,13 +204,13 @@ const EventPage = () => {
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount: smvBalance.smvAvailable,
+                                amount: smvBalance.smvBalance,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(smvBalance.smvAvailable)
+                                    .max(smvBalance.smvBalance)
                                     .required('Field is required'),
                             })}
                             enableReinitialize

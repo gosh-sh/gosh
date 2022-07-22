@@ -701,6 +701,8 @@ export class GoshWallet implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             });
+        if (['main', 'master'].indexOf(branchName) >= 0)
+            throw new Error(`Can not delete branch '${branchName}' `);
 
         // Check if branch exists
         const branch = await repo.getBranch(branchName);

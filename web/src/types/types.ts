@@ -46,7 +46,6 @@ export type TSmvBalanceDetails = {
     smvBalance: number;
     smvLocked: number;
     smvBusy: boolean;
-    smvAvailable: number;
 };
 
 export type TGoshEventDetails = {
