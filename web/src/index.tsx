@@ -1,11 +1,22 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, HashRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 import { TonClient, BinaryLibrary } from '@eversdk/core';
-import { libWeb } from '@eversdk/lib-web';
+import { libWeb, libWebSetup } from '@eversdk/lib-web';
 import App from './App';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from 'react-query';
+
+// Check for docker extension flag
+let ConditionedRouter = BrowserRouter;
+if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+    ConditionedRouter = HashRouter;
+    libWebSetup({
+        binaryURL:
+            'http://gosh.matusevich.pro/eversdk.wasm?v=' +
+            Math.random().toString(36).slice(2, 8),
+    });
+}
 
 // Create React QueryClient
 const queryClient = new QueryClient({
@@ -21,9 +32,9 @@ const root = createRoot(container!);
 root.render(
     <RecoilRoot>
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
+            <ConditionedRouter>
                 <App />
-            </BrowserRouter>
+            </ConditionedRouter>
         </QueryClientProvider>
     </RecoilRoot>
 );
