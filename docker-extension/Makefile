@@ -8,14 +8,20 @@ DETAILED_DESCRIPTION ?= $(shell cat description.html)
 
 .DEFAULT_GOAL := debug
 
+UI_V2_TARGET_DIR := $(realpath $(LOCAL_TEMP_DIR)/ui-v2)
+
 rm: ## Remove previous extension installations
 	docker extension rm teamgosh-docker-extension || true
 	docker extension rm teamgosh/docker-extension || true
 
-
-build: ## Build service image to be deployed as a desktop extension
+clean_temp:
 	-rm -rf $(LOCAL_TEMP_DIR)
 	-mkdir $(LOCAL_TEMP_DIR)
+
+build-ui-v2:
+	-cd ../web && make build target-dir=$(UI_V2_TARGET_DIR)
+
+build: clean_temp build-ui-v2 ## Build service image to be deployed as a desktop extension
 	-cp -r ../content-signature $(LOCAL_TEMP_DIR)
 	-cp -r ../git-remote-gosh $(LOCAL_TEMP_DIR)
 	-mkdir $(LOCAL_TEMP_DIR)/gosh
@@ -25,6 +31,7 @@ build: ## Build service image to be deployed as a desktop extension
 	  --tag=$(IMAGE):latest \
 	  --build-arg content_signature_local_dir="$(LOCAL_TEMP_DIR)/content-signature" \
 	  --build-arg git_remote_gosh_local_dir="$(LOCAL_TEMP_DIR)/git-remote-gosh" \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
 	  --output=type=docker \
 	  .

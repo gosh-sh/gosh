@@ -7,7 +7,7 @@
     "dashboard-tab": {
       "title": "Gosh verified images",
       "root": "/ui",
-      "src": "index.html"
+      "src": "v2/index.html"
     }
   }
 }

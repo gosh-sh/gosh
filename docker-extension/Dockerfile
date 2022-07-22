@@ -29,6 +29,7 @@ COPY --link ./vm/commands/ /command/
 COPY --link $content_signature_local_dir /command/tools/content-signature
 COPY --link $git_remote_gosh_local_dir /command/tools/git-remote-gosh
 COPY --link $gosh_abi_local_dir /command/tools/gosh
+COPY --link $ui_v2 /ui/v2
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
