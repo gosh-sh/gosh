@@ -7,11 +7,11 @@ build:
 	  --volume $(CURRENT_DIR):/workdir \
 	  --env REACT_APP_ISDOCKEREXT=true \
           --env BUILD_PATH=/dest \
-	  --volume $(TARGET_DIR):/dest \
+	  --volume $(abspath ./build):/dest \
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  node:18.2.0-alpine \
-          sh -c "npm install && npm run build:dockerprod"
-
+          sh -c "npm install && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run build:dockerprod"
+	cp -r ./build/* $(TARGET_DIR)
 .PHONY: build
 
