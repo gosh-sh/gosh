@@ -1,0 +1,186 @@
+@import './colors.scss';
+@import './mixins.scss';
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+.content-wrapper {
+  margin-top: 70px;
+  margin-bottom: 50px;
+
+  .alert {
+    margin-bottom: 30px;
+    padding-left: 30px;
+    border-radius: 10px;
+
+
+    &.alert-primary {
+      background-color: #daddff;
+      border-color: #cbd0ff;
+    }
+    &.alert-info {
+      color: #4f78a3;
+      background-color: #eaf4fd;
+      border-color: #bedaef;
+    }
+    
+    h2 {
+      margin-top: 10px;
+      margin-left: 0px;
+      margin-bottom: 30px;
+      color: black;
+    }
+  }
+
+  h1 {
+    margin-bottom: 3rem;
+  }
+  a {
+    scroll-margin: 20px;
+    font-weight: 400;
+  }
+  p, li {
+    font-weight: 400;
+  }
+  p {
+    margin-bottom: 1.5rem;
+  }
+  h2 {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    font-size: 1.35rem;
+  }
+  h4 {
+    margin-top: 50px;
+    margin-bottom: 20px;
+  }
+  ul, ol {
+    margin: 0;
+    padding: 0;
+    margin-top: 20px;
+    margin-bottom: 20px;
+
+    li {
+      position: relative;
+      padding-left: 2rem;
+      list-style-type: none;
+      margin-bottom: 15px;
+
+      &:before {
+        content: '';
+        position: absolute;
+        height: 1px;
+        width: 10px;
+        background-color: #bec4c8;
+        color: #bec4c8;
+        left: 0;
+        top: 13px;
+      }
+    }
+  }
+  ul ol {
+    & > li {
+      &:nth-child(1):before {content: 'a)';}
+      &:nth-child(2):before {content: 'b)';}
+      &:nth-child(3):before {content: 'c)';}
+      &:nth-child(4):before {content: 'd)';}
+      &:nth-child(5):before {content: 'e)';}
+      &:nth-child(6):before {content: 'f)';}
+      &:nth-child(7):before {content: 'g)';}
+      &:nth-child(8):before {content: 'h)';}
+      &:nth-child(9):before {content: 'i)';}
+      &:nth-child(10):before {content: 'j)';}
+      &:before {
+        position: absolute;
+        background-color: transparent;
+        color: #bec4c8;
+        left: 0;
+        top: auto;
+      }
+    }
+  }
+  ol {
+    & > li {
+      &:nth-child(1):before {content: '1.';}
+      &:nth-child(2):before {content: '2.';}
+      &:nth-child(3):before {content: '3.';}
+      &:nth-child(4):before {content: '4.';}
+      &:nth-child(5):before {content: '5.';}
+      &:nth-child(6):before {content: '6.';}
+      &:nth-child(7):before {content: '7.';}
+      &:nth-child(8):before {content: '8.';}
+      &:nth-child(9):before {content: '9.';}
+      &:nth-child(10):before {content: '10.';}
+      &:nth-child(11):before {content: '11.';}
+      &:nth-child(12):before {content: '12.';}
+      &:nth-child(13):before {content: '13.';}
+      &:nth-child(14):before {content: '14.';}
+      &:nth-child(15):before {content: '15.';}
+      &:nth-child(16):before {content: '16.';}
+      &:nth-child(17):before {content: '17.';}
+      &:nth-child(18):before {content: '18.';}
+      &:nth-child(19):before {content: '19.';}
+      &:nth-child(20):before {content: '20.';}
+      &:nth-child(21):before {content: '21.';}
+      &:before {
+        position: absolute;
+        background-color: transparent;
+        color: #bec4c8;
+        left: 0;
+        top: auto;
+      }
+    }
+  }
+
+  .toc {
+    a.collapse-control {
+      margin-bottom: 20px;
+      display: inline-block;
+
+      &:after {
+        content: '';
+        width: 16px;
+        height: 12px;
+        display: inline-block;
+        background-image: url("data:image/svg+xml,%3Csvg width='16' height='10' viewBox='0 0 16 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.828369 1.48535L7.89944 8.55642L14.9705 1.48535' stroke='%233888FF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+        background-position: center 1px;
+        background-repeat: no-repeat;
+        margin-left: 0.5rem;
+        transform: rotate(180deg);
+        @include transition(0.15s);
+      }
+      &.collapsed:after {
+        transform: rotate(0deg);
+        @include transition(0.35s);
+      }
+    }
+    .card-toc {
+      border-radius: 20px;
+      padding: 1rem; 
+      border: none;
+      background-color: $surf-gray-background;
+      
+      a {
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+      
+      p {
+        margin: 0;
+      }
+    }
+    ul, ol {
+      padding: 0;
+      margin-top: .5rem;
+      margin-bottom: 0;
+      margin-left: 1rem;
+      margin-right: 1rem;
+
+      li:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

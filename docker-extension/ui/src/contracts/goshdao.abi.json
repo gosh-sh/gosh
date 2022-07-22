@@ -1,0 +1,96 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"rootgosh","type":"address"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"CommitCode","type":"cell"},
+				{"name":"CommitData","type":"cell"},
+				{"name":"BlobCode","type":"cell"},
+				{"name":"BlobData","type":"cell"},
+				{"name":"RepositoryCode","type":"cell"},
+				{"name":"RepositoryData","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"WalletData","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAddrWallet",
+			"inputs": [
+				{"name":"pubkeyroot","type":"uint256"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getNameDao",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getRootPubkey",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"version","type":"string"},
+		{"name":"m_WalletCode","type":"cell"},
+		{"name":"m_WalletData","type":"cell"},
+		{"name":"m_RepositoryCode","type":"cell"},
+		{"name":"m_RepositoryData","type":"cell"},
+		{"name":"m_CommitCode","type":"cell"},
+		{"name":"m_CommitData","type":"cell"},
+		{"name":"m_BlobCode","type":"cell"},
+		{"name":"m_BlobData","type":"cell"},
+		{"name":"_rootgosh","type":"address"},
+		{"name":"_rootpubkey","type":"uint256"},
+		{"name":"_nameDao","type":"string"}
+	]
+}

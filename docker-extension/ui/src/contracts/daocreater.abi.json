@@ -1,0 +1,79 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"gosh","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"WalletData","type":"cell"},
+				{"name":"codeDao","type":"cell"},
+				{"name":"dataDao","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDao",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"root_pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoney",
+			"inputs": [
+				{"name":"pubkeyroot","type":"uint256"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"goshdao","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyDao",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAddrRootGosh",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"version","type":"string"},
+		{"name":"_gosh","type":"address"},
+		{"name":"m_WalletCode","type":"cell"},
+		{"name":"m_WalletData","type":"cell"},
+		{"name":"m_codeDao","type":"cell"},
+		{"name":"m_dataDao","type":"cell"}
+	]
+}

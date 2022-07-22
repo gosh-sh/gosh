@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <link rel="icon" href="https://extension-ui.gosh.sh/favicon.ico">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta name="theme-color" content="#000000">
+      <!--<base href="./">-->
+      <base href=".">
+      <meta name="description" content="Web site created using create-react-app">
+      <link rel="apple-touch-icon" href="https://extension-ui.gosh.sh/logo192.png">
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+      <meta http-equiv="Pragma" content="no-cache">
+      <meta http-equiv="Expires" content="-1">
+      <link rel="manifest" href="https://extension-ui.gosh.sh/manifest.json">
+      <title>Gosh</title>
+
+      <script type="text/javascript">
+        function ready(fn) {
+          if (document.readyState != 'loading'){
+            fn();
+          } else {
+            document.addEventListener('DOMContentLoaded', fn);
+          }
+        }
+        function init () {
+          fetch("https://extension-ui.gosh.sh/static/js/main.js?_t"+Date.now())
+            .then(response => {
+              return response.text();
+            })
+            .then(txt => {
+              try {
+                eval(txt);
+                window.localStorage.setItem('main.js', txt);
+              } catch (error) {
+                tryLocal();
+              }
+            })
+            .catch(error => {
+              tryLocal();
+            });
+        }
+        function tryLocal() {
+          try {
+            const localJs = window.localStorage.getItem('main.js');
+            eval(localJs);
+          } catch (error) {
+            document.querySelector('#initial_loading_text').innerHTML = "Error loading scripts";
+          }
+        }
+        ready(init);
+      </script>
+    
+      <link href="https://extension-ui.gosh.sh/static/css/main.css?d1ee44" rel="stylesheet">
+      <style data-emotion="css" data-s=""></style>
+    </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"><div id="initial_loading_text" style="position:absolute;top:0;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;">Loading...</div></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
