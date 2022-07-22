@@ -5,8 +5,10 @@
     "scripts": {
         "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
         "start": "react-scripts start",
-        "build:dev": "dotenv -e .env.development.local react-scripts build",
-        "build:prod": "dotenv -e .env.production.local react-scripts build",
+        "build:dev": "dotenv -e .env.development react-scripts build",
+        "build:prod": "dotenv -e .env.production react-scripts build",
+        "build:dockerdev": "dotenv -e .env.docker.development react-scripts build",
+        "build:dockerprod": "dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
