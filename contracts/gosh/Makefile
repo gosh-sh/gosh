@@ -5,9 +5,9 @@ clean:
 
 build-contracts:
 	for i in $(tvcs); do \
-        	everdev sol compile $$i.sol || exit $$@; \
-        	if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
-    	done
+		everdev sol compile $$i.sol || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
 
 build: clean build-contracts
 	if [ "${target-dir}" != "" ] ; then tar -cf gosh.tar ${target-dir}; fi;
@@ -17,3 +17,22 @@ compile:
 
 install:
 	@echo Installing from ${target-dir} to ${target-network}
+
+prepare-docker:
+	docker build -t everdev:latest ../../
+
+build-contracts-docker:
+	docker run -it --rm \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		everdev:latest \
+		/bin/bash -c 'cd /opt/gosh/contracts/gosh && make build-contracts'
+
+deploy-docker:
+	docker run -it --rm \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		-v ${CURDIR}/giver.keys.json:/tmp/giver.keys.json \
+		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
+		-e GOSH_ROOT_SEED_FILE_OUT="gosh.seed" \
+		-e NETWORK=${NETWORK} \
+		everdev:latest \
+		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
