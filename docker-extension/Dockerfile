@@ -6,6 +6,7 @@ ARG content_signature_local_dir
 ARG git_remote_gosh_local_dir
 ARG gosh_abi_local_dir
 ARG detailed_description
+ARG ui_v2
 
 LABEL org.opencontainers.image.title="Gosh" \
     org.opencontainers.image.description="Build your decentralized and secure software supply chain with Docker and Git Open Source Hodler" \
@@ -37,13 +38,6 @@ ENV DOCKER_CLI_EXPERIMENTAL=enabled
 ENV NODE_ENV=production
 
 ARG TARGETOS TARGETARCH
-WORKDIR /command/tools/content-signature
-RUN npm i
-
-WORKDIR /command/tools/git-remote-gosh
-RUN rm -rf node_modules && rm package-lock.json && npm i
-
-RUN ln -s /command/tools/git-remote-gosh/git-remote-gosh.js  /usr/local/bin/git-remote-gosh
 
 COPY --link icon.svg /
 
