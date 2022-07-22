@@ -1,5 +1,5 @@
 CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-TARGET_DIR := $(realpath $(target-dir))
+TARGET_DIR := $(abspath $(target-dir))
 
 build:
 	docker run \
