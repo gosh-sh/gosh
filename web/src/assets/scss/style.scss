@@ -7,7 +7,6 @@
 
 @import 'react-toastify/scss/main';
 @import 'github-markdown-css/github-markdown-light.css';
-@import 'diff2html/bundles/css/diff2html.min.css';
 // @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
 
 html,
@@ -65,8 +64,7 @@ for those elements which require gradient border color
         inset-0
         p-px
         transition-colors;
-    -webkit-mask: linear-gradient(#ffffff 0 0) content-box,
-        linear-gradient(#ffffff 0 0);
+    -webkit-mask: linear-gradient(#ffffff 0 0) content-box, linear-gradient(#ffffff 0 0);
     mask: linear-gradient(#ffffff 0 0) content-box, linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
