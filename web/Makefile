@@ -8,6 +8,7 @@ build: clear_screen $(shell find res -type f -not -path "$(TARGET_DIR)")
 	docker run \
 	  --rm \
 	  --volume $(CURRENT_DIR):/workdir \
+	  --env REACT_APP_ISDOCKEREXT=1 \
           --env BUILD_PATH=/dest \
 	  --volume $(TARGET_DIR):/dest \
 	  --platform linux/amd64 \
