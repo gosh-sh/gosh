@@ -1,0 +1,29 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+
+.progress-ring {
+  transform: translate(-2px, -2px);
+  margin-right: .25rem;
+
+  .circle-back {
+    fill: transparent;
+    stroke: #E2E3E4;
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  .circle-bar {
+    fill: transparent;
+    stroke: $surf-blue;
+    stroke-width: 3;
+    stroke-linecap: butt;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+}
+
+.active {
+  opacity: 1;
+  visibility: visible;
+}

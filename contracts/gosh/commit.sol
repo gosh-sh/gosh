@@ -111,6 +111,12 @@ contract Commit is Modifiers {
     }
     
     //Commit part
+    
+    function isCorrect(string newname, string fromcommit) public view senderIs(_rootRepo){
+        tvm.accept();
+        Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, fromcommit);
+    }
+    
     function allCorrect(uint128 number) public view senderIs(_rootRepo){
         tvm.accept();
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number);

@@ -113,6 +113,22 @@
 			]
 		},
 		{
+			"name": "platformIsInitializedFailed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformIsInitializedFailed","type":"bool"}
+			]
+		},
+		{
+			"name": "platformConstructorFailed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformConstructorFailed","type":"bool"}
+			]
+		},
+		{
 			"name": "clientHead",
 			"inputs": [
 			],
@@ -174,6 +190,8 @@
 		{"name":"smvAccount","type":"address"},
 		{"name":"tokenRoot","type":"address"},
 		{"name":"lockerBusy","type":"bool"},
+		{"name":"platformIsInitializedFailed","type":"bool"},
+		{"name":"platformConstructorFailed","type":"bool"},
 		{"name":"clientHead","type":"optional(address)"},
 		{"name":"total_votes","type":"uint128"},
 		{"name":"votes_locked","type":"uint128"},

@@ -71,7 +71,7 @@ const EventsPage = () => {
                         const event = new GoshSmvProposal(dao.account.client, id);
                         return {
                             address: event.address,
-                            params: await event.getGoshSetCommitProposalParams(),
+                            params: await event.getParams(),
                             isCompleted: await event.isCompleted(),
                         };
                     })
@@ -117,6 +117,10 @@ const EventsPage = () => {
                     wallet={wallet}
                     className="mb-5 bg-gray-100"
                 />
+
+                <div className="mb-4">
+                    Don't see your event? Please wait, events are reloaded automatically
+                </div>
 
                 {events.isFetching && (
                     <div className="text-gray-606060">

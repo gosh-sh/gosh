@@ -60,6 +60,7 @@ export type TGoshEventDetails = {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
+    isProtected: boolean;
 };
 
 export type TGoshCommitContent = {
@@ -132,6 +133,8 @@ export enum EGoshBlobFlag {
 
 export enum EEventType {
     PR = 1,
+    BRANCH_LOCK = 2,
+    BRANCH_UNLOCK = 3,
 }
 
 interface IContract {
@@ -261,6 +264,14 @@ export interface IGoshWallet extends IContract {
         commitName: string,
         filesCount: number
     ): Promise<void>;
+    startProposalForAddProtectedBranch(
+        repoName: string,
+        branchName: string
+    ): Promise<void>;
+    startProposalForDeleteProtectedBranch(
+        repoName: string,
+        branchName: string
+    ): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
     getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>;
@@ -283,8 +294,6 @@ export interface IGoshWallet extends IContract {
         index2: number
     ): Promise<string>;
     setHead(repoName: string, branch: string): Promise<void>;
-    addProtectedBranch(repoName: string, branchName: string): Promise<void>;
-    deleteProtectedBranch(repoName: string, branchName: string): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {
@@ -311,6 +320,7 @@ export interface IGoshRepository extends IContract {
     getGoshAddr(): Promise<string>;
     getSnapshotCode(branch: string): Promise<string>;
     getSnapshotAddr(branch: string, filename: string): Promise<string>;
+    isBranchProtected(branch: string): Promise<boolean>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -390,6 +400,8 @@ export interface IGoshSmvProposal extends IContract {
     getVotes(): Promise<{ yes: number; no: number }>;
     getTime(): Promise<{ start: Date; finish: Date }>;
     getGoshSetCommitProposalParams(): Promise<any>;
+    getGoshAddProtectedBranchProposalParams(): Promise<any>;
+    getGoshDeleteProtectedBranchProposalParams(): Promise<any>;
     getLockerAddr(): Promise<string>;
     isCompleted(): Promise<boolean | null>;
 }

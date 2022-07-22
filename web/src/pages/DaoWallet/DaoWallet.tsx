@@ -35,6 +35,7 @@ const DaoWalletPage = () => {
         console.debug('[Move balance to SMV balance] - Values:', values);
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 
             await wallet.lockVoting(values.amount);
             toast.success('Submitted, balance will be updated soon');
@@ -48,6 +49,7 @@ const DaoWalletPage = () => {
         console.debug('[Move SMV balance to balance] - Values:', values);
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 
             await wallet.unlockVoting(values.amount);
             toast.success('Submitted, balance will be updated soon');
@@ -60,6 +62,7 @@ const DaoWalletPage = () => {
     const onReleaseSmvTokens = async () => {
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 
             await wallet.updateHead();
             toast.success('Release submitted, tokens will be released soon');
@@ -115,7 +118,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || smvBalance.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to SMV balance
@@ -131,13 +134,13 @@ const DaoWalletPage = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            amount: smvBalance.smvBalance - smvBalance.smvLocked,
+                            amount: smvBalance.smvBalance,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.smvBalance - smvBalance.smvLocked)
+                                .max(smvBalance.smvBalance)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -159,7 +162,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || smvBalance.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to wallet
@@ -184,7 +187,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2"
                                     type="submit"
-                                    disabled={isSubmitting || !smvBalance.smvBusy}
+                                    disabled={isSubmitting || smvBalance.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Release locked tokens

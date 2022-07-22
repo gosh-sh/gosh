@@ -16,7 +16,7 @@ import {
 import { useRecoilValue } from 'recoil';
 import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks';
 import Spinner from '../../components/Spinner';
-import { isMainBranch, splitByPath } from '../../helpers';
+import { splitByPath } from '../../helpers';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Menu, Transition } from '@headlessui/react';
 import CopyClipboard from '../../components/CopyClipboard';
@@ -79,7 +79,7 @@ const RepoPage = () => {
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!isMainBranch(branchName) && goshWallet?.isDaoParticipant && (
+                    {!branch?.isProtected && goshWallet?.isDaoParticipant && (
                         <Link
                             to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
                                 pathName && `/${pathName}`

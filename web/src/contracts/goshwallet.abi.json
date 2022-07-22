@@ -216,41 +216,30 @@
 			]
 		},
 		{
-			"name": "isProtectedBranch",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "addProtectedBranch",
-			"inputs": [
-				{"name":"repo","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deleteProtectedBranch",
-			"inputs": [
-				{"name":"repo","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
 				{"name":"numberChangedFiles","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForAddProtectedBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForDeleteProtectedBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
 			],
 			"outputs": [
 			]

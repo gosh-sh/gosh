@@ -224,7 +224,7 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
             setDetails((state) => ({
                 ...state,
                 balance,
-                smvBalance: details.tokens.total,
+                smvBalance: details.tokens.total - details.tokens.locked,
                 smvLocked: details.tokens.locked,
                 smvBusy: details.isBusy,
             }));

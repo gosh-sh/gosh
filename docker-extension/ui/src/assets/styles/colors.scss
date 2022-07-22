@@ -1,0 +1,98 @@
+$blue: #0090F5;
+
+$surf-blue: #0083e0;
+$surf-cobalt: #3888FF;
+$surf-pink: #FF7B86;
+$surf-yellow: #ffdb4d;
+$surf-green: #88BF26;
+
+$background: #F4F4F6;
+$background-dark-primary: #20262A;
+$background-dark-bw: #1C2125;
+
+$tertiary: #b6b8ba;
+
+$white: #FFFFFF;
+$surf-gray-background: #fafafc;
+$surf-gray-background-alt: #f4f4f5;
+$dark: #1C2125;
+$dark-alt: #20262A;
+
+$dark-primary: #20262A;
+$dark-gray: #3B4043;
+$surf-gray: #20262A;
+$surf-gray-2: #707376;
+$surf-gray-3: #6b707e;
+$surf-gray-4: #a2a9b9;
+
+$tertiary: #b6b8ba;
+$gray-light: #8c8f91;
+$gray-extralight: #ADB0B1;
+
+$text-secondary: #adb0b1;
+
+
+$dark: #1C2125;
+$dark-alt: #20262A;
+$dark-gray: #3B4043;
+$gray: #676B6E;
+$tertiary: #b6b8ba;
+$gray-light: #8c8f91;
+$gray-extralight: #ADB0B1;
+$white: #ffffff;
+$green-alt: #2FA851; //#36C05C;
+$green: #36C05C;
+$blue: #0083E0;
+$red: #e22626;
+$white: #FFFFFF;
+$surf-gray-background: #fafafc;
+$surf-gray-background-alt: #f4f4f5;
+
+// ui-kit-colors
+$cerise: #E33F84;
+$red-violet: #A62E99;
+$purple-heart: #681EB0;
+$daisy-blush: #4E1AA6;
+$blue-gem: #35179C;
+$governor-bay: #3D3BC1;
+$royal-blue: #4963E6;
+$cornflower-blue: #5B95E8;
+$blue-sky: #70C7EC;
+
+// scss-docs-start gray-color-variables
+$white:    #fff;
+$gray-100: #fafafc;
+$gray-200: #e9eaef;
+$gray-300: #dedfe6;
+$gray-400: #ced2da;
+$gray-500: #adb3bd;
+$gray-600: #6c717d;
+$gray-700: #494d57;
+$gray-800: #343840;
+$gray-900: #212329;
+$black:    #000;
+
+// Create your own map
+$ui-kit-colors: (
+  "cerise": #E33F84,
+  "red-violet": #A62E99,
+  "purple-heart": #681EB0,
+  "daisy-blush": #4E1AA6,
+  "blue-gem": #35179C,
+  "governor-bay": #3D3BC1,
+  "royal-blue": #4963E6,
+  "cornflower-blue": #5B95E8,
+  "blue-sky": #70C7EC,
+);
+
+// Create your own map
+$surf-colors: (
+  "blue": $surf-blue,
+  "red": $surf-pink,
+  "green": $surf-green,
+  "cyan": rgb(176, 225, 233),
+  "yellow": rgb(241, 205, 94)
+);
+
+
+$main: #007BFF;

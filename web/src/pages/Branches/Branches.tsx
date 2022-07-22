@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { faChevronRight, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChevronRight,
+    faTrash,
+    faLock,
+    faLockOpen,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Field, Form, Formik, FormikHelpers } from 'formik';
-import { useMutation } from 'react-query';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import BranchSelect from '../../components/BranchSelect';
 import TextField from '../../components/FormikForms/TextField';
 import Spinner from '../../components/Spinner';
@@ -12,8 +16,7 @@ import { TRepoLayoutOutletContext } from '../RepoLayout';
 import * as Yup from 'yup';
 import { useRecoilValue } from 'recoil';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
-import { isMainBranch } from '../../helpers';
+import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks';
 import { EGoshError, GoshError } from '../../types/errors';
 import { toast } from 'react-toastify';
 import { GoshCommit } from '../../types/classes';
@@ -26,35 +29,76 @@ type TCreateBranchFormValues = {
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const navigate = useNavigate();
+    const smvBalance = useSmvBalance(goshWallet);
     const [branchName, setBranchName] = useState<string>('main');
     const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [search, setSearch] = useState<string>('');
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
-    const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);
+    const [branchesBusy, setBranchesBusy] = useState<{
+        [key: string]: { busy: boolean; lock: boolean; delete: boolean };
+    }>({});
 
-    const branchDeleteMutation = useMutation(
-        (name: string) => {
+    /** Lock branch by SMV */
+    const onBranchLock = async (name: string) => {
+        try {
+            setBranchesBusy((state) => ({
+                ...state,
+                [name]: { ...state[name], busy: true, lock: true },
+            }));
+
+            if (await goshRepo.isBranchProtected(name))
+                throw new Error('Branch is already protected');
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
-            return goshWallet.deleteBranch(goshRepo, name);
-        },
-        {
-            onMutate: (variables) => {
-                setBranchesOnMutation((value) => [...value, variables]);
-            },
-            onSuccess: () => updateBranches(),
-            onError: (error: any) => {
-                console.error(error);
-                toast.error(error.message);
-            },
-            onSettled: (data, error, variables) => {
-                setBranchesOnMutation((value) =>
-                    value.filter((item) => item !== variables)
-                );
-            },
-        }
-    );
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (smvBalance.smvBalance < 20)
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
 
+            await goshWallet.startProposalForAddProtectedBranch(repoName, name);
+            navigate(`/${daoName}/events`, { replace: true });
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e.message);
+        } finally {
+            setBranchesBusy((state) => ({
+                ...state,
+                [name]: { ...state[name], busy: false, lock: false },
+            }));
+        }
+    };
+
+    /** Unlock branch by SMV */
+    const onBranchUnlock = async (name: string) => {
+        try {
+            setBranchesBusy((state) => ({
+                ...state,
+                [name]: { ...state[name], busy: true, lock: true },
+            }));
+
+            const isProtected = await goshRepo.isBranchProtected(name);
+            if (!isProtected) throw new Error('Branch is not protected');
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (smvBalance.smvBalance < 20)
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
+
+            await goshWallet.startProposalForDeleteProtectedBranch(repoName, name);
+            navigate(`/${daoName}/events`, { replace: true });
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e.message);
+        } finally {
+            setBranchesBusy((state) => ({
+                ...state,
+                [name]: { ...state[name], busy: false, lock: false },
+            }));
+        }
+    };
+
+    /** Create new branch */
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
         helpers: FormikHelpers<any>
@@ -81,9 +125,30 @@ export const BranchesPage = () => {
         }
     };
 
-    const onBranchDelete = (name: string) => {
+    /** Delete branch */
+    const onBranchDelete = async (name: string) => {
         if (window.confirm(`Delete branch '${name}'?`)) {
-            branchDeleteMutation.mutate(name);
+            try {
+                setBranchesBusy((state) => ({
+                    ...state,
+                    [name]: { ...state[name], busy: true, delete: true },
+                }));
+
+                if (await goshRepo.isBranchProtected(name))
+                    throw new Error('Branch is protected');
+                if (!repoName) throw new GoshError(EGoshError.NO_REPO);
+                if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+
+                await goshWallet.deleteBranch(goshRepo, name);
+                await updateBranches();
+            } catch (e: any) {
+                setBranchesBusy((state) => ({
+                    ...state,
+                    [name]: { ...state[name], busy: false, delete: false },
+                }));
+                console.error(e);
+                toast.error(e.message);
+            }
         }
     };
 
@@ -198,25 +263,56 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {!isMainBranch(branch.name) && goshWallet?.isDaoParticipant && (
-                                <button
-                                    type="button"
-                                    className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
+                            {goshWallet?.isDaoParticipant && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3"
+                                        onClick={() => {
+                                            branch.isProtected
+                                                ? onBranchUnlock(branch.name)
+                                                : onBranchLock(branch.name);
+                                        }}
+                                        disabled={
+                                            smvBalance.smvBusy ||
+                                            branchesBusy[branch.name]?.busy
+                                        }
+                                    >
+                                        {branchesBusy[branch.name]?.lock ? (
+                                            <Spinner size="xs" />
+                                        ) : (
+                                            <FontAwesomeIcon
+                                                icon={
+                                                    branch.isProtected
+                                                        ? faLockOpen
+                                                        : faLock
+                                                }
+                                                size="sm"
+                                            />
+                                        )}
+                                        <span className="ml-2">
+                                            {branch.isProtected ? 'Unlock' : 'Lock'}
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
                                         hover:bg-rose-500 disabled:bg-rose-400"
-                                    onClick={() => onBranchDelete(branch.name)}
-                                    disabled={
-                                        branchDeleteMutation.isLoading &&
-                                        branchesOnMutation.indexOf(branch.name) >= 0
-                                    }
-                                >
-                                    {branchDeleteMutation.isLoading &&
-                                    branchesOnMutation.indexOf(branch.name) >= 0 ? (
-                                        <Spinner size="xs" />
-                                    ) : (
-                                        <FontAwesomeIcon icon={faTrash} size="sm" />
-                                    )}
-                                    <span className="ml-2">Delete</span>
-                                </button>
+                                        onClick={() => onBranchDelete(branch.name)}
+                                        disabled={
+                                            branch.isProtected ||
+                                            branchesBusy[branch.name]?.busy ||
+                                            ['main', 'master'].indexOf(branch.name) >= 0
+                                        }
+                                    >
+                                        {branchesBusy[branch.name]?.delete ? (
+                                            <Spinner size="xs" />
+                                        ) : (
+                                            <FontAwesomeIcon icon={faTrash} size="sm" />
+                                        )}
+                                        <span className="ml-2">Delete</span>
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>

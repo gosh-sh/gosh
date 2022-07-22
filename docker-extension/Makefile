@@ -1,0 +1,75 @@
+IMAGE?=teamgosh-docker-extension
+#IMAGE?=teamgosh-docker-extension
+TAG?=2.0.2
+LOCAL_TEMP_DIR=./.tmp
+
+PLATFORM             ?= linux/amd64,linux/arm/v7,linux/arm64
+DETAILED_DESCRIPTION ?= $(shell cat description.html)
+
+.DEFAULT_GOAL := debug
+
+UI_V2_TARGET_DIR := $(abspath $(LOCAL_TEMP_DIR)/ui-v2)
+GIT_REMOTE_GOSH_TARGET_DIR := $(abspath $(LOCAL_TEMP_DIR)/git-remote-gosh)
+
+rm: ## Remove previous extension installations
+	docker extension rm teamgosh-docker-extension || true
+	docker extension rm teamgosh/docker-extension || true
+
+clean_temp:
+	-rm -rf $(LOCAL_TEMP_DIR)
+	mkdir $(LOCAL_TEMP_DIR)
+
+build-ui-v2:
+	mkdir -p $(UI_V2_TARGET_DIR)	
+	cd ../web && make build target-dir=$(UI_V2_TARGET_DIR)
+
+build-git-remote-gosh:
+	mkdir -p $(GIT_REMOTE_GOSH_TARGET_DIR)
+	cd ../git-remote-gosh && make build target-dir=$(GIT_REMOTE_GOSH_TARGET_DIR)
+
+build: clean_temp build-ui-v2 build-git-remote-gosh ## Build service image to be deployed as a desktop extension
+	cp -r ../content-signature $(LOCAL_TEMP_DIR)
+	mkdir $(LOCAL_TEMP_DIR)/gosh
+	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	docker buildx build \
+	  --tag=$(IMAGE):$(TAG) \
+	  --tag=$(IMAGE):latest \
+	  --build-arg content_signature_local_dir="$(LOCAL_TEMP_DIR)/content-signature" \
+	  --build-arg git_remote_gosh_local_dir="$(LOCAL_TEMP_DIR)/git-remote-gosh" \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
+	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --output=type=docker \
+	  .
+
+install: rm build ## Install the extension
+	docker extension install $(IMAGE):$(TAG)
+
+update: build ## Update the extension
+	docker extension update $(IMAGE):$(TAG)
+
+debug: update ## Debug the extension
+	docker extension dev debug $(IMAGE):$(TAG)
+
+publish: ## Publish the extension
+	-rm -rf $(LOCAL_TEMP_DIR)
+	-mkdir $(LOCAL_TEMP_DIR)
+	-cp -r ../content-signature $(LOCAL_TEMP_DIR)
+	-cp -r ../git-remote-gosh $(LOCAL_TEMP_DIR)
+	-mkdir $(LOCAL_TEMP_DIR)/gosh
+	-cp -r ../gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	docker buildx build \
+	  --no-cache \
+	  --platform $(PLATFORM) \
+	  --tag=$(IMAGE):$(TAG) \
+	  --tag=$(IMAGE):latest \
+	  --build-arg content_signature_local_dir="$(LOCAL_TEMP_DIR)/content-signature" \
+	  --build-arg git_remote_gosh_local_dir="$(LOCAL_TEMP_DIR)/git-remote-gosh" \
+	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --build-arg detailed_description="$(DETAILED_DESCRIPTION)" \
+	  --push \
+	  .
+	-rm -rf $(LOCAL_TEMP_DIR)
+
+
+
+.PHONY: build install update debug publish

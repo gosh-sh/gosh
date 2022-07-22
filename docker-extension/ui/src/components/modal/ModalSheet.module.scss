@@ -1,0 +1,37 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.modal-sheet {
+  position: absolute;
+  bottom: 0;
+  height: auto;
+  top: 100%;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+  z-index: 10;
+  opacity: 0;
+  will-change: top;
+
+  transition: opacity 0.3s cubic-bezier(0.375, 0.885, 0.6, 1) .5s, top 0.3s cubic-bezier(0.375, 0.885, 0.6, 1) 0s, visibility 0.3s cubic-bezier(0.375, 0.885, 0.6, 1) 1s;
+
+  background: $background-dark-primary;
+  border-radius: .5rem;
+  overflow: hidden;
+
+  &:after {
+    content: '';
+    bottom: 0;
+    left: 0;
+    height: 1.5rem;
+    width: 100%;
+    z-index: 1000;
+    position: absolute;
+  }
+  &.active {
+    visibility: visible;
+    opacity: 1;
+    top: 0;
+    transition: opacity 0.2s cubic-bezier(0.375, 0.885, 0.6, 1) 0s, top 0.3s cubic-bezier(0.375, 0.885, 0.6, 1) 0s, visibility 0s cubic-bezier(0.375, 0.885, 0.6, 1) 0s;
+  }
+}

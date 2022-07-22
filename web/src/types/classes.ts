@@ -23,7 +23,6 @@ import {
     sha1Tree,
     unixtimeWithTz,
     zstd,
-    isMainBranch,
     loadFromIPFS,
     MAX_ONCHAIN_DIFF_SIZE,
     saveToIPFS,
@@ -522,14 +521,8 @@ export class GoshWallet implements IGoshWallet {
         await this.setTree(repo.meta.name, futureCommit.name, updatedTreeRootAddr);
         !!callback && callback({ treeSet: true });
 
-        // Set repo commit if not proposal or start new proposal
-        // await this.startProposalForSetCommit(
-        //     repo.meta.name,
-        //     branch.name,
-        //     futureCommit.name,
-        //     processedBlobs.length
-        // );
-        if (!isMainBranch(branch.name)) {
+        const isBranchProtected = await repo.isBranchProtected(branch.name);
+        if (!isBranchProtected) {
             await this.setCommit(
                 repo.meta.name,
                 branch.name,
@@ -708,6 +701,8 @@ export class GoshWallet implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             });
+        if (['main', 'master'].indexOf(branchName) >= 0)
+            throw new Error(`Can not delete branch '${branchName}' `);
 
         // Check if branch exists
         const branch = await repo.getBranch(branchName);
@@ -979,7 +974,7 @@ export class GoshWallet implements IGoshWallet {
         commitName: string,
         filesCount: number
     ): Promise<void> {
-        console.debug('Start proposal', {
+        console.debug('Start PR proposal', {
             repoName,
             branchName,
             commit: commitName,
@@ -991,6 +986,22 @@ export class GoshWallet implements IGoshWallet {
             commit: commitName,
             numberChangedFiles: filesCount,
         });
+    }
+
+    async startProposalForAddProtectedBranch(
+        repoName: string,
+        branchName: string
+    ): Promise<void> {
+        console.debug('Start add branch proposal', { repoName, branchName });
+        await this.run('startProposalForAddProtectedBranch', { repoName, branchName });
+    }
+
+    async startProposalForDeleteProtectedBranch(
+        repoName: string,
+        branchName: string
+    ): Promise<void> {
+        console.debug('Start delete branch proposal', { repoName, branchName });
+        await this.run('startProposalForDeleteProtectedBranch', { repoName, branchName });
     }
 
     async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
@@ -1130,25 +1141,6 @@ export class GoshWallet implements IGoshWallet {
 
         return { name: commitName, content: commitData, parents };
     }
-
-    private async prepareBlobContent(
-        content: string | Buffer
-    ): Promise<{ sha: string; prepared: string }> {
-        const contentSha = sha1(content, 'blob', 'sha1');
-        let prepared = Buffer.isBuffer(content) ? content.toString('base64') : content;
-        prepared = await zstd.compress(this.account.client, prepared);
-        return { sha: contentSha, prepared };
-    }
-
-    async addProtectedBranch(repoName: string, branchName: string): Promise<void> {
-        console.debug('Add protected branch', { repo: repoName, branch: branchName });
-        await this.run('addProtectedBranch', { repo: repoName, branch: branchName });
-    }
-
-    async deleteProtectedBranch(repoName: string, branchName: string): Promise<void> {
-        console.debug('Delete protected branch', { repo: repoName, branch: branchName });
-        await this.run('deleteProtectedBranch', { repo: repoName, branch: branchName });
-    }
 }
 
 export class GoshRepository implements IGoshRepository {
@@ -1195,10 +1187,16 @@ export class GoshRepository implements IGoshRepository {
 
     async getBranches(): Promise<TGoshBranch[]> {
         const result = await this.account.runLocal('getAllAddress', {});
-        return result.decoded?.output.value0.map((item: any) => ({
-            name: item.key,
-            commitAddr: item.value,
-        }));
+        const items = result.decoded?.output.value0;
+        return await Promise.all(
+            items.map(async (item: any) => {
+                return {
+                    name: item.key,
+                    commitAddr: item.value,
+                    isProtected: await this.isBranchProtected(item.key),
+                };
+            })
+        );
     }
 
     async getBranch(name: string): Promise<TGoshBranch> {
@@ -1207,6 +1205,7 @@ export class GoshRepository implements IGoshRepository {
         return {
             name: decoded.key,
             commitAddr: decoded.value,
+            isProtected: await this.isBranchProtected(name),
         };
     }
 
@@ -1274,6 +1273,11 @@ export class GoshRepository implements IGoshRepository {
             branch,
             name: filename,
         });
+        return result.decoded?.output.value0;
+    }
+
+    async isBranchProtected(branch: string): Promise<boolean> {
+        const result = await this.account.runLocal('isBranchProtected', { branch });
         return result.decoded?.output.value0;
     }
 }
@@ -1561,7 +1565,7 @@ export class GoshSmvProposal implements IGoshSmvProposal {
         return {
             address: this.address,
             id: await this.getId(),
-            params: await this.getGoshSetCommitProposalParams(),
+            params: await this.getParams(),
             time: await this.getTime(),
             votes: await this.getVotes(),
             status: {
@@ -1571,6 +1575,19 @@ export class GoshSmvProposal implements IGoshSmvProposal {
         };
     }
 
+    async getParams(): Promise<any> {
+        try {
+            return await this.getGoshSetCommitProposalParams();
+        } catch {}
+        try {
+            return await this.getGoshAddProtectedBranchProposalParams();
+        } catch {}
+        try {
+            return await this.getGoshDeleteProtectedBranchProposalParams();
+        } catch {}
+        return null;
+    }
+
     async getId(): Promise<string> {
         const result = await this.account.runLocal('propId', {});
         return result.decoded?.output.propId;
@@ -1578,6 +1595,30 @@ export class GoshSmvProposal implements IGoshSmvProposal {
 
     async getGoshSetCommitProposalParams(): Promise<any> {
         const result = await this.account.runLocal('getGoshSetCommitProposalParams', {});
+        const decoded = result.decoded?.output;
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        };
+    }
+
+    async getGoshAddProtectedBranchProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshAddProtectedBranchProposalParams',
+            {}
+        );
+        const decoded = result.decoded?.output;
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        };
+    }
+
+    async getGoshDeleteProtectedBranchProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshDeleteProtectedBranchProposalParams',
+            {}
+        );
         const decoded = result.decoded?.output;
         return {
             ...decoded,
