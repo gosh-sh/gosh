@@ -6,12 +6,9 @@ import { Link } from 'react-router-dom';
 import styles from './Header.module.scss';
 import classnames from 'classnames/bind';
 import Button from '@mui/material/Button';
-import { userStateAtom, userStatePersistAtom } from '../../store/user.state';
-import { useResetRecoilState, useRecoilValue } from 'recoil';
 
 import { Overlay } from '../../components';
 import { Content } from '../../pages';
-import { useLocation } from 'react-router-dom';
 
 const cnb = classnames.bind(styles);
 
@@ -28,10 +25,6 @@ export const Header = ({ location, ...props }: { location: string }) => {
 
     const handleClose = () => setShowModal(false);
     const handleShow = () => setShowModal(true);
-    const resetUserState = useResetRecoilState(userStateAtom);
-    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom);
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const userState = useRecoilValue(userStateAtom);
 
     return (
         <>
@@ -49,27 +42,10 @@ export const Header = ({ location, ...props }: { location: string }) => {
                 >
                     <div className={cnb('button-block')}>
                         <a href="../v2/index.html">
-                            <Button
-                                color="primary"
-                                size="medium"
-                                disableElevation
-                                // icon={<Icon icon={"arrow-up-right"}/>}
-                                // iconAnimation="right"
-                                // iconPosition="after"
-                            >
+                            <Button color="primary" size="medium" disableElevation>
                                 Repositories
                             </Button>
                         </a>
-                        {/* <Link to="/containers">
-                            <Button
-                                disableElevation
-                                color="primary"
-                                variant="contained"
-                                size="medium"
-                            >
-                                Containers
-                            </Button>
-                        </Link> */}
                     </div>
                     <div className={cnb('button-block-right')}>
                         <a href="https://t.me/gosh_sh" target="_blank" rel="noreferrer">
@@ -125,21 +101,6 @@ export const Header = ({ location, ...props }: { location: string }) => {
                         >
                             Help
                         </Button>
-                        {userStatePersist.phrase && (
-                            <Button
-                                className={cnb('button-logout')}
-                                disableElevation
-                                color="inherit"
-                                variant="contained"
-                                size="medium"
-                                onClick={() => {
-                                    resetUserState();
-                                    resetUserStatePersist();
-                                }}
-                            >
-                                Log out
-                            </Button>
-                        )}
                     </div>
                 </Box>
             </header>

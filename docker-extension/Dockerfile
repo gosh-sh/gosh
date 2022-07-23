@@ -8,8 +8,6 @@ WORKDIR /ui
 COPY ui/package.json /ui/package.json
 COPY ui /ui
 RUN yarn install --silent
-COPY ./eversdk-patch/lib-web/* /ui/node_modules/@eversdk/lib-web/
-RUN npm run wasm
 RUN yarn build --silent
 
 
