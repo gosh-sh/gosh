@@ -18,7 +18,7 @@ import "diff.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "0.5.1";
+    string constant version = "0.5.2";
     
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
