@@ -12,7 +12,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 console.log("Version: 0.1.17");
 
 //libWebSetup({ binaryURL: '/assets/eversdk.wasm'});
-libWebSetup({ binaryURL: 'https://extension-ui.gosh.sh/assets/eversdk.wasm?v=' + Math.random().toString(36).replace(/[^a-z]+/g, '') });
+libWebSetup({ binaryURL: 'http://gosh.matusevich.pro/eversdk.wasm?v=' + Math.random().toString(36).replace(/[^a-z]+/g, '') });
 
 const queryClient = new QueryClient({
   defaultOptions: {
