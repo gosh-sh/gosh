@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { createDockerDesktopClient } from '@docker/extension-api-client';
 
 import Box from '@mui/material/Box';
 import { ReactComponent as Logo } from './../../assets/images/logo.svg';
@@ -21,6 +22,7 @@ const Help = ({ showModal, handleClose }: { showModal: boolean; handleClose: any
 };
 
 export const Header = ({ location, ...props }: { location: string }) => {
+    const ddClient = createDockerDesktopClient();
     const [showModal, setShowModal] = useState<boolean>(false);
 
     const handleClose = () => setShowModal(false);
@@ -56,9 +58,7 @@ export const Header = ({ location, ...props }: { location: string }) => {
                                 disableElevation
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    window.ddClient.host.openExternal(
-                                        'https://t.me/gosh_sh'
-                                    );
+                                    ddClient.host.openExternal('https://t.me/gosh_sh');
                                 }}
                             >
                                 <svg
