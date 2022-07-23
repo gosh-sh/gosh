@@ -6,10 +6,9 @@ import {
   isMobile
 } from "react-device-detect";
 
-import Main from "./main";
 import Content from "./content";
-import { Header, Footer } from "./../layouts";
-
+import { Header } from "./../layouts";
+import { Loader } from "../components";
 
 import { useEverClient } from "./../hooks/ever.hooks";
 
@@ -19,8 +18,13 @@ import Containers from "./../pages/Containers";
 import DaoLayout from "./../pages/DaoLayout";
 import RepoLayout from "./../pages/RepoLayout";
 import HomePage from "./../pages/Home";
+import GotoPage from "./../pages/Goto";
 import DaosPage from "./../pages/Daos";
 import DaoPage from "./../pages/Dao";
+import DaoWalletPage from "./../pages/DaoWallet";
+import DaoParticipantsPage from "./../pages/DaoParticipants";
+import EventsPage from "./../pages/Events";
+import EventPage from "./../pages/Event";
 import DaoCreatePage from "./../pages/DaoCreate";
 import ReposPage from "./../pages/Repos";
 import RepoCreatePage from "./../pages/RepoCreate";
@@ -34,7 +38,9 @@ import CommitsPage from "./../pages/Commits";
 import CommitPage from "./../pages/Commit";
 import PullsPage from "./../pages/Pulls";
 import PullCreatePage from "./../pages/PullCreate";
-import RepoLayoutClear from "../pages/RepoLayout/RepoLayoutClear";
+import RepoLayoutBase from "../pages/RepoLayout/RepoLayoutBase";
+import DaoSettingsLayout from "../pages/DaoSettingsLayout";
+import BlobLayout from "../pages/BlobLayout";
 
 const Router = () => {
   const client = useEverClient();
@@ -43,20 +49,32 @@ const Router = () => {
 
   useEffect(() => {
       if (!client) return;
-      setIsInitialized(true);
+      client.client.version().then(() => {
+        setIsInitialized(true);
+    });
   }, [client]);
   // const location:string = useLocation().pathname.split('/').filter(Boolean)[0];
 
   const navigate = useNavigate();
   const location = useLocation();
-  // useEffect(() => {
-  //   navigate("/");
-  //   location.pathname = "/";
-  //   return () => {}
-  // }, [])
-  
+  useEffect(() => {
+    navigate("/");
+    location.pathname = "/";
+    return () => {}
+  }, [])
+
+  if (!isInitialized) return (
+    <div style={{ display: "flex", height: "100vh", width: "100vw", justifyContent: "center", alignItems: "center"}}>
+        <div className="loader">
+            <Loader/>
+            App is loading...
+        </div>
+    </div>
+  )
+
+
   return (
-    <div className={cn("ws-app", useLocation().pathname.split('/').filter(Boolean)[0], {"isMobile": isMobile, "main": !location.pathname.split('/').filter(Boolean)[0]})}>
+    <div className={cn("ws-app", location.pathname.split('/').filter(Boolean)[0], {"isMobile": isMobile, "main": !location.pathname.split('/').filter(Boolean)[0]})}>
       <Header
         location={location.pathname.split('/').filter(Boolean)[0] || "main"}
       />
@@ -80,26 +98,42 @@ const Router = () => {
           <Route path="/organizations/:daoName" element={<ProtectedLayout />}>
             <Route element={<DaoLayout />}>
               <Route element={<DaoPage />} >
-                <Route index element={null} />
+                <Route index element={<ReposPage />} />
                 <Route path="repositories/create" element={<RepoCreatePage />} />
+                <Route path="events" element={<EventsPage />} />
+                <Route path="wallet" element={<DaoWalletPage />} />
+                <Route path="participants" element={<DaoParticipantsPage />} />
               </Route>
-              <Route path="repositories" element={<ReposPage />}/>
-            </Route>
-            <Route path="repositories/:repoName/blobs" element={<RepoLayoutClear />}>
-              <Route path="create/:branchName" element={<BlobCreatePage />} />
-              <Route path="update/:branchName/:blobName" element={<BlobUpdatePage />} />
-            </Route>
-            <Route path="repositories/:repoName" element={<RepoLayout />}>
-              <Route element={<RepoPage />}>
-                <Route index element={null} />
-                <Route path="branches" element={<BranchesPage />} />
+              <Route path="events/:pullAddress" element={<EventPage />} />
+              <Route path="settings" element={<DaoSettingsLayout />}>
+                  <Route path="wallet" element={<DaoWalletPage />} />
+                  <Route path="participants" element={<DaoParticipantsPage />} />
               </Route>
-              <Route path="tree/:branchName" element={<RepoPage />} />
-              <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
-              <Route path="commits/:branchName" element={<CommitsPage />} />
-              <Route path="commit/:branchName/:commitName" element={<CommitPage />} />
-              <Route path="pulls/create" element={<PullCreatePage />} />
-              <Route path="pulls" element={<PullsPage />} />
+
+            </Route>
+            <Route path="repositories/:repoName" element={<RepoLayoutBase />}>
+
+              <Route element={<BlobLayout />}>
+                <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
+                <Route path="blobs/create/:branchName/*" element={<BlobCreatePage />} />
+                <Route path="blobs/update/:branchName/*" element={<BlobUpdatePage />} />
+                <Route path="blobs/:branchName/*" element={<BlobPage />} />
+              </Route>
+
+              <Route element={<RepoLayout />}>
+                <Route element={<RepoPage />}>
+                  <Route index element={null} />
+                  <Route path="branches" element={<BranchesPage />} />
+                </Route>
+                <Route path="tree/:branchName" element={<RepoPage />} />
+                <Route path="tree/:branchName/*" element={<RepoPage />} />
+
+                <Route path="commits/:branchName" element={<CommitsPage />} />
+                <Route path="commit/:branchName/:commitName" element={<CommitPage />} />
+                <Route path="pull" element={<PullCreatePage />} />
+                <Route path="find/:branchName" element={<GotoPage />} />
+
+              </Route>
             </Route>
           </Route>
           <Route path="/containers" element={<Containers />} />
@@ -108,7 +142,6 @@ const Router = () => {
         </Routes>
         <ToastContainer/>
       </main>
-      <Footer />
     </div>
   );
 };

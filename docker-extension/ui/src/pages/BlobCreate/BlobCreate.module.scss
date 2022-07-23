@@ -50,13 +50,13 @@
 }
 .text-editor-wrapper, .text-editor {
     background-color1: $white;
-    min-height: 400px;
+    max-height: 400px;
 }
 
 .text-editor-wrapper {
     background-color: $white;
     margin-top: 1rem;
-    min-height: 400px;
+    max-height: 400px;
     border-radius: 6px;
     margin-top: 1rem;
     margin-bottom: 1.25rem;

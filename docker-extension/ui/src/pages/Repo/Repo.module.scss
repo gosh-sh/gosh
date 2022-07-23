@@ -48,14 +48,26 @@
   border: 0.07rem solid #e8e9ee;
 
   .tree-files-item {
-    padding: .375rem .5rem;
+    height: 36px;
+    padding: 0 .75rem;
     font-size: 14px;
     font-weight: 600;
     border-bottom: 0.07rem solid #e8e9ee;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
     @include transition(0.2s);
 
     a {
       color: $dark;
+      margin-left: -1.5rem;
+      padding-left: 1.5rem;
+
+      &:hover {
+        color: $main;
+        text-decoration: underline !important;
+      }
     }
 
     &:last-child {
@@ -65,9 +77,23 @@
     &:hover {
       background-color: $surf-gray-background-alt;
 
-      a {
-        color: $main;
+      // a {
+      //   color: $main;
+      // }
+    }
+    svg {
+      height: 16px;
+      width: auto;
+      margin-right: .25rem;
+    }
+    &.tree-files-item-tree {
+      svg, svg * {
+        fill: #9a9db1;
       }
+    }
+    &.tree-files-item-back {
+      letter-spacing: .1rem;
+      padding-left: .875rem;
     }
   }
 }
@@ -86,6 +112,11 @@
 
     svg {
       color: $main;
+    }
+    &:disabled {
+      svg {
+        color: rgba(black, 0.5);
+      }
     }
   }
 }

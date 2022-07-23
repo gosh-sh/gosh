@@ -1,6 +1,16 @@
 # syntax=docker/dockerfile:1.4
 FROM --platform=${BUILDPLATFORM} node:16-slim as base
 
+
+FROM --platform=$BUILDPLATFORM node:16.10 AS client-builder
+WORKDIR /ui
+# cache packages in layer
+COPY ui/package.json /ui/package.json
+COPY ui /ui
+RUN yarn install --silent
+RUN yarn build --silent
+
+
 FROM base
 ARG content_signature_local_dir
 ARG git_remote_gosh_local_dir
@@ -31,6 +41,7 @@ COPY --link $content_signature_local_dir /command/tools/content-signature
 COPY --link $git_remote_gosh_local_dir /command/tools/git-remote-gosh
 COPY --link $gosh_abi_local_dir /command/tools/gosh
 COPY --link $ui_v2 /ui/v2
+COPY --from=client-builder /ui/build ui/v1
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1

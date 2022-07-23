@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { userStateAtom } from "./../../store/user.state";
 import { Loader, Modal, FlexContainer, Flex } from "./../../components";
-import { GoshDao } from "./../../types/classes";
-import { fromEvers } from "./../../utils";
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -18,7 +16,6 @@ import classnames from "classnames/bind";
 import { Typography } from "@mui/material";
 
 const cnb = classnames.bind(styles);
-
 
 type TFormValues = {
     name: string;
@@ -37,17 +34,11 @@ const DaoCreatePage = () => {
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`;
-            const daoAddr = await goshRoot?.deployDao(values.name, rootPubkey);
-            console.debug('DAO address:', daoAddr);
-            const dao = new GoshDao(goshRoot.account.client, daoAddr);
+            const goshDao = await goshRoot.createDao(values.name.toLowerCase(), rootPubkey);
 
-            // Topup GoshDao and deploy wallets
-            await goshRoot.daoCreator.sendMoneyDao(
-                values.name,
-                fromEvers(2 * values.participants.length)
-            );
             await Promise.all(values.participants.map(async (item) => {
-                const walletAddr = await dao.deployWallet(rootPubkey, item);
+                if (!userState.keys) throw Error('Empty user state');
+                const walletAddr = await goshDao.deployWallet(rootPubkey, item, userState.keys);
                 console.debug('DAOWallet address:', walletAddr);
             }));
 
@@ -79,11 +70,15 @@ const DaoCreatePage = () => {
                     }}
                     onSubmit={onDaoCreate}
                     validationSchema={Yup.object().shape({
-                        name: Yup.string().required('Name is required'),
+                        name: Yup.string()
+                            .matches(/^[\w-]+$/, 'Name has invalid characters')
+                            .max(64, 'Max length is 64 characters')
+                            .required('Name is required'),
                         participants: Yup.array().of(Yup.string().required('Required'))
                     })}
+                    enableReinitialize
                 >
-                    {({ values, touched, handleChange, errors, isSubmitting }) => (
+                    {({ values, touched, handleChange, errors, isSubmitting, setFieldValue }) => (
                         <Form>
                             <div>
                                 <InputBase
@@ -93,12 +88,13 @@ const DaoCreatePage = () => {
                                     placeholder="New organization name"
                                     autoComplete={'off'}
                                     value={values.name}
-                                    onChange={handleChange}
+                                    onChange={(e: any) => setFieldValue('name', e.target.value.toLowerCase())}
                                     error={touched && touched.name && Boolean(errors.name)}
+                                    disabled={isSubmitting}
                                 />
                                 {errors.name && (
                                     <Typography className="error-block color-error">
-                                        Enter organization's name.
+                                        {errors.name}
                                     </Typography>
                                 )}
                             </div>
@@ -127,7 +123,7 @@ const DaoCreatePage = () => {
                                                             className="input-field input-field-modal"
                                                             type="text"
                                                             placeholder="Participant public key"
-                                                            disabled={index === 0}
+                                                            disabled={index === 0 || isSubmitting}
                                                             value={values.participants[index]}
                                                             onChange={handleChange}
                                                             error={touched && touched.participants && Boolean(errors.participants)}
@@ -144,7 +140,8 @@ const DaoCreatePage = () => {
                                                             onClick={() => remove(index)}
                                                             aria-label="close"
                                                             className={cnb("close")}
-                                                            disabled={index <= 0 }
+                                                            // disabled={index <= 0 }
+                                                            disabled={isSubmitting}
                                                         >
                                                             <CloseIcon />
                                                         </IconButton>
@@ -157,6 +154,7 @@ const DaoCreatePage = () => {
                                                 type="button"
                                                 size="large"
                                                 onClick={() => push('')}
+                                                disabled={isSubmitting}
                                             >
                                                 Add participant <CloseIcon />
                                             </Button>

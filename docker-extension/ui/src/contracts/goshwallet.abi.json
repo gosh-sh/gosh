@@ -6,12 +6,25 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"creator","type":"address"},
 				{"name":"commitCode","type":"cell"},
-				{"name":"commitData","type":"cell"},
 				{"name":"blobCode","type":"cell"},
-				{"name":"blobData","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
-				{"name":"repositoryData","type":"cell"}
+				{"name":"WalletCode","type":"cell"},
+				{"name":"TagCode","type":"cell"},
+				{"name":"lockerCode","type":"cell"},
+				{"name":"platformCode","type":"cell"},
+				{"name":"clientCode","type":"cell"},
+				{"name":"proposalCode","type":"cell"},
+				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyObject",
+			"inputs": [
+				{"name":"obj","type":"address"}
 			],
 			"outputs": [
 			]
@@ -31,8 +44,91 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"name":"parent1","type":"address"},
-				{"name":"parent2","type":"address"}
+				{"name":"parents","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForSetCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployBlob",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"blobName","type":"string"},
+				{"name":"fullBlob","type":"string"},
+				{"name":"ipfsBlob","type":"string"},
+				{"name":"prevSha","type":"string"},
+				{"name":"flags","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setBlob",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"blobs","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setHEAD",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "tryProposalResult",
+			"inputs": [
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoney",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCompletedCallback",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"_tokenLocker","type":"address"},
+				{"name":"res","type":"optional(bool)"},
+				{"name":"propData","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -42,8 +138,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"newName","type":"string"},
-				{"name":"fromName","type":"string"},
-				{"name":"amountFiles","type":"uint128"}
+				{"name":"fromName","type":"string"}
 			],
 			"outputs": [
 			]
@@ -53,17 +148,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"Name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployDiff",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"name","type":"string"},
-				{"name":"branch","type":"string"},
-				{"name":"diff","type":"string"}
 			],
 			"outputs": [
 			]
@@ -79,24 +163,22 @@
 			]
 		},
 		{
-			"name": "deployBlob",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"blobName","type":"string"},
-				{"name":"fullBlob","type":"string"},
-				{"name":"prevSha","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployTag",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametag","type":"string"},
 				{"name":"nameCommit","type":"string"},
+				{"name":"content","type":"string"},
 				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"}
 			],
 			"outputs": [
 			]
@@ -140,6 +222,218 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "onTokenWalletDeployed",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "proposalIsCompleted",
+			"inputs": [
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onLockerDeployed",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onLockerTokenWalletDeployed",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onTokenBalanceUpdateWhileLockVoting",
+			"inputs": [
+				{"name":"balance","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "lockVoting",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unlockVoting",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteFor",
+			"inputs": [
+				{"name":"platformCode","type":"cell"},
+				{"name":"clientCode","type":"cell"},
+				{"name":"proposal","type":"address"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "proposalAddress",
+			"inputs": [
+				{"name":"_tip3VotingLocker","type":"address"},
+				{"name":"propId","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "proposalAddressByAccount",
+			"inputs": [
+				{"name":"acc","type":"address"},
+				{"name":"propId","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "clientAddress",
+			"inputs": [
+				{"name":"_tip3VotingLocker","type":"address"},
+				{"name":"propId","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "killAccount",
+			"inputs": [
+				{"name":"address_to","type":"address"},
+				{"name":"tokens_to","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "withdrawTokens",
+			"inputs": [
+				{"name":"address_to","type":"address"},
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateHead",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"sender_wallet","type":"address"},
+				{"name":"gasTo","type":"address"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensMint",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onBounceTokensTransfer",
+			"inputs": [
+				{"name":"root","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"wallet_to","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "tip3Root",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tip3Root","type":"address"}
+			]
+		},
+		{
+			"name": "tip3Wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tip3Wallet","type":"address"}
+			]
+		},
+		{
+			"name": "tip3VotingLocker",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tip3VotingLocker","type":"address"}
+			]
+		},
+		{
+			"name": "lockerTip3Wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lockerTip3Wallet","type":"address"}
+			]
+		},
+		{
+			"name": "initialized",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"initialized","type":"bool"}
+			]
+		},
+		{
+			"name": "_tokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_tokenBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "lastVoteResult",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lastVoteResult","type":"optional(bool)"}
+			]
 		}
 	],
 	"data": [
@@ -151,17 +445,38 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"version","type":"string"},
+		{"name":"tip3Root","type":"address"},
+		{"name":"nonce","type":"uint256"},
+		{"name":"tip3Wallet","type":"address"},
+		{"name":"tip3VotingLocker","type":"address"},
+		{"name":"clientCodeHash","type":"uint256"},
+		{"name":"clientCodeDepth","type":"uint16"},
+		{"name":"proposalCodeHash","type":"uint256"},
+		{"name":"proposalCodeDepth","type":"uint16"},
+		{"name":"platformCodeHash","type":"uint256"},
+		{"name":"platformCodeDepth","type":"uint16"},
+		{"name":"lockerCodeHash","type":"uint256"},
+		{"name":"lockerCodeDepth","type":"uint16"},
+		{"name":"lockerTip3Wallet","type":"address"},
+		{"name":"initialized","type":"bool"},
+		{"name":"_tokenBalance","type":"uint128"},
+		{"name":"m_messages","type":"map(uint256,uint32)"},
+		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
+		{"name":"lastVoteResult","type":"optional(bool)"},
+		{"name":"lockingAmount","type":"uint128"},
+		{"name":"_creator","type":"address"},
 		{"name":"_rootRepoPubkey","type":"uint256"},
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_goshdao","type":"address"},
+		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
-		{"name":"m_RepositoryData","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_CommitData","type":"cell"},
 		{"name":"m_BlobCode","type":"cell"},
-		{"name":"m_BlobData","type":"cell"}
+		{"name":"m_WalletCode","type":"cell"},
+		{"name":"m_TagCode","type":"cell"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"}
 	]
 }

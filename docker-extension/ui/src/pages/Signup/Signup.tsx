@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Form, Formik, Field } from "formik";
 import * as Yup from "yup";
 import { useEverClient } from "./../../hooks/ever.hooks";
-import { useSetRecoilState } from "recoil";
-import { userStateAtom } from "./../../store/user.state";
+import { useResetRecoilState, useSetRecoilState } from "recoil";
+import { appModalStateAtom } from "../../store/app.state";
+import { userStatePersistAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
-import { Loader } from "./../../components";
+import { Loader, PinCode, Slider, SlideSwitcher } from "./../../components";
 import { TonClient } from "@eversdk/core";
 
 import Button from '@mui/material/Button'
@@ -24,21 +25,27 @@ type TFormValues = {
 
 export const SignupPage = () => {
     const navigate = useNavigate();
+    const userStatePersistReset = useResetRecoilState(userStatePersistAtom);
     const everClient = useEverClient();
-    const setUserState = useSetRecoilState(userStateAtom);
+    const setModal = useSetRecoilState(appModalStateAtom);
     const [phrase, setPhrase] = useState<string>('');
 
     const generatePhrase = async (client: TonClient) => {
         const result = await client.crypto.mnemonic_from_random({});
         setPhrase(result.phrase);
     }
-
-    const onFormSubmit = async (values: TFormValues) => {
-        const keys = await everClient.crypto.mnemonic_derive_sign_keys({
-            phrase: values.phrase
+    const onFormSubmit = (values: TFormValues) => {
+        userStatePersistReset();
+        setModal({
+            static: true,
+            isOpen: true,
+            element: (
+                <PinCode
+                    phrase={values.phrase}
+                    onUnlock={() => navigate('/account/orgs', { replace: true })}
+                />
+            )
         });
-        setUserState({ phrase: values.phrase, keys });
-        navigate('/account/organizations', { replace: true });
     }
 
     useEffect(() => {
@@ -68,6 +75,13 @@ export const SignupPage = () => {
             >
                 {({ values, handleChange, isSubmitting }) => (
                     <Form className="px-5 sm:px-124px">
+
+                    <Slider
+                        direction={"horizontal"}
+                        spaceBetween={16}
+                        allowTouchMove={false}
+                    >
+                    <>
                         <div>
                             <TextareaAutosize
                                 name="phrase"
@@ -96,19 +110,34 @@ export const SignupPage = () => {
                         />
                         </div>
 
+                        <SlideSwitcher
+                                direction="next"
+                            >   
                         <div className="mt-6">
                             <Button
                                 color="primary"
                                 className="button-cta"
                                 variant="contained"
                                 size="large"
-                                type="submit"
+                                type="button"
                                 disabled={isSubmitting || !values.isConfirmed}
                             >
                                 <Loader className={isSubmitting ? "loader-active" : ""}/>
                                 Create account
                             </Button>
                         </div>
+                            </SlideSwitcher>
+                        </>
+                        <>
+                            <PinCode
+                                phrase={values.phrase}
+                                onUnlock={() => {
+                                    userStatePersistReset();
+                                    navigate('/account/organizations', { replace: true })}
+                                }
+                            />
+                        </>
+                        </Slider>
                     </Form>
                 )}
             </Formik>

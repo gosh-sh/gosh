@@ -10,26 +10,9 @@
 				{"name":"name","type":"string"},
 				{"name":"goshdao","type":"address"},
 				{"name":"CommitCode","type":"cell"},
-				{"name":"CommitData","type":"cell"},
 				{"name":"BlobCode","type":"cell"},
-				{"name":"BlobData","type":"cell"},
-				{"name":"codeSnapshot","type":"cell"},
-				{"name":"dataSnapshot","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
-				{"name":"WalletData","type":"cell"},
-				{"name":"codeTag","type":"cell"},
-				{"name":"dataTag","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployDiff",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"name","type":"string"},
-				{"name":"branch","type":"string"},
-				{"name":"diff","type":"string"}
+				{"name":"codeTag","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -45,26 +28,6 @@
 			]
 		},
 		{
-			"name": "copySnapshot",
-			"inputs": [
-				{"name":"index","type":"uint32"},
-				{"name":"fromname","type":"string"},
-				{"name":"newname","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "addSnapshot",
-			"inputs": [
-				{"name":"addr","type":"address"},
-				{"name":"oldbranch","type":"string"},
-				{"name":"newbranch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deleteBranch",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
@@ -74,25 +37,26 @@
 			]
 		},
 		{
-			"name": "deployCommit",
+			"name": "setCommit",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"nameBranch","type":"string"},
-				{"name":"nameCommit","type":"string"},
-				{"name":"fullCommit","type":"string"},
-				{"name":"parent1","type":"address"},
-				{"name":"parent2","type":"address"}
+				{"name":"commit","type":"address"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "deployTag",
+			"name": "setHEAD",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"nametag","type":"string"},
-				{"name":"nameCommit","type":"string"},
-				{"name":"commit","type":"address"}
+				{"name":"nameBranch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -103,7 +67,7 @@
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"snapshot","type":"address[]"}],"name":"value0","type":"tuple"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple"}
 			]
 		},
 		{
@@ -111,11 +75,19 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"snapshot","type":"address[]"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
 			"name": "getCommitCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTagCode",
 			"inputs": [
 			],
 			"outputs": [
@@ -147,9 +119,16 @@
 			]
 		},
 		{
+			"name": "getHEAD",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
 			"name": "getCommitAddr",
 			"inputs": [
-				{"name":"nameBranch","type":"string"},
 				{"name":"nameCommit","type":"string"}
 			],
 			"outputs": [
@@ -157,10 +136,9 @@
 			]
 		},
 		{
-			"name": "getSnapAddr",
+			"name": "getBlobAddr",
 			"inputs": [
-				{"name":"branch","type":"string"},
-				{"name":"name","type":"string"}
+				{"name":"nameBlob","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -184,21 +162,15 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"version","type":"string"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_CommitData","type":"cell"},
 		{"name":"m_BlobCode","type":"cell"},
-		{"name":"m_BlobData","type":"cell"},
-		{"name":"m_codeSnapshot","type":"cell"},
-		{"name":"m_dataSnapshot","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_WalletData","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
-		{"name":"m_dataTag","type":"cell"},
 		{"name":"_rootGosh","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
+		{"name":"_head","type":"string"},
 		{"name":"_Branches","type":"optional(cell)"}
 	]
 }

@@ -3,7 +3,7 @@ import { useOutletContext, useParams } from "react-router-dom";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCommitTime, getCodeLanguageFromFilename, getCommitTree } from "../../utils";
+import { getCommitTime, getCodeLanguageFromFilename, getCommitTree, getBlobContent } from "../../utils";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { GoshBlob, GoshCommit } from "../../types/classes";
 import CopyClipboard from "../../components/CopyClipboard";
@@ -11,7 +11,8 @@ import { shortString } from "../../utils";
 
 import styles from './Commit.module.scss';
 import classnames from "classnames/bind";
-import { Flex, FlexContainer } from "../../components";
+import { Flex, FlexContainer, Loader } from "../../components";
+import { Typography } from "@mui/material";
 
 const cnb = classnames.bind(styles);
 
@@ -21,7 +22,12 @@ const CommitPage = () => {
     const { branchName, commitName } = useParams();
     const monaco = useMonaco();
     const [commit, setCommit] = useState<IGoshCommit>();
-    const [blobs, setBlobs] = useState<{ name: string; curr: IGoshBlob; prev?: IGoshBlob; }[]>([]);
+    const [blobs, setBlobs] = useState<{
+        name: string;
+        curr: IGoshBlob;
+        currContent: string;
+        prevContent?: string;
+    }[]>([]);
 
     const renderCommitter = (committer: string) => {
         const [pubkey] = committer.split(' ');
@@ -38,14 +44,21 @@ const CommitPage = () => {
     useEffect(() => {
         const getCommit = async (repo: IGoshRepository, branch: string, name: string) => {
             // Get commit data
-            const address = await repo.getCommitAddr(branch, name);
+            const address = await repo.getCommitAddr(name);
             const commit = new GoshCommit(repo.account.client, address);
             await commit.load();
 
             // Get commit blobs
             const blobAddrs = await commit.getBlobs();
+            console.debug('[Commit] - Blob addrs:', blobAddrs);
             const blobTrees: IGoshBlob[] = [];
-            const blobs: { name: string; curr: IGoshBlob; prev?: IGoshBlob; }[] = [];
+            const blobs: {
+                name: string;
+                curr: IGoshBlob;
+                currContent: string;
+                prevContent?: string;
+            }[] = [];
+
             await Promise.all(
                 blobAddrs.map(async (addr) => {
                     // Create blob and load it's data
@@ -54,16 +67,17 @@ const CommitPage = () => {
                     if (!blob.meta) throw Error('Can not load blob meta');
 
                     // Extract tree blob from common blobs
-                    if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
-                    else {
+                    if (blob.meta.name.indexOf('tree ') >= 0) {
+                        blobTrees.push(blob);
+                    } else {
+                        const currFullBlob = await getBlobContent(goshRepo, blob.meta.name);
+
                         // If blob has prevSha, load this prev blob
-                        let prevBlob = undefined;
+                        let prevFullBlob = undefined;
                         if (blob.meta?.prevSha) {
-                            const prevBlobAddr = await commit.getBlobAddr(`blob ${blob.meta.prevSha}`);
-                            prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
-                            await prevBlob.load();
+                            prevFullBlob = await getBlobContent(goshRepo, blob.meta.prevSha);
                         }
-                        blobs.push({ name: '', curr: blob, prev: prevBlob });
+                        blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
                     }
                 })
             );
@@ -98,7 +112,10 @@ const CommitPage = () => {
 
     return (
         <div>
-            {(!monaco || !commit) && (<p>Loading commit...</p>)}
+            {(!monaco || !commit) && (<div className={cnb("loader", "loader-participants")}>
+                        <Loader />
+                        Loading {"commit"}...
+                    </div>)}
             {monaco && commit && (
                 <>
                     <div>
@@ -113,7 +130,7 @@ const CommitPage = () => {
                             </Flex>
                             <Flex>
                                 <CopyClipboard
-                                    label={shortString(commit.meta?.sha || "")}
+                                    label={<Typography>{shortString(commit.meta?.sha || "")}</Typography>}
                                     componentProps={{
                                         text: commit.meta?.sha || ""
                                     }}
@@ -141,16 +158,19 @@ const CommitPage = () => {
                     {blobs?.map((item, index) => {
                         const language = getCodeLanguageFromFilename(monaco, item.name);
                         return (
-                            <div key={index} className="my-5 border rounded overflow-hidden">
-                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                            <>
+                                <div key={index+"name"} className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
                                     {item.name}
                                 </div>
-                                <BlobDiffPreview
-                                    original={item.prev?.meta?.content}
-                                    modified={item.curr.meta?.content}
-                                    modifiedLanguage={language}
-                                />
-                            </div>
+                                <div key={index} className={cnb("text-editor-wrapper", "text-editor-wrapper-preview")}>
+                                    <BlobDiffPreview
+                                        className={cnb("text-editor")}
+                                        original={item.prevContent}
+                                        modified={item.currContent}
+                                        modifiedLanguage={language}
+                                    />
+                                </div>
+                            </>
                         );
                     })}
                 </>

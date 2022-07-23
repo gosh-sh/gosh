@@ -1,3 +1,3 @@
 export * from "./RepoLayout";
-export * from "./RepoLayoutClear";
+export * from "./RepoLayoutBase";
 export { default } from "./RepoLayout";

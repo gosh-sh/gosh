@@ -6,6 +6,7 @@ import { NavLink, Outlet } from "react-router-dom";
 const AccountLayout = () => {
     const tabs = [
         { to: '/account/organizations', title: 'Organizations' },
+        { to: '/account/repos', title: 'Repositories', disabled: true},
         { to: '/account/settings', title: 'Settings' }
     ];
 

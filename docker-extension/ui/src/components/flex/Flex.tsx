@@ -7,6 +7,7 @@ const cnb = classnames.bind(styles);
 export interface FlexProps extends InputHTMLAttributes<HTMLInputElement>{
   grow?: number,
   shrink?: number
+  align?: string
 }
 export interface FlexContainerProps extends InputHTMLAttributes<HTMLInputElement>{
   direction?: string,
@@ -21,6 +22,7 @@ export const FlexContainer = ({
   className,
   align,
   children,
+  style,
   ...props
 } : FlexContainerProps) => {
   return <>
@@ -28,7 +30,8 @@ export const FlexContainer = ({
       className={cnb("flex-container", className, direction ? "flex-container-" + direction : "flex-container-row")}
       style={{
         justifyContent: justify,
-        alignItems: align
+        alignItems: align,
+        ...style
       }}
       {...props}
     >
@@ -39,7 +42,9 @@ export const FlexContainer = ({
 
 export const Flex = ({
   grow,
+  align,
   shrink,
+  style,
   children,
   ...props
 } : FlexProps) => {
@@ -48,7 +53,9 @@ export const Flex = ({
       className={cnb("flex")}
       style={{
         flexGrow: grow,
-        flexShrink: shrink
+        alignSelf: align,
+        flexShrink: shrink,
+        ...style
       }}
       {...props}
     >

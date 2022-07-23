@@ -4,8 +4,11 @@ import { EmojiHappyIcon } from '@heroicons/react/outline';
 import InputBase from '@mui/material/InputBase';
 import Typography from "@mui/material/Typography";
 import CopyClipboard from "./../../components/CopyClipboard";
+import { useRecoilValue } from "recoil";
+import { userStateAtom } from "../../store/user.state";
 
 export const Settings = () => {
+  const userState = useRecoilValue(userStateAtom);
   return (
     <>
       <div className="page-header">
@@ -35,6 +38,29 @@ export const Settings = () => {
                   <CopyClipboard
                       componentProps={{
                           text: process.env.REACT_APP_GOSH_ADDR || ""
+                      }}
+                  />
+
+              </div>
+            </div>
+          </Flex>
+          <Flex>
+
+            <div className={"gosh-root-address"}>
+
+            <Typography>Public key</Typography>
+
+              <div className={"wallet-address-copy-wrapper"}>
+                <InputBase
+                  className="input-field"
+                  type="text"
+                  value={userState?.keys?.public || ""}
+                  onChange={() => {}}
+                  disabled
+                  />
+                  <CopyClipboard
+                      componentProps={{
+                          text: userState?.keys?.public || ""
                       }}
                   />
 

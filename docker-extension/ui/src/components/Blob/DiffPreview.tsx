@@ -29,20 +29,26 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                 renderLineHighlight: 'none',
                 contextmenu: false,
                 automaticLayout: true,
-                renderOverviewRuler: false,
+                // renderOverviewRuler: false,
                 scrollBeyondLastLine: false,
-                scrollbar: {
-                    vertical: 'hidden',
-                    verticalScrollbarSize: 0,
-                    handleMouseWheel: false
-                },
+                // scrollbar: {
+                //     vertical: 'hidden',
+                //     verticalScrollbarSize: 0,
+                //     handleMouseWheel: false
+                // },
             }}
             onMount={(editor) => {
                 editor.onDidUpdateDiff(() => {
                     // Set diff editor dom element calculated real height
                     const originalHeight = editor.getOriginalEditor().getContentHeight();
                     const modifiedHeight = editor.getModifiedEditor().getContentHeight();
-                    editor._domElement.style.height = `${originalHeight + modifiedHeight}px`;
+                    // editor._domElement.style.height = `${originalHeight + modifiedHeight}px`;
+
+                    let calc = originalHeight + modifiedHeight;
+                    const max = Math.max(originalHeight, modifiedHeight);
+                    if (max > 500) calc = 500;
+                    editor._domElement.style.height = `${calc}px`;
+                    
                 });
             }}
         />

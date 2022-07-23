@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate, useOutletContext, useParams, Outlet } from "react-router-dom";
-import { IGoshRepository, IGoshSnapshot, TGoshBranch } from "./../../types/types";
-import { TRepoLayoutOutletContext } from "./../RepoLayout";
-import BranchSelect from "./../../components/BranchSelect";
-import { GoshSnapshot } from "./../../types/classes";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
+import BranchSelect from "../../components/BranchSelect";
 import { useRecoilValue } from "recoil";
-import { goshCurrBranchSelector } from "./../../store/gosh.state";
-import { useGoshRepoBranches } from "./../../hooks/gosh.hooks";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
+import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { Icon, Loader, FlexContainer, Flex } from '../../components';
+import { splitByPath } from "../../utils";
 
 import { Popover } from '@headlessui/react'
-import { ClockIcon, PlusIcon, BookOpenIcon, DownloadIcon } from '@heroicons/react/outline';
+import { ClockIcon, PlusIcon, BookOpenIcon, DownloadIcon, DocumentIcon } from '@heroicons/react/outline';
+import { FolderIcon } from '@heroicons/react/solid';
 
 import CopyClipboard from "../../components/CopyClipboard";
 
@@ -23,29 +23,16 @@ import Typography from "@mui/material/Typography";
 const cnb = classnames.bind(styles);
 
 const RepoPage = () => {
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshRepoTree, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
+    const pathName = useParams()['*'] || '';
+
     const navigate = useNavigate();
     const { branches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const [tree, setTree] = useState<IGoshSnapshot[]>();
+    const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
-    useEffect(() => {
-        const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-            setTree(undefined);
-            const snapshots = await Promise.all(
-                currBranch.snapshot.map(async (address) => {
-                    const snapshot = new GoshSnapshot(repo.account.client, address);
-                    await snapshot.load();
-                    return snapshot;
-                })
-            );
-            console.debug('GoshSnapshots:', snapshots);
-            setTree(snapshots);
-        }
-
-        if (goshRepo && branch) getTree(goshRepo, branch);
-    }, [goshRepo, branch]);
+    const [dirUp] = splitByPath(pathName);
 
     return (
         <>
@@ -97,7 +84,18 @@ const RepoPage = () => {
                         grow={1000}
                     >
                 <div className={cnb("button-actions", "align-right")}>
-                    <Link
+                    
+                    {subtree === undefined ?
+                        <Button
+                            color="inherit"
+                            size="medium"
+                            variant="contained"
+                            className={cnb("button-default", "btn-icon")}
+                            disableElevation
+                            disabled={true}
+
+                        ><PlusIcon/> Add file </Button>
+                    : <Link
                         to={`/organizations/${daoName}/repositories/${repoName}/blobs/create/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
@@ -112,7 +110,7 @@ const RepoPage = () => {
                             // iconAnimation="right"
                             // iconPosition="after"
                         ><PlusIcon/> Add file </Button>
-                        </Link>
+                        </Link>}
 
                         <Popover className={cnb("relative")}>
                     <Popover.Button as={"div"}>
@@ -136,13 +134,13 @@ const RepoPage = () => {
                                 <div className={cnb("clone-field")}>
                                     <textarea
                                         onClick={(event: React.MouseEvent<HTMLTextAreaElement, MouseEvent>) => (event.target as HTMLTextAreaElement).select()}
-                                        value={`git clone -v gosh::net.ton.dev://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`}
+                                        value={`git clone -v gosh::network.gosh.sh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`}
                                         onChange={() => {}}        
                                     />   
 
                                 <CopyClipboard
                                     componentProps={{
-                                        text: `git clone -v gosh::net.ton.dev://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`
+                                        text: `git clone -v gosh::network.gosh.sh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`
                                     }}
                                 />
                                 </div>
@@ -162,43 +160,55 @@ const RepoPage = () => {
             </div>
 
             <div className={cnb("tree")}>
-                {tree === undefined && (
+                {subtree === undefined && (
                     <div className="loader">
                     <Loader />
                     Loading {"tree"}...
                     </div>
                 )}
 
-                {tree && !tree?.length && (
+                {subtree && !subtree?.length && (
                     <div className="no-data"><BookOpenIcon/>There are no files yet</div>
                 )}
+                <Outlet context={{ goshRepo, goshWallet }} />
 
-                    <Outlet context={{ goshRepo, goshWallet }} />
-                {Boolean(tree?.length) && <div className={cnb("tree-files")}>
-                    {tree?.map((blob, index) => (
-                        <div
-                            key={index}
-                            className={cnb("tree-files-item")}
+                {(!!subtree && pathName || Boolean(subtree?.length)) && <div className={cnb("tree-files")}>
+                    {!!subtree && pathName && (
+                        <div className={cnb("tree-files-item", "tree-files-item-back")}>
+                        <Link
+                            to={`/organizations/${daoName}/repositories/${repoName}/tree/${branchName}${dirUp && `/${dirUp}`}`}
                         >
-                            <div className="basis-1/4 text-sm font-medium">
-                                <Link
-                                    className="hover:underline"
-                                    to={`/organizations/${daoName}/repositories/${repoName}/blob/${blob.meta?.name}`}
-                                >
-                                    {blob.meta && blob.meta.name.split('/').slice(-1)}
-                                </Link>
-                            </div>
-                            <div className="text-gray-500 text-sm">
-                                {/* <Link
-                                    className="hover:underline"
-                                    to={`/repositories/${repoName}/commit/${blob.lastCommitSha}`}
-                                >
-                                    {blob.lastCommitMsg.title}
-                                </Link> */}
-                            </div>
+                            ..
+                        </Link>
                         </div>
-                    ))}
+                    )}
+                    {Boolean(subtree?.length) && <>
+                        {!!subtree && subtree?.map((item: any, index: number) => {
+                            const path = [item.path, item.name].filter((part) => part !== '').join('/');
+                            const type = item.type === 'tree' ? 'tree' : 'blobs';
+                            return (
+                                <div
+                                    key={index}
+                                    className={cnb("tree-files-item", "tree-files-item-" + type)}
+                                >
+                                        {type === "tree" ? <FolderIcon/> : <DocumentIcon/>}
+                                        <Link
+                                            className="hover:underline"
+                                            to={`/organizations/${daoName}/repositories/${repoName}/${type}/${branchName}/${path}`}
+    
+                                            // to={`/organizations/${daoName}/repositories/${repoName}/blob/${blob.meta?.name}`}
+                                        >
+                                            {item.name}
+                                        </Link>
+                                </div>
+                        )})}
+                    </>}
+            
+                    
                 </div>}
+
+
+
             </div>
         </>
     );

@@ -1,6 +1,6 @@
 
 import { Field } from "formik";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { classNames } from "../../utils";
 import { Loader} from "../../components";
 
@@ -24,6 +24,7 @@ type TFormCommitBlockProps<T> = {
 
 const FormCommitBlock = <T extends {title: string}, >(props: TFormCommitBlockProps<T>) => {
     const { urlBack, className, isDisabled, isSubmitting, extraFields, extraButtons, values } = props;
+    const navigate = useNavigate();
 
     return (
         <div>
@@ -34,7 +35,8 @@ const FormCommitBlock = <T extends {title: string}, >(props: TFormCommitBlockPro
                     name="title"
                     className={cnb("input-field", "input")}
                     type="text"
-                    placeholder="Commit title"
+                    placeholder='Commit title'
+                    disabled={isSubmitting || isDisabled}
                     autoComplete='off'
                     value={values?.title}
                 />
@@ -46,7 +48,9 @@ const FormCommitBlock = <T extends {title: string}, >(props: TFormCommitBlockPro
                     name="message"
                     className={cnb("input-field", "input", "textarea")}
                     type="text"
-                    placeholder="Commit optional description"
+                    placeholder='Commit optional description'
+                    disabled={isSubmitting || isDisabled}
+
                     autoComplete='off'
                 />
             </div>
@@ -62,7 +66,7 @@ const FormCommitBlock = <T extends {title: string}, >(props: TFormCommitBlockPro
                       className={cnb("button-submit", "btn-icon")}
                       type="submit"
                       disableElevation
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isDisabled}
                       // icon={<Icon icon={"arrow-up-right"}/>}
                       // iconAnimation="right"
                       // iconPosition="after"
@@ -70,21 +74,20 @@ const FormCommitBlock = <T extends {title: string}, >(props: TFormCommitBlockPro
 
                 
                 {urlBack && (
-                    <Link
-                        to={urlBack}
-                    >
                         
                     <Button
                       color="primary"
                     //   variant="contained"
                       size="large"
                       className={"btn-icon"}
+                      disabled={isSubmitting}
+                      onClick={() => navigate(urlBack)}
+
                       disableElevation
                       // icon={<Icon icon={"arrow-up-right"}/>}
                       // iconAnimation="right"
                       // iconPosition="after"
                   >Cancel</Button>
-                    </Link>
                 )}
                 {extraButtons}
             </div>

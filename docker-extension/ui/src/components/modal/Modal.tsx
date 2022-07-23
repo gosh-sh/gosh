@@ -15,7 +15,7 @@ const cnb = classnames.bind(styles);
 interface ModalProps {
   show: boolean,
   wide?: boolean,
-  onHide: () => void,
+  onHide: () => void | undefined,
   className?: string,
   [key: string]: any
 }
@@ -47,7 +47,7 @@ export const Overlay = ({
   closeAfterTransition
 >
 
-  <IconButton
+  {onHide && <IconButton
     edge="start"
     color="inherit"
     onClick={onHide}
@@ -55,7 +55,7 @@ export const Overlay = ({
     className={cnb("close")}
   >
     <CloseIcon />
-  </IconButton>
+  </IconButton>}
   <>{children}</>
 </Dialog>}</>
   );
@@ -85,15 +85,15 @@ export const Modal = ({
   closeAfterTransition
 >
 
-    <IconButton
-      edge="start"
-      color="inherit"
-      onClick={onHide}
-      aria-label="close"
-      className={cnb("close")}
-    >
-      <CloseIcon />
-    </IconButton>
+  {onHide && <IconButton
+    edge="start"
+    color="inherit"
+    onClick={onHide}
+    aria-label="close"
+    className={cnb("close")}
+  >
+    <CloseIcon />
+  </IconButton>}
     <>{children}</>
 </Dialog>
   );

@@ -10,6 +10,7 @@ import * as Yup from "yup";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { isMainBranch } from "../../utils";
 
 import Button from '@mui/material/Button';
 import InputBase from '@mui/material/InputBase';
@@ -36,8 +37,7 @@ export const BranchesPage = () => {
     const navigate = useNavigate();
     const branchDeleteMutation = useMutation(
         (name: string) => {
-            if (!repoName) throw Error('Repository name is undefined');
-            return goshWallet.deleteBranch(repoName, name);
+            return goshWallet.deleteBranch(goshRepo, name);
         },
         {
             onMutate: (variables) => {
@@ -59,15 +59,9 @@ export const BranchesPage = () => {
         helpers: FormikHelpers<any>
     ) => {
         try {
-            if (!repoName) throw Error('Repository is undefined');
             if (!values.from) throw Error('From branch is undefined');
 
-            await goshWallet.createBranch(
-                repoName,
-                values.newName,
-                values.from.name,
-                values.from.snapshot.length
-            );
+            await goshWallet.deployBranch(goshRepo, values.newName.toLowerCase(), values.from.name);
             await updateBranches();
             helpers.resetForm();
         } catch (e: any) {
@@ -98,6 +92,8 @@ export const BranchesPage = () => {
                     onSubmit={onBranchCreate}
                     validationSchema={Yup.object().shape({
                         newName: Yup.string()
+                            .matches(/^[\w-]+$/, 'Name has invalid characters')
+                            .max(64, 'Max length is 64 characters')
                             .notOneOf((branches).map((b) => b.name), 'Branch exists')
                             .required('Branch name is required')
                     })}
@@ -115,6 +111,7 @@ export const BranchesPage = () => {
                                         branch={branch}
                                         branches={branches}
                                         className={cnb("branch-fork")}
+                                        disabled={isSubmitting}
                                         onChange={(selected) => {
                                             if (selected) {
                                                 setBranchName(selected?.name);
@@ -124,14 +121,19 @@ export const BranchesPage = () => {
                                     />
                                 </Flex>
                                 <Flex>
-                                    <Icon icon="chevron-right"  className={cnb("branch-chevron")} />
+                                    <Icon icon="chevron-right" className={cnb("branch-chevron")} />
                                 </Flex>
                                 <Flex>
                                     <Field
                                         name="newName"
                                         placeholder='Branch name'
                                         autoComplete='off'
+                                        disabled={isSubmitting}
                                         className={cnb("input-field", "branch-name")}
+                                        onChange={(e: any) => {
+                                            setFieldValue('newName', e.target.value.toLowerCase());
+                                        }}
+
                                     />
                                 </Flex>
                                 <Flex>
@@ -158,7 +160,7 @@ export const BranchesPage = () => {
                 <InputBase
                     className="input-field"
                     type="text"
-                    placeholder="Search  (Disabled for now)"
+                    placeholder="Search (Disabled for now)"
                     disabled
                     onChange={(e: any) => setSearch(e.target.value)}
                 />
@@ -183,7 +185,7 @@ export const BranchesPage = () => {
                             </Link>
                         </Flex>
                         <Flex>
-                            {branch.name !== 'main' && (
+                            {!isMainBranch(branch.name) && (
 
                                 <Button
                                     color="primary"

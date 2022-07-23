@@ -24,6 +24,6 @@ A variety of utility tools to assist with all the aspects of the solution are un
 
 - work with on-chain repository as if you use git repo with gosh helper: <link>
 - build and sign images straight from git on chain (gosh)
-    - (temporary solution) as a proof of concept you can start signing images [manually](https://github.com/tonlabs/gosh/tree/main/content-signature)
-    - (coming soon) build images from signed on-chain source code ([fetching smart-contracts states](https://github.com/tonlabs/gosh/tree/main/buildkit))
-- ensure you’re using trusted docker images ([authentication signature check](https://github.com/tonlabs/gosh/tree/main/docker-extension))
+    - (temporary solution) as a proof of concept you can start signing images manually as described here https://github.com/tonlabs/gosh/tree/main/content-signature
+    - (coming soon) build images from signed on-chain source code (fetching smart-contracts states - https://github.com/tonlabs/gosh/tree/main/buildkit)
+- ensure you’re using trusted docker images (authentication signature check - https://github.com/tonlabs/gosh/tree/main/docker-extension)

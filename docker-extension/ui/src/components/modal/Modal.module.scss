@@ -15,9 +15,12 @@
         padding: 2rem;
         border-radius: 0.75rem !important;
         box-sizing: border-box;
+        background-color: #F4F4F6 !important;
+        color: $dark !important;
     }
     button[aria-label="close"] {
         margin-top1: 2rem;
+        color: $dark !important;
     }
 }
 .modal-wide {
@@ -30,5 +33,28 @@
         padding: 1.5rem;
         padding-top: 3rem;
         border-radius: 0 !important;
+    }
+}
+.pin-wrapper {
+    width: 230px !important;
+    height: 200px;
+    padding-top: 2rem;
+    margin: 0 auto;
+}
+.pin-prompt {
+    height: 30px;
+    margin-top: 1rem !important;
+    color: rgb(220, 75, 75);
+    text-align: center;
+}
+.pin-field-wrapper {
+    position: relative;
+    height: 50px;
+
+    .pin-field {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 301px !important;
     }
 }

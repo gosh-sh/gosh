@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useParams, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useParams, useLocation, useOutletContext } from "react-router-dom";
 import { Loader } from "../../components";
-import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from "../../hooks/gosh.hooks";
-import { IGoshRepository, IGoshWallet } from "../../types/types";
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
+import { IGoshRepository, IGoshWallet, TGoshTree, TGoshTreeItem } from "../../types/types";
 import CopyClipboard from "./../../components/CopyClipboard";
 import { shortString } from "./../../utils";
+import { RecoilValueReadOnly, useRecoilValue } from "recoil";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
+
 
 import { Icon, FlexContainer, Flex } from '../../components';
 
@@ -33,14 +36,21 @@ const cnb = classnames.bind(styles);
 export type TRepoLayoutOutletContext = {
     goshRepo: IGoshRepository;
     goshWallet: IGoshWallet;
+    goshRepoTree: {
+      tree: { tree: TGoshTree; items: TGoshTreeItem[] };
+      getSubtree(path?: string): RecoilValueReadOnly<TGoshTreeItem[]>;
+      getTreeItems(path?: string): RecoilValueReadOnly<TGoshTreeItem[]>;
+      getTreeItem(path?: string): RecoilValueReadOnly<TGoshTreeItem>;
+  };
 }
 
 const RepoLayout = () => {
-    const { daoName, repoName } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const location = useLocation();
-    const goshRepo = useGoshRepo(daoName, repoName);
-    const goshWallet = useGoshWallet(daoName);
     const { updateBranches } = useGoshRepoBranches(goshRepo);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch);
     const [isFetched, setIsFetched] = useState<boolean>(false);
 
     useEffect(() => {
@@ -54,15 +64,19 @@ const RepoLayout = () => {
         if (goshRepo && goshWallet) init();
     }, [goshRepo, goshWallet, updateBranches]);
 
+    useEffect(() => {
+      console.log(goshRepoTree);
+    }, [goshRepoTree]);
+
 
     const tabs = isFetched ? [
         { to: `/organizations/${daoName}/repositories/${repoName}`, title: 'Code', icon: <CodeIcon/> },
-        { to: `/organizations/${daoName}/repositories/${repoName}/pulls`, title: 'Pull requests', icon: <Icon icon={"pull-request"}/> },
+        { to: `/organizations/${daoName}/repositories/${repoName}/pull`, title: 'Pull request', icon: <Icon icon={"pull-request"}/> },
         // { to: `/organizations/${daoName}/repositories/${repoName}/branches`, title: 'Branches', icon: <Icon icon={"branches"}/> },
     ]
     : [
       { to: ``, title: 'Code', icon: <CodeIcon/> },
-      { to: ``, title: 'Pull requests', icon: <Icon icon={"pull-request"}/> },
+      { to: ``, title: 'Pull request', icon: <Icon icon={"pull-request"}/> },
       // { to: `/organizations/${daoName}/repositories/${repoName}/branches`, title: 'Branches', icon: <Icon icon={"branches"}/> },
   ];
 
@@ -75,13 +89,9 @@ const RepoLayout = () => {
     useEffect(() => {
       setValue(tabs[0].to);
     }, [isFetched])
-    
 
     return (<>
-    
-    <Container
-    className={"content-container-fullwidth"}
-  >
+
     <div className="header-row">
       
       <FlexContainer
@@ -134,9 +144,8 @@ const RepoLayout = () => {
       </Tabs>
     </div>
     <div className="main-row">
-      <Outlet context={{ goshRepo, goshWallet }} />
+      <Outlet context={{ goshRepo, goshWallet, goshRepoTree }} />
     </div>
-  </Container>
   </>
     );
 }

@@ -1,94 +1,100 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
-import { IGoshRepository, IGoshSnapshot } from "../../types/types";
+import { IGoshBlob, IGoshRepository, TGoshTreeItem } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename } from "../../utils";
+import { getCodeLanguageFromFilename, getBlobContent } from "../../utils";
+
 import BlobPreview from "../../components/Blob/Preview";
 import CopyClipboard from "../../components/CopyClipboard";
-import { GoshSnapshot } from "../../types/classes";
-import { Loader} from "../../components";
+
+import { Flex, FlexContainer, Loader } from "../../components";
 import { useRecoilValue } from "recoil";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { AccountType } from "@eversdk/appkit";
+import { GoshBlob } from "../../types/classes";
 
+import styles from './Blob.module.scss';
+import classnames from "classnames/bind";
+import { Typography } from "@mui/material";
+
+const cnb = classnames.bind(styles);
 
 const BlobPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'main', blobName } = useParams();
-    const branches = useRecoilValue(goshBranchesAtom);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    // const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
+    // const { daoName, repoName, branchName = 'main', blobName } = useParams();
+    // const branches = useRecoilValue(goshBranchesAtom);
+    // const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const pathName = useParams()['*'];
+    const { daoName, repoName, branchName = 'main' } = useParams();
+    const { goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+
+
+
     const navigate = useNavigate();
     const monaco = useMonaco();
-    const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
+    const branches = useRecoilValue(goshBranchesAtom);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
+    const [blob, setBlob] = useState<IGoshBlob>();
+
 
     useEffect(() => {
-        const getSnapshot = async (repo: IGoshRepository, branch: string, blob: string) => {
-            setSnapshot(undefined);
-            const snapAddr = await repo.getSnapshotAddr(branch, blob);
-            const snapshot = new GoshSnapshot(repo.account.client, snapAddr);
-            const { acc_type } = await snapshot.account.getAccount();
-            if (acc_type === AccountType.active) await snapshot.load();
-            setSnapshot(snapshot);
+        const getBlob = async (repo: IGoshRepository, treeItem: TGoshTreeItem) => {
+            setBlob(undefined);
+            const blobAddr = await repo.getBlobAddr(`blob ${treeItem.sha}`);
+            const blob = new GoshBlob(repo.account.client, blobAddr);
+            const { acc_type } = await blob.account.getAccount();
+            if (acc_type === AccountType.active) {
+                await blob.load();
+                const content = await getBlobContent(repo, treeItem.sha);
+                if (blob.meta) blob.meta.content = content;
+            };
+            setBlob(blob);
         }
 
-        if (goshRepo && branchName && blobName) getSnapshot(goshRepo, branchName, blobName);
-    }, [goshRepo, branchName, blobName]);
+        if (goshRepo && treeItem) getBlob(goshRepo, treeItem);
+    }, [goshRepo, treeItem]);
 
-    return (
+    return (<>
+    
         <div className="bordered-block px-7 py-8">
-            <div className="flex items-center justify-between gap-3 mb-5">
-                <div>
-                    <BranchSelect
-                        branch={branch}
-                        branches={branches}
-                        onChange={(selected) => {
-                            if (selected) {
-                                navigate(`/${daoName}/${repoName}/blob/${selected.name}/${blobName}`);
-                            }
-                        }}
-                    />
-                    <Link
-                        to={`/${daoName}/${repoName}/tree/${branchName}`}
-                        className="ml-3 text-extblue font-medium hover:underline"
-                    >
-                        {repoName}
-                    </Link>
-                    <span className="mx-2">/</span>
-                    <span className="font-meduim">{blobName}</span>
-                </div>
-            </div>
 
-            {!snapshot && (
-                <div className="text-gray-606060 text-sm">
+            {!blob && (
+                <div className="loader">
                     <Loader/>
                     Loading file...
                 </div>
             )}
-            {snapshot && !snapshot.meta && (<div className="text-gray-606060 text-sm">File not found</div>)}
-            {monaco && snapshot?.meta && (
-                <div className="border rounded overflow-hidden">
-                    <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
+            
+            {goshRepoTree.tree && !treeItem && (<Typography className="text-gray-606060 text-sm">File not found</Typography>)}
+
+            {monaco && treeItem && blob?.meta && (
+                <div className={cnb("text-editor-wrapper", "text-editor-wrapper-preview")}>
+                    <div className={cnb("copy-button")}>
                         <CopyClipboard
                             componentProps={{
-                                text: snapshot.meta.content
+                                text: blob.meta.content
                             }}
                             iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
 
                         />
-                        <Link
-                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${blobName}`}
+                        {/* <Link
+                            to={`/repositories/${daoName}/organizations/${repoName}/blobs/update/${branchName}/${pathName}`}
                             className="text-extblack/60 hover:text-extblack p-1 ml-2">
-                        </Link>
+                                Update
+                        </Link> */}
                     </div>
+
                     <BlobPreview
-                        language={getCodeLanguageFromFilename(monaco, snapshot.meta.name)}
-                        value={snapshot.meta.content}
+                    className={cnb("text-editor")}
+                        language={getCodeLanguageFromFilename(monaco, blob.meta.name)}
+                        value={blob.meta.content}
                     />
                 </div>
             )}
-        </div>
+        </div></>
     );
 }
 

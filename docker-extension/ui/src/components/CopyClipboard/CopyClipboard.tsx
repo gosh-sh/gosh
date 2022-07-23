@@ -3,7 +3,7 @@ import React, { ReactNode } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { toast, Slide } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { ToastOptionsShortcuts } from "./../../utils";
+import { ToastOptionsShortcuts } from "../../utils";
 import IconButton from '@mui/material/IconButton';
 import { DocumentDuplicateIcon } from '@heroicons/react/outline';
 import styles from './CopyClipboard.module.scss';

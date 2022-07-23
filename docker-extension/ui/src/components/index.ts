@@ -5,3 +5,4 @@ export * from "./Flex";
 export * from "./Loader";
 export * from "./MetaDecorator";
 export * from "./Modal";
+export * from "./Slider";

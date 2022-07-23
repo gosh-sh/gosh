@@ -29,7 +29,11 @@ declare global {
         listContainers: () => Promise<Array<any>>,
         listImages: () => Promise<Array<any>>
       },
-      extension: any
+      extension: any,
+      host: {
+        openExternal: (url: string) => void,
+        [key: string]: any
+      }
     };
   }
 }

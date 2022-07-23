@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Modal } from "./../../components";
-import Button from '@mui/material/Button'
+import Button from '@mui/material/Button';
 
 import Typography from '@mui/material/Typography';
 
@@ -12,7 +12,7 @@ import { Container } from "@mui/material";
 import styles from './Home.module.scss';
 import classnames from "classnames/bind";
 import { useRecoilValue } from "recoil";
-import { userStateAtom } from "./../../store/user.state";
+import { userStateAtom, userStatePersistAtom } from "../../store/user.state";
 
 const cnb = classnames.bind(styles);
 
@@ -21,6 +21,7 @@ export const Home = ({action}: {action?: string}) => {
   const [showSignupModal, setShowSignupModal] = useState<boolean>(action === "signup");
 
   const userState = useRecoilValue(userStateAtom);
+  const userStatePersist = useRecoilValue(userStatePersistAtom);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export const Home = ({action}: {action?: string}) => {
       <Modal
         show={showModal}
         onHide={handleClose}
-        className={cnb("modal")}
+        className={cnb("modal", "sign-modal")}
       >
         <SigninPage/>
       </Modal>
@@ -62,7 +63,7 @@ export const Home = ({action}: {action?: string}) => {
       <Modal
         show={showModal}
         onHide={handleClose}
-        className={cnb("modal")}
+        className={cnb("modal", "sign-modal")}
       >
         <SignupPage/>
       </Modal>
@@ -93,7 +94,7 @@ export const Home = ({action}: {action?: string}) => {
         </Typography>
 
         <div className={cnb("button-flex")}>
-        {userState && userState.phrase 
+        {userStatePersist.phrase 
         ? <div className={cnb("button-flex")}>
         <Button
             color="inherit"
@@ -105,7 +106,7 @@ export const Home = ({action}: {action?: string}) => {
             // iconPosition="after"
             onClick={() => {
                 //setShowSigninModal(true);
-                navigate("/account/organizations");
+                navigate(userState.phrase ? "/account/organizations" : "/account");
             }}
             >Account &amp; Organizations</Button>
         </div>

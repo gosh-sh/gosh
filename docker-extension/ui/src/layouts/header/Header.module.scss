@@ -2,9 +2,19 @@
 @import '../../assets/styles/mixins.scss';
 
 .header {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 76px;
+  width: 100%;
+  z-index: 100;
+  background-color: #e9ebee;
 
   a {
+    position: relative;
+    z-index: 9999999;
+
     svg {
       vertical-align: middle;
     }
@@ -31,34 +41,14 @@
     }
   }
 
-  .logo {
-    font-size: 1rem;
-    font-weight: 600;
-    color: $white;
-    display: block;
-    padding-right: 0.5rem; 
-    padding-left: 0; 
-    border-radius: .5rem;
-    color: $dark;
-    position: relative;
-    z-index: 99999;
-
-    svg {
-      vertical-align: middle;
-      margin-right: 5px;
-      transform: translateY(0px);
-      width: 28px;
-      height: auto;
-    }
-  }
 }
 .button-block {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  position: absolute !important;
   top: 1.125rem;
   left: 4.5rem;
+  padding-left: 1.5rem;
 
   &:hover, &:focus {
     background-color: transparent;
@@ -100,5 +90,41 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+  }
+}
+.button-logout {
+}
+.button-telegram {
+  padding-right: .75rem;
+
+  svg {
+    height: 22px;
+    width: auto;
+    display: block;
+    margin-right: .25rem;
+    transform: translateX(-5px);
+  }
+}
+.logo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $white;
+  display: block;
+  padding-right: 0.5rem; 
+  padding-left: 0; 
+  border-radius: .5rem;
+  color: $dark;
+  left: 1.5rem;
+  top: 1.5rem;
+  position: fixed;
+  z-index: 99999;
+
+  svg {
+    vertical-align: middle;
+    margin-right: 5px;
+    transform: translateY(0px);
+    width: 28px;
+    height: auto;
+    color: $dark;
   }
 }

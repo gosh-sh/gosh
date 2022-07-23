@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { useGoshWallet } from "./../../hooks/gosh.hooks";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { Loader, Modal } from "./../../components";
-import { TDaoLayoutOutletContext } from "./../DaoLayout";
+import { TDaoLayoutOutletContext } from "./../Dao";
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -29,7 +29,7 @@ const RepoCreatePage = () => {
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await goshWallet?.deployRepo(values.name);
+            await goshWallet?.deployRepo(values.name.toLowerCase());
             navigate(`/organizations/${daoName}/repositories/${values.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
@@ -52,10 +52,13 @@ const RepoCreatePage = () => {
                     initialValues={{ name: '' }}
                     onSubmit={onRepoCreate}
                     validationSchema={Yup.object().shape({
-                        name: Yup.string().required('Name is required')
+                        name: Yup.string()
+                            .matches(/^[\w-]+$/, 'Name has invalid characters')
+                            .max(64, 'Max length is 64 characters')
+                            .required('Name is required')
                     })}
                 >
-                    {({ isSubmitting, values, errors, touched, handleChange }) => (
+                    {({ isSubmitting, values, errors, touched, handleChange, setFieldValue }) => (
                         <Form>
                         <div>
                             <InputBase
@@ -65,12 +68,13 @@ const RepoCreatePage = () => {
                                 placeholder="Repository name"
                                 autoComplete={'off'}
                                 value={values.name}
-                                onChange={handleChange}
+                                disabled={isSubmitting}
+                                onChange={(e: any) => setFieldValue('name', e.target.value.toLowerCase())}
                                 error={touched && touched.name && Boolean(errors.name)}
                             />
                             {errors.name && (
                                 <Typography className="error-block color-error">
-                                    Enter repository's name.
+                                    {errors.name}
                                 </Typography>
                             )}
                         </div>

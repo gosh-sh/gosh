@@ -6,21 +6,12 @@ import { IGoshDao } from "./../types/types";
 
 import Container from '@mui/material/Container';
 
-
-export type TDaoLayoutOutletContext = {
-    goshDao: IGoshDao;
-}
-
 const DaoLayout = () => {
     const { daoName } = useParams();
     const goshDao = useGoshDao(daoName);
 
     return (
-        <Container
-            className={"content-container"}
-        >
-            <Outlet context={{ goshDao }} />
-      </Container>
+        <Outlet context={{ goshDao }} />
     );
 }
 

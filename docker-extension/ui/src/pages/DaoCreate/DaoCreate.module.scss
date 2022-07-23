@@ -41,12 +41,12 @@
         }
 
         &:hover {
-            box-shadow: inset 100px 100px 100px #f3f4f7;
+            box-shadow: inset 100px 100px 100px #fafbfc;
             background-color: transparent;
             background-color: #f3f4f7;
             color: $main;
             @include transition(0.7s);
-            box-shadow: inset 100px 100px 100px #f3f4f7, rgb(0 0 30 / 20%) 0px 3px 3px -2px, rgb(0 0 0 / 7%) 0px 3px 4px 0px, rgb(0 0 0 / 5%) 0px 1px 8px 0px, rgb(0 0 0 / 5%) 0px 5px 8px 0px;
+            box-shadow: inset 100px 100px 100px #fafbfc, rgb(0 0 30 / 20%) 0px 3px 3px -2px, rgb(0 0 0 / 7%) 0px 3px 4px 0px, rgb(0 0 0 / 5%) 0px 1px 8px 0px, rgb(0 0 0 / 5%) 0px 5px 8px 0px;
 
             svg {
                 transform-origin: 50% 50%;

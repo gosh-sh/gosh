@@ -5,13 +5,16 @@ import Paper from '@mui/material/Paper';
 import { styled } from '@mui/material/styles';
 import styles from './Account.module.scss';
 import classnames from "classnames/bind";
-import { CogIcon, UserGroupIcon } from '@heroicons/react/outline';
+import { CogIcon, UserGroupIcon, DatabaseIcon } from '@heroicons/react/outline';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+
+import { useSetRecoilState, useRecoilValue } from "recoil";
+import { userStateAtom, userStatePersistAtom } from "../../store/user.state";
 
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -35,8 +38,12 @@ const ItemTransparent = styled(Paper)(({ theme, elevation = 2 }) => ({
 const cnb = classnames.bind(styles);
 
 export const Account = () => {
+  const userStatePersist = useRecoilValue(userStatePersistAtom);
+  const userState = useRecoilValue(userStateAtom);
+  
   const tabs = [
     { to: '/account/organizations', title: 'Organizations' },
+    { to: '/account/repositories', title: 'Repositories', disabled: true},
     { to: '/account/settings', title: 'Settings' }
   ];
 
@@ -44,6 +51,8 @@ export const Account = () => {
     switch (title.toLocaleLowerCase()) {
       case "settings":
         return <CogIcon/>
+      case "repositories":
+        return <DatabaseIcon/>
       case "organizations":
         return <UserGroupIcon/>
     
@@ -52,10 +61,10 @@ export const Account = () => {
     }
   }
   return (
-    <Container
+    userState.phrase ? <Container
       className={"content-container"}
     >
-      <div className="left-column">
+      {userState.phrase && <><div className="left-column">
         {/* <h2 className="font-semibold text-2xl mb-5">User account</h2> */}
 
         <List
@@ -65,7 +74,8 @@ export const Account = () => {
         {tabs.map((item, index) => (
           <ListItem
             key={index}
-            className={"menu-list-item"}
+            disabled={item.disabled}
+            className={cnb("menu-list-item", {"menu-list-item-disabled" : item.disabled})}
           >
             <NavLink
               key={index}
@@ -91,8 +101,8 @@ export const Account = () => {
       </div>
       <div className="right-column">
         <Outlet />
-      </div>
-    </Container>
+      </div></>}
+    </Container> : <></>
   );
 }
 

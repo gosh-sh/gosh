@@ -18,18 +18,19 @@ type TBranchSelectProps = {
     branches: TGoshBranch[];
     className?: string;
     disabled?: boolean;
+    style?: object;
     onChange(selected: TGoshBranch | undefined): void;
 }
 
 export const BranchSelect = (props: TBranchSelectProps) => {
-    const { branch, branches, disabled, onChange } = props;
+    const { branch, branches, disabled, onChange, style } = props;
     const searchRef = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState<string>('');
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
 
-    useEffect(() => {
-        setFiltered(branches);
-    }, [branches]);
+    // useEffect(() => {
+    //     setFiltered(branches);
+    // }, [branches]);
 
     useEffect(() => {
         if (search) {
@@ -45,6 +46,7 @@ export const BranchSelect = (props: TBranchSelectProps) => {
             as="div"
             className={cnb("list-box", props.className)}
             value={branch}
+            style={style}
             disabled={disabled}
             onChange={(value: any) => onChange(value)}
         >

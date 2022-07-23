@@ -1,24 +1,24 @@
 import { KeyPair } from "@eversdk/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { goshBranchesAtom } from "../store/gosh.state";
+import { getRepoTree } from "../utils/helpers";
+import { goshBranchesAtom, goshRepoBlobSelector, goshRepoTreeAtom, goshRepoTreeSelector } from "../store/gosh.state";
 import { userStateAtom } from "../store/user.state";
 import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from "../types/classes";
-import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet } from "../types/types";
+import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet, TGoshBranch } from "../types/types";
 import { useEverClient } from "./ever.hooks";
 
 
 /** Create GoshRoot object */
 export const useGoshRoot = () => {
     const client = useEverClient();
-    const userState = useRecoilValue(userStateAtom);
 
     return useMemo<IGoshRoot | undefined>(() => {
         const address = process.env.REACT_APP_GOSH_ADDR;
-        if (client && userState.keys?.public && address) {
+        if (client && address) {
             return new GoshRoot(client, address);
         }
-    }, [client, userState.keys]);
+    }, [client]);
 }
 
 export const useGoshDao = (name?: string) => {
@@ -47,15 +47,12 @@ export const useGoshWallet = (daoName?: string) => {
     useEffect(() => {
         const createWallet = async (goshDao: IGoshDao, keys: KeyPair) => {
             const rootPubkey = await goshDao.getRootPubkey();
-            const goshWalletAddr = await goshDao.getWalletAddr(
-                rootPubkey,
-                `0x${keys.public}`
-            );
-            const goshWallet = new GoshWallet(
-                goshDao.account.client,
-                goshWalletAddr,
-                keys
-            );
+            const goshWalletAddr = await goshDao.getWalletAddr(rootPubkey, `0x${keys.public}`);
+            const goshWallet = new GoshWallet(goshDao.account.client, goshWalletAddr, keys);
+
+            const daoParticipants = await goshDao.getWallets();
+            goshWallet.isDaoParticipant = daoParticipants.indexOf(goshWallet.address) >= 0;
+
             setGoshWallet(goshWallet);
         }
 
@@ -102,4 +99,30 @@ export const useGoshRepoBranches = (goshRepo?: IGoshRepository) => {
     }, [goshRepo, setBranches]);
 
     return { branches, updateBranch, updateBranches };
+}
+
+/** Get GoshRepo tree and selectors */
+export const useGoshRepoTree = (repo?: IGoshRepository, branch?: TGoshBranch) => {
+    const [tree, setTree] = useRecoilState(goshRepoTreeAtom);
+
+    const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path });
+    const getTreeItems = (path?: string) => goshRepoTreeSelector({ type: 'items', path });
+    const getTreeItem = (path?: string) => goshRepoBlobSelector(path);
+
+    const _branch = useMemo(() => {
+        if (!branch) return undefined;
+        return { ...branch };
+    }, [branch?.name, branch?.commitAddr]);
+
+    useEffect(() => {
+        const getTree = async (repo: IGoshRepository, branch: TGoshBranch) => {
+            setTree(undefined);
+            const tree = await getRepoTree(repo, branch);
+            setTree(tree);
+        }
+
+        if (repo && _branch) getTree(repo, _branch);
+    }, [repo, _branch, setTree]);
+
+    return { tree, getSubtree, getTreeItems, getTreeItem };
 }
