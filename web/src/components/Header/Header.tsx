@@ -31,7 +31,7 @@ const Header = () => {
                         <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
                             {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
                                 <a
-                                    href="../v1/index.html#/containers"
+                                    href="../v1/index.html"
                                     rel="noreferrer"
                                     className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                                 >

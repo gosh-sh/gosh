@@ -48,7 +48,7 @@ export const Header = ({ location, ...props }: { location: string }) => {
                     }}
                 >
                     <div className={cnb('button-block')}>
-                        <a href="../v2/index.html#/account/organizations">
+                        <a href="../v2/index.html">
                             <Button
                                 color="primary"
                                 size="medium"
