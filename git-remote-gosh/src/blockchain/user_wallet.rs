@@ -2,13 +2,7 @@ use crate::abi;
 use crate::blockchain::GoshContract;
 use crate::config::UserWalletConfig;
 use crate::git_helper::GitHelper;
-use serde::{
-    Serializer,
-    Serialize,
-    ser::SerializeSeq
-};
 use ton_client::crypto::KeyPair;
-use primitive_types::U256;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -25,7 +19,7 @@ struct GetAddrDaoResult {
     pub address: String,
 }
 
-
+#[instrument(level = "debug", skip(context))]
 pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     let config = user_wallet_config(context);
     if config.is_none() {

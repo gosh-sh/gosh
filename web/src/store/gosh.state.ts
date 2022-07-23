@@ -72,9 +72,10 @@ export const goshRepoBlobSelector = selectorFamily({
             if (!treeObject || !path) return undefined;
 
             const { items } = treeObject;
-            const filtered = [...items].filter(
-                (item) => `${item.path}/${item.name}`.search(path) >= 0
-            );
+            const filtered = [...items].filter((item) => {
+                const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`;
+                return fullpath === path;
+            });
             return filtered[0];
         },
 });

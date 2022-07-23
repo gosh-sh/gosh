@@ -7,13 +7,8 @@ use git2::Repository;
 use git_diff;
 use git_hash::{self, ObjectId};
 use git_object;
-use git_odb;
-use git_odb::FindExt;
 use git_odb::{Find, Write};
-use git_repository::OdbHandle;
-use git_repository::{self, Object};
 use std::env::current_dir;
-use std::os;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::{
@@ -68,7 +63,7 @@ impl GitHelper {
             branch_name,
             file_path,
         ).await?;
-        
+
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
             None,
@@ -178,6 +173,28 @@ impl GitHelper {
         Ok(statistics)
     }
 
+    #[instrument(level = "debug", skip(self))]
+    fn get_parent_id(&mut self, commit_id: &ObjectId) -> Result<ObjectId> {
+        let mut buffer: Vec<u8> = Vec::new();
+        let commit = self
+            .local_repository()
+            .objects
+            .try_find(commit_id, &mut buffer)?
+            .expect("Commit should exists");
+
+        let raw_commit = String::from_utf8(commit.data.to_vec())?;
+
+        let commit_iter = commit.try_into_commit_iter().unwrap();
+        let parent_id = commit_iter
+            .parent_ids()
+            .map(|e| e.to_string())
+            .into_iter()
+            .nth(0)
+            .unwrap_or(ZERO_SHA.to_string());
+
+        Ok(git_hash::ObjectId::from_str(&parent_id)?)
+    }
+
     // find ancestor commit
     #[instrument(level = "debug", skip(self))]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
@@ -261,8 +278,9 @@ impl GitHelper {
                 ancestor_commit_id = out.lines().next().unwrap().to_string();
             }
             let originate_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
-            let mut create_branch_op = CreateBranchOperation::new(originate_commit, branch_name, self);
-            create_branch_op.run().await;
+            let branching_point = self.get_parent_id(&originate_commit)?;
+            let mut create_branch_op = CreateBranchOperation::new(branching_point, branch_name, self);
+            create_branch_op.run().await?;
         }
 
         for line in out.lines() {

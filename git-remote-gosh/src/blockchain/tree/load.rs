@@ -8,12 +8,12 @@ use std::error::Error;
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
     pub flags: Number,
-    pub name: String,
-    pub sha1: String,
     pub mode: String,
-
     #[serde(rename = "typeObj")]
     pub type_obj: String,
+    pub name: String,
+    pub sha1: String,
+    pub sha256: String,
 }
 
 #[derive(Deserialize, Debug, DataContract)]
@@ -22,6 +22,8 @@ pub struct TreeComponent {
 pub struct Tree {
     #[serde(rename = "value0")]
     pub objects: HashMap<String, TreeComponent>,
+    #[serde(rename = "value1")]
+    ipfs: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]

@@ -610,20 +610,33 @@ export class GoshWallet implements IGoshWallet {
 
         // Get all snapshots from branch `from` and deploy to branch `to`
         const snapCode = await this.getSnapshotCode(fromName, repo.address);
-        const snaps = await this.account.client.net.query_collection({
-            collection: 'accounts',
-            filter: { code: { eq: snapCode } },
-            result: 'id',
-        });
+        let next: string | undefined;
+        const snaps = [];
+        while (true) {
+            const accounts = await getPaginatedAccounts({
+                filters: [`code: {eq:"${snapCode}"}`],
+                limit: 50,
+                lastId: next,
+            });
+            const items = await Promise.all(
+                accounts.results.map(async ({ id }) => {
+                    return new GoshSnapshot(this.account.client, id);
+                })
+            );
+            snaps.push(...items);
+            next = accounts.lastId;
+
+            if (accounts.completed) break;
+            await sleep(200);
+        }
         console.debug('Snaps', snaps);
 
         const commitAddr = await repo.getCommitAddr(fromCommit);
         const tree = await getRepoTree(repo, commitAddr);
 
-        // Get snapshots tree items and check consistency
-        let treeSnaps = await Promise.all(
-            snaps.result.map(async ({ id }) => {
-                const snap = new GoshSnapshot(this.account.client, id);
+        // Get only those snapshots which exist in tree
+        let snapsExist = await Promise.all(
+            snaps.map(async (snap) => {
                 let name = await snap.getName();
                 name = name.split('/').slice(1).join('/');
 
@@ -634,15 +647,13 @@ export class GoshWallet implements IGoshWallet {
                 if (treeItem) return { snap, name, treeItem };
             })
         );
-        treeSnaps = treeSnaps.filter((item) => !!item);
-        console.debug('Snap + tree item', treeSnaps);
-        if (snaps.result.length !== treeSnaps.length) {
-            throw new Error('Tree inconsistent');
-        }
+        console.debug('Total read snaps', snapsExist);
+        snapsExist = snapsExist.filter((item) => !!item);
+        console.debug('Existing in tree snaps', snapsExist);
 
         // Deploy snapshots
         await Promise.all(
-            treeSnaps.map(async (item) => {
+            snapsExist.map(async (item) => {
                 if (!item) return;
                 const { snap, name, treeItem } = item;
                 const { content } = await snap.getSnapshot(fromCommit, treeItem);

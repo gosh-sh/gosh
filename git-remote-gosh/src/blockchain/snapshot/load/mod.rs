@@ -35,7 +35,11 @@ pub struct Snapshot {
     pub current_ipfs: Option<String>,
 
     #[serde(rename = "value6")]
-    pub original_commit: String
+    pub original_commit: String,
+
+    #[serde(rename = "value7")]
+    pub ready_for_diffs: bool,
+
 }
 
 #[derive(Deserialize, Debug)]
@@ -101,6 +105,8 @@ where
             if v.len() % 2 != 0 {
                 // It is certainly not a hex string
                 return Err(E::custom("Not a hex string"));
+            } else if v.len() == 0 {
+                return Err(E::custom("Empty string"));
             }
             let compressed_data: Vec<u8> = (0..v.len())
                 .step_by(2)

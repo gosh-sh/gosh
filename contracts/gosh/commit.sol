@@ -159,16 +159,16 @@ contract Commit is Modifiers {
         require(_number == 0, ERR_PROCCESS_IS_EXIST);
         _number = number;
         _approved = 0;
-        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0);
+        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(_pubkey, branch, branchcommit, address(this));
         _continueChain = true;
         _continueDiff = true;
         getMoney(_pubkey);
     }
     
-    function _sendAllDiff(string branch, address branchcommit, uint128 index) public senderIs(address(this)) {
+    function _sendAllDiff(string branch, address branchcommit, uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
-        if (_number == 0) { 
+        if ((number == 0) && (index == 0)) { 
             _approved = 0;
             _continueDiff = false;
             _diffcheck = true;
@@ -177,9 +177,9 @@ contract Commit is Modifiers {
             this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchcommit);
             return;
         }
-        if (index >= _number) { return; }
+        if (index >= number) { return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
-        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index + 1);
+        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index + 1, number);
         getMoney(_pubkey);
     }
     
