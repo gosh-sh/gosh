@@ -11,6 +11,9 @@ import { faBox } from '@fortawesome/free-solid-svg-icons';
 const Header = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom);
     const location = useLocation();
+    const navigateToV1UI = (_:any) => {
+        window.location.href = window.location.href.replace("/v2/index.html", "/v1/index.html");
+    };
 
     return (
         <header>
@@ -31,7 +34,7 @@ const Header = () => {
                         <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
                             {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
                                 <a
-                                    href="../v1/index.html"
+                                    onClick={navigateToV1UI}
                                     rel="noreferrer"
                                     className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                                 >

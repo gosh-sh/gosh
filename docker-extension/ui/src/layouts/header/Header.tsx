@@ -28,6 +28,10 @@ export const Header = ({ location, ...props }: { location: string }) => {
     const handleClose = () => setShowModal(false);
     const handleShow = () => setShowModal(true);
 
+    const navigateToV2UI = (_:any) => {
+        window.location.href = window.location.href.replace("/v1/index.html", "/v2/index.html");
+    };
+
     return (
         <>
             <Link to={''} className={cnb('logo')}>
@@ -43,7 +47,7 @@ export const Header = ({ location, ...props }: { location: string }) => {
                     }}
                 >
                     <div className={cnb('button-block')}>
-                        <a href="../v2/index.html">
+                        <a onClick={navigateToV2UI}>
                             <Button color="primary" size="medium" disableElevation>
                                 Repositories
                             </Button>
