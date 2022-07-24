@@ -1,7 +1,6 @@
 import { HashRouter } from 'react-router-dom';
 import './../assets/styles/index.scss';
 import Router from './router';
-import { HelmetProvider } from 'react-helmet-async';
 import { DockerMuiThemeProvider } from '@docker/docker-mui-theme';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -22,11 +21,9 @@ const App = () => {
     return (
         <ThemeProvider theme={theme}>
             <DockerMuiThemeProvider>
-                <HelmetProvider>
-                    <HashRouter>
-                        <Router />
-                    </HashRouter>
-                </HelmetProvider>
+                <HashRouter>
+                    <Router />
+                </HashRouter>
             </DockerMuiThemeProvider>
         </ThemeProvider>
     );

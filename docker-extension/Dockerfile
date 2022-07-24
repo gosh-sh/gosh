@@ -1,14 +1,16 @@
 # syntax=docker/dockerfile:1.4
-FROM --platform=${BUILDPLATFORM} node:16-slim as base
+FROM --platform=${BUILDPLATFORM} node:18-slim as base
 
 
-FROM --platform=$BUILDPLATFORM node:16.10 AS client-builder
+FROM --platform=$BUILDPLATFORM node:18.6.0 AS client-builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
 COPY ui /ui
-RUN yarn install --silent
-RUN yarn build --silent
+# RUN yarn install --silent
+# RUN yarn build --silent
+RUN npm install --legacy-peer-deps
+RUN npm run build
 
 
 FROM base

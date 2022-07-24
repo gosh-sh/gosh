@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MetaDecorator, Overlay } from './../components';
+import { Overlay } from './../components';
 import Button from '@mui/material/Button';
 import { DockerClient } from './../client';
 import Container from '@mui/material/Container';
@@ -629,11 +629,6 @@ const Main = () => {
 
     return (
         <>
-            <MetaDecorator
-                title="Gosh Docker Extension"
-                description="Git On-chain Source Holder Docker extension for Secure Software Supply BlockChain"
-                keywords="docker, gosh, extension, sssb, sssp"
-            />
             <div className="button-block">
                 <Button
                     color="primary"
