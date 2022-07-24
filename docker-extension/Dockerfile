@@ -9,7 +9,7 @@ COPY ui/package.json /ui/package.json
 COPY ui /ui
 # RUN yarn install --silent
 # RUN yarn build --silent
-RUN npm install --legacy-peer-deps
+RUN npm install
 RUN npm run build
 
 
