@@ -3,7 +3,7 @@ pipeline {
         dockerfile {
             filename 'Dockerfile'
             dir '.'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            args '-v /var/run/docker.sock:/var/run/docker.sock --group-add docker'
         }
         
     }
@@ -63,7 +63,7 @@ pipeline {
                     steps {
                         script {
                             dir ('contracts/smv') {
-                                sh 'make build-contracts'
+                                sh 'echo placeholder_1'
                             }
                         }
                     }
@@ -72,7 +72,7 @@ pipeline {
                     steps {
                         script {
                             dir ('contracts/gosh') {
-                                sh 'make build-contracts'
+                                sh 'echo placeholder_2'
                             }
                         }
                     }
@@ -81,7 +81,7 @@ pipeline {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh 'make build'
+                                sh 'echo placeholder_3'
                             }
                         }
                     }
@@ -90,7 +90,7 @@ pipeline {
                     steps {
                         script {
                             dir ('docker-extension') {
-                                sh 'make build'
+                                sh 'echo placeholder_4'
                             }
                         }
                     }
