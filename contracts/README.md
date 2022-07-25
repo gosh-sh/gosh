@@ -6,23 +6,20 @@
 
 #### Deploy
 
-1. Place giver keys file named giver.keys.json inside contracts folder
-2. ```
-    cd contracts
-    make deploy-testnet
+1. Place giver keys file named giver.keys.json inside contracts/gosh folder
+2. Navigate to gosh directory:
     ```
-NOTE: script will generate gosh.seed, GoshRoot.addr and GoshDaoCreator.addr files. 
-
-
-#### Environment variables for Docker command (described in Makefile)
-| Name | Default | Description |
-| ------ | ------ | ------ |
-| GIVER_WALLET_ADDR | - | Multisig wallet (giver) address to top up contracts before deployment |
-| NETWORK | - | GOSH netwotk entrypoint |
-| GOSH_ROOT_SEED_FILE_OUT | - | File name to save newly generated root keys |
-| EVERDEV_VERSION | latest | Everdev NPM package version |
-| EVERDEV_SOL_COMPILER_VERSION | latest | Solidity compiler version |
-| EVERDEV_TVM_LINKER_VERSION | latest | TVM linker version |
-| EVERDEV_TONOS_CLI_VERSION | latest | TONOS CLI version |
-| GOSH_REPO_ROOT_PATH | /opt/gosh | Path to mount GOSH repo inside container |
-| GIVER_WALLET_KEYS_PATH | /tmp/giver.keys.json | Path to mount keys inside container |
+    cd contracts/gosh
+    ```
+2. Build docker image with Everdev and other requirements:
+    ```
+    make prepare-docker
+    ```
+3. Build smart-contracts:
+    ```
+    make build-contracts-docker
+    ```
+4. Deploy smart-contracts:
+    ```
+    make deploy-docker -e NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391
+    ```

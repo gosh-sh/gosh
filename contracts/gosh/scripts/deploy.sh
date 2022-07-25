@@ -1,52 +1,21 @@
 #!/bin/bash
 set -e
 
-# Script for deployment GoshRoot contract
-# Need to run from GOSH repo root folder
-
-# Docker envs
-# GIVER_WALLET_ADDR
-# NETWORK
-# GOSH_ROOT_SEED_FILE_OUT
-#EVERDEV_VERSION=latest
-#EVERDEV_SOL_COMPILER_VERSION=latest
-#EVERDEV_TVM_LINKER_VERSION=latest
-#EVERDEV_TONOS_CLI_VERSION=latest
+# envs
+GOSH_PATH="../../gosh"
+SMV_PATH="../../smv"
+CREATOR_ABI="$GOSH_PATH/daocreator.abi.json"
+GOSH_ABI="$GOSH_PATH/gosh.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
 GIVER_WALLET_KEYS_PATH=/tmp/giver.keys.json
 
-# Script envs
-GOSH_PATH="./gosh"
-SMV_PATH="./smv"
-CREATOR_ABI="$GOSH_PATH/daocreator.abi.json"
-GOSH_ABI="$GOSH_PATH/gosh.abi.json"
-
-# Pre-requirements
-cd $GOSH_REPO_ROOT_PATH
-apt-get -qq update -y > /dev/null
-apt-get -qq install make curl -y > /dev/null
-
-# Install required packages
-echo "========== Run everdev installation"
-npm i -g everdev@$EVERDEV_VERSION
-
-everdev sol set --compiler $EVERDEV_SOL_COMPILER_VERSION
-everdev sol set --linker $EVERDEV_TVM_LINKER_VERSION
-everdev tonos-cli set --version $EVERDEV_TONOS_CLI_VERSION
-everdev network add $NETWORK $NETWORK
-
 # Generate GOSH keys
-tonos-cli genphrase > $GOSH_ROOT_SEED_FILE_OUT
-seed=`cat $GOSH_ROOT_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
+echo "========== Generate keys for GoshRoot"
+tonos-cli genphrase > $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT
+seed=`cat $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
 everdev signer add GOSHRootSigner "$seed"
 
-# Contracts compilation
-echo "========== Run contracts compilation"
-cd $SMV_PATH && bash ./compile_really_all.sh || true
-cd ..
-cd $GOSH_PATH
-make build
-cd ..
+everdev network add $NETWORK $NETWORK
 
 # Prepare GIVER_WALLET
 curl https://raw.githubusercontent.com/tonlabs/ton-labs-contracts/master/solidity/safemultisig/SafeMultisigWallet.abi.json -O -s
@@ -56,12 +25,12 @@ everdev signer add GiverWalletSigner $GIVER_WALLET_KEYS_PATH
 # Calculate GoshRoot and GoshDaoCreator addresses
 GOSH_ROOT_ADDR=$(everdev contract info $GOSH_ABI --signer GOSHRootSigner --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
 echo "========== GoshRoot address: '$GOSH_ROOT_ADDR'"
-echo $GOSH_ROOT_ADDR > GoshRoot.addr
+echo $GOSH_ROOT_ADDR > $GOSH_PATH/GoshRoot.addr
 
 CREATOR_ADDR=$(everdev contract info $CREATOR_ABI --signer GOSHRootSigner --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
 CREATOR_BALANCE=400000000000000
 echo "========== GoshDaoCreator address: '$CREATOR_ADDR'"
-echo $CREATOR_ADDR > GoshDaoCreator.addr
+echo $CREATOR_ADDR > $GOSH_PATH/GoshDaoCreator.addr
 
 # Send some tokens to GoshRoot for deploy
 echo "========== Send 50 tons for deploy"
