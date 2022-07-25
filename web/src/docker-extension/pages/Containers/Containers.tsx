@@ -112,7 +112,7 @@ function EnhancedTable<T extends { id: string }>({
     actionCaption,
     actionActive,
 }: {
-    data: { isLoading: boolean, data: Array<T> }
+    data: { isLoading: boolean; data: Array<T> };
     columns: DataColumn<T>[];
     actionFunction: (element: T, index: number) => void;
     actionEndFunction?: () => void;
@@ -151,98 +151,94 @@ function EnhancedTable<T extends { id: string }>({
                             headCells={columns}
                         />
                         <TableBody>
-                            {!data.isLoading ? (
-                                stableSort<T>(data.data, getComparator<T>(order, orderBy)).map(
-                                    (row, index) => {
-                                        return (
-                                            <Fragment key={index}>
-                                                <TableRow
-                                                    key={index}
-                                                    className={cn({
-                                                        'dd-table-row-noborder':
-                                                            actionActive &&
-                                                            actionActive !== true &&
-                                                            actionActive.id === row.id!,
-                                                    })}
-                                                >
-                                                    {columns.map((column, i) =>
-                                                        column.id === 'validated' ? (
-                                                            <TableCell
-                                                                key={String(column.id)}
-                                                            >
-                                                                <StatusDot
-                                                                    status={String(
-                                                                        row[column.id]
-                                                                    )}
-                                                                />
-                                                            </TableCell>
-                                                        ) : (
-                                                            <TableCell
-                                                                key={String(column.id)}
-                                                            >
-                                                                <>{row[column.id]}</>
-                                                            </TableCell>
-                                                        )
-                                                    )}
-                                                    <TableCell className="dd-cell-button">
-                                                        {actionActive &&
-                                                            actionActive !== true &&
-                                                            actionActive.id === row.id! &&
-                                                            !actionActive.active ? (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn--body px-2.5 py-1.5 text-xs rounded"
-                                                                onClick={() => {
-                                                                    actionEndFunction &&
-                                                                        actionEndFunction();
-                                                                }}
-                                                            >
-                                                                Close
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn--body px-2.5 py-1.5 text-xs rounded"
-                                                                disabled={Boolean(
-                                                                    actionActive
-                                                                )}
-                                                                onClick={() => {
-                                                                    actionFunction(
-                                                                        row,
-                                                                        index
-                                                                    );
-                                                                }}
-                                                            >
-                                                                {actionCaption}
-                                                            </button>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                                {actionActive &&
-                                                    actionActive !== true &&
-                                                    actionActive.id === row.id! && (
-                                                        <TableRow key={index}>
-                                                            <TableCell colSpan={10}>
-                                                                <pre className="text-xs">
-                                                                    <code>
-                                                                        {actionActive.stdout ||
-                                                                            'Initialising validation...'}
-                                                                    </code>
-                                                                </pre>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                            </Fragment>
-                                        );
-                                    }
-                                )
-                            ) : (
+                            {data.isLoading && (
                                 <TableRow>
                                     <TableCell colSpan={columns.length}>
                                         <span className="dd-loading">Loading...</span>
                                     </TableCell>
                                 </TableRow>
                             )}
+
+                            {!data.isLoading && !data.data.length && (
+                                <div className="px-4 py-3">---</div>
+                            )}
+
+                            {stableSort<T>(
+                                data.data,
+                                getComparator<T>(order, orderBy)
+                            ).map((row, index) => {
+                                return (
+                                    <Fragment key={index}>
+                                        <TableRow
+                                            key={index}
+                                            className={cn({
+                                                'dd-table-row-noborder':
+                                                    actionActive &&
+                                                    actionActive !== true &&
+                                                    actionActive.id === row.id!,
+                                            })}
+                                        >
+                                            {columns.map((column, i) =>
+                                                column.id === 'validated' ? (
+                                                    <TableCell key={String(column.id)}>
+                                                        <StatusDot
+                                                            status={String(
+                                                                row[column.id]
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                ) : (
+                                                    <TableCell key={String(column.id)}>
+                                                        <>{row[column.id]}</>
+                                                    </TableCell>
+                                                )
+                                            )}
+                                            <TableCell className="dd-cell-button">
+                                                {actionActive &&
+                                                actionActive !== true &&
+                                                actionActive.id === row.id! &&
+                                                !actionActive.active ? (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded"
+                                                        onClick={() => {
+                                                            actionEndFunction &&
+                                                                actionEndFunction();
+                                                        }}
+                                                    >
+                                                        Close
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded"
+                                                        disabled={Boolean(actionActive)}
+                                                        onClick={() => {
+                                                            actionFunction(row, index);
+                                                        }}
+                                                    >
+                                                        {actionCaption}
+                                                    </button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                        {actionActive &&
+                                            actionActive !== true &&
+                                            actionActive.id === row.id! && (
+                                                <TableRow key={index}>
+                                                    <TableCell colSpan={10}>
+                                                        <pre className="text-xs">
+                                                            <code>
+                                                                {actionActive.stdout ||
+                                                                    'Initialising validation...'}
+                                                            </code>
+                                                        </pre>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                    </Fragment>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -253,11 +249,14 @@ function EnhancedTable<T extends { id: string }>({
 
 const Main = () => {
     const [validation, setValidation] = useState<boolean | Validation>(false);
-    const [containers, setContainers] = useState<{ data: Array<ContainerType>, isLoading: boolean }>({
+    const [containers, setContainers] = useState<{
+        data: Array<ContainerType>;
+        isLoading: boolean;
+    }>({
         isLoading: false,
         data: [],
     });
-    const [images, setImages] = useState<{ data: Array<ImageType>, isLoading: boolean }>({
+    const [images, setImages] = useState<{ data: Array<ImageType>; isLoading: boolean }>({
         isLoading: false,
         data: [],
     });
@@ -424,10 +423,11 @@ const Main = () => {
         DockerClient.getContainers().then((value) => {
             console.log(value);
             setContainers({
-                data: value.map((container: ContainerType) => ({
-                    ...container,
-                    id: container.containerHash,
-                })) || [],
+                data:
+                    value.map((container: ContainerType) => ({
+                        ...container,
+                        id: container.containerHash,
+                    })) || [],
                 isLoading: false,
             });
         });
@@ -441,12 +441,14 @@ const Main = () => {
         DockerClient.getImages().then((value) => {
             console.log(value);
             setImages({
-                data: value.map((image: ImageType) => ({ ...image, id: image.imageHash })),
+                data: value.map((image: ImageType) => ({
+                    ...image,
+                    id: image.imageHash,
+                })),
                 isLoading: false,
             });
         });
     }, []);
-
 
     const handleClick = () => {
         setContainers({
