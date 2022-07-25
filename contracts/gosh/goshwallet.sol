@@ -19,6 +19,7 @@ import "daocreator.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
+import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
 import "../smv/Libraries/SMVConstants.sol";
@@ -37,7 +38,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _ ;
     }
 
-    string constant version = "0.5.2";
+    string constant version = "0.5.3";
     
     address _creator;
     uint256 static _rootRepoPubkey;
@@ -52,6 +53,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     TvmCell m_SnapshotCode;
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
+    TvmCell m_contentSignature;
 
     TvmCell m_SMVPlatformCode;
     TvmCell m_SMVClientCode;
@@ -75,6 +77,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell SnapshotCode,
         TvmCell codeTree,
         TvmCell codeDiff,
+        TvmCell contentSignature,
         uint128 limit_wallets,
         uint128 limit_time,
         uint128 limit_messages,
@@ -99,6 +102,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         m_SnapshotCode = SnapshotCode;
         m_codeTree = codeTree;
         m_codeDiff = codeDiff;
+        m_contentSignature = contentSignature;
         _limit_wallets = limit_wallets;
         _limit_time = limit_time;
         _limit_messages = limit_messages;
@@ -108,6 +112,22 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
         _tip3root = _tip3Root;
+        getMoney();
+    }
+
+    //Content part
+    function deployContent(
+        string repoName,
+        string commit,
+        string label,
+        string content
+    ) public onlyOwner accept saveMsg {
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label}});
+        new ContentSignature{
+            stateInit: s1, value: 5 ton, wid: 0
+        }(_rootRepoPubkey, tvm.pubkey(), _rootgosh, _goshdao, m_WalletCode, content);
         getMoney();
     }
     
@@ -135,7 +155,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         }(_creator, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,
-            m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _limit_wallets, _limit_time, _limit_messages, 
+            m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 
             m_lockerCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tip3root);
         getMoney();
@@ -602,6 +622,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Getters
+    function getContentCode(string repoName) external view returns(TvmCell) {
+        address repo = _buildRepositoryAddr(repoName);
+        return GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+    }
     
     function getDiffAddr(string reponame, string commitName, uint128 index1, uint128 index2) external view returns(address) {
         address repo = _buildRepositoryAddr(reponame);

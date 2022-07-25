@@ -11,7 +11,7 @@ import "./modifiers/modifiers.sol";
 import "Upgradable.sol";
 
 contract GoshConfig is Modifiers, Upgradable {
-    string constant version = "0.5.2";
+    string constant version = "0.5.3";
 
     GlobalConfig _config;
 

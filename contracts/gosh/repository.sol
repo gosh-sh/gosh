@@ -17,7 +17,7 @@ import "./modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "0.5.2";
+    string constant version = "0.5.3";
 
     uint256 _pubkey;
     TvmCell m_CommitCode;
