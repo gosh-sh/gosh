@@ -40,6 +40,19 @@ build: clean_temp build-ui-v2 build-git-remote-gosh ## Build service image to be
 	  --output=type=docker \
 	  .
 
+build-ci: build-ui-v2
+	mkdir $(LOCAL_TEMP_DIR)/gosh
+	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	docker buildx build \
+	  --tag=$(IMAGE):$(TAG) \
+	  --tag=$(IMAGE):latest \
+	  --build-arg content_signature_local_dir="$(LOCAL_TEMP_DIR)/content-signature" \
+	  --build-arg git_remote_gosh_local_dir="$(LOCAL_TEMP_DIR)/git-remote-gosh" \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
+	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --output=type=docker \
+	  .
+
 install: rm build ## Install the extension
 	docker extension install $(IMAGE):$(TAG)
 

@@ -1,4 +1,5 @@
 tvcs = tree tag snapshot repository goshwallet goshdao goshconfig gosh diff daocreator commit content-signature
+KEYS_PATH = ${CURDIR}
 clean:
 	rm -f *.tvc *.abi.json
 	rm -rf .solc_imports
@@ -28,9 +29,9 @@ build-contracts-docker:
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh && make build-contracts'
 
 deploy-docker:
-	docker run -it --rm \
+	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
-		-v ${CURDIR}/giver.keys.json:/tmp/giver.keys.json \
+		-v ${KEYS_PATH}:/tmp/giver.keys.json \
 		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
 		-e GOSH_ROOT_SEED_FILE_OUT="gosh.seed" \
 		-e NETWORK=${NETWORK} \
