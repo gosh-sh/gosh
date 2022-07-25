@@ -1,67 +1,67 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import BranchSelect from '../../components/BranchSelect';
-import { IGoshRepository, TGoshTreeItem } from '../../types/types';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { useMonaco } from '@monaco-editor/react';
-import { getCodeLanguageFromFilename, ZERO_COMMIT } from '../../helpers';
-import BlobPreview from '../../components/Blob/Preview';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import BranchSelect from '../../components/BranchSelect'
+import { IGoshRepository, TGoshTreeItem } from '../../types/types'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { useMonaco } from '@monaco-editor/react'
+import { getCodeLanguageFromFilename, ZERO_COMMIT } from '../../helpers'
+import BlobPreview from '../../components/Blob/Preview'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faMagnifyingGlass,
     faPencil,
     faFloppyDisk,
-} from '@fortawesome/free-solid-svg-icons';
-import CopyClipboard from '../../components/CopyClipboard';
-import Spinner from '../../components/Spinner';
-import { useRecoilValue } from 'recoil';
-import { goshBranchesAtom, goshCurrBranchSelector } from '../../store/gosh.state';
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
-import { GoshCommit, GoshSnapshot } from '../../types/classes';
-import { useGoshRepoTree } from '../../hooks/gosh.hooks';
-import { Buffer } from 'buffer';
-import FileDownload from '../../components/FileDownload';
+} from '@fortawesome/free-solid-svg-icons'
+import CopyClipboard from '../../components/CopyClipboard'
+import Spinner from '../../components/Spinner'
+import { useRecoilValue } from 'recoil'
+import { goshBranchesAtom, goshCurrBranchSelector } from '../../store/gosh.state'
+import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
+import { GoshCommit, GoshSnapshot } from '../../types/classes'
+import { useGoshRepoTree } from '../../hooks/gosh.hooks'
+import { Buffer } from 'buffer'
+import FileDownload from '../../components/FileDownload'
 
 const BlobPage = () => {
-    const pathName = useParams()['*'];
-    const { daoName, repoName, branchName = 'main' } = useParams();
-    const navigate = useNavigate();
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const monaco = useMonaco();
-    const branches = useRecoilValue(goshBranchesAtom);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const { tree, getTreeItem } = useGoshRepoTree(goshRepo, branch, pathName);
-    const treeItem = useRecoilValue(getTreeItem(pathName));
-    const [blob, setBlob] = useState<any>();
+    const pathName = useParams()['*']
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const navigate = useNavigate()
+    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const monaco = useMonaco()
+    const branches = useRecoilValue(goshBranchesAtom)
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const { tree, getTreeItem } = useGoshRepoTree(goshRepo, branch, pathName)
+    const treeItem = useRecoilValue(getTreeItem(pathName))
+    const [blob, setBlob] = useState<any>()
 
     useEffect(() => {
         const getBlob = async (
             repo: IGoshRepository,
             commitAddr: string,
             branchName: string,
-            treeItem: TGoshTreeItem
+            treeItem: TGoshTreeItem,
         ) => {
-            setBlob(undefined);
+            setBlob(undefined)
 
-            const commit = new GoshCommit(repo.account.client, commitAddr);
-            const commitName = await commit.getName();
-            if (commitName === ZERO_COMMIT) return;
+            const commit = new GoshCommit(repo.account.client, commitAddr)
+            const commitName = await commit.getName()
+            if (commitName === ZERO_COMMIT) return
 
-            let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
-            filepath = `${filepath}${treeItem.name}`;
+            let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`
+            filepath = `${filepath}${treeItem.name}`
 
-            const snapAddr = await repo.getSnapshotAddr(branchName, filepath);
-            console.debug('Snap addr', snapAddr);
-            const snap = new GoshSnapshot(repo.account.client, snapAddr);
-            const data = await snap.getSnapshot(commitName, treeItem);
-            setBlob({ content: data.content });
-        };
-
-        console.debug('Branch commit', branch?.commitAddr);
-        if (goshRepo && branch?.commitAddr && treeItem) {
-            getBlob(goshRepo, branch?.commitAddr, branch.name, treeItem);
+            const snapAddr = await repo.getSnapshotAddr(branchName, filepath)
+            console.debug('Snap addr', snapAddr)
+            const snap = new GoshSnapshot(repo.account.client, snapAddr)
+            const data = await snap.getSnapshot(commitName, treeItem)
+            setBlob({ content: data.content })
         }
-    }, [goshRepo, branch?.commitAddr, branch?.name, treeItem]);
+
+        console.debug('Branch commit', branch?.commitAddr)
+        if (goshRepo && branch?.commitAddr && treeItem) {
+            getBlob(goshRepo, branch?.commitAddr, branch.name, treeItem)
+        }
+    }, [goshRepo, branch?.commitAddr, branch?.name, treeItem])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -72,8 +72,8 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`
-                            );
+                                `/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`,
+                            )
                         }
                     }}
                 />
@@ -143,7 +143,7 @@ const BlobPage = () => {
                 </div>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default BlobPage;
+export default BlobPage

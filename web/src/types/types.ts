@@ -241,11 +241,7 @@ export interface IGoshWallet extends IContract {
         diffs: TGoshDiff[],
     ): Promise<void>
     deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string>
-    deployTag(
-        repo: IGoshRepository,
-        commitName: string,
-        content: string,
-    ): Promise<void>
+    deployTag(repo: IGoshRepository, commitName: string, content: string): Promise<void>
     deployNewSnapshot(
         repoAddr: string,
         branchName: string,
@@ -261,11 +257,7 @@ export interface IGoshWallet extends IContract {
         branchName: string,
         filename: string,
     ): Promise<string>
-    setTree(
-        repoName: string,
-        commitName: string,
-        treeAddr: string,
-    ): Promise<void>
+    setTree(repoName: string, commitName: string, treeAddr: string): Promise<void>
     setCommit(
         repoName: string,
         branchName: string,
@@ -314,11 +306,7 @@ export interface IGoshWallet extends IContract {
         label: string,
         content: string,
     ): Promise<void>
-    getContentAdress(
-        repoName: string,
-        commitName: string,
-        label: string,
-    ): Promise<string>
+    getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
 }
 
 export interface IGoshRepository extends IContract {

@@ -1,2 +1,2 @@
-export * from "./BlobCreate";
-export { default } from "./BlobCreate";
+export * from './BlobCreate'
+export { default } from './BlobCreate'

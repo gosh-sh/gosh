@@ -1,2 +1,2 @@
-export * from "./BlobUpdate";
-export { default } from "./BlobUpdate";
+export * from './BlobUpdate'
+export { default } from './BlobUpdate'

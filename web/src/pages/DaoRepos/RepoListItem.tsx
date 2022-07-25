@@ -1,22 +1,22 @@
-import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types';
-import { shortString } from '../../utils';
+import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link } from 'react-router-dom'
+import CopyClipboard from '../../components/CopyClipboard'
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
+import { shortString } from '../../utils'
 
 type TRepositoryListItemProps = {
-    daoName: string;
-    daoLink?: boolean;
+    daoName: string
+    daoLink?: boolean
     item: Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
-        branches?: TGoshBranch[];
-        head?: string;
-        tags?: TGoshTagDetails[];
-    };
-};
+        branches?: TGoshBranch[]
+        head?: string
+        tags?: TGoshTagDetails[]
+    }
+}
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
-    const { daoName, item, daoLink = false } = props;
+    const { daoName, item, daoLink = false } = props
 
     return (
         <div className="py-3">
@@ -80,7 +80,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 />
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default RepositoryListItem;
+export default RepositoryListItem

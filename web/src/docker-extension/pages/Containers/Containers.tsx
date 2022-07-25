@@ -1,76 +1,76 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react'
 
-import { DockerClient } from './../../client';
-import Container from '@mui/material/Container';
-import cn from 'classnames';
+import { DockerClient } from './../../client'
+import Container from '@mui/material/Container'
+import cn from 'classnames'
 
-import Box from '@mui/material/Box';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
-import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import TableSortLabel from '@mui/material/TableSortLabel'
+import Paper from '@mui/material/Paper'
 
-import { visuallyHidden } from '@mui/utils';
+import { visuallyHidden } from '@mui/utils'
 
 import {
     DataColumn,
     Validation,
     Image as ImageType,
     Container as ContainerType,
-} from './../../interfaces';
+} from './../../interfaces'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
-);
+)
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     if (b[orderBy] < a[orderBy]) {
-        return -1;
+        return -1
     }
     if (b[orderBy] > a[orderBy]) {
-        return 1;
+        return 1
     }
-    return 0;
+    return 0
 }
 
-type Order = 'asc' | 'desc';
+type Order = 'asc' | 'desc'
 
 function getComparator<T>(order: Order, orderBy: keyof T): (a: T, b: T) => number {
     return order === 'desc'
         ? (a, b) => descendingComparator<T>(a, b, orderBy)
-        : (a, b) => -descendingComparator<T>(a, b, orderBy);
+        : (a, b) => -descendingComparator<T>(a, b, orderBy)
 }
 
 function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
-    const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
+    const stabilizedThis = array.map((el, index) => [el, index] as [T, number])
     stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
+        const order = comparator(a[0], b[0])
         if (order !== 0) {
-            return order;
+            return order
         }
-        return a[1] - b[1];
-    });
-    return stabilizedThis.map((el) => el[0]);
+        return a[1] - b[1]
+    })
+    return stabilizedThis.map((el) => el[0])
 }
 
 interface EnhancedTableProps<T> {
-    onRequestSort: (event: React.MouseEvent<unknown>, property: keyof T) => void;
-    order: Order;
-    orderBy: string;
-    rowCount: number;
+    onRequestSort: (event: React.MouseEvent<unknown>, property: keyof T) => void
+    order: Order
+    orderBy: string
+    rowCount: number
 }
 function EnhancedTableHead<T>(
-    props: EnhancedTableProps<T> & { headCells: DataColumn<T>[] }
+    props: EnhancedTableProps<T> & { headCells: DataColumn<T>[] },
 ) {
-    const { order, orderBy, headCells, onRequestSort } = props;
+    const { order, orderBy, headCells, onRequestSort } = props
     const createSortHandler =
         (property: keyof T) => (event: React.MouseEvent<unknown>) => {
-            onRequestSort(event, property);
-        };
+            onRequestSort(event, property)
+        }
 
     return (
         <TableHead>
@@ -101,7 +101,7 @@ function EnhancedTableHead<T>(
                 <TableCell></TableCell>
             </TableRow>
         </TableHead>
-    );
+    )
 }
 
 function EnhancedTable<T extends { id: string }>({
@@ -112,22 +112,22 @@ function EnhancedTable<T extends { id: string }>({
     actionCaption,
     actionActive,
 }: {
-    data: { isLoading: boolean; data: Array<T> };
-    columns: DataColumn<T>[];
-    actionFunction: (element: T, index: number) => void;
-    actionEndFunction?: () => void;
-    actionCaption: string;
-    actionActive: boolean | Validation;
+    data: { isLoading: boolean; data: Array<T> }
+    columns: DataColumn<T>[]
+    actionFunction: (element: T, index: number) => void
+    actionEndFunction?: () => void
+    actionCaption: string
+    actionActive: boolean | Validation
 }) {
-    const [order, setOrder] = React.useState<Order>('asc');
-    const [orderBy, setOrderBy] = React.useState<keyof T>('validated' as keyof T);
-    const [dense] = React.useState(false);
+    const [order, setOrder] = React.useState<Order>('asc')
+    const [orderBy, setOrderBy] = React.useState<keyof T>('validated' as keyof T)
+    const [dense] = React.useState(false)
 
     const handleRequestSort = (event: React.MouseEvent<unknown>, property: keyof T) => {
-        const isAsc = orderBy === property && order === 'asc';
-        setOrder(isAsc ? 'desc' : 'asc');
-        setOrderBy(property);
-    };
+        const isAsc = orderBy === property && order === 'asc'
+        setOrder(isAsc ? 'desc' : 'asc')
+        setOrderBy(property)
+    }
 
     return (
         <Box sx={{ width: '100%' }}>
@@ -165,7 +165,7 @@ function EnhancedTable<T extends { id: string }>({
 
                             {stableSort<T>(
                                 data.data,
-                                getComparator<T>(order, orderBy)
+                                getComparator<T>(order, orderBy),
                             ).map((row, index) => {
                                 return (
                                     <Fragment key={index}>
@@ -183,7 +183,7 @@ function EnhancedTable<T extends { id: string }>({
                                                     <TableCell key={String(column.id)}>
                                                         <StatusDot
                                                             status={String(
-                                                                row[column.id]
+                                                                row[column.id],
                                                             )}
                                                         />
                                                     </TableCell>
@@ -191,7 +191,7 @@ function EnhancedTable<T extends { id: string }>({
                                                     <TableCell key={String(column.id)}>
                                                         <>{row[column.id]}</>
                                                     </TableCell>
-                                                )
+                                                ),
                                             )}
                                             <TableCell className="dd-cell-button">
                                                 {actionActive &&
@@ -203,7 +203,7 @@ function EnhancedTable<T extends { id: string }>({
                                                         className="btn btn--body px-2.5 py-1.5 text-xs rounded"
                                                         onClick={() => {
                                                             actionEndFunction &&
-                                                                actionEndFunction();
+                                                                actionEndFunction()
                                                         }}
                                                     >
                                                         Close
@@ -214,7 +214,7 @@ function EnhancedTable<T extends { id: string }>({
                                                         className="btn btn--body px-2.5 py-1.5 text-xs rounded"
                                                         disabled={Boolean(actionActive)}
                                                         onClick={() => {
-                                                            actionFunction(row, index);
+                                                            actionFunction(row, index)
                                                         }}
                                                     >
                                                         {actionCaption}
@@ -237,29 +237,29 @@ function EnhancedTable<T extends { id: string }>({
                                                 </TableRow>
                                             )}
                                     </Fragment>
-                                );
+                                )
                             })}
                         </TableBody>
                     </Table>
                 </TableContainer>
             </Paper>
         </Box>
-    );
+    )
 }
 
 const Main = () => {
-    const [validation, setValidation] = useState<boolean | Validation>(false);
+    const [validation, setValidation] = useState<boolean | Validation>(false)
     const [containers, setContainers] = useState<{
-        data: Array<ContainerType>;
-        isLoading: boolean;
+        data: Array<ContainerType>
+        isLoading: boolean
     }>({
         isLoading: false,
         data: [],
-    });
+    })
     const [images, setImages] = useState<{ data: Array<ImageType>; isLoading: boolean }>({
         isLoading: false,
         data: [],
-    });
+    })
 
     const columns: DataColumn<ContainerType>[] = React.useMemo(
         () => [
@@ -318,8 +318,8 @@ const Main = () => {
                 width: 200,
             },
         ],
-        []
-    );
+        [],
+    )
     const columnsImage: Array<DataColumn<ImageType>> = React.useMemo(
         () => [
             {
@@ -359,8 +359,8 @@ const Main = () => {
                 width: 200,
             },
         ],
-        []
-    );
+        [],
+    )
 
     // const data = React.useMemo<ContainerType[]>(
     //     () => [
@@ -419,9 +419,9 @@ const Main = () => {
         setContainers({
             data: [],
             isLoading: true,
-        });
+        })
         DockerClient.getContainers().then((value) => {
-            console.log(value);
+            console.log(value)
             setContainers({
                 data:
                     value.map((container: ContainerType) => ({
@@ -429,60 +429,60 @@ const Main = () => {
                         id: container.containerHash,
                     })) || [],
                 isLoading: false,
-            });
-        });
-    }, []);
+            })
+        })
+    }, [])
 
     useEffect(() => {
         setImages({
             data: [],
             isLoading: true,
-        });
+        })
         DockerClient.getImages().then((value) => {
-            console.log(value);
+            console.log(value)
             setImages({
                 data: value.map((image: ImageType) => ({
                     ...image,
                     id: image.imageHash,
                 })),
                 isLoading: false,
-            });
-        });
-    }, []);
+            })
+        })
+    }, [])
 
     const handleClick = () => {
         setContainers({
             data: [],
             isLoading: true,
-        });
+        })
         DockerClient.getContainers().then((value) => {
-            console.log(value);
+            console.log(value)
             setContainers({
                 data: value || [],
                 isLoading: false,
-            });
+            })
             //do stuff
-        });
-    };
+        })
+    }
 
     function validateContainer(element: ContainerType, index: number): void {
-        let logs: string[] = [];
+        let logs: string[] = []
         setValidation({
             id: element.containerHash,
             type: 'container',
             active: true,
             stdout: '',
-        });
+        })
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
-                logs.push(status);
+                logs.push(status)
                 setValidation({
                     id: element.containerHash,
                     type: 'container',
                     active: true,
                     stdout: logs.join('\n'),
-                });
+                })
             },
             () =>
                 setValidation({
@@ -490,28 +490,28 @@ const Main = () => {
                     type: 'container',
                     active: false,
                     stdout: logs.join('\n'),
-                })
-        );
+                }),
+        )
     }
 
     function validateImage(element: ImageType, index: number): void {
-        let logs: string[] = [];
+        let logs: string[] = []
         setValidation({
             id: element.imageHash,
             type: 'image',
             active: true,
             stdout: '',
-        });
+        })
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
-                logs.push(status);
+                logs.push(status)
                 setValidation({
                     id: element.imageHash,
                     type: 'image',
                     active: true,
                     stdout: logs.join('\n'),
-                });
+                })
             },
             () =>
                 setValidation({
@@ -519,12 +519,12 @@ const Main = () => {
                     type: 'image',
                     active: false,
                     stdout: logs.join('\n'),
-                })
-        );
+                }),
+        )
     }
 
     function closeValidation(): void {
-        setValidation(false);
+        setValidation(false)
     }
 
     return (
@@ -572,7 +572,7 @@ const Main = () => {
                 />
             </Container>
         </>
-    );
-};
+    )
+}
 
-export default Main;
+export default Main

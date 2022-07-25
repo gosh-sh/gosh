@@ -1,1 +1,6 @@
 /node_modules
+/src/contracts
+/build
+
+/package-lock.json
+/rim.cache.json

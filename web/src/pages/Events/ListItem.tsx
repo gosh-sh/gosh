@@ -1,19 +1,19 @@
-import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
-import Spinner from '../../components/Spinner';
-import { eventTypes } from '../../helpers';
-import { TGoshEventDetails } from '../../types/types';
-import { shortString } from '../../utils';
+import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link } from 'react-router-dom'
+import CopyClipboard from '../../components/CopyClipboard'
+import Spinner from '../../components/Spinner'
+import { eventTypes } from '../../helpers'
+import { TGoshEventDetails } from '../../types/types'
+import { shortString } from '../../utils'
 
 type TEventListItemProps = {
-    daoName: string;
-    event: TGoshEventDetails;
-};
+    daoName: string
+    event: TGoshEventDetails
+}
 
 const EventListItem = (props: TEventListItemProps) => {
-    const { daoName, event } = props;
+    const { daoName, event } = props
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-3">
@@ -79,7 +79,7 @@ const EventListItem = (props: TEventListItemProps) => {
                 )}
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default EventListItem;
+export default EventListItem

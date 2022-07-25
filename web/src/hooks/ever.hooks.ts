@@ -2,7 +2,7 @@
 // import { TonClient } from '@eversdk/core';
 // import { useRecoilValue } from 'recoil';
 // import { everStateAtom } from '../store/ever.state';
-import { goshClient } from '../helpers';
+import { goshClient } from '../helpers'
 
 /** Backward compatibility, remove hook after full refactor */
 export const useEverClient = () => {
@@ -14,5 +14,5 @@ export const useEverClient = () => {
     //     return new TonClient(config);
     // }, [configStr]);
 
-    return goshClient;
-};
+    return goshClient
+}

@@ -1,44 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
     faChevronRight,
     faTrash,
     faLock,
     faLockOpen,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Field, Form, Formik, FormikHelpers } from 'formik';
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import BranchSelect from '../../components/BranchSelect';
-import TextField from '../../components/FormikForms/TextField';
-import Spinner from '../../components/Spinner';
-import { TGoshBranch } from '../../types/types';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
-import * as Yup from 'yup';
-import { useRecoilValue } from 'recoil';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
-import { GoshCommit } from '../../types/classes';
+} from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Field, Form, Formik, FormikHelpers } from 'formik'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import BranchSelect from '../../components/BranchSelect'
+import TextField from '../../components/FormikForms/TextField'
+import Spinner from '../../components/Spinner'
+import { TGoshBranch } from '../../types/types'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import * as Yup from 'yup'
+import { useRecoilValue } from 'recoil'
+import { goshCurrBranchSelector } from '../../store/gosh.state'
+import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
+import { GoshCommit } from '../../types/classes'
 
 type TCreateBranchFormValues = {
-    newName: string;
-    from?: TGoshBranch;
-};
+    newName: string
+    from?: TGoshBranch
+}
 
 export const BranchesPage = () => {
-    const { daoName, repoName } = useParams();
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
-    const navigate = useNavigate();
-    const smvBalance = useSmvBalance(goshWallet);
-    const [branchName, setBranchName] = useState<string>('main');
-    const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const [search, setSearch] = useState<string>('');
-    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
+    const { daoName, repoName } = useParams()
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const navigate = useNavigate()
+    const smvBalance = useSmvBalance(goshWallet)
+    const [branchName, setBranchName] = useState<string>('main')
+    const { branches, updateBranches } = useGoshRepoBranches(goshRepo)
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const [search, setSearch] = useState<string>('')
+    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
     const [branchesBusy, setBranchesBusy] = useState<{
-        [key: string]: { busy: boolean; lock: boolean; delete: boolean };
-    }>({});
+        [key: string]: { busy: boolean; lock: boolean; delete: boolean }
+    }>({})
 
     /** Lock branch by SMV */
     const onBranchLock = async (name: string) => {
@@ -46,28 +46,28 @@ export const BranchesPage = () => {
             setBranchesBusy((state) => ({
                 ...state,
                 [name]: { ...state[name], busy: true, lock: true },
-            }));
+            }))
 
             if (await goshRepo.isBranchProtected(name))
-                throw new Error('Branch is already protected');
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+                throw new Error('Branch is already protected')
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await goshWallet.startProposalForAddProtectedBranch(repoName, name);
-            navigate(`/${daoName}/events`, { replace: true });
+            await goshWallet.startProposalForAddProtectedBranch(repoName, name)
+            navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
-            console.error(e);
-            toast.error(e.message);
+            console.error(e)
+            toast.error(e.message)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
                 [name]: { ...state[name], busy: false, lock: false },
-            }));
+            }))
         }
-    };
+    }
 
     /** Unlock branch by SMV */
     const onBranchUnlock = async (name: string) => {
@@ -75,55 +75,55 @@ export const BranchesPage = () => {
             setBranchesBusy((state) => ({
                 ...state,
                 [name]: { ...state[name], busy: true, lock: true },
-            }));
+            }))
 
-            const isProtected = await goshRepo.isBranchProtected(name);
-            if (!isProtected) throw new Error('Branch is not protected');
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            const isProtected = await goshRepo.isBranchProtected(name)
+            if (!isProtected) throw new Error('Branch is not protected')
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await goshWallet.startProposalForDeleteProtectedBranch(repoName, name);
-            navigate(`/${daoName}/events`, { replace: true });
+            await goshWallet.startProposalForDeleteProtectedBranch(repoName, name)
+            navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
-            console.error(e);
-            toast.error(e.message);
+            console.error(e)
+            toast.error(e.message)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
                 [name]: { ...state[name], busy: false, lock: false },
-            }));
+            }))
         }
-    };
+    }
 
     /** Create new branch */
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
-        helpers: FormikHelpers<any>
+        helpers: FormikHelpers<any>,
     ) => {
         try {
-            if (!values.from) throw new GoshError(EGoshError.NO_BRANCH);
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
 
             const commit = new GoshCommit(
                 goshWallet.account.client,
-                values.from.commitAddr
-            );
+                values.from.commitAddr,
+            )
             await goshWallet.deployBranch(
                 goshRepo,
                 values.newName.toLowerCase(),
                 values.from.name,
-                await commit.getName()
-            );
-            await updateBranches();
-            helpers.resetForm();
+                await commit.getName(),
+            )
+            await updateBranches()
+            helpers.resetForm()
         } catch (e: any) {
-            console.error(e);
-            toast.error(e.message);
+            console.error(e)
+            toast.error(e.message)
         }
-    };
+    }
 
     /** Delete branch */
     const onBranchDelete = async (name: string) => {
@@ -132,38 +132,38 @@ export const BranchesPage = () => {
                 setBranchesBusy((state) => ({
                     ...state,
                     [name]: { ...state[name], busy: true, delete: true },
-                }));
+                }))
 
                 if (await goshRepo.isBranchProtected(name))
-                    throw new Error('Branch is protected');
-                if (!repoName) throw new GoshError(EGoshError.NO_REPO);
-                if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+                    throw new Error('Branch is protected')
+                if (!repoName) throw new GoshError(EGoshError.NO_REPO)
+                if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await goshWallet.deleteBranch(goshRepo, name);
-                await updateBranches();
+                await goshWallet.deleteBranch(goshRepo, name)
+                await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
                     ...state,
                     [name]: { ...state[name], busy: false, delete: false },
-                }));
-                console.error(e);
-                toast.error(e.message);
+                }))
+                console.error(e)
+                toast.error(e.message)
             }
         }
-    };
+    }
 
     useEffect(() => {
-        updateBranches();
-    }, [updateBranches]);
+        updateBranches()
+    }, [updateBranches])
 
     useEffect(() => {
         if (search) {
-            const pattern = new RegExp(search, 'i');
-            setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
+            const pattern = new RegExp(search, 'i')
+            setFiltered(branches.filter((item) => item.name.search(pattern) >= 0))
         } else {
-            setFiltered(branches);
+            setFiltered(branches)
         }
-    }, [branches, search]);
+    }, [branches, search])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -178,7 +178,7 @@ export const BranchesPage = () => {
                                 .max(64, 'Max length is 64 characters')
                                 .notOneOf(
                                     branches.map((b) => b.name),
-                                    'Branch exists'
+                                    'Branch exists',
                                 )
                                 .required('Branch name is required'),
                         })}
@@ -191,8 +191,8 @@ export const BranchesPage = () => {
                                         branches={branches}
                                         onChange={(selected) => {
                                             if (selected) {
-                                                setBranchName(selected?.name);
-                                                setFieldValue('from', selected);
+                                                setBranchName(selected?.name)
+                                                setFieldValue('from', selected)
                                             }
                                         }}
                                         disabled={isSubmitting}
@@ -217,8 +217,8 @@ export const BranchesPage = () => {
                                                 onChange: (e: any) => {
                                                     setFieldValue(
                                                         'newName',
-                                                        e.target.value.toLowerCase()
-                                                    );
+                                                        e.target.value.toLowerCase(),
+                                                    )
                                                 },
                                             }}
                                         />
@@ -271,7 +271,7 @@ export const BranchesPage = () => {
                                         onClick={() => {
                                             branch.isProtected
                                                 ? onBranchUnlock(branch.name)
-                                                : onBranchLock(branch.name);
+                                                : onBranchLock(branch.name)
                                         }}
                                         disabled={
                                             smvBalance.smvBusy ||
@@ -319,7 +319,7 @@ export const BranchesPage = () => {
                 ))}
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default BranchesPage;
+export default BranchesPage

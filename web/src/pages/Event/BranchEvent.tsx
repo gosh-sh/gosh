@@ -1,14 +1,14 @@
-import { Link } from 'react-router-dom';
-import { EEventType, TGoshEventDetails } from '../../types/types';
+import { Link } from 'react-router-dom'
+import { EEventType, TGoshEventDetails } from '../../types/types'
 
 type TBranchEventProps = {
-    daoName?: string;
-    details: TGoshEventDetails;
-};
+    daoName?: string
+    details: TGoshEventDetails
+}
 
 const BranchEvent = (props: TBranchEventProps) => {
-    const { daoName, details } = props;
-    const { params, status } = details;
+    const { daoName, details } = props
+    const { params, status } = details
 
     return (
         <div>
@@ -43,7 +43,7 @@ const BranchEvent = (props: TBranchEventProps) => {
                 </span>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default BranchEvent;
+export default BranchEvent

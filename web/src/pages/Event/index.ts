@@ -1,2 +1,2 @@
-export * from "./Event";
-export { default } from "./Event";
+export * from './Event'
+export { default } from './Event'

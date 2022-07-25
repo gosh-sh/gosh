@@ -1,7 +1,7 @@
 // import { NetworkQueriesProtocol } from '@eversdk/core';
-import { atom } from 'recoil';
+import { atom } from 'recoil'
 // import { getEndpoints } from "../helpers";
-import { TEverState } from '../types/types';
+import { TEverState } from '../types/types'
 
 /** Backward compatibility, remove hook after full refactor */
 export const everStateAtom = atom<TEverState>({
@@ -15,4 +15,4 @@ export const everStateAtom = atom<TEverState>({
             // }
         },
     },
-});
+})

@@ -1,14 +1,13 @@
-import React from "react";
-import { Menu, Transition } from "@headlessui/react";
-import { Link } from "react-router-dom";
-import { classNames } from "../../utils";
-import { useResetRecoilState } from "recoil";
-import { userStateAtom, userStatePersistAtom } from "../../store/user.state";
-
+import React from 'react'
+import { Menu, Transition } from '@headlessui/react'
+import { Link } from 'react-router-dom'
+import { classNames } from '../../utils'
+import { useResetRecoilState } from 'recoil'
+import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 
 const DropdownMenu = () => {
-    const resetUserState = useResetRecoilState(userStateAtom);
-    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom);
+    const resetUserState = useResetRecoilState(userStateAtom)
+    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom)
     const items = [
         { to: '/account/orgs', title: 'Organizations', className: 'text-gray-050a15' },
         { to: '/account/repos', title: 'Repositories', className: 'text-gray-050a15' },
@@ -18,11 +17,11 @@ const DropdownMenu = () => {
             title: 'Sign out',
             className: 'text-red-dd3a3a',
             onClick: () => {
-                resetUserState();
-                resetUserStatePersist();
-            }
-        }
-    ];
+                resetUserState()
+                resetUserStatePersist()
+            },
+        },
+    ]
 
     return (
         <Menu as="div" className="relative">
@@ -45,7 +44,7 @@ const DropdownMenu = () => {
                                     className={classNames(
                                         'block my-1 text-lg leading-32px hover:text-white',
                                         active ? 'text-white' : null,
-                                        item?.className
+                                        item?.className,
                                     )}
                                     onClick={item?.onClick}
                                 >
@@ -57,7 +56,7 @@ const DropdownMenu = () => {
                 </Menu.Items>
             </Transition>
         </Menu>
-    );
+    )
 }
 
-export default DropdownMenu;
+export default DropdownMenu

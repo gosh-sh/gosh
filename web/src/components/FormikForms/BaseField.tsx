@@ -1,17 +1,16 @@
-import React from "react";
-import { ErrorMessage, FieldProps } from "formik";
-import { classNames } from "../../utils";
-
+import React from 'react'
+import { ErrorMessage, FieldProps } from 'formik'
+import { classNames } from '../../utils'
 
 export interface IBaseFieldProps extends FieldProps {
-    className?: string;
-    children: React.ReactNode;
-    label?: string;
-    labelClassName?: string;
-    help?: string;
-    helpClassName?: string;
-    errorEnabled?: boolean;
-    errorClassName?: string;
+    className?: string
+    children: React.ReactNode
+    label?: string
+    labelClassName?: string
+    help?: string
+    helpClassName?: string
+    errorEnabled?: boolean
+    errorClassName?: string
 }
 
 const BaseField = (props: IBaseFieldProps) => {
@@ -24,8 +23,8 @@ const BaseField = (props: IBaseFieldProps) => {
         errorEnabled = true,
         errorClassName,
         field,
-        form
-    } = props;
+        form,
+    } = props
 
     return (
         <>
@@ -35,7 +34,9 @@ const BaseField = (props: IBaseFieldProps) => {
                     className={classNames(
                         'block mb-1 text-sm font-semibold',
                         labelClassName,
-                        form.touched[field.name] && form.errors[field.name] ? 'text-rose-600' : 'text-gray-700'
+                        form.touched[field.name] && form.errors[field.name]
+                            ? 'text-rose-600'
+                            : 'text-gray-700',
                     )}
                 >
                     {label}
@@ -53,7 +54,7 @@ const BaseField = (props: IBaseFieldProps) => {
                 </div>
             )}
         </>
-    );
+    )
 }
 
 export default BaseField
