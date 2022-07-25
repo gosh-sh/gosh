@@ -299,6 +299,17 @@
 			]
 		},
 		{
+			"name": "getContentAdress",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getDiffAddr",
 			"inputs": [
 				{"name":"reponame","type":"string"},
