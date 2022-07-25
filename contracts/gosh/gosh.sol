@@ -12,6 +12,7 @@ import "./modifiers/modifiers.sol";
 import "repository.sol";
 import "goshdao.sol";
 import "tree.sol";
+import "content-signature.sol";
 
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
@@ -214,6 +215,16 @@ contract Gosh is Modifiers, Upgradable {
     }
 
     //Getters
+    function getContentAdress(string repoName,
+        string daoName,
+        string commit,
+        string label) external view returns(address) {
+        TvmCell s1 = _composeRepoStateInit(repoName, address.makeAddrStd(0, tvm.hash(_composeDaoStateInit(daoName))));
+        address repo = address.makeAddrStd(0, tvm.hash(s1));
+        TvmCell deployCode = GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+        TvmCell s2 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label}});
+       return address.makeAddrStd(0, tvm.hash(s2));
+    }
 
     function getAddrRepository(string name, string dao) external view returns(address) {
         TvmCell s1 = _composeRepoStateInit(name, address.makeAddrStd(0, tvm.hash(_composeDaoStateInit(dao))));

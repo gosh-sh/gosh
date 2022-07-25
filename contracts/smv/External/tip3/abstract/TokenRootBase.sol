@@ -235,7 +235,7 @@ abstract contract TokenRootBase is ITokenRoot, ICallbackParamsStructure {
         @dev Can by called only by owner address
         @param to Withdraw receiver
     */
-    function sendSurplusGas(address to) external pure onlyRootOwner {
+    function sendSurplusGas(address to) external view onlyRootOwner {
         tvm.rawReserve(_targetBalance(), 0);
         to.transfer({
             value: 0,
