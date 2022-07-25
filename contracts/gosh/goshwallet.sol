@@ -127,7 +127,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label}});
         new ContentSignature{
             stateInit: s1, value: 5 ton, wid: 0
-        }(_rootRepoPubkey, tvm.pubkey(), _rootgosh, _goshdao, m_WalletCode, content);
+        }(_rootRepoPubkey, tvm.pubkey(), _rootgosh, _goshdao, m_WalletCode, content, _index);
         getMoney();
     }
 
