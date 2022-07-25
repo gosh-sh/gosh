@@ -294,6 +294,17 @@ export interface IGoshWallet extends IContract {
         index2: number
     ): Promise<string>;
     setHead(repoName: string, branch: string): Promise<void>;
+    deployContent(
+        repoName: string,
+        commitName: string,
+        label: string,
+        content: string
+    ): Promise<void>;
+    getContentAdress(
+        repoName: string,
+        commitName: string,
+        label: string
+    ): Promise<string>;
 }
 
 export interface IGoshRepository extends IContract {
@@ -376,6 +387,12 @@ export interface IGoshTag extends IContract {
 
     load(): Promise<void>;
     getCommit(): Promise<string>;
+    getContent(): Promise<string>;
+}
+
+export interface IGoshContentSignature extends IContract {
+    address: string;
+
     getContent(): Promise<string>;
 }
 

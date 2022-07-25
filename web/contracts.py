@@ -19,6 +19,7 @@ CONTRACTS = [
     'gosh/tag',
     'gosh/diff',
     'gosh/tree',
+    'gosh/content-signature',
     'smv/SMVProposal',
     'smv/SMVTokenLocker',
     'smv/SMVClient',
