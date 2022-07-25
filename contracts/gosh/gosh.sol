@@ -15,7 +15,7 @@ import "tree.sol";
 
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
-    string constant version = "0.5.2";
+    string constant version = "0.5.3";
     
     address _creator;
     TvmCell m_RepositoryCode;
@@ -26,6 +26,7 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_codeSnapshot;
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
+    TvmCell m_contentSignature;
 
     //SMV
     TvmCell m_TokenLockerCode;
@@ -104,6 +105,7 @@ contract Gosh is Modifiers, Upgradable {
             m_codeSnapshot,
             m_codeTree,
             m_codeDiff,
+            m_contentSignature,
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -184,6 +186,11 @@ contract Gosh is Modifiers, Upgradable {
     function setSnapshot(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeSnapshot = code;
+    }
+
+    function setcontentSignature(TvmCell code) public  onlyOwner {
+        tvm.accept();
+        m_contentSignature = code;
     }
 
     function setWallet(TvmCell code) public  onlyOwner {

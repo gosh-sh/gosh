@@ -101,6 +101,14 @@
 			]
 		},
 		{
+			"name": "setcontentSignature",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setWallet",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -277,6 +285,7 @@
 		{"name":"m_codeSnapshot","type":"cell"},
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
+		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},

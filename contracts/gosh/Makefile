@@ -1,4 +1,4 @@
-tvcs = tree tag snapshot repository goshwallet goshdao goshconfig gosh diff daocreator commit
+tvcs = tree tag snapshot repository goshwallet goshdao goshconfig gosh diff daocreator commit content-signature
 clean:
 	rm -f *.tvc *.abi.json
 	rm -rf .solc_imports

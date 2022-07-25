@@ -10,6 +10,7 @@ import GoshDiffABI from '../contracts/diff.abi.json';
 import GoshTreeABI from '../contracts/tree.abi.json';
 import GoshSnapshotABI from '../contracts/snapshot.abi.json';
 import GoshTagABI from '../contracts/tag.abi.json';
+import GoshContentSignatureABI from '../contracts/content-signature.abi.json';
 import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json';
 import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json';
 import GoshSmvClientABI from '../contracts/SMVClient.abi.json';
@@ -59,6 +60,7 @@ import {
     TGoshRepoDetails,
     TGoshEventDetails,
     TGoshCommitDetails,
+    IGoshContentSignature,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -1094,6 +1096,28 @@ export class GoshWallet implements IGoshWallet {
         await this.run('setHEAD', { repoName, branchName: branch });
     }
 
+    async deployContent(
+        repoName: string,
+        commitName: string,
+        label: string,
+        content: string
+    ): Promise<void> {
+        await this.run('deployContent', { repoName, commit: commitName, label, content });
+    }
+
+    async getContentAdress(
+        repoName: string,
+        commitName: string,
+        label: string
+    ): Promise<string> {
+        const result = await this.account.runLocal('getContentAdress', {
+            repoName,
+            commit: commitName,
+            label,
+        });
+        return result.decoded?.output.value0;
+    }
+
     async run(
         functionName: string,
         input: object,
@@ -1531,6 +1555,22 @@ export class GoshTag implements IGoshTag {
     async getCommit(): Promise<string> {
         const result = await this.account.runLocal('getCommit', {});
         return result.decoded?.output.value0;
+    }
+
+    async getContent(): Promise<string> {
+        const result = await this.account.runLocal('getContent', {});
+        return result.decoded?.output.value0;
+    }
+}
+
+export class GoshContentSignature implements IGoshContentSignature {
+    abi: any = GoshContentSignatureABI;
+    account: Account;
+    address: string;
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
     }
 
     async getContent(): Promise<string> {
