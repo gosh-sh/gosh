@@ -28,7 +28,6 @@ build-git-remote-gosh:
 	cd ../git-remote-gosh && make build target-dir=$(GIT_REMOTE_GOSH_TARGET_DIR)
 
 build: clean_temp build-ui-v2 build-git-remote-gosh ## Build service image to be deployed as a desktop extension
-	cp -r ../content-signature $(LOCAL_TEMP_DIR)
 	mkdir $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	docker buildx build \
@@ -47,7 +46,7 @@ install: rm build ## Install the extension
 update: build ## Update the extension
 	docker extension update $(IMAGE):$(TAG)
 
-debug: update ## Debug the extension
+debug: ## Debug the extension
 	docker extension dev debug $(IMAGE):$(TAG)
 
 publish: ## Publish the extension

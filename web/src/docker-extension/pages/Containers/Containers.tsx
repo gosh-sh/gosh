@@ -112,7 +112,7 @@ function EnhancedTable<T extends { id: string }>({
     actionCaption,
     actionActive,
 }: {
-    data: T[];
+    data: { isLoading: boolean, data: Array<T> }
     columns: DataColumn<T>[];
     actionFunction: (element: T, index: number) => void;
     actionEndFunction?: () => void;
@@ -147,12 +147,12 @@ function EnhancedTable<T extends { id: string }>({
                             order={order}
                             orderBy={orderBy as string}
                             onRequestSort={handleRequestSort}
-                            rowCount={data.length}
+                            rowCount={data.data.length}
                             headCells={columns}
                         />
                         <TableBody>
-                            {data.length ? (
-                                stableSort<T>(data, getComparator<T>(order, orderBy)).map(
+                            {!data.isLoading ? (
+                                stableSort<T>(data.data, getComparator<T>(order, orderBy)).map(
                                     (row, index) => {
                                         return (
                                             <Fragment key={index}>
@@ -186,9 +186,9 @@ function EnhancedTable<T extends { id: string }>({
                                                     )}
                                                     <TableCell className="dd-cell-button">
                                                         {actionActive &&
-                                                        actionActive !== true &&
-                                                        actionActive.id === row.id! &&
-                                                        !actionActive.active ? (
+                                                            actionActive !== true &&
+                                                            actionActive.id === row.id! &&
+                                                            !actionActive.active ? (
                                                             <button
                                                                 type="button"
                                                                 className="btn btn--body px-2.5 py-1.5 text-xs rounded"
@@ -253,8 +253,14 @@ function EnhancedTable<T extends { id: string }>({
 
 const Main = () => {
     const [validation, setValidation] = useState<boolean | Validation>(false);
-    const [containers, setContainers] = useState<Array<ContainerType>>([]);
-    const [images, setImages] = useState<Array<ImageType>>([]);
+    const [containers, setContainers] = useState<{ data: Array<ContainerType>, isLoading: boolean }>({
+        isLoading: false,
+        data: [],
+    });
+    const [images, setImages] = useState<{ data: Array<ImageType>, isLoading: boolean }>({
+        isLoading: false,
+        data: [],
+    });
 
     const columns: DataColumn<ContainerType>[] = React.useMemo(
         () => [
@@ -411,41 +417,48 @@ const Main = () => {
     // );
 
     useEffect(() => {
+        setContainers({
+            data: [],
+            isLoading: true,
+        });
         DockerClient.getContainers().then((value) => {
             console.log(value);
-            setContainers(
-                value.map((container: ContainerType) => ({
+            setContainers({
+                data: value.map((container: ContainerType) => ({
                     ...container,
                     id: container.containerHash,
-                })) || []
-            );
-            //do stuff
+                })) || [],
+                isLoading: false,
+            });
         });
     }, []);
 
     useEffect(() => {
+        setImages({
+            data: [],
+            isLoading: true,
+        });
         DockerClient.getImages().then((value) => {
             console.log(value);
-            setImages(
-                value.map((image: ImageType) => ({ ...image, id: image.imageHash })) || []
-            );
-            setImages(value || []);
-            //do stuff
+            setImages({
+                data: value.map((image: ImageType) => ({ ...image, id: image.imageHash })),
+                isLoading: false,
+            });
         });
     }, []);
 
-    // const data = React.useMemo<Array<ContainerType>>(() => ([{
-    //   validated: "loading",
-    //   containerHash: 78165381872341234,
-    //   containerName: "nginx-main",
-    //   imageHash: 1948731,
-    //   buildProvider: "239182",
-    // }]), undefined);
 
     const handleClick = () => {
+        setContainers({
+            data: [],
+            isLoading: true,
+        });
         DockerClient.getContainers().then((value) => {
             console.log(value);
-            setContainers(value || []);
+            setContainers({
+                data: value || [],
+                isLoading: false,
+            });
             //do stuff
         });
     };

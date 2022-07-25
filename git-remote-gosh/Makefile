@@ -13,7 +13,7 @@ copy_abi: clear_abi
 	-cp ../contracts/gosh/*.abi.json ./resources/
 
 build: copy_abi clear_screen
-	cargo build --release
+	cargo build --release --bin git-remote-gosh
 	cp ./target/release/git-remote-gosh $(TARGET_DIR)/git-remote-gosh
 
 test: copy_abi clear_screen

@@ -14,7 +14,6 @@ RUN npm run build
 
 
 FROM base
-ARG content_signature_local_dir
 ARG git_remote_gosh_local_dir
 ARG gosh_abi_local_dir
 ARG detailed_description
@@ -39,7 +38,6 @@ COPY --link --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plug
 COPY --link metadata.json /
 COPY --link ./vm/docker-compose.yaml /
 COPY --link ./vm/commands/ /command/
-COPY --link $content_signature_local_dir /command/tools/content-signature
 COPY --link $git_remote_gosh_local_dir /command/tools/git-remote-gosh
 COPY --link $gosh_abi_local_dir /command/tools/gosh
 COPY --link $ui_v2 /ui/v2
