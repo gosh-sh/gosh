@@ -3,6 +3,7 @@ pipeline {
         dockerfile {
             filename 'Dockerfile'
             dir '.'
+            args '-v /var/run/docker.sock:/var/run/docker.sock --group-add docker'
         }
         
     }
@@ -15,9 +16,9 @@ pipeline {
 
         }   
 
-        stage('SMV') { 
-            stages {
-                stage("Build") {
+        stage('Build') { 
+            parallel {
+                stage("SMV") {
                     steps {
                         script {
                             dir ('contracts/smv') {
@@ -26,85 +27,85 @@ pipeline {
                         }
                     }
                 }
-                /*stage("Test") {
+                stage("GOSH") {
+                    steps {
+                        script {
+                            dir ('contracts/gosh') {
+                                sh 'make build-contracts'
+                            }
+                        }
+                    }
+                }
+                stage("Git Helper") {
+                    steps {
+                        script {
+                            dir ('git-remote-gosh') {
+                                sh 'make build'
+                            }
+                        }
+                    }
+                }
+                stage("Docker Extension") {
+                    steps {
+                        script {
+                            dir ('docker-extension') {
+                                sh 'make build'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Unit tests') { 
+            parallel {
+                stage("SMV") {
                     steps {
                         script {
                             dir ('contracts/smv') {
-                                sh 'make build-contracts'
+                                sh 'echo placeholder_1'
                             }
                         }
                     }
-                }*/
-            }
-        }
-
-        stage('GOSH') { 
-            stages {
-                stage("Build") {
+                }
+                stage("GOSH") {
                     steps {
                         script {
                             dir ('contracts/gosh') {
-                                sh 'make build-contracts'
+                                sh 'echo placeholder_2'
                             }
                         }
                     }
                 }
-                /*stage("Test") {
+                stage("Git Helper") {
                     steps {
                         script {
-                            dir ('contracts/gosh') {
-                                sh 'make build-contracts'
+                            dir ('git-remote-gosh') {
+                                sh 'echo placeholder_3'
                             }
                         }
                     }
-                }*/
-            }
-        }
-
-        stage('Git Helper') { 
-            stages {
-                stage("Build") {
+                }
+                stage("Docker Extension") {
                     steps {
                         script {
-                            sh 'cd git-remote-gosh && make build'
+                            dir ('docker-extension') {
+                                sh 'echo placeholder_4'
+                            }
                         }
                     }
                 }
-                /*stage("Test") {
-                    steps {
-                        script {
-                            sh ''
-                        }
-                    }
-                }*/
             }
         }
 
-        stage('Docker Extension') { 
-            stages {
-                stage("Build") {
-                    steps {
-                        script {
-                            sh 'echo "NEED REPO"'
-                        }
-                    }
-                }
-                /*stage("Test") {
-                    steps {
-                        script {
-                            sh ''
-                        }
-                    }
-                }*/
-            }
-        }
-
-        stage('Test environment setup') { 
+        stage('Integration Tests setup') { 
             stages {
                 stage("Deploy smart-contracts") {
                     steps {
                         script {
-                            sh 'cd contracts/gosh && deploy-docker'
+                            dir ('contracts/gosh') {
+                                sh 'deploy-docker'
+                            }
                         }
                     }
                 }
@@ -117,6 +118,5 @@ pipeline {
                 }*/
             }
         }
-
     }
 }

@@ -25,6 +25,7 @@ RUN     addgroup --gid 1000 jenkins &&\
         adduser --home /home/jenkins --shell /bin/bash --uid 1000 --ingroup jenkins jenkins --disabled-password &&\
         mkdir -p /home/jenkins/.jenkins && \
         mkdir -p /home/jenkins/agent &&\
+        usermod -aG docker jenkins &&\
         chown -R jenkins: /home/jenkins
 
 USER    jenkins
