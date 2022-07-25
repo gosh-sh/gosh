@@ -97,6 +97,9 @@ echo "========== Run setTag"
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 everdev contract run $GOSH_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
 
+echo "========== Run setcontentSignature"
+CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+everdev contract run $GOSH_ABI setcontentSignature --input "{\"code\":\"$CONTENTSIG_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
 
 # Send tokens to GoshDaoCreator and deploy
 echo "========== Send $CREATOR_BALANCE tons to GoshDaoCreator"
