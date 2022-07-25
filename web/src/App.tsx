@@ -38,6 +38,7 @@ import BaseModal from './components/Modal/BaseModal';
 import Spinner from './components/Spinner';
 import { ToastOptionsShortcuts } from './helpers';
 import { shortString } from './utils';
+import Containers from './docker-extension/pages/Containers';
 
 const App = () => {
     const client = useEverClient();
@@ -65,6 +66,7 @@ const App = () => {
             <main className="main grow">
                 <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/containers" element={<Containers />} />
                     <Route path="/account/signin" element={<SigninPage />} />
                     <Route path="/account/signup" element={<SignupPage />} />
                     <Route path="/account" element={<ProtectedLayout />}>

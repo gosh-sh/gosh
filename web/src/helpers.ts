@@ -18,6 +18,7 @@ import { IGoshRepository, TGoshCommit, TGoshTree, TGoshTreeItem } from './types/
 import * as Diff from 'diff';
 import GoshSnapshotAbi from './contracts/snapshot.abi.json';
 import { sleep } from './utils';
+import { createDockerDesktopClient } from '@docker/extension-api-client';
 // import LightningFS from '@isomorphic-git/lightning-fs';
 // import { EGoshError, GoshError } from './types/errors';
 
@@ -28,6 +29,9 @@ export const ZERO_ADDR =
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
 export const MAX_ONCHAIN_FILE_SIZE = 15360;
 export const MAX_ONCHAIN_DIFF_SIZE = 15000;
+
+export const dockerClient =
+    process.env.REACT_APP_ISDOCKEREXT === 'true' ? createDockerDesktopClient() : null;
 
 export const goshClient = new TonClient({
     network: {
