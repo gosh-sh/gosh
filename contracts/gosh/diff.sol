@@ -33,6 +33,7 @@ contract DiffC is Modifiers {
     TvmCell m_WalletCode;
     TvmCell m_codeDiff;
     TvmCell m_CommitCode;
+    TvmCell m_codeTree;
     address _rootGosh;
     uint128 _approved = 0;
     string _branchName;
@@ -40,6 +41,7 @@ contract DiffC is Modifiers {
     address _newC;
     bool _last;
     bool _entry;
+    uint128 _indexApply;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -51,6 +53,7 @@ contract DiffC is Modifiers {
         TvmCell WalletCode,
         TvmCell codeDiff,
         TvmCell CommitCode,
+        TvmCell codeTree,
         Diff[] diffs,
         uint128 index,
         bool last
@@ -69,6 +72,7 @@ contract DiffC is Modifiers {
         m_CommitCode = CommitCode;
         _diff = diffs;
         _last = last;
+        m_codeTree = codeTree;
         getMoney(_pubkey);
     }
     
@@ -107,9 +111,11 @@ contract DiffC is Modifiers {
     }
     
     //Tree part
-    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public pure {
-        tvm.accept();    
-        value0; value1; sha;
+    function getTreeAddr(string shaTree) internal view returns(address) {
+        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
+        //return tvm.insertPubkey(stateInit, pubkey);
+        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
     
     //Commit part
@@ -149,6 +155,7 @@ contract DiffC is Modifiers {
             return;
         }
         _entry = true;
+        _indexApply = now;
         _branchcommit = branchcommit;
         if (_diff.length != 0) { 
             this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
@@ -169,14 +176,15 @@ contract DiffC is Modifiers {
             }
             return; 
         }
-        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
+        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2, _indexApply);
         getMoney(_pubkey);
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
-    function approveDiff(bool res, string commit, uint256 sha) public view {
+    function approveDiff(bool res, string commit, string truecommit, uint256 sha, string name, uint128 index) public view {
         tvm.accept();
-        sha;
+        commit;
+        require(index == _indexApply, ERR_PROCCESS_END);
         bool isIt = false;
         for (Diff a : _diff) {
             if (a.snap == msg.sender) { isIt = true; }
@@ -188,14 +196,17 @@ contract DiffC is Modifiers {
             else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
             return; 
         }
-        Commit(_buildCommitAddr(commit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index1, _index2);
+        Commit(_buildCommitAddr(truecommit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index1, _index2, sha, name, index);
     
     }
     
-    function approveDiffFinal(string commit, bool res) public senderIs(_buildCommitAddr(commit)) {
+    function approveDiffFinal(Request value0, optional(TreeObject) value1, string sha, uint128 index) public senderIs(getTreeAddr(sha)) {
         tvm.accept();
+        require(_entry == true, ERR_PROCCESS_END);
+        require(index == _indexApply, ERR_PROCCESS_END);
         getMoney(_pubkey);
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (value1.hasValue() == false) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (value1.get().sha256 != value0.sha) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
         uint256 need = _diff.length;
         if (_last == false) { need += 1; }
