@@ -105,8 +105,8 @@ contract Commit is Modifiers {
         return _contractflex;
     }
     
-    function getTreeSha(string commit, uint128 index1, uint128 index2, uint256 sha, string name, uint128 index) public view senderIs(getDiffAddress(commit, index1, index2)) {
-        Tree(_tree).checkSha{value: 0.5 ton, flag: 1}(_nameCommit, Request(msg.sender, name, name, sha), index);
+    function getTreeSha(string commit, uint128 index1, uint128 index2) public view senderIs(getDiffAddress(commit, index1, index2)) {
+        DiffC(msg.sender).approveDiffFinal{value: 0.2 ton, flag: 1}(_nameCommit, true);
         getMoney(_pubkey);    
     }
     
@@ -188,13 +188,13 @@ contract Commit is Modifiers {
         getMoney(_pubkey);
     }
     
-    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path, uint128 index) public view senderIs(getSnapshotAddr(branch, path)){
+    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path) public view senderIs(getSnapshotAddr(branch, path)){
         getMoney(_pubkey);
         tvm.accept();
         if (value1.hasValue()) { 
-            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get())), index); return;
+            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
         }
-        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))), index);
+        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
     }
     
     function getSnapshotAddr(string branch, string name) private view returns(address) {

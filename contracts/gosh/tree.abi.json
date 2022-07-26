@@ -73,23 +73,12 @@
 			]
 		},
 		{
-			"name": "checkSha",
-			"inputs": [
-				{"name":"commit","type":"string"},
-				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getShaInfoDiff",
 			"inputs": [
 				{"name":"commit","type":"string"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
-				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"name":"index","type":"uint128"}
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
 			],
 			"outputs": [
 			]
@@ -98,8 +87,7 @@
 			"name": "getShaInfoCommit",
 			"inputs": [
 				{"name":"commit","type":"string"},
-				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"name":"index","type":"uint128"}
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
 			],
 			"outputs": [
 			]
@@ -108,9 +96,7 @@
 			"name": "getShaInfoTree",
 			"inputs": [
 				{"name":"sha","type":"string"},
-				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"name":"isDiff","type":"bool"},
-				{"name":"index","type":"uint128"}
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
 			],
 			"outputs": [
 			]
