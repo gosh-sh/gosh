@@ -127,8 +127,8 @@ pub async fn diff_address(
     let params = serde_json::json!({
         "reponame": context.remote.repo.clone(),
         "commitName": last_commit_id.to_string(),
-        "index1": format!("0x{index1}"),
-        "index2": format!("0x{index2}"),
+        "index1": format!("0x{:x}", index1),
+        "index2": format!("0x{:x}", index2),
     });
     let result: GetDiffAddrResult = wallet.run_local(
         &context.es_client, 
@@ -138,7 +138,7 @@ pub async fn diff_address(
     return Ok(result.address);
 }
 
-#[instrument(level = "debug", skip(diff_coordinate, diff))]
+#[instrument(level = "debug", skip(diff))]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
@@ -185,8 +185,8 @@ pub async fn push_diff(
         branch_name: branch_name.to_string(),
         commit_id: last_commit_id.to_string(),
         diffs,
-        index1: format!("0x{index1}"),
-        index2: format!("0x{index2}"),
+        index1: format!("0x{:x}", index1),
+        index2: format!("0x{:x}", index2),
         last: is_last
     };
 
