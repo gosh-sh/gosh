@@ -46,8 +46,8 @@ struct DeployDiffParams {
     #[serde(rename = "commitName")]
     commit_id: String,
     diffs: Vec<Diff>,
-    index1: String,
-    index2: String,
+    index1: u32,
+    index2: u32,
     last: bool
 }
 
@@ -122,13 +122,11 @@ pub async fn diff_address(
     diff_coordinate: &PushDiffCoordinate
 ) -> Result<String> {
     let wallet = user_wallet(context).await?;
-    let index1 = diff_coordinate.index_of_parallel_thread;
-    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;
     let params = serde_json::json!({
         "reponame": context.remote.repo.clone(),
         "commitName": last_commit_id.to_string(),
-        "index1": format!("0x{:x}", index1),
-        "index2": format!("0x{:x}", index2),
+        "index1": diff_coordinate.index_of_parallel_thread,
+        "index2": diff_coordinate.order_of_diff_in_the_parallel_thread,
     });
     let result: GetDiffAddrResult = wallet.run_local(
         &context.es_client, 
@@ -178,15 +176,13 @@ pub async fn push_diff(
     log::trace!("push_diff: {:?}", diff);
     let diffs: Vec<Diff> = vec![diff];
 
-    let index1 = diff_coordinate.index_of_parallel_thread;
-    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;
     let args = DeployDiffParams {
         repo_name: context.remote.repo.clone(),
         branch_name: branch_name.to_string(),
         commit_id: last_commit_id.to_string(),
         diffs,
-        index1: format!("0x{:x}", index1),
-        index2: format!("0x{:x}", index2),
+        index1: diff_coordinate.index_of_parallel_thread,
+        index2: diff_coordinate.order_of_diff_in_the_parallel_thread,
         last: is_last
     };
 
