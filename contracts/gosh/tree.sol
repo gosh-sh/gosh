@@ -127,46 +127,55 @@ contract Tree is Modifiers {
         GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
     
-    function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public view {
+    function checkSha(string commit, Request value0, uint128 index) public view senderIs(getCommitAddr(commit, _repo)){
+        tvm.accept();
+        getShaInfo(value0, true, index);
+        getMoney(_pubkey);
+    }
+    
+    function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0, uint128 index) public view {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        getShaInfo(value0);
+        getShaInfo(value0, false, index);
         getMoney(_pubkey);
     }    
     
-    function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
+    function getShaInfoCommit(string commit, Request value0, uint128 index) public view senderIs(getCommitAddr(commit, _repo)) {
         tvm.accept();
-        getShaInfo(value0);
+        getShaInfo(value0, false, index);
         getMoney(_pubkey);
     }    
     
-    function getShaInfoTree(string sha, Request value0) public view {
+    function getShaInfoTree(string sha, Request value0, bool isDiff, uint128 index) public view {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        getShaInfo(value0);
+        getShaInfo(value0, isDiff, index);
         getMoney(_pubkey);
     }    
     
-    function getShaInfo(Request value0) private view {
+    function getShaInfo(Request value0, bool isDiff, uint128 index) private view {
         optional(uint32) pos = value0.lastPath.find(byte('/'));
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get());
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
             if (_tree.exists(tvm.hash("tree:" + nowPath))) {
-                Tree(getTreeAddr(_tree[tvm.hash("tree:" + nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
+                Tree(getTreeAddr(_tree[tvm.hash("tree:" + nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0, isDiff, index);
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
+                if (isDiff) { DiffC(value0.answer).approveDiffFinal{value: 0.21 ton, flag: 1}(value0, null, _shaTree, index); }
+                else { Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree, index); }
             }
             getMoney(_pubkey);
             return;
         }
         else {
             if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == false) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
+                if (isDiff) { DiffC(value0.answer).approveDiffFinal{value: 0.21 ton, flag: 1}(value0, null, _shaTree, index); }
+                else { Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree, index); }
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
+                if (isDiff) { DiffC(value0.answer).approveDiffFinal{value: 0.21 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree, index); }
+                else { Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree, index); }
             }
             getMoney(_pubkey);
             return;

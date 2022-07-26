@@ -1,5 +1,6 @@
 import { Image, Container } from './interfaces'
-import { dockerClient } from '../helpers'
+import { dockerClient, goshClient, goshRoot } from '../helpers'
+import { GoshDao, GoshWallet } from '../types/classes'
 
 const logger = console
 
@@ -16,6 +17,7 @@ const METADATA_KEY = {
     BUILD_PROVIDER: 'WALLET_PUBLIC',
     GOSH_ADDRESS: 'GOSH_ADDRESS',
     GOSH_COMMIT_HASH: 'GOSH_COMMIT_HASH',
+    GOSH_DAO: 'GOSH_DAO',
 }
 const COMMAND = {
     CALCULATE_IMAGE_SHA: '/command/gosh-image-sha.sh',
@@ -162,6 +164,7 @@ export class DockerClient {
         imageId: string,
         appendValidationLog: any,
         closeValidationLog: any,
+        userStatePublicKey: string,
     ): Promise<boolean> {
         const [imageExists, image] = await DockerClient._findImage(imageId)
         if (!imageExists) {
@@ -176,8 +179,13 @@ export class DockerClient {
             METADATA_KEY.GOSH_COMMIT_HASH,
             '-',
         )
+        const [hasDao, goshDao] = DockerClient.readContainerImageMetadata(
+            image,
+            METADATA_KEY.GOSH_DAO,
+            '-',
+        )
 
-        if (!hasRepositoryAddress || !hasCommitHash) {
+        if (!hasRepositoryAddress || !hasCommitHash || !hasDao) {
             appendValidationLog('Error: The image was not build from Gosh')
             closeValidationLog()
             return false
@@ -194,6 +202,19 @@ export class DockerClient {
             WELL_KNOWN_ROOT_CONTRACT_ADDRESS.length,
         )
 
+        const daoAddress = await goshRoot.getDaoAddr(goshDao)
+        const dao = new GoshDao(goshClient, daoAddress)
+        const walletAddr = await dao.getWalletAddr(`0x${userStatePublicKey}`, 0)
+        const wallet = new GoshWallet(goshClient, walletAddr)
+
+        const content = await wallet.getContentAdress(
+            goshRepositoryName,
+            goshCommitHash,
+            '',
+        )
+        appendValidationLog('Content:', content)
+        const validImageHashes = content.split(',')
+
         try {
             if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
 
@@ -205,61 +226,18 @@ export class DockerClient {
                 appendValidationLog('Failed to calculate image sha.')
                 return false
             }
+
             appendValidationLog('Image sha: ' + imageSha)
 
-            let result = {
-                code: -1,
-                stdout: '',
+            if (validImageHashes.includes(imageSha)) {
+                appendValidationLog('Success.')
+                closeValidationLog()
+                return true
+            } else {
+                appendValidationLog('Failed: sha does not match.')
+                closeValidationLog()
+                return false
             }
-            dockerClient.extension.vm.cli.exec(
-                COMMAND.VALIDATE_IMAGE_SHA,
-                [
-                    ENDPOINTS,
-                    NETWORK_NAME,
-                    GOSH_ROOT_CONTRACT_ADDRESS,
-                    goshRepositoryName,
-                    goshCommitHash,
-                ],
-                {
-                    stream: {
-                        onOutput(data: any): void {
-                            if (!!data.stdout) {
-                                result.stdout += data.stdout + '\n'
-                                appendValidationLog(data.stdout)
-                            }
-                            if (!!data.stderr) {
-                                appendValidationLog(data.stderr)
-                            }
-                        },
-                        onError(error: any): void {
-                            console.error(JSON.stringify(error))
-                            appendValidationLog(JSON.stringify(error))
-                            closeValidationLog()
-                        },
-                        onClose(exitCode: number): void {
-                            logger.log(`onClose with exit code ${exitCode}`)
-                            result.code = exitCode
-                            if ('code' in result && result.code !== 0) {
-                                appendValidationLog('Failed to build an image.')
-                                closeValidationLog()
-                                return
-                            }
-                            const calculatedImageSha = result.stdout.trim()
-                            appendValidationLog(
-                                'Calculated image sha from gosh: ' + calculatedImageSha,
-                            )
-                            if (calculatedImageSha !== imageSha) {
-                                appendValidationLog('Failed: sha does not match.')
-                                closeValidationLog()
-                                return
-                            }
-                            appendValidationLog('Success.')
-                            closeValidationLog()
-                        },
-                    },
-                },
-            )
-            return true
         } catch (error: any) {
             console.error(error)
             return false

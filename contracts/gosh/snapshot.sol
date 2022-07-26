@@ -40,6 +40,7 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
     bool _ready = false;
+    uint128 _initTime;
 
     constructor(
         uint256 pubkeysender,
@@ -81,6 +82,7 @@ contract Snapshot is Modifiers {
         _ipfs = ipfsdata;
         _baseCommit = commit;
         m_codeTree = codeTree;
+        _initTime = now;
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
@@ -88,7 +90,7 @@ contract Snapshot is Modifiers {
         }
         else {
             Commit(_buildCommitAddr(_oldcommits))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name, _initTime);
             //TODO CHECK
         }
     }
@@ -105,9 +107,10 @@ contract Snapshot is Modifiers {
         return address(tvm.hash(state));
     }
     
-    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
+    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha, uint128 index) public senderIs(getTreeAddr(sha)) {
         if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
         if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); return; }
+        if (index != _initTime) { selfdestruct(_rootRepo); return; }
         _ready = true;
     }
     
@@ -135,14 +138,14 @@ contract Snapshot is Modifiers {
         return _contractflex;
     }
 
-    function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
+    function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2, uint128 index) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         require(_ready == true, ERR_SNAPSHOT_NOT_READY);
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
         uint256 empty;
         if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
-            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, diff.commit, empty, _name, index);
             return;
         } else {
             require(_buildDiffAddr(namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -151,25 +154,25 @@ contract Snapshot is Modifiers {
         }
         if (diff.ipfs.hasValue()) {
             _ipfs = diff.ipfs.get();
-            DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, empty);
+            DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, diff.commit, empty, _name, index);
             _applying = true;
             return;
         } else {
             if (_ipfs.hasValue() == true) {
-                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, diff.commit, empty, _name, index);
                 return;
             }
             if (diff.patch.hasValue() == false) {
-                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, diff.commit, empty, _name, index);
                 return;
             }
             optional(bytes) res = gosh.applyZipPatchQ(_snapshot, diff.patch.get());
             if (res.hasValue() != true) {
-                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, diff.commit, empty, _name, index);
                 return;
             }
             _snapshot = res.get();
-            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, diff.commit, tvm.hash(gosh.unzip(_snapshot)), _name, index);
             _applying = true;
             return;
         }

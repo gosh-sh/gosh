@@ -22,6 +22,8 @@ import {
     Image as ImageType,
     Container as ContainerType,
 } from './../../interfaces'
+import { useRecoilValue } from 'recoil'
+import { userStateAtom } from '../../../store/user.state'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
@@ -160,7 +162,7 @@ function EnhancedTable<T extends { id: string }>({
                             )}
 
                             {!data.isLoading && !data.data.length && (
-                                <div className="px-4 py-3">---</div>
+                                <div className="px-4 py-3">-</div>
                             )}
 
                             {stableSort<T>(
@@ -248,6 +250,7 @@ function EnhancedTable<T extends { id: string }>({
 }
 
 const Main = () => {
+    const userState = useRecoilValue(userStateAtom)
     const [validation, setValidation] = useState<boolean | Validation>(false)
     const [containers, setContainers] = useState<{
         data: Array<ContainerType>
@@ -362,59 +365,6 @@ const Main = () => {
         [],
     )
 
-    // const data = React.useMemo<ContainerType[]>(
-    //     () => [
-    //         {
-    //             validated: 'success',
-    //             id: '05deec074512993...',
-    //             containerHash: '05deec074512993...',
-    //             containerName: '/exciting_brahrnag...',
-    //             imageHash: 'sha256:137444141...',
-    //             buildProvider: '-',
-    //             goshRootAddress: '',
-    //         },
-    //         {
-    //             validated: 'success',
-    //             id: '85b26c7366d42e...',
-    //             containerHash: '85b26c7366d42e...',
-    //             containerName: '/blissful_gates',
-    //             imageHash: 'sha256:3954a180f...',
-    //             buildProvider: '95c06aa743d1f90...',
-    //             goshRootAddress: '',
-    //         },
-    //         {
-    //             validated: 'error',
-    //             id: '0c9039aa990d70... ',
-    //             containerHash: '0c9039aa990d70... ',
-    //             containerName: '/docker-beautifu...',
-    //             imageHash: 'sha256:b5ec650b2...',
-    //             buildProvider: '84a595396a47a6c...',
-    //             goshRootAddress: '',
-    //         },
-    //     ],
-    //     undefined
-    // );
-
-    // const dataImage = React.useMemo<ImageType[]>(
-    //     () => [
-    //         {
-    //             validated: 'success',
-    //             id: 'sha256:3954a180f...',
-    //             imageHash: 'sha256:3954a180f...',
-    //             buildProvider: '95c06aa743d1f90...',
-    //             goshRootAddress: '',
-    //         },
-    //         {
-    //             validated: 'success',
-    //             id: 'sha256:137444141...',
-    //             imageHash: 'sha256:137444141...',
-    //             buildProvider: '-',
-    //             goshRootAddress: '',
-    //         },
-    //     ],
-    //     undefined
-    // );
-
     useEffect(() => {
         setContainers({
             data: [],
@@ -467,59 +417,78 @@ const Main = () => {
 
     function validateContainer(element: ContainerType, index: number): void {
         let logs: string[] = []
-        setValidation({
+        let validation = {
             id: element.containerHash,
             type: 'container',
             active: true,
             stdout: '',
-        })
+        }
+        setValidation(validation)
+        const publicKey = userState?.keys?.public
+        if (!publicKey) {
+            setValidation({
+                ...validation,
+                active: false,
+                stdout: 'Public key not found',
+            })
+            return
+        }
+
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
                 logs.push(status)
                 setValidation({
-                    id: element.containerHash,
-                    type: 'container',
+                    ...validation,
                     active: true,
                     stdout: logs.join('\n'),
                 })
             },
             () =>
                 setValidation({
-                    id: element.containerHash,
-                    type: 'container',
+                    ...validation,
                     active: false,
                     stdout: logs.join('\n'),
                 }),
+            publicKey,
         )
     }
 
     function validateImage(element: ImageType, index: number): void {
         let logs: string[] = []
-        setValidation({
+        let validation = {
             id: element.imageHash,
             type: 'image',
             active: true,
             stdout: '',
-        })
+        }
+        setValidation(validation)
+        const publicKey = userState?.keys?.public
+        if (!publicKey) {
+            setValidation({
+                ...validation,
+                active: false,
+                stdout: 'Public key not found',
+            })
+            return
+        }
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
                 logs.push(status)
                 setValidation({
-                    id: element.imageHash,
-                    type: 'image',
+                    ...validation,
                     active: true,
                     stdout: logs.join('\n'),
                 })
             },
             () =>
                 setValidation({
-                    id: element.imageHash,
-                    type: 'image',
+                    ...validation,
                     active: false,
                     stdout: logs.join('\n'),
                 }),
+            publicKey,
         )
     }
 
