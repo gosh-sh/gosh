@@ -31,7 +31,8 @@
 			"inputs": [
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value1","type":"optional(tuple)"},
-				{"name":"sha","type":"string"}
+				{"name":"sha","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -42,7 +43,8 @@
 				{"name":"namecommit","type":"string"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"}],"name":"diff","type":"tuple"},
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -153,6 +155,7 @@
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
 		{"name":"_branch","type":"string"},
-		{"name":"_ready","type":"bool"}
+		{"name":"_ready","type":"bool"},
+		{"name":"_initTime","type":"uint128"}
 	]
 }
