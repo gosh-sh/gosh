@@ -318,6 +318,7 @@ impl GitHelper {
             }
         }
         parallel_diffs_upload_support.push_dangling(self).await?; 
+        parallel_diffs_upload_support.wait_all_diffs(self).await?;
         // 9. Set commit (move HEAD)
         blockchain::notify_commit(
             self, 

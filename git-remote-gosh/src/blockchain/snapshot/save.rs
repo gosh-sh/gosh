@@ -7,8 +7,25 @@ use crate::{
 use git_hash;
 use reqwest::multipart;
 use snapshot::Snapshot;
+use crate::abi as gosh_abi;
+use crate::blockchain::{
+    GoshContract,
+    TonClient
+};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+#[derive(Deserialize, Debug)]
+struct GetDiffAddrResult {
+    #[serde(rename = "value0")]
+    pub address: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetVersionResult {
+    #[serde(rename = "value0")]
+    pub version: String,
+}
 
 #[derive(Serialize, Debug)]
 struct Diff {
@@ -58,6 +75,7 @@ struct SaveRes {
 
 // Note: making fields verbose
 // It must be very clear what is going on
+#[derive(Debug)]
 pub struct PushDiffCoordinate {
     pub index_of_parallel_thread: u32,
     pub order_of_diff_in_the_parallel_thread: u32,
@@ -78,6 +96,46 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     let response = ipfs_client.cli.post(&url).multipart(form).send().await?;
     let response_body = response.json::<SaveRes>().await?;
     Ok(response_body.hash)
+}
+
+#[instrument(level = "debug", skip(context))]
+pub async fn is_diff_deployed(
+    context: &TonClient,
+    contract_address: &str
+) -> Result<bool> {
+    let diff_contract = GoshContract::new(
+        contract_address,
+        gosh_abi::DIFF
+    );
+    let result: Result<GetVersionResult> = diff_contract.run_local(
+        context,
+        "getVersion",
+        None
+    ).await;
+    return Ok(result.is_ok())
+}
+
+#[instrument(level = "debug", skip(context))]
+pub async fn diff_address(
+    context: &mut GitHelper,
+    last_commit_id: &git_hash::ObjectId,
+    diff_coordinate: &PushDiffCoordinate
+) -> Result<String> {
+    let wallet = user_wallet(context).await?;
+    let index1 = diff_coordinate.index_of_parallel_thread;
+    let index2 = diff_coordinate.order_of_diff_in_the_parallel_thread;
+    let params = serde_json::json!({
+        "reponame": context.remote.repo.clone(),
+        "commitName": last_commit_id.to_string(),
+        "index1": format!("0x{index1}"),
+        "index2": format!("0x{index2}"),
+    });
+    let result: GetDiffAddrResult = wallet.run_local(
+        &context.es_client, 
+        "getDiffAddr", 
+        Some(params)
+    ).await?;
+    return Ok(result.address);
 }
 
 #[instrument(level = "debug", skip(diff_coordinate, diff))]
@@ -136,6 +194,7 @@ pub async fn push_diff(
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
+
     Ok(())
 }
 
