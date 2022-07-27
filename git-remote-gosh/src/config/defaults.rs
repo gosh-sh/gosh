@@ -4,7 +4,6 @@ use std::vec::Vec;
 
 pub const PRIMARY_NETWORK: &str = "network.gosh.sh";
 pub const IPFS_HTTP_ENDPOINT: &str = "https://ipfs.network.gosh.sh";
-pub const IPFS_THRESHOLD: u64 = 15000;
 
 #[cfg(target_family = "unix")]
 pub const CONFIG_LOCATION: &str = "~/.gosh/config.json";

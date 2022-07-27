@@ -74,7 +74,8 @@ impl GitHelper {
             branch_name.to_string(),
             blob_id.clone(),
             file_path.to_string(),
-            file_diff.clone()
+            file_diff.original.clone(),
+            file_diff.patch.clone()
         );
         parallel_diffs_upload_support.push(
             self,
@@ -160,7 +161,8 @@ impl GitHelper {
                         branch_name.to_string(),
                         blob_id.clone(),
                         file_path.clone(),
-                        file_diff.clone() 
+                        file_diff.original.clone(),
+                        file_diff.patch.clone() 
                     );
                     parallel_diffs_upload_support.push(
                         self,

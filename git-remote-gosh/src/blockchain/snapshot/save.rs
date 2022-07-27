@@ -22,6 +22,12 @@ struct GetDiffAddrResult {
 }
 
 #[derive(Deserialize, Debug)]
+struct GetDiffResultResult {
+    #[serde(rename = "value0")]
+    pub content: Option<Vec<u8>>
+}
+
+#[derive(Deserialize, Debug)]
 struct GetVersionResult {
     #[serde(rename = "value0")]
     pub version: String,
@@ -146,8 +152,10 @@ pub async fn push_diff(
     diff_coordinate: &PushDiffCoordinate,
     last_commit_id: &git_hash::ObjectId,
     is_last: bool,
+    original_snapshot_content: &Vec<u8>,
     diff: &Vec<u8>,
 ) -> Result<()> {
+    let wallet = user_wallet(context).await?;
     let snapshot_addr = Snapshot::calculate_address(
         &context.es_client,
         &context.repo_addr,
@@ -158,11 +166,29 @@ pub async fn push_diff(
     let diff = ton_client::utils::compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
-    let (patch, ipfs) = if diff.len() > 15000 /* crate::config::defaults::IPFS_THRESHOLD */ {
-        let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
-        (None, ipfs)
-    } else {
-        (Some(hex::encode(diff)), None)
+    let (patch, ipfs) = {
+        let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_THRESHOLD;
+        if !is_going_to_ipfs {
+            // Ensure contract can accept this patch
+            let data = serde_json::json!({
+                "state": original_snapshot_content, 
+                "diff": diff
+            });
+            let apply_patch_result: GetDiffResultResult = wallet.run_local(
+                &context.es_client, 
+                "getDiffResult", 
+                Some(data)
+            ).await?;
+            if apply_patch_result.content.is_none() {
+                is_going_to_ipfs = true;
+            }
+        }
+        if is_going_to_ipfs { 
+            let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
+            (None, ipfs)
+        } else {
+            (Some(hex::encode(diff)), None)
+        }
     };
 
     let diff = Diff {
@@ -186,7 +212,6 @@ pub async fn push_diff(
         last: is_last
     };
 
-    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);

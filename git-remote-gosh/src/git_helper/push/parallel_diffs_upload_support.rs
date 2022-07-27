@@ -22,6 +22,7 @@ pub struct ParallelDiff {
     branch_name: String,
     blob_id: git_hash::ObjectId,
     file_path: String,
+    original_snapshot_content: Vec<u8>,
     diff: Vec<u8>
 }
 
@@ -31,6 +32,7 @@ impl ParallelDiff {
         branch_name: String,
         blob_id: git_hash::ObjectId,
         file_path: String,
+        original_snapshot_content: Vec<u8>, 
         diff: Vec<u8>
     ) -> Self {
         Self {
@@ -38,6 +40,7 @@ impl ParallelDiff {
             branch_name,
             blob_id,
             file_path,
+            original_snapshot_content,
             diff
         }
     }
@@ -64,6 +67,7 @@ impl ParallelDiffsUploadSupport {
                 branch_name,
                 blob_id,
                 file_path,
+                original_snapshot_content,
                 diff
             }) in self.dangling_diffs.values().into_iter() {
             blockchain::snapshot::push_diff(
@@ -75,6 +79,7 @@ impl ParallelDiffsUploadSupport {
                 &diff_coordinates,
                 &self.last_commit_id,
                 true, // <- It is known now
+                original_snapshot_content,
                 diff
             ).await?;
             let diff_contract_address = blockchain::snapshot::diff_address(
@@ -117,6 +122,7 @@ impl ParallelDiffsUploadSupport {
                 branch_name,
                 blob_id,
                 file_path,
+                original_snapshot_content,
                 diff 
             })) => {
                 blockchain::snapshot::push_diff(
@@ -128,6 +134,7 @@ impl ParallelDiffsUploadSupport {
                     &diff_coordinates,
                     &self.last_commit_id,
                     false, // <- It is known now
+                    original_snapshot_content,
                     diff
                 ).await?;
             }

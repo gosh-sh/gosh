@@ -5,11 +5,16 @@ use diffy::create_patch_bytes;
 use crate::git_helper::push::Result;
 
 
+pub struct GenerageBlobDiffResult {
+    pub original: Vec<u8>,
+    pub patch: Vec<u8>
+}
+
 pub async fn generate_blob_diff(
     odb: &OdbHandle,
     blob_id_from: Option<&ObjectId>,
     blob_id_to: &ObjectId,
-) -> Result<Vec<u8>> {
+) -> Result<GenerageBlobDiffResult> {
     let mut blob_from_buffer: Vec<u8> = Vec::new();
     let mut blob_to_buffer: Vec<u8> = Vec::new();
     let prev_content = match blob_id_from {
@@ -26,5 +31,8 @@ pub async fn generate_blob_diff(
         .data;
     let diff: Vec<u8> = create_patch_bytes(prev_content, next_content).to_bytes();
 
-    Ok(diff)
+    Ok(GenerageBlobDiffResult {
+        original: prev_content.to_vec(),
+        patch: diff
+    })
 }
