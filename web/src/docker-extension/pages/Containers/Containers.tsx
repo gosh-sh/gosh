@@ -440,7 +440,7 @@ const Main = () => {
                 logs.push(status)
                 setValidation({
                     ...validation,
-                    active: true,
+                    active: false,
                     stdout: logs.join('\n'),
                 })
             },
@@ -451,6 +451,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             publicKey,
+            userState,
         )
     }
 
@@ -478,7 +479,7 @@ const Main = () => {
                 logs.push(status)
                 setValidation({
                     ...validation,
-                    active: true,
+                    active: false,
                     stdout: logs.join('\n'),
                 })
             },
@@ -489,6 +490,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             publicKey,
+            userState,
         )
     }
 

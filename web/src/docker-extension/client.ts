@@ -1,6 +1,8 @@
 import { Image, Container } from './interfaces'
 import { dockerClient, goshClient, goshRoot } from '../helpers'
-import { GoshDao, GoshWallet } from '../types/classes'
+import { GoshContentSignature, GoshDao, GoshWallet } from '../types/classes'
+import { parse } from 'node:path/win32'
+import { TUserState } from '../types/types'
 
 const logger = console
 
@@ -12,12 +14,10 @@ const WELL_KNOWN_ROOT_CONTRACT_ADDRESS =
 
 console.debug('Endpoints', ENDPOINTS)
 console.debug('Gosh root', GOSH_ROOT_CONTRACT_ADDRESS)
-
 const METADATA_KEY = {
     BUILD_PROVIDER: 'WALLET_PUBLIC',
-    GOSH_ADDRESS: 'GOSH_ADDRESS',
+    GOSH_ADDRESS: 'GOSH_ADDRESS', // gosh://0:6dfcf8a001da3e7a1910f873245c47904638e8fb4bf204c0b31b156f9c891d8c/test/repo
     GOSH_COMMIT_HASH: 'GOSH_COMMIT_HASH',
-    GOSH_DAO: 'GOSH_DAO',
 }
 const COMMAND = {
     CALCULATE_IMAGE_SHA: '/command/gosh-image-sha.sh',
@@ -165,6 +165,7 @@ export class DockerClient {
         appendValidationLog: any,
         closeValidationLog: any,
         userStatePublicKey: string,
+        userState?: TUserState,
     ): Promise<boolean> {
         const [imageExists, image] = await DockerClient._findImage(imageId)
         if (!imageExists) {
@@ -179,45 +180,74 @@ export class DockerClient {
             METADATA_KEY.GOSH_COMMIT_HASH,
             '-',
         )
-        const [hasDao, goshDao] = DockerClient.readContainerImageMetadata(
-            image,
-            METADATA_KEY.GOSH_DAO,
-            '-',
-        )
 
-        if (!hasRepositoryAddress || !hasCommitHash || !hasDao) {
+        if (!hasRepositoryAddress || !hasCommitHash) {
             appendValidationLog('Error: The image was not build from Gosh')
             closeValidationLog()
             return false
         }
 
+        if (!goshRepositoryAddress.startsWith('gosh://')) {
+            appendValidationLog('Error: Invalid gosh address protocol')
+            closeValidationLog()
+            return false
+        }
+
+        const [goshRootContract, goshDao, goshRepoName] = goshRepositoryAddress
+            .slice('gosh://'.length)
+            .split('/')
+
         // Note: Not safe. improve
-        if (!goshRepositoryAddress.startsWith(WELL_KNOWN_ROOT_CONTRACT_ADDRESS)) {
+        // TODO: check root contract
+        if (goshRootContract !== GOSH_ROOT_CONTRACT_ADDRESS) {
             appendValidationLog('Error: unknown gosh root address.')
             closeValidationLog()
             return false
         }
 
-        const goshRepositoryName = goshRepositoryAddress.slice(
-            WELL_KNOWN_ROOT_CONTRACT_ADDRESS.length,
-        )
+        const goshRepositoryName = `${goshDao}/${goshRepoName}`
 
         const daoAddress = await goshRoot.getDaoAddr(goshDao)
         const dao = new GoshDao(goshClient, daoAddress)
         const walletAddr = await dao.getWalletAddr(`0x${userStatePublicKey}`, 0)
-        const wallet = new GoshWallet(goshClient, walletAddr)
 
-        const content = await wallet.getContentAdress(
+        console.log('walletAddr', walletAddr)
+        console.log('daoAddress', daoAddress)
+
+        console.log(
+            'deployContent',
+            goshRepositoryName,
+            goshCommitHash,
+            '',
+            'sha256:511bd981cb73818ab72940df0af72253b2cf8fc06fbcf92be7d0b922390d3fbf',
+        )
+
+        console.log('keys', userState?.keys)
+
+        // TODO: use only public key
+        // const wallet = new GoshWallet(goshClient, walletAddr, user)
+        const wallet = new GoshWallet(goshClient, walletAddr, userState?.keys)
+        // await wallet.deployContent(
+        //     goshRepositoryName,
+        //     goshCommitHash,
+        //     '',
+        // )
+        const contentAddr = await wallet.getContentAdress(
             goshRepositoryName,
             goshCommitHash,
             '',
         )
-        appendValidationLog('Content:', content)
+        const contentObj = new GoshContentSignature(goshClient, contentAddr)
+        const content = await contentObj.getContent()
+
+        console.log('content', content)
+        appendValidationLog(`Valid Image Hashes: ${content}`)
         const validImageHashes = content.split(',')
 
         try {
             if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
 
+            appendValidationLog('Calculating image sha...')
             const [isImageShaCalculated, imageSha] = await DockerClient.calculateImageSha(
                 imageId,
                 '',
@@ -248,8 +278,11 @@ export class DockerClient {
         imageId: string,
         defaultValue: string,
     ): Promise<[boolean, string]> {
+        logger.log(`calculateImageSha ${imageId}`)
         try {
-            if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
+            if (!dockerClient?.extension.vm) {
+                throw new Error('Extension vm undefined')
+            }
             const result = await dockerClient.extension.vm.cli.exec(
                 COMMAND.CALCULATE_IMAGE_SHA,
                 [imageId],

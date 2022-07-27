@@ -410,6 +410,16 @@
 			]
 		},
 		{
+			"name": "getDiffResult",
+			"inputs": [
+				{"name":"state","type":"bytes"},
+				{"name":"diff","type":"bytes"}
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(bytes)"}
+			]
+		},
+		{
 			"name": "onTokenWalletDeployed",
 			"inputs": [
 				{"name":"wallet","type":"address"}

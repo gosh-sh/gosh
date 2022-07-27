@@ -694,6 +694,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function getVersion() external pure returns(string) {
         return version;
     }
+    
+    function getDiffResult(bytes state, bytes diff) external pure returns(optional(bytes)) {
+        return gosh.applyZipPatchQ(state, diff);
+    }
 
     //
     // Internals
