@@ -51,7 +51,9 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
     use git_object::tree::EntryMode::*;
     match entry_mode {
         Tree => "tree",
-        Blob | BlobExecutable | Link => "blob",
+        Blob => "blob",
+        BlobExecutable => "blobExecutable",
+        Link => "link",
         Commit => unimplemented!(),
     }
     .to_owned()

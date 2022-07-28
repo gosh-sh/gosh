@@ -41,7 +41,7 @@ impl GitHelper {
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj)?;
-        log::info!("Writing git object - success");
+        log::info!("Writing git object - success, {}", object_id);
         return Ok(object_id);
     }
 
@@ -141,6 +141,7 @@ impl GitHelper {
                     let oid = entry.oid.clone();
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
+                            log::trace!("Tree entry: tree {}->{}", id, oid);
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}/{}", path_to_node, entry.filename),
                                 oid,
@@ -148,10 +149,12 @@ impl GitHelper {
                             tree_obj_queue.push_back(to_load);
                         }
                         git_object::tree::EntryMode::Commit => {
+                            log::trace!("Tree entry: commit {}->{}", id, oid);
                             commits_queue.push_back(oid);
                         }
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
+                            log::trace!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
                             // Note:
