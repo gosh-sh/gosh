@@ -12,6 +12,7 @@ use crate::blockchain::{
     GoshContract,
     TonClient
 };
+use ton_client::error::ClientError;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -171,16 +172,23 @@ pub async fn push_diff(
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
-                "state": original_snapshot_content, 
-                "diff": diff
+                "state": hex::encode(original_snapshot_content), 
+                "diff": hex::encode(&diff)
             });
-            let apply_patch_result: GetDiffResultResult = wallet.run_local(
+            let apply_patch_result = wallet.run_local::<GetDiffResultResult>(
                 &context.es_client, 
                 "getDiffResult", 
                 Some(data)
-            ).await?;
-            if apply_patch_result.content.is_none() {
-                is_going_to_ipfs = true;
+            ).await;
+            
+            if apply_patch_result.is_ok() {
+                if apply_patch_result.unwrap().content.is_none() {
+                    is_going_to_ipfs = true;
+                }
+            } else {
+                let apply_patch_result_error = apply_patch_result.unwrap_err();
+                let message = apply_patch_result_error.description();
+                is_going_to_ipfs = message.contains("Contract execution was terminated with error: invalid opcode");
             }
         }
         if is_going_to_ipfs { 

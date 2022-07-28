@@ -269,8 +269,7 @@ async fn run_local(
     )
     .await
     .map(|r| r.decoded.unwrap())
-    .map(|r| r.output.unwrap())
-    .unwrap();
+    .map(|r| r.output.unwrap())?;
 
     Ok(result)
 }
