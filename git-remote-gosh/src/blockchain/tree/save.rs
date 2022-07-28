@@ -36,7 +36,7 @@ impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
     fn from((sha256, entry): (String, &tree::EntryRef)) -> Self {
         Self {
             flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
-            mode: std::str::from_utf8(git_object::tree::EntryMode::Blob.as_bytes())
+            mode: std::str::from_utf8(entry.mode.as_bytes())
                 .unwrap()
                 .to_owned(),
             type_obj: convert_to_type_obj(entry.mode),
