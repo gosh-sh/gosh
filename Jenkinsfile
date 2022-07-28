@@ -50,7 +50,7 @@ pipeline {
                         script {
                             dir ('git-remote-gosh') {
                                 sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-pc-windows-gnu"
-                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-pc-windows-gnu"
+                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-pc-windows-gnu.exe"
                             }
                         }
                     }
