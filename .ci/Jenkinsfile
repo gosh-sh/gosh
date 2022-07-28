@@ -5,13 +5,21 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /tmp/giver.keys.json:/tmp/giver.keys.json --group-add docker'
         }  
     }
+    parameters {
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH'
+        booleanParam name: 'RELEASE', defaultValue: false, description: 'If true will create Github Release!'
+    }
 
     stages {
         stage('Clone repository') {
             steps {
-            checkout scm
+                git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
+                checkout scm
+                script {
+                    env.VERSION = sh script: "cat git-remote-gosh/Cargo.toml | grep version | head -1 | grep -Eo '[0-9]\\.[0-9]\\.[0-9]' | tr -d '\n'", returnStdout: true
+                    currentBuild.displayName = "#${BUILD_NUMBER}_${BRANCH}_v${VERSION}"
+                }
             }
-
         }   
 
         stage('Build') { 
@@ -40,7 +48,6 @@ pipeline {
                         script {
                             dir ('git-remote-gosh') {
                                 sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-unknown-linux-gnu"
-                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-unknown-linux-gnu"
                             }
                         }
                     }
@@ -50,7 +57,6 @@ pipeline {
                         script {
                             dir ('git-remote-gosh') {
                                 sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-pc-windows-gnu"
-                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-pc-windows-gnu.exe"
                             }
                         }
                     }
@@ -115,20 +121,37 @@ pipeline {
                         script {
                             dir ('contracts/gosh') {
                                 sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
-                                archiveArtifacts artifacts: "gosh.seed"
                             }
                         }
                     }
                 }
-                /*stage("Functional testing") {
+                stage("Functional testing") {
                     steps {
                         script {
                             sh ''
                         }
                     }
-                }*/
+                }
             }
         }
+        stage("Release") {
+            steps {
+                script {
+                    archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-linux"
+                    archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-windows.exe"
+                    archiveArtifacts artifacts: "gosh.seed"
+                    dir ('.ci/scripts') {
+                        if (params.RELEASE) {
+                            withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                                sh "./create-github-release.sh $TOKEN ${VERSION} ${BRANCH}"
+                                sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-linux"
+                                sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-windows.exe"
+                            }
+                        }
+                    }
+                }
+            }
+        }    
     }
     post { 
         always { 
