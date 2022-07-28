@@ -1,9 +1,4 @@
-import {
-    abiSerialized,
-    builderOpBitString,
-    NetworkQueriesProtocol,
-    TonClient,
-} from '@eversdk/core'
+import { abiSerialized, NetworkQueriesProtocol, TonClient } from '@eversdk/core'
 import { toast } from 'react-toastify'
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
@@ -694,8 +689,9 @@ export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
 }
 
 export const tvmHash = async (data: string): Promise<string> => {
-    const boc = await goshClient.boc.encode_boc({
-        builder: [builderOpBitString(Buffer.from(data).toString('hex'))],
+    const boc = await goshClient.abi.encode_boc({
+        params: [{ name: 'data', type: 'string' }],
+        data: { data },
     })
     const hash = await goshClient.boc.get_boc_hash({ boc: boc.boc })
     return hash.hash
