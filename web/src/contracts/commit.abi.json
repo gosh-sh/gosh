@@ -30,7 +30,10 @@
 			"inputs": [
 				{"name":"commit","type":"string"},
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"sha","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -116,7 +119,8 @@
 				{"name":"value0","type":"bytes"},
 				{"name":"value1","type":"optional(string)"},
 				{"name":"branch","type":"string"},
-				{"name":"path","type":"string"}
+				{"name":"path","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
