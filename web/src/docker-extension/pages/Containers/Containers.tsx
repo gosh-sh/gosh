@@ -280,7 +280,7 @@ const Main = () => {
                 id: 'containerHash',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 400,
+                maxWidth: 300,
                 minWidth: 150,
                 width: 200,
             },
@@ -289,7 +289,16 @@ const Main = () => {
                 id: 'containerName',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 400,
+                maxWidth: 300,
+                minWidth: 165,
+                width: 200,
+            },
+            {
+                label: 'Gosh address',
+                id: 'goshAddress',
+                numeric: false,
+                disablePadding: false,
+                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
             },
@@ -298,25 +307,7 @@ const Main = () => {
                 id: 'imageHash',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 400,
-                minWidth: 165,
-                width: 200,
-            },
-            {
-                label: 'Build provider',
-                id: 'buildProvider',
-                numeric: false,
-                disablePadding: false,
-                maxWidth: 400,
-                minWidth: 165,
-                width: 200,
-            },
-            {
-                label: 'Gosh network root',
-                id: 'goshRootAddress',
-                numeric: false,
-                disablePadding: false,
-                maxWidth: 400,
+                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
             },
@@ -335,29 +326,20 @@ const Main = () => {
                 width: 30,
             },
             {
+                label: 'Gosh address',
+                id: 'goshAddress',
+                numeric: false,
+                disablePadding: false,
+                maxWidth: 300,
+                minWidth: 165,
+                width: 200,
+            },
+            {
                 label: 'Image hash',
                 id: 'imageHash',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 400,
-                minWidth: 165,
-                width: 200,
-            },
-            {
-                label: 'Build provider',
-                id: 'buildProvider',
-                numeric: false,
-                disablePadding: false,
-                maxWidth: 400,
-                minWidth: 165,
-                width: 200,
-            },
-            {
-                label: 'Gosh network root',
-                id: 'goshRootAddress',
-                numeric: false,
-                disablePadding: false,
-                maxWidth: 400,
+                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
             },
@@ -370,7 +352,7 @@ const Main = () => {
             data: [],
             isLoading: true,
         })
-        DockerClient.getContainers().then((value) => {
+        DockerClient.getContainers(userState).then((value) => {
             console.log(value)
             setContainers({
                 data:
@@ -381,14 +363,14 @@ const Main = () => {
                 isLoading: false,
             })
         })
-    }, [])
+    }, [userState])
 
     useEffect(() => {
         setImages({
             data: [],
             isLoading: true,
         })
-        DockerClient.getImages().then((value) => {
+        DockerClient.getImages(userState).then((value) => {
             console.log(value)
             setImages({
                 data: value.map((image: ImageType) => ({
@@ -398,14 +380,14 @@ const Main = () => {
                 isLoading: false,
             })
         })
-    }, [])
+    }, [userState])
 
     const handleClick = () => {
         setContainers({
             data: [],
             isLoading: true,
         })
-        DockerClient.getContainers().then((value) => {
+        DockerClient.getContainers(userState).then((value) => {
             console.log(value)
             setContainers({
                 data: value || [],
@@ -415,7 +397,10 @@ const Main = () => {
         })
     }
 
-    function validateContainer(element: ContainerType, index: number): void {
+    async function validateContainer(
+        element: ContainerType,
+        index: number,
+    ): Promise<void> {
         let logs: string[] = []
         let validation = {
             id: element.containerHash,
@@ -434,7 +419,7 @@ const Main = () => {
             return
         }
 
-        DockerClient.validateContainerImage(
+        const isValid = await DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
                 logs.push(status)
@@ -453,6 +438,18 @@ const Main = () => {
             publicKey,
             userState,
         )
+        setContainers((containers) => ({
+            ...containers,
+            data: containers.data.map((container) =>
+                container.id === element.id
+                    ? {
+                          ...container,
+                          // TODO remove
+                          validated: isValid ? 'success' : 'error',
+                      }
+                    : container,
+            ),
+        }))
     }
 
     function validateImage(element: ImageType, index: number): void {

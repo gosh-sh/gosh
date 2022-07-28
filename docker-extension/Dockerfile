@@ -30,7 +30,7 @@ LABEL org.opencontainers.image.title="Gosh" \
 RUN <<EOF
     set -ex
     apt-get update -qy
-    apt-get install -qy git docker bash ca-certificates
+    apt-get install -qy git docker.io bash ca-certificates
 EOF
 
 COPY --link --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plugins/docker-buildx
