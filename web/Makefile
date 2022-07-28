@@ -2,6 +2,7 @@ CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 TARGET_DIR := $(abspath $(target-dir))
 
 build:
+	mkdir -p build
 	docker run \
 	  --rm \
 	  --volume $(CURRENT_DIR):/workdir \

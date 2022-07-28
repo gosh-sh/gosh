@@ -1,11 +1,9 @@
 pipeline {
 	agent {
-        dockerfile {
-            filename 'Dockerfile'
-            dir '.'
-            args '-v /var/run/docker.sock:/var/run/docker.sock --group-add docker'
-        }
-        
+        docker {
+            image 'jenkins-docker-agent:1'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /tmp/giver.keys.json:/tmp/giver.keys.json --group-add docker'
+        }  
     }
 
     stages {
@@ -17,7 +15,8 @@ pipeline {
         }   
 
         stage('Build') { 
-            parallel {
+            failFast true
+            stages {
                 stage("SMV") {
                     steps {
                         script {
@@ -36,11 +35,22 @@ pipeline {
                         }
                     }
                 }
-                stage("Git Helper") {
+                stage("Git Helper: Linux") {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh 'make build'
+                                sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-unknown-linux-gnu"
+                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-unknown-linux-gnu"
+                            }
+                        }
+                    }
+                }
+                stage("Git Helper: Windows") {
+                    steps {
+                        script {
+                            dir ('git-remote-gosh') {
+                                sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-pc-windows-gnu"
+                                archiveArtifacts artifacts: "build-${BUILD_NUMBER}/git-remote-gosh-x86_64-pc-windows-gnu"
                             }
                         }
                     }
@@ -49,7 +59,7 @@ pipeline {
                     steps {
                         script {
                             dir ('docker-extension') {
-                                sh 'make build'
+                                sh "mkdir -p ./.tmp/git-remote-gosh && cp -r ../git-remote-gosh/target/x86_64-unknown-linux-gnu/release/* ./.tmp/git-remote-gosh && make build-ci"
                             }
                         }
                     }
@@ -104,7 +114,8 @@ pipeline {
                     steps {
                         script {
                             dir ('contracts/gosh') {
-                                sh 'deploy-docker'
+                                sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                                archiveArtifacts artifacts: "gosh.seed"
                             }
                         }
                     }
@@ -117,6 +128,11 @@ pipeline {
                     }
                 }*/
             }
+        }
+    }
+    post { 
+        always { 
+            cleanWs()
         }
     }
 }
