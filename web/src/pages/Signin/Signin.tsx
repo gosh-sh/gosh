@@ -1,34 +1,36 @@
-import React from "react";
-import { Form, Formik, Field, ErrorMessage, FormikHelpers } from "formik";
-import * as Yup from "yup";
-import TextareaField from "../../components/FormikForms/TextareaField";
-import { useEverClient } from "../../hooks/ever.hooks";
-import { useResetRecoilState, useSetRecoilState } from "recoil";
-import { useNavigate } from "react-router-dom";
-import Spinner from "../../components/Spinner";
-import { appModalStateAtom } from "../../store/app.state";
-import PinCodeModal from "../../components/Modal/PinCode";
-import { userStatePersistAtom } from "../../store/user.state";
-
+import React from 'react'
+import { Form, Formik, Field, ErrorMessage, FormikHelpers } from 'formik'
+import * as Yup from 'yup'
+import TextareaField from '../../components/FormikForms/TextareaField'
+import { useEverClient } from '../../hooks/ever.hooks'
+import { useResetRecoilState, useSetRecoilState } from 'recoil'
+import { useNavigate } from 'react-router-dom'
+import Spinner from '../../components/Spinner'
+import { appModalStateAtom } from '../../store/app.state'
+import PinCodeModal from '../../components/Modal/PinCode'
+import { userStatePersistAtom } from '../../store/user.state'
 
 type TFormValues = {
-    phrase: string;
+    phrase: string
 }
 
 const SigninPage = () => {
-    const navigate = useNavigate();
-    const userStatePersistReset = useResetRecoilState(userStatePersistAtom);
-    const everClient = useEverClient();
-    const setModal = useSetRecoilState(appModalStateAtom);
+    const navigate = useNavigate()
+    const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
+    const everClient = useEverClient()
+    const setModal = useSetRecoilState(appModalStateAtom)
 
-    const onFormSubmit = async (values: TFormValues, helpers: FormikHelpers<TFormValues>) => {
-        const result = await everClient.crypto.mnemonic_verify({ phrase: values.phrase });
+    const onFormSubmit = async (
+        values: TFormValues,
+        helpers: FormikHelpers<TFormValues>,
+    ) => {
+        const result = await everClient.crypto.mnemonic_verify({ phrase: values.phrase })
         if (!result.valid) {
-            helpers.setFieldError('phrase', 'Phrase is invalid');
-            return;
+            helpers.setFieldError('phrase', 'Phrase is invalid')
+            return
         }
 
-        userStatePersistReset();
+        userStatePersistReset()
         setModal({
             static: true,
             isOpen: true,
@@ -37,8 +39,8 @@ const SigninPage = () => {
                     phrase={values.phrase}
                     onUnlock={() => navigate('/account/orgs', { replace: true })}
                 />
-            )
-        });
+            ),
+        })
     }
 
     return (
@@ -54,7 +56,7 @@ const SigninPage = () => {
                 initialValues={{ phrase: '' }}
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
-                    phrase: Yup.string().required('Phrase is required')
+                    phrase: Yup.string().required('Phrase is required'),
                 })}
             >
                 {({ isSubmitting, touched, errors }) => (
@@ -67,13 +69,15 @@ const SigninPage = () => {
                                 inputProps={{
                                     className: '!px-7 !py-6',
                                     autoComplete: 'off',
-                                    placeholder: 'GOSH root seed phrase'
+                                    placeholder: 'GOSH root seed phrase',
                                 }}
                             />
                         </div>
 
                         <div className="mt-10 text-red-dd3a3a text-center text-base h-6">
-                            {touched.phrase && errors.phrase && (<ErrorMessage name={'phrase'} />)}
+                            {touched.phrase && errors.phrase && (
+                                <ErrorMessage name={'phrase'} />
+                            )}
                         </div>
 
                         <div className="mt-2">
@@ -90,7 +94,7 @@ const SigninPage = () => {
                 )}
             </Formik>
         </div>
-    );
+    )
 }
 
-export default SigninPage;
+export default SigninPage

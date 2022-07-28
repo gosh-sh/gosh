@@ -23,17 +23,17 @@ export enum EGoshError {
     SMV_LOCKER_BUSY = 'SMV locker busy',
     SMV_NO_PROPOSAL = 'SMV proposal undefined',
     SMV_NO_START = 'SMV voting for proposal is not started yet',
-    SMV_NO_BALANCE = 'SMV not enough balance'
+    SMV_NO_BALANCE = 'SMV not enough balance',
 }
 
 export class GoshError extends Error {
-    title: string;
-    data?: object;
+    title: string
+    data?: object
 
     constructor(message: string, data?: object) {
-        super(message + (data ? ` (${JSON.stringify(data)})` : ''));
-        this.name = 'GoshError';
-        this.title = message;
-        this.data = data;
+        super(message + (data ? ` (${JSON.stringify(data)})` : ''))
+        this.name = 'GoshError'
+        this.title = message
+        this.data = data
     }
 }

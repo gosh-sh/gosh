@@ -1,113 +1,113 @@
-import { useEffect, useState } from 'react';
-import { Field, Form, Formik } from 'formik';
-import { useOutletContext, useParams } from 'react-router-dom';
-import TextField from '../../components/FormikForms/TextField';
-import Spinner from '../../components/Spinner';
-import { GoshSmvProposal } from '../../types/classes';
-import { EEventType, TGoshEventDetails } from '../../types/types';
-import * as Yup from 'yup';
-import CopyClipboard from '../../components/CopyClipboard';
-import { shortString } from '../../utils';
-import { useGoshRoot, useSmvBalance } from '../../hooks/gosh.hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons';
-import { TDaoLayoutOutletContext } from '../DaoLayout';
-import PREvent from './PREvent';
-import SmvBalance from '../../components/SmvBalance/SmvBalance';
-import { eventTypes, goshClient } from '../../helpers';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
-import BranchEvent from './BranchEvent';
+import { useEffect, useState } from 'react'
+import { Field, Form, Formik } from 'formik'
+import { useOutletContext, useParams } from 'react-router-dom'
+import TextField from '../../components/FormikForms/TextField'
+import Spinner from '../../components/Spinner'
+import { GoshSmvProposal } from '../../types/classes'
+import { EEventType, TGoshEventDetails } from '../../types/types'
+import * as Yup from 'yup'
+import CopyClipboard from '../../components/CopyClipboard'
+import { shortString } from '../../utils'
+import { useGoshRoot, useSmvBalance } from '../../hooks/gosh.hooks'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
+import PREvent from './PREvent'
+import SmvBalance from '../../components/SmvBalance/SmvBalance'
+import { eventTypes, goshClient } from '../../helpers'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
+import BranchEvent from './BranchEvent'
 
 type TFormValues = {
-    approve: string;
-    amount: number;
-};
+    approve: string
+    amount: number
+}
 
 const EventPage = () => {
-    const { daoName, eventAddr } = useParams();
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
-    const root = useGoshRoot();
-    const smvBalance = useSmvBalance(wallet);
-    const [check, setCheck] = useState<boolean>(false);
+    const { daoName, eventAddr } = useParams()
+    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const root = useGoshRoot()
+    const smvBalance = useSmvBalance(wallet)
+    const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
-        details?: TGoshEventDetails;
-        isFetching: boolean;
+        details?: TGoshEventDetails
+        isFetching: boolean
     }>({
         isFetching: true,
-    });
+    })
 
     /** Send check trigger to event */
     const onProposalCheck = async () => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
-            setCheck(true);
-            await wallet.tryProposalResult(event.details.address);
-            toast.success('Re-check submitted, event details will be updated soon');
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            setCheck(true)
+            await wallet.tryProposalResult(event.details.address)
+            toast.success('Re-check submitted, event details will be updated soon')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         } finally {
-            setCheck(false);
+            setCheck(false)
         }
-    };
+    }
 
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!root) throw new GoshError(EGoshError.NO_ROOT);
-            if (!dao) throw new GoshError(EGoshError.NO_DAO);
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
+            if (!root) throw new GoshError(EGoshError.NO_ROOT)
+            if (!dao) throw new GoshError(EGoshError.NO_DAO)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (
                 event.details.time.start &&
                 Date.now() < event.details.time.start.getTime()
             ) {
                 throw new GoshError(EGoshError.SMV_NO_START, {
                     start: event.details.time.start.getTime(),
-                });
+                })
             }
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
-            const smvPlatformCode = await root.getSmvPlatformCode();
-            const smvClientCode = await dao.getSmvClientCode();
-            const choice = values.approve === 'true';
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            const smvPlatformCode = await root.getSmvPlatformCode()
+            const smvClientCode = await dao.getSmvClientCode()
+            const choice = values.approve === 'true'
             await wallet.voteFor(
                 smvPlatformCode,
                 smvClientCode,
                 event.details.address,
                 choice,
-                values.amount
-            );
-            toast.success('Vote accepted, event details will be updated soon');
+                values.amount,
+            )
+            toast.success('Vote accepted, event details will be updated soon')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     useEffect(() => {
         const getEvent = async () => {
-            if (!eventAddr) return;
+            if (!eventAddr) return
 
-            const event = new GoshSmvProposal(goshClient, eventAddr);
-            const details = await event.getDetails();
-            setEvent((state) => ({ ...state, details, isFetching: false }));
-        };
+            const event = new GoshSmvProposal(goshClient, eventAddr)
+            const details = await event.getDetails()
+            setEvent((state) => ({ ...state, details, isFetching: false }))
+        }
 
-        setEvent({ details: undefined, isFetching: true });
-        getEvent();
+        setEvent({ details: undefined, isFetching: true })
+        getEvent()
 
         const interval = setInterval(async () => {
-            console.debug('Event details reload');
-            await getEvent();
-        }, 10000);
+            console.debug('Event details reload')
+            await getEvent()
+        }, 10000)
 
         return () => {
-            clearInterval(interval);
-        };
-    }, [eventAddr]);
+            clearInterval(interval)
+        }
+    }, [eventAddr])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -286,7 +286,7 @@ const EventPage = () => {
                 <BranchEvent daoName={daoName} details={event.details} />
             )}
         </div>
-    );
-};
+    )
+}
 
-export default EventPage;
+export default EventPage

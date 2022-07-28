@@ -1,46 +1,46 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Listbox } from "@headlessui/react";
-import { TGoshBranch } from "../../types/types";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
-import { classNames } from "../../utils";
-
+import React, { useEffect, useRef, useState } from 'react'
+import { Listbox } from '@headlessui/react'
+import { TGoshBranch } from '../../types/types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
+import { classNames } from '../../utils'
 
 type TBranchSelectProps = {
-    className?: string;
-    branch?: TGoshBranch;
-    branches: TGoshBranch[];
-    disabled?: boolean;
-    onChange(selected: TGoshBranch | undefined): void;
+    className?: string
+    branch?: TGoshBranch
+    branches: TGoshBranch[]
+    disabled?: boolean
+    onChange(selected: TGoshBranch | undefined): void
 }
 
 const BranchSelect = (props: TBranchSelectProps) => {
-    const { className, branch, branches, disabled, onChange } = props;
-    const searchRef = useRef<HTMLInputElement>(null);
-    const [search, setSearch] = useState<string>('');
-    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
+    const { className, branch, branches, disabled, onChange } = props
+    const searchRef = useRef<HTMLInputElement>(null)
+    const [search, setSearch] = useState<string>('')
+    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
 
     useEffect(() => {
         if (search) {
-            const pattern = new RegExp(search, 'i');
-            setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
+            const pattern = new RegExp(search, 'i')
+            setFiltered(branches.filter((item) => item.name.search(pattern) >= 0))
         } else {
-            setFiltered(branches);
+            setFiltered(branches)
         }
-    }, [branches, search]);
+    }, [branches, search])
 
     return (
         <Listbox
             as="div"
-            className={() => classNames(
-                'relative inline-block min-w-[7rem] max-w-[12rem] border rounded',
-                disabled ? 'bg-gray-100' : '',
-                className
-            )}
+            className={() =>
+                classNames(
+                    'relative inline-block min-w-[7rem] max-w-[12rem] border rounded',
+                    disabled ? 'bg-gray-100' : '',
+                    className,
+                )
+            }
             value={branch}
             disabled={disabled}
             onChange={(value) => onChange(value)}
-
         >
             <Listbox.Button
                 as="div"
@@ -84,7 +84,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
                             className={({ active }) => {
                                 return classNames(
                                     'cursor-pointer py-2 px-3 truncate border-b last:border-b-0 hover:bg-gray-50',
-                                    active ? 'bg-gray-50' : ''
+                                    active ? 'bg-gray-50' : '',
                                 )
                             }}
                         >
@@ -94,7 +94,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
                 </div>
             </Listbox.Options>
         </Listbox>
-    );
+    )
 }
 
-export default BranchSelect;
+export default BranchSelect

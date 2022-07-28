@@ -1,62 +1,62 @@
-import { faCoins, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
-import Spinner from '../../components/Spinner';
-import { getPaginatedAccounts, goshClient } from '../../helpers';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
-import { userStateAtom } from '../../store/user.state';
-import { GoshDao, GoshWallet } from '../../types/classes';
-import { TGoshDaoDetails } from '../../types/types';
+import { faCoins, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import Spinner from '../../components/Spinner'
+import { getPaginatedAccounts, goshClient } from '../../helpers'
+import { useGoshRoot } from '../../hooks/gosh.hooks'
+import { userStateAtom } from '../../store/user.state'
+import { GoshDao, GoshWallet } from '../../types/classes'
+import { TGoshDaoDetails } from '../../types/types'
 
 const DaosPage = () => {
-    const userState = useRecoilValue(userStateAtom);
-    const goshRoot = useGoshRoot();
-    const [search, setSearch] = useState<string>('');
+    const userState = useRecoilValue(userStateAtom)
+    const goshRoot = useGoshRoot()
+    const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
-        list: TGoshDaoDetails[];
-        lastId?: string;
-        completed: boolean;
-        isFetching: boolean;
+        list: TGoshDaoDetails[]
+        lastId?: string
+        completed: boolean
+        isFetching: boolean
     }>({
         list: [],
         completed: false,
         isFetching: true,
-    });
+    })
 
     const getDaoList = useCallback(
         async (lastId?: string) => {
-            if (!userState.keys?.public) return;
-            setDaos((curr) => ({ ...curr, isFetching: true }));
+            if (!userState.keys?.public) return
+            setDaos((curr) => ({ ...curr, isFetching: true }))
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
             const walletCode = await goshRoot.getDaoWalletCode(
-                `0x${userState.keys.public}`
-            );
+                `0x${userState.keys.public}`,
+            )
             const wallets = await getPaginatedAccounts({
                 filters: [`code: {eq:"${walletCode}"}`],
                 limit: 10,
                 lastId,
-            });
+            })
 
             // Get unique dao addresses from wallets
             const uniqueDaoAddresses = new Set(
                 await Promise.all(
                     wallets.results.map(async (item: any) => {
-                        const wallet = new GoshWallet(goshRoot.account.client, item.id);
-                        return await wallet.getDaoAddr();
-                    })
-                )
-            );
+                        const wallet = new GoshWallet(goshRoot.account.client, item.id)
+                        return await wallet.getDaoAddr()
+                    }),
+                ),
+            )
 
             // Get daos details from unique dao addressed
             const items = await Promise.all(
                 Array.from(uniqueDaoAddresses).map(async (address) => {
-                    const dao = new GoshDao(goshClient, address);
-                    return await dao.getDetails();
-                })
-            );
+                    const dao = new GoshDao(goshClient, address)
+                    return await dao.getDetails()
+                }),
+            )
 
             setDaos((curr) => ({
                 ...curr,
@@ -64,15 +64,15 @@ const DaosPage = () => {
                 list: [...curr.list, ...items],
                 lastId: wallets.lastId,
                 completed: wallets.completed,
-            }));
+            }))
         },
-        [goshRoot, userState.keys?.public]
-    );
+        [goshRoot, userState.keys?.public],
+    )
 
     useEffect(() => {
-        setDaos({ list: [], isFetching: true, completed: true });
-        getDaoList();
-    }, [getDaoList]);
+        setDaos({ list: [], isFetching: true, completed: true })
+        getDaoList()
+    }, [getDaoList])
 
     return (
         <>
@@ -147,7 +147,7 @@ const DaosPage = () => {
                 )}
             </div>
         </>
-    );
-};
+    )
+}
 
-export default DaosPage;
+export default DaosPage

@@ -73,7 +73,7 @@ pipeline {
                     steps {
                         script {
                             dir ('contracts/smv') {
-                                sh 'echo 1'
+                                sh 'echo placeholder_1'
                             }
                         }
                     }
@@ -82,7 +82,7 @@ pipeline {
                     steps {
                         script {
                             dir ('contracts/gosh') {
-                                sh 'echo 2'
+                                sh 'echo placeholder_2'
                             }
                         }
                     }
@@ -91,7 +91,7 @@ pipeline {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh 'echo 3'
+                                sh 'echo placeholder_3'
                             }
                         }
                     }
@@ -100,7 +100,7 @@ pipeline {
                     steps {
                         script {
                             dir ('docker-extension') {
-                                sh 'echo 4'
+                                sh 'echo placeholder_4'
                             }
                         }
                     }

@@ -1,2 +1,2 @@
-export * from "./Repo";
-export { default } from "./Repo";
+export * from './Repo'
+export { default } from './Repo'

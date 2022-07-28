@@ -1,12 +1,12 @@
-import { Link, useOutletContext, useParams } from 'react-router-dom';
-import CopyClipboard from '../../components/CopyClipboard';
-import { shortString } from '../../utils';
-import { TDaoLayoutOutletContext } from '../DaoLayout';
-import ReposPage from '../DaoRepos';
+import { Link, useOutletContext, useParams } from 'react-router-dom'
+import CopyClipboard from '../../components/CopyClipboard'
+import { shortString } from '../../utils'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
+import ReposPage from '../DaoRepos'
 
 const DaoPage = () => {
-    const { daoName } = useParams();
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const { daoName } = useParams()
+    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
 
     return (
         <div className="flex flex-wrap-reverse gap-x-4 gap-y-6">
@@ -40,7 +40,7 @@ const DaoPage = () => {
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default DaoPage;
+export default DaoPage

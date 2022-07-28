@@ -1,36 +1,36 @@
-import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
-import Spinner from '../components/Spinner';
-import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks';
-import { userStatePersistAtom } from '../store/user.state';
-import { IGoshDao, IGoshWallet } from '../types/types';
-import { classNames } from '../utils';
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import Spinner from '../components/Spinner'
+import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks'
+import { userStatePersistAtom } from '../store/user.state'
+import { IGoshDao, IGoshWallet } from '../types/types'
+import { classNames } from '../utils'
 
 export type TDaoLayoutOutletContext = {
-    dao: IGoshDao;
-    wallet?: IGoshWallet;
-};
+    dao: IGoshDao
+    wallet?: IGoshWallet
+}
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const { daoName } = useParams();
-    const dao = useGoshDao(daoName);
-    const wallet = useGoshWallet(dao);
-    const [isReady, setIsReady] = useState<boolean>(false);
+    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const { daoName } = useParams()
+    const dao = useGoshDao(daoName)
+    const wallet = useGoshWallet(dao)
+    const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
         { to: `/${daoName}`, title: 'Overview', public: true },
         { to: `/${daoName}/repos`, title: 'Repositories', public: true },
         { to: `/${daoName}/events`, title: 'Events', public: true },
         { to: `/${daoName}/settings`, title: 'Settings', public: false },
-    ];
+    ]
 
     useEffect(() => {
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet);
-        if (dao && walletAwaited) setIsReady(true);
-    }, [dao, userStatePersist.phrase, wallet]);
+            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
+        if (dao && walletAwaited) setIsReady(true)
+    }, [dao, userStatePersist.phrase, wallet])
 
     return (
         <div className="container container--full my-10">
@@ -62,7 +62,7 @@ const DaoLayout = () => {
                                             'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                             isActive
                                                 ? '!text-gray-050a15 border-b border-b-gray-050a15'
-                                                : null
+                                                : null,
                                         )
                                     }
                                 >
@@ -75,7 +75,7 @@ const DaoLayout = () => {
                 </>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default DaoLayout;
+export default DaoLayout

@@ -1,9 +1,9 @@
-import { Dialog } from '@headlessui/react';
-import { useRecoilState } from 'recoil';
-import { appModalStateAtom } from '../../store/app.state';
+import { Dialog } from '@headlessui/react'
+import { useRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../store/app.state'
 
 const BaseModal = () => {
-    const [modal, setModal] = useRecoilState(appModalStateAtom);
+    const [modal, setModal] = useRecoilState(appModalStateAtom)
 
     return (
         <Dialog
@@ -18,7 +18,7 @@ const BaseModal = () => {
                 {modal.element}
             </div>
         </Dialog>
-    );
-};
+    )
+}
 
-export default BaseModal;
+export default BaseModal

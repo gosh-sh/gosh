@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
-import { IGoshRepository, TGoshCommit } from '../../types/types';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { getCommit, getCommitTime } from '../../helpers';
-import CopyClipboard from '../../components/CopyClipboard';
-import { shortString } from '../../utils';
-import Spinner from '../../components/Spinner';
-import CommitBlobs from './CommitBlobs';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
+import { useEffect, useState } from 'react'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { IGoshRepository, TGoshCommit } from '../../types/types'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { getCommit, getCommitTime } from '../../helpers'
+import CopyClipboard from '../../components/CopyClipboard'
+import { shortString } from '../../utils'
+import Spinner from '../../components/Spinner'
+import CommitBlobs from './CommitBlobs'
+import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 
 const CommitPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName, commitName } = useParams();
-    const { branch } = useGoshRepoBranches(goshRepo, branchName);
-    const [commit, setCommit] = useState<TGoshCommit>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { daoName, repoName, branchName, commitName } = useParams()
+    const { branch } = useGoshRepoBranches(goshRepo, branchName)
+    const [commit, setCommit] = useState<TGoshCommit>()
 
     const renderCommitter = (committer: string) => {
-        const [pubkey] = committer.split(' ');
+        const [pubkey] = committer.split(' ')
         return (
             <CopyClipboard
                 label={shortString(pubkey)}
@@ -24,19 +24,19 @@ const CommitPage = () => {
                     text: pubkey,
                 }}
             />
-        );
-    };
+        )
+    }
 
     useEffect(() => {
         const _getCommit = async (repo: IGoshRepository, name: string) => {
             // Get commit data
-            const address = await repo.getCommitAddr(name);
-            const commitData = await getCommit(repo, address);
-            setCommit(commitData);
-        };
+            const address = await repo.getCommitAddr(name)
+            const commitData = await getCommit(repo, address)
+            setCommit(commitData)
+        }
 
-        if (commitName) _getCommit(goshRepo, commitName);
-    }, [goshRepo, commitName]);
+        if (commitName) _getCommit(goshRepo, commitName)
+    }, [goshRepo, commitName])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -67,7 +67,7 @@ const CommitPage = () => {
                             <div>
                                 <span className="mr-2 text-gray-050a15/65">at</span>
                                 {getCommitTime(
-                                    commit.content.committer || ''
+                                    commit.content.committer || '',
                                 ).toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
@@ -110,7 +110,7 @@ const CommitPage = () => {
                 </>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default CommitPage;
+export default CommitPage

@@ -1,2 +1,2 @@
-export * from './DaoParticipants';
-export { default } from './DaoParticipants';
+export * from './DaoParticipants'
+export { default } from './DaoParticipants'

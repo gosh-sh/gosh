@@ -1,32 +1,32 @@
-import { useEffect, useState } from 'react';
-import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
-import Spinner from '../components/Spinner';
+import { useEffect, useState } from 'react'
+import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import Spinner from '../components/Spinner'
 import {
     useGoshRepo,
     useGoshWallet,
     useGoshRepoBranches,
     useGoshDao,
-} from '../hooks/gosh.hooks';
-import { IGoshRepository, IGoshWallet } from '../types/types';
-import { classNames } from '../utils';
-import { useRecoilValue } from 'recoil';
-import { userStatePersistAtom } from '../store/user.state';
+} from '../hooks/gosh.hooks'
+import { IGoshRepository, IGoshWallet } from '../types/types'
+import { classNames } from '../utils'
+import { useRecoilValue } from 'recoil'
+import { userStatePersistAtom } from '../store/user.state'
 
 export type TRepoLayoutOutletContext = {
-    goshRepo: IGoshRepository;
-    goshWallet?: IGoshWallet;
-};
+    goshRepo: IGoshRepository
+    goshWallet?: IGoshWallet
+}
 
 const RepoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const { daoName, repoName, branchName = 'main' } = useParams();
-    const goshRepo = useGoshRepo(daoName, repoName);
-    const dao = useGoshDao(daoName);
-    const goshWallet = useGoshWallet(dao);
-    const { updateBranches } = useGoshRepoBranches(goshRepo);
-    const [isFetched, setIsFetched] = useState<boolean>(false);
+    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const goshRepo = useGoshRepo(daoName, repoName)
+    const dao = useGoshDao(daoName)
+    const goshWallet = useGoshWallet(dao)
+    const { updateBranches } = useGoshRepoBranches(goshRepo)
+    const [isFetched, setIsFetched] = useState<boolean>(false)
 
     const tabs = [
         {
@@ -41,18 +41,18 @@ const RepoLayout = () => {
             icon: faCodePullRequest,
             public: false,
         },
-    ];
+    ]
 
     useEffect(() => {
         const init = async () => {
-            await updateBranches();
-            setIsFetched(true);
-        };
+            await updateBranches()
+            setIsFetched(true)
+        }
 
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && goshWallet);
-        if (goshRepo && walletAwaited) init();
-    }, [goshRepo, goshWallet, userStatePersist.phrase, updateBranches]);
+            !userStatePersist.phrase || (userStatePersist.phrase && goshWallet)
+        if (goshRepo && walletAwaited) init()
+    }, [goshRepo, goshWallet, userStatePersist.phrase, updateBranches])
 
     return (
         <div className="container container--full my-10">
@@ -94,7 +94,7 @@ const RepoLayout = () => {
                                             'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                             isActive
                                                 ? '!text-gray-050a15 border-b border-b-gray-050a15'
-                                                : null
+                                                : null,
                                         )
                                     }
                                 >
@@ -112,7 +112,7 @@ const RepoLayout = () => {
                 </>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default RepoLayout;
+export default RepoLayout

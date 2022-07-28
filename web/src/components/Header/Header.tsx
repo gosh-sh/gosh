@@ -1,20 +1,20 @@
-import { Disclosure } from '@headlessui/react';
-import { Link, useLocation } from 'react-router-dom';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { userStatePersistAtom } from '../../store/user.state';
-import logoBlack from '../../assets/images/logo-black.svg';
-import DropdownMenu from './DropdownMenu';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { faDocker } from '@fortawesome/free-brands-svg-icons';
-import { appModalStateAtom } from '../../store/app.state';
-import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal';
-import { dockerClient } from '../../helpers';
+import { Disclosure } from '@headlessui/react'
+import { Link, useLocation } from 'react-router-dom'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { userStatePersistAtom } from '../../store/user.state'
+import logoBlack from '../../assets/images/logo-black.svg'
+import DropdownMenu from './DropdownMenu'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
+import { faDocker } from '@fortawesome/free-brands-svg-icons'
+import { appModalStateAtom } from '../../store/app.state'
+import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
+import { dockerClient } from '../../helpers'
 
 const Header = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const location = useLocation();
-    const setModal = useSetRecoilState(appModalStateAtom);
+    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const location = useLocation()
+    const setModal = useSetRecoilState(appModalStateAtom)
     // const navigateToV1UI = (_: any) => {
     //     window.location.href = window.location.href.replace(
     //         '/v2/index.html',
@@ -64,7 +64,7 @@ const Header = () => {
                                                         path="help"
                                                     />
                                                 ),
-                                            });
+                                            })
                                         }}
                                     >
                                         <FontAwesomeIcon
@@ -97,10 +97,10 @@ const Header = () => {
                                 className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                                 onClick={(e) => {
                                     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-                                        e.preventDefault();
+                                        e.preventDefault()
                                         dockerClient?.host.openExternal(
-                                            'https://t.me/gosh_sh'
-                                        );
+                                            'https://t.me/gosh_sh',
+                                        )
                                     }
                                 }}
                             >
@@ -169,7 +169,7 @@ const Header = () => {
                 )}
             </Disclosure>
         </header>
-    );
-};
+    )
+}
 
-export default Header;
+export default Header

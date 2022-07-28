@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
-import BranchSelect from '../../components/BranchSelect';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect } from 'react'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import BranchSelect from '../../components/BranchSelect'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faClockRotateLeft,
     faCodeBranch,
@@ -12,30 +12,30 @@ import {
     faCode,
     faChevronDown,
     faTerminal,
-} from '@fortawesome/free-solid-svg-icons';
-import { useRecoilValue } from 'recoil';
-import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks';
-import Spinner from '../../components/Spinner';
-import { splitByPath } from '../../helpers';
-import { faFile } from '@fortawesome/free-regular-svg-icons';
-import { Menu, Transition } from '@headlessui/react';
-import CopyClipboard from '../../components/CopyClipboard';
-import { shortString } from '../../utils';
+} from '@fortawesome/free-solid-svg-icons'
+import { useRecoilValue } from 'recoil'
+import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks'
+import Spinner from '../../components/Spinner'
+import { splitByPath } from '../../helpers'
+import { faFile } from '@fortawesome/free-regular-svg-icons'
+import { Menu, Transition } from '@headlessui/react'
+import CopyClipboard from '../../components/CopyClipboard'
+import { shortString } from '../../utils'
 
 const RepoPage = () => {
-    const pathName = useParams()['*'] || '';
-    const { daoName, repoName, branchName = 'main' } = useParams();
-    const navigate = useNavigate();
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { branches, branch, updateBranch } = useGoshRepoBranches(goshRepo, branchName);
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
-    const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
+    const pathName = useParams()['*'] || ''
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const navigate = useNavigate()
+    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useGoshRepoBranches(goshRepo, branchName)
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName)
+    const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName))
 
-    const [dirUp] = splitByPath(pathName);
+    const [dirUp] = splitByPath(pathName)
 
     useEffect(() => {
-        if (branch?.name) updateBranch(branch.name);
-    }, [branch?.name, updateBranch]);
+        if (branch?.name) updateBranch(branch.name)
+    }, [branch?.name, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -46,7 +46,7 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`);
+                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`)
                             }
                         }}
                     />
@@ -125,7 +125,7 @@ const RepoPage = () => {
                                         <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
                                             gosh://
                                             {shortString(
-                                                process.env.REACT_APP_GOSH_ADDR ?? ''
+                                                process.env.REACT_APP_GOSH_ADDR ?? '',
                                             )}
                                             /{daoName}/{repoName}
                                         </div>
@@ -175,8 +175,8 @@ const RepoPage = () => {
                         subtree?.map((item: any, index: number) => {
                             const path = [item.path, item.name]
                                 .filter((part) => part !== '')
-                                .join('/');
-                            const type = item.type === 'tree' ? 'tree' : 'blobs';
+                                .join('/')
+                            const type = item.type === 'tree' ? 'tree' : 'blobs'
 
                             return (
                                 <div key={index} className="py-3">
@@ -194,12 +194,12 @@ const RepoPage = () => {
                                         {item.name}
                                     </Link>
                                 </div>
-                            );
+                            )
                         })}
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default RepoPage;
+export default RepoPage

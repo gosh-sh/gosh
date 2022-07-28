@@ -1,82 +1,82 @@
-import { useCallback, useEffect, useState } from 'react';
-import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Field, FieldArray, Form, Formik, FormikHelpers } from 'formik';
-import { useRecoilValue } from 'recoil';
-import CopyClipboard from '../../components/CopyClipboard';
-import TextField from '../../components/FormikForms/TextField';
-import Spinner from '../../components/Spinner';
-import { userStateAtom } from '../../store/user.state';
-import { GoshWallet } from '../../types/classes';
-import { shortString } from '../../utils';
-import * as Yup from 'yup';
-import { useOutletContext } from 'react-router-dom';
-import { TDaoLayoutOutletContext } from '../DaoLayout';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
+import { useCallback, useEffect, useState } from 'react'
+import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Field, FieldArray, Form, Formik, FormikHelpers } from 'formik'
+import { useRecoilValue } from 'recoil'
+import CopyClipboard from '../../components/CopyClipboard'
+import TextField from '../../components/FormikForms/TextField'
+import Spinner from '../../components/Spinner'
+import { userStateAtom } from '../../store/user.state'
+import { GoshWallet } from '../../types/classes'
+import { shortString } from '../../utils'
+import * as Yup from 'yup'
+import { useOutletContext } from 'react-router-dom'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
 
 type TParticipantFormValues = {
-    pubkey: string[];
-};
+    pubkey: string[]
+}
 
 const DaoParticipantsPage = () => {
-    const userState = useRecoilValue(userStateAtom);
-    const { dao } = useOutletContext<TDaoLayoutOutletContext>();
+    const userState = useRecoilValue(userStateAtom)
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const [participants, setParticipants] =
-        useState<{ pubkey: string; smvBalance: number }[]>();
+        useState<{ pubkey: string; smvBalance: number }[]>()
 
     const getParticipantList = useCallback(async () => {
         // Get GoshWallet code by user's pubkey and get all user's wallets
-        const walletAddrs = await dao.getWallets();
-        console.debug('GoshWallets addreses:', walletAddrs);
+        const walletAddrs = await dao.getWallets()
+        console.debug('GoshWallets addreses:', walletAddrs)
 
         const participants = await Promise.all(
             walletAddrs.map(async (addr) => {
-                const wallet = new GoshWallet(dao.account.client, addr);
-                const pubkey = await wallet.getPubkey();
-                const smvBalance = await wallet.getSmvTokenBalance();
-                return { pubkey, smvBalance };
-            })
-        );
-        setParticipants(participants);
-    }, [dao]);
+                const wallet = new GoshWallet(dao.account.client, addr)
+                const pubkey = await wallet.getPubkey()
+                const smvBalance = await wallet.getSmvTokenBalance()
+                return { pubkey, smvBalance }
+            }),
+        )
+        setParticipants(participants)
+    }, [dao])
 
     const onCreateParticipant = async (
         values: TParticipantFormValues,
-        helpers: FormikHelpers<any>
+        helpers: FormikHelpers<any>,
     ) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
 
-            console.debug('[DAO participants] - Create values:', values);
+            console.debug('[DAO participants] - Create values:', values)
             await Promise.all(
                 values.pubkey.map(async (item) => {
-                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
+                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
 
-                    console.debug('[DAO participants] - DAO address:', dao.address);
-                    const rootPubkey = await dao.getRootPubkey();
+                    console.debug('[DAO participants] - DAO address:', dao.address)
+                    const rootPubkey = await dao.getRootPubkey()
                     console.debug(
                         '[DAO participants] - Create root/item/keys:',
                         rootPubkey,
                         item,
-                        userState.keys
-                    );
-                    const walletAddr = await dao.deployWallet(item, userState.keys);
-                    console.debug('[DAO participants] - Create wallet addr:', walletAddr);
-                })
-            );
+                        userState.keys,
+                    )
+                    const walletAddr = await dao.deployWallet(item, userState.keys)
+                    console.debug('[DAO participants] - Create wallet addr:', walletAddr)
+                }),
+            )
 
-            getParticipantList();
-            helpers.resetForm();
+            getParticipantList()
+            helpers.resetForm()
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     useEffect(() => {
-        getParticipantList();
-    }, [getParticipantList]);
+        getParticipantList()
+    }, [getParticipantList])
 
     return (
         <>
@@ -184,7 +184,7 @@ const DaoParticipantsPage = () => {
                 )}
             </Formik>
         </>
-    );
-};
+    )
+}
 
-export default DaoParticipantsPage;
+export default DaoParticipantsPage

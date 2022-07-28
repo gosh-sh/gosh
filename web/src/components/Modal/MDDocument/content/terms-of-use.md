@@ -11,7 +11,7 @@
 
 1. [Introduction](#introduction)
 2. [Definitions](#definitions)
-3. [Important Disclaimer](#important-disclaimer) 
+3. [Important Disclaimer](#important-disclaimer)
 4. [General Provisions](#general-provisions)
 5. [Verification](#verification)
 6. [Service](#service)
@@ -58,8 +58,7 @@
 
 **Terms** mean these Terms and Conditions.
 
-**User  or you, your** mean an individual accessing or using services provided by the Company. If the party is a legal entity - the “User, you, yours” is the legal entity acting through an authorized representative person.
-
+**User or you, your** mean an individual accessing or using services provided by the Company. If the party is a legal entity - the “User, you, yours” is the legal entity acting through an authorized representative person.
 
 <a name='important-disclaimer' id='important-disclaimer'></a>
 
@@ -99,6 +98,7 @@ BY USING OR ASKING TO USE THE SERVICE, THE USER AGREES TO THESE TERMS AND AGREES
 ## Service
 
 1. There are several types of service available for Users. The final list of available services for you depends on technical, legal, and other conditions at the Company's discretion. In particular, the service can include:
+
     - Purchase and sale of digital assets against fiat currency and vice versa;
     - Exchange one type of digital asset to another.
 
@@ -123,45 +123,47 @@ BY USING OR ASKING TO USE THE SERVICE, THE USER AGREES TO THESE TERMS AND AGREES
 ## Warranties
 
 Further, by using or asking to use the services, you acknowledge and agree that:
-- You expressly agree to these Terms;
-- You are legally permitted to purchase, sell and make any other transactions with digital assets in your jurisdiction;
-- You have verified and determined that your use of the service does not violate any of such laws or regulations of any jurisdiction that applies to you;
-- You are 18 years and over;
-- You or the beneficiary owner of the company (if User is a legal entity) are not a politically exposed person (PEP) and do not have any relationship (e.g., relative, associate, etc.) with a PEP who holds or held during the last 12 months any public position. If the above statement is untrue or inaccurate with respect to you, you should inform us without delay and do not use the services. Upon consideration of all relevant information we will inform you if/how you may use the service;
-- You are of sound mind and are capable of taking responsibility for your actions;
-- You are an individual acting on your behalf and not a representative (agent, fiduciary, trustee, etc.) of any kind of another private person or a governmental body. You understand that as a person who registered with your ID Information you have provided you are solely liable under these Terms (for Users private persons);
-- You are authorized to perform any actions in accordance with these Terms on behalf of the legal entity whom you represent (for Users legal entities);
-- All the details that you have submitted to us within the registration and/or verification process or otherwise, are accurate, up-to-date as of the date of provision, complete and not misleading;
-- You will notify us immediately of any changes to any ID information you have provided to us;
-- You understand that financial regulations, financial codes, financial ethics, and contractual requirements vary worldwide, and it is your responsibility to make sure that you comply with any and all local regulations, directives, restrictions and laws in your local place of residence before using the services.
-- You are solely responsible for any regulatory reporting requirements in relation to your transactions and using our service;
-- None of the funds (including any digital assets) that you use within the wallet and/or the services originate in any way from drug trafficking, abduction, terrorist activity, tax evasion or any other activity that is unlawful or could be considered unlawful by any relevant authority, and you will not use the wallet and/or the services for or in connection with any illegal activity in any country or jurisdiction, including without limitation money laundering and financing of terrorism;
-- You take sole responsibility and risks associated with storing, receiving and transferring digital assets, whether referred to in these Terms, arising under any applicable law or otherwise;
-- You shall not hack into, interfere with, disrupt, disable, overburden or otherwise impair the proper working of our service or violate or attempt to violate the security rules;
-- You shall not make any attempt to access information or data which User is not authorized to access;
-- The Company reserves the right to refuse to provide any service to you or any potential User without giving a notice or stating a reason, and particularly where there is suspicious activity or potentially fraudulent, illicit, illegal or related activities suspected;
-- You shall promptly provide the Company, upon request, any additional information which we may consider necessary for providing the services;
-- You accept that the services are provided on an “as is” and “under development” basis. Therefore, provided the Company acts in good faith and in accordance with these Terms, you accept that the Company is providing the services without being able to provide any warranties, including, but not limited to title, merchantability or fitness for a particular purpose;
-- You have an understanding of the usage and intricacies of blockchain technology and digital assets;
-- You bear sole responsibility for determining if the storage, use or ownership of digital assets, potential appreciation or depreciation in digital assets over time, the sale and purchase of digital assets and/or any other action or transaction related to digital assets have tax implications.
-- You are able to evaluate and understand the risks that are related to the services.
+
+-   You expressly agree to these Terms;
+-   You are legally permitted to purchase, sell and make any other transactions with digital assets in your jurisdiction;
+-   You have verified and determined that your use of the service does not violate any of such laws or regulations of any jurisdiction that applies to you;
+-   You are 18 years and over;
+-   You or the beneficiary owner of the company (if User is a legal entity) are not a politically exposed person (PEP) and do not have any relationship (e.g., relative, associate, etc.) with a PEP who holds or held during the last 12 months any public position. If the above statement is untrue or inaccurate with respect to you, you should inform us without delay and do not use the services. Upon consideration of all relevant information we will inform you if/how you may use the service;
+-   You are of sound mind and are capable of taking responsibility for your actions;
+-   You are an individual acting on your behalf and not a representative (agent, fiduciary, trustee, etc.) of any kind of another private person or a governmental body. You understand that as a person who registered with your ID Information you have provided you are solely liable under these Terms (for Users private persons);
+-   You are authorized to perform any actions in accordance with these Terms on behalf of the legal entity whom you represent (for Users legal entities);
+-   All the details that you have submitted to us within the registration and/or verification process or otherwise, are accurate, up-to-date as of the date of provision, complete and not misleading;
+-   You will notify us immediately of any changes to any ID information you have provided to us;
+-   You understand that financial regulations, financial codes, financial ethics, and contractual requirements vary worldwide, and it is your responsibility to make sure that you comply with any and all local regulations, directives, restrictions and laws in your local place of residence before using the services.
+-   You are solely responsible for any regulatory reporting requirements in relation to your transactions and using our service;
+-   None of the funds (including any digital assets) that you use within the wallet and/or the services originate in any way from drug trafficking, abduction, terrorist activity, tax evasion or any other activity that is unlawful or could be considered unlawful by any relevant authority, and you will not use the wallet and/or the services for or in connection with any illegal activity in any country or jurisdiction, including without limitation money laundering and financing of terrorism;
+-   You take sole responsibility and risks associated with storing, receiving and transferring digital assets, whether referred to in these Terms, arising under any applicable law or otherwise;
+-   You shall not hack into, interfere with, disrupt, disable, overburden or otherwise impair the proper working of our service or violate or attempt to violate the security rules;
+-   You shall not make any attempt to access information or data which User is not authorized to access;
+-   The Company reserves the right to refuse to provide any service to you or any potential User without giving a notice or stating a reason, and particularly where there is suspicious activity or potentially fraudulent, illicit, illegal or related activities suspected;
+-   You shall promptly provide the Company, upon request, any additional information which we may consider necessary for providing the services;
+-   You accept that the services are provided on an “as is” and “under development” basis. Therefore, provided the Company acts in good faith and in accordance with these Terms, you accept that the Company is providing the services without being able to provide any warranties, including, but not limited to title, merchantability or fitness for a particular purpose;
+-   You have an understanding of the usage and intricacies of blockchain technology and digital assets;
+-   You bear sole responsibility for determining if the storage, use or ownership of digital assets, potential appreciation or depreciation in digital assets over time, the sale and purchase of digital assets and/or any other action or transaction related to digital assets have tax implications.
+-   You are able to evaluate and understand the risks that are related to the services.
 
 <a name='service-cancelation-by-company' id='service-cancelation-by-company'></a>
 
 ## Service Cancelation by Company
 
 1.  The Company has the right to limit, suspend, or cancel User’s access to the services if:
-    - any of your warranties set forth herein appear to be false or misleading.
-    - the ID Information submitted by User is not accurate, is inconsistent with the information provided at the time of registration or later or User failed to provide reasonable proof;
-    - User violates the Terms and any other Company’s rules;
-    - Company suspects that User uses the services to engage in, attempt to engage in, or in connection with fraudulent activity, money laundering, terrorist financing or other financial crime or illicit activity;
-    - required to do so under any applicable law, regulation or an order issued by a competent authority;
-    - the services are being used in a manner which may cause the services to be interrupted or damaged or such a way that the functionality of the services is in any way impaired or attempt to bypass or break any security mechanism of the services;
-    - there is any attempt of any unauthorized access to any part or component of the service;
-    - there are other circumstances that invoke necessary measures for legal compliance and safety.
 
-2. The Company will typically give notice of any limitation, suspension, or cancelation of the access to the service but it may limit, suspend or cancel without any prior notice to the User. You acknowledge that Company’s decision to limit, suspend, or cancel access to the service, may be based on confidential criteria that are essential to Company’s risk management and that Company is under no obligation to disclose the details of such procedures and reasons to you.
-3. The User also acknowledges that in case of limitation, suspension, or cancelation of User’s access to the service due to any reasons with no prior notice, any digital assets kept on the User’s balance may become inaccessible temporarily or permanently if required so by applicable laws and regulations.
+    -   any of your warranties set forth herein appear to be false or misleading.
+    -   the ID Information submitted by User is not accurate, is inconsistent with the information provided at the time of registration or later or User failed to provide reasonable proof;
+    -   User violates the Terms and any other Company’s rules;
+    -   Company suspects that User uses the services to engage in, attempt to engage in, or in connection with fraudulent activity, money laundering, terrorist financing or other financial crime or illicit activity;
+    -   required to do so under any applicable law, regulation or an order issued by a competent authority;
+    -   the services are being used in a manner which may cause the services to be interrupted or damaged or such a way that the functionality of the services is in any way impaired or attempt to bypass or break any security mechanism of the services;
+    -   there is any attempt of any unauthorized access to any part or component of the service;
+    -   there are other circumstances that invoke necessary measures for legal compliance and safety.
+
+2.  The Company will typically give notice of any limitation, suspension, or cancelation of the access to the service but it may limit, suspend or cancel without any prior notice to the User. You acknowledge that Company’s decision to limit, suspend, or cancel access to the service, may be based on confidential criteria that are essential to Company’s risk management and that Company is under no obligation to disclose the details of such procedures and reasons to you.
+3.  The User also acknowledges that in case of limitation, suspension, or cancelation of User’s access to the service due to any reasons with no prior notice, any digital assets kept on the User’s balance may become inaccessible temporarily or permanently if required so by applicable laws and regulations.
 
 <a name='third-parties-services' id='third-parties-services'></a>
 
@@ -175,22 +177,24 @@ Further, by using or asking to use the services, you acknowledge and agree that:
 ## License Restrictions
 
 You agree that you will:
-- not rent, lease, sub-license, loan, provide, or otherwise make available, the services in any form, in whole or in part to any person without prior written consent from us;
-- not copy any of these Terms, except as part of the normal use of the service or where it is necessary for back-up or operational security;
-- not adapt, vary, alter or modify the whole or any part of these Terms nor permit by us or the services or any part of them to be combined with, or become incorporated in, any other programs, except as necessary to use the services on devices as permitted in these Terms;
-- not disassemble, decompile, reverse engineer or create derivative works based on the whole or any part of our service nor attempt to do any such things;
-- comply with all applicable technology control or export laws and regulations that apply to the technology used or supported by the service.
+
+-   not rent, lease, sub-license, loan, provide, or otherwise make available, the services in any form, in whole or in part to any person without prior written consent from us;
+-   not copy any of these Terms, except as part of the normal use of the service or where it is necessary for back-up or operational security;
+-   not adapt, vary, alter or modify the whole or any part of these Terms nor permit by us or the services or any part of them to be combined with, or become incorporated in, any other programs, except as necessary to use the services on devices as permitted in these Terms;
+-   not disassemble, decompile, reverse engineer or create derivative works based on the whole or any part of our service nor attempt to do any such things;
+-   comply with all applicable technology control or export laws and regulations that apply to the technology used or supported by the service.
 
 <a name='use-restrictions' id='use-restrictions'></a>
 
 ## Use Restrictions
 
 You should:
-- not use any service in any unlawful manner, for any unlawful purpose, or in any manner inconsistent with these terms, or act fraudulently or maliciously, for example, by hacking into or inserting malicious code, such as viruses, or harmful data, into any service or any operating system;
-- not infringe our intellectual property rights or those of any third party in relation to your use of any service (to the extent that these terms do not license such use);
-- not transmit any material that is defamatory, offensive or otherwise objectionable in relation to your use of any service;
-- not use any service in a way that could damage, disable, overburden, impair or compromise our systems or security or interfere with other Users; and
-- not collect or harvest any restricted and confidential information or data from our systems or attempt to decipher any transmissions to or from the servers running the service.
+
+-   not use any service in any unlawful manner, for any unlawful purpose, or in any manner inconsistent with these terms, or act fraudulently or maliciously, for example, by hacking into or inserting malicious code, such as viruses, or harmful data, into any service or any operating system;
+-   not infringe our intellectual property rights or those of any third party in relation to your use of any service (to the extent that these terms do not license such use);
+-   not transmit any material that is defamatory, offensive or otherwise objectionable in relation to your use of any service;
+-   not use any service in a way that could damage, disable, overburden, impair or compromise our systems or security or interfere with other Users; and
+-   not collect or harvest any restricted and confidential information or data from our systems or attempt to decipher any transmissions to or from the servers running the service.
 
 <a name='amendments-to-these-terms' id='amendments-to-these-terms'></a>
 
@@ -250,6 +254,7 @@ The Terms and Privacy Policy as may be amended from time to time, constitute the
 ## Liability Limitation
 
 1. User hereby agrees that subject to applicable laws and regulations, and the Company will not be liable for:
+
     - any interruption, malfunction, downtime, off-line situation or another failure of any digital assets or trading platforms or online services provided by any third parties, including any third party's system, databases or any of its components, including Everscale blockchain or any other blockchains;
     - regulatory compliances measures, notices or actions imposed or any tax liability incurred by the User;
     - any loss or damage with regard to the User’s data or other data directly or indirectly caused by malfunction of any third-party systems, power failures, unlawful access to or theft of data, computer viruses or destructive code on any third party systems or programming defects;
@@ -265,13 +270,12 @@ The Terms and Privacy Policy as may be amended from time to time, constitute the
 ## Risks
 
 1. Prior to using the services, the User shall consider and acknowledge the following risks associated with digital assets and blockchains:
-    - *Lack of professional expertise* in dealing with digital assets and blockchain-based software systems. We recommend using our service persons with sufficient experience with digital assets and blockchains or who have proficient knowledge about it. Users are solely responsible for ensuring relevant knowledge and experience in dealing with digital assets to ensure that the Users understand the risks associated with the services. 
-    - *Price volatility.* In general, digital assets have been demonstrating extreme fluctuations in price over short periods of time. Therefore, the User hereby accepts and understands that the Company does not guarantee the market liquidity that might result in difficulty to buy, sell or own digital assets. 
-    - *Security.* Digital assets may be subject to expropriation and or/theft. Hackers or other malicious groups or organizations may attempt to interfere with the digital assets in a variety of ways. Furthermore, there is the risk that source code may contain intentional or unintentional bugs or weaknesses which may negatively affect the digital assets or result in the loss of User’s digital assets, the loss of User’s ability to access or control digital assets or the loss of any other assets;    
-    - *Technology.* The Company is not responsible for the performance of open-source protocols. Forks and changes in relevant blockchains may result in significant and sudden changes to the value and/or usability of digital assets. The company will make its best attempt to inform its Users of an upcoming fork. However, the Company is not responsible for such loss of value of digital assets and bears no responsibility for any loss incurred by you while using the service or in any direct or indirect connection to the service.
-    - *Legislation.* The regulatory status of digital assets and blockchain technology is unclear in many jurisdictions. It is difficult to predict how or whether governmental authorities may regulate such technologies. It is likewise difficult to predict how or whether any governmental authority may make changes to existing laws, regulations, or rules that may affect digital assets, blockchain technology, and its applications. Such changes could negatively impact digital assets in various ways. The company may cease the operations in a jurisdiction in the event that governmental actions make it unlawful or commercially undesirable to continue to do so. The User acknowledges and understands that the Company shall not be liable for any losses or damages (whether direct or indirect) caused by changes in regulatory and compliance requirements of the applicable laws and regulations.
-    - *Other risks.* Digital assets are relatively new and dynamic technology. In addition to the risks included in the above discussion of risk factors, there are other risks associated with the purchase, holding and use of the digital assets, including those that we cannot anticipate. Such risks may further appear as unanticipated variations or combinations of the risks discussed above.
-    
+    - _Lack of professional expertise_ in dealing with digital assets and blockchain-based software systems. We recommend using our service persons with sufficient experience with digital assets and blockchains or who have proficient knowledge about it. Users are solely responsible for ensuring relevant knowledge and experience in dealing with digital assets to ensure that the Users understand the risks associated with the services.
+    - _Price volatility._ In general, digital assets have been demonstrating extreme fluctuations in price over short periods of time. Therefore, the User hereby accepts and understands that the Company does not guarantee the market liquidity that might result in difficulty to buy, sell or own digital assets.
+    - _Security._ Digital assets may be subject to expropriation and or/theft. Hackers or other malicious groups or organizations may attempt to interfere with the digital assets in a variety of ways. Furthermore, there is the risk that source code may contain intentional or unintentional bugs or weaknesses which may negatively affect the digital assets or result in the loss of User’s digital assets, the loss of User’s ability to access or control digital assets or the loss of any other assets;
+    - _Technology._ The Company is not responsible for the performance of open-source protocols. Forks and changes in relevant blockchains may result in significant and sudden changes to the value and/or usability of digital assets. The company will make its best attempt to inform its Users of an upcoming fork. However, the Company is not responsible for such loss of value of digital assets and bears no responsibility for any loss incurred by you while using the service or in any direct or indirect connection to the service.
+    - _Legislation._ The regulatory status of digital assets and blockchain technology is unclear in many jurisdictions. It is difficult to predict how or whether governmental authorities may regulate such technologies. It is likewise difficult to predict how or whether any governmental authority may make changes to existing laws, regulations, or rules that may affect digital assets, blockchain technology, and its applications. Such changes could negatively impact digital assets in various ways. The company may cease the operations in a jurisdiction in the event that governmental actions make it unlawful or commercially undesirable to continue to do so. The User acknowledges and understands that the Company shall not be liable for any losses or damages (whether direct or indirect) caused by changes in regulatory and compliance requirements of the applicable laws and regulations.
+    - _Other risks._ Digital assets are relatively new and dynamic technology. In addition to the risks included in the above discussion of risk factors, there are other risks associated with the purchase, holding and use of the digital assets, including those that we cannot anticipate. Such risks may further appear as unanticipated variations or combinations of the risks discussed above.
 2. **No Warranty.** User understands that there is no warranty whatsoever on the services and digital assets, express or implied, to the extent permitted by law, and that the services are provided on an “as is” basis, and we don’t accept any charges, or claim of any nature from User for any delays, malfunction, errors, missing data, misrepresentation, omissions, etc. The User also understands that the Company will not provide any refund of the purchase price for digital assets under any circumstance except if explicitly stated otherwise in these Terms. The User further agrees to accept sole risk for using the services.
 3. **Fraud Prevention.** In order to reduce the possibility of fraud, phishing attempts and other schemes perpetrated by malicious third parties, the User agrees not to respond directly to any inquiry regarding the user's credentials. The User understands that the Company may send him or her emails or other messages from time-to-time, but these notices will never ask for private keys and/or a mnemonic phrase.
 4. **Guarantee Fund.** The Company is not a participant of a guarantee scheme, and all operations with digital assets are not covered by the Guarantee Fund Act of the Estonian Republic.

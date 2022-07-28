@@ -1,10 +1,9 @@
-import React from "react";
-import { Switch } from "@headlessui/react";
+import React from 'react'
+import { Switch } from '@headlessui/react'
 
-import { IBaseFieldProps } from "./BaseField";
-import { classNames } from "../../utils";
-import { ErrorMessage } from "formik";
-
+import { IBaseFieldProps } from './BaseField'
+import { classNames } from '../../utils'
+import { ErrorMessage } from 'formik'
 
 const SwitchField = (props: IBaseFieldProps) => {
     const {
@@ -14,8 +13,8 @@ const SwitchField = (props: IBaseFieldProps) => {
         errorEnabled = true,
         errorClassName,
         form,
-        field
-    } = props;
+        field,
+    } = props
 
     return (
         <>
@@ -24,19 +23,21 @@ const SwitchField = (props: IBaseFieldProps) => {
                     <Switch
                         checked={form.values[field.name]}
                         onChange={(value) => {
-                            form.setFieldTouched(field.name, true);
-                            form.setFieldValue(field.name, value, true);
+                            form.setFieldTouched(field.name, true)
+                            form.setFieldValue(field.name, value, true)
                         }}
                         className={classNames(
                             'input-switch',
-                            form.values[field.name] ? 'checked' : null
+                            form.values[field.name] ? 'checked' : null,
                         )}
                     >
                         <span />
                     </Switch>
 
                     {label && (
-                        <Switch.Label className={classNames('ml-3 cursor-pointer', labelClassName)}>
+                        <Switch.Label
+                            className={classNames('ml-3 cursor-pointer', labelClassName)}
+                        >
                             {label}
                         </Switch.Label>
                     )}
@@ -49,8 +50,7 @@ const SwitchField = (props: IBaseFieldProps) => {
                 </div>
             )}
         </>
-
-    );
+    )
 }
 
 export default SwitchField

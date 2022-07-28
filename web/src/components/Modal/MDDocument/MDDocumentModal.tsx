@@ -1,27 +1,27 @@
-import { Dialog } from '@headlessui/react';
-import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
+import { Dialog } from '@headlessui/react'
+import { useEffect, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
 
 type TMDDocumentModalProps = {
-    title?: string;
-    path?: string;
-};
+    title?: string
+    path?: string
+}
 
 const MDDocumentModal = (props: TMDDocumentModalProps) => {
-    const { title, path } = props;
-    const [content, setContent] = useState<any>(null);
+    const { title, path } = props
+    const [content, setContent] = useState<any>(null)
 
     useEffect(() => {
-        setContent('');
+        setContent('')
         const getContent = async () => {
-            const file = await import(`./content/${path}.md`);
-            const response = await fetch(file.default);
-            const markdown = await response.text();
-            setContent(markdown);
-        };
-        getContent();
-    }, [path]);
+            const file = await import(`./content/${path}.md`)
+            const response = await fetch(file.default)
+            const markdown = await response.text()
+            setContent(markdown)
+        }
+        getContent()
+    }, [path])
 
     return (
         <Dialog.Panel className="rounded-xl bg-white px-8 py-8 w-full max-w-2xl">
@@ -33,7 +33,7 @@ const MDDocumentModal = (props: TMDDocumentModalProps) => {
                 <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
             </div>
         </Dialog.Panel>
-    );
-};
+    )
+}
 
-export default MDDocumentModal;
+export default MDDocumentModal

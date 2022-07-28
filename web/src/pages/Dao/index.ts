@@ -1,2 +1,2 @@
-export * from './Dao';
-export { default } from './Dao';
+export * from './Dao'
+export { default } from './Dao'

@@ -1,13 +1,11 @@
 module.exports = {
-    content: [
-        "./src/**/*.{js,jsx,ts,tsx}",
-    ],
+    content: ['./src/**/*.{js,jsx,ts,tsx}'],
     theme: {
         extend: {
             maxWidth: {
-                'container': '1288px',
+                container: '1288px',
                 '696px': '43.5rem',
-                '264px': '16.5rem'
+                '264px': '16.5rem',
             },
             colors: {
                 'gray-050a15': '#050a15',
@@ -22,26 +20,33 @@ module.exports = {
                 'red-f18888': '#f18888',
                 'red-eb7979': '#eb7979',
 
-                'extblue': '#61a3ff',
+                extblue: '#61a3ff',
             },
             backgroundImage: {
-                'button-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .26) 45%, rgba(10, 17, 36, .26) 100%)',
-                'button-header-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .48) 0%, rgba(10, 17, 36, .07) 45%, rgba(10, 17, 36, .07) 100%)',
-                'button-header-focus-border': 'linear-gradient(to bottom right, rgba(232, 232, 245, .44) 0%, rgba(229, 229, 249, .29) 45%, rgba(229, 229, 249, .29) 100%)',
-                'dropdown-menu-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .19) 45%, rgba(10, 17, 36, .19) 100%)',
-                'block-border': 'linear-gradient(to bottom right, rgba(232, 232, 245, .82) 0%, rgba(229, 229, 249, 0) 45%, rgba(229, 229, 249, 0) 100%)',
-                'switch-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .0) 45%, rgba(10, 17, 36, .0) 100%)',
-                'input-error-border': 'linear-gradient(to bottom right, rgba(241, 136, 136, .82) 0%, rgba(235, 121, 121, .29) 45%, rgba(235, 121, 121, .29) 100%)',
+                'button-border':
+                    'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .26) 45%, rgba(10, 17, 36, .26) 100%)',
+                'button-header-border':
+                    'linear-gradient(to bottom right, rgba(10, 17, 36, .48) 0%, rgba(10, 17, 36, .07) 45%, rgba(10, 17, 36, .07) 100%)',
+                'button-header-focus-border':
+                    'linear-gradient(to bottom right, rgba(232, 232, 245, .44) 0%, rgba(229, 229, 249, .29) 45%, rgba(229, 229, 249, .29) 100%)',
+                'dropdown-menu-border':
+                    'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .19) 45%, rgba(10, 17, 36, .19) 100%)',
+                'block-border':
+                    'linear-gradient(to bottom right, rgba(232, 232, 245, .82) 0%, rgba(229, 229, 249, 0) 45%, rgba(229, 229, 249, 0) 100%)',
+                'switch-border':
+                    'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .0) 45%, rgba(10, 17, 36, .0) 100%)',
+                'input-error-border':
+                    'linear-gradient(to bottom right, rgba(241, 136, 136, .82) 0%, rgba(235, 121, 121, .29) 45%, rgba(235, 121, 121, .29) 100%)',
             },
             fontFamily: {
-                body: ['Poppins', 'sans-serif']
+                body: ['Poppins', 'sans-serif'],
             },
             fontSize: {
                 '32px': '2rem',
             },
             lineHeight: {
                 '32px': '2rem',
-                '56px': '3.5rem'
+                '56px': '3.5rem',
             },
             spacing: {
                 '18px': '1.125rem',
@@ -50,33 +55,33 @@ module.exports = {
                 '51px': '3.1875rem',
                 '72px': '4.5rem',
                 '124px': '7.75rem',
-                '158px': '9.875rem'
+                '158px': '9.875rem',
             },
             borderRadius: {
                 '3px': '0.1875rem',
                 '5px': '0.3125rem',
-                '21px': '1.3125rem'
+                '21px': '1.3125rem',
             },
             opacity: {
-                '1': '0.01',
-                '3': '0.03',
-                '7': '0.07',
-                '12': '0.12',
-                '15': '0.15',
-                '29': '0.29',
-                '65': '0.65'
+                1: '0.01',
+                3: '0.03',
+                7: '0.07',
+                12: '0.12',
+                15: '0.15',
+                29: '0.29',
+                65: '0.65',
             },
             boxShadow: {
-                'button': 'inset 1px 1px 1px rgba(10, 17, 36, 0.48)',
-                'input': 'inset 1px 1px 1px rgba(232, 232, 245, 0.82)',
+                button: 'inset 1px 1px 1px rgba(10, 17, 36, 0.48)',
+                input: 'inset 1px 1px 1px rgba(232, 232, 245, 0.82)',
                 'input-error': 'inset 1px 1px 1px rgba(241, 136, 136, 0.82)',
             },
             backdropBlur: {
-                '33px': '33px'
+                '33px': '33px',
             },
             zIndex: {
-                '1': '1'
-            }
+                1: '1',
+            },
         },
     },
     plugins: [],

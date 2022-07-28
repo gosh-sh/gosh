@@ -1,9 +1,9 @@
-import Spinner from '../../components/Spinner';
-import { TCreateCommitCallbackParams } from '../../types/types';
+import Spinner from '../../components/Spinner'
+import { TCreateCommitCallbackParams } from '../../types/types'
 
 const Result = (props: any) => {
-    return <span className="mr-3">{!props.flag ? <Spinner size="sm" /> : 'OK'}</span>;
-};
+    return <span className="mr-3">{!props.flag ? <Spinner size="sm" /> : 'OK'}</span>
+}
 
 const CommitProgress = (props: TCreateCommitCallbackParams) => {
     const {
@@ -14,7 +14,7 @@ const CommitProgress = (props: TCreateCommitCallbackParams) => {
         commitDeploy,
         tagsDeploy,
         completed,
-    } = props;
+    } = props
     return (
         <div className="text-sm text-gray-050a15/70 bg-gray-050a15/5 rounded p-3">
             <code className="flex flex-col gap-2">
@@ -48,7 +48,7 @@ const CommitProgress = (props: TCreateCommitCallbackParams) => {
                 </div>
             </code>
         </div>
-    );
-};
+    )
+}
 
-export default CommitProgress;
+export default CommitProgress

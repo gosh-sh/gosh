@@ -1,27 +1,26 @@
-import React from "react";
-import Editor from "@monaco-editor/react";
-
+import React from 'react'
+import Editor from '@monaco-editor/react'
 
 type TEditorPanelProps = {
-    language?: string;
-    value?: string;
-    className?: string;
-    onChange?(value: string | undefined): void;
+    language?: string
+    value?: string
+    className?: string
+    onChange?(value: string | undefined): void
 }
 
 const BlobEditor = (props: TEditorPanelProps) => {
-    const { className, onChange, ...rest } = props;
+    const { className, onChange, ...rest } = props
 
     return (
         <Editor
             className="min-h-[500px]"
             wrapperProps={{
-                className
+                className,
             }}
             onChange={onChange}
             {...rest}
         />
-    );
+    )
 }
 
-export default BlobEditor;
+export default BlobEditor

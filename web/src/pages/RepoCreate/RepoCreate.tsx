@@ -1,35 +1,35 @@
-import React from 'react';
-import { Field, Form, Formik } from 'formik';
-import * as Yup from 'yup';
-import TextField from '../../components/FormikForms/TextField';
-import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import Spinner from '../../components/Spinner';
-import { TDaoLayoutOutletContext } from '../DaoLayout';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
+import React from 'react'
+import { Field, Form, Formik } from 'formik'
+import * as Yup from 'yup'
+import TextField from '../../components/FormikForms/TextField'
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import Spinner from '../../components/Spinner'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
 
 type TFormValues = {
-    name: string;
-};
+    name: string
+}
 
 const RepoCreatePage = () => {
-    const { daoName } = useParams();
-    const navigate = useNavigate();
-    const { wallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const { daoName } = useParams()
+    const navigate = useNavigate()
+    const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            await wallet.deployRepo(values.name.toLowerCase());
-            navigate(`/${daoName}/${values.name}`, { replace: true });
+            await wallet.deployRepo(values.name.toLowerCase())
+            navigate(`/${daoName}/${values.name}`, { replace: true })
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
-    if (!wallet) return <Navigate to={`/${daoName}`} />;
+    if (!wallet) return <Navigate to={`/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
@@ -61,7 +61,7 @@ const RepoCreatePage = () => {
                                         onChange: (e: any) =>
                                             setFieldValue(
                                                 'name',
-                                                e.target.value.toLowerCase()
+                                                e.target.value.toLowerCase(),
                                             ),
                                     }}
                                 />
@@ -80,7 +80,7 @@ const RepoCreatePage = () => {
                 </Formik>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default RepoCreatePage;
+export default RepoCreatePage

@@ -1,54 +1,54 @@
-import React from 'react';
-import { Field, FieldArray, Form, Formik } from 'formik';
-import * as Yup from 'yup';
-import TextField from '../../components/FormikForms/TextField';
-import { useGoshRoot } from '../../hooks/gosh.hooks';
-import { useNavigate } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
-import { userStateAtom } from '../../store/user.state';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
-import Spinner from '../../components/Spinner';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
+import React from 'react'
+import { Field, FieldArray, Form, Formik } from 'formik'
+import * as Yup from 'yup'
+import TextField from '../../components/FormikForms/TextField'
+import { useGoshRoot } from '../../hooks/gosh.hooks'
+import { useNavigate } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import { userStateAtom } from '../../store/user.state'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
+import Spinner from '../../components/Spinner'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
 
 type TFormValues = {
-    name: string;
-    participants: string[];
-};
+    name: string
+    participants: string[]
+}
 
 const DaoCreatePage = () => {
-    const goshRoot = useGoshRoot();
-    const navigate = useNavigate();
-    const userState = useRecoilValue(userStateAtom);
+    const goshRoot = useGoshRoot()
+    const navigate = useNavigate()
+    const userState = useRecoilValue(userStateAtom)
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
-            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT);
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT)
 
             // Deploy GoshDao
-            const rootPubkey = `0x${userState.keys.public}`;
+            const rootPubkey = `0x${userState.keys.public}`
             const goshDao = await goshRoot.createDao(
                 values.name.toLowerCase(),
-                rootPubkey
-            );
+                rootPubkey,
+            )
 
             // Deploy wallets
             await Promise.all(
                 values.participants.map(async (item) => {
-                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
-                    const walletAddr = await goshDao.deployWallet(item, userState.keys);
-                    console.debug('DAOWallet address:', walletAddr);
-                })
-            );
+                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+                    const walletAddr = await goshDao.deployWallet(item, userState.keys)
+                    console.debug('DAOWallet address:', walletAddr)
+                }),
+            )
 
-            navigate('/account/orgs');
+            navigate('/account/orgs')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     return (
         <div className="container container--full mt-12 mb-5">
@@ -87,7 +87,7 @@ const DaoCreatePage = () => {
                                         onChange: (e: any) =>
                                             setFieldValue(
                                                 'name',
-                                                e.target.value.toLowerCase()
+                                                e.target.value.toLowerCase(),
                                             ),
                                     }}
                                 />
@@ -168,7 +168,7 @@ const DaoCreatePage = () => {
                 </Formik>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default DaoCreatePage;
+export default DaoCreatePage

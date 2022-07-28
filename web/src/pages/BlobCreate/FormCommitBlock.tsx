@@ -1,22 +1,22 @@
-import React from 'react';
-import { Field } from 'formik';
-import TextField from '../../components/FormikForms/TextField';
-import TextareaField from '../../components/FormikForms/TextareaField';
-import { useNavigate } from 'react-router-dom';
-import { classNames } from '../../utils';
-import Spinner from '../../components/Spinner';
-import { TCreateCommitCallbackParams } from '../../types/types';
-import CommitProgress from './CommitProgress';
+import React from 'react'
+import { Field } from 'formik'
+import TextField from '../../components/FormikForms/TextField'
+import TextareaField from '../../components/FormikForms/TextareaField'
+import { useNavigate } from 'react-router-dom'
+import { classNames } from '../../utils'
+import Spinner from '../../components/Spinner'
+import { TCreateCommitCallbackParams } from '../../types/types'
+import CommitProgress from './CommitProgress'
 
 type TFormCommitBlockProps = {
-    urlBack?: string;
-    className?: string;
-    isDisabled?: boolean;
-    isSubmitting?: boolean;
-    extraFields?: any;
-    extraButtons?: any;
-    progress?: TCreateCommitCallbackParams;
-};
+    urlBack?: string
+    className?: string
+    isDisabled?: boolean
+    isSubmitting?: boolean
+    extraFields?: any
+    extraButtons?: any
+    progress?: TCreateCommitCallbackParams
+}
 
 const FormCommitBlock = (props: TFormCommitBlockProps) => {
     const {
@@ -27,8 +27,8 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
         extraFields,
         extraButtons,
         progress,
-    } = props;
-    const navigate = useNavigate();
+    } = props
+    const navigate = useNavigate()
 
     return (
         <div className={classNames('mt-5 border rounded px-4 py-3', className)}>
@@ -101,7 +101,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 </div>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default FormCommitBlock;
+export default FormCommitBlock

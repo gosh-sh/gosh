@@ -1,33 +1,33 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
-import BranchSelect from '../../components/BranchSelect';
-import CopyClipboard from '../../components/CopyClipboard';
-import Spinner from '../../components/Spinner';
-import { getCommit, getCommitTime, ZERO_COMMIT } from '../../helpers';
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { IGoshRepository, TGoshCommit } from '../../types/types';
-import { shortString } from '../../utils';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import BranchSelect from '../../components/BranchSelect'
+import CopyClipboard from '../../components/CopyClipboard'
+import Spinner from '../../components/Spinner'
+import { getCommit, getCommitTime, ZERO_COMMIT } from '../../helpers'
+import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
+import { goshCurrBranchSelector } from '../../store/gosh.state'
+import { IGoshRepository, TGoshCommit } from '../../types/types'
+import { shortString } from '../../utils'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const CommitsPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'main' } = useParams();
-    const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const navigate = useNavigate();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { branches, updateBranch } = useGoshRepoBranches(goshRepo)
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const navigate = useNavigate()
     const [commits, setCommits] = useState<{
-        list: TGoshCommit[];
-        isFetching: boolean;
-        next?: string;
+        list: TGoshCommit[]
+        isFetching: boolean
+        next?: string
     }>({
         list: [],
         isFetching: true,
-    });
+    })
 
     const renderCommitter = (committer: string) => {
-        const [pubkey] = committer.split(' ');
+        const [pubkey] = committer.split(' ')
         return (
             <CopyClipboard
                 label={shortString(pubkey)}
@@ -35,42 +35,42 @@ const CommitsPage = () => {
                     text: pubkey,
                 }}
             />
-        );
-    };
+        )
+    }
 
     const getCommits = async (repo: IGoshRepository, next?: string) => {
-        setCommits((curr) => ({ ...curr, isFetching: true }));
+        setCommits((curr) => ({ ...curr, isFetching: true }))
 
-        const list: TGoshCommit[] = [];
-        let count = 0;
+        const list: TGoshCommit[] = []
+        let count = 0
         while (count < 5) {
-            if (!next) break;
+            if (!next) break
 
-            const commitData = await getCommit(repo, next);
-            if (commitData.name !== ZERO_COMMIT) list.push(commitData);
+            const commitData = await getCommit(repo, next)
+            if (commitData.name !== ZERO_COMMIT) list.push(commitData)
 
-            next = commitData.parents[0] || '';
-            count += 1;
+            next = commitData.parents[0] || ''
+            count += 1
         }
         setCommits((curr) => ({
             list: [...curr.list, ...list],
             isFetching: false,
             next,
-        }));
-    };
+        }))
+    }
 
     useEffect(() => {
         const initCommits = async () => {
-            setCommits({ list: [], isFetching: true });
-            getCommits(goshRepo, branch?.commitAddr);
-        };
+            setCommits({ list: [], isFetching: true })
+            getCommits(goshRepo, branch?.commitAddr)
+        }
 
-        if (goshRepo && branch?.commitAddr) initCommits();
-    }, [goshRepo, branch?.commitAddr]);
+        if (goshRepo && branch?.commitAddr) initCommits()
+    }, [goshRepo, branch?.commitAddr])
 
     useEffect(() => {
-        updateBranch(branchName);
-    }, [branchName, updateBranch]);
+        updateBranch(branchName)
+    }, [branchName, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -79,7 +79,7 @@ const CommitsPage = () => {
                 branches={branches}
                 onChange={(selected) => {
                     if (selected) {
-                        navigate(`/${daoName}/${repoName}/commits/${selected.name}`);
+                        navigate(`/${daoName}/${repoName}/commits/${selected.name}`)
                     }
                 }}
             />
@@ -120,7 +120,7 @@ const CommitsPage = () => {
                                 <div>
                                     <span className="mr-2 text-gray-050a15/65">at</span>
                                     {getCommitTime(
-                                        commit.content.committer || ''
+                                        commit.content.committer || '',
                                     ).toLocaleString()}
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ const CommitsPage = () => {
                 </div>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default CommitsPage;
+export default CommitsPage

@@ -1,25 +1,25 @@
-import { Field, Form, Formik } from 'formik';
-import { useOutletContext } from 'react-router-dom';
-import TextField from '../../components/FormikForms/TextField';
-import Spinner from '../../components/Spinner';
-import * as Yup from 'yup';
-import { useRecoilValue } from 'recoil';
-import { userStateAtom } from '../../store/user.state';
-import CopyClipboard from '../../components/CopyClipboard';
-import { TDaoLayoutOutletContext } from '../DaoLayout';
-import { EGoshError, GoshError } from '../../types/errors';
-import { toast } from 'react-toastify';
-import SmvBalance from '../../components/SmvBalance/SmvBalance';
-import { useSmvBalance } from '../../hooks/gosh.hooks';
+import { Field, Form, Formik } from 'formik'
+import { useOutletContext } from 'react-router-dom'
+import TextField from '../../components/FormikForms/TextField'
+import Spinner from '../../components/Spinner'
+import * as Yup from 'yup'
+import { useRecoilValue } from 'recoil'
+import { userStateAtom } from '../../store/user.state'
+import CopyClipboard from '../../components/CopyClipboard'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
+import { EGoshError, GoshError } from '../../types/errors'
+import { toast } from 'react-toastify'
+import SmvBalance from '../../components/SmvBalance/SmvBalance'
+import { useSmvBalance } from '../../hooks/gosh.hooks'
 
 type TMoveBalanceFormValues = {
-    amount: number;
-};
+    amount: number
+}
 
 const DaoWalletPage = () => {
-    const userState = useRecoilValue(userStateAtom);
-    const { wallet } = useOutletContext<TDaoLayoutOutletContext>();
-    const smvBalance = useSmvBalance(wallet);
+    const userState = useRecoilValue(userStateAtom)
+    const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const smvBalance = useSmvBalance(wallet)
 
     const gitRemoteCredentials = {
         'my-wallet': {
@@ -29,48 +29,48 @@ const DaoWalletPage = () => {
                 secret: userState.keys?.secret,
             },
         },
-    };
+    }
 
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
-        console.debug('[Move balance to SMV balance] - Values:', values);
+        console.debug('[Move balance to SMV balance] - Values:', values)
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.lockVoting(values.amount);
-            toast.success('Submitted, balance will be updated soon');
+            await wallet.lockVoting(values.amount)
+            toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     const onMoveSmvBalanceToBalance = async (values: TMoveBalanceFormValues) => {
-        console.debug('[Move SMV balance to balance] - Values:', values);
+        console.debug('[Move SMV balance to balance] - Values:', values)
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.unlockVoting(values.amount);
-            toast.success('Submitted, balance will be updated soon');
+            await wallet.unlockVoting(values.amount)
+            toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     const onReleaseSmvTokens = async () => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET);
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.updateHead();
-            toast.success('Release submitted, tokens will be released soon');
+            await wallet.updateHead()
+            toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
-            console.error(e.message);
-            toast.error(e.message);
+            console.error(e.message)
+            toast.error(e.message)
         }
-    };
+    }
 
     if (!wallet)
         return (
@@ -78,7 +78,7 @@ const DaoWalletPage = () => {
                 <Spinner className="mr-3" />
                 Loading wallet...
             </div>
-        );
+        )
     return (
         <>
             <SmvBalance details={smvBalance} wallet={wallet} className="mb-4 !px-0" />
@@ -220,7 +220,7 @@ const DaoWalletPage = () => {
                 </div>
             </div>
         </>
-    );
-};
+    )
+}
 
-export default DaoWalletPage;
+export default DaoWalletPage

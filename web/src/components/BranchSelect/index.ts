@@ -1,2 +1,2 @@
-export * from './BranchSelect';
-export { default } from './BranchSelect';
+export * from './BranchSelect'
+export { default } from './BranchSelect'

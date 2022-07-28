@@ -1,55 +1,55 @@
-import { useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
+import { useEffect, useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
 
-import { useEverClient } from './hooks/ever.hooks';
-import Header from './components/Header';
-import ProtectedLayout from './pages/ProtectedLayout';
-import AccountLayout from './pages/AccountLayout';
-import DaoLayout from './pages/DaoLayout';
-import DaoSettingsLayout from './pages/DaoSettingsLayout';
-import RepoLayout from './pages/RepoLayout';
-import HomePage from './pages/Home';
-import SettingsPage from './pages/Settings';
-import SignupPage from './pages/Signup';
-import SigninPage from './pages/Signin';
-import DaosPage from './pages/Daos';
-import DaoPage from './pages/Dao';
-import DaoCreatePage from './pages/DaoCreate';
-import DaoWalletPage from './pages/DaoWallet';
-import DaoParticipantsPage from './pages/DaoParticipants';
-import DaoReposPage from './pages/DaoRepos';
-import RepoCreatePage from './pages/RepoCreate';
-import ReposPage from './pages/Repos';
-import RepoPage from './pages/Repo';
-import BranchesPage from './pages/Branches';
-import BlobCreatePage from './pages/BlobCreate';
-import BlobUpdatePage from './pages/BlobUpdate';
-import BlobPage from './pages/Blob';
-import CommitsPage from './pages/Commits';
-import CommitPage from './pages/Commit';
-import PullCreatePage from './pages/PullCreate';
-import GotoPage from './pages/Goto';
-import EventsPage from './pages/Events';
-import EventPage from './pages/Event';
+import { useEverClient } from './hooks/ever.hooks'
+import Header from './components/Header'
+import ProtectedLayout from './pages/ProtectedLayout'
+import AccountLayout from './pages/AccountLayout'
+import DaoLayout from './pages/DaoLayout'
+import DaoSettingsLayout from './pages/DaoSettingsLayout'
+import RepoLayout from './pages/RepoLayout'
+import HomePage from './pages/Home'
+import SettingsPage from './pages/Settings'
+import SignupPage from './pages/Signup'
+import SigninPage from './pages/Signin'
+import DaosPage from './pages/Daos'
+import DaoPage from './pages/Dao'
+import DaoCreatePage from './pages/DaoCreate'
+import DaoWalletPage from './pages/DaoWallet'
+import DaoParticipantsPage from './pages/DaoParticipants'
+import DaoReposPage from './pages/DaoRepos'
+import RepoCreatePage from './pages/RepoCreate'
+import ReposPage from './pages/Repos'
+import RepoPage from './pages/Repo'
+import BranchesPage from './pages/Branches'
+import BlobCreatePage from './pages/BlobCreate'
+import BlobUpdatePage from './pages/BlobUpdate'
+import BlobPage from './pages/Blob'
+import CommitsPage from './pages/Commits'
+import CommitPage from './pages/Commit'
+import PullCreatePage from './pages/PullCreate'
+import GotoPage from './pages/Goto'
+import EventsPage from './pages/Events'
+import EventPage from './pages/Event'
 
-import './assets/scss/style.scss';
-import BaseModal from './components/Modal/BaseModal';
-import Spinner from './components/Spinner';
-import { ToastOptionsShortcuts } from './helpers';
-import { shortString } from './utils';
-import Containers from './docker-extension/pages/Containers';
+import './assets/scss/style.scss'
+import BaseModal from './components/Modal/BaseModal'
+import Spinner from './components/Spinner'
+import { ToastOptionsShortcuts } from './helpers'
+import { shortString } from './utils'
+import Containers from './docker-extension/pages/Containers'
 
 const App = () => {
-    const client = useEverClient();
-    const [isInitialized, setIsInitialized] = useState<boolean>(false);
+    const client = useEverClient()
+    const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
     useEffect(() => {
-        if (!client) return;
+        if (!client) return
         client.client.version().then(() => {
-            setIsInitialized(true);
-        });
-    }, [client]);
+            setIsInitialized(true)
+        })
+    }, [client])
 
     if (!isInitialized)
         return (
@@ -59,7 +59,7 @@ const App = () => {
                     App is loading...
                 </div>
             </div>
-        );
+        )
     return (
         <div className="wrapper">
             <Header />
@@ -134,7 +134,7 @@ const App = () => {
             <ToastContainer {...ToastOptionsShortcuts.Default} />
             <BaseModal />
         </div>
-    );
-};
+    )
+}
 
-export default App;
+export default App

@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { faFile } from '@fortawesome/free-regular-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
-import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { useGoshRepoTree } from '../../hooks/gosh.hooks';
-import { goshCurrBranchSelector } from '../../store/gosh.state';
-import Spinner from '../../components/Spinner';
+import React, { useState } from 'react'
+import { faFile } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { useGoshRepoTree } from '../../hooks/gosh.hooks'
+import { goshCurrBranchSelector } from '../../store/gosh.state'
+import Spinner from '../../components/Spinner'
 
 const GotoPage = () => {
-    const { daoName, repoName, branchName = 'main' } = useParams();
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch);
-    const [search, setSearch] = useState<string>('');
-    const treeItems = useRecoilValue(getTreeItems(search));
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch)
+    const [search, setSearch] = useState<string>('')
+    const treeItems = useRecoilValue(getTreeItems(search))
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -45,9 +45,7 @@ const GotoPage = () => {
             )}
             {!!treeItems &&
                 treeItems?.map((item, index) => {
-                    const path = `${item.path ? `${item.path}/` : ''}${
-                        item.name
-                    }`;
+                    const path = `${item.path ? `${item.path}/` : ''}${item.name}`
                     return (
                         <div
                             key={index}
@@ -65,10 +63,10 @@ const GotoPage = () => {
                                 {path}
                             </Link>
                         </div>
-                    );
+                    )
                 })}
         </div>
-    );
-};
+    )
+}
 
-export default GotoPage;
+export default GotoPage

@@ -1,2 +1,2 @@
-export * from './FileDownload';
-export { default } from './FileDownload';
+export * from './FileDownload'
+export { default } from './FileDownload'

@@ -1,12 +1,12 @@
-import { classNames } from '../utils';
-import { NavLink, Outlet } from 'react-router-dom';
+import { classNames } from '../utils'
+import { NavLink, Outlet } from 'react-router-dom'
 
 const AccountLayout = () => {
     const tabs = [
         { to: '/account/orgs', title: 'Organizations' },
         { to: '/account/repos', title: 'Repositories' },
         { to: '/account/settings', title: 'Settings' },
-    ];
+    ]
 
     return (
         <div className="container container--full mt-12 mb-5">
@@ -22,7 +22,7 @@ const AccountLayout = () => {
                                 className={({ isActive }) =>
                                     classNames(
                                         'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
-                                        isActive ? '!text-gray-050a15' : null
+                                        isActive ? '!text-gray-050a15' : null,
                                     )
                                 }
                             >
@@ -36,7 +36,7 @@ const AccountLayout = () => {
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default AccountLayout;
+export default AccountLayout

@@ -141,6 +141,18 @@
 			]
 		},
 		{
+			"name": "getContentAdress",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"daoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getAddrRepository",
 			"inputs": [
 				{"name":"name","type":"string"},
