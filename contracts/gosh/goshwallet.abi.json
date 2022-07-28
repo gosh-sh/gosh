@@ -420,6 +420,15 @@
 			]
 		},
 		{
+			"name": "getHash",
+			"inputs": [
+				{"name":"state","type":"bytes"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "onTokenWalletDeployed",
 			"inputs": [
 				{"name":"wallet","type":"address"}
