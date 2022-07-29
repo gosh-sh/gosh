@@ -104,12 +104,6 @@ contract Commit is Modifiers {
         });
         return _contractflex;
     }
-    
-    function getTreeSha(string commit, uint128 index1, uint128 index2) public view senderIs(getDiffAddress(commit, index1, index2)) {
-        DiffC(msg.sender).approveDiffFinal{value: 0.2 ton, flag: 1}(_nameCommit, true);
-        getMoney(_pubkey);    
-    }
-    
     //Commit part
     
     function isCorrect(string newname, string fromcommit) public view senderIs(_rootRepo){

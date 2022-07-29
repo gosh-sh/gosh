@@ -36,6 +36,7 @@ struct Diff {
     optional(bytes) patch;
     optional(string) ipfs;
     string sha1;
+    uint256 sha256;
 }
 
 struct Item {

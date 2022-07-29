@@ -177,6 +177,7 @@ contract DiffC is Modifiers {
     function approveDiff(bool res, string commit, uint256 sha) public view {
         tvm.accept();
         sha;
+        commit;
         bool isIt = false;
         for (Diff a : _diff) {
             if (a.snap == msg.sender) { isIt = true; }
@@ -188,11 +189,11 @@ contract DiffC is Modifiers {
             else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
             return; 
         }
-        Commit(_buildCommitAddr(commit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index1, _index2);
+        this.approveDiffFinal{value: 0.2 ton, flag: 1}(true);
     
     }
     
-    function approveDiffFinal(string commit, bool res) public senderIs(_buildCommitAddr(commit)) {
+    function approveDiffFinal(bool res) public senderIs(address(this)) {
         tvm.accept();
         getMoney(_pubkey);
         if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
