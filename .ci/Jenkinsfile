@@ -139,7 +139,7 @@ pipeline {
                 script {
                     archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-linux"
                     archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-windows.exe"
-                    archiveArtifacts artifacts: "gosh.seed"
+                    archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
                     dir ('.ci/scripts') {
                         if (params.RELEASE) {
                             withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
