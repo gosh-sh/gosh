@@ -168,13 +168,13 @@ contract Snapshot is Modifiers {
                 DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
                 return;
             }
-            if (tvm.hash(res.get()) == diff.sha256) {
+            if (tvm.hash(gosh.unzip(res.get())) == diff.sha256) {
                        _snapshot = res.get();
                         DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
                         _applying = true;
             }
             else {
-                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(res.get()));
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(gosh.unzip(res.get())));
             }
             return;
         }
