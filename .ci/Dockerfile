@@ -10,7 +10,7 @@ ENV     PATH=/opt/cargo/bin:$PATH
 ENV     DEBIAN_FRONTEND=noninteractive
 
 RUN     apt -y update &&\
-        apt -y install make cmake curl build-essential openssl pkg-config libssl-dev libtool gcc-mingw-w64 &&\
+        apt -y install make cmake curl build-essential openssl pkg-config libssl-dev libtool gcc-mingw-w64 jq &&\
         curl -fsSL https://deb.nodesource.com/setup_18.x | sh &&\
         mkdir -m777 /opt/rust /opt/cargo &&\
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y  &&\ 
