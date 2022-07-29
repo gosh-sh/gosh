@@ -192,14 +192,14 @@ export const getTreeItemsFromPath = async (
     const sha = sha1(content, 'blob', 'sha1')
 
     // const sha256 = sha1(fileContent, 'blob', 'sha256');
-    const sha256 = await tvmHash(ipfs || (content as string))
+    const sha256 = await goshRoot.getTvmHash(ipfs || (content as string))
 
     items.push({
         flags,
         mode: '100644',
         type: 'blob',
         sha1: sha,
-        sha256: `0x${sha256}`,
+        sha256,
         path,
         name,
     })
@@ -688,13 +688,12 @@ export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
     return Buffer.from(await response.arrayBuffer())
 }
 
-export const tvmHash = async (data: string): Promise<string> => {
-    const boc = await goshClient.abi.encode_boc({
-        params: [{ name: 'data', type: 'string' }],
-        data: { data },
-    })
-    const hash = await goshClient.boc.get_boc_hash({ boc: boc.boc })
-    return hash.hash
+export const splitByChunk = (array: any[], chunkSize: number = 10): any[][] => {
+    const chunks = []
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize))
+    }
+    return chunks
 }
 
 /**

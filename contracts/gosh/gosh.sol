@@ -17,7 +17,7 @@ import "content-signature.sol";
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
     string constant version = "0.5.3";
-    
+
     address _creator;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -52,12 +52,12 @@ contract Gosh is Modifiers, Upgradable {
             m_RepositoryCode, address(this), goshdao, version
         );
         return tvm.buildStateInit({
-            code: deployCode, 
+            code: deployCode,
             contr: Repository,
             varInit: {_name: name}
         });
     }
-    
+
     function _composeWalletStateInit(uint256 pubkey, uint256 rootpubkey, address dao, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
         TvmCell _contractflex = tvm.buildStateInit({
@@ -84,7 +84,7 @@ contract Gosh is Modifiers, Upgradable {
         delete b;
         b.store(hash);
         TvmCell deployCode = tvm.setCodeSalt(m_codeDao, b.toCell());
-        return tvm.buildStateInit({ 
+        return tvm.buildStateInit({
             code: deployCode,
             contr: GoshDao,
             varInit: {}
@@ -129,7 +129,7 @@ contract Gosh is Modifiers, Upgradable {
     }
 
     //Setters
-    
+
     //SMV
 
     /* TvmCell m_TokenLockerCode;
@@ -277,6 +277,10 @@ contract Gosh is Modifiers, Upgradable {
 
     function getTagCode() external view returns(TvmCell) {
         return m_codeTag;
+    }
+
+    function getHash(bytes state) external pure returns(uint256) {
+        return tvm.hash(state);
     }
 
     function getVersion() external pure returns(string) {

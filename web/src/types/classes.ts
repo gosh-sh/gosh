@@ -32,7 +32,8 @@ import {
     MAX_ONCHAIN_FILE_SIZE,
     goshDaoCreator,
     getPaginatedAccounts,
-    tvmHash,
+    splitByChunk,
+    goshRoot,
 } from '../helpers'
 import {
     IGoshTree,
@@ -176,6 +177,13 @@ export class GoshRoot implements IGoshRoot {
             repoName,
             commit: commitName,
             label,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getTvmHash(data: string): Promise<string> {
+        const result = await this.account.runLocal('getHash', {
+            state: Buffer.from(data).toString('hex'),
         })
         return result.decoded?.output.value0
     }
@@ -502,13 +510,16 @@ export class GoshWallet implements IGoshWallet {
         // Deploy trees, commit, tags in parallel
         await Promise.all([
             (async () => {
-                await Promise.all(
-                    updatedPaths.map(async (path) => {
-                        const subtree = updatedTree[path]
-                        const addr = await this.deployTree(repo, subtree)
-                        console.debug('Subtree addr', addr)
-                    }),
-                )
+                for (const chunk of splitByChunk(updatedPaths)) {
+                    await Promise.all(
+                        chunk.map(async (path) => {
+                            const subtree = updatedTree[path]
+                            const addr = await this.deployTree(repo, subtree)
+                            console.debug('Subtree addr', addr)
+                        }),
+                    )
+                    await sleep(200)
+                }
                 !!callback && callback({ treeDeploy: true })
             })(),
             (async () => {
@@ -664,39 +675,40 @@ export class GoshWallet implements IGoshWallet {
                 if (treeItem) return { snap, name, treeItem }
             }),
         )
-        console.debug('Total read snaps', snapsExist)
         snapsExist = snapsExist.filter((item) => !!item)
-        console.debug('Existing in tree snaps', snapsExist)
 
-        // Deploy snapshots
-        await Promise.all(
-            snapsExist.map(async (item) => {
-                if (!item) return
-                const { snap, name, treeItem } = item
-                const { content } = await snap.getSnapshot(fromCommit, treeItem)
-                console.debug('Snap name/data', name, content)
+        // Deploy snapshots (split by chunks)
+        for (const chunk of splitByChunk(snapsExist)) {
+            await Promise.all(
+                chunk.map(async (item) => {
+                    if (!item) return
+                    const { snap, name, treeItem } = item
+                    const { content } = await snap.getSnapshot(fromCommit, treeItem)
 
-                let ipfs = null
-                let snapdata = ''
-                const compressed = await zstd.compress(this.account.client, content)
-                if (
-                    Buffer.isBuffer(content) ||
-                    Buffer.from(compressed, 'base64').byteLength >= MAX_ONCHAIN_FILE_SIZE
-                ) {
-                    ipfs = await saveToIPFS(compressed)
-                } else {
-                    snapdata = Buffer.from(compressed, 'base64').toString('hex')
-                }
-                await this.deployNewSnapshot(
-                    repo.address,
-                    newName,
-                    fromCommit,
-                    name,
-                    snapdata,
-                    ipfs,
-                )
-            }),
-        )
+                    let ipfs = null
+                    let snapdata = ''
+                    const compressed = await zstd.compress(this.account.client, content)
+                    if (
+                        Buffer.isBuffer(content) ||
+                        Buffer.from(compressed, 'base64').byteLength >=
+                            MAX_ONCHAIN_FILE_SIZE
+                    ) {
+                        ipfs = await saveToIPFS(compressed)
+                    } else {
+                        snapdata = Buffer.from(compressed, 'base64').toString('hex')
+                    }
+                    await this.deployNewSnapshot(
+                        repo.address,
+                        newName,
+                        fromCommit,
+                        name,
+                        snapdata,
+                        ipfs,
+                    )
+                }),
+            )
+            await sleep(200)
+        }
 
         // Deploy new branch
         console.debug('Deploy branch', {
@@ -710,16 +722,12 @@ export class GoshWallet implements IGoshWallet {
             fromCommit,
         })
 
-        return new Promise((resolve) => {
-            const interval = setInterval(async () => {
-                const branch = await repo.getBranch(newName)
-                console.debug('[Deploy branch] - Branch:', branch)
-                if (branch.name === newName) {
-                    clearInterval(interval)
-                    resolve()
-                }
-            }, 1500)
-        })
+        while (true) {
+            const branch = await repo.getBranch(newName)
+            console.debug('Branch', branch)
+            if (branch.name === newName) break
+            await sleep(5000)
+        }
     }
 
     async deleteBranch(repo: IGoshRepository, branchName: string): Promise<void> {
@@ -738,34 +746,48 @@ export class GoshWallet implements IGoshWallet {
 
         // Get all snapshots from branch and delete
         const snapCode = await this.getSnapshotCode(branchName, repo.address)
-        const snaps = await this.account.client.net.query_collection({
-            collection: 'accounts',
-            filter: { code: { eq: snapCode } },
-            result: 'id',
-        })
-        console.debug('Snaps:', snaps)
-        await Promise.all(
-            snaps.result.map(async ({ id }) => {
-                console.debug('Delete snapshot:', id)
-                await this.deleteSnapshot(id)
-            }),
-        )
+        let next: string | undefined
+        const snaps = []
+        while (true) {
+            const accounts = await getPaginatedAccounts({
+                filters: [`code: {eq:"${snapCode}"}`],
+                limit: 50,
+                lastId: next,
+            })
+            snaps.push(...accounts.results.map(({ id }) => id))
+            next = accounts.lastId
+
+            if (accounts.completed) break
+            await sleep(200)
+        }
+        console.debug('Snaps', snaps)
+
+        // Delete snapshots (split by chunks)
+        for (const chunk of splitByChunk(snaps)) {
+            await Promise.all(
+                chunk.map(async (address) => {
+                    console.debug('Delete snapshot:', address)
+                    await this.deleteSnapshot(address)
+                }),
+            )
+            await sleep(200)
+        }
 
         // Delete branch and wait for it to be deleted
+        console.debug('Delete branch', {
+            repoName: repo.meta.name,
+            Name: branchName,
+        })
         await this.run('deleteBranch', {
             repoName: repo.meta.name,
             Name: branchName,
         })
-        return new Promise((resolve) => {
-            const interval = setInterval(async () => {
-                const branch = await repo.getBranch(branchName)
-                console.debug('[Delete branch] - Branch:', branch)
-                if (!branch.name) {
-                    clearInterval(interval)
-                    resolve()
-                }
-            }, 1500)
-        })
+        while (true) {
+            const branch = await repo.getBranch(branchName)
+            console.debug('Branch', branch)
+            if (!branch.name) break
+            await sleep(5000)
+        }
     }
 
     async deployCommit(
@@ -787,13 +809,25 @@ export class GoshWallet implements IGoshWallet {
         const repoName = repo.meta.name
         console.debug('Commit addr', await repo.getCommitAddr(commitName))
 
-        // Deploy diffs
-        await Promise.all(
-            diffs.map(async (diff, index) => {
-                diff.commit = commitName
-                console.debug(
-                    'Deploy diff',
-                    {
+        // Deploy diffs (split by chunks)
+        for (const chunk of splitByChunk(diffs)) {
+            await Promise.all(
+                chunk.map(async (diff, index) => {
+                    diff.commit = commitName
+                    console.debug(
+                        'Deploy diff',
+                        {
+                            repoName,
+                            branchName: branch.name,
+                            commitName,
+                            diffs: [diff],
+                            index1: index,
+                            index2: 0,
+                            last: true,
+                        },
+                        await this.getDiffAddr(repoName, commitName, index, 0),
+                    )
+                    await this.run('deployDiff', {
                         repoName,
                         branchName: branch.name,
                         commitName,
@@ -801,20 +835,11 @@ export class GoshWallet implements IGoshWallet {
                         index1: index,
                         index2: 0,
                         last: true,
-                    },
-                    await this.getDiffAddr(repoName, commitName, index, 0),
-                )
-                await this.run('deployDiff', {
-                    repoName,
-                    branchName: branch.name,
-                    commitName,
-                    diffs: [diff],
-                    index1: index,
-                    index2: 0,
-                    last: true,
-                })
-            }),
-        )
+                    })
+                }),
+            )
+            await sleep(200)
+        }
 
         // Deploy commit
         console.debug('Deploy commit', {
@@ -858,8 +883,8 @@ export class GoshWallet implements IGoshWallet {
         // Deploy tree and get address
         const datatree: any = {}
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = await tvmHash(`${type}:${name}`)
-            datatree[`0x${key}`] = {
+            const key = await goshRoot.getTvmHash(`${type}:${name}`)
+            datatree[key] = {
                 flags: flags.toString(),
                 mode,
                 typeObj: type,
