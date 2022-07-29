@@ -109,6 +109,7 @@ export type TGoshDiff = {
     ipfs: string | null
     commit: string
     sha1: string
+    sha256: string
 }
 
 export type TCreateCommitCallbackParams = {
@@ -166,7 +167,7 @@ export interface IGoshRoot extends IContract {
         commitName: string,
         label: string,
     ): Promise<string>
-    getTvmHash(data: string): Promise<string>
+    getTvmHash(data: string | Buffer): Promise<string>
 }
 
 export interface IGoshDao extends IContract {

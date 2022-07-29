@@ -181,9 +181,12 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getTvmHash(data: string): Promise<string> {
+    async getTvmHash(data: string | Buffer): Promise<string> {
+        const state = Buffer.isBuffer(data)
+            ? data.toString('hex')
+            : Buffer.from(data).toString('hex')
         const result = await this.account.runLocal('getHash', {
-            state: Buffer.from(data).toString('hex'),
+            state,
         })
         return result.decoded?.output.value0
     }
@@ -457,6 +460,7 @@ export class GoshWallet implements IGoshWallet {
                         ipfs,
                         commit: '',
                         sha1: sha1(modified, 'blob', 'sha1'),
+                        sha256: await goshRoot.getTvmHash(modified),
                     },
                 })
 
