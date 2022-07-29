@@ -1,28 +1,20 @@
 #!/bin/bash
 set -e
 
-# 
-
 # params: repo commit_hash
 # output: gosh_hash
-NETWORKS=$1
-GOSH_NETWORK=$2
-GOSH_ROOT_CONTRACT_ADDRESS=$3
-REPOSITORY_NAME=$4
-COMMIT_HASH=$5
+GOSH_ADDRESS=$1
+REPOSITORY_NAME=$2
+COMMIT_HASH=$3
 
-GOSH_NETWORK="net.ton.dev"
-
-GOSH_REMOTE_URL=gosh::${GOSH_NETWORK}://${GOSH_ROOT_CONTRACT_ADDRESS}/"$REPOSITORY_NAME"
-
-
+# TODO: fix potential race condition for directories
 {
     LAST_PWD=$(pwd)
     mkdir -p /workdir/"$REPOSITORY_NAME"
     cd /workdir/"$REPOSITORY_NAME"
-    rm -rf *
+    rm -rf ./*
 
-    git clone "$GOSH_REMOTE_URL" "$REPOSITORY_NAME"
+    git clone "$GOSH_ADDRESS" "$REPOSITORY_NAME"
 
     cd "$REPOSITORY_NAME"
     git fetch -a
@@ -31,13 +23,13 @@ GOSH_REMOTE_URL=gosh::${GOSH_NETWORK}://${GOSH_ROOT_CONTRACT_ADDRESS}/"$REPOSITO
     IDDFILE=/workdir/"$REPOSITORY_NAME".iidfile
 
     docker buildx build \
-        -f goshfile.yaml \
+        -f Dockerfile \
         --load \
         --iidfile "$IDDFILE" \
         --no-cache \
         .
 
-    TARGET_IMAGE=$(< "$IDDFILE")
+    TARGET_IMAGE=$(<"$IDDFILE")
 
     if [[ -z "$TARGET_IMAGE" ]]; then
         echo "Error: Image was not built"

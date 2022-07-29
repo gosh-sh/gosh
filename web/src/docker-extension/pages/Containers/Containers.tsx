@@ -294,8 +294,8 @@ const Main = () => {
                 width: 200,
             },
             {
-                label: 'Gosh address',
-                id: 'goshAddress',
+                label: 'Image hash',
+                id: 'imageHash',
                 numeric: false,
                 disablePadding: false,
                 maxWidth: 300,
@@ -303,8 +303,8 @@ const Main = () => {
                 width: 200,
             },
             {
-                label: 'Image hash',
-                id: 'imageHash',
+                label: 'Gosh address',
+                id: 'goshAddress',
                 numeric: false,
                 disablePadding: false,
                 maxWidth: 300,
@@ -326,8 +326,8 @@ const Main = () => {
                 width: 30,
             },
             {
-                label: 'Gosh address',
-                id: 'goshAddress',
+                label: 'Image hash',
+                id: 'imageHash',
                 numeric: false,
                 disablePadding: false,
                 maxWidth: 300,
@@ -335,8 +335,8 @@ const Main = () => {
                 width: 200,
             },
             {
-                label: 'Image hash',
-                id: 'imageHash',
+                label: 'Gosh address',
+                id: 'goshAddress',
                 numeric: false,
                 disablePadding: false,
                 maxWidth: 300,
@@ -409,17 +409,8 @@ const Main = () => {
             stdout: '',
         }
         setValidation(validation)
-        const publicKey = userState?.keys?.public
-        if (!publicKey) {
-            setValidation({
-                ...validation,
-                active: false,
-                stdout: 'Public key not found',
-            })
-            return
-        }
 
-        const isValid = await DockerClient.validateContainerImage(
+        await DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
                 logs.push(status)
@@ -435,21 +426,8 @@ const Main = () => {
                     active: false,
                     stdout: logs.join('\n'),
                 }),
-            publicKey,
             userState,
         )
-        setContainers((containers) => ({
-            ...containers,
-            data: containers.data.map((container) =>
-                container.id === element.id
-                    ? {
-                          ...container,
-                          // TODO remove
-                          validated: isValid ? 'success' : 'error',
-                      }
-                    : container,
-            ),
-        }))
     }
 
     function validateImage(element: ImageType, index: number): void {
@@ -461,15 +439,6 @@ const Main = () => {
             stdout: '',
         }
         setValidation(validation)
-        const publicKey = userState?.keys?.public
-        if (!publicKey) {
-            setValidation({
-                ...validation,
-                active: false,
-                stdout: 'Public key not found',
-            })
-            return
-        }
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
@@ -486,7 +455,6 @@ const Main = () => {
                     active: false,
                     stdout: logs.join('\n'),
                 }),
-            publicKey,
             userState,
         )
     }

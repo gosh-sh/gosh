@@ -6,6 +6,7 @@ import { TUserState } from '../types/types'
 const logger = console
 
 const ENDPOINTS = process.env.REACT_APP_GOSH_NETWORK || ''
+const GOSH_NETWORK = ENDPOINTS.replace(/^https?:\/\//, '')
 const GOSH_ROOT_CONTRACT_ADDRESS = process.env.REACT_APP_GOSH_ADDR || ''
 
 console.debug('Endpoints', ENDPOINTS)
@@ -207,11 +208,10 @@ export class DockerClient {
         imageId: string,
         appendValidationLog: any,
         closeValidationLog: any,
-        userStatePublicKey: string,
-        userState?: TUserState,
+        userState: TUserState,
     ): Promise<boolean> {
         const image: IDockerImage | undefined = await DockerClient._findImage(imageId)
-        if (image === undefined) {
+        if (typeof image === 'undefined') {
             appendValidationLog('Error: image does not exist any more.')
             closeValidationLog()
             return false
@@ -251,17 +251,23 @@ export class DockerClient {
 
         const goshRepositoryName = `${goshDao}/${goshRepoName}`
 
-        const daoAddress = await goshRoot.getDaoAddr(goshDao)
-        const dao = new GoshDao(goshClient, daoAddress)
-        const walletAddr = await dao.getWalletAddr(`0x${userStatePublicKey}`, 0)
+        const wallet = await DockerClient._getWallet(userState, goshRootContract, goshDao)
+        if (!wallet) {
+            appendValidationLog('Error: unable to get gosh wallet.')
+            closeValidationLog()
+            return false
+        }
 
-        console.log('walletAddr', walletAddr)
-        console.log('daoAddress', daoAddress)
-        console.log('keys', userState?.keys)
+        const contentAddr = await wallet.getContentAdress(
+            goshRepositoryName,
+            goshCommitHash,
+            '',
+        )
 
-        // TODO: use only public key
-        // const wallet = new GoshWallet(goshClient, walletAddr, user)
-        const wallet = new GoshWallet(goshClient, walletAddr, userState?.keys)
+        const contentObj = new GoshContentSignature(goshClient, contentAddr)
+        const content = await contentObj.getContent()
+        const validImageHashes = content.split(',')
+
         // HACK!!!
         // await wallet.deployContent(
         //     goshRepositoryName,
@@ -269,33 +275,25 @@ export class DockerClient {
         //     '',
         //     'sha256:511bd981cb73818ab72940df0af72253b2cf8fc06fbcf92be7d0b922390d3fbf',
         // )
-        const contentAddr = await wallet.getContentAdress(
-            goshRepositoryName,
-            goshCommitHash,
-            '',
-        )
-        const contentObj = new GoshContentSignature(goshClient, contentAddr)
-        const content = await contentObj.getContent()
-
-        console.log('content', content)
-        appendValidationLog(`Valid Image Hashes: ${content}`)
-        const validImageHashes = content.split(',')
 
         try {
             if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
+            appendValidationLog('Build image from Gosh')
 
-            appendValidationLog('Calculating image sha...')
-            const [isImageShaCalculated, imageSha] = await DockerClient.calculateImageSha(
-                imageId,
-                '',
+            const goshAddressWithNetwork = goshAddress.replace(
+                /^gosh:\/\//,
+                `gosh::${GOSH_NETWORK}://`,
             )
-            if (!isImageShaCalculated) {
-                appendValidationLog('Failed to calculate image sha.')
+            const result = await dockerClient.extension.vm.cli.exec(
+                COMMAND.VALIDATE_IMAGE_SHA,
+                [goshAddressWithNetwork, `${goshDao}__${goshRepoName}`, goshCommitHash],
+            )
+            if ('code' in result && !!result.code) {
+                logger.log(`Failed to validate image. ${JSON.stringify(result)}`)
+                closeValidationLog()
                 return false
             }
-
-            appendValidationLog(`Image sha: ${imageSha}`)
-
+            const imageSha = result.stdout.trim()
             if (validImageHashes.includes(imageSha)) {
                 appendValidationLog('Success.')
                 closeValidationLog()
