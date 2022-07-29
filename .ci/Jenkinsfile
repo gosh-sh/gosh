@@ -6,7 +6,7 @@ pipeline {
         }  
     }
     parameters {
-        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH'
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'RELEASE', defaultValue: false, description: 'If true will create Github Release!'
     }
 
