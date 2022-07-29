@@ -174,7 +174,7 @@ contract Snapshot is Modifiers {
                         _applying = true;
             }
             else {
-                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(res.get()));
             }
             return;
         }
