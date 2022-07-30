@@ -79,3 +79,15 @@ export const goshRepoBlobSelector = selectorFamily({
             return filtered[0]
         },
 })
+
+export const goshBlobAtom = atom<{
+    address?: string
+    commit?: string
+    path?: string
+    content?: string | Buffer
+    isIpfs?: boolean
+    isFetching: boolean
+}>({
+    key: 'GoshBlobAtom',
+    default: { isFetching: true },
+})

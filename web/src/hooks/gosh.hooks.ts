@@ -1,8 +1,9 @@
 import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getRepoTree, goshClient, goshRoot } from '../helpers'
+import { getRepoTree, goshClient, goshRoot, ZERO_COMMIT } from '../helpers'
 import {
+    goshBlobAtom,
     goshBranchesAtom,
     goshCurrBranchSelector,
     goshDaoAtom,
@@ -12,7 +13,14 @@ import {
     goshWalletAtom,
 } from '../store/gosh.state'
 import { userStateAtom } from '../store/user.state'
-import { GoshDao, GoshWallet, GoshRepository, GoshSmvLocker } from '../types/classes'
+import {
+    GoshDao,
+    GoshWallet,
+    GoshRepository,
+    GoshSmvLocker,
+    GoshCommit,
+    GoshSnapshot,
+} from '../types/classes'
 import {
     IGoshDao,
     IGoshRepository,
@@ -170,27 +178,26 @@ export const useGoshRepoTree = (
     repo?: IGoshRepository,
     branch?: TGoshBranch,
     filterPath?: string,
-    disableEffect?: boolean,
+    isDisabled?: boolean,
 ) => {
     const [tree, setTree] = useRecoilState(goshRepoTreeAtom)
-    const needEffect = !disableEffect || (disableEffect && !tree)
-    const branchStr = JSON.stringify(branch)
+    const isEffectNeeded = !isDisabled || (isDisabled && !tree)
 
     const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path })
     const getTreeItems = (path?: string) => goshRepoTreeSelector({ type: 'items', path })
     const getTreeItem = (path?: string) => goshRepoBlobSelector(path)
 
     useEffect(() => {
-        const getTree = async (repo: IGoshRepository, branch: TGoshBranch) => {
+        const getTree = async (repo: IGoshRepository, commitAddr: string) => {
             setTree(undefined)
-            const tree = await getRepoTree(repo, branch.commitAddr, filterPath)
+            const tree = await getRepoTree(repo, commitAddr, filterPath)
             setTree(tree)
         }
 
-        if (repo && branchStr && needEffect) {
-            getTree(repo, JSON.parse(branchStr))
+        if (repo && branch?.commitAddr && isEffectNeeded) {
+            getTree(repo, branch.commitAddr)
         }
-    }, [repo, branchStr, filterPath, needEffect, setTree])
+    }, [repo, branch?.commitAddr, filterPath, isEffectNeeded, setTree])
 
     return { tree, getSubtree, getTreeItems, getTreeItem }
 }
@@ -241,4 +248,66 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
     }, [wallet])
 
     return details
+}
+
+export const useGoshBlob = (
+    repo?: IGoshRepository,
+    branchName?: string,
+    path?: string,
+    fromState: boolean = false,
+) => {
+    const [blob, setBlob] = useRecoilState(goshBlobAtom)
+    const [isEffectNeeded] = useState<boolean>(!fromState || (fromState && !blob.address))
+    const { branch } = useGoshRepoBranches(repo, branchName)
+    const tree = useGoshRepoTree(repo, branch, path, !isEffectNeeded)
+    const treeItem = useRecoilValue(tree.getTreeItem(path))
+
+    useEffect(() => {
+        const _getBlobDetails = async () => {
+            setBlob({ isFetching: true })
+
+            if (!repo || !branch?.name || !branch.commitAddr || !path) {
+                setBlob({ isFetching: false })
+                return
+            }
+
+            const commit = new GoshCommit(goshClient, branch.commitAddr)
+            const commitName = await commit.getName()
+            if (commitName === ZERO_COMMIT) {
+                setBlob({ isFetching: false })
+                return
+            }
+
+            const address = await repo.getSnapshotAddr(branch.name, path)
+            console.debug('Snapshot address', address)
+            setBlob((state) => ({
+                ...state,
+                path,
+                address,
+                commit: commitName,
+            }))
+        }
+
+        if (isEffectNeeded) _getBlobDetails()
+    }, [repo, branch?.name, branch?.commitAddr, path, isEffectNeeded, setBlob])
+
+    useEffect(() => {
+        const _getBlobContent = async () => {
+            if (!blob.address || !blob.commit || !treeItem) return
+
+            console.debug('Tree item', treeItem)
+            const snap = new GoshSnapshot(goshClient, blob.address)
+            const data = await snap.getSnapshot(blob.commit, treeItem)
+            setBlob((state) => ({
+                ...state,
+                content: data.content,
+                isIpfs: data.isIpfs,
+                isFetching: false,
+            }))
+        }
+
+        if (isEffectNeeded && blob.isFetching) _getBlobContent()
+    }, [blob.address, blob.commit, blob.isFetching, treeItem, isEffectNeeded, setBlob])
+
+    return blob
 }

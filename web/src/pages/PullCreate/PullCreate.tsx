@@ -49,10 +49,10 @@ const PullCreatePage = () => {
     const userState = useRecoilValue(userStateAtom)
     const { daoName, repoName } = useParams()
     const navigate = useNavigate()
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const smvBalance = useSmvBalance(goshWallet)
-    const { branches, updateBranches } = useGoshRepoBranches(goshRepo)
+    const smvBalance = useSmvBalance(wallet)
+    const { branches, updateBranches } = useGoshRepoBranches(repo)
     const [compare, setCompare] = useState<
         {
             to?: { item: TGoshTreeItem; blob: any }
@@ -104,8 +104,8 @@ const PullCreatePage = () => {
         const onCompare = async (wallet: IGoshWallet, repo: IGoshRepository) => {
             try {
                 const [branchFromName, branchToName] = compareParam.split('...')
-                const branchFrom = await goshRepo.getBranch(branchFromName)
-                const branchTo = await goshRepo.getBranch(branchToName)
+                const branchFrom = await repo.getBranch(branchFromName)
+                const branchTo = await repo.getBranch(branchToName)
                 if (!branchFrom?.commitAddr || !branchTo?.commitAddr)
                     throw new GoshError(EGoshError.NO_BRANCH)
                 if (branchFrom.commitAddr === branchTo.commitAddr) {
@@ -113,12 +113,12 @@ const PullCreatePage = () => {
                     return
                 }
                 setCompare(undefined)
-                const fromTree = await getRepoTree(goshRepo, branchFrom.commitAddr)
+                const fromTree = await getRepoTree(repo, branchFrom.commitAddr)
                 const fromTreeItems = [...fromTree.items].filter(
                     (item) => item.type === 'blob',
                 )
                 console.debug('[Pull create] - From tree blobs:', fromTreeItems)
-                const toTree = await getRepoTree(goshRepo, branchTo.commitAddr)
+                const toTree = await getRepoTree(repo, branchTo.commitAddr)
                 const toTreeItems = [...toTree.items].filter(
                     (item) => item.type === 'blob',
                 )
@@ -206,14 +206,13 @@ const PullCreatePage = () => {
         }
 
         setCompare([])
-        if (goshRepo && goshWallet && compareParam !== 'main...main')
-            onCompare(goshWallet, goshRepo)
-    }, [compareParam, goshRepo, goshWallet])
+        if (repo && wallet && compareParam !== 'main...main') onCompare(wallet, repo)
+    }, [compareParam, repo, wallet])
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
             if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH)
             if (branchFrom.name === branchTo.name || !compare?.length)
@@ -241,8 +240,8 @@ const PullCreatePage = () => {
             }
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await goshWallet.createCommit(
-                goshRepo,
+            await wallet.createCommit(
+                repo,
                 branchTo,
                 userState.keys.public,
                 blobs,
@@ -253,8 +252,7 @@ const PullCreatePage = () => {
             )
 
             // Delete branch after merge (if selected), update branches, redirect
-            if (values.deleteBranch)
-                await goshWallet.deleteBranch(goshRepo, branchFrom.name)
+            if (values.deleteBranch) await wallet.deleteBranch(repo, branchFrom.name)
             await updateBranches()
             navigate(
                 branchTo.isProtected
@@ -268,7 +266,7 @@ const PullCreatePage = () => {
         }
     }
 
-    if (!goshWallet) return <Navigate to={`/${daoName}/${repoName}`} />
+    if (!wallet) return <Navigate to={`/${daoName}/${repoName}`} />
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">

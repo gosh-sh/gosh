@@ -37,12 +37,12 @@ const BlobCreatePage = () => {
     const pathName = useParams()['*']
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const userState = useRecoilValue(userStateAtom)
-    const { updateBranch } = useGoshRepoBranches(goshRepo)
+    const { updateBranch } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true)
+    const tree = useGoshRepoTree(repo, branch, pathName, true)
     const [activeTab, setActiveTab] = useState<number>(0)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
@@ -54,25 +54,22 @@ const BlobCreatePage = () => {
     const onCommitChanges = async (values: TFormValues) => {
         try {
             if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
             if (branch.isProtected)
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!goshWallet.isDaoParticipant)
-                throw new GoshError(EGoshError.NOT_PARTICIPANT)
-
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`
-            const exists = goshRepoTree.tree?.items.find(
+            const exists = tree.tree?.items.find(
                 (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,
             )
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
-
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await goshWallet.createCommit(
-                goshRepo,
+            await wallet.createCommit(
+                repo,
                 branch,
                 userState.keys.public,
                 [
@@ -95,7 +92,7 @@ const BlobCreatePage = () => {
         }
     }
 
-    if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />
+    if (!wallet?.isDaoParticipant) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <Formik

@@ -10,9 +10,9 @@ import Spinner from '../../components/Spinner'
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch)
+    const { tree, getTreeItems } = useGoshRepoTree(repo, branch)
     const [search, setSearch] = useState<string>('')
     const treeItems = useRecoilValue(getTreeItems(search))
 

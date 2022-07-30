@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import BranchSelect from '../../components/BranchSelect'
-import { IGoshRepository, TGoshTreeItem } from '../../types/types'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename, ZERO_COMMIT } from '../../helpers'
+import { getCodeLanguageFromFilename } from '../../helpers'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -14,54 +12,20 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { useRecoilValue } from 'recoil'
-import { goshBranchesAtom, goshCurrBranchSelector } from '../../store/gosh.state'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { GoshCommit, GoshSnapshot } from '../../types/classes'
-import { useGoshRepoTree } from '../../hooks/gosh.hooks'
+import { useGoshBlob, useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 
 const BlobPage = () => {
-    const pathName = useParams()['*']
+    const treePath = useParams()['*']
+
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const branches = useRecoilValue(goshBranchesAtom)
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const { tree, getTreeItem } = useGoshRepoTree(goshRepo, branch, pathName)
-    const treeItem = useRecoilValue(getTreeItem(pathName))
-    const [blob, setBlob] = useState<any>()
-
-    useEffect(() => {
-        const getBlob = async (
-            repo: IGoshRepository,
-            commitAddr: string,
-            branchName: string,
-            treeItem: TGoshTreeItem,
-        ) => {
-            setBlob(undefined)
-
-            const commit = new GoshCommit(repo.account.client, commitAddr)
-            const commitName = await commit.getName()
-            if (commitName === ZERO_COMMIT) return
-
-            let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`
-            filepath = `${filepath}${treeItem.name}`
-
-            const snapAddr = await repo.getSnapshotAddr(branchName, filepath)
-            console.debug('Snap addr', snapAddr)
-            const snap = new GoshSnapshot(repo.account.client, snapAddr)
-            const data = await snap.getSnapshot(commitName, treeItem)
-            setBlob({ content: data.content })
-        }
-
-        console.debug('Branch commit', branch?.commitAddr)
-        if (goshRepo && branch?.commitAddr && treeItem) {
-            getBlob(goshRepo, branch?.commitAddr, branch.name, treeItem)
-        }
-    }, [goshRepo, branch?.commitAddr, branch?.name, treeItem])
+    const { branches, branch } = useGoshRepoBranches(repo, branchName)
+    const blob = useGoshBlob(repo, branchName, treePath)
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -72,7 +36,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`,
+                                `/${daoName}/${repoName}/blobs/${selected.name}/${treePath}`,
                             )
                         }
                     }}
@@ -82,7 +46,7 @@ const BlobPage = () => {
                         daoName={daoName}
                         repoName={repoName}
                         branchName={branchName}
-                        pathName={pathName}
+                        pathName={treePath}
                     />
                 </div>
                 <div className="grow text-right">
@@ -96,16 +60,16 @@ const BlobPage = () => {
                 </div>
             </div>
 
-            {tree?.tree && !treeItem && (
+            {!blob.isFetching && blob.content === undefined && (
                 <div className="text-gray-606060 text-sm">File not found</div>
             )}
-            {(!tree?.tree || (treeItem && !blob)) && (
+            {blob.isFetching && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading file...
                 </div>
             )}
-            {monaco && treeItem && blob?.content && (
+            {monaco && blob.path && blob.content && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
                         {!Buffer.isBuffer(blob.content) ? (
@@ -119,9 +83,9 @@ const BlobPage = () => {
                                         size: 'sm',
                                     }}
                                 />
-                                {!branch?.isProtected && goshWallet?.isDaoParticipant && (
+                                {!branch?.isProtected && wallet?.isDaoParticipant && (
                                     <Link
-                                        to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
+                                        to={`/${daoName}/${repoName}/blobs/update/${branchName}/${treePath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />
@@ -130,14 +94,14 @@ const BlobPage = () => {
                             </>
                         ) : (
                             <FileDownload
-                                name={pathName}
+                                name={treePath}
                                 content={blob.content}
                                 label={<FontAwesomeIcon icon={faFloppyDisk} />}
                             />
                         )}
                     </div>
                     <BlobPreview
-                        language={getCodeLanguageFromFilename(monaco, treeItem.name)}
+                        language={getCodeLanguageFromFilename(monaco, blob.path)}
                         value={blob.content}
                     />
                 </div>

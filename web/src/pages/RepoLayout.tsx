@@ -15,17 +15,17 @@ import { useRecoilValue } from 'recoil'
 import { userStatePersistAtom } from '../store/user.state'
 
 export type TRepoLayoutOutletContext = {
-    goshRepo: IGoshRepository
-    goshWallet?: IGoshWallet
+    repo: IGoshRepository
+    wallet?: IGoshWallet
 }
 
 const RepoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const goshRepo = useGoshRepo(daoName, repoName)
+    const repo = useGoshRepo(daoName, repoName)
     const dao = useGoshDao(daoName)
-    const goshWallet = useGoshWallet(dao)
-    const { updateBranches } = useGoshRepoBranches(goshRepo)
+    const wallet = useGoshWallet(dao)
+    const { updateBranches } = useGoshRepoBranches(repo)
     const [isFetched, setIsFetched] = useState<boolean>(false)
 
     const tabs = [
@@ -50,9 +50,9 @@ const RepoLayout = () => {
         }
 
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && goshWallet)
-        if (goshRepo && walletAwaited) init()
-    }, [goshRepo, goshWallet, userStatePersist.phrase, updateBranches])
+            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
+        if (repo && walletAwaited) init()
+    }, [repo, wallet, userStatePersist.phrase, updateBranches])
 
     return (
         <div className="container container--full my-10">
@@ -83,7 +83,7 @@ const RepoLayout = () => {
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
                         {tabs
-                            .filter((item) => (!goshWallet ? item.public : item))
+                            .filter((item) => (!wallet ? item.public : item))
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -108,7 +108,7 @@ const RepoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ goshRepo, goshWallet }} />
+                    <Outlet context={{ repo, wallet }} />
                 </>
             )}
         </div>

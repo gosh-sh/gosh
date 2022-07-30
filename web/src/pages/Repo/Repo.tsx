@@ -23,15 +23,15 @@ import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from '../../utils'
 
 const RepoPage = () => {
-    const pathName = useParams()['*'] || ''
+    const treePath = useParams()['*']
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(goshRepo, branchName)
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName)
-    const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName))
+    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
+    const tree = useGoshRepoTree(repo, branch, treePath)
+    const subtree = useRecoilValue(tree.getSubtree(treePath))
 
-    const [dirUp] = splitByPath(pathName)
+    const [dirUp] = splitByPath(treePath || '')
 
     useEffect(() => {
         if (branch?.name) updateBranch(branch.name)
@@ -79,10 +79,10 @@ const RepoPage = () => {
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!branch?.isProtected && goshWallet?.isDaoParticipant && (
+                    {!branch?.isProtected && wallet?.isDaoParticipant && (
                         <Link
                             to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
-                                pathName && `/${pathName}`
+                                treePath && `/${treePath}`
                             }`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
@@ -160,7 +160,7 @@ const RepoPage = () => {
                     </div>
                 )}
 
-                {!!subtree && pathName && (
+                {!!subtree && treePath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
                         to={`/${daoName}/${repoName}/tree/${branchName}${

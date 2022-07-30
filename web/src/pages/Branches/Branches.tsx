@@ -28,11 +28,11 @@ type TCreateBranchFormValues = {
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const smvBalance = useSmvBalance(goshWallet)
+    const smvBalance = useSmvBalance(wallet)
     const [branchName, setBranchName] = useState<string>('main')
-    const { branches, updateBranches } = useGoshRepoBranches(goshRepo)
+    const { branches, updateBranches } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
@@ -48,15 +48,15 @@ export const BranchesPage = () => {
                 [name]: { ...state[name], busy: true, lock: true },
             }))
 
-            if (await goshRepo.isBranchProtected(name))
+            if (await repo.isBranchProtected(name))
                 throw new Error('Branch is already protected')
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await goshWallet.startProposalForAddProtectedBranch(repoName, name)
+            await wallet.startProposalForAddProtectedBranch(repoName, name)
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -77,15 +77,15 @@ export const BranchesPage = () => {
                 [name]: { ...state[name], busy: true, lock: true },
             }))
 
-            const isProtected = await goshRepo.isBranchProtected(name)
+            const isProtected = await repo.isBranchProtected(name)
             if (!isProtected) throw new Error('Branch is not protected')
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await goshWallet.startProposalForDeleteProtectedBranch(repoName, name)
+            await wallet.startProposalForDeleteProtectedBranch(repoName, name)
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -105,14 +105,11 @@ export const BranchesPage = () => {
     ) => {
         try {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            const commit = new GoshCommit(
-                goshWallet.account.client,
-                values.from.commitAddr,
-            )
-            await goshWallet.deployBranch(
-                goshRepo,
+            const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
+            await wallet.deployBranch(
+                repo,
                 values.newName.toLowerCase(),
                 values.from.name,
                 await commit.getName(),
@@ -134,12 +131,12 @@ export const BranchesPage = () => {
                     [name]: { ...state[name], busy: true, delete: true },
                 }))
 
-                if (await goshRepo.isBranchProtected(name))
+                if (await repo.isBranchProtected(name))
                     throw new Error('Branch is protected')
                 if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-                if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+                if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await goshWallet.deleteBranch(goshRepo, name)
+                await wallet.deleteBranch(repo, name)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
@@ -168,7 +165,7 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex flex-wrap justify-between gap-4">
-                {goshWallet?.isDaoParticipant && (
+                {wallet?.isDaoParticipant && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -263,7 +260,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {goshWallet?.isDaoParticipant && (
+                            {wallet?.isDaoParticipant && (
                                 <>
                                     <button
                                         type="button"

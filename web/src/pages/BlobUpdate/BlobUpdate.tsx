@@ -11,15 +11,13 @@ import BlobEditor from '../../components/Blob/Editor'
 import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import { useMonaco } from '@monaco-editor/react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { IGoshRepository, TGoshTreeItem } from '../../types/types'
 import { getCodeLanguageFromFilename, splitByPath } from '../../helpers'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { useRecoilValue } from 'recoil'
 import {
+    useGoshBlob,
     useCommitProgress,
     useGoshRepoBranches,
-    useGoshRepoTree,
 } from '../../hooks/gosh.hooks'
 import { userStateAtom } from '../../store/user.state'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
@@ -27,7 +25,6 @@ import { EGoshError, GoshError } from '../../types/errors'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'
-import { GoshCommit, GoshSnapshot } from '../../types/classes'
 
 type TFormValues = {
     name: string
@@ -38,44 +35,41 @@ type TFormValues = {
 }
 
 const BlobUpdatePage = () => {
-    const pathName = useParams()['*']
+    const treePath = useParams()['*']
+
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const userState = useRecoilValue(userStateAtom)
-    const { updateBranch } = useGoshRepoBranches(goshRepo)
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true)
-    const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName))
+    const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
-    const [blob, setBlob] = useState<{ content: string | Buffer; isIpfs: boolean }>()
+    const blob = useGoshBlob(repo, branchName, treePath, true)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
-        pathName && `/${pathName}`
+        treePath && `/${treePath}`
     }`
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
             if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
             if (branch.isProtected)
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!goshWallet.isDaoParticipant)
-                throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
             if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
-            const [path] = splitByPath(pathName || '')
+            const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await goshWallet.createCommit(
-                goshRepo,
+            await wallet.createCommit(
+                repo,
                 branch,
                 userState.keys.public,
                 [
@@ -100,59 +94,37 @@ const BlobUpdatePage = () => {
     }
 
     useEffect(() => {
-        const getBlob = async (
-            repo: IGoshRepository,
-            branchName: string,
-            treeItem: TGoshTreeItem,
-            commitAddr: string,
-        ) => {
-            let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`
-            filepath = `${filepath}${treeItem.name}`
-
-            const snapAddr = await repo.getSnapshotAddr(branchName, filepath)
-            console.debug(snapAddr)
-
-            const commit = new GoshCommit(repo.account.client, commitAddr)
-            const commitName = await commit.getName()
-
-            const snap = new GoshSnapshot(repo.account.client, snapAddr)
-            const data = await snap.getSnapshot(commitName, treeItem)
-            if (Buffer.isBuffer(data.content)) {
-                toast.error(EGoshError.FILE_BINARY)
-                navigate(urlBack)
-            } else setBlob(data)
+        if (Buffer.isBuffer(blob.content)) {
+            toast.error(EGoshError.FILE_BINARY)
+            navigate(urlBack)
         }
-
-        if (goshRepo && branch?.name && branch.commitAddr && treeItem) {
-            getBlob(goshRepo, branch.name, treeItem, branch.commitAddr)
-        }
-    }, [goshRepo, branch?.name, branch?.commitAddr, treeItem, urlBack, navigate])
+    }, [blob.content, navigate, urlBack])
 
     useEffect(() => {
-        if (monaco && pathName) {
-            const language = getCodeLanguageFromFilename(monaco, pathName)
+        if (monaco && treePath) {
+            const language = getCodeLanguageFromFilename(monaco, treePath)
             setBlobCodeLanguage(language)
         }
-    }, [monaco, pathName])
+    }, [monaco, treePath])
 
-    if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />
+    if (!wallet?.isDaoParticipant) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <div className="px-4 sm:px-7">
-                {goshRepoTree.tree && !treeItem && (
+                {!blob.isFetching && blob.content === undefined && (
                     <div className="text-gray-606060 text-sm">File not found</div>
                 )}
-                {(!goshRepoTree.tree || (treeItem && blob === undefined)) && (
+                {blob.isFetching && (
                     <div className="text-gray-606060 text-sm">
                         <Spinner className="mr-3" />
                         Loading file...
                     </div>
                 )}
             </div>
-            {monaco && pathName && blob !== undefined && (
+            {monaco && blob.path && blob.content && (
                 <Formik
                     initialValues={{
-                        name: splitByPath(pathName)[1],
+                        name: splitByPath(blob.path)[1],
                         content: blob.content.toString(),
                         title: '',
                         message: '',
@@ -172,7 +144,7 @@ const BlobUpdatePage = () => {
                                         daoName={daoName}
                                         repoName={repoName}
                                         branchName={branchName}
-                                        pathName={pathName}
+                                        pathName={treePath}
                                         pathOnly={true}
                                         isBlob={false}
                                     />

@@ -10,9 +10,9 @@ import CommitBlobs from './CommitBlobs'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 
 const CommitPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName, commitName } = useParams()
-    const { branch } = useGoshRepoBranches(goshRepo, branchName)
+    const { branch } = useGoshRepoBranches(repo, branchName)
     const [commit, setCommit] = useState<TGoshCommit>()
 
     const renderCommitter = (committer: string) => {
@@ -35,8 +35,8 @@ const CommitPage = () => {
             setCommit(commitData)
         }
 
-        if (commitName) _getCommit(goshRepo, commitName)
-    }, [goshRepo, commitName])
+        if (commitName) _getCommit(repo, commitName)
+    }, [repo, commitName])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -101,7 +101,7 @@ const CommitPage = () => {
 
                     {branch && commit.branch === branch.name && (
                         <CommitBlobs
-                            repo={goshRepo}
+                            repo={repo}
                             branch={branch.name}
                             commit={commit.name}
                             className="mt-4"

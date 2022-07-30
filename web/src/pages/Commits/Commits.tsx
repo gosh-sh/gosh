@@ -12,9 +12,9 @@ import { shortString } from '../../utils'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const CommitsPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { branches, updateBranch } = useGoshRepoBranches(goshRepo)
+    const { branches, updateBranch } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
     const navigate = useNavigate()
     const [commits, setCommits] = useState<{
@@ -62,11 +62,11 @@ const CommitsPage = () => {
     useEffect(() => {
         const initCommits = async () => {
             setCommits({ list: [], isFetching: true })
-            getCommits(goshRepo, branch?.commitAddr)
+            getCommits(repo, branch?.commitAddr)
         }
 
-        if (goshRepo && branch?.commitAddr) initCommits()
-    }, [goshRepo, branch?.commitAddr])
+        if (repo && branch?.commitAddr) initCommits()
+    }, [repo, branch?.commitAddr])
 
     useEffect(() => {
         updateBranch(branchName)
@@ -153,7 +153,7 @@ const CommitsPage = () => {
                         className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                         type="button"
                         disabled={commits.isFetching}
-                        onClick={() => getCommits(goshRepo, commits.next)}
+                        onClick={() => getCommits(repo, commits.next)}
                     >
                         {commits.isFetching && <Spinner className="mr-2" />}
                         Load more
