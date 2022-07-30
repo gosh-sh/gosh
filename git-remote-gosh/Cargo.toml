@@ -73,7 +73,3 @@ path = 'src/lib.rs'
 [[bin]]
 name = "git-remote-gosh"
 path = "src/main.rs"
-
-[[bin]]
-name = "git-remote-gosh-vscode-debug"
-path = "src/vscode-debug.rs"
