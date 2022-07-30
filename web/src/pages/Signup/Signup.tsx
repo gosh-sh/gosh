@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Form, Formik, Field } from 'formik'
 import * as Yup from 'yup'
 import TextareaField from '../../components/FormikForms/TextareaField'
 import SwitchField from '../../components/FormikForms/SwitchField'
-import { useEverClient } from '../../hooks/ever.hooks'
 import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { useNavigate } from 'react-router-dom'
 import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { userStatePersistAtom } from '../../store/user.state'
+import { goshClient } from '../../helpers'
 
 type TFormValues = {
     phrase: string
@@ -19,7 +19,6 @@ type TFormValues = {
 const SignupPage = () => {
     const navigate = useNavigate()
     const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
-    const everClient = useEverClient()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [phrase, setPhrase] = useState<string>('')
 
@@ -43,8 +42,8 @@ const SignupPage = () => {
     }
 
     useEffect(() => {
-        generatePhrase(everClient)
-    }, [everClient])
+        generatePhrase(goshClient)
+    }, [])
 
     return (
         <div className="block-auth">

@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
 import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
-import { chacha20, generateRandomBytes } from '../../helpers'
-import { useEverClient } from '../../hooks/ever.hooks'
+import { chacha20, generateRandomBytes, goshClient } from '../../helpers'
 import { appModalStateAtom } from '../../store/app.state'
 import { TUserStatePersist } from '../../types/types'
 import { toast } from 'react-toastify'
@@ -20,7 +19,6 @@ type TPinCodeModalProps = {
 const PinCodeModal = (props: TPinCodeModalProps) => {
     const { phrase, unlock, onUnlock } = props
 
-    const everClient = useEverClient()
     const [userStatePersist, setUserStatePersist] = useRecoilState(userStatePersistAtom)
     const setUserState = useSetRecoilState(userStateAtom)
     const setModal = useSetRecoilState(appModalStateAtom)
@@ -36,9 +34,9 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             const pinKey = Number(pin).toString(16)
 
             if (phrase) {
-                const nonce = await generateRandomBytes(everClient, 12, true)
+                const nonce = await generateRandomBytes(goshClient, 12, true)
                 const encrypted = await chacha20.encrypt(
-                    everClient,
+                    goshClient,
                     Buffer.from(phrase).toString('base64'),
                     pinKey,
                     nonce,
@@ -57,13 +55,13 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 }
 
                 let decrypted = await chacha20.decrypt(
-                    everClient,
+                    goshClient,
                     tmp.phrase,
                     pinKey,
                     tmp.nonce,
                 )
                 decrypted = Buffer.from(decrypted, 'base64').toString()
-                const keys = await everClient.crypto.mnemonic_derive_sign_keys({
+                const keys = await goshClient.crypto.mnemonic_derive_sign_keys({
                     phrase: decrypted,
                 })
 
@@ -73,16 +71,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 onUnlock && onUnlock()
             }
         },
-        [
-            everClient,
-            phrase,
-            unlock,
-            tmp,
-            onUnlock,
-            setModal,
-            setUserState,
-            setUserStatePersist,
-        ],
+        [phrase, unlock, tmp, onUnlock, setModal, setUserState, setUserStatePersist],
     )
 
     useEffect(() => {

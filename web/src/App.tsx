@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 
-import { useEverClient } from './hooks/ever.hooks'
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
 import AccountLayout from './pages/AccountLayout'
@@ -36,20 +35,19 @@ import EventPage from './pages/Event'
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
-import { ToastOptionsShortcuts } from './helpers'
+import { goshClient, ToastOptionsShortcuts } from './helpers'
 import { shortString } from './utils'
 import Containers from './docker-extension/pages/Containers'
 
 const App = () => {
-    const client = useEverClient()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
     useEffect(() => {
-        if (!client) return
-        client.client.version().then(() => {
+        if (!goshClient) return
+        goshClient.client.version().then(() => {
             setIsInitialized(true)
         })
-    }, [client])
+    }, [])
 
     if (!isInitialized)
         return (
