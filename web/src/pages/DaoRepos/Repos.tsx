@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { useGoshRoot } from '../../hooks/gosh.hooks'
 import { GoshRepository } from '../../types/classes'
 import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient } from '../../helpers'
+import { getPaginatedAccounts, goshClient, goshRoot } from '../../helpers'
 import { sleep } from '../../utils'
 
 const DaoRepositoriesPage = () => {
     const pageSize = 10
 
-    const goshRoot = useGoshRoot()
     const { daoName } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
     const [search, setSearch] = useState<string>('')
@@ -96,7 +94,7 @@ const DaoRepositoriesPage = () => {
         }
 
         getRepoList()
-    }, [goshRoot, dao.address])
+    }, [dao.address])
 
     /** Update filtered items and page depending on search */
     useEffect(() => {

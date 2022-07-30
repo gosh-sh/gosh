@@ -5,6 +5,7 @@ import {
     getCommitTime,
     getRepoTree,
     goshClient,
+    goshRoot,
     loadFromIPFS,
     zstd,
 } from '../../helpers'
@@ -17,7 +18,6 @@ import {
 } from '../../types/types'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import { GoshCommit, GoshDiff, GoshRepository } from '../../types/classes'
-import { useGoshRoot } from '../../hooks/gosh.hooks'
 import { AccountType } from '@eversdk/appkit'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
@@ -36,7 +36,6 @@ type TCommitBlobsType = {
 
 const PREvent = (props: TCommitBlobsType) => {
     const { className, daoName, repoName, branchName, commitName, status } = props
-    const root = useGoshRoot()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
     const [details, setDetails] = useState<TGoshCommitDetails>()
@@ -146,7 +145,7 @@ const PREvent = (props: TCommitBlobsType) => {
 
             setIsFetched(false)
 
-            const repoAddr = await root.getRepoAddr(_repoName, daoName)
+            const repoAddr = await goshRoot.getRepoAddr(_repoName, daoName)
             const repo = new GoshRepository(goshClient, repoAddr)
 
             const commitAddr = await repo.getCommitAddr(_commitName)
@@ -216,7 +215,7 @@ const PREvent = (props: TCommitBlobsType) => {
         }
 
         getCommitBlobs(repoName, branchName, commitName)
-    }, [root, daoName, repoName, branchName, commitName])
+    }, [daoName, repoName, branchName, commitName])
 
     return (
         <div className={className}>

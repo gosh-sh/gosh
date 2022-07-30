@@ -30,21 +30,6 @@ import {
     TGoshBranch,
     TSmvBalanceDetails,
 } from '../types/types'
-// import { useEverClient } from './ever.hooks';
-
-/** Create GoshRoot object */
-/** Backward compatibility, remove hook after full refactor */
-export const useGoshRoot = () => {
-    return goshRoot
-    // const client = useEverClient();
-
-    // return useMemo<IGoshRoot | undefined>(() => {
-    //     const address = process.env.REACT_APP_GOSH_ADDR;
-    //     if (client && address) {
-    //         return new GoshRoot(client, address);
-    //     }
-    // }, [client]);
-}
 
 export const useGoshDao = (name?: string) => {
     const [details, setDetails] = useRecoilState(goshDaoAtom)
@@ -129,7 +114,6 @@ export const useGoshWallet = (dao?: IGoshDao) => {
 
 /** Create GoshRepository object */
 export const useGoshRepo = (daoName?: string, name?: string) => {
-    const goshRoot = useGoshRoot()
     const [goshRepo, setGoshRepo] = useState<IGoshRepository>()
 
     useEffect(() => {
@@ -140,7 +124,7 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
         }
 
         if (goshRoot && daoName && name) createRepo(goshRoot, daoName, name)
-    }, [goshRoot, daoName, name])
+    }, [daoName, name])
 
     return goshRepo
 }

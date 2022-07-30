@@ -4,15 +4,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient } from '../../helpers'
-import { useGoshRoot } from '../../hooks/gosh.hooks'
+import { getPaginatedAccounts, goshClient, goshRoot } from '../../helpers'
 import { userStateAtom } from '../../store/user.state'
 import { GoshDao, GoshWallet } from '../../types/classes'
 import { TGoshDaoDetails } from '../../types/types'
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom)
-    const goshRoot = useGoshRoot()
     const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
         list: TGoshDaoDetails[]
@@ -66,7 +64,7 @@ const DaosPage = () => {
                 completed: wallets.completed,
             }))
         },
-        [goshRoot, userState.keys?.public],
+        [userState.keys?.public],
     )
 
     useEffect(() => {

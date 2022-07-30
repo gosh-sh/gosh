@@ -8,13 +8,13 @@ import { EEventType, TGoshEventDetails } from '../../types/types'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from '../../utils'
-import { useGoshRoot, useSmvBalance } from '../../hooks/gosh.hooks'
+import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import PREvent from './PREvent'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { eventTypes, goshClient } from '../../helpers'
+import { eventTypes, goshClient, goshRoot } from '../../helpers'
 import { EGoshError, GoshError } from '../../types/errors'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
@@ -27,7 +27,6 @@ type TFormValues = {
 const EventPage = () => {
     const { daoName, eventAddr } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
-    const root = useGoshRoot()
     const smvBalance = useSmvBalance(wallet)
     const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
@@ -57,7 +56,6 @@ const EventPage = () => {
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!root) throw new GoshError(EGoshError.NO_ROOT)
             if (!dao) throw new GoshError(EGoshError.NO_DAO)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
@@ -70,7 +68,7 @@ const EventPage = () => {
                 })
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            const smvPlatformCode = await root.getSmvPlatformCode()
+            const smvPlatformCode = await goshRoot.getSmvPlatformCode()
             const smvClientCode = await dao.getSmvClientCode()
             const choice = values.approve === 'true'
             await wallet.voteFor(

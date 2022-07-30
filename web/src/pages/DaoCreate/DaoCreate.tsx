@@ -2,7 +2,6 @@ import React from 'react'
 import { Field, FieldArray, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import TextField from '../../components/FormikForms/TextField'
-import { useGoshRoot } from '../../hooks/gosh.hooks'
 import { useNavigate } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { userStateAtom } from '../../store/user.state'
@@ -11,6 +10,7 @@ import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
 import { EGoshError, GoshError } from '../../types/errors'
 import { toast } from 'react-toastify'
+import { goshRoot } from '../../helpers'
 
 type TFormValues = {
     name: string
@@ -18,14 +18,12 @@ type TFormValues = {
 }
 
 const DaoCreatePage = () => {
-    const goshRoot = useGoshRoot()
     const navigate = useNavigate()
     const userState = useRecoilValue(userStateAtom)
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
             if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT)
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { useGoshRoot } from '../../hooks/gosh.hooks'
+import { goshRoot } from '../../helpers'
 import { userStateAtom } from '../../store/user.state'
 import { GoshDao, GoshRepository, GoshWallet } from '../../types/classes'
 import { TGoshRepoDetails } from '../../types/types'
@@ -10,12 +10,11 @@ import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {
     const userState = useRecoilValue(userStateAtom)
-    const goshRoot = useGoshRoot()
     const [search, setSearch] = useState<string>()
     const repoListQuery = useQuery(
         ['userRepositoryList'],
         async (): Promise<{ repo: TGoshRepoDetails; daoName?: string }[]> => {
-            if (!goshRoot || !userState.keys) return []
+            if (!userState.keys) return []
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
             const walletCode = await goshRoot.getDaoWalletCode(
