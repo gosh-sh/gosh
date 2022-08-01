@@ -38,12 +38,13 @@ build-gosh-git-image:
 	cd ../git-remote-gosh \
 		&& make pull FULL_IMAGE_NAME=${GOSH_GIT_IMAGE} PLATFORM=${PLATFORM}
 
-build: clean_temp build-ui-v2 no-build-gosh-git-image ## Build service image to be deployed as a desktop extension
+build: clean_temp build-ui-v2 build-gosh-git-image ## Build service image to be deployed as a desktop extension
 	mkdir $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	docker buildx build \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
+	  --platform $(PLATFORM) \
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
 	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
@@ -71,25 +72,19 @@ update: build ## Update the extension
 debug: ## Debug the extension
 	docker extension dev debug $(IMAGE):$(TAG)
 
-publish: ## Publish the extension
-	-rm -rf $(LOCAL_TEMP_DIR)
-	-mkdir $(LOCAL_TEMP_DIR)
-	-cp -r ../content-signature $(LOCAL_TEMP_DIR)
-	-cp -r ../git-remote-gosh $(LOCAL_TEMP_DIR)
-	-mkdir $(LOCAL_TEMP_DIR)/gosh
-	-cp -r ../gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+publish: clean_temp build-ui-v2 build-gosh-git-image ## Publish the extension
+	mkdir $(LOCAL_TEMP_DIR)/gosh
+	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	docker buildx build \
 	  --no-cache \
 	  --platform $(PLATFORM) \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
-	  --build-arg content_signature_local_dir="$(LOCAL_TEMP_DIR)/content-signature" \
-	  --build-arg git_remote_gosh_local_dir="$(LOCAL_TEMP_DIR)/git-remote-gosh" \
+	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
-	  --build-arg detailed_description="$(DETAILED_DESCRIPTION)" \
 	  --push \
 	  .
-	-rm -rf $(LOCAL_TEMP_DIR)
 
 
 .PHONY: build install update debug publish
