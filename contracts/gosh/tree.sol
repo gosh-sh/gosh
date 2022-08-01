@@ -149,6 +149,7 @@ contract Tree is Modifiers {
     
     function getShaInfo(Request value0) private view {
         optional(uint32) pos = value0.lastPath.find(byte('/'));
+        getMoney(_pubkey);
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get());
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
@@ -162,13 +163,23 @@ contract Tree is Modifiers {
             return;
         }
         else {
-            if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == false) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
-            }
-            else {
+            if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == true) {
                 Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
+                return;
             }
-            getMoney(_pubkey);
+            if (_tree.exists(tvm.hash("blobExecutable:" + value0.lastPath)) == true) {
+                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blobExecutable:" + value0.lastPath)], _shaTree);
+                return;
+            }
+            if (_tree.exists(tvm.hash("link:" + value0.lastPath)) == true) {
+                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("link:" + value0.lastPath)], _shaTree);
+                return;
+            }
+            if (_tree.exists(tvm.hash("commit:" + value0.lastPath)) == true) {
+                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("commit:" + value0.lastPath)], _shaTree);
+                return;
+            }
+            Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
             return;
         }
     }
