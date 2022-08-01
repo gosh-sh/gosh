@@ -1,7 +1,6 @@
 DOCKER              ?= docker
 DOCKER_BUILDER_NAME ?= public-gosh-builder
-# PLATFORM            ?= linux/amd64,linux/arm64
-PLATFORM            ?= linux/amd64
+PLATFORM            ?= linux/amd64,linux/arm64
 PROGRESS            ?= auto
 # PROGRESS            ?= plain
 DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
@@ -19,7 +18,7 @@ IMAGE_NAME := teamgosh/git
 IMAGE_TAG  ?= ${GIT_BRANCH}
 
 # TAG_COMMIT := ${IMAGE_NAME}:${GIT_COMMIT}
-FULL_IMAGE_NAME := ${IMAGE_NAME}:${IMAGE_TAG}
+FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
 .PHONY: clear_screen

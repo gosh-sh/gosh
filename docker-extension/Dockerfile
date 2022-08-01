@@ -1,20 +1,21 @@
 # syntax=docker/dockerfile:1.4
-FROM --platform=${BUILDPLATFORM} node:18-slim as base
+
+ARG GOSH_GIT_IMAGE=teamgosh/git
+
+FROM ${GOSH_GIT_IMAGE} as gosh_git
+FROM --platform=${BUILDPLATFORM} node:18-bullseye-slim as node_slim
 
 
-FROM --platform=$BUILDPLATFORM node:18.6.0 AS client-builder
+FROM --platform=${BUILDPLATFORM} node:18-bullseye AS node_builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
-COPY ui /ui
-# RUN yarn install --silent
-# RUN yarn build --silent
+COPY --link ui /ui
 RUN npm install
 RUN npm run build
 
 
-FROM base
-ARG git_remote_gosh_local_dir
+FROM node_slim
 ARG gosh_abi_local_dir
 ARG detailed_description
 ARG ui_v2
@@ -38,20 +39,18 @@ COPY --link --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plug
 COPY --link metadata.json /
 COPY --link ./vm/docker-compose.yaml /
 COPY --link ./vm/commands/ /command/
-COPY --link $git_remote_gosh_local_dir /command/tools/git-remote-gosh
 COPY --link $gosh_abi_local_dir /command/tools/gosh
 COPY --link $ui_v2 /ui/v2
-COPY --from=client-builder /ui/build ui/v1
+COPY --from=node_builder /ui/build ui/v1
+
+COPY --link icon.svg /
+COPY --link index.html /ui/index.html
+
+ARG TARGETOS TARGETARCH
+COPY --from=gosh_git /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
 ENV DOCKER_CLI_EXPERIMENTAL=enabled
 ENV NODE_ENV=production
-
-ARG TARGETOS TARGETARCH
-
-COPY --link icon.svg /
-
-COPY --link index.html /ui/index.html
-
 CMD [ "sleep", "infinity" ]
