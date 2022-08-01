@@ -30,12 +30,14 @@ mod serde_number;
 pub mod snapshot;
 pub mod tree;
 mod user_wallet;
+mod tvm_hash;
 pub use commit::{ push_commit, notify_commit };
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;
 pub use tree::{push_tree, Tree};
 pub use user_wallet::user_wallet;
+pub use tvm_hash::tvm_hash;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;
@@ -428,28 +430,13 @@ pub async fn get_head(context: &TonClient, address: &str) -> Result<String> {
     return Ok(result.head);
 }
 
-pub async fn tvm_hash(context: &TonClient, data: String) -> Result<String> {
-    let builder = BuilderOp::BitString { value: hex::encode(data) };
-    let params = ParamsOfEncodeBoc {
-        builder: vec![builder],
-        ..Default::default()
-    };
-    let ResultOfEncodeBoc { boc } = encode_boc(context.clone(), params).await?;
-    let ResultOfGetBocHash { hash } = get_boc_hash(
-        context.clone(),
-        ParamsOfGetBocHash { boc }
-    ).await?;
-
-    Ok(hash)
-}
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
     use crate::config;
 
-    struct TestEnv {
+    pub struct TestEnv {
         config: Config,
         client: TonClient,
         gosh: String,
@@ -464,10 +451,9 @@ mod tests {
             TestEnv {
                 config: cfg,
                 client,
-                gosh: "0:eef0faac2330d2608c725b32becc916dced505bdb88d84f18c222708a7fa8229"
-                    .to_string(),
-                dao: "teampre".to_string(),
-                repo: "testme".to_string(),
+                gosh: "0:531e04367c6d2e779e7af838b7a66282c58847b1fa15ab26d253aa780736ce2e".to_string(),
+                dao: "shnapsss".to_string(),
+                repo: "repo".to_string(),
             }
         }
     }
@@ -503,13 +489,43 @@ mod tests {
         );
     }
 
+    #[derive(Deserialize, Debug)]
+    struct GetHashResult {
+        #[serde(rename = "value0")] 
+        hash: String
+    }
+
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
         let te = TestEnv::new();
-        let data_to_hash = "Vasily".to_string();
-        let expected_hash = "530d506c1d3dcf478264f48123f56407b92e169fdc00be6062f4e53f2f8b0d07";
-        let hash = tvm_hash(&te.client, data_to_hash).await.unwrap();
-        assert_eq!(expected_hash, hash);
+        const sample_string: &str = include_str!(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"), 
+                "/src/blockchain/tvm_hash/deploy.sh.test-sample"
+            )
+        );
+        const precalculated_hash_for_the_string: &str = "0x2f58a03ce9f03a504bd7b59421b3aef17b7b65c54e9b119e85fe15dcfba464a8";
+        let hash = tvm_hash(&te.client, sample_string.to_string()).await.unwrap();
+
+        let args = serde_json::json!({ 
+            "state": hex::encode(sample_string)
+        });
+        let logger = crate::logger::GitHelperLogger::init().ok().unwrap();
+
+        let test_pubkey = "13f63ef393f3fc6c22a7faf629dca64df19ca0388cf1c8dd04c84ddf44d1e742"; 
+        let test_secret = "80378dc53f9d6d27a69463d9e14a6ec867a08665faba96bec793ffa592b26d64";
+        let contract = crate::blockchain::user_wallet::get_user_wallet(
+            &te.client,
+            &te.gosh,
+            &te.dao,
+            test_pubkey,
+            test_secret
+        ).await.ok().unwrap();
+        let result: GetHashResult = contract
+            .run_local(&te.client, "getHash", Some(args))
+            .await
+            .expect("ok");
+        assert_eq!(result.hash, format!("0x{}", hash));
     }
 
     // TODO:

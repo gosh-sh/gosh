@@ -2,6 +2,7 @@ use crate::abi;
 use crate::blockchain::GoshContract;
 use crate::config::UserWalletConfig;
 use crate::git_helper::GitHelper;
+use crate::blockchain::TonClient;
 use ton_client::crypto::KeyPair;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -19,32 +20,26 @@ struct GetAddrDaoResult {
     pub address: String,
 }
 
-#[instrument(level = "debug", skip(context))]
-pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
-    let config = user_wallet_config(context);
-    if config.is_none() {
-        return Err("User wallet config must be set".into());
-    }
-    let config = config.expect("Guarded");
+pub async fn get_user_wallet(client: &TonClient, gosh_root_contract_address: &str, dao_name: &str, pubkey: &str, secret: &str)  -> Result<GoshContract> {
     let gosh_root_contract = GoshContract::new(
-        &context.remote.gosh,
+        gosh_root_contract_address,
         abi::GOSH
     );
      
     let dao_address: GetAddrDaoResult = gosh_root_contract.run_local(
-        &context.es_client,
+        &client,
         "getAddrDao",
         Some(serde_json::json!({
-            "name": context.remote.dao
+            "name": dao_name
         }))
     ).await?;
     let dao_contract = GoshContract::new(
         &dao_address.address,
         abi::DAO
     );
-    let pubkey = format!("0x{}", config.pubkey);
+    let pubkey = format!("0x{}", pubkey);
     let result: GetAddrWalletResult = dao_contract.run_local(
-        &context.es_client, 
+        &client, 
         "getAddrWallet",
         Some(serde_json::json!({
             "pubkey": pubkey,
@@ -53,10 +48,27 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     ).await?;
     let user_wallet_address = result.address; 
     log::trace!("user_wallet address: {:?}", user_wallet_address);
-    let secrets = KeyPair::new(config.pubkey, config.secret);
+    let secrets = KeyPair::new(pubkey.into(), secret.into());
 
     let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
-    return Ok(contract);
+    return Ok(contract);   
+    
+}
+
+#[instrument(level = "debug", skip(context))]
+pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
+    let config = user_wallet_config(context);
+    if config.is_none() {
+        return Err("User wallet config must be set".into());
+    }
+    let config = config.expect("Guarded");
+    return Ok(get_user_wallet(
+        &context.es_client,
+        &context.remote.gosh,
+        &context.remote.dao,
+        &config.pubkey, 
+        &config.secret  
+    ).await?);
 }
 
 fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
