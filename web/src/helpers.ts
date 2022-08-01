@@ -140,7 +140,7 @@ export const fromEvers = (value: number): number => {
 
 export const sha1 = (
     data: string | Buffer,
-    type: 'blob' | 'commit' | 'tree' | 'tag',
+    type: 'blob' | 'commit' | 'tree' | 'tag' | 'blobExecutable' | 'link',
     mode: 'sha1' | 'sha256',
 ): string => {
     let content = data
@@ -183,21 +183,19 @@ export const getTreeItemsFromPath = async (
     fullpath: string,
     content: string | Buffer,
     flags: number,
-    ipfs: string | null,
+    treeItem?: TGoshTreeItem,
 ): Promise<TGoshTreeItem[]> => {
     const items: TGoshTreeItem[] = []
 
     // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(fullpath)
-    const sha = sha1(content, 'blob', 'sha1')
-
-    // const sha256 = sha1(fileContent, 'blob', 'sha256');
-    const sha256 = await goshRoot.getTvmHash(ipfs || (content as string))
+    const sha = sha1(content, treeItem?.type || 'blob', 'sha1')
+    const sha256 = await goshRoot.getTvmHash(content)
 
     items.push({
         flags,
-        mode: '100644',
-        type: 'blob',
+        mode: treeItem?.mode || '100644',
+        type: treeItem?.type || 'blob',
         sha1: sha,
         sha256,
         path,

@@ -44,7 +44,7 @@ const BlobUpdatePage = () => {
     const userState = useRecoilValue(userStateAtom)
     const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
-    const blob = useGoshBlob(repo, branchName, treePath, true)
+    const { blob, treeItem } = useGoshBlob(repo, branchName, treePath, true)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
@@ -78,6 +78,7 @@ const BlobUpdatePage = () => {
                         modified: values.content,
                         original: blob?.content ?? '',
                         isIpfs: blob?.isIpfs,
+                        treeItem,
                     },
                 ],
                 message,

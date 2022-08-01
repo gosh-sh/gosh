@@ -389,6 +389,7 @@ export class GoshWallet implements IGoshWallet {
             modified: string | Buffer
             original?: string | Buffer
             isIpfs?: boolean
+            treeItem?: TGoshTreeItem
         }[],
         message: string,
         tags?: string,
@@ -411,7 +412,7 @@ export class GoshWallet implements IGoshWallet {
         const processedBlobs: any[] = []
         await Promise.all(
             blobs.map(async (blob) => {
-                const { name, modified, original, isIpfs = false } = blob
+                const { name, modified, original, treeItem, isIpfs = false } = blob
 
                 // Deploy empty snapshot
                 const snap = await this.deployNewSnapshot(
@@ -469,7 +470,7 @@ export class GoshWallet implements IGoshWallet {
                     blob.name,
                     blob.modified,
                     flags,
-                    ipfs,
+                    treeItem,
                 )
                 blobPathItems.forEach((pathItem) => {
                     const pathIndex = updatedPaths.findIndex(

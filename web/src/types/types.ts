@@ -91,8 +91,8 @@ export type TGoshCommitDetails = {
 
 export type TGoshTreeItem = {
     flags: number
-    mode: '040000' | '100644'
-    type: 'tree' | 'blob'
+    mode: '040000' | '100644' | string
+    type: 'tree' | 'blob' | 'blobExecutable' | 'link'
     sha1: string
     sha256: string
     path: string
@@ -215,6 +215,7 @@ export interface IGoshWallet extends IContract {
             modified: string | Buffer
             original?: string | Buffer
             isIpfs?: boolean
+            treeItem?: TGoshTreeItem
         }[],
         message: string,
         tags?: string,

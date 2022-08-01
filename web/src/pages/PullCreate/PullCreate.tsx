@@ -115,12 +115,12 @@ const PullCreatePage = () => {
                 setCompare(undefined)
                 const fromTree = await getRepoTree(repo, branchFrom.commitAddr)
                 const fromTreeItems = [...fromTree.items].filter(
-                    (item) => item.type === 'blob',
+                    (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
                 )
                 console.debug('[Pull create] - From tree blobs:', fromTreeItems)
                 const toTree = await getRepoTree(repo, branchTo.commitAddr)
                 const toTreeItems = [...toTree.items].filter(
-                    (item) => item.type === 'blob',
+                    (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
                 )
                 console.debug('[Pull create] - To tree blobs:', toTreeItems)
                 // Find items that exist in both trees and were changed
@@ -229,6 +229,7 @@ const PullCreatePage = () => {
                     modified: from.blob.content ?? '',
                     original: to?.blob.content,
                     isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
+                    treeItem: from.item,
                 }
             })
             console.debug('Blobs', blobs)

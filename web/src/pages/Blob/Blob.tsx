@@ -25,7 +25,7 @@ const BlobPage = () => {
     const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const { branches, branch } = useGoshRepoBranches(repo, branchName)
-    const blob = useGoshBlob(repo, branchName, treePath)
+    const { blob } = useGoshBlob(repo, branchName, treePath)
 
     return (
         <div className="bordered-block px-7 py-8">
