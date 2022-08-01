@@ -12,7 +12,7 @@ use crate::blockchain::{
     GoshContract,
     TonClient
 };
-use ton_client::error::ClientError;
+
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

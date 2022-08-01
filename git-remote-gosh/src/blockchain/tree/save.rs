@@ -2,7 +2,7 @@ use crate::git_helper::GitHelper;
 
 use ::git_object;
 
-use crate::blockchain::{self, GoshBlobBitFlags, tvm_hash, TonClient};
+use crate::blockchain::{self, GoshBlobBitFlags, tvm_hash};
 use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find};

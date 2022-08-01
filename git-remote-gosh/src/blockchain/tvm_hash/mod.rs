@@ -5,11 +5,7 @@ use crate::blockchain::{
 use ton_client::boc::{
     ParamsOfGetBocHash,
     ResultOfGetBocHash,
-    BuilderOp,
     get_boc_hash,
-    BocCacheType,
-    ParamsOfEncodeBoc,
-    ResultOfEncodeBoc,
 };
 use ton_client::abi::{
     AbiParam,

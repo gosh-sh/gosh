@@ -14,10 +14,6 @@ pub use create_branch::CreateBranchOperation;
 
 use ton_client::{
     abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
-    boc::{
-        encode_boc, get_boc_hash, BuilderOp, ParamsOfEncodeBoc, ParamsOfGetBocHash,
-        ResultOfEncodeBoc, ResultOfGetBocHash
-    },
     crypto::KeyPair,
     net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
