@@ -62,12 +62,23 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Result<(String, TreeNode), Box<dyn Error>> {
     let mut buffer = vec![];
-    let content = context.local_repository()
-        .objects
-        .find_blob(e.oid, &mut buffer)?
-        .data;
-
-    let content_hash = tvm_hash(&context.es_client, &content).await?;
+    use git_object::tree::EntryMode::*;
+    let content_hash = match e.mode {
+        Tree | Link => {
+            let _ = context.local_repository()
+                .objects 
+                .try_find(e.oid, &mut buffer)?;
+             sha256::digest_bytes(&buffer)
+        }, 
+        Blob | BlobExecutable => {
+            let content = context.local_repository()
+                .objects
+                .find_blob(e.oid, &mut buffer)?
+                .data;
+           tvm_hash(&context.es_client, content).await? 
+        },
+        Commit => unimplemented!() 
+    };
     let file_name = e.filename.to_string();
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
     let type_obj = &tree_node.type_obj;
