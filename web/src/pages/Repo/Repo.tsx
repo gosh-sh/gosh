@@ -23,7 +23,7 @@ import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from '../../utils'
 
 const RepoPage = () => {
-    const treePath = useParams()['*']
+    const treePath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
@@ -31,7 +31,7 @@ const RepoPage = () => {
     const tree = useGoshRepoTree(repo, branch, treePath)
     const subtree = useRecoilValue(tree.getSubtree(treePath))
 
-    const [dirUp] = splitByPath(treePath || '')
+    const [dirUp] = splitByPath(treePath)
 
     useEffect(() => {
         if (branch?.name) updateBranch(branch.name)
