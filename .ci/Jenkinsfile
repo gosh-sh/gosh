@@ -7,7 +7,6 @@ pipeline {
     }
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
-        booleanParam name: 'RELEASE', defaultValue: false, description: 'If true will create Github Release!'
     }
 
     stages {
@@ -25,7 +24,7 @@ pipeline {
         stage('Build') { 
             failFast true
             stages {
-                stage("SMV") {
+                stage("Compile: SMV") {
                     steps {
                         script {
                             dir ('contracts/smv') {
@@ -34,7 +33,7 @@ pipeline {
                         }
                     }
                 }
-                stage("GOSH") {
+                stage("Compile: GOSH") {
                     steps {
                         script {
                             dir ('contracts/gosh') {
@@ -43,29 +42,11 @@ pipeline {
                         }
                     }
                 }
-                stage("Git Helper: Linux") {
+                stage("Build: Git Helper") {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-unknown-linux-gnu"
-                            }
-                        }
-                    }
-                }
-                stage("Git Helper: Windows") {
-                    steps {
-                        script {
-                            dir ('git-remote-gosh') {
-                                sh "make build target-dir='build-${BUILD_NUMBER}' TARGET_ARCH=x86_64-pc-windows-gnu"
-                            }
-                        }
-                    }
-                }
-                stage("Docker Extension") {
-                    steps {
-                        script {
-                            dir ('docker-extension') {
-                                sh "mkdir -p ./.tmp/git-remote-gosh && cp -r ../git-remote-gosh/target/x86_64-unknown-linux-gnu/release/* ./.tmp/git-remote-gosh && make build-ci"
+                                sh "make bench"
                             }
                         }
                     }
@@ -73,85 +54,22 @@ pipeline {
             }
         }
 
-        stage('Unit tests') { 
-            parallel {
-                stage("SMV") {
-                    steps {
-                        script {
-                            dir ('contracts/smv') {
-                                sh 'echo placeholder_1'
-                            }
-                        }
-                    }
-                }
-                stage("GOSH") {
-                    steps {
-                        script {
-                            dir ('contracts/gosh') {
-                                sh 'echo placeholder_2'
-                            }
-                        }
-                    }
-                }
+        stage('Publish') { 
+            stages {
                 stage("Git Helper") {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh 'echo placeholder_3'
-                            }
-                        }
-                    }
-                }
-                stage("Docker Extension") {
-                    steps {
-                        script {
-                            dir ('docker-extension') {
-                                sh 'echo placeholder_4'
+                                withCredentials([string(credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                                    sh "docker login -u ${USERNAME} -p ${PASSWORD}"
+                                    sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-
-        stage('Integration Tests setup') { 
-            stages {
-                stage("Deploy smart-contracts") {
-                    steps {
-                        script {
-                            dir ('contracts/gosh') {
-                                sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
-                            }
-                        }
-                    }
-                }
-                stage("Functional testing") {
-                    steps {
-                        script {
-                            sh ''
-                        }
-                    }
-                }
-            }
-        }
-        stage("Release") {
-            steps {
-                script {
-                    archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-linux"
-                    archiveArtifacts artifacts: "git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-windows.exe"
-                    archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
-                    dir ('.ci/scripts') {
-                        if (params.RELEASE) {
-                            withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                                sh "./create-github-release.sh $TOKEN ${VERSION} ${BRANCH}"
-                                sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-linux"
-                                sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/build-${BUILD_NUMBER}/git-remote-gosh-windows.exe"
-                            }
-                        }
-                    }
-                }
-            }
-        }    
+        }  
     }
     post { 
         always { 
