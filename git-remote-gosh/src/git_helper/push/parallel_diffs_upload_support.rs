@@ -23,7 +23,8 @@ pub struct ParallelDiff {
     blob_id: git_hash::ObjectId,
     file_path: String,
     original_snapshot_content: Vec<u8>,
-    diff: Vec<u8>
+    diff: Vec<u8>,
+    new_snapshot_content: Vec<u8>
 }
 
 impl ParallelDiff {
@@ -33,7 +34,8 @@ impl ParallelDiff {
         blob_id: git_hash::ObjectId,
         file_path: String,
         original_snapshot_content: Vec<u8>, 
-        diff: Vec<u8>
+        diff: Vec<u8>,
+        new_snapshot_content: Vec<u8>
     ) -> Self {
         Self {
             commit_id,
@@ -41,7 +43,8 @@ impl ParallelDiff {
             blob_id,
             file_path,
             original_snapshot_content,
-            diff
+            diff,
+            new_snapshot_content
         }
     }
 }
@@ -68,7 +71,8 @@ impl ParallelDiffsUploadSupport {
                 blob_id,
                 file_path,
                 original_snapshot_content,
-                diff
+                diff,
+                new_snapshot_content
             }) in self.dangling_diffs.values().into_iter() {
             blockchain::snapshot::push_diff(
                 context,
@@ -80,7 +84,8 @@ impl ParallelDiffsUploadSupport {
                 &self.last_commit_id,
                 true, // <- It is known now
                 original_snapshot_content,
-                diff
+                diff,
+                new_snapshot_content
             ).await?;
             let diff_contract_address = blockchain::snapshot::diff_address(
                 context,
@@ -123,7 +128,8 @@ impl ParallelDiffsUploadSupport {
                 blob_id,
                 file_path,
                 original_snapshot_content,
-                diff 
+                diff,
+                new_snapshot_content 
             })) => {
                 blockchain::snapshot::push_diff(
                     context,
@@ -135,7 +141,8 @@ impl ParallelDiffsUploadSupport {
                     &self.last_commit_id,
                     false, // <- It is known now
                     original_snapshot_content,
-                    diff
+                    diff,
+                    new_snapshot_content
                 ).await?;
             }
         }

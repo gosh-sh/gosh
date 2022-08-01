@@ -5,7 +5,7 @@ use ::git_object;
 use crate::blockchain::{self, GoshBlobBitFlags, tvm_hash};
 use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
-use git_odb::{self, Find};
+use git_odb::{self, Find, FindExt};
 use std::collections::{HashSet, VecDeque, HashMap};
 use std::error::Error;
 use std::vec::Vec;
@@ -62,19 +62,18 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Result<(String, TreeNode), Box<dyn Error>> {
     let mut buffer = vec![];
-    context
-            .local_repository()
-            .objects
-            .try_find(e.oid, &mut buffer)?
-            .expect("Local object must be there");
+    let content = context.local_repository()
+        .objects
+        .find_blob(e.oid, &mut buffer)?
+        .data;
 
-    let content_hash = tvm_hash(&context.es_client, hex::encode(&buffer)).await?;
+    let content_hash = tvm_hash(&context.es_client, &content).await?;
     let file_name = e.filename.to_string();
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
     let type_obj = &tree_node.type_obj;
     let key = tvm_hash(
         &context.es_client,
-        format!("{}:{}", type_obj, file_name)
+        format!("{}:{}", type_obj, file_name).as_bytes()
     ).await?;
     Ok((format!("0x{}", key), tree_node))
 }
