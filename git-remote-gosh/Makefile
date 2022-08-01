@@ -62,8 +62,9 @@ bench: copy_abi prepare-builder
 	@echo === bench build
 	${DOCKER_BUILDX} \
 		\
+		--platform ${PLATFORM} \
 		-f Dockerfile \
-		-t teamgosh/git:latest \
+		-t ${FULL_IMAGE_NAME} \
 		.
 
 .PHONY: publish

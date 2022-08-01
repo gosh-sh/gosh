@@ -46,7 +46,7 @@ pipeline {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh "make bench"
+                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
                             }
                         }
                     }
@@ -56,17 +56,17 @@ pipeline {
 
         stage('Publish') { 
             stages {
-                stage("Git Helper") {
+                stage("Publish: Git Helper") {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                withCredentials([string(credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                                    sh "docker login -u ${USERNAME} -p ${PASSWORD}"
-                                    sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                                    sh 'make publish FULL_IMAGE_NAME=teamgosh/git:$VERSION'
                                 }
                             }
                         }
-                    }
+                    }   
                 }
             }
         }  
