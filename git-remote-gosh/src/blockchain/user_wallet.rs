@@ -37,12 +37,11 @@ pub async fn get_user_wallet(client: &TonClient, gosh_root_contract_address: &st
         &dao_address.address,
         abi::DAO
     );
-    let pubkey = format!("0x{}", pubkey);
     let result: GetAddrWalletResult = dao_contract.run_local(
         &client, 
         "getAddrWallet",
         Some(serde_json::json!({
-            "pubkey": pubkey,
+            "pubkey": format!("0x{}", pubkey),
             "index": 0
         }))
     ).await?;
