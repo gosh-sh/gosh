@@ -26,6 +26,7 @@ contract Tree is Modifiers {
     address static _repo;
     optional(string) _ipfs;
     uint256 _pubkey;
+    uint256 _pubkeysender;
     address _rootGosh;
     address _goshdao;
     TvmCell m_WalletCode;
@@ -57,19 +58,20 @@ contract Tree is Modifiers {
         _rootGosh = rootGosh;
         _goshdao = goshdao;
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
+        _pubkeysender = pubkey;
         _ipfs = ipfs;      
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
         _tree = data;
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }    
     
     function countAll(uint256 pubkey, uint128 index) public {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
         require(_count == false, ERR_PROCCESS_IS_EXIST);
         _count = true;
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
         this.count{value: 0.2 ton, flag: 1}(0);
     }
     
@@ -82,7 +84,7 @@ contract Tree is Modifiers {
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
             this.count{value: 0.2 ton, flag: 1}(index + 1);
         }
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }
     
     function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
@@ -92,7 +94,7 @@ contract Tree is Modifiers {
         _countFiles += res;
         _needAnswer -= 1;
         if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }
     
     function sendRequests(uint256 index) public senderIs(address(this)) {
@@ -101,14 +103,14 @@ contract Tree is Modifiers {
         else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         if (index == request.length - 1) { delete request; return; }
         this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }
     
     function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
         tvm.accept();
         if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
         request.push(TreeAnswer(msg.sender, true));
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
         return;
     }
     
@@ -116,7 +118,7 @@ contract Tree is Modifiers {
         tvm.accept();
         if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         request.push(TreeAnswer(msg.sender, false));
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
         return;
     }
     
@@ -131,25 +133,25 @@ contract Tree is Modifiers {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }    
     
     function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }    
     
     function getShaInfoTree(string sha, Request value0) public view {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
     }    
     
     function getShaInfo(Request value0) private view {
         optional(uint32) pos = value0.lastPath.find(byte('/'));
-        getMoney(_pubkey);
+        getMoney(_pubkeysender);
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get());
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
@@ -159,7 +161,6 @@ contract Tree is Modifiers {
             else {
                 Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
             }
-            getMoney(_pubkey);
             return;
         }
         else {

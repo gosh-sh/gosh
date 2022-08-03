@@ -164,6 +164,7 @@
 		{"name":"_index2","type":"uint128"},
 		{"name":"_nameCommit","type":"string"},
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubkeysender","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameBranch","type":"string"},

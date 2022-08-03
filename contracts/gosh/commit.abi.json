@@ -328,6 +328,7 @@
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubkeysender","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameCommit","type":"string"},

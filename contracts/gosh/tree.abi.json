@@ -160,6 +160,7 @@
 		{"name":"_repo","type":"address"},
 		{"name":"_ipfs","type":"optional(string)"},
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubkeysender","type":"uint256"},
 		{"name":"_rootGosh","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
