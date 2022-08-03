@@ -32,8 +32,11 @@ const DaosPage = () => {
             const walletCode = await goshRoot.getDaoWalletCode(
                 `0x${userState.keys.public}`,
             )
+            const walletCodeHash = await goshClient.boc.get_boc_hash({
+                boc: walletCode,
+            })
             const wallets = await getPaginatedAccounts({
-                filters: [`code: {eq:"${walletCode}"}`],
+                filters: [`code_hash: {eq:"${walletCodeHash.hash}"}`],
                 limit: 10,
                 lastId,
             })

@@ -643,11 +643,12 @@ export class GoshWallet implements IGoshWallet {
 
         // Get all snapshots from branch `from` and deploy to branch `to`
         const snapCode = await this.getSnapshotCode(fromName, repo.address)
+        const snapCodeHash = await this.account.client.boc.get_boc_hash({ boc: snapCode })
         let next: string | undefined
         const snaps = []
         while (true) {
             const accounts = await getPaginatedAccounts({
-                filters: [`code: {eq:"${snapCode}"}`],
+                filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
                 limit: 50,
                 lastId: next,
             })
@@ -751,11 +752,12 @@ export class GoshWallet implements IGoshWallet {
 
         // Get all snapshots from branch and delete
         const snapCode = await this.getSnapshotCode(branchName, repo.address)
+        const snapCodeHash = await this.account.client.boc.get_boc_hash({ boc: snapCode })
         let next: string | undefined
         const snaps = []
         while (true) {
             const accounts = await getPaginatedAccounts({
-                filters: [`code: {eq:"${snapCode}"}`],
+                filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
                 limit: 50,
                 lastId: next,
             })
@@ -1327,11 +1329,12 @@ export class GoshRepository implements IGoshRepository {
     async getTags(): Promise<{ content: string; commit: string }[]> {
         // Get repo tag code and all tag accounts addresses
         const code = await this.getTagCode()
+        const codeHash = await this.account.client.boc.get_boc_hash({ boc: code })
         const accounts: string[] = []
         let next: string | undefined
         while (true) {
             const { results, lastId, completed } = await getPaginatedAccounts({
-                filters: [`code: {eq:"${code}"}`],
+                filters: [`code_hash: {eq:"${codeHash.hash}"}`],
                 limit: 50,
                 lastId: next,
             })
