@@ -1,8 +1,10 @@
-PLATFORM            ?= linux/amd64,linux/arm64
-
-IMAGE?=teamgosh-docker-extension
-TAG?=2.0.3
-LOCAL_TEMP_DIR=./.tmp
+DOCKER              ?= docker
+DOCKER_BUILDER_NAME ?= public-gosh-builder
+DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
+PLATFORM       ?= linux/amd64,linux/arm64
+IMAGE          ?= teamgosh/docker-extension
+TAG            ?= 2.0.4
+LOCAL_TEMP_DIR ?= ./.tmp
 
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | tr / _)
@@ -75,7 +77,7 @@ debug: ## Debug the extension
 publish: clean_temp build-ui-v2 build-gosh-git-image ## Publish the extension
 	mkdir $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
-	docker buildx build \
+	${DOCKER_BUILDX} \
 	  --no-cache \
 	  --platform $(PLATFORM) \
 	  --tag=$(IMAGE):$(TAG) \
