@@ -59,11 +59,13 @@ prepare-builder: qemu ## prepare docker buildx builder
 
 .PHONY: bench
 bench: copy_abi prepare-builder
-	@echo === bench build
+	@echo === build + publish
 	${DOCKER_BUILDX} \
+		--progress=${PROGRESS} \
+		--platform ${PLATFORM} \
+		-t ${FULL_IMAGE_NAME} \
 		\
 		-f Dockerfile \
-		-t teamgosh/git:latest \
 		.
 
 .PHONY: publish
