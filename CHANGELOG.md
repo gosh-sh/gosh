@@ -11,5 +11,5 @@ Major change for Gosh contracts. With the new architecture released:
 Git remote helper (gosh) was rewritten in Rust. It unblocks us for further performance improvements.
 
 ### Changed
-UI part was updated to work with released contracts
+UI part was updated to work with the released contracts
 
