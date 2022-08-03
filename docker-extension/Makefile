@@ -53,6 +53,7 @@ build: clean_temp build-ui-v2 build-gosh-git-image ## Build service image to be 
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
 	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --build-arg detailed_description="$(DETAILED_DESCRIPTION)" \
 	  --output=type=docker \
 	  .
 
@@ -67,6 +68,7 @@ build-ci: build-ui-v2
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
 	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --build-arg detailed_description="$(DETAILED_DESCRIPTION)" \
 	  --output=type=docker \
 	  .
 
@@ -92,6 +94,7 @@ publish: clean_temp build-ui-v2 build-gosh-git-image ## Publish the extension
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
 	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --build-arg detailed_description="$(DETAILED_DESCRIPTION)" \
 	  --push \
 	  .
 
