@@ -3,7 +3,7 @@ DOCKER_BUILDER_NAME ?= public-gosh-builder
 DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
 PLATFORM       ?= linux/amd64,linux/arm64
 IMAGE          ?= teamgosh/docker-extension
-TAG            ?= 2.0.4
+TAG            ?= 2.0.5
 LOCAL_TEMP_DIR ?= ./.tmp
 
 GIT_COMMIT := $(shell git rev-parse HEAD)

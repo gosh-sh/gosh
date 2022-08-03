@@ -58,16 +58,17 @@ RUN \
     --target aarch64-unknown-linux-gnu \
     --target-dir=/target
 
-FROM debian:bullseye-slim as base
+FROM debian:bullseye-slim as final-base
 RUN apt-get update && apt-get install -yq --no-install-recommends git libssl1.1 libc6 ca-certificates
 
-FROM base as final-amd64
+FROM final-base as final-amd64
 COPY --from=build-amd64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
-FROM base as final-arm64
+FROM final-base as final-arm64
 COPY --from=build-arm64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 FROM final-${TARGETARCH}
 # ENV GOSH_TRACE=1
 WORKDIR /workdir
 ENTRYPOINT [ "git" ]
+CMD [ "help" ]
