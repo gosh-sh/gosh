@@ -7,7 +7,8 @@ use crate::git_helper::push::Result;
 
 pub struct GenerageBlobDiffResult {
     pub original: Vec<u8>,
-    pub patch: Vec<u8>
+    pub patch: Vec<u8>,
+    pub after_patch: Vec<u8>
 }
 
 pub async fn generate_blob_diff(
@@ -33,6 +34,7 @@ pub async fn generate_blob_diff(
 
     Ok(GenerageBlobDiffResult {
         original: prev_content.to_vec(),
-        patch: diff
+        patch: diff,
+        after_patch: next_content.to_vec()
     })
 }

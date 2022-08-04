@@ -4,7 +4,7 @@ import Spinner from '../../components/Spinner'
 import { GoshSmvProposal } from '../../types/classes'
 import { sleep } from '../../utils'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { getPaginatedAccounts } from '../../helpers'
+import { getPaginatedAccounts, goshClient } from '../../helpers'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -58,11 +58,12 @@ const EventsPage = () => {
         const getEventList = async () => {
             // Get events accounts by code
             const code = await dao.getSmvProposalCode()
+            const codeHash = await goshClient.boc.get_boc_hash({ boc: code })
             const list: any[] = []
             let next: string | undefined
             while (true) {
                 const accounts = await getPaginatedAccounts({
-                    filters: [`code: {eq:"${code}"}`],
+                    filters: [`code_hash: {eq:"${codeHash.hash}"}`],
                     limit: 50,
                     lastId: next,
                 })

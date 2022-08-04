@@ -59,12 +59,13 @@ prepare-builder: qemu ## prepare docker buildx builder
 
 .PHONY: bench
 bench: copy_abi prepare-builder
-	@echo === bench build
+	@echo === build + publish
 	${DOCKER_BUILDX} \
-		\
+		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
-		-f Dockerfile \
 		-t ${FULL_IMAGE_NAME} \
+		\
+		-f Dockerfile \
 		.
 
 .PHONY: publish
@@ -77,6 +78,18 @@ publish: copy_abi prepare-builder
 		-t ${FULL_IMAGE_NAME} \
 		\
 		-f Dockerfile \
+		.
+
+.PHONY: publish-alpine
+publish-alpine: copy_abi prepare-builder
+	@echo === build + publish
+	${DOCKER_BUILDX} \
+		--push \
+		--progress=plain \
+		--platform ${PLATFORM} \
+		-t ${FULL_IMAGE_NAME}-alpine \
+		\
+		-f Dockerfile.alpine \
 		.
 
 .PHONY: publish-latest

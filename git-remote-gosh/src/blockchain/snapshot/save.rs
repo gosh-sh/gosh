@@ -9,6 +9,7 @@ use reqwest::multipart;
 use snapshot::Snapshot;
 use crate::abi as gosh_abi;
 use crate::blockchain::{
+    tvm_hash,
     GoshContract,
     TonClient
 };
@@ -42,7 +43,8 @@ struct Diff {
     commit_id: String,
     patch: Option<String>,
     ipfs: Option<String>,
-    sha1: String
+    sha1: String,
+    sha256: String
 }
 #[derive(Serialize, Debug)]
 struct DeployDiffParams {
@@ -155,6 +157,7 @@ pub async fn push_diff(
     is_last: bool,
     original_snapshot_content: &Vec<u8>,
     diff: &Vec<u8>,
+    new_snapshot_content: &Vec<u8>
 ) -> Result<()> {
     let wallet = user_wallet(context).await?;
     let snapshot_addr = Snapshot::calculate_address(
@@ -205,6 +208,13 @@ pub async fn push_diff(
         patch,
         ipfs,
         sha1: blob_id.to_string(),
+        sha256: format!(
+            "0x{}", 
+            tvm_hash(
+                &context.es_client, 
+                new_snapshot_content
+            ).await?
+        )
     };
 
     log::trace!("push_diff: {:?}", diff);

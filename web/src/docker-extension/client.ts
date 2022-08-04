@@ -233,6 +233,8 @@ export class DockerClient {
             return false
         }
 
+        appendValidationLog(`Repository ${goshAddress}\n on commit ${goshCommitHash}`)
+
         if (!goshAddress.startsWith('gosh://')) {
             appendValidationLog('Error: Invalid gosh address protocol')
             closeValidationLog()
@@ -258,24 +260,6 @@ export class DockerClient {
             return false
         }
 
-        const contentAddr = await wallet.getContentAdress(
-            goshRepositoryName,
-            goshCommitHash,
-            '',
-        )
-
-        const contentObj = new GoshContentSignature(goshClient, contentAddr)
-        const content = await contentObj.getContent()
-        const validImageHashes = content.split(',')
-
-        // HACK!!!
-        // await wallet.deployContent(
-        //     goshRepositoryName,
-        //     goshCommitHash,
-        //     '',
-        //     'sha256:511bd981cb73818ab72940df0af72253b2cf8fc06fbcf92be7d0b922390d3fbf',
-        // )
-
         try {
             if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
             appendValidationLog('Build image from Gosh')
@@ -284,16 +268,45 @@ export class DockerClient {
                 /^gosh:\/\//,
                 `gosh::${GOSH_NETWORK}://`,
             )
+
             const result = await dockerClient.extension.vm.cli.exec(
                 COMMAND.VALIDATE_IMAGE_SHA,
                 [goshAddressWithNetwork, `${goshDao}__${goshRepoName}`, goshCommitHash],
             )
+
             if ('code' in result && !!result.code) {
                 logger.log(`Failed to validate image. ${JSON.stringify(result)}`)
                 closeValidationLog()
                 return false
             }
+
+            console.log('Stderr:', result.stderr)
+
             const imageSha = result.stdout.trim()
+
+            if (imageSha.length === 0) {
+                appendValidationLog('Error: Gosh sha is empty')
+                closeValidationLog()
+                return false
+            }
+
+            appendValidationLog(`Gosh image SHA: ${imageSha}`)
+
+            // HACK!!!
+            // await wallet.deployContent(goshRepositoryName, goshCommitHash, '', imageSha)
+
+            const contentAddr = await wallet.getContentAdress(
+                goshRepositoryName,
+                goshCommitHash,
+                '',
+            )
+
+            const contentObj = new GoshContentSignature(goshClient, contentAddr)
+            const content = await contentObj.getContent()
+            const validImageHashes = content.split(',')
+
+            console.log('List of signed bashes:', validImageHashes)
+
             if (validImageHashes.includes(imageSha)) {
                 appendValidationLog('Success.')
                 closeValidationLog()

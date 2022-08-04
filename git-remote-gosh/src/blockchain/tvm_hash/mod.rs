@@ -17,15 +17,15 @@ use ton_client::abi::{
 };
 
 
-pub async fn tvm_hash(context: &TonClient, data: String) -> Result<String> {
+pub async fn tvm_hash(context: &TonClient, data: &[u8]) -> Result<String> {
     let params = ParamsOfAbiEncodeBoc {
         params: vec![AbiParam {
             name: "data".to_string(),
-            param_type: "string".to_string(),
+            param_type: "bytes".to_string(),
             ..Default::default()
         }],
         data: serde_json::json!({
-            "data": data
+            "data": hex::encode(data)
         }),
         boc_cache: None
     };

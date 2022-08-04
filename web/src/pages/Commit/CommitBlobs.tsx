@@ -70,7 +70,9 @@ const CommitBlobs = (props: TCommitBlobsType) => {
 
             // Compare trees to determine new/changed blobs
             const updatedItems: TGoshTreeItem[] = []
-            for (const item of tree.items.filter((i) => i.type === 'blob')) {
+            for (const item of tree.items.filter(
+                (i) => ['blob', 'blobExecutable', 'link'].indexOf(i.type) >= 0,
+            )) {
                 const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
                 const found = treeParent.items.findIndex((pitem) => {
                     let pfullpath = `${pitem.path ? `${pitem.path}/` : ''}`

@@ -293,5 +293,5 @@ export const useGoshBlob = (
         if (isEffectNeeded && blob.isFetching) _getBlobContent()
     }, [blob.address, blob.commit, blob.isFetching, treeItem, isEffectNeeded, setBlob])
 
-    return blob
+    return { blob, treeItem }
 }

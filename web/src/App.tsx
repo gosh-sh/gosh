@@ -41,12 +41,40 @@ import Containers from './docker-extension/pages/Containers'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
+    let timer: NodeJS.Timeout | null = null
+
+    const timerRestart = () => {
+        if (timer) clearInterval(timer)
+        timer = setInterval(async () => {
+            await goshClient.net.suspend()
+            console.debug('Gosh client suspended')
+            await goshClient.net.resume()
+            console.debug('Gosh client resumed')
+        }, 1000 * 60 * 10)
+    }
+
+    const onMouseMove = () => timerRestart()
 
     useEffect(() => {
         if (!goshClient) return
         goshClient.client.version().then(() => {
             setIsInitialized(true)
         })
+    }, [])
+
+    useEffect(() => {
+        // Initialize gosh client suspend/resume timer
+        timerRestart()
+
+        // Listen for mouse events
+        window.addEventListener('mousemove', onMouseMove)
+
+        return () => {
+            if (timer) {
+                clearTimeout(timer)
+                window.removeEventListener('mousemove', onMouseMove)
+            }
+        }
     }, [])
 
     if (!isInitialized)
