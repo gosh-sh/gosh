@@ -61,10 +61,10 @@ RUN \
 FROM debian:bullseye-slim as final-base
 RUN apt-get update && apt-get install -yq --no-install-recommends git libssl1.1 libc6 ca-certificates
 
-FROM final-base as final-amd64
+FROM --platform=amd64 final-base as final-amd64
 COPY --from=build-amd64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
-FROM final-base as final-arm64
+FROM --platform=arm64 final-base as final-arm64
 COPY --from=build-arm64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 FROM final-${TARGETARCH}

@@ -80,6 +80,18 @@ publish: copy_abi prepare-builder
 		-f Dockerfile \
 		.
 
+.PHONY: publish-alpine
+publish-alpine: copy_abi prepare-builder
+	@echo === build + publish
+	${DOCKER_BUILDX} \
+		--push \
+		--progress=plain \
+		--platform ${PLATFORM} \
+		-t ${FULL_IMAGE_NAME}-alpine \
+		\
+		-f Dockerfile.alpine \
+		.
+
 .PHONY: publish-latest
 publish-latest: publish-branch
 	${DOCKER} pull ${FULL_IMAGE_NAME}
