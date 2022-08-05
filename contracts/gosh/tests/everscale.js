@@ -4,44 +4,16 @@ const path = require('path');
 const { TonClient, abiContract, abiJson, signerKeys, signerNone } = require('@eversdk/core');
 const { libNode } = require("@eversdk/lib-node");
 
+const giver = require('./giver.js');
+
 const readConfig = () => {
     CONFIG = JSON.parse(fs.readFileSync("./config.json"));
     if (!CONFIG.localNode) {
         CONFIG.url = CONFIG.urlWeb;
-        CONFIG.giverKeys = devNetGiverKeys;
+        CONFIG.giverKeys = giver.keys;
     };
     return CONFIG;
 }
-// for devnet
-const devNetGiverAddress = '0:3282fb4cce2cde32cca0bc11edf3df8fb32c3847ec8b75f4e678718cde2f6bb0';
-const devNetGiverAbiDev = {
-    "ABI version": 2,
-    "header": ["pubkey", "time", "expire"],
-    "functions": [
-        {
-            "name": "submitTransaction",
-            "inputs": [
-                { "name": "dest", "type": "address" },
-                { "name": "value", "type": "uint128" },
-                { "name": "bounce", "type": "bool" },
-                { "name": "allBalance", "type": "bool" },
-                { "name": "payload", "type": "cell" }
-            ],
-            "outputs": [
-                { "name": "transId", "type": "uint64" }
-            ]
-        },
-    ],
-    "data": [
-    ],
-    "events": [
-    ]
-};
-const devNetGiverKeys = {
-    "public": "41a71ceaa7ac96eda2b261cfeeec2a52120fe93f744eb6909b2a33eb183f7ba2",
-    "secret": "4565f3d76cbf69bbf335de22cf7c99beb2c57fc30de62d540812663fb5839c25"
-};
-
 
 // for nodeSE
 const nodeSeGiverAddress = '0:841288ed3b55d9cdafa806807f02a0ae0c169aa5edfe88a789a6482429756a94';
@@ -73,11 +45,14 @@ let CONFIG;
 let gosh;
 
 let daoCreatorPackage;
-let goshWalletPackage = {};
 let goshDaoPackage;
+let goshWalletPackage = {};
+let treePackage;
 let repoPackage;
 let commitPackage;
-let blobPackage;
+let diffPackage;
+let snapshotPackage;
+let tagPackage;
 
 
 async function loadPackage(name) {
@@ -153,8 +128,8 @@ async function sendGrams(destAddr, amount) {
         const result = await CLIENT.processing.process_message({
             send_events: false,
             message_encode_params: {
-                address: devNetGiverAddress,
-                abi: abiContract(devNetGiverAbiDev),
+                address: giver.address,
+                abi: abiContract(giver.abi),
                 call_set: {
                     function_name: 'submitTransaction',
                     input: {
@@ -253,28 +228,31 @@ async function deployGosh() {
     // calculate future address of the dao creator
     const daoCreatorPackage = await loadPackage('daocreator');
     const options = {
-        gosh: '',
+        goshaddr: '',
         WalletCode: '',
-        WalletData: '',
-        codeDao: '',
-        dataDao: ''
+        codeDao: ''
     };
     const daoCreatorFutAddr = await calcDeployAddress(daoCreatorPackage, keys, options);
 
     // deploy gosh
     const goshPackage = await loadPackage('gosh');
     gosh = await deploy(goshPackage, keys, { creator: daoCreatorFutAddr }, 1000);
-    repoPackage = await loadPackage('repository');
-    await call(gosh, 'setRepository', { code: repoPackage.code, data: repoPackage.data });
-    commitPackage = await loadPackage('commit');
-    await call(gosh, 'setCommit', { code: commitPackage.code, data: commitPackage.data });
-    blobPackage = await loadPackage('blob');
-    await call(gosh, 'setBlob', { code: blobPackage.code, data: blobPackage.data });
-    goshWalletPackage = await loadPackage('goshwallet');
-    await call(gosh, 'setWallet', { code: goshWalletPackage.code, data: goshWalletPackage.data });
+
     goshDaoPackage = await loadPackage('goshdao');
     await call(gosh, 'setDao', { code: goshDaoPackage.code, data: goshDaoPackage.data });
-    let tagPackage = await loadPackage('tag');
+    repoPackage = await loadPackage('repository');
+    await call(gosh, 'setRepository', { code: repoPackage.code, data: repoPackage.data });
+    goshWalletPackage = await loadPackage('goshwallet');
+    await call(gosh, 'setWallet', { code: goshWalletPackage.code, data: goshWalletPackage.data });
+    treePackage = await loadPackage('tree');
+    await call(gosh, 'setTree', { code: treePackage.code, data: treePackage.data });
+    commitPackage = await loadPackage('commit');
+    await call(gosh, 'setCommit', { code: commitPackage.code, data: commitPackage.data });
+    diffPackage = await loadPackage('diff');
+    await call(gosh, 'setDiff', { code: diffPackage.code, data: diffPackage.data });
+    snapshotPackage = await loadPackage('snapshot');
+    await call(gosh, 'setSnapshot', { code: snapshotPackage.code, data: snapshotPackage.data });
+    tagPackage = await loadPackage('tag');
     await call(gosh, 'setTag', { code: tagPackage.code, data: tagPackage.data });
     let tokenWalletPackage = await loadPackage('../smv/External/tip3/TokenWallet');
     await call(gosh, 'setTokenWallet', { code: tokenWalletPackage.code, value1: tokenWalletPackage.data });
@@ -286,6 +264,8 @@ async function deployGosh() {
     await call(gosh, 'setSMVClient', { code: smvClientPackage.code, value1: smvClientPackage.data });
     let smvProposalPackage = await loadPackage('../smv/SMVProposal');
     await call(gosh, 'setSMVProposal', { code: smvProposalPackage.code, value1: smvProposalPackage.data });
+    let smvTokenRootPackage = await loadPackage('../smv/External/tip3/TokenRoot');
+    await call(gosh, 'setTokenRoot', { code: smvTokenRootPackage.code, value1: smvTokenRootPackage.data });
     return gosh;
 };
 
@@ -293,11 +273,9 @@ async function deployGosh() {
 async function deployDaoCreator(gosh) {
     daoCreatorPackage = await loadPackage('daocreator');
     const params = {
-        gosh: gosh.address,
+        goshaddr: gosh.address,
         WalletCode: goshWalletPackage.code,
-        WalletData: goshWalletPackage.data,
         codeDao: goshDaoPackage.code,
-        dataDao: goshDaoPackage.data
     };
     daoCreator = await deploy(daoCreatorPackage, gosh.keys, params, 200000);
     return daoCreator;
@@ -323,7 +301,7 @@ async function deleteWallet(dao, wallet) {
 async function deployWallet(dao, pubkey) {
     await call(dao, 'deployWallet', { pubkey: `0x${pubkey}` });
     const wallet = Object.assign({}, goshWalletPackage);
-    wallet.address = (await run(dao, 'getAddrWallet', { pubkey: `0x${pubkey}` })).output.value0;
+    wallet.address = (await run(dao, 'getAddrWallet', { pubkey: `0x${pubkey}`, index: 0 })).output.value0;
     if (await getAccount(wallet.address)) {
         console.log(`${dao.name} has deployed wallet address : ${wallet.address}`);
         console.log('wallet balance:', await getBalance(wallet.address));
@@ -331,7 +309,7 @@ async function deployWallet(dao, pubkey) {
     return wallet;
 };
 
-// for deleting repositiry, commit, blob
+// for deleting repositiry, commit
 async function deleteObject(wallet, objectAddr) {
     await call(wallet, 'destroyObject', { obj: objectAddr });
     console.log('Deleted object at address:', objectAddr);
@@ -415,52 +393,6 @@ async function getCommit(commit) {
     return commitName;
 }; */
 
-
-//------------------------blob-----------------------------
-async function deployBlob(
-    wallet,
-    repo,
-    repoName,
-    commit,
-    branch,
-    blobName,
-    fullBlob,
-    ipfsBlob,
-    prevSha,
-    flags
-) {
-    const params = {
-        repoName,
-        commit,
-        branch,
-        blobName,
-        fullBlob,
-        ipfsBlob,
-        prevSha,
-        flags
-    };
-
-    await call(wallet, 'deployBlob', params);
-
-    const blob = Object.assign({}, blobPackage);
-    blob.address = (await run(repo, 'getBlobAddr', { nameBlob: blobName })).output.value0;
-
-    if (await getAccount(blob.address)) {
-        console.log(`Deploy blob on ${blob.address}`);
-    };
-    return blob;
-};
-
-async function getBlob(blob) {
-    const blobData = await run(blob, 'getBlob');
-    return blobData;
-};
-
-async function getprevSha(blob) {
-    const blobPrevSha = await run(blob, 'getprevSha');
-    return blobPrevSha;
-}
-
 // ---------------------exports----------------------------
 
 module.exports = {
@@ -479,11 +411,8 @@ module.exports = {
     getBranch,
     deleteBranch,
     deployCommit,
-    deployBlob,
     getCommit,
     //getNameCommit,
-    getBlob,
-    getprevSha,
     createCommitObject,
     deleteObject,
     deleteWallet,

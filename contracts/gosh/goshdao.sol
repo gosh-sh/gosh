@@ -16,7 +16,7 @@ import "../smv/TokenRootOwner.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "0.4.1";
+    string constant version = "0.5.3";
     
     uint128 _limit_wallets = 1;
     uint128 _limit_time = 30;
@@ -30,6 +30,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     TvmCell m_codeSnapshot;
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
+    TvmCell m_contentSignature;
     address _rootgosh;
     string _nameDao;
     mapping(uint256 => address  ) _wallets;
@@ -57,6 +58,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell codeSnapshot,
         TvmCell codeTree,
         TvmCell codeDiff,
+        TvmCell contentSignature,
         /////////////////////
         TvmCell TokenLockerCode,
         TvmCell SMVPlatformCode,
@@ -96,6 +98,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
         m_TokenRootCode = TokenRootCode;
         m_TokenWalletCode = TokenWalletCode;
+        m_contentSignature = contentSignature;
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
@@ -118,7 +121,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(_creator, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,
-            m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, _limit_wallets, _limit_time, _limit_messages, 
+            m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 
             m_TokenLockerCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _rootTokenRoot);
         getMoney();
@@ -151,8 +154,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _limit_messages = limit_messages;
         getMoney();
     }
+    
+    function getAddrWalletIn(uint256 pubkey, uint128 index) private view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
-    //Getters
+    //Getters    
     function getAddrWallet(uint256 pubkey, uint128 index) external view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         return address.makeAddrStd(0, tvm.hash(s1));

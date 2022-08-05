@@ -17,21 +17,17 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of DaoCreator */
 contract DaoCreator is Modifiers, Upgradable{
-    string constant version = "0.4.1";
+    string constant version = "0.5.3";
     
     address _gosh;
     TvmCell m_WalletCode;
     TvmCell m_codeDao;
 
     constructor(
-        address goshaddr, 
-        TvmCell WalletCode,
-        TvmCell codeDao) public onlyOwner {
+        address goshaddr) public onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
         _gosh = goshaddr;
-        m_WalletCode = WalletCode;
-        m_codeDao = codeDao;
     }
 
     function deployDao(
@@ -89,6 +85,18 @@ contract DaoCreator is Modifiers, Upgradable{
     // Upgradable
     function onCodeUpgrade() internal override {
         tvm.resetStorage();
+    }
+    
+    //Setters
+    
+    function setWalletCode(TvmCell code) public  onlyOwner {
+        tvm.accept();
+        m_WalletCode = code;
+    }
+    
+    function setDaoCode(TvmCell code) public  onlyOwner {
+        tvm.accept();
+        m_codeDao = code;
     }
 
     //Getters

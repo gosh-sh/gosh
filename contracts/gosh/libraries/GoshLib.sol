@@ -7,7 +7,21 @@
 pragma ton-solidity >=0.61.2;
 
 library GoshLib {
-    string constant versionLib = "0.4.1";
+    string constant versionLib = "0.5.3";
+
+    function buildSignatureCode(
+        TvmCell originalCode,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(version);
+        b.store(repo);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
     
     function buildWalletCode(
         TvmCell originalCode,

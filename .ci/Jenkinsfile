@@ -1,0 +1,79 @@
+pipeline {
+	agent {
+        docker {
+            image 'jenkins-docker-agent:1'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /tmp/giver.keys.json:/tmp/giver.keys.json --group-add docker'
+        }  
+    }
+    parameters {
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
+    }
+
+    stages {
+        stage('Clone repository') {
+            steps {
+                git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
+                checkout scm
+                script {
+                    env.VERSION = sh script: "cat git-remote-gosh/Cargo.toml | grep version | head -1 | grep -Eo '[0-9]\\.[0-9]\\.[0-9]' | tr -d '\n'", returnStdout: true
+                    currentBuild.displayName = "#${BUILD_NUMBER}_${BRANCH}_v${VERSION}"
+                }
+            }
+        }   
+
+        stage('Build') { 
+            failFast true
+            stages {
+                stage("Compile: SMV") {
+                    steps {
+                        script {
+                            dir ('contracts/smv') {
+                                sh 'make build-contracts'
+                            }
+                        }
+                    }
+                }
+                stage("Compile: GOSH") {
+                    steps {
+                        script {
+                            dir ('contracts/gosh') {
+                                sh 'make build-contracts'
+                            }
+                        }
+                    }
+                }
+                stage("Build: Git Helper") {
+                    steps {
+                        script {
+                            dir ('git-remote-gosh') {
+                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Publish') { 
+            stages {
+                stage("Publish: Git Helper") {
+                    steps {
+                        script {
+                            dir ('git-remote-gosh') {
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                                }
+                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+                            }
+                        }
+                    }   
+                }
+            }
+        }  
+    }
+    post { 
+        always { 
+            cleanWs()
+        }
+    }
+}

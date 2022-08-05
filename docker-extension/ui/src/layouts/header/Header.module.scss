@@ -1,0 +1,130 @@
+@import '../../assets/styles/colors.scss';
+@import '../../assets/styles/mixins.scss';
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 76px;
+  width: 100%;
+  z-index: 100;
+  background-color: #e9ebee;
+
+  a {
+    position: relative;
+    z-index: 9999999;
+
+    svg {
+      vertical-align: middle;
+    }
+  }
+  
+  .navbar {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .navbar-nav {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      flex-grow: 1;
+      justify-content: space-between;
+
+      @media (max-width: 767px) {
+        justify-content: space-between;
+        width: 100%;
+      }
+    }
+  }
+
+}
+.button-block {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  top: 1.125rem;
+  left: 4.5rem;
+  padding-left: 1.5rem;
+
+  &:hover, &:focus {
+    background-color: transparent;
+    border: none;
+  }
+
+  button {
+    background-color: transparent;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -.03rem;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    margin-left: .75rem;
+    font-family: "Open Sans", sans-serif;
+    padding: 4px 16px;
+    cursor: pointer;
+    color: $dark;
+    transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  
+    &:hover, &:focus {
+      background-color: transparent;
+      border: none;
+      color: #024c9b;
+    }
+  
+    &.selected {
+      color: #007BFF;
+    }
+    &:hover {
+      background-color: transparent;
+      border: none;
+      color: #007BFF;
+    }
+  
+  
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+.button-logout {
+}
+.button-telegram {
+  padding-right: .75rem;
+
+  svg {
+    height: 22px;
+    width: auto;
+    display: block;
+    margin-right: .25rem;
+    transform: translateX(-5px);
+  }
+}
+.logo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $white;
+  display: block;
+  padding-right: 0.5rem; 
+  padding-left: 0; 
+  border-radius: .5rem;
+  color: $dark;
+  left: 1.5rem;
+  top: 1.5rem;
+  position: fixed;
+  z-index: 99999;
+
+  svg {
+    vertical-align: middle;
+    margin-right: 5px;
+    transform: translateY(0px);
+    width: 28px;
+    height: auto;
+    color: $dark;
+  }
+}

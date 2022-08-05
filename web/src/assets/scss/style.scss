@@ -1,0 +1,308 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import './iconsfont.css';
+@import './dockerext.scss';
+
+@import 'react-toastify/scss/main';
+@import 'github-markdown-css/github-markdown-light.css';
+// @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
+
+html,
+body,
+#root {
+    @apply h-full
+        bg-white
+        text-black
+        font-body;
+}
+
+.wrapper {
+    background-image: url('../images/bg.png');
+    @apply bg-right-top
+        bg-no-repeat
+        bg-cover
+        bg-fixed
+        min-h-full
+        flex
+        flex-col;
+}
+
+.container {
+    @apply px-5
+        max-w-container
+        mx-auto;
+
+    &--full {
+        @apply px-0 sm:px-5;
+    }
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+
+    /* Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/*
+This is a base ::after pseudo element class which is used only
+for those elements which require gradient border color
+    .element-with-gradient-border {
+        @extend .gradient-border-after;
+        background-image: linear-gradient(...);
+        border-radius: <the same as parent element has>
+*/
+.gradient-border-after {
+    content: '';
+    @apply absolute
+        -z-1
+        inset-0
+        p-px
+        transition-colors;
+    -webkit-mask: linear-gradient(#ffffff 0 0) content-box, linear-gradient(#ffffff 0 0);
+    mask: linear-gradient(#ffffff 0 0) content-box, linear-gradient(#ffffff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+.btn {
+    @apply inline-block
+        relative
+        z-0
+        rounded-5px
+        outline-none
+        transition-colors;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply rounded-5px;
+    }
+
+    /* Base app button */
+    &--body {
+        @apply bg-gray-050a15
+            text-white
+            font-semibold;
+
+        &:hover {
+            @apply bg-white text-black;
+
+            &::after {
+                @apply bg-button-border;
+            }
+        }
+
+        &:disabled {
+            @apply bg-gray-050a15/75
+                text-white/75
+                pointer-events-none;
+        }
+    }
+
+    /* Header button */
+    &--header {
+        @apply bg-gray-c4c4c4/1
+            sm:backdrop-blur-sm
+            flex
+            flex-row-reverse
+            gap-x-2.5
+            items-center
+            sm:px-18px
+            sm:py-2.5
+            font-normal
+            text-gray-050a15 sm:text-gray-53596d
+            text-lg
+            leading-8 sm:leading-normal;
+
+        &::after {
+            @apply sm:bg-button-header-border;
+        }
+
+        &:hover {
+            @apply text-white;
+
+            &::after {
+                @apply sm:bg-button-header-focus-border;
+            }
+        }
+
+        &.icon-arrow {
+            &::before {
+                @apply block sm:hidden text-xs;
+            }
+        }
+    }
+
+    /* Header burger button */
+    &--burger {
+        @apply w-10 sm:w-12
+            h-10 sm:h-12
+            flex
+            items-center
+            justify-center
+            text-xs
+            text-gray-0a1124 sm:text-gray-53596d;
+
+        &::before {
+            @apply text-inherit
+                translate-x-px
+                translate-y-px;
+        }
+    }
+}
+
+.dropdown-menu {
+    @apply origin-top-right
+        absolute
+        right-0
+        mt-2
+        px-5
+        py-2
+        bg-white/12
+        outline-none
+        z-50
+        backdrop-blur-md
+        rounded-md;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-dropdown-menu-border rounded-md;
+    }
+}
+
+.block-auth {
+    @apply relative
+        max-w-696px
+        pt-12 sm:pt-72px
+        pb-16
+        bg-white/65
+        backdrop-blur-33px
+        rounded-t-21px sm:rounded-21px
+        mx-auto
+        mt-158px sm:mt-51px
+        sm:mb-10;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-block-border
+            rounded-t-21px sm:rounded-21px;
+    }
+}
+
+.bordered-block {
+    @apply relative
+        bg-white/65
+        backdrop-blur-33px
+        rounded-21px;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-block-border
+            rounded-21px;
+    }
+}
+
+.tab--active {
+    @apply bg-extblue;
+    @apply text-white;
+}
+
+.btn--blue {
+    @apply bg-extblue;
+    @apply disabled:opacity-75;
+    @apply hover:opacity-90;
+    @apply rounded;
+    @apply text-white;
+    @apply border-extblue;
+}
+
+.input {
+    @apply relative
+        rounded-3px
+        bg-gray-050a15/3
+        transition
+        pointer-events-none;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-block-border rounded-3px;
+    }
+
+    &:focus-within {
+        &::after {
+            @apply bg-dropdown-menu-border;
+        }
+    }
+
+    .element {
+        @apply w-full
+            outline-none
+            bg-transparent
+            text-base
+            text-gray-050a15
+            pointer-events-auto
+            px-4
+            py-3;
+    }
+
+    &.has-error {
+        .element {
+            @apply text-red-dd3a3a placeholder:text-red-dd3a3a;
+        }
+
+        &::after {
+            @apply bg-input-error-border;
+        }
+    }
+}
+
+.input-switch {
+    @apply relative
+        inline-flex
+        flex-shrink-0
+        items-center
+        h-6
+        w-16
+        rounded-full
+        transition-colors
+        outline-none;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-switch-border rounded-full;
+    }
+
+    span {
+        @apply inline-block
+            w-18px
+            h-18px
+            transform
+            rounded-full
+            transition-transform
+            bg-gray-050a15/25
+            translate-x-1;
+    }
+
+    &:hover,
+    &:focus {
+        @apply bg-gray-050a15/15;
+
+        span {
+            @apply bg-gray-050a15/65;
+        }
+    }
+
+    &.checked {
+        @apply bg-gray-c4c4c4/25;
+
+        span {
+            @apply bg-gray-050a15 translate-x-10;
+        }
+    }
+}

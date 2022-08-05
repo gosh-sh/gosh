@@ -262,7 +262,7 @@ abstract contract TokenWalletBase is ITokenWallet {
         @dev Can by called only by owner address
         @param to Withdraw receiver
     */
-    function sendSurplusGas(address to) external pure onlyOwner {
+    function sendSurplusGas(address to) external view onlyOwner {
         tvm.rawReserve(_targetBalance(), 0);
         to.transfer({
             value: 0,

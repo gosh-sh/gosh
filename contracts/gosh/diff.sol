@@ -18,15 +18,15 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "0.4.1";
+    string constant version = "0.5.3";
     
-    uint128 static _index;
+    uint128 static _index1;
+    uint128 static _index2;
     string static _nameCommit;
     uint256 _pubkey;
     address _rootRepo;
     address _goshdao;
     string _nameBranch;
-    string _commit;
     string _name;
     bool check = false;
     Diff[] _diff;
@@ -39,15 +39,14 @@ contract DiffC is Modifiers {
     address _branchcommit;
     address _newC;
     bool _last;
+    bool _entry;
 
     constructor(address goshdao, 
         address rootGosh, 
-        uint256 value0,
-        uint256 value1, 
+        uint256 pubkey,
+        uint256 pubkeysender, 
         string nameRepo, 
         string nameBranch, 
-        address branchcommit,
-        string commit, 
         address repo,
         TvmCell WalletCode,
         TvmCell codeDiff,
@@ -58,20 +57,18 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        _name = nameRepo;
+        m_WalletCode = WalletCode;        
         _rootGosh = rootGosh;
         _goshdao = goshdao;
-        _pubkey = value0;
+        _pubkey = pubkey;
+        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
-        _branchcommit = branchcommit;
-        _commit = commit;
-        m_WalletCode = WalletCode;
         m_codeDiff = codeDiff;
         m_CommitCode = CommitCode;
         _diff = diffs;
         _last = last;
-        require(checkAccess(value1, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         getMoney(_pubkey);
     }
     
@@ -81,7 +78,7 @@ contract DiffC is Modifiers {
         TvmCell s1 = _composeWalletStateInit(pubkey, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         if (address(this).balance > 80 ton) { return; }
-        GoshWallet(addr).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index);
+        GoshWallet(addr).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -91,9 +88,10 @@ contract DiffC is Modifiers {
     }
     
     function checkAllAccess(address sender) private view returns(bool) {
+        if (address(this) == sender) { return true; }
         if (_buildCommitAddr(_nameCommit) == sender) { return true; }
-        if (_index == 0) { return false; }
-        if (getDiffAddress(_index - 1) == sender) { return true; }
+        if (_index2 == 0) { return false; }
+        if (getDiffAddress(_index2 - 1) == sender) { return true; }
         return false;
     }
     
@@ -109,9 +107,9 @@ contract DiffC is Modifiers {
     }
     
     //Tree part
-    function TreeAnswer(Request value0, optional(TreeObject) value1) public pure {
+    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public pure {
         tvm.accept();    
-        value0; value1;
+        value0; value1; sha;
     }
     
     //Commit part
@@ -142,62 +140,90 @@ contract DiffC is Modifiers {
     }
     
     //Diff part        
-    function sendDiffAll() public view {
+    function sendDiffAll(string branch, address branchcommit) public {
         tvm.accept();
+        require(_entry == false, ERR_DIFF_ALREADY_USED);
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
-        this.sendDiff{value: 0.1 ton, flag: 1}(0);
+        if (branch != _nameBranch) { 
+            Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, branch, branchcommit, _index1);
+            return;
+        }
+        _entry = true;
+        _branchcommit = branchcommit;
+        if (_diff.length != 0) { 
+            this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
+            getMoney(_pubkey);
+            return;
+        }
+        if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, branch, _branchcommit, _index1);  } 
+        else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         getMoney(_pubkey);
     }
     
-    function sendDiff(
-        uint128 index) public view senderIs(address(this)) {
+    function sendDiff(uint128 index, address branchcommit) public view senderIs(address(this)) {
         tvm.accept();
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
             if (_last == false) { 
-                DiffC(getDiffAddress(_index + 1)).sendDiffAll{value : 0.2 ton, flag: 1}();
+                DiffC(getDiffAddress(_index2 + 1)).sendDiffAll{value : 0.2 ton, flag: 1}(_nameBranch, branchcommit);
             }
             return; 
         }
-        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index);
+        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
         getMoney(_pubkey);
-        this.sendDiff{value: 0.1 ton, flag: 1}(index + 1);
+        this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
     function approveDiff(bool res, string commit, uint256 sha) public view {
         tvm.accept();
         sha;
+        commit;
         bool isIt = false;
         for (Diff a : _diff) {
             if (a.snap == msg.sender) { isIt = true; }
         }
         getMoney(_pubkey);
         if (isIt == false) { return; }
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
-        Commit(_buildCommitAddr(commit)).getTreeSha{value: 0.2 ton, flag: 1}(_nameCommit, _index);
+        if (res != true) { 
+            if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1); }
+            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            return; 
+        }
+        this.approveDiffFinal{value: 0.2 ton, flag: 1}(true);
     
     }
     
-    function approveDiffFinal(string commit, bool res) public senderIs(_buildCommitAddr(commit)) {
+    function approveDiffFinal(bool res) public senderIs(address(this)) {
         tvm.accept();
         getMoney(_pubkey);
         if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
-        if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
-            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
+            if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1);  } 
+            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
         }
         getMoney(_pubkey);
     }
     
-    function approveDiffDiff(bool res) public senderIs(getDiffAddress(_index + 1)){
+    function approveDiffDiff(bool res) public senderIs(getDiffAddress(_index2 + 1)){
         tvm.accept();
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (res != true) { 
+            if (_index2 == 0) { 
+                Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1); 
+                this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
+            }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            return; 
+        }
         getMoney(_pubkey);
         _approved += 1;
-        if (_approved == _diff.length) {
-            if (_index == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameCommit, _nameBranch, _branchcommit, _buildCommitAddr(_nameCommit));  } 
-            else { DiffC(getDiffAddress(_index - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); selfdestruct(_buildCommitAddr(_nameCommit));}
+        uint256 need = _diff.length;
+        if (_last == false) { need += 1; }
+        if (_approved == need) {
+            if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_pubkey, _nameBranch, _branchcommit, _index1);  } 
+            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); }
         }
         getMoney(_pubkey);
     }
@@ -207,12 +233,11 @@ contract DiffC is Modifiers {
         tvm.accept();
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
-            if (_last == true) { return; }
-            DiffC(getDiffAddress(_index + 1)).allCorrect{value : 0.2 ton, flag: 1}();
+            if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}();
-        Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], index);
+        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2); 
+        Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index);
         getMoney(_pubkey);
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
@@ -220,13 +245,13 @@ contract DiffC is Modifiers {
     function cancelDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
-        if (_last == false) { DiffC(getDiffAddress(_index + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
+        if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
         if (index > _diff.length) { delete _diff; _approved = 0; return; }
         if (index == _diff.length) { 
             _approved = 0;
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}();
+        Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index1, _index2);
         getMoney(_pubkey);
         this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
@@ -238,8 +263,24 @@ contract DiffC is Modifiers {
     
     function _composeDiffStateInit(uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, _rootRepo, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _nameCommit, _index: index}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _nameCommit, _index1: _index1, _index2: index}});
         return stateInit;
+    }
+    
+    function checkSender(uint128 index, address sender) public view senderIs(address(this)) {
+        if (index >= _diff.length) { return; }
+        if (_diff[index].snap == sender) { this.cancelCommit{value: 0.1 ton, flag: 1}(); return; }
+        this.checkSender{value: 0.2 ton, flag: 1}(index + 1, msg.sender);
+    }
+    
+    //Fallback/Receive
+    onBounce(TvmSlice body) external pure {
+        body;
+        this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
+    }
+    
+    fallback() external pure {
+        this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
     }
     
     //Selfdestruct
@@ -254,7 +295,7 @@ contract DiffC is Modifiers {
     }
 
     function getNextAdress() external view returns(address) {
-        return getDiffAddress(_index + 1);
+        return getDiffAddress(_index2 + 1);
     }
     
     function getVersion() external pure returns(string) {
