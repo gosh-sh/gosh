@@ -10,13 +10,12 @@ pipeline {
     }
 
     stages {
-        failFast true
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
-                    env.VERSION = sh script: "cat git-remote-gosh/Cargo.toml | grep version | head -1 | grep -Eo '[0-9]\\.[0-9]\\.[0-9]' | tr -d '\n'", returnStdout: true
+                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "#${BUILD_NUMBER}_${BRANCH}_v${VERSION}"
                 }
             }
@@ -44,39 +43,53 @@ pipeline {
                 }
             }
         }
-
-        parallel {
-            stage('Build') { 
-                stages {
-                    stage("Build: Git Helper") {
-                        steps {
-                            script {
-                                dir ('git-remote-gosh') {
-                                    sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+        stage('Build & Deploy') {
+            parallel {
+                stage('Build') { 
+                    stages {
+                        stage("Build: Git Helper") {
+                            steps {
+                                script {
+                                    dir ('git-remote-gosh') {
+                                        sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                    }
                                 }
                             }
                         }
-                    }
-                    stage("Build: Docker Extension") {
-                        steps {
-                            script {
-                                dir ('docker-extension') {
-                                    sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                        stage("Build: Docker Extension") {
+                            steps {
+                                script {
+                                    dir ('docker-extension') {
+                                        sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            stage("Deploy: smart-contracts") {
-                steps {
-                    script {
-                        dir ('contracts/gosh') {
-                            sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                stage("Deploy: smart-contracts") {
+                    steps {
+                        script {
+                            dir ('contracts/gosh') {
+                                sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                            }
                         }
+                        archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
+                        archiveArtifacts artifacts: "contracts/gosh/GoshRoot.addr"
                     }
-                    archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
+                }
+            }
+        }
+
+        stage("Deploy: web") {
+            steps {
+                script {
+                    dir ('web') {
+                        env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
+                        sh "sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' .env.ci"
+                        sh 'make run ENV=ci '
+                    }
                 }
             }
         }
@@ -110,6 +123,7 @@ pipeline {
     post { 
         always { 
             cleanWs()
+            sh 'docker rm -f gosh-web'
         }
     }
 }
