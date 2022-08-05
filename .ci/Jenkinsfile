@@ -10,6 +10,7 @@ pipeline {
     }
 
     stages {
+        failFast true
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
@@ -21,8 +22,7 @@ pipeline {
             }
         }   
 
-        stage('Build') { 
-            failFast true
+        stage('Compile') { 
             stages {
                 stage("Compile: SMV") {
                     steps {
@@ -42,14 +42,41 @@ pipeline {
                         }
                     }
                 }
-                stage("Build: Git Helper") {
-                    steps {
-                        script {
-                            dir ('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+            }
+        }
+
+        parallel {
+            stage('Build') { 
+                stages {
+                    stage("Build: Git Helper") {
+                        steps {
+                            script {
+                                dir ('git-remote-gosh') {
+                                    sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                }
                             }
                         }
                     }
+                    stage("Build: Docker Extension") {
+                        steps {
+                            script {
+                                dir ('docker-extension') {
+                                    sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage("Deploy: smart-contracts") {
+                steps {
+                    script {
+                        dir ('contracts/gosh') {
+                            sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                        }
+                    }
+                    archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
                 }
             }
         }
@@ -63,11 +90,20 @@ pipeline {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
                                 }
-                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
+                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                             }
                         }
                     }   
                 }
+                /*stage("Publish: Docker Extension") {
+                    steps {
+                        script {
+                            dir ('docker-extension') {
+                                sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                            }
+                        }
+                    }
+                }*/
             }
         }  
     }
