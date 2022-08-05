@@ -62,8 +62,8 @@ pipeline {
                             dir ('git-remote-gosh') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
-                                    sh 'make publish FULL_IMAGE_NAME=teamgosh/git:$VERSION'
                                 }
+                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION}"
                             }
                         }
                     }   
