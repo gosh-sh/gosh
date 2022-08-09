@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { EEventType, TGoshEventDetails } from '../../types/types'
+import { EEventType, TGoshEventDetails } from 'gosh-react'
 
 type TBranchEventProps = {
     daoName?: string

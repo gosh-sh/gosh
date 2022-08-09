@@ -9,7 +9,7 @@ import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-ic
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
-import { dockerClient } from '../../helpers'
+import { dockerClient } from 'gosh-react'
 
 const Header = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)

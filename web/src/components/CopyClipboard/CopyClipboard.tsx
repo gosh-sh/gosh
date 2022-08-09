@@ -4,7 +4,7 @@ import CopyToClipboard from 'react-copy-to-clipboard'
 import { toast } from 'react-toastify'
 import { ToastOptionsShortcuts } from '../../helpers'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
-import { classNames } from '../../utils'
+import { classNames } from 'gosh-react'
 
 type TCopyClipboardProps = {
     componentProps: Omit<CopyToClipboard.Props, 'children'>

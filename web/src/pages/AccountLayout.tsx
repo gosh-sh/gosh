@@ -1,4 +1,4 @@
-import { classNames } from '../utils'
+import { classNames } from 'gosh-react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 const AccountLayout = () => {

@@ -8,21 +8,21 @@ import {
     goshRoot,
     loadFromIPFS,
     zstd,
-} from '../../helpers'
+} from 'gosh-react'
 import {
     IGoshCommit,
     IGoshRepository,
     TGoshCommitDetails,
     TGoshDiff,
     TGoshTreeItem,
-} from '../../types/types'
+} from 'gosh-react'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { GoshCommit, GoshDiff, GoshRepository } from '../../types/classes'
+import { GoshCommit, GoshDiff, GoshRepository } from 'gosh-react'
 import { AccountType } from '@eversdk/appkit'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from '../../utils'
+import { shortString } from 'gosh-react'
 import { Link } from 'react-router-dom'
 
 type TCommitBlobsType = {

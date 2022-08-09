@@ -9,8 +9,8 @@ import {
     useGoshRepoBranches,
     useGoshDao,
 } from '../hooks/gosh.hooks'
-import { IGoshRepository, IGoshWallet } from '../types/types'
-import { classNames } from '../utils'
+import { IGoshRepository, IGoshWallet } from 'gosh-react'
+import { classNames } from 'gosh-react'
 import { useRecoilValue } from 'recoil'
 import { userStatePersistAtom } from '../store/user.state'
 

@@ -4,9 +4,9 @@ import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
 import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
-import { chacha20, generateRandomBytes, goshClient } from '../../helpers'
+import { chacha20, generateRandomBytes, goshClient } from 'gosh-react'
 import { appModalStateAtom } from '../../store/app.state'
-import { TUserStatePersist } from '../../types/types'
+import { TUserStatePersist } from 'gosh-react'
 import { toast } from 'react-toastify'
 
 type TPinCodeModalProps = {

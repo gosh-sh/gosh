@@ -212,13 +212,14 @@ export class GoshDao implements IGoshDao {
     }
 
     async getDetails(): Promise<TGoshDaoDetails> {
-        const smvTokenRootAddr = await this.getSmvRootTokenAddr()
-        const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
+        // const smvTokenRootAddr = await this.getSmvRootTokenAddr()
+        // const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
         return {
             address: this.address,
             name: await this.getName(),
             participants: await this.getWallets(),
-            supply: await smvTokenRoot.getTotalSupply(),
+            // supply: await smvTokenRoot.getTotalSupply(),
+            supply: 0,
         }
     }
 
@@ -230,50 +231,51 @@ export class GoshDao implements IGoshDao {
                 address: this.address,
             })
 
-        // Topup GoshDao, deploy and topup GoshWallet
-        const walletAddr = await this.getWalletAddr(pubkey, 0)
-        console.debug('[Deploy wallet] - GoshWallet addr:', walletAddr)
-        const wallet = new GoshWallet(this.account.client, walletAddr)
-        const acc = await wallet.account.getAccount()
-        if (acc.acc_type !== AccountType.active) {
-            // const daoBalance = await this.account.getBalance();
-            // if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
-            await this.account.run(
-                'deployWallet',
-                { pubkey },
-                { signer: signerKeys(keys) },
-            )
-            await new Promise<void>((resolve) => {
-                const interval = setInterval(async () => {
-                    const acc = await wallet.account.getAccount()
-                    console.debug('[Deploy wallet] - Account:', acc)
-                    if (acc.acc_type === AccountType.active) {
-                        clearInterval(interval)
-                        resolve()
-                    }
-                }, 1500)
-            })
-        }
+        // // Topup GoshDao, deploy and topup GoshWallet
+        // const walletAddr = await this.getWalletAddr(pubkey, 0)
+        // console.debug('[Deploy wallet] - GoshWallet addr:', walletAddr)
+        // const wallet = new GoshWallet(this.account.client, walletAddr)
+        // const acc = await wallet.account.getAccount()
+        // if (acc.acc_type !== AccountType.active) {
+        //     // const daoBalance = await this.account.getBalance();
+        //     // if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
+        //     await this.account.run(
+        //         'deployWallet',
+        //         { pubkey },
+        //         { signer: signerKeys(keys) },
+        //     )
+        //     await new Promise<void>((resolve) => {
+        //         const interval = setInterval(async () => {
+        //             const acc = await wallet.account.getAccount()
+        //             console.debug('[Deploy wallet] - Account:', acc)
+        //             if (acc.acc_type === AccountType.active) {
+        //                 clearInterval(interval)
+        //                 resolve()
+        //             }
+        //         }, 1500)
+        //     })
+        // }
 
-        // Check wallet SMV token balance and mint if needed
-        const smvTokenBalance = await wallet.getSmvTokenBalance()
-        console.debug('[Deploy wallet] - SMV token balance:', smvTokenBalance)
-        if (!smvTokenBalance) {
-            const rootTokenAddr = await this.getSmvRootTokenAddr()
-            console.debug('[Deploy wallet] - Root token addr:', rootTokenAddr)
-            await this.mint(
-                rootTokenAddr,
-                100,
-                walletAddr,
-                0,
-                this.address,
-                true,
-                '',
-                keys,
-            )
-        }
+        // // Check wallet SMV token balance and mint if needed
+        // const smvTokenBalance = await wallet.getSmvTokenBalance()
+        // console.debug('[Deploy wallet] - SMV token balance:', smvTokenBalance)
+        // if (!smvTokenBalance) {
+        //     const rootTokenAddr = await this.getSmvRootTokenAddr()
+        //     console.debug('[Deploy wallet] - Root token addr:', rootTokenAddr)
+        //     await this.mint(
+        //         rootTokenAddr,
+        //         100,
+        //         walletAddr,
+        //         0,
+        //         this.address,
+        //         true,
+        //         '',
+        //         keys,
+        //     )
+        // }
 
-        return walletAddr
+        // return walletAddr
+        return ''
     }
 
     async getWalletAddr(pubkey: string, index: number): Promise<string> {

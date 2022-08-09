@@ -1,7 +1,7 @@
 // import { NetworkQueriesProtocol } from '@eversdk/core';
 import { atom } from 'recoil'
 // import { getEndpoints } from "../helpers";
-import { TEverState } from '../types/types'
+import { TEverState } from 'gosh-react'
 
 /** Backward compatibility, remove hook after full refactor */
 export const everStateAtom = atom<TEverState>({

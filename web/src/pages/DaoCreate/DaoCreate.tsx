@@ -8,9 +8,9 @@ import { userStateAtom } from '../../store/user.state'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError } from 'gosh-react'
 import { toast } from 'react-toastify'
-import { goshRoot } from '../../helpers'
+import { goshRoot } from 'gosh-react'
 
 type TFormValues = {
     name: string

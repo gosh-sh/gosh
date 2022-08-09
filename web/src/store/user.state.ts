@@ -1,6 +1,6 @@
 import { atom } from 'recoil'
 import { recoilPersist } from 'recoil-persist'
-import { TUserState, TUserStatePersist } from '../types/types'
+import { TUserState, TUserStatePersist } from 'gosh-react'
 
 const { persistAtom } = recoilPersist({ key: 'recoil' })
 

@@ -11,15 +11,15 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { TGoshBranch } from '../../types/types'
+import { TGoshBranch } from 'gosh-react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError } from 'gosh-react'
 import { toast } from 'react-toastify'
-import { GoshCommit } from '../../types/classes'
+import { GoshCommit } from 'gosh-react'
 
 type TCreateBranchFormValues = {
     newName: string

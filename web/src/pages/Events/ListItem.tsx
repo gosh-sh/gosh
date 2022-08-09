@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { eventTypes } from '../../helpers'
-import { TGoshEventDetails } from '../../types/types'
-import { shortString } from '../../utils'
+import { eventTypes } from 'gosh-react'
+import { TGoshEventDetails } from 'gosh-react'
+import { shortString } from 'gosh-react'
 
 type TEventListItemProps = {
     daoName: string

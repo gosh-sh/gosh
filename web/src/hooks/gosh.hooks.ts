@@ -1,7 +1,7 @@
 import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getRepoTree, goshClient, goshRoot, ZERO_COMMIT } from '../helpers'
+import { getRepoTree, goshClient, goshRoot, ZERO_COMMIT } from 'gosh-react'
 import {
     goshBlobAtom,
     goshBranchesAtom,
@@ -20,7 +20,7 @@ import {
     GoshSmvLocker,
     GoshCommit,
     GoshSnapshot,
-} from '../types/classes'
+} from 'gosh-react'
 import {
     IGoshDao,
     IGoshRepository,
@@ -29,7 +29,7 @@ import {
     TCreateCommitCallbackParams,
     TGoshBranch,
     TSmvBalanceDetails,
-} from '../types/types'
+} from 'gosh-react'
 
 export const useGoshDao = (name?: string) => {
     const [details, setDetails] = useRecoilState(goshDaoAtom)

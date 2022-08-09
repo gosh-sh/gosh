@@ -2,9 +2,9 @@ import { faCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { EGoshError, GoshError } from '../../types/errors'
-import { IGoshWallet, TSmvBalanceDetails } from '../../types/types'
-import { classNames } from '../../utils'
+import { EGoshError, GoshError } from 'gosh-react'
+import { IGoshWallet, TSmvBalanceDetails } from 'gosh-react'
+import { classNames } from 'gosh-react'
 import Spinner from '../Spinner'
 
 type TSmvBalanceProps = {

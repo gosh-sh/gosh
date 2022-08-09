@@ -1,7 +1,7 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames } from '../../utils'
+import { classNames } from 'gosh-react'
 import { useResetRecoilState } from 'recoil'
 import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 

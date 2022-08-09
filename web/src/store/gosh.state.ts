@@ -5,7 +5,7 @@ import {
     TGoshTree,
     TGoshTreeItem,
     TGoshWalletDetails,
-} from '../types/types'
+} from 'gosh-react'
 
 export const goshDaoAtom = atom<TGoshDaoDetails | undefined>({
     key: 'GoshDaoAtom',

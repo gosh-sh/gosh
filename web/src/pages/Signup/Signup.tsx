@@ -9,7 +9,7 @@ import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { userStatePersistAtom } from '../../store/user.state'
-import { goshClient } from '../../helpers'
+import { goshClient } from 'gosh-react'
 
 type TFormValues = {
     phrase: string
@@ -22,7 +22,7 @@ const SignupPage = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
     const [phrase, setPhrase] = useState<string>('')
 
-    const generatePhrase = async (client: TonClient) => {
+    const generatePhrase = async (client: TonClient | any) => {
         const result = await client.crypto.mnemonic_from_random({})
         setPhrase(result.phrase)
     }
