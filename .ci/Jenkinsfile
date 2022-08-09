@@ -6,7 +6,7 @@ pipeline {
         }  
     }
     parameters {
-        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'contracts/fix-bugs', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
     }
 
     stages {
