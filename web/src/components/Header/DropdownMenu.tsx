@@ -1,7 +1,7 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames, userStateAtom, userStatePersistAtom } from 'gosh-react'
+import { classNames, userStateAtom, userStatePersistAtom } from 'react-gosh'
 import { useResetRecoilState } from 'recoil'
 
 const DropdownMenu = () => {

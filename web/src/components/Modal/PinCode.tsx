@@ -10,7 +10,7 @@ import {
     userStateAtom,
     userStatePersistAtom,
     TUserStatePersist,
-} from 'gosh-react'
+} from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
 

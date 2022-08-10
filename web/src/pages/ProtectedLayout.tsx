@@ -3,7 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useSetRecoilState, useRecoilValue } from 'recoil'
 import PinCodeModal from '../components/Modal/PinCode'
 import { appModalStateAtom } from '../store/app.state'
-import { userStateAtom, userStatePersistAtom } from 'gosh-react'
+import { userStateAtom, userStatePersistAtom } from 'react-gosh'
 
 type TProtectedLayoutProps = {
     redirect?: boolean

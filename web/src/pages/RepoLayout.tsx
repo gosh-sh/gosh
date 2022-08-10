@@ -14,7 +14,7 @@ import {
     IGoshWallet,
     classNames,
     userStatePersistAtom,
-} from 'gosh-react'
+} from 'react-gosh'
 import { useRecoilValue } from 'recoil'
 
 export type TRepoLayoutOutletContext = {

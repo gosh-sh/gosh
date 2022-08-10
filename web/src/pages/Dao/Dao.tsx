@@ -1,6 +1,6 @@
 import { Link, useOutletContext, useParams } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from 'gosh-react'
+import { shortString } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 

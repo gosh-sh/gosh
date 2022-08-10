@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { GoshRepository } from 'gosh-react'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'gosh-react'
+import { GoshRepository } from 'react-gosh'
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient, goshRoot } from 'gosh-react'
-import { sleep } from 'gosh-react'
+import { getPaginatedAccounts, goshClient, goshRoot } from 'react-gosh'
+import { sleep } from 'react-gosh'
 
 const DaoRepositoriesPage = () => {
     const pageSize = 10

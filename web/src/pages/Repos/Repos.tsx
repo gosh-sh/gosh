@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { goshRoot } from 'gosh-react'
+import { goshRoot } from 'react-gosh'
 import {
     GoshDao,
     GoshRepository,
     GoshWallet,
     userStateAtom,
     TGoshRepoDetails,
-} from 'gosh-react'
+} from 'react-gosh'
 import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {

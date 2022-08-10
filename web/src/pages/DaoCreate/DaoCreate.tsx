@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
-import { goshRoot, EGoshError, GoshError, userStateAtom } from 'gosh-react'
+import { goshRoot, EGoshError, GoshError, userStateAtom } from 'react-gosh'
 
 type TFormValues = {
     name: string

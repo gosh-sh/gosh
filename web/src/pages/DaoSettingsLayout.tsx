@@ -1,5 +1,5 @@
 import { Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom'
-import { classNames } from 'gosh-react'
+import { classNames } from 'react-gosh'
 import { TDaoLayoutOutletContext } from './DaoLayout'
 
 const DaoSettingsLayout = () => {

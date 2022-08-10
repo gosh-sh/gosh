@@ -1,7 +1,7 @@
 import { Image, Container } from './interfaces'
-import { dockerClient, goshClient, goshRoot } from 'gosh-react'
-import { GoshContentSignature, GoshDao, GoshWallet } from 'gosh-react'
-import { TUserState } from 'gosh-react'
+import { dockerClient, goshClient, goshRoot } from 'react-gosh'
+import { GoshContentSignature, GoshDao, GoshWallet } from 'react-gosh'
+import { TUserState } from 'react-gosh'
 
 const logger = console
 

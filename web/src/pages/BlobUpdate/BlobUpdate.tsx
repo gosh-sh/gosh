@@ -25,7 +25,7 @@ import {
     getCodeLanguageFromFilename,
     splitByPath,
     classNames,
-} from 'gosh-react'
+} from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'

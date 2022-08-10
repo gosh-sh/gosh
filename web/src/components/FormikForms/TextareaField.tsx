@@ -1,5 +1,5 @@
 import React from 'react'
-import { classNames } from 'gosh-react'
+import { classNames } from 'react-gosh'
 import BaseField, { IBaseFieldProps } from './BaseField'
 
 interface ITextAreaFieldProps extends IBaseFieldProps {

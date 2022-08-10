@@ -1,6 +1,6 @@
 import { useRecoilValue } from 'recoil'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString, userStateAtom } from 'gosh-react'
+import { shortString, userStateAtom } from 'react-gosh'
 
 const SettingsPage = () => {
     const userState = useRecoilValue(userStateAtom)

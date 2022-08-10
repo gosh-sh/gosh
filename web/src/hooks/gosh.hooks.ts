@@ -30,7 +30,7 @@ import {
     TCreateCommitCallbackParams,
     TGoshBranch,
     TSmvBalanceDetails,
-} from 'gosh-react'
+} from 'react-gosh'
 
 export const useGoshDao = (name?: string) => {
     const [details, setDetails] = useRecoilState(goshDaoAtom)

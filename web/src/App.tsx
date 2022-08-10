@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import { goshClient } from 'gosh-react'
+import { goshClient } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -37,7 +37,7 @@ import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
 import { ToastOptionsShortcuts } from './helpers'
-import { shortString } from 'gosh-react'
+import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 
 const App = () => {

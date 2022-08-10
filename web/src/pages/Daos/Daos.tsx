@@ -12,7 +12,7 @@ import {
     getPaginatedAccounts,
     goshClient,
     goshRoot,
-} from 'gosh-react'
+} from 'react-gosh'
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom)

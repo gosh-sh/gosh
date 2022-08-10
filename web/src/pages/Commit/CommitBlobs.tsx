@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import Spinner from '../../components/Spinner'
-import { getBlobAtCommit, getRepoTree } from 'gosh-react'
-import { IGoshRepository, TGoshTreeItem } from 'gosh-react'
+import { getBlobAtCommit, getRepoTree } from 'react-gosh'
+import { IGoshRepository, TGoshTreeItem } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { GoshCommit } from 'gosh-react'
+import { GoshCommit } from 'react-gosh'
 
 type TCommitBlobsType = {
     className?: string

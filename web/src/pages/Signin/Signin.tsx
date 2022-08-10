@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { goshClient, userStatePersistAtom } from 'gosh-react'
+import { goshClient, userStatePersistAtom } from 'react-gosh'
 
 type TFormValues = {
     phrase: string

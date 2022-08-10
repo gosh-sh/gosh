@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
 import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks'
-import { IGoshDao, IGoshWallet, userStatePersistAtom, classNames } from 'gosh-react'
+import { IGoshDao, IGoshWallet, userStatePersistAtom, classNames } from 'react-gosh'
 
 export type TDaoLayoutOutletContext = {
     dao: IGoshDao

@@ -1,5 +1,5 @@
 import { ErrorMessage, FieldProps } from 'formik'
-import { classNames } from 'gosh-react'
+import { classNames } from 'react-gosh'
 
 export interface IBaseFieldProps extends FieldProps {
     className?: string

@@ -25,7 +25,7 @@ import {
     userStateAtom,
     getCodeLanguageFromFilename,
     classNames,
-} from 'gosh-react'
+} from 'react-gosh'
 import { toast } from 'react-toastify'
 
 type TFormValues = {

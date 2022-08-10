@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Listbox } from '@headlessui/react'
-import { TGoshBranch } from 'gosh-react'
+import { TGoshBranch } from 'react-gosh'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
-import { classNames } from 'gosh-react'
+import { classNames } from 'react-gosh'
 
 type TBranchSelectProps = {
     className?: string

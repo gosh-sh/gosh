@@ -12,7 +12,7 @@ import {
 } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { getCodeLanguageFromFilename, getRepoTree } from 'gosh-react'
+import { getCodeLanguageFromFilename, getRepoTree } from 'react-gosh'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
@@ -30,9 +30,9 @@ import {
     TGoshBranch,
     TGoshTreeItem,
     userStateAtom,
-} from 'gosh-react'
+} from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
-import { EGoshError, GoshError, GoshCommit, GoshSnapshot } from 'gosh-react'
+import { EGoshError, GoshError, GoshCommit, GoshSnapshot } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
 

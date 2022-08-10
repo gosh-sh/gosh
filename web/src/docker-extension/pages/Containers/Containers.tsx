@@ -23,7 +23,7 @@ import {
     Container as ContainerType,
 } from './../../interfaces'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from 'gosh-react'
+import { userStateAtom } from 'react-gosh'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>

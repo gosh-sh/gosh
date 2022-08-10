@@ -2,8 +2,8 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'gosh-react'
-import { shortString } from 'gosh-react'
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
+import { shortString } from 'react-gosh'
 
 type TRepositoryListItemProps = {
     daoName: string
