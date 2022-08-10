@@ -1,7 +1,6 @@
 import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getRepoTree, goshClient, goshRoot, ZERO_COMMIT } from 'gosh-react'
 import {
     goshBlobAtom,
     goshBranchesAtom,
@@ -12,7 +11,6 @@ import {
     goshRepoTreeSelector,
     goshWalletAtom,
 } from '../store/gosh.state'
-import { userStateAtom } from '../store/user.state'
 import {
     GoshDao,
     GoshWallet,
@@ -20,8 +18,11 @@ import {
     GoshSmvLocker,
     GoshCommit,
     GoshSnapshot,
-} from 'gosh-react'
-import {
+    getRepoTree,
+    goshClient,
+    goshRoot,
+    ZERO_COMMIT,
+    userStateAtom,
     IGoshDao,
     IGoshRepository,
     IGoshRoot,

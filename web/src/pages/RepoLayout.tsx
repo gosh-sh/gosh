@@ -9,10 +9,13 @@ import {
     useGoshRepoBranches,
     useGoshDao,
 } from '../hooks/gosh.hooks'
-import { IGoshRepository, IGoshWallet } from 'gosh-react'
-import { classNames } from 'gosh-react'
+import {
+    IGoshRepository,
+    IGoshWallet,
+    classNames,
+    userStatePersistAtom,
+} from 'gosh-react'
 import { useRecoilValue } from 'recoil'
-import { userStatePersistAtom } from '../store/user.state'
 
 export type TRepoLayoutOutletContext = {
     repo: IGoshRepository

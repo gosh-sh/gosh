@@ -1,9 +1,5 @@
 import { Account } from '@eversdk/appkit'
-import { ClientConfig, KeyPair } from '@eversdk/core'
-
-export type TEverState = {
-    config: ClientConfig
-}
+import { KeyPair } from '@eversdk/core'
 
 export type TUserStatePersist = {
     phrase?: string

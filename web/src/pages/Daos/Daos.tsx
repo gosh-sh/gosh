@@ -4,10 +4,15 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient, goshRoot } from 'gosh-react'
-import { userStateAtom } from '../../store/user.state'
-import { GoshDao, GoshWallet } from 'gosh-react'
-import { TGoshDaoDetails } from 'gosh-react'
+import {
+    GoshDao,
+    GoshWallet,
+    userStateAtom,
+    TGoshDaoDetails,
+    getPaginatedAccounts,
+    goshClient,
+    goshRoot,
+} from 'gosh-react'
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom)

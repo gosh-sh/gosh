@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
-import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
-import { chacha20, generateRandomBytes, goshClient } from 'gosh-react'
+import {
+    chacha20,
+    generateRandomBytes,
+    goshClient,
+    userStateAtom,
+    userStatePersistAtom,
+    TUserStatePersist,
+} from 'gosh-react'
 import { appModalStateAtom } from '../../store/app.state'
-import { TUserStatePersist } from 'gosh-react'
 import { toast } from 'react-toastify'
 
 type TPinCodeModalProps = {

@@ -24,13 +24,17 @@ import {
     useGoshRepoBranches,
     useSmvBalance,
 } from '../../hooks/gosh.hooks'
-import { userStateAtom } from '../../store/user.state'
-import { IGoshRepository, IGoshWallet, TGoshBranch, TGoshTreeItem } from 'gosh-react'
+import {
+    IGoshRepository,
+    IGoshWallet,
+    TGoshBranch,
+    TGoshTreeItem,
+    userStateAtom,
+} from 'gosh-react'
 import BranchSelect from '../../components/BranchSelect'
-import { EGoshError, GoshError } from 'gosh-react'
+import { EGoshError, GoshError, GoshCommit, GoshSnapshot } from 'gosh-react'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
-import { GoshCommit, GoshSnapshot } from 'gosh-react'
 
 type TCommitFormValues = {
     title: string

@@ -4,13 +4,11 @@ import * as Yup from 'yup'
 import TextField from '../../components/FormikForms/TextField'
 import { useNavigate } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../store/user.state'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
-import { EGoshError, GoshError } from 'gosh-react'
 import { toast } from 'react-toastify'
-import { goshRoot } from 'gosh-react'
+import { goshRoot, EGoshError, GoshError, userStateAtom } from 'gosh-react'
 
 type TFormValues = {
     name: string
