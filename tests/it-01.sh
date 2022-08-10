@@ -17,7 +17,7 @@ DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
 
 # create DAO
 
-DAO1_NAME=dao7
+DAO1_NAME=dao01
 
 # generate dao1 keys
 SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
@@ -52,17 +52,26 @@ REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REP
 
 # clone repo
 
-#git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
+git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
 
-# echo "  Gosh root:" $GOSH_ROOT_ADDR
-# echo "DAO creator:" $DAO_CREATOR_ADDR
-# echo ===================== DAO =====================
-# echo "   DAO name:" $DAO1_NAME
-# echo "DAO address:" $DAO1_ADDR
-# echo "   DAO keys:" $(cat $DAO1_KEYS)
-# echo ==================== WALLET ===================
-# echo "WALLET address:" $WALLET_ADDR
-# echo "   WALLET keys:" $(cat $WALLET_KEYS)
-# echo ================== REPOSITORY ===================
-# echo "     REPO_NAME:" $REPO_NAME
-# echo "     REPO_ADDR:" $REPO_ADDR
+#check
+cd repo1
+REPO_STATUS=1
+if git status | grep 'No commits yet'; then
+    REPO_STATUS=0
+fi
+
+echo "  Gosh root:" $GOSH_ROOT_ADDR
+echo "DAO creator:" $DAO_CREATOR_ADDR
+echo ===================== DAO =====================
+echo "   DAO name:" $DAO1_NAME
+echo "DAO address:" $DAO1_ADDR
+echo "   DAO keys:" $(cat $DAO1_KEYS)
+echo ==================== WALLET ===================
+echo "WALLET address:" $WALLET_ADDR
+echo "   WALLET keys:" $(cat $WALLET_KEYS)
+echo ================== REPOSITORY ===================
+echo "     REPO_NAME:" $REPO_NAME
+echo "     REPO_ADDR:" $REPO_ADDR
+
+exit $REPO_STATUS
