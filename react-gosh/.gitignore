@@ -10,6 +10,7 @@
 
 # production
 /dist
+react-gosh-*.tgz
 
 # misc
 .vscode
