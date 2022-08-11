@@ -21,6 +21,8 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
+DOCKER_OUTPUT ?= type=image,name=${FULL_IMAGE_NAME}
+
 .PHONY: clear_screen
 clear_screen:
 	-clear && printf '\e[3J'
@@ -64,6 +66,7 @@ bench: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		--output ${DOCKER_OUTPUT} \
 		\
 		-f Dockerfile \
 		.

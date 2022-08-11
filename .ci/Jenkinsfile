@@ -7,6 +7,7 @@ pipeline {
     }
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
+        booleanParam name: 'RELEASE', defaultValue: false, description: 'If true will create Github Release, upload artifacts and push Docker images!'
     }
 
     stages {
@@ -96,23 +97,49 @@ pipeline {
 
         stage('Publish') { 
             stages {
-                stage("Publish: Git Helper") {
+                if (params.RELEASE) {
+                    stage("Publish: Git Helper - Docker") {
+                        steps {
+                            script {
+                                dir ('git-remote-gosh') {
+                                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                        sh 'docker login -u $USERNAME -p $PASSWORD'
+                                    }
+                                    sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                }
+                            }
+                        }   
+                    }
+                }
+                stage("Publish: Git Helper - bin") {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_OUTPUT='type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
+                                sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
+                                sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
+                            }
+                            archiveArtifacts artifacts: "git-remote-gosh/git-remote-gosh-amd64"
+                            archiveArtifacts artifacts: "git-remote-gosh/git-remote-gosh-arm64"
+                            if (params.RELEASE) {
+                                dir ('.ci/scripts') {
+                                    withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                                        sh "./create-github-release.sh $TOKEN ${VERSION} ${BRANCH}"
+                                        sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64"
+                                        sh "./github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64"
+                                    }
                                 }
-                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                             }
                         }
                     }   
                 }
-                /*stage("Publish: Docker Extension") {
-                    steps {
-                        script {
-                            dir ('docker-extension') {
-                                sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                /*if (params.RELEASE) {
+                    stage("Publish: Docker Extension") {
+                        steps {
+                            script {
+                                dir ('docker-extension') {
+                                    sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                                }
                             }
                         }
                     }
