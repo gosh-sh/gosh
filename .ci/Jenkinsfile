@@ -57,6 +57,20 @@ pipeline {
                                 }
                             }
                         }
+                        stage("Publish: Git Helper - Docker") {
+                            steps {
+                                script {
+                                    //if (params.RELEASE) {
+                                        dir ('git-remote-gosh') {
+                                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                                sh 'docker login -u $USERNAME -p $PASSWORD'
+                                            }
+                                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                        }
+                                    //}
+                                }
+                            }   
+                        }
                         stage("Build: Docker Extension") {
                             steps {
                                 script {
