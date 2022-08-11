@@ -97,10 +97,10 @@ pipeline {
 
         stage('Publish') { 
             stages {
-                if (params.RELEASE) {
-                    stage("Publish: Git Helper - Docker") {
-                        steps {
-                            script {
+                stage("Publish: Git Helper - Docker") {
+                    steps {
+                        script {
+                            if (params.RELEASE) {
                                 dir ('git-remote-gosh') {
                                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                         sh 'docker login -u $USERNAME -p $PASSWORD'
@@ -108,8 +108,8 @@ pipeline {
                                     sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                                 }
                             }
-                        }   
-                    }
+                        }
+                    }   
                 }
                 stage("Publish: Git Helper - bin") {
                     steps {
@@ -133,17 +133,17 @@ pipeline {
                         }
                     }   
                 }
-                /*if (params.RELEASE) {
-                    stage("Publish: Docker Extension") {
-                        steps {
-                            script {
+                /*stage("Publish: Docker Extension") {
+                    steps {
+                        script {
+                            if (params.RELEASE) {
                                 dir ('docker-extension') {
                                     sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
                                 }
                             }
                         }
                     }
-                }*/
+                }/*
             }
         }  
     }
