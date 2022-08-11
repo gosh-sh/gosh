@@ -21,7 +21,7 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
-DOCKER_OUTPUT ?= "type=docker"
+DOCKER_OUTPUT ?= docker
 
 .PHONY: clear_screen
 clear_screen:
@@ -63,7 +63,7 @@ bench: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
-		--output ${DOCKER_OUTPUT} \
+		--output=type=${DOCKER_OUTPUT} \
 		\
 		-f Dockerfile \
 		.

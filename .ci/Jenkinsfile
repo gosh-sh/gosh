@@ -115,7 +115,7 @@ pipeline {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_OUTPUT='type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
+                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_OUTPUT='local,dest=./' PLATFORM=linux/amd64,linux/arm64"
                                 sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
                                 sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
                             }
