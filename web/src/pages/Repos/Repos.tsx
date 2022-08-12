@@ -63,7 +63,6 @@ const RepositoriesPage = () => {
                         result: 'id',
                     })
 
-                    await dao.load()
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {
                             const repo = new GoshRepository(
@@ -73,7 +72,9 @@ const RepositoriesPage = () => {
                             return await repo.getDetails()
                         }),
                     )
-                    return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
+                    // TODO: Get dao name
+                    // return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
+                    return repos.map((repo) => ({ repo, daoName: '' }))
                 }),
             )
 

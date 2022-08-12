@@ -169,11 +169,7 @@ export interface IGoshRoot extends IContract {
 export interface IGoshDao extends IContract {
     address: string
     daoCreator: IGoshDaoCreator
-    meta?: {
-        name: string
-    }
 
-    load(): Promise<void>
     getDetails(): Promise<TGoshDaoDetails>
     deployWallet(pubkey: string, keys: KeyPair): Promise<string>
     getWalletAddr(pubkey: string, index: number): Promise<string>
