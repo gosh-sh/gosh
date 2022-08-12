@@ -41,13 +41,16 @@ const RepoLayout = () => {
             icon: faCodePullRequest,
             public: false,
         },
-        {
+    ]
+
+    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+        tabs.push({
             to: `/${daoName}/${repoName}/build/${branchName}`,
             title: 'Build image',
             icon: faCube,
             public: false,
-        },
-    ]
+        })
+    }
 
     useEffect(() => {
         const init = async () => {
