@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons'
+import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
@@ -39,6 +39,12 @@ const RepoLayout = () => {
             to: `/${daoName}/${repoName}/pull`,
             title: 'Pull request',
             icon: faCodePullRequest,
+            public: false,
+        },
+        {
+            to: `/${daoName}/${repoName}/build/${branchName}`,
+            title: 'Build image',
+            icon: faCube,
             public: false,
         },
     ]
