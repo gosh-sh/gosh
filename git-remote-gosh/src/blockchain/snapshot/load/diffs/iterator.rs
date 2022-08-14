@@ -79,7 +79,7 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug", skip(client))]
     pub async fn next(&mut self, client: &TonClient) -> Result<Option<DiffMessage>, Box<dyn Error>> {
-        if !self.is_buffer_ready() {
+        while !self.is_buffer_ready() && self.next.is_some(){
             self.try_load_next_chunk(client).await?;
         }
         return Ok(self.try_take_next_item());
@@ -109,6 +109,7 @@ impl DiffMessagesIterator {
                             .await?
                             .expect("commit data should be here");
                         let original_branch = commit_data.branch;
+                        log::info!("First commit in this branch to the file {} is {} and it was branched from {}", file_path, original_commit, original_branch);
                         // find what is it pointing to
                         let original_snapshot = Snapshot::calculate_address(
                             client,
