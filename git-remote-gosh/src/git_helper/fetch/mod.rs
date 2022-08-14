@@ -40,7 +40,11 @@ impl GitHelper {
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
-        let object_id = store.write(obj)?;
+        let object_id = store.write(obj)
+            .map_err(|e|{
+                log::error!("Write git object failed  with: {}", e);
+                e
+            })?;
         log::info!("Writing git object - success, {}", object_id);
         return Ok(object_id);
     }
@@ -96,32 +100,20 @@ impl GitHelper {
         let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
         let sha = git_hash::ObjectId::from_str(sha)?;
         commits_queue.push_back(sha);
+        let mut dangling_trees = vec![];
+        let mut dangling_commits = vec![];
         loop {
-            if let Some(id) = commits_queue.pop_front() {
-                guard!(id);
-                let address = &self.calculate_commit_address(&id).await?;
-                let onchain_commit = blockchain::GoshCommit::load(&self.es_client, address).await?;
-                log::info!("loaded onchain commit {}", id);
-                let data = git_object::Data::new(
-                    git_object::Kind::Commit,
-                    onchain_commit.content.as_bytes(),
-                );
-                let obj = git_object::Object::from(data.decode()?).into_commit();
-                log::info!("Received commit {}", id);
-                let to_load = TreeObjectsQueueItem {
-                    path: "".to_owned(),
-                    oid: obj.tree.clone(),
-                };
-                tree_obj_queue.push_back(to_load);
-                for parent_id in &obj.parents {
-                    commits_queue.push_back(parent_id.clone());
-                }
-                self.write_git_object(obj).await?;
+            if blobs_restore_plan.is_available() { 
+                log::info!("Restoring blobs");
+                blobs_restore_plan.restore(self).await?;
+                blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
             if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
                 let id = tree_node_to_load.oid;
+                log::info!("Loading tree: {}", id);
                 guard!(id);
+                log::info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let remote_gosh_root_contract_address = &self.remote.gosh;
@@ -147,11 +139,11 @@ impl GitHelper {
                                 oid,
                             };
                             tree_obj_queue.push_back(to_load);
-                        }
+                        },
                         git_object::tree::EntryMode::Commit => {
                             log::trace!("Tree entry: commit {}->{}", id, oid);
                             commits_queue.push_back(oid);
-                        }
+                        },
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
                             log::trace!("Tree entry: blob {}->{}", id, oid);
@@ -173,16 +165,56 @@ impl GitHelper {
                                 snapshot_address
                             );
                             blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
-                        }
-                        _ => unimplemented!(),
+                        },
+                        _ => {
+                            log::info!("IT MUST BE NOTED!");
+                            panic!();
+                        },
                     }
                 }
-                self.write_git_object(tree_object).await?;
+                dangling_trees.push(tree_object);
                 continue;
             }
-            break;
+            if !dangling_trees.is_empty() {
+                for obj in dangling_trees.iter().rev() {
+                    self.write_git_object(obj).await?;
+                }
+                dangling_trees.clear();
+            }
+      
+            if let Some(id) = commits_queue.pop_front() {
+                guard!(id);
+                let address = &self.calculate_commit_address(&id).await?;
+                let onchain_commit = blockchain::GoshCommit::load(&self.es_client, address).await?;
+                log::info!("loaded onchain commit {}", id);
+                let data = git_object::Data::new(
+                    git_object::Kind::Commit,
+                    onchain_commit.content.as_bytes(),
+                );
+                let obj = git_object::Object::from(data.decode()?).into_commit();
+                log::info!("Received commit {}", id);
+                let to_load = TreeObjectsQueueItem {
+                    path: "".to_owned(),
+                    oid: obj.tree.clone(),
+                };
+                log::info!("New tree root: {}", &to_load.oid);
+                tree_obj_queue.push_back(to_load);
+                for parent_id in &obj.parents {
+                    commits_queue.push_back(parent_id.clone());
+                }
+                dangling_commits.push(obj);
+                continue;
+            }
+      
+            if !dangling_commits.is_empty() {
+                for obj in dangling_commits.iter().rev() {
+                    self.write_git_object(obj).await?;
+                }
+                dangling_commits.clear();
+                continue;
+            }
+       break;
         }
-        blobs_restore_plan.restore(self).await?;
         Ok(vec!["\n".to_owned()])
     }
 }

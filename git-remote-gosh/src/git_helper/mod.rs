@@ -134,10 +134,13 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let cmd = iter.next();
         let arg1 = iter.next();
         let arg2 = iter.next();
-
+        let msg = line.clone();
         log::debug!("Line: {line}");
         log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
-
+        let local_git_dir = env::var("GIT_DIR")?;
+        let lock_file_path = local_git_dir + "/.gosh-lock";
+        let mut lock_file = fslock::LockFile::open(&lock_file_path)?;
+        lock_file.lock_with_pid()?;
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => helper.push(ref_arg).await?,
@@ -148,8 +151,9 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
             (None, None, None) => return Ok(()),
             _ => Err("unknown command")?,
         };
+        lock_file.unlock()?;
         for line in response {
-            log::debug!("< {line}");
+            log::debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
     }
