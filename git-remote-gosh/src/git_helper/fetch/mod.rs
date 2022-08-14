@@ -63,7 +63,7 @@ impl GitHelper {
     }
 
     #[instrument(level = "debug")]
-    pub async fn fetch(&mut self, sha: &str, name: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    pub async fn fetch(&mut self, sha: &str, name: &str) -> Result<(), Box<dyn Error>> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {
             return Err("Error. Can not fetch an object without refs/heads/ prefix")?;
@@ -213,9 +213,9 @@ impl GitHelper {
                 dangling_commits.clear();
                 continue;
             }
-       break;
+            break;
         }
-        Ok(vec!["\n".to_owned()])
+        Ok(())
     }
 }
 

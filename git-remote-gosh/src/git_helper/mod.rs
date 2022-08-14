@@ -125,9 +125,15 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
     let mut helper = GitHelper::build(config, url, logger).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
+    let mut is_fetching_a_batch = false;
     while let Some(line) = lines.next_line().await? {
         if line.is_empty() {
-            return Ok(());
+            if is_fetching_a_batch {
+                is_fetching_a_batch = false;
+                stdout.write_all("\n".as_bytes()).await?;     
+            } else {
+                return Ok(());
+            }
         }
 
         let mut iter = line.split_ascii_whitespace();
@@ -137,21 +143,20 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let msg = line.clone();
         log::debug!("Line: {line}");
         log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
-        let local_git_dir = env::var("GIT_DIR")?;
-        let lock_file_path = local_git_dir + "/.gosh-lock";
-        let mut lock_file = fslock::LockFile::open(&lock_file_path)?;
-        lock_file.lock_with_pid()?;
-        let response = match (cmd, arg1, arg2) {
+         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => helper.push(ref_arg).await?,
-            (Some("fetch"), Some(sha), Some(name)) => helper.fetch(sha, name).await?,
+            (Some("fetch"), Some(sha), Some(name)) => {
+                is_fetching_a_batch = true; 
+                helper.fetch(sha, name).await?;
+                vec![]
+            },
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (None, None, None) => return Ok(()),
             _ => Err("unknown command")?,
         };
-        lock_file.unlock()?;
         for line in response {
             log::debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
