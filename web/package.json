@@ -11,7 +11,7 @@
         "build:dockerprod": "rim -m 'src/**/* | eversdk-patch/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "update-react-gosh": "cd ../react-gosh && npm run prepublish && npm pack && cd ../web && rm -r ./node_modules/react-gosh || true && npm update react-gosh"
+        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run prepublish && npm pack && cd ../web && rm -rf ./node_modules/react-gosh || true && npm update react-gosh"
     },
     "eslintConfig": {
         "extends": [

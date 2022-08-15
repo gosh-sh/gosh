@@ -1,21 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRecoilValue } from 'recoil'
 import { getPaginatedAccounts, goshClient, goshRoot } from '../helpers'
 import { userStateAtom } from '../store'
-import { GoshDao, GoshWallet, TGoshDaoDetails } from '../types'
+import { GoshDao, GoshWallet } from '../classes'
 import { sleep } from '../utils'
+import { TDaoListItem } from '../types'
 
 function useDaoList(perPage: number = 10) {
-    const userState = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userStateAtom)
     const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
-        items: {
-            address: string
-            name: string
-            isLoadDetailsFired?: boolean
-            participants?: string[]
-            supply?: number
-        }[]
+        items: TDaoListItem[]
         filtered: string[]
         page: number
         isFetching: boolean
@@ -26,14 +21,44 @@ function useDaoList(perPage: number = 10) {
         isFetching: true,
     })
 
+    /** Load next chunk of DAO list items */
+    const onLoadNext = () => {
+        setDaos((state) => ({ ...state, page: state.page + 1 }))
+    }
+
+    /** Load item details and update corresponging list item */
+    const setItemDetails = async (item: TDaoListItem) => {
+        if (item.isLoadDetailsFired) return
+
+        setDaos((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+
+        const dao = new GoshDao(goshClient, item.address)
+        const details = await dao.getDetails()
+
+        setDaos((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) return { ...curr, ...details }
+                return curr
+            }),
+        }))
+    }
+
+    /** Get initial DAO list */
     useEffect(() => {
         const getDaoList = async () => {
-            if (!userState.keys?.public) return
+            if (!keys?.public) return
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(
-                `0x${userState.keys.public}`,
-            )
+            const walletCode = await goshRoot.getDaoWalletCode(`0x${keys.public}`)
             const walletCodeHash = await goshClient.boc.get_boc_hash({
                 boc: walletCode,
             })
@@ -71,7 +96,7 @@ function useDaoList(perPage: number = 10) {
             )
 
             setDaos({
-                items,
+                items: items.sort((a, b) => (a.name > b.name ? 1 : -1)),
                 filtered: items.map((item) => item.address),
                 page: 1,
                 isFetching: false,
@@ -80,7 +105,23 @@ function useDaoList(perPage: number = 10) {
 
         setDaos({ items: [], filtered: [], page: 1, isFetching: true })
         getDaoList()
-    }, [])
+    }, [keys?.public])
+
+    /** Update filtered items and page depending on search */
+    useEffect(() => {
+        setDaos((state) => {
+            return {
+                ...state,
+                page: search ? 1 : state.page,
+                filtered: state.items
+                    .filter((item) => {
+                        const pattern = new RegExp(search, 'i')
+                        return !search || item.name.search(pattern) >= 0
+                    })
+                    .map((item) => item.address),
+            }
+        })
+    }, [search])
 
     return {
         isFetching: daos.isFetching,
@@ -88,7 +129,11 @@ function useDaoList(perPage: number = 10) {
         items: daos.items
             .filter((item) => daos.filtered.indexOf(item.address) >= 0)
             .slice(0, daos.page * perPage),
-        hasMore: daos.page * perPage < daos.filtered.length,
+        hasNext: daos.page * perPage < daos.filtered.length,
+        search,
+        setSearch,
+        loadNext: onLoadNext,
+        loadItemDetails: setItemDetails,
     }
 }
 

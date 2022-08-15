@@ -1,86 +1,19 @@
-import { faCoins, faUsers } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import {
-    GoshDao,
-    GoshWallet,
-    userStateAtom,
-    TGoshDaoDetails,
-    getPaginatedAccounts,
-    goshClient,
-    goshRoot,
-    useDaoList,
-} from 'react-gosh'
+import { useDaoList } from 'react-gosh'
+import DaoListItem from './DaoListItem'
 
 const DaosPage = () => {
-    const userState = useRecoilValue(userStateAtom)
-    const [search, setSearch] = useState<string>('')
-    const { items, isFetching, isEmpty, hasMore } = useDaoList(5)
-    // const [daos, setDaos] = useState<{
-    //     list: TGoshDaoDetails[]
-    //     lastId?: string
-    //     completed: boolean
-    //     isFetching: boolean
-    // }>({
-    //     list: [],
-    //     completed: false,
-    //     isFetching: true,
-    // })
-
-    // const getDaoList = useCallback(
-    //     async (lastId?: string) => {
-    //         if (!userState.keys?.public) return
-    //         setDaos((curr) => ({ ...curr, isFetching: true }))
-
-    //         // Get GoshWallet code by user's pubkey and get all user's wallets
-    //         const walletCode = await goshRoot.getDaoWalletCode(
-    //             `0x${userState.keys.public}`,
-    //         )
-    //         const walletCodeHash = await goshClient.boc.get_boc_hash({
-    //             boc: walletCode,
-    //         })
-    //         const wallets = await getPaginatedAccounts({
-    //             filters: [`code_hash: {eq:"${walletCodeHash.hash}"}`],
-    //             limit: 10,
-    //             lastId,
-    //         })
-
-    //         // Get unique dao addresses from wallets
-    //         const uniqueDaoAddresses = new Set(
-    //             await Promise.all(
-    //                 wallets.results.map(async (item: any) => {
-    //                     const wallet = new GoshWallet(goshRoot.account.client, item.id)
-    //                     return await wallet.getDaoAddr()
-    //                 }),
-    //             ),
-    //         )
-
-    //         // Get daos details from unique dao addressed
-    //         const items = await Promise.all(
-    //             Array.from(uniqueDaoAddresses).map(async (address) => {
-    //                 const dao = new GoshDao(goshClient, address)
-    //                 return await dao.getDetails()
-    //             }),
-    //         )
-
-    //         setDaos((curr) => ({
-    //             ...curr,
-    //             isFetching: false,
-    //             list: [...curr.list, ...items],
-    //             lastId: wallets.lastId,
-    //             completed: wallets.completed,
-    //         }))
-    //     },
-    //     [userState.keys?.public],
-    // )
-
-    // useEffect(() => {
-    //     setDaos({ list: [], isFetching: true, completed: true })
-    //     getDaoList()
-    // }, [getDaoList])
+    const {
+        items,
+        isFetching,
+        isEmpty,
+        hasNext,
+        search,
+        setSearch,
+        loadNext,
+        loadItemDetails,
+    } = useDaoList(5)
 
     return (
         <>
@@ -89,10 +22,9 @@ const DaosPage = () => {
                     <input
                         className="element !py-1.5"
                         type="text"
-                        placeholder="Search orgranization... (not available now)"
+                        placeholder="Search orgranization..."
                         autoComplete="off"
                         value={search}
-                        disabled={true}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
@@ -118,35 +50,19 @@ const DaosPage = () => {
                 )}
 
                 <div className="divide-y divide-gray-c4c4c4">
-                    {items.map((item: any, index) => (
-                        <div key={index} className="py-3">
-                            <Link
-                                to={`/${item.name}`}
-                                className="text-xl font-semibold hover:underline"
-                            >
-                                {item.name}
-                            </Link>
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-gray-606060 text-sm mt-1">
-                                {/* <div>
-                                    <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                                    Participants: {item.participants.length}
-                                </div>
-                                <div>
-                                    <FontAwesomeIcon icon={faCoins} className="mr-2" />
-                                    Total supply: {item.supply}
-                                </div> */}
-                            </div>
-                        </div>
-                    ))}
+                    {items.map((item, index) => {
+                        loadItemDetails(item)
+                        return <DaoListItem key={index} item={item} />
+                    })}
                 </div>
 
-                {hasMore && (
+                {hasNext && (
                     <div className="text-center mt-3">
                         <button
                             className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                             type="button"
                             disabled={isFetching}
-                            // onClick={() => getDaoList(daos.lastId)}
+                            onClick={loadNext}
                         >
                             {isFetching && <Spinner className="mr-2" />}
                             Load more

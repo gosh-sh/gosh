@@ -1,5 +1,6 @@
 import { Account } from '@eversdk/appkit'
 import { KeyPair } from '@eversdk/core'
+import { TDaoDetails } from './dao.types'
 
 export type TUserStatePersist = {
     phrase?: string
@@ -9,13 +10,6 @@ export type TUserStatePersist = {
 
 export type TUserState = TUserStatePersist & {
     keys?: KeyPair
-}
-
-export type TGoshDaoDetails = {
-    address: string
-    name: string
-    participants: string[]
-    supply: number
 }
 
 export type TGoshWalletDetails = {
@@ -168,9 +162,8 @@ export interface IGoshRoot extends IContract {
 
 export interface IGoshDao extends IContract {
     address: string
-    daoCreator: IGoshDaoCreator
 
-    getDetails(): Promise<TGoshDaoDetails>
+    getDetails(): Promise<TDaoDetails>
     deployWallet(pubkey: string, keys: KeyPair): Promise<string>
     getWalletAddr(pubkey: string, index: number): Promise<string>
     getWallets(): Promise<string[]>

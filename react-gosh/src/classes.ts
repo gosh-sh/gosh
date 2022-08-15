@@ -1,20 +1,20 @@
 import { Account, AccountRunOptions, AccountType } from '@eversdk/appkit'
 import { KeyPair, signerKeys, signerNone, TonClient } from '@eversdk/core'
-import GoshDaoCreatorABI from '../contracts/daocreator.abi.json'
-import GoshABI from '../contracts/gosh.abi.json'
-import GoshDaoABI from '../contracts/goshdao.abi.json'
-import GoshWalletABI from '../contracts/goshwallet.abi.json'
-import GoshRepositoryABI from '../contracts/repository.abi.json'
-import GoshCommitABI from '../contracts/commit.abi.json'
-import GoshDiffABI from '../contracts/diff.abi.json'
-import GoshTreeABI from '../contracts/tree.abi.json'
-import GoshSnapshotABI from '../contracts/snapshot.abi.json'
-import GoshTagABI from '../contracts/tag.abi.json'
-import GoshContentSignatureABI from '../contracts/content-signature.abi.json'
-import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json'
-import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json'
-import GoshSmvClientABI from '../contracts/SMVClient.abi.json'
-import GoshSmvTokenRootABI from '../contracts/TokenRoot.abi.json'
+import GoshDaoCreatorABI from './contracts/daocreator.abi.json'
+import GoshABI from './contracts/gosh.abi.json'
+import GoshDaoABI from './contracts/goshdao.abi.json'
+import GoshWalletABI from './contracts/goshwallet.abi.json'
+import GoshRepositoryABI from './contracts/repository.abi.json'
+import GoshCommitABI from './contracts/commit.abi.json'
+import GoshDiffABI from './contracts/diff.abi.json'
+import GoshTreeABI from './contracts/tree.abi.json'
+import GoshSnapshotABI from './contracts/snapshot.abi.json'
+import GoshTagABI from './contracts/tag.abi.json'
+import GoshContentSignatureABI from './contracts/content-signature.abi.json'
+import GoshSmvProposalABI from './contracts/SMVProposal.abi.json'
+import GoshSmvLockerABI from './contracts/SMVTokenLocker.abi.json'
+import GoshSmvClientABI from './contracts/SMVClient.abi.json'
+import GoshSmvTokenRootABI from './contracts/TokenRoot.abi.json'
 import {
     calculateSubtrees,
     getRepoTree,
@@ -34,7 +34,7 @@ import {
     getPaginatedAccounts,
     splitByChunk,
     goshRoot,
-} from '../helpers'
+} from './helpers'
 import {
     IGoshTree,
     TGoshBranch,
@@ -56,16 +56,16 @@ import {
     IGoshSnapshot,
     TGoshDiff,
     IGoshDiff,
-    TGoshDaoDetails,
     TGoshTagDetails,
     TGoshRepoDetails,
     TGoshEventDetails,
     TGoshCommitDetails,
     IGoshContentSignature,
-} from './types'
+} from './types/types'
 import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
-import { sleep } from '../utils'
+import { sleep } from './utils'
+import { TDaoDetails } from './types/dao.types'
 
 export class GoshDaoCreator implements IGoshDaoCreator {
     abi: any = GoshDaoCreatorABI
@@ -196,15 +196,13 @@ export class GoshDao implements IGoshDao {
     abi: any = GoshDaoABI
     account: Account
     address: string
-    daoCreator: IGoshDaoCreator
 
     constructor(client: TonClient, address: string) {
         this.address = address
-        this.daoCreator = goshDaoCreator
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
-    async getDetails(): Promise<TGoshDaoDetails> {
+    async getDetails(): Promise<TDaoDetails> {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr()
         const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
         return {
@@ -216,7 +214,6 @@ export class GoshDao implements IGoshDao {
     }
 
     async deployWallet(pubkey: string, keys: KeyPair): Promise<string> {
-        // Topup GoshDao, deploy and topup GoshWallet
         const walletAddr = await this.getWalletAddr(pubkey, 0)
         console.debug('[Deploy wallet] - GoshWallet addr:', walletAddr)
         const wallet = new GoshWallet(this.account.client, walletAddr)

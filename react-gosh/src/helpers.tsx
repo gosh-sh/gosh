@@ -4,13 +4,7 @@ import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import GoshSnapshotAbi from './contracts/snapshot.abi.json'
-import {
-    GoshCommit,
-    GoshDaoCreator,
-    GoshRoot,
-    GoshSnapshot,
-    GoshTree,
-} from './types/classes'
+import { GoshCommit, GoshDaoCreator, GoshRoot, GoshSnapshot, GoshTree } from './classes'
 import { IGoshRepository, TGoshCommit, TGoshTree, TGoshTreeItem } from './types'
 import { sleep } from './utils'
 
