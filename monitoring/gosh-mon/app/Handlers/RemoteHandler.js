@@ -145,7 +145,7 @@ class RemoteHandler extends GoshHandler_1.default {
         return this.gosh_branch.startsWith('release:') ?
             [
                 /* 0*/ () => this.ensureDir('../.gosh'),
-                /* 1*/ () => this.copyFile('config/credentials.json', '../.gosh/credentials.json'),
+                /* 1*/ () => this.copyFile('config/config.json', '../.gosh/config.json'),
                 () => this.nodeWait(this.getRandomInt(1000, 5000)),
                 /* 2*/ async () => {
                     // https://github.com/tonlabs/gosh.git
