@@ -21,6 +21,8 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
+DOCKER_BUILDX_ARGS ?= 
+
 .PHONY: clear_screen
 clear_screen:
 	-clear && printf '\e[3J'
@@ -37,9 +39,6 @@ copy_abi: clear_abi
 .PHONY: build
 build: copy_abi clear_screen
 	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
-	mkdir -p $(TARGET_DIR)/git-remote-gosh || true
-	if [ "${TARGET_ARCH}" = "x86_64-pc-windows-gnu" ]; then cp ./target/${TARGET_ARCH}/release/git-remote-gosh.exe $(TARGET_DIR)/git-remote-gosh-windows.exe; fi;
-	if [ "${TARGET_ARCH}" = "x86_64-unknown-linux-gnu" ]; then cp ./target/${TARGET_ARCH}/release/git-remote-gosh $(TARGET_DIR)/git-remote-gosh-linux; fi;
 
 .PHONY: test
 test: copy_abi clear_screen
@@ -64,6 +63,7 @@ bench: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile \
 		.

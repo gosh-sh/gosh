@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons'
+import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
@@ -42,6 +42,15 @@ const RepoLayout = () => {
             public: false,
         },
     ]
+
+    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+        tabs.push({
+            to: `/${daoName}/${repoName}/build/${branchName}`,
+            title: 'Build image',
+            icon: faCube,
+            public: false,
+        })
+    }
 
     useEffect(() => {
         const init = async () => {
