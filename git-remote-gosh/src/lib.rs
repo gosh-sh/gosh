@@ -23,7 +23,6 @@ extern crate tracing;
 
 extern crate diffy;
 extern crate lru;
-extern crate fslock;
 
 pub mod abi;
 pub mod blockchain;
