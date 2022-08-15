@@ -80,7 +80,10 @@ impl Snapshot {
             .run_local(context, "getName", None)
             .await?;
         log::debug!("received file path `{result:?}` for snapshot {snapshot:?}", );
-        return Ok(result.file_path);
+        // Note: Fix! Contract returns file path prefixed with a branch name
+        let mut path = result.file_path;
+        path = path.split_once("/").expect("Must be prefixed").1.to_string();
+        return Ok(path);
     }
 }
 

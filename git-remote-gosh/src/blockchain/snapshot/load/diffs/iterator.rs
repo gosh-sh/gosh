@@ -23,7 +23,8 @@ pub struct DiffMessage {
 
 #[derive(Debug)]
 enum NextChunk {
-    MessagesPage(String, Option<String>)
+    MessagesPage(String, Option<String>),
+    JumpToAnotherBranchSnapshot(String, String)
 }
 
 #[derive(Debug)]
@@ -79,48 +80,88 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug", skip(client))]
     pub async fn next(&mut self, client: &TonClient) -> Result<Option<DiffMessage>, Box<dyn Error>> {
-        if !self.is_buffer_ready() {
+        while !self.is_buffer_ready() && self.next.is_some(){
             self.try_load_next_chunk(client).await?;
         }
         return Ok(self.try_take_next_item());
     }
 
+    async fn into_next_page(client: &TonClient, current_snapshot_address: &str, repository_address: &str, next_page_info: Option<String>) -> Result<Option<NextChunk>, Box<dyn Error>> {
+        let address = current_snapshot_address;
+        return Ok(match next_page_info {
+            Some(next_page_info) => Some(
+                NextChunk::MessagesPage(
+                    address.to_string(),
+                    Some(next_page_info)
+                )
+            ),
+            None => {
+                // find last commit
+                let Snapshot { original_commit, .. } = Snapshot::load(client, &address).await?;
+                let file_path = Snapshot::get_file_path(client, &address).await?;
+                let commit_addr = get_commit_address(client, repository_address, &original_commit).await?;
+                let commit_data = get_commit_by_addr(client, &commit_addr)
+                    .await?
+                    .expect("commit data should be here");
+                let original_branch = commit_data.branch;
+                // find what is it pointing to
+                let original_snapshot = Snapshot::calculate_address(
+                    client,
+                    repository_address,
+                    &original_branch,
+                    &file_path
+                ).await?;
+                log::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
+                // generate filter
+                Some(NextChunk::JumpToAnotherBranchSnapshot(original_snapshot, original_commit))
+            }
+        });
+    } 
+
     #[instrument(level = "debug", skip(client))]
     async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
+        log::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
+            Some(NextChunk::JumpToAnotherBranchSnapshot(snapshot_address, ignore_commits_after)) => {
+                log::info!("Jumping to another branch: {} - commit {}", snapshot_address, ignore_commits_after);
+                let address = snapshot_address;
+                // Now we will be loading page by page till 
+                // we find a message with the expected commit
+                // Fail if not found: it must be there
+                let mut cursor = None;
+                let mut index = None;
+                let mut next_page_info = None;
+                while index.is_none() { 
+                    log::info!("loading messages");
+                    let (buffer, possible_next_page_info, stop_on) = load_messages_to(client, &address, &cursor, None).await?;
+                    log::info!("messages: {:?}", buffer);
+                    for i in 0..buffer.len() {
+                        if &buffer[i].diff.commit == ignore_commits_after {
+                            index = Some(i);
+                        }
+                    }
+                    self.buffer = buffer;
+                    if index.is_none() { 
+                        log::info!("Expected commit was not found");
+                        if possible_next_page_info.is_some() {
+                            cursor = possible_next_page_info;
+                        } else {
+                            panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
+                        }
+                    } else {
+                        log::info!("Commit found at {}", index.unwrap());
+                        next_page_info = possible_next_page_info;
+                    }
+                }
+                self.buffer_cursor = index.unwrap();
+                DiffMessagesIterator::into_next_page(client, &address, &self.repo_addr, next_page_info).await?
+            },
             Some(NextChunk::MessagesPage(address, cursor)) => {
                 let (buffer, next_page_info, stop_on) = load_messages_to(client, &address, cursor, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
-                match next_page_info {
-                    Some(next_page_info) => Some(
-                        NextChunk::MessagesPage(
-                            address.to_string(),
-                            Some(next_page_info)
-                        )
-                    ),
-                    None => {
-                        // find last commit
-                        let Snapshot { original_commit, .. } = Snapshot::load(client, &address).await?;
-                        let file_path = Snapshot::get_file_path(client, &address).await?;
-                        let commit_addr = get_commit_address(client, &self.repo_addr, &original_commit).await?;
-                        let commit_data = get_commit_by_addr(client, &commit_addr)
-                            .await?
-                            .expect("commit data should be here");
-                        let original_branch = commit_data.branch;
-                        // find what is it pointing to
-                        let original_snapshot = Snapshot::calculate_address(
-                            client,
-                            &self.repo_addr,
-                            &original_branch,
-                            &file_path
-                        ).await?;
-
-                        // generate filter
-                        Some(NextChunk::MessagesPage(original_snapshot, None))
-                    }
-                }
+                DiffMessagesIterator::into_next_page(client, &address, &self.repo_addr, next_page_info).await?
             },
         };
         Ok(())
