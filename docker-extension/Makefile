@@ -3,7 +3,7 @@ DOCKER_BUILDER_NAME ?= public-gosh-builder
 DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
 PLATFORM       ?= linux/amd64,linux/arm64
 IMAGE          ?= teamgosh/docker-extension
-TAG            ?= 2.0.5
+TAG            ?= 2.0.6
 LOCAL_TEMP_DIR ?= ./.tmp
 
 GIT_COMMIT := $(shell git rev-parse HEAD)
@@ -70,10 +70,23 @@ build-ci: build-ui-v2
 	  --output=type=docker \
 	  .
 
-install: rm build ## Install the extension
+build-debug: clean_temp build-ui-v2 ## Install the extension
+	-mkdir $(LOCAL_TEMP_DIR)/gosh
+	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	docker buildx build \
+	  --tag=$(IMAGE):$(TAG) \
+	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
+	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
+	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
+	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --output=type=docker \
+	  .
+
+install: rm build-debug
 	docker extension install $(IMAGE):$(TAG)
 
-update: build ## Update the extension
+update: build-debug ## Update the extension
 	docker extension update $(IMAGE):$(TAG)
 
 debug: ## Debug the extension
