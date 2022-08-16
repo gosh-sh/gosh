@@ -2,8 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks'
-import { IGoshDao, IGoshWallet, userStatePersistAtom, classNames } from 'react-gosh'
+import { useGoshWallet } from '../hooks/gosh.hooks'
+import {
+    IGoshDao,
+    IGoshWallet,
+    userStatePersistAtom,
+    classNames,
+    useDao,
+} from 'react-gosh'
 
 export type TDaoLayoutOutletContext = {
     dao: IGoshDao
@@ -13,7 +19,7 @@ export type TDaoLayoutOutletContext = {
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName } = useParams()
-    const dao = useGoshDao(daoName)
+    const { dao } = useDao(daoName)
     const wallet = useGoshWallet(dao)
     const [isReady, setIsReady] = useState<boolean>(false)
 

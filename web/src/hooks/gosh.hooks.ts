@@ -5,14 +5,12 @@ import {
     goshBlobAtom,
     goshBranchesAtom,
     goshCurrBranchSelector,
-    goshDaoAtom,
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
     goshWalletAtom,
 } from '../store/gosh.state'
 import {
-    GoshDao,
     GoshWallet,
     GoshRepository,
     GoshSmvLocker,
@@ -31,34 +29,6 @@ import {
     TGoshBranch,
     TSmvBalanceDetails,
 } from 'react-gosh'
-
-export const useGoshDao = (name?: string) => {
-    const [details, setDetails] = useRecoilState(goshDaoAtom)
-    const [dao, setDao] = useState<IGoshDao>()
-
-    useEffect(() => {
-        const getDao = async (
-            _name: string,
-            state: { name?: string; address?: string },
-        ) => {
-            if (!state.address || state.name !== _name) {
-                console.debug('Get dao hook (blockchain)')
-                const address = await goshRoot.getDaoAddr(_name)
-                const dao = new GoshDao(goshRoot.account.client, address)
-                const details = await dao.getDetails()
-                setDao(dao)
-                setDetails(details)
-            } else {
-                console.debug('Get dao hook (from state)')
-                setDao(new GoshDao(goshRoot.account.client, state.address))
-            }
-        }
-
-        if (name) getDao(name, { name: details?.name, address: details?.address })
-    }, [name, details?.name, details?.address, setDetails])
-
-    return dao
-}
 
 export const useGoshWallet = (dao?: IGoshDao) => {
     const userState = useRecoilValue(userStateAtom)

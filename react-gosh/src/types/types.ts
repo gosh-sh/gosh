@@ -1,5 +1,5 @@
-import { Account } from '@eversdk/appkit'
-import { KeyPair } from '@eversdk/core'
+import { Account, AccountRunOptions } from '@eversdk/appkit'
+import { KeyPair, ResultOfProcessMessage } from '@eversdk/core'
 import { TDaoDetails } from './dao.types'
 
 export type TUserStatePersist = {
@@ -128,33 +128,38 @@ export enum EEventType {
     BRANCH_UNLOCK = 3,
 }
 
-interface IContract {
+export interface IContract {
     abi: any
     tvc?: string
     account: Account
+
+    run(
+        functionName: string,
+        input: object,
+        options?: AccountRunOptions,
+        writeLog?: boolean,
+    ): Promise<ResultOfProcessMessage>
 }
 
 export interface IGoshDaoCreator extends IContract {
     address: string
 
-    deployDao(name: string, rootPubkey: string): Promise<void>
+    deployDao(name: string, ownerPubkey: string): Promise<ResultOfProcessMessage>
 }
 export interface IGoshRoot extends IContract {
     address: string
-    daoCreator: IGoshDaoCreator
 
-    createDao(name: string, rootPubkey: string): Promise<IGoshDao>
-
+    deployDao(name: string, rootPubkey: string): Promise<IGoshDao>
     getDaoAddr(name: string): Promise<string>
     getDaoWalletCode(pubkey: string): Promise<string>
     getRepoAddr(name: string, daoName: string): Promise<string>
-    getDaoRepoCode(daoAddress: string): Promise<string>
+    getDaoRepoCode(daoAddr: string): Promise<string>
     getSmvPlatformCode(): Promise<string>
-    getTreeAddr(repoAddr: string, treeName: string): Promise<string>
+    getTreeAddr(repoAddr: string, treeHash: string): Promise<string>
     getContentAddress(
         daoName: string,
         repoName: string,
-        commitName: string,
+        commitHash: string,
         label: string,
     ): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
@@ -164,7 +169,7 @@ export interface IGoshDao extends IContract {
     address: string
 
     getDetails(): Promise<TDaoDetails>
-    deployWallet(pubkey: string, keys: KeyPair): Promise<string>
+    deployWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<IGoshWallet>
     getWalletAddr(pubkey: string, index: number): Promise<string>
     getWallets(): Promise<string[]>
     getName(): Promise<string>
@@ -172,16 +177,7 @@ export interface IGoshDao extends IContract {
     getSmvRootTokenAddr(): Promise<string>
     getSmvProposalCode(): Promise<string>
     getSmvClientCode(): Promise<string>
-    mint(
-        rootTokenAddr: string,
-        amount: number,
-        recipient: string,
-        deployWalletValue: number,
-        remainingGasTo: string,
-        notify: boolean,
-        payload: string,
-        keys: KeyPair,
-    ): Promise<void>
+    mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 export interface IGoshWallet extends IContract {

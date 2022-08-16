@@ -11,4 +11,10 @@ type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply'> & {
     isLoadDetailsFired?: boolean
 }
 
-export { TDaoDetails, TDaoListItem }
+type TDaoCreateProgress = {
+    isFetching: boolean
+    isDaoDeployed?: boolean
+    participants: { pubkey: string; isDeployed?: boolean; isMinted?: boolean }[]
+}
+
+export { TDaoDetails, TDaoListItem, TDaoCreateProgress }

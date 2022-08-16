@@ -1,4 +1,3 @@
-import React from 'react'
 import { Field, FieldArray, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import TextField from '../../components/FormikForms/TextField'
@@ -8,7 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
-import { goshRoot, EGoshError, GoshError, userStateAtom } from 'react-gosh'
+import { userStateAtom, useDaoCreate } from 'react-gosh'
+import DaoCreateProgress from './Progress'
 
 type TFormValues = {
     name: string
@@ -17,28 +17,12 @@ type TFormValues = {
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const userState = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userStateAtom)
+    const { createDao, progress } = useDaoCreate()
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-
-            // Deploy GoshDao
-            const rootPubkey = `0x${userState.keys.public}`
-            const goshDao = await goshRoot.createDao(
-                values.name.toLowerCase(),
-                rootPubkey,
-            )
-
-            // Deploy wallets
-            await Promise.all(
-                values.participants.map(async (item) => {
-                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-                    const walletAddr = await goshDao.deployWallet(item, userState.keys)
-                    console.debug('DAOWallet address:', walletAddr)
-                }),
-            )
-
+            await createDao(values.name, values.participants)
             navigate('/account/orgs')
         } catch (e: any) {
             console.error(e.message)
@@ -56,9 +40,7 @@ const DaoCreatePage = () => {
                 <Formik
                     initialValues={{
                         name: '',
-                        participants: [
-                            userState.keys ? `0x${userState.keys.public}` : '',
-                        ],
+                        participants: [keys ? `0x${keys.public}` : ''],
                     }}
                     onSubmit={onDaoCreate}
                     validationSchema={Yup.object().shape({
@@ -162,6 +144,8 @@ const DaoCreatePage = () => {
                         </Form>
                     )}
                 </Formik>
+
+                <DaoCreateProgress progress={progress} className={'mt-4'} />
             </div>
         </div>
     )
