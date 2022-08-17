@@ -69,7 +69,7 @@ const EventPage = () => {
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
-            const smvClientCode = await dao.getSmvClientCode()
+            const smvClientCode = await dao.instance.getSmvClientCode()
             const choice = values.approve === 'true'
             await wallet.voteFor(
                 smvPlatformCode,

@@ -236,6 +236,7 @@ export class GoshDao extends BaseContract implements IGoshDao {
             name: await this.getName(),
             participants: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
+            ownerPubkey: await this.getRootPubkey(),
         }
     }
 

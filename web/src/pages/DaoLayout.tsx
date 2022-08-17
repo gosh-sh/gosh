@@ -9,18 +9,23 @@ import {
     userStatePersistAtom,
     classNames,
     useDao,
+    TDaoDetails,
 } from 'react-gosh'
 
 export type TDaoLayoutOutletContext = {
-    dao: IGoshDao
+    dao: {
+        instance: IGoshDao
+        details: TDaoDetails
+        isOwner: boolean
+    }
     wallet?: IGoshWallet
 }
 
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName } = useParams()
-    const { dao } = useDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName)
+    const wallet = useGoshWallet(dao.instance)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
@@ -33,8 +38,8 @@ const DaoLayout = () => {
     useEffect(() => {
         const walletAwaited =
             !userStatePersist.phrase || (userStatePersist.phrase && wallet)
-        if (dao && walletAwaited) setIsReady(true)
-    }, [dao, userStatePersist.phrase, wallet])
+        if (dao.instance && walletAwaited) setIsReady(true)
+    }, [dao.instance, userStatePersist.phrase, wallet])
 
     return (
         <div className="container container--full my-10">

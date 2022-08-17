@@ -64,7 +64,7 @@ const DaoRepositoriesPage = () => {
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const repoCode = await goshRoot.getDaoRepoCode(dao.address)
+            const repoCode = await goshRoot.getDaoRepoCode(dao.instance.address)
             const repoCodeHash = await goshClient.boc.get_boc_hash({ boc: repoCode })
             const list: any[] = []
             let next: string | undefined
@@ -95,7 +95,7 @@ const DaoRepositoriesPage = () => {
         }
 
         getRepoList()
-    }, [dao.address])
+    }, [dao.instance.address])
 
     /** Update filtered items and page depending on search */
     useEffect(() => {

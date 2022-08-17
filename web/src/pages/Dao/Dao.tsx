@@ -19,9 +19,9 @@ const DaoPage = () => {
                 <div>
                     <p className="text-sm text-gray-606060 mb-1">DAO address</p>
                     <CopyClipboard
-                        label={shortString(dao.address)}
+                        label={shortString(dao.instance.address)}
                         componentProps={{
-                            text: dao.address,
+                            text: dao.instance.address,
                         }}
                     />
                 </div>

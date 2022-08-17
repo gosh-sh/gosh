@@ -22,8 +22,8 @@ const RepoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const repo = useGoshRepo(daoName, repoName)
-    const { dao } = useDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName)
+    const wallet = useGoshWallet(dao.instance)
     const { updateBranches } = useGoshRepoBranches(repo)
     const [isFetched, setIsFetched] = useState<boolean>(false)
 

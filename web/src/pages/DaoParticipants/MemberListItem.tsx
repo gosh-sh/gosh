@@ -5,7 +5,7 @@ type TMemberListItemProps = {
     item: TDaoMemberListItem
 }
 
-const MemberListItem = (props: TMemberListItemProps) => {
+const DaoMemberListItem = (props: TMemberListItemProps) => {
     const { item } = props
 
     return (
@@ -42,4 +42,4 @@ const MemberListItem = (props: TMemberListItemProps) => {
     )
 }
 
-export default MemberListItem
+export default DaoMemberListItem

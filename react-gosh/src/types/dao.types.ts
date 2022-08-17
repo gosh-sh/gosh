@@ -3,11 +3,13 @@ type TDaoDetails = {
     name: string
     participants: string[]
     supply: number
+    ownerPubkey: string
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply'> & {
+type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply' | 'ownerPubkey'> & {
     participants?: string[]
     supply?: number
+    ownerPubkey?: string
     isLoadDetailsFired?: boolean
 }
 

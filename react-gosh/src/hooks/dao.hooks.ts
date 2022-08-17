@@ -144,6 +144,7 @@ function useDaoList(perPage: number) {
 }
 
 function useDao(name?: string) {
+    const { keys } = useRecoilValue(userStateAtom)
     const [details, setDetails] = useRecoilState(daoAtom)
     const [dao, setDao] = useState<IGoshDao>()
 
@@ -167,7 +168,11 @@ function useDao(name?: string) {
         getDao()
     }, [name, details?.name, details?.address, setDetails])
 
-    return { dao, details }
+    return {
+        instance: dao,
+        details,
+        isOwner: details && keys && details.ownerPubkey.slice(2) === keys.public,
+    }
 }
 
 function useDaoCreate() {
