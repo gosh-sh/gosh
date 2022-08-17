@@ -17,4 +17,21 @@ type TDaoCreateProgress = {
     participants: { pubkey: string; isDeployed?: boolean; isMinted?: boolean }[]
 }
 
-export { TDaoDetails, TDaoListItem, TDaoCreateProgress }
+type TDaoMemberDetails = {
+    wallet: string
+    pubkey: string
+    smvBalance: number
+}
+
+type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
+    smvBalance?: number
+    isLoadDetailsFired?: boolean
+}
+
+export {
+    TDaoDetails,
+    TDaoListItem,
+    TDaoCreateProgress,
+    TDaoMemberDetails,
+    TDaoMemberListItem,
+}

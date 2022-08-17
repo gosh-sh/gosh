@@ -21,7 +21,7 @@ const DaosPage = () => {
                 <div className="input basis-full sm:basis-1/2">
                     <input
                         className="element !py-1.5"
-                        type="text"
+                        type="search"
                         placeholder="Search orgranization..."
                         autoComplete="off"
                         value={search}

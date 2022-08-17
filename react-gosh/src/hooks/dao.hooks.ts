@@ -4,7 +4,7 @@ import { getPaginatedAccounts, goshClient, goshRoot } from '../helpers'
 import { userStateAtom, daoAtom } from '../store'
 import { GoshDao, GoshWallet } from '../classes'
 import { sleep } from '../utils'
-import { IGoshDao, TDaoCreateProgress, TDaoListItem } from '../types'
+import { IGoshDao, TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
 import { EGoshError, GoshError } from '../errors'
 
 function useDaoList(perPage: number = 10) {
@@ -221,8 +221,106 @@ function useDaoCreate() {
     return { progress, createDao }
 }
 
-function useDaoMemberList() {
+function useDaoMemberList(perPage: number = 20) {
     const details = useRecoilValue(daoAtom)
+    const [search, setSearch] = useState<string>('')
+    const [members, setMembers] = useState<{
+        items: TDaoMemberListItem[]
+        filtered: string[]
+        page: number
+        isFetching: boolean
+    }>({
+        items: [],
+        filtered: [],
+        page: 1,
+        isFetching: true,
+    })
+
+    /** Load next chunk of DAO member list items */
+    const onLoadNext = () => {
+        setMembers((state) => ({ ...state, page: state.page + 1 }))
+    }
+
+    /** Load item details and update corresponging list item */
+    const setItemDetails = async (item: TDaoMemberListItem) => {
+        if (item.isLoadDetailsFired) return
+
+        setMembers((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.wallet === item.wallet) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+
+        const wallet = new GoshWallet(goshClient, item.wallet)
+        const details = { smvBalance: await wallet.getSmvTokenBalance() }
+
+        setMembers((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.wallet === item.wallet) return { ...curr, ...details }
+                return curr
+            }),
+        }))
+    }
+
+    /** Get initial DAO members list */
+    useEffect(() => {
+        const getMemberList = async () => {
+            if (!details?.address) return
+
+            const dao = new GoshDao(goshClient, details.address)
+            const wallets = await dao.getWallets()
+            const items = await Promise.all(
+                wallets.map(async (address) => {
+                    const wallet = new GoshWallet(goshClient, address)
+                    const pubkey = await wallet.getPubkey()
+                    return { wallet: address, pubkey }
+                }),
+            )
+
+            setMembers({
+                items: items.sort((a, b) => (a.pubkey > b.pubkey ? 1 : -1)),
+                filtered: items.map((item) => item.wallet),
+                page: 1,
+                isFetching: false,
+            })
+        }
+
+        setMembers({ items: [], filtered: [], page: 1, isFetching: true })
+        getMemberList()
+    }, [details?.address])
+
+    /** Update filtered items and page depending on search */
+    useEffect(() => {
+        setMembers((state) => {
+            return {
+                ...state,
+                page: search ? 1 : state.page,
+                filtered: state.items
+                    .filter((item) => {
+                        const pattern = new RegExp(search, 'i')
+                        return !search || item.pubkey.search(pattern) >= 0
+                    })
+                    .map((item) => item.wallet),
+            }
+        })
+    }, [search])
+
+    return {
+        isFetching: members.isFetching,
+        items: members.items
+            .filter((item) => members.filtered.indexOf(item.wallet) >= 0)
+            .slice(0, perPage ? members.page * perPage : members.items.length),
+        hasNext: perPage ? members.page * perPage < members.filtered.length : false,
+        search,
+        setSearch,
+        loadNext: onLoadNext,
+        loadItemDetails: setItemDetails,
+    }
 }
 
-export { useDaoList, useDao, useDaoCreate }
+export { useDaoList, useDao, useDaoCreate, useDaoMemberList }

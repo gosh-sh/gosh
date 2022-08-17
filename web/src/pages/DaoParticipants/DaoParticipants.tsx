@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, FieldArray, Form, Formik, FormikHelpers } from 'formik'
 import { useRecoilValue } from 'recoil'
-import CopyClipboard from '../../components/CopyClipboard'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { GoshWallet, userStateAtom, shortString, EGoshError, GoshError } from 'react-gosh'
+import { userStateAtom, EGoshError, GoshError, useDaoMemberList } from 'react-gosh'
 import * as Yup from 'yup'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { toast } from 'react-toastify'
+import MemberListItem from './MemberListItem'
 
 type TParticipantFormValues = {
     pubkey: string[]
@@ -19,24 +18,8 @@ type TParticipantFormValues = {
 const DaoParticipantsPage = () => {
     const userState = useRecoilValue(userStateAtom)
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const [participants, setParticipants] =
-        useState<{ pubkey: string; smvBalance: number }[]>()
 
-    const getParticipantList = useCallback(async () => {
-        // Get GoshWallet code by user's pubkey and get all user's wallets
-        const walletAddrs = await dao.getWallets()
-        console.debug('GoshWallets addreses:', walletAddrs)
-
-        const participants = await Promise.all(
-            walletAddrs.map(async (addr) => {
-                const wallet = new GoshWallet(dao.account.client, addr)
-                const pubkey = await wallet.getPubkey()
-                const smvBalance = await wallet.getSmvTokenBalance()
-                return { pubkey, smvBalance }
-            }),
-        )
-        setParticipants(participants)
-    }, [dao])
+    const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
 
     const onCreateParticipant = async (
         values: TParticipantFormValues,
@@ -63,7 +46,7 @@ const DaoParticipantsPage = () => {
                 }),
             )
 
-            getParticipantList()
+            // getParticipantList()
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
@@ -71,14 +54,21 @@ const DaoParticipantsPage = () => {
         }
     }
 
-    useEffect(() => {
-        getParticipantList()
-    }, [getParticipantList])
-
     return (
         <>
-            <div>
-                {participants === undefined && (
+            <div className="input">
+                <input
+                    className="element !py-1.5"
+                    type="search"
+                    placeholder="Search member by pubkey..."
+                    autoComplete="off"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+
+            <div className="mt-8">
+                {isFetching && (
                     <div className="text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading participants...
@@ -86,23 +76,10 @@ const DaoParticipantsPage = () => {
                 )}
 
                 <div className="divide-y divide-gray-c4c4c4">
-                    {participants?.map(({ pubkey, smvBalance }, index) => (
-                        <div
-                            key={index}
-                            className="py-2 flex flex-wrap gap-x-3 items-center justify-between"
-                        >
-                            <CopyClipboard
-                                componentProps={{ text: pubkey }}
-                                label={shortString(pubkey, 10, 10)}
-                            />
-                            <div>
-                                <span className="text-gray-606060 text-sm mr-2">
-                                    Token balance:
-                                </span>
-                                {smvBalance}
-                            </div>
-                        </div>
-                    ))}
+                    {items.map((item, index) => {
+                        loadItemDetails(item)
+                        return <MemberListItem key={index} item={item} />
+                    })}
                 </div>
             </div>
 
@@ -119,7 +96,7 @@ const DaoParticipantsPage = () => {
                             name="pubkey"
                             render={({ push, remove }) => (
                                 <>
-                                    {values.pubkey.map((item, index) => (
+                                    {values.pubkey.map((index) => (
                                         <div
                                             key={index}
                                             className="flex items-center justify-between gap-x-3 mb-2"
