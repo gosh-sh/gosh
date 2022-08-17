@@ -22,12 +22,12 @@ const DaoWalletPage = () => {
     const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
     const smvBalance = useSmvBalance(wallet)
 
-    const networkName = 'network.gosh.sh'
+    const networkName = `network for ${daoName}`
     const gitRemoteCredentials = {
         'primary-network': networkName,
         networks: {
             [networkName]: {
-                [`${daoName}-wallet`]: {
+                'user-wallet': {
                     pubkey: userState.keys?.public,
                     secret: userState.keys?.secret,
                 },
