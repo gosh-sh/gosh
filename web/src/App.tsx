@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 
 import Header from './components/Header'
@@ -116,6 +116,10 @@ const App = () => {
                             <Route path="events" element={<EventsPage />} />
                             <Route path="events/:eventAddr" element={<EventPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
+                                <Route
+                                    index
+                                    element={<Navigate to="wallet" replace={true} />}
+                                />
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route
                                     path="participants"
