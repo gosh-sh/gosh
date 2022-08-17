@@ -24,6 +24,8 @@ import {
 } from './../../interfaces'
 import { useRecoilValue } from 'recoil'
 import { userStateAtom } from '../../../store/user.state'
+import CopyClipboard from '../../../components/CopyClipboard'
+import { shortString } from '../../../utils'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
@@ -180,21 +182,44 @@ function EnhancedTable<T extends { id: string }>({
                                                     actionActive.id === row.id!,
                                             })}
                                         >
-                                            {columns.map((column, i) =>
-                                                column.id === 'validated' ? (
-                                                    <TableCell key={String(column.id)}>
-                                                        <StatusDot
-                                                            status={String(
-                                                                row[column.id],
-                                                            )}
-                                                        />
+                                            {columns.map((column, i) => {
+                                                const key = String(column.id)
+                                                const content = row[column.id]
+                                                const contentStr = String(content)
+                                                if (column.id === 'validated') {
+                                                    return (
+                                                        <TableCell key={key}>
+                                                            <StatusDot
+                                                                status={contentStr}
+                                                            />
+                                                        </TableCell>
+                                                    )
+                                                }
+                                                if (
+                                                    !!column.short &&
+                                                    contentStr.length > 14
+                                                ) {
+                                                    return (
+                                                        <TableCell key={key}>
+                                                            <CopyClipboard
+                                                                componentProps={{
+                                                                    text: contentStr,
+                                                                }}
+                                                                label={shortString(
+                                                                    contentStr,
+                                                                    10,
+                                                                    4,
+                                                                )}
+                                                            />
+                                                        </TableCell>
+                                                    )
+                                                }
+                                                return (
+                                                    <TableCell key={key}>
+                                                        <>{content}</>
                                                     </TableCell>
-                                                ) : (
-                                                    <TableCell key={String(column.id)}>
-                                                        <>{row[column.id]}</>
-                                                    </TableCell>
-                                                ),
-                                            )}
+                                                )
+                                            })}
                                             <TableCell className="dd-cell-button">
                                                 {actionActive &&
                                                 actionActive !== true &&
@@ -280,16 +305,15 @@ const Main = () => {
                 id: 'containerHash',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 300,
                 minWidth: 150,
                 width: 200,
+                short: true,
             },
             {
                 label: 'Container name',
                 id: 'containerName',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
             },
@@ -298,18 +322,18 @@ const Main = () => {
                 id: 'imageHash',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
+                short: true,
             },
             {
                 label: 'Gosh address',
                 id: 'goshAddress',
                 numeric: false,
                 disablePadding: false,
-                maxWidth: 300,
                 minWidth: 165,
                 width: 200,
+                short: true,
             },
         ],
         [],
@@ -333,6 +357,7 @@ const Main = () => {
                 maxWidth: 300,
                 minWidth: 165,
                 width: 200,
+                short: true,
             },
             {
                 label: 'Gosh address',
@@ -342,6 +367,7 @@ const Main = () => {
                 maxWidth: 300,
                 minWidth: 165,
                 width: 200,
+                short: true,
             },
         ],
         [],
@@ -475,7 +501,7 @@ const Main = () => {
                 </button>
             </div>
 
-            <Container className="dd-containers mt-12">
+            <Container maxWidth={false} className="dd-containers mt-12">
                 <h6 className="mb-2">Containers</h6>
                 <EnhancedTable<ContainerType>
                     data={containers}
