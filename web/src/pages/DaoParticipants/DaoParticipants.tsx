@@ -172,7 +172,7 @@ const DaoParticipantsPage = () => {
                             type="submit"
                             className="!block btn btn--body px-3 py-3 mt-4
                             w-full sm:w-auto sm:mx-auto"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !values.pubkey.length}
                         >
                             {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                             Save changes

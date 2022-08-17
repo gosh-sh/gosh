@@ -221,4 +221,8 @@ function useDaoCreate() {
     return { progress, createDao }
 }
 
+function useDaoMemberList() {
+    const details = useRecoilValue(daoAtom)
+}
+
 export { useDaoList, useDao, useDaoCreate }
