@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { useOutletContext, useParams } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
@@ -17,12 +17,11 @@ type TMoveBalanceFormValues = {
 }
 
 const DaoWalletPage = () => {
-    const { daoName } = useParams()
     const userState = useRecoilValue(userStateAtom)
     const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
     const smvBalance = useSmvBalance(wallet)
 
-    const networkName = `network for ${daoName}`
+    const networkName = 'network.gosh.sh'
     const gitRemoteCredentials = {
         'primary-network': networkName,
         networks: {
