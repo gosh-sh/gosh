@@ -118,7 +118,7 @@ const App = () => {
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route
                                     index
-                                    element={<Navigate to="./wallet" replace={true} />}
+                                    element={<Navigate to="wallet" replace={true} />}
                                 />
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route
