@@ -12,16 +12,6 @@ const MemberListItem = (props: TMemberListItemProps) => {
         <div className="py-2 flex flex-wrap gap-x-3 items-center justify-between">
             <CopyClipboard
                 className="basis-1/3"
-                componentProps={{ text: item.pubkey }}
-                label={
-                    <>
-                        <span className="text-gray-606060 text-sm mr-2">Pubkey:</span>
-                        {shortString(item.pubkey, 9, 9)}
-                    </>
-                }
-            />
-            <CopyClipboard
-                className="basis-1/3"
                 componentProps={{ text: item.wallet }}
                 label={
                     <>
@@ -30,6 +20,20 @@ const MemberListItem = (props: TMemberListItemProps) => {
                     </>
                 }
             />
+
+            {item.pubkey && (
+                <CopyClipboard
+                    className="basis-1/3"
+                    componentProps={{ text: item.pubkey }}
+                    label={
+                        <>
+                            <span className="text-gray-606060 text-sm mr-2">Pubkey:</span>
+                            {shortString(item.pubkey, 9, 9)}
+                        </>
+                    }
+                />
+            )}
+
             <div>
                 <span className="text-gray-606060 text-sm mr-2">Token balance:</span>
                 {item.smvBalance}

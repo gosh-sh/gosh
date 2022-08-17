@@ -8,7 +8,7 @@ import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
 import { userStateAtom, useDaoCreate } from 'react-gosh'
-import DaoCreateProgress from './Progress'
+import DaoCreateProgress from './DaoCreateProgress'
 
 type TFormValues = {
     name: string

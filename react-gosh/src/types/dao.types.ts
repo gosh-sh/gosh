@@ -14,7 +14,7 @@ type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply'> & {
 type TDaoCreateProgress = {
     isFetching: boolean
     isDaoDeployed?: boolean
-    participants: { pubkey: string; isDeployed?: boolean; isMinted?: boolean }[]
+    participants: TDaoMemberCreateProgress['members']
 }
 
 type TDaoMemberDetails = {
@@ -23,9 +23,19 @@ type TDaoMemberDetails = {
     smvBalance: number
 }
 
-type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
+type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
+    pubkey?: string
     smvBalance?: number
     isLoadDetailsFired?: boolean
+}
+
+type TDaoMemberCreateProgress = {
+    isFetching: boolean
+    members: {
+        pubkey: string
+        isDeployed?: boolean
+        isMinted?: boolean
+    }[]
 }
 
 export {
@@ -34,4 +44,5 @@ export {
     TDaoCreateProgress,
     TDaoMemberDetails,
     TDaoMemberListItem,
+    TDaoMemberCreateProgress,
 }

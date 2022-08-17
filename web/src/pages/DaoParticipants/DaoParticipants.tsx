@@ -1,52 +1,28 @@
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, FieldArray, Form, Formik, FormikHelpers } from 'formik'
-import { useRecoilValue } from 'recoil'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { userStateAtom, EGoshError, GoshError, useDaoMemberList } from 'react-gosh'
+import { useDaoMemberList, useDaoMemberCreate } from 'react-gosh'
 import * as Yup from 'yup'
-import { useOutletContext } from 'react-router-dom'
-import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { toast } from 'react-toastify'
 import MemberListItem from './MemberListItem'
+import DaoMemberCreateProgress from './MemberCreateProgress'
 
 type TParticipantFormValues = {
     pubkey: string[]
 }
 
 const DaoParticipantsPage = () => {
-    const userState = useRecoilValue(userStateAtom)
-    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-
     const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
+    const { progress, createMember } = useDaoMemberCreate()
 
     const onCreateParticipant = async (
         values: TParticipantFormValues,
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-
-            console.debug('[DAO participants] - Create values:', values)
-            await Promise.all(
-                values.pubkey.map(async (item) => {
-                    if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
-
-                    console.debug('[DAO participants] - DAO address:', dao.address)
-                    const rootPubkey = await dao.getRootPubkey()
-                    console.debug(
-                        '[DAO participants] - Create root/item/keys:',
-                        rootPubkey,
-                        item,
-                        userState.keys,
-                    )
-                    const walletAddr = await dao.deployWallet(item, userState.keys)
-                    console.debug('[DAO participants] - Create wallet addr:', walletAddr)
-                }),
-            )
-
-            // getParticipantList()
+            await createMember(values.pubkey)
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
@@ -96,7 +72,7 @@ const DaoParticipantsPage = () => {
                             name="pubkey"
                             render={({ push, remove }) => (
                                 <>
-                                    {values.pubkey.map((index) => (
+                                    {values.pubkey.map((_, index) => (
                                         <div
                                             key={index}
                                             className="flex items-center justify-between gap-x-3 mb-2"
@@ -157,6 +133,8 @@ const DaoParticipantsPage = () => {
                     </Form>
                 )}
             </Formik>
+
+            <DaoMemberCreateProgress className="mt-4" progress={progress} />
         </>
     )
 }
