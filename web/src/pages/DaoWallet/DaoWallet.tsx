@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
@@ -17,16 +17,19 @@ type TMoveBalanceFormValues = {
 }
 
 const DaoWalletPage = () => {
+    const { daoName } = useParams()
     const userState = useRecoilValue(userStateAtom)
     const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
     const smvBalance = useSmvBalance(wallet)
 
     const gitRemoteCredentials = {
-        'my-wallet': {
-            address: wallet?.address,
-            keys: {
-                public: userState.keys?.public,
-                secret: userState.keys?.secret,
+        networks: {
+            'network.gosh.sh': {
+                [`${daoName}-wallet`]: {
+                    pubkey: userState.keys?.public,
+                    secret: userState.keys?.secret,
+                },
+                endpoints: ['http://network.gosh.sh'],
             },
         },
     }
@@ -198,7 +201,7 @@ const DaoWalletPage = () => {
                 </div>
                 <div className="py-5">
                     <h3 className="text-lg font-semibold">Git remote</h3>
-                    <div className="mb-3">Git remote credentials</div>
+                    <div className="mb-3">~/.gosh/config.json</div>
                     {wallet.isDaoParticipant ? (
                         <div className="relative text-sm rounded-md">
                             <CopyClipboard
