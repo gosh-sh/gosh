@@ -700,12 +700,16 @@ export class GoshWallet implements IGoshWallet {
                 chunk.map(async (item) => {
                     if (!item) return
                     const { snap, name, treeItem } = item
-                    const { content } = await snap.getSnapshot(fromCommit, treeItem)
+                    const { content, isIpfs } = await snap.getSnapshot(
+                        fromCommit,
+                        treeItem,
+                    )
 
                     let ipfs = null
                     let snapdata = ''
                     const compressed = await zstd.compress(this.account.client, content)
                     if (
+                        isIpfs ||
                         Buffer.isBuffer(content) ||
                         Buffer.from(content).byteLength >= MAX_ONCHAIN_FILE_SIZE
                     ) {
