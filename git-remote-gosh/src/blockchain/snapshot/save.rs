@@ -174,6 +174,9 @@ pub async fn push_diff(
         let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD 
             || new_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
         if !is_going_to_ipfs {
+            is_going_to_ipfs = content_inspector::ContentType::BINARY == content_inspector::inspect(&new_snapshot_content);
+        }
+        if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
                 "state": hex::encode(original_snapshot_content), 
