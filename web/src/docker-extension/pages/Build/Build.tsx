@@ -8,9 +8,8 @@ import { Field, Form, Formik } from 'formik'
 import SwitchField from '../../../components/FormikForms/SwitchField'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../../store/user.state'
+import { userStateAtom, getCommit } from 'react-gosh'
 import TextField from '../../../components/FormikForms/TextField'
-import { getCommit } from '../../../helpers'
 
 type TBuildFormValues = {
     tag: string
