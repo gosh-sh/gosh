@@ -22,7 +22,7 @@ import { createDockerDesktopClient } from '@docker/extension-api-client'
 export const ZERO_ADDR =
     '0:0000000000000000000000000000000000000000000000000000000000000000'
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000'
-export const MAX_ONCHAIN_FILE_SIZE = 15360
+export const MAX_ONCHAIN_FILE_SIZE = 15000
 export const MAX_ONCHAIN_DIFF_SIZE = 15000
 
 export const dockerClient =
@@ -179,25 +179,32 @@ export const sha1Tree = (items: TGoshTreeItem[], mode: 'sha1' | 'sha256') => {
     return sha1(buffer, 'tree', mode)
 }
 
+export const sha256 = (content: string | Buffer, prefix: boolean): string => {
+    const hash = SHA256(
+        Buffer.isBuffer(content)
+            ? cryptoJs.enc.Hex.parse(content.toString('hex'))
+            : cryptoJs.enc.Utf8.parse(content),
+    ).toString()
+
+    if (prefix) return `0x${hash}`
+    return hash
+}
+
 export const getTreeItemsFromPath = async (
     fullpath: string,
-    content: string | Buffer,
+    hashes: { sha1: string; sha256: string },
     flags: number,
     treeItem?: TGoshTreeItem,
 ): Promise<TGoshTreeItem[]> => {
     const items: TGoshTreeItem[] = []
 
-    // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(fullpath)
-    const sha = sha1(content, treeItem?.type || 'blob', 'sha1')
-    const sha256 = await goshRoot.getTvmHash(content)
-
     items.push({
         flags,
         mode: treeItem?.mode || '100644',
         type: treeItem?.type || 'blob',
-        sha1: sha,
-        sha256,
+        sha1: hashes.sha1,
+        sha256: hashes.sha256,
         path,
         name,
     })
