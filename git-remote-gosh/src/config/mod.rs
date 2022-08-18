@@ -10,7 +10,8 @@ use std::{
 
 mod defaults;
 
-pub const IPFS_THRESHOLD: usize = 15000;
+pub const IPFS_DIFF_THRESHOLD: usize = 15000;
+pub const IPFS_CONTENT_THRESHOLD: usize = 15000;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
