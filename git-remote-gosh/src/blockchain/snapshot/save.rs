@@ -145,6 +145,15 @@ pub async fn diff_address(
     return Ok(result.address);
 }
 
+pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
+    let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD 
+        || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    if !is_going_to_ipfs {
+        is_going_to_ipfs = content_inspector::ContentType::BINARY == content_inspector::inspect(&new_content);
+    }
+    return is_going_to_ipfs;
+}
+
 #[instrument(level = "debug", skip(diff))]
 pub async fn push_diff(
     context: &mut GitHelper,
@@ -171,11 +180,7 @@ pub async fn push_diff(
     log::debug!("compressed to {} size", diff.len());
 
     let (patch, ipfs) = {
-        let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD 
-            || new_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
-        if !is_going_to_ipfs {
-            is_going_to_ipfs = content_inspector::ContentType::BINARY == content_inspector::inspect(&new_snapshot_content);
-        }
+        let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
