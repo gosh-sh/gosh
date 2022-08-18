@@ -515,12 +515,12 @@ export const getBlobAtCommit = async (
             const compressed = (await loadFromIPFS(msgipfs)).toString()
             const decompressed = await zstd.decompress(goshClient, compressed, true)
             content = decompressed
-            if (message.ipfsdata) deployed = true
+            // if (message.ipfsdata) deployed = true
         } else if (msgdata) {
             const compressed = Buffer.from(msgdata, 'hex').toString('base64')
             const decompressed = await zstd.decompress(goshClient, compressed, true)
             content = decompressed
-            deployed = true
+            // deployed = true
         } else if (msgpatch && msgcommit !== commit) {
             const patch = await zstd.decompress(
                 repo.account.client,
@@ -533,7 +533,7 @@ export const getBlobAtCommit = async (
         }
 
         if (msgcommit === commit) break
-        if (msgcommit) {
+        if (msgcommit && !msgipfs) {
             const msgcommitAddr = await repo.getCommitAddr(msgcommit)
             const msgcommitObj = new GoshCommit(goshClient, msgcommitAddr)
             const msgcommitParents = await msgcommitObj.getParents()
