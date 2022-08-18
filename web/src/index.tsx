@@ -12,9 +12,7 @@ let ConditionedRouter = BrowserRouter
 if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
     ConditionedRouter = HashRouter
     libWebSetup({
-        binaryURL:
-            'http://gosh.matusevich.pro/eversdk.wasm?v=' +
-            Math.random().toString(36).slice(2, 8),
+        binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
     })
 }
 

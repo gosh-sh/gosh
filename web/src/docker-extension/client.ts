@@ -11,14 +11,18 @@ const GOSH_ROOT_CONTRACT_ADDRESS = process.env.REACT_APP_GOSH_ADDR || ''
 
 console.debug('Endpoints', ENDPOINTS)
 console.debug('Gosh root', GOSH_ROOT_CONTRACT_ADDRESS)
-const METADATA_KEY = {
-    GOSH_ADDRESS: 'GOSH_ADDRESS', // e.g. gosh://0:6dfcf8a001da3e7a1910f873245c47904638e8fb4bf204c0b31b156f9c891d8c/test/repo
-    GOSH_COMMIT_HASH: 'GOSH_COMMIT_HASH',
+
+const IMAGE_LABELS = {
+    GOSH_ADDRESS: 'gosh.address',
+    GOSH_COMMIT: 'gosh.commit',
+    GOSH_IMAGE_DOCKERFILE: 'gosh.image.dockerfile',
 }
+
 const COMMAND = {
     CALCULATE_IMAGE_SHA: '/command/gosh-image-sha.sh',
     VALIDATE_IMAGE_SIGNATURE: '/command/ensure-image-signature.sh',
     VALIDATE_IMAGE_SHA: '/command/validate-image-sha.sh',
+    BUILD_IMAGE: '/command/build-image.sh',
 }
 const UNSIGNED_STATUS = 'error'
 
@@ -50,15 +54,11 @@ export class DockerClient {
                     : container.Id
                 const [hasGoshAddress, goshAddress] = DockerClient.readImageMetadata(
                     image,
-                    METADATA_KEY.GOSH_ADDRESS,
+                    IMAGE_LABELS.GOSH_ADDRESS,
                     '-',
                 )
                 const [hasGoshCommitHash, goshCommitHash] =
-                    DockerClient.readImageMetadata(
-                        image,
-                        METADATA_KEY.GOSH_COMMIT_HASH,
-                        '-',
-                    )
+                    DockerClient.readImageMetadata(image, IMAGE_LABELS.GOSH_COMMIT, '-')
 
                 const validated =
                     hasGoshAddress && hasGoshCommitHash
@@ -91,15 +91,11 @@ export class DockerClient {
             images.map(async (image) => {
                 const [hasGoshAddress, goshAddress] = DockerClient.readImageMetadata(
                     image,
-                    METADATA_KEY.GOSH_ADDRESS,
+                    IMAGE_LABELS.GOSH_ADDRESS,
                     '-',
                 )
                 const [hasGoshCommitHash, goshCommitHash] =
-                    DockerClient.readImageMetadata(
-                        image,
-                        METADATA_KEY.GOSH_COMMIT_HASH,
-                        '-',
-                    )
+                    DockerClient.readImageMetadata(image, IMAGE_LABELS.GOSH_COMMIT, '-')
 
                 const validated =
                     hasGoshAddress && hasGoshCommitHash
@@ -201,7 +197,7 @@ export class DockerClient {
     }
 
     static async getBuildProvider(container: any): Promise<[boolean, string]> {
-        return DockerClient.readImageMetadata(container, METADATA_KEY.GOSH_ADDRESS, '-')
+        return DockerClient.readImageMetadata(container, IMAGE_LABELS.GOSH_ADDRESS, '-')
     }
 
     static async validateContainerImage(
@@ -218,12 +214,12 @@ export class DockerClient {
         }
         const [hasRepositoryAddress, goshAddress] = DockerClient.readImageMetadata(
             image,
-            METADATA_KEY.GOSH_ADDRESS,
+            IMAGE_LABELS.GOSH_ADDRESS,
             '-',
         )
         const [hasCommitHash, goshCommitHash] = DockerClient.readImageMetadata(
             image,
-            METADATA_KEY.GOSH_COMMIT_HASH,
+            IMAGE_LABELS.GOSH_COMMIT,
             '-',
         )
 
@@ -292,9 +288,6 @@ export class DockerClient {
 
             appendValidationLog(`Gosh image SHA: ${imageSha}`)
 
-            // HACK!!!
-            // await wallet.deployContent(goshRepositoryName, goshCommitHash, '', imageSha)
-
             const contentAddr = await wallet.getContentAdress(
                 goshRepositoryName,
                 goshCommitHash,
@@ -344,6 +337,67 @@ export class DockerClient {
         } catch (error: any) {
             logger.log(`Error: ${JSON.stringify(error)}`)
             return [false, defaultValue]
+        }
+    }
+
+    static async buildImage(
+        goshAddress: string,
+        goshCommitHash: string,
+        imageDockerfile: string,
+        imageTag: string,
+        appendLog: any,
+        userState: TUserState,
+    ): Promise<boolean> {
+        console.log('buildImage', goshAddress, goshCommitHash, imageDockerfile)
+        const [goshRootContract, goshDao, goshRepoName] =
+            DockerClient._getRepositoryTuple(goshAddress)
+
+        const goshRepositoryName = `${goshDao}/${goshRepoName}`
+
+        const wallet = await DockerClient._getWallet(userState, goshRootContract, goshDao)
+        if (!wallet) {
+            appendLog('Error: unable to get gosh wallet.')
+            return false
+        }
+        try {
+            if (!dockerClient?.extension.vm) {
+                throw new Error('Extension vm undefined')
+            }
+            appendLog('Building...')
+            const result = await dockerClient.extension.vm.cli.exec(COMMAND.BUILD_IMAGE, [
+                goshAddress,
+                `${goshDao}__${goshRepoName}`,
+                goshCommitHash,
+                imageDockerfile,
+                imageTag,
+                IMAGE_LABELS.GOSH_ADDRESS,
+                IMAGE_LABELS.GOSH_COMMIT,
+                IMAGE_LABELS.GOSH_IMAGE_DOCKERFILE,
+            ])
+
+            if ('code' in result && !!result.code) {
+                logger.log(`Failed to build an image. ${JSON.stringify(result)}`)
+                return false
+            }
+
+            console.log('Stderr:', result.stderr)
+
+            const imageSha = result.stdout.trim()
+
+            if (imageSha.length === 0) {
+                appendLog('Error: Gosh sha is empty')
+                return false
+            } else {
+                appendLog(`Image SHA is ${imageSha}`)
+            }
+
+            appendLog('Signing...')
+            await wallet.deployContent(goshRepositoryName, goshCommitHash, '', imageSha)
+            appendLog('Done.')
+            return true
+        } catch (error: any) {
+            console.error(error)
+            return false
         }
     }
 

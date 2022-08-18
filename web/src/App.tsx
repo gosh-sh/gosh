@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { goshClient } from 'react-gosh'
 
@@ -39,6 +39,7 @@ import Spinner from './components/Spinner'
 import { ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
+import BuildPage from './docker-extension/pages/Build'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -76,7 +77,7 @@ const App = () => {
                 window.removeEventListener('mousemove', onMouseMove)
             }
         }
-    }, [])
+    }, [onMouseMove, timer, timerRestart])
 
     if (!isInitialized)
         return (
@@ -116,6 +117,10 @@ const App = () => {
                             <Route path="events" element={<EventsPage />} />
                             <Route path="events/:eventAddr" element={<EventPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
+                                <Route
+                                    index
+                                    element={<Navigate to="wallet" replace={true} />}
+                                />
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route
                                     path="participants"
@@ -142,10 +147,11 @@ const App = () => {
                                 element={<CommitPage />}
                             />
                             <Route path="pull" element={<PullCreatePage />} />
+                            <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
                         </Route>
                     </Route>
-                    <Route path="*" element={<p>No match (404)</p>} />
+                    <Route path="*" element={<p className="text-lg">No match (404)</p>} />
                 </Routes>
             </main>
             <footer className="footer">

@@ -11,6 +11,7 @@ export type DataColumn<T> = {
     id: keyof T
     numeric: boolean
     disablePadding: boolean
+    short?: boolean
     [key: string]: any
 }
 
