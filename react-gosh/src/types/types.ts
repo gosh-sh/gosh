@@ -170,6 +170,7 @@ export interface IGoshDao extends IContract {
 
     getDetails(): Promise<TDaoDetails>
     deployWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<IGoshWallet>
+    deleteWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<void>
     getWalletAddr(pubkey: string, index: number): Promise<string>
     getWallets(): Promise<string[]>
     getName(): Promise<string>

@@ -389,4 +389,47 @@ function useDaoMemberCreate() {
     return { progress, createMember }
 }
 
-export { useDaoList, useDao, useDaoCreate, useDaoMemberList, useDaoMemberCreate }
+function useDaoMemberDelete() {
+    const { keys } = useRecoilValue(userStateAtom)
+    const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
+    const [fetching, setFetching] = useState<string[]>([])
+
+    const isFetching = (pubkey: string) => fetching.indexOf(pubkey) >= 0
+
+    const deleteMember = async (...pubkeys: string[]) => {
+        if (!keys) throw new GoshError(EGoshError.NO_USER)
+        if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
+
+        setFetching((state) => [...state, ...pubkeys])
+
+        const dao = new GoshDao(goshClient, daoDetails.address)
+        await Promise.all(
+            pubkeys.map(async (pubkey) => {
+                const walletAddr = await dao.getWalletAddr(pubkey, 0)
+                await dao.deleteWallet(pubkey, keys)
+                setFetching((state) => state.filter((_pubkey) => _pubkey !== pubkey))
+                setDaoDetails((state) => {
+                    if (!state) return
+                    return {
+                        ...state,
+                        participants: state.participants.filter(
+                            (address) => address !== walletAddr,
+                        ),
+                        supply: state.supply - 100,
+                    }
+                })
+            }),
+        )
+    }
+
+    return { deleteMember, isFetching }
+}
+
+export {
+    useDaoList,
+    useDao,
+    useDaoCreate,
+    useDaoMemberList,
+    useDaoMemberCreate,
+    useDaoMemberDelete,
+}

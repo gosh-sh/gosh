@@ -260,6 +260,10 @@ export class GoshDao extends BaseContract implements IGoshDao {
         return wallet
     }
 
+    async deleteWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<void> {
+        await this.run('deleteWallet', { pubkey }, { signer: signerKeys(daoOwnerKeys) })
+    }
+
     async getWalletAddr(pubkey: string, index: number): Promise<string> {
         const result = await this.account.runLocal('getAddrWallet', {
             pubkey,
