@@ -24,6 +24,7 @@ contract Repository is Modifiers{
     TvmCell m_SnapshotCode;
     TvmCell m_WalletCode;
     TvmCell m_codeTag;
+    TvmCell m_codeTree;
     address _rootGosh;
     string static _name;
     address _goshdao;
@@ -41,6 +42,7 @@ contract Repository is Modifiers{
         TvmCell WalletCode,
         TvmCell codeTag,
         TvmCell SnapshotCode,
+        TvmCell codeTree,
         uint128 index
         ) public {
         require(_name != "", ERR_NO_DATA);
@@ -53,6 +55,7 @@ contract Repository is Modifiers{
         _name = name;
         m_CommitCode = CommitCode;
         m_codeTag = codeTag;
+        m_codeTree = codeTree;
         m_SnapshotCode = SnapshotCode;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
@@ -175,6 +178,12 @@ contract Repository is Modifiers{
             return;
         }
     }
+    
+    function _composeTreeStateInit(string shaTree) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: address(this)}});
+        return stateInit;
+    }
 
     //Getters
         
@@ -186,6 +195,11 @@ contract Repository is Modifiers{
             return false;
         }
         return true;
+    }
+    
+    function getTreeAddr(string treeName) external view returns(address) {
+        TvmCell s1 = _composeTreeStateInit(treeName);
+        return address.makeAddrStd(0, tvm.hash(s1));
     }
     
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {

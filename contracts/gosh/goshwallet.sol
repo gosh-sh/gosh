@@ -230,7 +230,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone());
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
-            _rootRepoPubkey, tvm.pubkey(), nameRepo, _goshdao, _rootgosh, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, _index);
+            _rootRepoPubkey, tvm.pubkey(), nameRepo, _goshdao, _rootgosh, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, _index);
         getMoney();
     }
 
@@ -672,11 +672,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
-    }
-
-    function getTreeAddr(address repo, string treeName) external view returns(address) {
-        TvmCell s1 = _composeTreeStateInit(treeName, repo);
-        return address.makeAddrStd(0, tvm.hash(s1));
     }
 
     function getSnapshotCode(string branch, address repo) external view returns(TvmCell) {
