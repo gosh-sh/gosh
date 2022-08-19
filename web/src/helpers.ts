@@ -415,7 +415,7 @@ export const getBlobAtCommit = async (
                   edges{
                     node{
                       boc
-                      created_at
+                      created_lt
                     }
                     cursor
                   }
@@ -431,13 +431,11 @@ export const getBlobAtCommit = async (
             query: queryString,
         })
         const messages = query.result.data.blockchain.account.messages
-        messages.edges.sort(
-            (a: any, b: any) =>
-                //@ts-ignore
-                (a.node.created_at < b.node.created_at) -
-                //@ts-ignore
-                (a.node.created_at > b.node.created_at),
-        )
+        messages.edges.sort((a: any, b: any) => {
+            const a_lt = parseInt(a.node.created_lt, 16)
+            const b_lt = parseInt(b.node.created_lt, 16)
+            return a_lt < b_lt ? 1 : -1
+        })
         for (const item of messages.edges) {
             try {
                 const decoded = await repo.account.client.abi.decode_message({
