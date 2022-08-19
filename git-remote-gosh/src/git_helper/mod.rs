@@ -125,11 +125,15 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
     let mut helper = GitHelper::build(config, url, logger).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
-    let mut is_fetching_a_batch = false;
+
+    // Note: we assume git client will work correctly and will terminate this batch
+    // with an empty line prior the next operation 
+    let mut is_batching_operation_in_progress = false;
+
     while let Some(line) = lines.next_line().await? {
         if line.is_empty() {
-            if is_fetching_a_batch {
-                is_fetching_a_batch = false;
+            if is_batching_operation_in_progress {
+                is_batching_operation_in_progress = false;
                 stdout.write_all("\n".as_bytes()).await?;     
             } else {
                 return Ok(());
@@ -145,9 +149,13 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
          let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
-            (Some("push"), Some(ref_arg), None) => helper.push(ref_arg).await?,
+            (Some("push"), Some(ref_arg), None) => {
+                is_batching_operation_in_progress = true;
+                helper.push(ref_arg).await?;
+                vec![]
+            },
             (Some("fetch"), Some(sha), Some(name)) => {
-                is_fetching_a_batch = true; 
+                is_batching_operation_in_progress = true;
                 helper.fetch(sha, name).await?;
                 vec![]
             },
