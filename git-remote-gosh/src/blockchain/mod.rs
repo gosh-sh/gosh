@@ -14,6 +14,7 @@ pub use create_branch::CreateBranchOperation;
 
 use ton_client::{
     abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
+    boc::{BocCacheType, cache_set, ParamsOfBocCacheSet, ResultOfBocCacheSet},
     crypto::KeyPair,
     net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
@@ -27,7 +28,7 @@ pub mod snapshot;
 pub mod tree;
 mod user_wallet;
 mod tvm_hash;
-pub use commit::{ push_commit, notify_commit };
+pub use commit::{push_commit, notify_commit};
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;
@@ -41,6 +42,7 @@ use crate::config::Config;
 pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
+const CACHE_PIN_STATIC: &str = "static";
 
 #[repr(u8)]
 pub enum GoshBlobBitFlags {
@@ -56,6 +58,7 @@ pub struct GoshContract {
     pretty_name: String,
     abi: Abi,
     keys: Option<KeyPair>,
+    boc_ref: Option<String>,
 }
 
 impl fmt::Debug for GoshContract {
@@ -74,6 +77,7 @@ impl GoshContract {
             address: address.to_owned(),
             abi: Abi::Json(abi.to_string()),
             keys: None,
+            boc_ref: None,
         }
     }
 
@@ -83,6 +87,7 @@ impl GoshContract {
             address: address.to_owned(),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
+            boc_ref: None,
         }
     }
 
@@ -100,6 +105,21 @@ impl GoshContract {
         log::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
+
+    #[instrument(level = "debug", skip(context))]
+    pub async fn run_static<T>(
+        &mut self,
+        context: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> Result<T>
+    where
+        T: de::DeserializeOwned,
+    {
+        let result = run_static(context, self, function_name, args).await?;
+        log::trace!("run_statuc result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result)?)
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -110,6 +130,11 @@ pub struct GoshBlob {
     pub content: Vec<u8>,
     pub ipfs: String,
     pub flags: Number,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct AccountBoc {
+    boc: String
 }
 
 #[derive(Deserialize, Debug)]
@@ -225,8 +250,7 @@ async fn run_local(
         },
     )
     .await
-    .map(|r| r.result)
-    .unwrap();
+    .map(|r| r.result)?;
 
     if query.is_empty() {
         return Err(Box::new(RunLocalError::from(format!(
@@ -272,6 +296,88 @@ async fn run_local(
     Ok(result)
 }
 
+async fn run_static(
+    context: &TonClient,
+    contract: &mut GoshContract,
+    function_name: &str,
+    args: Option<serde_json::Value>,
+) -> Result<serde_json::Value> {
+    let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
+        eprintln!("run_static: use cached boc ref");
+        (boc_ref, Some(BocCacheType::Unpinned))
+    } else {
+        eprintln!("run_static: load account' boc");
+        let filter = Some(serde_json::json!({
+            "id": { "eq": contract.address }
+        }));
+        let query = query_collection(
+            context.clone(),
+            ParamsOfQueryCollection {
+                collection: "accounts".to_owned(),
+                filter,
+                result: "boc".to_owned(),
+                limit: Some(1),
+                order: None,
+            },
+        )
+        .await
+        .map(|r| r.result)?;
+
+        if query.is_empty() {
+            return Err(Box::new(RunLocalError::from(format!(
+                "account with address {} not found. Was trying to call {}",
+                contract.address, function_name
+            ))));
+        }
+        let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
+        let ResultOfBocCacheSet { boc_ref } = cache_set(
+            context.clone(),
+            ParamsOfBocCacheSet {
+                boc,
+                cache_type: BocCacheType::Pinned { pin: CACHE_PIN_STATIC.to_string() }
+            }
+        ).await?;
+        contract.boc_ref = Some(boc_ref.clone());
+        (boc_ref, None)
+    };
+    // ---------
+    let call_set = match args {
+        Some(value) => CallSet::some_with_function_and_input(function_name, value),
+        None => CallSet::some_with_function(function_name),
+    };
+
+    let encoded = encode_message(
+        context.clone(),
+        ParamsOfEncodeMessage {
+            abi: contract.abi.clone(),
+            address: Some(contract.address.to_owned()),
+            call_set: call_set,
+            signer: Signer::None,
+            deploy_set: None,
+            processing_try_index: None,
+        },
+    )
+    .await
+    .map_err(|e| Box::new(RunLocalError::from(&e)))?;
+    // ---------
+    let result = run_tvm(
+        context.clone(),
+        ParamsOfRunTvm {
+            message: encoded.message,
+            account: account.clone(),
+            abi: Some(contract.abi.clone()),
+            boc_cache,
+            execution_options: None,
+            return_updated_account: None,
+        },
+    )
+    .await
+    .map(|r| r.decoded.unwrap())
+    .map(|r| r.output.unwrap())?;
+
+    Ok(result)
+}
+
 async fn default_callback(pe: ProcessingEvent) {
     eprintln!("cb: {:#?}", pe);
 }
@@ -301,21 +407,21 @@ async fn call(
         processing_try_index: None,
     };
 
-    let result = ton_client::processing::process_message(
+    let ResultOfProcessMessage {
+        transaction, /* decoded, */
+        ..
+    } = ton_client::processing::process_message(
         context.clone(),
         ParamsOfProcessMessage {
             send_events: false,
             message_encode_params,
         },
         default_callback,
-    )
-    .await;
+    ).await?;
 
-    let ResultOfProcessMessage {
-        transaction, /* decoded, */
-        ..
-    } = result.unwrap();
-    let call_result: CallResult = serde_json::from_value(transaction).unwrap();
+    let call_result: CallResult = serde_json::from_value(transaction)?;
+
+    log::debug!("trx id: {}", call_result.trx_id);
 
     Ok(call_result)
 }
@@ -447,9 +553,9 @@ mod tests {
             TestEnv {
                 config: cfg,
                 client,
-                gosh: "0:531e04367c6d2e779e7af838b7a66282c58847b1fa15ab26d253aa780736ce2e".to_string(),
-                dao: "shnapsss".to_string(),
-                repo: "repo".to_string(),
+                gosh: "0:bb1ab825fe9fa51fb4eabb830347c7ee648951cb125182c793a0ca0f0b2cbe35".to_string(),
+                dao: "dao-x".to_string(),
+                repo: "repo-01".to_string(),
             }
         }
     }
@@ -494,15 +600,15 @@ mod tests {
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
         let te = TestEnv::new();
-        const sample_string: &str = include_str!(
+        const SAMPLE_STRING: &str = include_str!(
             concat!(
                 env!("CARGO_MANIFEST_DIR"), 
                 "/src/blockchain/tvm_hash/modifiers.sol.test-sample"
             )
         );
-        const precalculated_hash_for_the_string: &str = "0x31ae25c80597d6c084f743b6d9e2866196eb0194f42c084614baa9a0474aa12f";
-        let hash = tvm_hash(&te.client, sample_string.to_string().as_bytes()).await.unwrap();
-        assert_eq!(precalculated_hash_for_the_string, format!("0x{}", hash));
+        const PRECALCULATED_HASH_FOR_THE_STRING: &str = "0x31ae25c80597d6c084f743b6d9e2866196eb0194f42c084614baa9a0474aa12f";
+        let hash = tvm_hash(&te.client, SAMPLE_STRING.to_string().as_bytes()).await.unwrap();
+        assert_eq!(PRECALCULATED_HASH_FOR_THE_STRING, format!("0x{}", hash));
     /*
         let args = serde_json::json!({ 
             "state": hex::encode(sample_string)
@@ -530,15 +636,37 @@ mod tests {
     // Move into integration tests
     // As of now they're not following contract changes
     // therefore not adding a value
-    /*
     #[tokio::test]
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
-        let expected = "0:0453b13b3386a08e4f391a930b0d7689daf6c12aa73c6a51876d31acccc75dcc";
+        let expected = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
         assert_eq!(expected, repo_addr.unwrap());
     }
 
+    #[tokio::test]
+    async fn ensure_run_static_correectly() {
+        let te = TestEnv::new();
+        let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await.unwrap();
+        let address = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
+        let mut contract = GoshContract::new(address, gosh_abi::REPO);
+        let list: GetAllAddressResult = contract
+            .run_static(&te.client, "getAllAddress", None)
+            .await
+            .unwrap();
+
+        eprintln!("{:#?}", list);
+
+        let head: GetHeadResult = contract
+            .run_static(&te.client, "getHEAD", None)
+            .await
+            .unwrap();
+
+        eprintln!("{:#?}", head);
+
+    }
+
+    /*
     #[tokio::test]
     async fn ensure_list_remote_refs() {
         let te = TestEnv::new();

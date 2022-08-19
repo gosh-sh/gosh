@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain::{CreateBranchOperation, ZERO_SHA};
+use crate::blockchain::{CreateBranchOperation, ZERO_SHA, user_wallet};
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use git2::Repository;
 use git_diff;
@@ -202,6 +202,9 @@ impl GitHelper {
     // find ancestor commit
     #[instrument(level = "debug", skip(self))]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
+        log::info!("load wallet");
+        let wallet = user_wallet(self).await?;
+        self.wallet_contract = Some(wallet);
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit("/");

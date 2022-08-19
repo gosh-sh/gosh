@@ -79,17 +79,17 @@ version = '^0'
 
 [dependencies.tokio]
 features = ['full']
-version = '1.19.2'
+version = '1.20.1'
 
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.35.1'
+tag = '1.37.0'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.35.1'
+tag = '1.37.0'
 
 [dependencies.zstd]
 default-features = false
@@ -97,4 +97,4 @@ version = '^0'
 
 [patch.crates-io.tokio]
 git = 'https://github.com/tokio-rs/tokio'
-tag = 'tokio-1.19.2'
+tag = 'tokio-1.20.1'
