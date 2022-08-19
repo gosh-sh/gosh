@@ -49,8 +49,8 @@ pipeline {
                     steps {
                         script {
                             dir ('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='-t localhost:5000/teamgosh/git:${VERSION}' PLATFORM=linux/amd64,linux/arm64 DOCKER_BUILDER_ARGS='--driver-opt network=host'"
-                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./ -t localhost:5000/teamgosh/git:${VERSION}' PLATFORM=linux/amd64,linux/arm64"
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64 DOCKER_BUILDER_ARGS='--driver-opt network=host'"
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
                                 sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                                 sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
                                 sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
@@ -62,7 +62,7 @@ pipeline {
                     steps {
                         script {
                             dir ('docker-extension') {
-                                sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                                sh "make build-ci IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                             }
                         }
                     }
@@ -117,7 +117,9 @@ pipeline {
                                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                         sh 'docker login -u $USERNAME -p $PASSWORD'
                                     }
-                                    sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                    sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
+                                    sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:${VERSION}"
+                                    sh "docker push teamgosh/git:${VERSION}"
                                 }
                             }
                         }
@@ -148,7 +150,9 @@ pipeline {
                                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                         sh 'docker login -u $USERNAME -p $PASSWORD'
                                     }
-                                    sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                                    sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
+                                    sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:${VERSION}"
+                                    sh "docker push teamgosh/docker-extension:${VERSION}"
                                 }
                             }
                         }
