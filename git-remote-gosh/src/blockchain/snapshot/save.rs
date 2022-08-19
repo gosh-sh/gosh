@@ -165,7 +165,7 @@ pub async fn push_diff(
     let diff = diff.clone();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_service = context.new_ipfs_client()?;
-    let es_client = context.new_es_client()?;
+    let es_client = context.es_client.clone();
     let repo_name = context.remote.repo.clone();
     let commit_id = commit_id.clone(); 
     let branch_name = branch_name.to_owned();
@@ -174,23 +174,34 @@ pub async fn push_diff(
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = last_commit_id.clone();
     return Ok(tokio::spawn(async move {
-        inner_push_diff(
-            repo_name,
-            snapshot_addr,
-            wallet,
-            ipfs_service,
-            es_client,
-            &commit_id,
-            &branch_name,
-            &blob_id,
-            &file_path,
-            &diff_coordinate,
-            &last_commit_id,
-            is_last,
-            &original_snapshot_content,
-            &diff,
-            &new_snapshot_content
-        ).await.map_err(|e| e.description().to_string())
+        let mut attempt = 0;
+        let result = loop {
+            attempt += 1;
+            let result = inner_push_diff(
+                repo_name.clone(),
+                snapshot_addr.clone(),
+                wallet.clone(),
+                ipfs_service.clone(),
+                es_client.clone(),
+                &commit_id,
+                &branch_name,
+                &blob_id,
+                &file_path,
+                &diff_coordinate,
+                &last_commit_id,
+                is_last,
+                &original_snapshot_content,
+                &diff,
+                &new_snapshot_content
+            ).await;
+            if result.is_ok() || attempt > 3 {
+                break result;
+            } else {
+                log::debug!("inner_push_diff error: {}", result.unwrap_err().to_string());
+                std::thread::sleep(std::time::Duration::from_secs(5)); 
+            }
+        };
+        result.map_err(|e| e.description().to_string())
     }));
 }
  
