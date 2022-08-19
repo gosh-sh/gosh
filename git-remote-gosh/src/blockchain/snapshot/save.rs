@@ -79,7 +79,7 @@ struct SaveRes {
 
 // Note: making fields verbose
 // It must be very clear what is going on
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PushDiffCoordinate {
     pub index_of_parallel_thread: u32,
     pub order_of_diff_in_the_parallel_thread: u32,
@@ -152,16 +152,65 @@ pub async fn push_diff(
     original_snapshot_content: &Vec<u8>,
     diff: &Vec<u8>,
     new_snapshot_content: &Vec<u8>,
-) -> Result<()> {
+) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
     let wallet = user_wallet(context).await?;
-    let snapshot_addr = Snapshot::calculate_address(
+    let snapshot_addr: String = (Snapshot::calculate_address(
         &context.es_client,
         &context.repo_addr,
         branch_name,
         file_path,
-    )
-    .await?;
+    )).await?;
 
+    let original_snapshot_content = original_snapshot_content.clone();
+    let diff = diff.clone();
+    let new_snapshot_content = new_snapshot_content.clone();
+    let ipfs_service = context.new_ipfs_client()?;
+    let es_client = context.es_client.clone();
+    let repo_name = context.remote.repo.clone();
+    let commit_id = commit_id.clone(); 
+    let branch_name = branch_name.to_owned();
+    let blob_id = blob_id.clone();
+    let file_path = file_path.to_owned();
+    let diff_coordinate = diff_coordinate.clone();
+    let last_commit_id = last_commit_id.clone();
+    return Ok(tokio::spawn(async move {
+        inner_push_diff(
+            repo_name,
+            snapshot_addr,
+            wallet,
+            ipfs_service,
+            es_client,
+            &commit_id,
+            &branch_name,
+            &blob_id,
+            &file_path,
+            &diff_coordinate,
+            &last_commit_id,
+            is_last,
+            &original_snapshot_content,
+            &diff,
+            &new_snapshot_content
+        ).await.map_err(|e| e.description().to_string())
+    }));
+}
+ 
+pub async fn inner_push_diff(
+    repo_name: String,
+    snapshot_addr: String,
+    wallet: GoshContract, 
+    ipfs_client: IpfsService,
+    es_client: TonClient,
+    commit_id: &git_hash::ObjectId,
+    branch_name: &str,
+    blob_id: &git_hash::ObjectId,
+    file_path: &str,
+    diff_coordinate: &PushDiffCoordinate,
+    last_commit_id: &git_hash::ObjectId,
+    is_last: bool,
+    original_snapshot_content: &Vec<u8>,
+    diff: &Vec<u8>,
+    new_snapshot_content: &Vec<u8>,
+) -> Result<()> {
     let diff = ton_client::utils::compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
@@ -174,7 +223,7 @@ pub async fn push_diff(
                 "diff": hex::encode(&diff)
             });
             let apply_patch_result = wallet
-                .run_local::<GetDiffResultResult>(&context.es_client, "getDiffResult", Some(data))
+                .run_local::<GetDiffResultResult>(&es_client, "getDiffResult", Some(data))
                 .await;
 
             if apply_patch_result.is_ok() {
@@ -189,7 +238,7 @@ pub async fn push_diff(
             }
         }
         if is_going_to_ipfs {
-            let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
+            let ipfs = Some(save_data_to_ipfs(&ipfs_client, &diff).await?);
             (None, ipfs)
         } else {
             (Some(hex::encode(diff)), None)
@@ -201,7 +250,7 @@ pub async fn push_diff(
         } else {
             format!(
                 "0x{}",
-                tvm_hash(&context.es_client, new_snapshot_content).await?
+                tvm_hash(&es_client, new_snapshot_content).await?
             )
         }
     };
@@ -219,7 +268,7 @@ pub async fn push_diff(
     let diffs: Vec<Diff> = vec![diff];
 
     let args = DeployDiffParams {
-        repo_name: context.remote.repo.clone(),
+        repo_name: repo_name,
         branch_name: branch_name.to_string(),
         commit_id: last_commit_id.to_string(),
         diffs,
@@ -229,7 +278,7 @@ pub async fn push_diff(
     };
 
     let params = serde_json::to_value(args)?;
-    let result = call(&context.es_client, wallet, "deployDiff", Some(params)).await?;
+    let result = call(&es_client, wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
 
     Ok(())
