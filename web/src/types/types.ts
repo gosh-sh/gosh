@@ -160,7 +160,6 @@ export interface IGoshRoot extends IContract {
     getRepoAddr(name: string, daoName: string): Promise<string>
     getDaoRepoCode(daoAddress: string): Promise<string>
     getSmvPlatformCode(): Promise<string>
-    getTreeAddr(repoAddr: string, treeName: string): Promise<string>
     getContentAddress(
         daoName: string,
         repoName: string,
@@ -295,7 +294,6 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
-    getTreeAddr(repoAddr: string, treeName: string): Promise<string>
     getDiffAddr(
         repoName: string,
         commitName: string,
@@ -336,6 +334,7 @@ export interface IGoshRepository extends IContract {
     getGoshAddr(): Promise<string>
     getSnapshotCode(branch: string): Promise<string>
     getSnapshotAddr(branch: string, filename: string): Promise<string>
+    getTreeAddr(treeName: string): Promise<string>
     isBranchProtected(branch: string): Promise<boolean>
 }
 
