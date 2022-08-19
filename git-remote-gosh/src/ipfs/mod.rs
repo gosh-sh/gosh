@@ -1,6 +1,9 @@
 use reqwest::multipart;
+use reqwest_middleware;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
+
 use serde::Deserialize;
-use std::{error::Error, path::Path};
+use std::{error::Error, path::Path, time::Duration};
 
 use tokio::{fs::File, io::AsyncReadExt};
 
@@ -13,7 +16,7 @@ struct SaveRes {
 #[derive(Debug)]
 pub struct IpfsService {
     pub ipfs_endpoint_address: String,
-    pub cli: reqwest::Client,
+    pub cli: reqwest_middleware::ClientWithMiddleware,
 }
 
 impl IpfsService {
@@ -28,7 +31,7 @@ impl IpfsService {
     fn new(ipfs_endpoint_address: &str) -> Self {
         Self {
             ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            cli: reqwest::Client::new(),
+            cli: reqwest_middleware::ClientWithMiddleware::new(reqwest::Client::new(), Vec::new()),
         }
     }
 
@@ -36,7 +39,13 @@ impl IpfsService {
     pub(crate) fn build(ipfs_endpoint_address: &str) -> Result<Self, Box<dyn Error>> {
         Ok(Self {
             ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            cli: reqwest::Client::builder().build()?,
+            cli: reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
+                .with(RetryTransientMiddleware::new_with_policy(
+                    ExponentialBackoff::builder()
+                        .retry_bounds(Duration::from_secs(1), Duration::from_secs(60))
+                        .build_with_max_retries(10),
+                ))
+                .build(),
         })
     }
 
@@ -68,7 +77,7 @@ impl IpfsService {
     pub(crate) async fn load(&self, cid: &str) -> Result<Vec<u8>, Box<dyn Error>> {
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
         log::info!("loading from: {}", url);
-        let response = self.cli.get(url).fetch_mode_no_cors().send().await;
+        let response = self.cli.get(url).send().await;
         log::info!("response obj: {:?}", response);
         let response = response?;
         log::info!("Got response: {:?}", response);

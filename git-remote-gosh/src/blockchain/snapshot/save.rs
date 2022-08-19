@@ -1,19 +1,14 @@
 #![allow(unused_variables)]
+use crate::abi as gosh_abi;
+use crate::blockchain::{tvm_hash, GoshContract, TonClient};
 use crate::{
-    blockchain::{call, user_wallet, snapshot},
+    blockchain::{call, snapshot, user_wallet},
     git_helper::GitHelper,
-    ipfs::{IpfsService},
+    ipfs::IpfsService,
 };
 use git_hash;
 use reqwest::multipart;
 use snapshot::Snapshot;
-use crate::abi as gosh_abi;
-use crate::blockchain::{
-    tvm_hash,
-    GoshContract,
-    TonClient
-};
-
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -26,7 +21,7 @@ struct GetDiffAddrResult {
 #[derive(Deserialize, Debug)]
 struct GetDiffResultResult {
     #[serde(rename = "value0")]
-    pub content: Option<Vec<u8>>
+    pub content: Option<Vec<u8>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -44,7 +39,7 @@ struct Diff {
     patch: Option<String>,
     ipfs: Option<String>,
     sha1: String,
-    sha256: String
+    sha256: String,
 }
 #[derive(Serialize, Debug)]
 struct DeployDiffParams {
@@ -57,7 +52,7 @@ struct DeployDiffParams {
     diffs: Vec<Diff>,
     index1: u32,
     index2: u32,
-    last: bool
+    last: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -108,27 +103,18 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn is_diff_deployed(
-    context: &TonClient,
-    contract_address: &str
-) -> Result<bool> {
-    let diff_contract = GoshContract::new(
-        contract_address,
-        gosh_abi::DIFF
-    );
-    let result: Result<GetVersionResult> = diff_contract.run_local(
-        context,
-        "getVersion",
-        None
-    ).await;
-    return Ok(result.is_ok())
+pub async fn is_diff_deployed(context: &TonClient, contract_address: &str) -> Result<bool> {
+    let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
+    let result: Result<GetVersionResult> =
+        diff_contract.run_local(context, "getVersion", None).await;
+    return Ok(result.is_ok());
 }
 
 #[instrument(level = "debug", skip(context))]
 pub async fn diff_address(
     context: &mut GitHelper,
     last_commit_id: &git_hash::ObjectId,
-    diff_coordinate: &PushDiffCoordinate
+    diff_coordinate: &PushDiffCoordinate,
 ) -> Result<String> {
     let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
@@ -137,19 +123,18 @@ pub async fn diff_address(
         "index1": diff_coordinate.index_of_parallel_thread,
         "index2": diff_coordinate.order_of_diff_in_the_parallel_thread,
     });
-    let result: GetDiffAddrResult = wallet.run_local(
-        &context.es_client, 
-        "getDiffAddr", 
-        Some(params)
-    ).await?;
+    let result: GetDiffAddrResult = wallet
+        .run_local(&context.es_client, "getDiffAddr", Some(params))
+        .await?;
     return Ok(result.address);
 }
 
 pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
-    let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD 
+    let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
         || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
-        is_going_to_ipfs = content_inspector::ContentType::BINARY == content_inspector::inspect(&new_content);
+        is_going_to_ipfs =
+            content_inspector::ContentType::BINARY == content_inspector::inspect(&new_content);
     }
     return is_going_to_ipfs;
 }
@@ -166,15 +151,16 @@ pub async fn push_diff(
     is_last: bool,
     original_snapshot_content: &Vec<u8>,
     diff: &Vec<u8>,
-    new_snapshot_content: &Vec<u8>
+    new_snapshot_content: &Vec<u8>,
 ) -> Result<()> {
     let wallet = user_wallet(context).await?;
     let snapshot_addr = Snapshot::calculate_address(
         &context.es_client,
         &context.repo_addr,
         branch_name,
-        file_path
-    ).await?;
+        file_path,
+    )
+    .await?;
 
     let diff = ton_client::utils::compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
@@ -184,15 +170,13 @@ pub async fn push_diff(
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
-                "state": hex::encode(original_snapshot_content), 
+                "state": hex::encode(original_snapshot_content),
                 "diff": hex::encode(&diff)
             });
-            let apply_patch_result = wallet.run_local::<GetDiffResultResult>(
-                &context.es_client, 
-                "getDiffResult", 
-                Some(data)
-            ).await;
-            
+            let apply_patch_result = wallet
+                .run_local::<GetDiffResultResult>(&context.es_client, "getDiffResult", Some(data))
+                .await;
+
             if apply_patch_result.is_ok() {
                 if apply_patch_result.unwrap().content.is_none() {
                     is_going_to_ipfs = true;
@@ -200,10 +184,11 @@ pub async fn push_diff(
             } else {
                 let apply_patch_result_error = apply_patch_result.unwrap_err();
                 let message = apply_patch_result_error.description();
-                is_going_to_ipfs = message.contains("Contract execution was terminated with error: invalid opcode");
+                is_going_to_ipfs = message
+                    .contains("Contract execution was terminated with error: invalid opcode");
             }
         }
-        if is_going_to_ipfs { 
+        if is_going_to_ipfs {
             let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
             (None, ipfs)
         } else {
@@ -212,17 +197,11 @@ pub async fn push_diff(
     };
     let content_sha256 = {
         if ipfs.is_some() {
-            format!(
-                "0x{}",
-                sha256::digest_bytes(new_snapshot_content)
-            )
+            format!("0x{}", sha256::digest_bytes(new_snapshot_content))
         } else {
             format!(
-                "0x{}", 
-                tvm_hash(
-                    &context.es_client, 
-                    new_snapshot_content
-                ).await?
+                "0x{}",
+                tvm_hash(&context.es_client, new_snapshot_content).await?
             )
         }
     };
@@ -233,7 +212,7 @@ pub async fn push_diff(
         patch,
         ipfs,
         sha1: blob_id.to_string(),
-        sha256: content_sha256
+        sha256: content_sha256,
     };
 
     log::trace!("push_diff: {:?}", diff);
@@ -246,7 +225,7 @@ pub async fn push_diff(
         diffs,
         index1: diff_coordinate.index_of_parallel_thread,
         index2: diff_coordinate.order_of_diff_in_the_parallel_thread,
-        last: is_last
+        last: is_last,
     };
 
     let params = serde_json::to_value(args)?;
@@ -271,12 +250,9 @@ pub async fn push_new_branch_snapshot(
         let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &content).await?);
         ("".to_string(), ipfs)
     } else {
-        let content: String = content.iter()
-            .map(|e| format!("{:x?}", e))
-            .collect();
+        let content: String = content.iter().map(|e| format!("{:x?}", e)).collect();
         (content, None)
     };
-
 
     let args = DeploySnapshotParams {
         repo_address: context.repo_addr.clone(),
@@ -289,7 +265,13 @@ pub async fn push_new_branch_snapshot(
 
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
+    let result = call(
+        &context.es_client,
+        wallet,
+        "deployNewSnapshot",
+        Some(params),
+    )
+    .await?;
     log::debug!("deployNewSnapshot result: {:?}", result);
     Ok(())
 }
@@ -311,7 +293,13 @@ pub async fn push_initial_snapshot(
 
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(&context.es_client, wallet, "deployNewSnapshot", Some(params)).await?;
+    let result = call(
+        &context.es_client,
+        wallet,
+        "deployNewSnapshot",
+        Some(params),
+    )
+    .await?;
     log::debug!("deployNewSnapshot result: {:?}", result);
     Ok(())
 }
