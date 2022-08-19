@@ -34,6 +34,7 @@ import {
     getPaginatedAccounts,
     splitByChunk,
     goshRoot,
+    sha256,
 } from '../helpers'
 import {
     IGoshTree,
@@ -433,7 +434,10 @@ export class GoshWallet implements IGoshWallet {
                     patch = await zstd.compress(this.account.client, patch)
                     patch = Buffer.from(patch, 'base64').toString('hex')
 
-                    if (Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE) {
+                    if (
+                        Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE ||
+                        Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                    ) {
                         const compressed = await zstd.compress(
                             this.account.client,
                             modified,
@@ -452,6 +456,13 @@ export class GoshWallet implements IGoshWallet {
                     ipfs = await saveToIPFS(content)
                 }
 
+                const hashes = {
+                    sha1: sha1(modified, 'blob', 'sha1'),
+                    sha256: ipfs
+                        ? sha256(modified, true)
+                        : await goshRoot.getTvmHash(modified),
+                }
+
                 processedBlobs.push({
                     ...blob,
                     created: false,
@@ -460,15 +471,15 @@ export class GoshWallet implements IGoshWallet {
                         patch: ipfs ? null : patch,
                         ipfs,
                         commit: '',
-                        sha1: sha1(modified, 'blob', 'sha1'),
-                        sha256: await goshRoot.getTvmHash(modified),
+                        sha1: hashes.sha1,
+                        sha256: hashes.sha256,
                     },
                 })
 
                 // Update tree
                 const blobPathItems = await getTreeItemsFromPath(
                     blob.name,
-                    blob.modified,
+                    hashes,
                     flags,
                     treeItem,
                 )
@@ -689,15 +700,18 @@ export class GoshWallet implements IGoshWallet {
                 chunk.map(async (item) => {
                     if (!item) return
                     const { snap, name, treeItem } = item
-                    const { content } = await snap.getSnapshot(fromCommit, treeItem)
+                    const { content, isIpfs } = await snap.getSnapshot(
+                        fromCommit,
+                        treeItem,
+                    )
 
                     let ipfs = null
                     let snapdata = ''
                     const compressed = await zstd.compress(this.account.client, content)
                     if (
+                        isIpfs ||
                         Buffer.isBuffer(content) ||
-                        Buffer.from(compressed, 'base64').byteLength >=
-                            MAX_ONCHAIN_FILE_SIZE
+                        Buffer.from(content).byteLength >= MAX_ONCHAIN_FILE_SIZE
                     ) {
                         ipfs = await saveToIPFS(compressed)
                     } else {
