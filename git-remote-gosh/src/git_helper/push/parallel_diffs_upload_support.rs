@@ -9,6 +9,8 @@ use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 
+const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u32>,
     next_index: HashMap<String, u32>,
@@ -102,17 +104,17 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn wait_all_diffs(&mut self, context: &mut GitHelper) -> Result<()> {
         // TODO: 
-        // - Add max retries number
         // - Let user know if we reached it 
         // - Make it configurable
         let mut index = 0;
-        log::trace!("Expecting the following diff contracts to be deployed: {:?}", self.expecting_deployed_contacts_addresses);
+        log::debug!("Expecting the following diff contracts to be deployed: {:?}", self.expecting_deployed_contacts_addresses);
         while let Some(finished_task) = self.pushed_blobs.next().await {
             match finished_task {
                 Err(e) => { panic!("{}",e); },
                 Ok(result) => {}
             }
         }
+        let mut attempt = 0;
         loop {
             if index >= self.expecting_deployed_contacts_addresses.len() {
                 return Ok(());
@@ -120,9 +122,14 @@ impl ParallelDiffsUploadSupport {
             let expecting_address = self.expecting_deployed_contacts_addresses.get(index).unwrap();
             if blockchain::snapshot::is_diff_deployed(&context.es_client, expecting_address).await? {
                 index += 1;
+                attempt = 0;
             } else {
                 //TODO: replace with web-socket listen
                 std::thread::sleep(std::time::Duration::from_secs(3)); 
+                attempt += 1;
+                if attempt == MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
+                    panic!("Some contracts didn't appear in time: {}", expecting_address);
+                }
             } 
         } 
     }

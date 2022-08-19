@@ -165,7 +165,7 @@ pub async fn push_diff(
     let diff = diff.clone();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_service = context.new_ipfs_client()?;
-    let es_client = context.es_client.clone();
+    let es_client = context.new_es_client()?;
     let repo_name = context.remote.repo.clone();
     let commit_id = commit_id.clone(); 
     let branch_name = branch_name.to_owned();
