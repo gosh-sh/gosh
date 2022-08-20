@@ -54,35 +54,6 @@
 			]
 		},
 		{
-			"name": "sendMoney",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"commit","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyDiff",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"commit","type":"string"},
-				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyTree",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"shaTree","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "destroyObject",
 			"inputs": [
 				{"name":"obj","type":"address"}

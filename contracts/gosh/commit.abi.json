@@ -125,7 +125,6 @@
 		{
 			"name": "abortDiff",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"branch","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"index","type":"uint128"}
@@ -136,7 +135,6 @@
 		{
 			"name": "DiffCheckCommit",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"branch","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"index","type":"uint128"}

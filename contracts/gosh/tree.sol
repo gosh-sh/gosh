@@ -15,6 +15,7 @@ import "commit.sol";
 import "tree.sol";
 import "snapshot.sol";
 import "diff.sol";
+import "goshdao.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
@@ -62,14 +63,14 @@ contract Tree is Modifiers {
         m_codeTree = codeTree;
         m_codeCommit = codeCommit;
         _tree = data;
-        getMoney(_pubkey);
+        getMoney();
     }    
     
     function countAll(uint256 pubkey, uint128 index) public {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
         require(_count == false, ERR_PROCCESS_IS_EXIST);
         _count = true;
-        getMoney(_pubkey);
+        getMoney();
         this.count{value: 0.2 ton, flag: 1}(0);
     }
     
@@ -82,7 +83,7 @@ contract Tree is Modifiers {
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
             this.count{value: 0.2 ton, flag: 1}(index + 1);
         }
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
@@ -92,7 +93,7 @@ contract Tree is Modifiers {
         _countFiles += res;
         _needAnswer -= 1;
         if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function sendRequests(uint256 index) public senderIs(address(this)) {
@@ -101,14 +102,14 @@ contract Tree is Modifiers {
         else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         if (index == request.length - 1) { delete request; return; }
         this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
         tvm.accept();
         if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
         request.push(TreeAnswer(msg.sender, true));
-        getMoney(_pubkey);
+        getMoney();
         return;
     }
     
@@ -116,40 +117,38 @@ contract Tree is Modifiers {
         tvm.accept();
         if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
         request.push(TreeAnswer(msg.sender, false));
-        getMoney(_pubkey);
+        getMoney();
         return;
     }
     
-    function getMoney(uint256 pubkey) private view{
-        TvmCell s1 = _composeWalletStateInit(pubkey, 0);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+    function getMoney() private view{
         if (address(this).balance > 80 ton) { return; }
-        GoshWallet(addr).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
+        GoshDao(_goshdao).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
     
     function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public view {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney();
     }    
     
     function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney();
     }    
     
     function getShaInfoTree(string sha, Request value0) public view {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
-        getMoney(_pubkey);
+        getMoney();
     }    
     
     function getShaInfo(Request value0) private view {
         optional(uint32) pos = value0.lastPath.find(byte('/'));
-        getMoney(_pubkey);
+        getMoney();
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get());
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
@@ -159,7 +158,7 @@ contract Tree is Modifiers {
             else {
                 Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
             }
-            getMoney(_pubkey);
+            getMoney();
             return;
         }
         else {

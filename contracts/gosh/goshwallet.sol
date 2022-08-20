@@ -190,33 +190,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         DaoCreator(_creator).sendMoney{value : 0.2 ton}(_rootRepoPubkey, tvm.pubkey(), _goshdao, 21000 ton, _index);
     }
 
-    function sendMoney(address repo, string commit) public {
-        TvmCell s0 = _composeCommitStateInit(commit, repo);
-        address addr = address.makeAddrStd(0, tvm.hash(s0));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        addr.transfer(100 ton);
-        getMoney();
-    }
-
-    function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
-        TvmCell s0 = _composeDiffStateInit(commit, repo, index1, index2);
-        address addr = address.makeAddrStd(0, tvm.hash(s0));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        addr.transfer(50 ton);
-        getMoney();
-    }
-
-    function sendMoneyTree(address repo, string shaTree) public {
-        TvmCell s1 = _composeTreeStateInit(shaTree, repo);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        addr.transfer(80 ton);
-        getMoney();
-    }
-
     function destroyObject(address obj) public onlyOwner accept view {
         Object(obj).destroy{value : 0.2 ton, flag: 1}(_index);
     }
