@@ -1,4 +1,3 @@
-use futures::stream;
 use reqwest::multipart;
 use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
@@ -9,8 +8,8 @@ use tokio_retry::{strategy::ExponentialBackoff, Retry};
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Client = reqwest_middleware::ClientWithMiddleware;
 
-static MAX_RETRIES: usize = 10;
-static MAX_RETRY_DURATION: Duration = Duration::from_secs(10);
+static MAX_RETRIES: usize = 20;
+static MAX_RETRY_DURATION: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Deserialize)]
 struct SaveRes {
@@ -30,19 +29,22 @@ fn default_retry_strategy() -> ExponentialBackoff {
         .max_delay(MAX_RETRY_DURATION)
 }
 
-async fn save_retriable(cli: &Client, url: &str, path: impl AsRef<Path>) -> Result<String> {
+async fn save_file_retriable(cli: &Client, url: &str, path: impl AsRef<Path>) -> Result<String> {
+    // in case of file upload usually you want to store metadata, but:
     // 1) reqwest async has no support for file
     // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
     let file = File::open(path).await?;
     let body = reqwest::Body::from(file);
-    ipfs_save(cli, url, body).await
+    save_body(cli, url, body).await
 }
 
 async fn save_blob_retriable(cli: &Client, url: &str, blob: &[u8]) -> Result<String> {
-    ipfs_save(cli, url, blob.to_owned()).await
+    // TODO: to_owned is not really necessary since reqwest doesn't modify body
+    // so may be there's more clever way to not to copy blob
+    save_body(cli, url, blob.to_owned()).await
 }
 
-async fn ipfs_save<U, B>(cli: &Client, url: U, body: B) -> Result<String>
+async fn save_body<U, B>(cli: &Client, url: U, body: B) -> Result<String>
 where
     U: reqwest::IntoUrl,
     B: Into<reqwest::Body>,
@@ -52,6 +54,16 @@ where
     let response = cli.post(url).multipart(form).send().await?;
     let response_body = response.json::<SaveRes>().await?;
     Ok(response_body.hash)
+}
+
+async fn load_retriable(cli: &Client, url: &str) -> Result<Vec<u8>> {
+    log::info!("loading from: {}", url);
+    let response = cli.get(url).send().await;
+    log::info!("response obj: {:?}", response);
+    let response = response?;
+    log::info!("Got response: {:?}", response);
+    let response_body = response.bytes().await?;
+    Ok(Vec::from(&response_body[..]))
 }
 
 impl IpfsService {
@@ -106,14 +118,14 @@ impl IpfsService {
             })
             .take(MAX_RETRIES);
 
-        Ok(Retry::spawn(retry_strategy, || {
+        Retry::spawn(retry_strategy, || {
             save_blob_retriable(&self.cli, &url, &blob)
         })
-        .await?)
+        .await
     }
 
     #[instrument(level = "debug")]
-    pub async fn save<T>(&self, path: T) -> Result<String>
+    pub async fn save_file<T>(&self, path: T) -> Result<String>
     where
         T: AsRef<Path> + std::fmt::Debug,
     {
@@ -134,19 +146,23 @@ impl IpfsService {
             })
             .take(MAX_RETRIES);
 
-        Ok(Retry::spawn(retry_strategy, || save_retriable(&self.cli, &url, &path)).await?)
+        Retry::spawn(retry_strategy, || {
+            save_file_retriable(&self.cli, &url, &path)
+        })
+        .await
     }
 
     #[instrument(level = "debug")]
     pub async fn load(&self, cid: &str) -> Result<Vec<u8>> {
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
-        log::info!("loading from: {}", url);
-        let response = self.cli.get(url).send().await;
-        log::info!("response obj: {:?}", response);
-        let response = response?;
-        log::info!("Got response: {:?}", response);
-        let response_body = response.bytes().await?;
-        Ok(Vec::from(&response_body[..]))
+        let retry_strategy = default_retry_strategy()
+            .map(|d| {
+                log::info!("Retry in {d:?} ...");
+                d
+            })
+            .take(MAX_RETRIES);
+
+        Retry::spawn(retry_strategy, || load_retriable(&self.cli, &url)).await
     }
 }
 
@@ -184,7 +200,7 @@ mod tests {
     }
 
     #[test_log::test(tokio::test)]
-    async fn save_test() {
+    async fn save_file() {
         let mut path = env::temp_dir();
         path.push("test");
 
@@ -198,7 +214,7 @@ mod tests {
         let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
             .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
         let cid = ipfs
-            .save(&path)
+            .save_file(&path)
             .await
             .unwrap_or_else(|e| panic!("Can't upload to ipfs: {e}"));
 
