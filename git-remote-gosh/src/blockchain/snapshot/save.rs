@@ -91,13 +91,16 @@ pub struct PushDiffCoordinate {
 #[instrument(level = "debug")]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<String> {
     log::debug!("Uploading blob to IPFS");
+    let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
+    let content = base64::encode(content);
+    let content = content.as_bytes().to_vec();
 
     let url = format!(
         "{}/api/v0/add?pin=true&quiet=true",
         ipfs_client.ipfs_endpoint_address,
     );
 
-    let part = multipart::Part::bytes(content.to_vec());
+    let part = multipart::Part::bytes(content);
     let form = multipart::Form::new().part("file", part);
 
     let response = ipfs_client.cli.post(&url).multipart(form).send().await?;
@@ -254,9 +257,8 @@ pub async fn inner_push_diff(
         }
         if is_going_to_ipfs {
             log::debug!("inner_push_diff->save_data_to_ipfs");
-            let content: Vec<u8> = ton_client::utils::compress_zstd(new_snapshot_content, None)?;
             let ipfs = Some(
-                save_data_to_ipfs(&ipfs_client, &content)
+                save_data_to_ipfs(&ipfs_client, &new_snapshot_content)
                 .await
                 .map_err(|e|{
                     log::debug!("save_data_to_ipfs error: {}", e);
@@ -318,15 +320,15 @@ pub async fn push_new_branch_snapshot(
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
-    content: &[u8],
+    original_content: &[u8],
 ) -> Result<()> {
-    let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
+    let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
     log::debug!("compressed to {} size", content.len());
 
     let (content, ipfs) = if content.len() > 15000 {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
-            save_data_to_ipfs(&&context.ipfs_client, &content)
+            save_data_to_ipfs(&&context.ipfs_client, &original_content)
             .await
             .map_err(|e|{
                 log::debug!("save_data_to_ipfs error: {}", e);
