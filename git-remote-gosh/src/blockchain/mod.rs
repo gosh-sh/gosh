@@ -53,6 +53,7 @@ pub enum GoshBlobBitFlags {
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
 
+#[derive(Clone)]
 pub struct GoshContract {
     address: String,
     pretty_name: String,

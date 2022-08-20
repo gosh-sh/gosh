@@ -33,7 +33,6 @@ pub struct GitHelper {
     logger: Logger,
     gosh_root_contract: GoshContract,
     pub repo_contract: GoshContract,
-    pub wallet_contract: Option<GoshContract>
 }
 
 #[derive(Deserialize, Debug)]
@@ -99,7 +98,6 @@ impl GitHelper {
             logger,
             gosh_root_contract,
             repo_contract,
-            wallet_contract: None
         })
     }
 
