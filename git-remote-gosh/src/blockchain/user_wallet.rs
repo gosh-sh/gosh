@@ -47,25 +47,30 @@ pub async fn get_user_wallet(client: &TonClient, dao_address: &str, pubkey: &str
     Ok(contract)
 }
 
+lazy_static! {
+    static ref _user_wallet: std::sync::RwLock<Option<GoshContract>> = std::sync::RwLock::new(None);
+}
+
 #[instrument(level = "debug", skip(context))]
-pub async fn user_wallet(context: &mut GitHelper) -> Result<GoshContract> {
-    let wallet_contract = if context.wallet_contract.is_some() {
-        context.wallet_contract.unwrap()
-    } else {
-        let config = user_wallet_config(context);
-        if config.is_none() {
-            return Err("User wallet config must be set".into());
+pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
+    if _user_wallet.read().unwrap().is_none() {
+        let mut user_wallet = _user_wallet.write().unwrap();
+        if user_wallet.is_none() {
+            let config = user_wallet_config(context);
+            if config.is_none() {
+                return Err("User wallet config must be set".into());
+            }
+            let config = config.expect("Guarded");
+            *user_wallet = Some(get_user_wallet(
+                &context.es_client,
+                &context.dao_addr,
+                &config.pubkey,
+                &config.secret
+            ).await?);
         }
-        let config = config.expect("Guarded");
-        get_user_wallet(
-            &context.es_client,
-            &context.dao_addr,
-            &config.pubkey,
-            &config.secret
-        ).await?
     };
 
-    Ok(wallet_contract)
+    Ok(_user_wallet.read().unwrap().as_ref().unwrap().clone())
 }
 
 fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
