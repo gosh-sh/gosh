@@ -74,6 +74,15 @@
 			]
 		},
 		{
+			"name": "getConfigInfo",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setConfig",
 			"inputs": [
 				{"name":"limit_wallets","type":"uint128"},
@@ -131,6 +140,16 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"uint128"}
 			]
 		},
 		{

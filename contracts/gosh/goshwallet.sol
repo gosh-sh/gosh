@@ -398,6 +398,20 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         }(tvm.pubkey(), _index);
         getMoney();
     }
+    
+    //Config
+    function updateConfig() public onlyOwner accept saveMsg {
+        GoshDao(_goshdao).getConfigInfo{value: 0.15 ton, bounce: true, flag: 1}(tvm.pubkey(), _index);
+    }  
+    
+    function setConfig(uint128 limit_wallets, uint128 limit_time, uint128 limit_messages) public senderIs(_goshdao) {
+        tvm.accept();    
+        _limit_wallets = limit_wallets;
+        _limit_time = limit_time;
+        _limit_messages = limit_messages;
+        getMoney();
+    }
+    
 
     //Tree part
     function deployTree(
@@ -649,6 +663,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getSnapshotCode(string branch, address repo) external view returns(TvmCell) {
         return GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
+    }
+    
+    function getConfig() external view returns(uint128, uint128, uint128) {
+        return (_limit_wallets, _limit_time, _limit_messages);
     }
 
     function getWalletAddr(uint128 index) external view returns(address) {

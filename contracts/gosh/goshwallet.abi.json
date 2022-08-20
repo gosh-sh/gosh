@@ -178,6 +178,23 @@
 			]
 		},
 		{
+			"name": "updateConfig",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setConfig",
+			"inputs": [
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"limit_time","type":"uint128"},
+				{"name":"limit_messages","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -343,6 +360,16 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"uint128"}
 			]
 		},
 		{

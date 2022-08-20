@@ -22,7 +22,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.5.3";
     
     uint128 _limit_wallets = 5;
-    uint128 _limit_time = 60;
+    uint128 _limit_time = 100;
     uint128 _limit_messages = 10;
     
     address _creator;
@@ -198,6 +198,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _contractflex;
     }
     
+    function getConfigInfo(uint256 pubkey, uint128 index) public view senderIs(getAddrWalletIn(pubkey, index)) {
+        tvm.accept();
+        require(_wallets.exists(pubkey) == true, ERR_WALLET_NOT_EXIST);
+        GoshWallet(msg.sender).setConfig{value : 0.2 ton}(_limit_wallets, _limit_time, _limit_messages);
+    }
+    
     //Setters
     function setConfig(uint128 limit_wallets, uint128 limit_time, uint128 limit_messages) public onlyOwnerPubkey(_rootpubkey) {
         tvm.accept();    
@@ -249,7 +255,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getNameDao() external view returns(string) {
         return _nameDao;
     }
-
+    
+    function getConfig() external view returns(uint128, uint128, uint128) {
+        return (_limit_wallets, _limit_time, _limit_messages);
+    }
+    
     function getRootPubkey() external view returns(uint256) {
         return _rootpubkey;
     }
