@@ -190,7 +190,7 @@ pub async fn push_diff(
                 }
             } else {
                 let apply_patch_result_error = apply_patch_result.unwrap_err();
-                let message = apply_patch_result_error.description();
+                let message = apply_patch_result_error.to_string();
                 is_going_to_ipfs = message.contains("Contract execution was terminated with error: invalid opcode");
             }
         }
