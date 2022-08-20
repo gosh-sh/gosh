@@ -21,7 +21,6 @@ pipeline {
                 }
             }
         }   
-
         stage('Compile') { 
             stages {
                 stage("Compile: SMV") {
@@ -44,52 +43,52 @@ pipeline {
                 }
             }
         }
-        stage('Build & Deploy') {
-            parallel {
-                stage('Build') { 
-                    stages {
-                        stage("Build: Git Helper") {
-                            steps {
-                                script {
-                                    dir ('git-remote-gosh') {
-                                        sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
-                                    }
-                                }
-                            }
-                        }
-                        stage("Publish: Git Helper - Docker") {
-                            steps {
-                                script {
-                                    dir ('git-remote-gosh') {
-                                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                                            sh 'docker login -u $USERNAME -p $PASSWORD'
-                                        }
-                                        sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
-                                    }
-                                }
-                            }   
-                        }
-                        stage("Build: Docker Extension") {
-                            steps {
-                                script {
-                                    dir ('docker-extension') {
-                                        sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
-                                    }
-                                }
+        stage('Build') {
+            stages {
+                stage("Build: Git Helper") {
+                    steps {
+                        script {
+                            dir ('git-remote-gosh') {
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64 DOCKER_BUILDER_ARGS='--driver-opt network=host'"
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
+                                sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
+                                sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
                             }
                         }
                     }
                 }
-
-                stage("Deploy: smart-contracts") {
+                stage("Build: Docker Extension") {
                     steps {
                         script {
-                            dir ('contracts/gosh') {
-                                sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                            dir ('docker-extension') {
+                                sh "make build-ci IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                             }
                         }
-                        archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
-                        archiveArtifacts artifacts: "contracts/gosh/GoshRoot.addr"
+                    }
+                }
+            }
+        }
+
+        stage("Deploy: smart-contracts") {
+            steps {
+                script {
+                    dir ('contracts/gosh') {
+                        sh 'make prepare-docker && make deploy-docker KEYS_PATH=/tmp/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                    }
+                }
+                archiveArtifacts artifacts: "contracts/gosh/gosh.seed"
+                archiveArtifacts artifacts: "contracts/gosh/GoshRoot.addr"
+                archiveArtifacts artifacts: "contracts/gosh/GoshDaoCreator.addr"
+            }
+        }
+
+        stage("Tests: functional") {
+            steps {
+                script {
+                    dir ('tests') {
+                        sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
+                        sh 'PATH=/home/jenkins/bin:$PATH && ./it-01.sh'
                     }
                 }
             }
@@ -100,23 +99,35 @@ pipeline {
                 script {
                     dir ('web') {
                         env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
+                        env.REACT_APP_CREATOR_ADDR = sh script: "cat contracts/gosh/GoshDaoCreator.addr | tr -d '\n'", returnStdout: true
                         sh "sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' .env.ci"
+                        sh "sed -i '/REACT_APP_CREATOR_ADDR/s/\$/${REACT_APP_CREATOR_ADDR}/' .env.ci"
                         sh 'make run ENV=ci '
                     }
                 }
             }
         }
-
         stage('Publish') { 
             stages {
+                stage("Publish: Git Helper - Docker") {
+                    steps {
+                        script {
+                            if (params.RELEASE) {
+                                dir ('git-remote-gosh') {
+                                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                        sh 'docker login -u $USERNAME -p $PASSWORD'
+                                    }
+                                    sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
+                                    sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:${VERSION}"
+                                    sh "docker push teamgosh/git:${VERSION}"
+                                }
+                            }
+                        }
+                    }   
+                }
                 stage("Publish: Git Helper - bin") {
                     steps {
                         script {
-                            dir ('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
-                                sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
-                                sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
-                            }
                             archiveArtifacts artifacts: "git-remote-gosh/git-remote-gosh-amd64"
                             archiveArtifacts artifacts: "git-remote-gosh/git-remote-gosh-arm64"
                             if (params.RELEASE) {
@@ -139,7 +150,9 @@ pipeline {
                                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                         sh 'docker login -u $USERNAME -p $PASSWORD'
                                     }
-                                    sh "make publish IMAGE=teamgosh/docker-extension TAG=${VERSION} GOSH_GIT_IMAGE=teamgosh/git:${VERSION}"
+                                    sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
+                                    sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:${VERSION}"
+                                    sh "docker push teamgosh/docker-extension:${VERSION}"
                                 }
                             }
                         }

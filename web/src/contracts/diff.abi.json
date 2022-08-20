@@ -179,6 +179,7 @@
 		{"name":"_branchcommit","type":"address"},
 		{"name":"_newC","type":"address"},
 		{"name":"_last","type":"bool"},
-		{"name":"_entry","type":"bool"}
+		{"name":"_entry","type":"bool"},
+		{"name":"_flag","type":"bool"}
 	]
 }

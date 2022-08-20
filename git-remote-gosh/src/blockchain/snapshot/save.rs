@@ -171,7 +171,8 @@ pub async fn push_diff(
     log::debug!("compressed to {} size", diff.len());
 
     let (patch, ipfs) = {
-        let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_THRESHOLD;
+        let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD 
+            || new_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
@@ -201,6 +202,22 @@ pub async fn push_diff(
             (Some(hex::encode(diff)), None)
         }
     };
+    let content_sha256 = {
+        if ipfs.is_some() {
+            format!(
+                "0x{}",
+                sha256::digest_bytes(new_snapshot_content)
+            )
+        } else {
+            format!(
+                "0x{}", 
+                tvm_hash(
+                    &context.es_client, 
+                    new_snapshot_content
+                ).await?
+            )
+        }
+    };
 
     let diff = Diff {
         snapshot_addr,
@@ -208,13 +225,7 @@ pub async fn push_diff(
         patch,
         ipfs,
         sha1: blob_id.to_string(),
-        sha256: format!(
-            "0x{}", 
-            tvm_hash(
-                &context.es_client, 
-                new_snapshot_content
-            ).await?
-        )
+        sha256: content_sha256
     };
 
     log::trace!("push_diff: {:?}", diff);
