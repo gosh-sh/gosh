@@ -63,6 +63,7 @@ import {
     TGoshEventDetails,
     TGoshCommitDetails,
     IGoshContentSignature,
+    TGoshDaoWalletConfig,
 } from './types'
 import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
@@ -331,6 +332,28 @@ export class GoshDao implements IGoshDao {
             {
                 signer: signerKeys(keys),
             },
+        )
+    }
+
+    async getConfig(): Promise<TGoshDaoWalletConfig> {
+        const result = await this.account.runLocal('getConfig', {})
+        const decoded = result.decoded?.output
+        return {
+            wallets: decoded.value0,
+            time: decoded.value1,
+            messages: decoded.value2,
+        }
+    }
+
+    async setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void> {
+        await this.account.run(
+            'setConfig',
+            {
+                limit_wallets: config.wallets,
+                limit_time: config.time,
+                limit_messages: config.messages,
+            },
+            { signer: signerKeys(daoOwnerKeys) },
         )
     }
 }
@@ -1168,6 +1191,20 @@ export class GoshWallet implements IGoshWallet {
             label,
         })
         return result.decoded?.output.value0
+    }
+
+    async getConfig(): Promise<TGoshDaoWalletConfig> {
+        const result = await this.account.runLocal('getConfig', {})
+        const decoded = result.decoded?.output
+        return {
+            wallets: decoded.value0,
+            time: decoded.value1,
+            messages: decoded.value2,
+        }
+    }
+
+    async updateConfig(): Promise<void> {
+        await this.run('updateConfig', {})
     }
 
     async run(

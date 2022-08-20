@@ -22,6 +22,12 @@ export type TGoshDaoDetails = {
     supply: number
 }
 
+export type TGoshDaoWalletConfig = {
+    wallets: number
+    time: number
+    messages: number
+}
+
 export type TGoshWalletDetails = {
     address: string
     keys?: KeyPair
@@ -196,6 +202,8 @@ export interface IGoshDao extends IContract {
         payload: string,
         keys: KeyPair,
     ): Promise<void>
+    getConfig(): Promise<TGoshDaoWalletConfig>
+    setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 export interface IGoshWallet extends IContract {
@@ -308,6 +316,8 @@ export interface IGoshWallet extends IContract {
         content: string,
     ): Promise<void>
     getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
+    getConfig(): Promise<TGoshDaoWalletConfig>
+    updateConfig(): Promise<void>
 }
 
 export interface IGoshRepository extends IContract {

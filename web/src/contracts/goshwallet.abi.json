@@ -54,35 +54,6 @@
 			]
 		},
 		{
-			"name": "sendMoney",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"commit","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyDiff",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"commit","type":"string"},
-				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyTree",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"shaTree","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "destroyObject",
 			"inputs": [
 				{"name":"obj","type":"address"}
@@ -202,6 +173,23 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateConfig",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setConfig",
+			"inputs": [
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"limit_time","type":"uint128"},
+				{"name":"limit_messages","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -372,6 +360,16 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"uint128"}
 			]
 		},
 		{
