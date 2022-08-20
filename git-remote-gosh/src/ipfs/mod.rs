@@ -91,7 +91,7 @@ impl IpfsService {
     }
 
     #[instrument(level = "debug")]
-    pub async fn save_content(&self, content: &[u8]) -> Result<String> {
+    pub async fn save_blob(&self, blob: &[u8]) -> Result<String> {
         log::debug!("Uploading blob to IPFS");
 
         let url = format!(
@@ -101,13 +101,13 @@ impl IpfsService {
 
         let retry_strategy = default_retry_strategy()
             .map(|d| {
-                eprintln!("Retry in {d:?} ...");
+                log::info!("Retry in {d:?} ...");
                 d
             })
             .take(MAX_RETRIES);
 
         Ok(Retry::spawn(retry_strategy, || {
-            save_blob_retriable(&self.cli, &url, &content)
+            save_blob_retriable(&self.cli, &url, &blob)
         })
         .await?)
     }
@@ -129,7 +129,7 @@ impl IpfsService {
 
         let retry_strategy = default_retry_strategy()
             .map(|d| {
-                eprintln!("Retry in {d:?} ...");
+                log::info!("Retry in {d:?} ...");
                 d
             })
             .take(MAX_RETRIES);
@@ -165,11 +165,12 @@ mod tests {
     }
 
     #[test_log::test(tokio::test)]
-    async fn save_content_test() {
+    async fn save_blob_test() {
+        let blob = "fӅoAٲ";
         let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
             .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
         let cid = ipfs
-            .save_content(&Vec::new())
+            .save_blob(blob.as_bytes())
             .await
             .unwrap_or_else(|e| panic!("Can't upload to ipfs: {e}"));
 
@@ -179,7 +180,7 @@ mod tests {
             .await
             .unwrap_or_else(|e| panic!("Failed to load from ipfs: {e}"));
 
-        assert!(data.len() == 0);
+        assert_eq!(data, blob.as_bytes());
     }
 
     #[test_log::test(tokio::test)]

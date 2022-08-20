@@ -94,7 +94,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     let content = base64::encode(content);
     let content = content.as_bytes().to_vec();
 
-    ipfs_client.save_content(&content).await
+    ipfs_client.save_blob(&content).await
 }
 
 #[instrument(level = "debug", skip(context))]
