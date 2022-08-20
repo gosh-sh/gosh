@@ -275,6 +275,7 @@
 		{"name":"m_TokenRootCode","type":"cell"},
 		{"name":"m_TokenWalletCode","type":"cell"},
 		{"name":"_rootTokenRoot","type":"address"},
-		{"name":"_lastAccountAddress","type":"address"}
+		{"name":"_lastAccountAddress","type":"address"},
+		{"name":"_flag","type":"bool"}
 	]
 }

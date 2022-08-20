@@ -38,6 +38,7 @@ contract Tree is Modifiers {
     bool _count = false;
     bool _countend = false;
     TreeAnswer[] request;
+    bool _flag = false;
     
     constructor(
         uint256 pubkey,
@@ -121,32 +122,41 @@ contract Tree is Modifiers {
         return;
     }
     
-    function getMoney() private view{
+    function getMoney() private {
+        if (_flag == true) { return; }
         if (address(this).balance > 80 ton) { return; }
+        _flag = true;
         GoshDao(_goshdao).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
     
-    function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public view {
+    //Fallback/Receive
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
+    }
+    
+    function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }    
     
-    function getShaInfoCommit(string commit, Request value0) public view senderIs(getCommitAddr(commit, _repo)) {
+    function getShaInfoCommit(string commit, Request value0) public senderIs(getCommitAddr(commit, _repo)) {
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }    
     
-    function getShaInfoTree(string sha, Request value0) public view {
+    function getShaInfoTree(string sha, Request value0) public {
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }    
     
-    function getShaInfo(Request value0) private view {
+    function getShaInfo(Request value0) private {
         optional(uint32) pos = value0.lastPath.find(byte('/'));
         getMoney();
         if (pos.hasValue() == true){

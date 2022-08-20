@@ -170,6 +170,7 @@
 		{"name":"_needAnswer","type":"uint128"},
 		{"name":"_count","type":"bool"},
 		{"name":"_countend","type":"bool"},
-		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"}
+		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"},
+		{"name":"_flag","type":"bool"}
 	]
 }

@@ -46,6 +46,7 @@ contract Commit is Modifiers {
     bool _continueDiff = false;
     uint128 _number;
     uint128 _approved;
+    bool _flag = false;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -82,8 +83,10 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function getMoney() private view{
+    function getMoney() private {
+        if (_flag == true) { return; }
         if (address(this).balance > 80 ton) { return; }
+        _flag = true;
         GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
     }
     
@@ -110,7 +113,7 @@ contract Commit is Modifiers {
         Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, fromcommit);
     }
     
-    function allCorrect(uint128 number) public view senderIs(_rootRepo){
+    function allCorrect(uint128 number) public senderIs(_rootRepo){
         tvm.accept();
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number);
         getMoney();
@@ -128,14 +131,14 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function cancelCommit(string namecommit, uint128 number) public view {
+    function cancelCommit(string namecommit, uint128 number) public {
         tvm.accept();
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
     
-    function _cancelAllDiff(uint128 index, uint128 number) public view senderIs(address(this)) {
+    function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         if (index >= number) { return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
@@ -176,12 +179,12 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2) public view senderIs(getDiffAddress(_nameCommit, index1, index2)){
+    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2) public senderIs(getDiffAddress(_nameCommit, index1, index2)){
         value0;
         getMoney();
     }
     
-    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path) public view senderIs(getSnapshotAddr(branch, path)){
+    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path) public senderIs(getSnapshotAddr(branch, path)){
         getMoney();
         tvm.accept();
         if (value1.hasValue()) { 
@@ -199,7 +202,7 @@ contract Commit is Modifiers {
     function _checkChain(uint256 pubkey,
         string branchName,
         address branchCommit,
-        address newC) public view senderIs(address(this)) {
+        address newC) public senderIs(address(this)) {
         if (branchCommit  == address(this)) {
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit, newC);
         }
@@ -266,7 +269,7 @@ contract Commit is Modifiers {
         }
     }
     
-    function NotCorrectRepo(uint128 number) public view senderIs(_rootRepo){
+    function NotCorrectRepo(uint128 number) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
         if (number != 0) { this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number); }
@@ -289,7 +292,7 @@ contract Commit is Modifiers {
         string nameCommit,
         string branchName,
         address branchCommit ,  
-        address newC) public view {
+        address newC) public {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(pubkey, branchName, branchCommit, newC);
@@ -329,6 +332,12 @@ contract Commit is Modifiers {
     }
     
     //Fallback/Receive
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
+    }
+    
     onBounce(TvmSlice body) external view {
         tvm.accept();
         body;

@@ -48,6 +48,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     TvmCell m_TokenWalletCode;
     address public _rootTokenRoot;
     address public _lastAccountAddress;
+    
+    bool _flag = false;
 
     constructor(
         address rootgosh, 
@@ -107,13 +109,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
     }
     
-    function getMoney() private view {
+    function getMoney() private {
+        if (_flag == true) { return; }
         if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
+        _flag = true;
         DaoCreator(_creator).sendMoneyDao{value : 0.2 ton}(_nameDao, 30000 ton);
     }
     
-    function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public view {
+    function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
         TvmCell s0 = _composeDiffStateInit(commit, repo, index1, index2);
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -128,7 +132,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return stateInit;
     }
     
-    function sendMoneyCommit(address repo, string commit) public view {
+    function sendMoneyCommit(address repo, string commit) public {
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -143,7 +147,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return stateInit;
     }
     
-    function sendMoneyTree(address repo, string shaTree) public view {
+    function sendMoneyTree(address repo, string shaTree) public {
         TvmCell s1 = _composeTreeStateInit(shaTree, repo);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -206,6 +210,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getAddrWalletIn(uint256 pubkey, uint128 index) private view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubkey, index);
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    //Fallback/Receive
+    receive() external {
+        if (msg.sender == _creator) {
+            _flag = false;
+        }
     }
 
     //Getters    

@@ -350,6 +350,7 @@
 		{"name":"_continueChain","type":"bool"},
 		{"name":"_continueDiff","type":"bool"},
 		{"name":"_number","type":"uint128"},
-		{"name":"_approved","type":"uint128"}
+		{"name":"_approved","type":"uint128"},
+		{"name":"_flag","type":"bool"}
 	]
 }

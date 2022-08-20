@@ -41,6 +41,7 @@ contract DiffC is Modifiers {
     address _newC;
     bool _last;
     bool _entry;
+    bool _flag = false;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -73,10 +74,10 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    //TODO ask sha from tree and compare
-    
-    function getMoney() private view{
+    function getMoney() private {
+        if (_flag == true) { return; }
         if (address(this).balance > 80 ton) { return; }
+        _flag = true;
         GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }
     
@@ -112,14 +113,14 @@ contract DiffC is Modifiers {
     }
     
     //Commit part
-    function allCorrect() public view {
+    function allCorrect() public {
         tvm.accept();
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
         this.applyDiff{value: 0.1 ton, flag: 1}(0);
         getMoney();
     }
     
-    function cancelCommit() public view {
+    function cancelCommit() public {
         tvm.accept();
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
         this.cancelDiff{value: 0.1 ton, flag: 1}(0);
@@ -159,7 +160,7 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function sendDiff(uint128 index, address branchcommit) public view senderIs(address(this)) {
+    function sendDiff(uint128 index, address branchcommit) public senderIs(address(this)) {
         tvm.accept();
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
@@ -173,7 +174,7 @@ contract DiffC is Modifiers {
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
-    function approveDiff(bool res, string commit, uint256 sha) public view {
+    function approveDiff(bool res, string commit, uint256 sha) public {
         tvm.accept();
         sha;
         commit;
@@ -273,6 +274,12 @@ contract DiffC is Modifiers {
     }
     
     //Fallback/Receive
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
+    }
+    
     onBounce(TvmSlice body) external pure {
         body;
         this.checkSender{value: 0.1 ton, flag: 1}(0, msg.sender);
