@@ -23,49 +23,6 @@ pub struct IpfsService {
     pub cli: Client,
 }
 
-fn default_retry_strategy() -> ExponentialBackoff {
-    ExponentialBackoff::from_millis(100)
-        .factor(3)
-        .max_delay(MAX_RETRY_DURATION)
-}
-
-async fn save_file_retriable(cli: &Client, url: &str, path: impl AsRef<Path>) -> Result<String> {
-    // in case of file upload usually you want to store metadata, but:
-    // 1) reqwest async has no support for file
-    // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
-    let file = File::open(path).await?;
-    let body = reqwest::Body::from(file);
-    save_body(cli, url, body).await
-}
-
-async fn save_blob_retriable(cli: &Client, url: &str, blob: &[u8]) -> Result<String> {
-    // TODO: to_owned is not really necessary since reqwest doesn't modify body
-    // so may be there's more clever way to not to copy blob
-    save_body(cli, url, blob.to_owned()).await
-}
-
-async fn save_body<U, B>(cli: &Client, url: U, body: B) -> Result<String>
-where
-    U: reqwest::IntoUrl,
-    B: Into<reqwest::Body>,
-{
-    let part = multipart::Part::stream(body);
-    let form = multipart::Form::new().part("file", part);
-    let response = cli.post(url).multipart(form).send().await?;
-    let response_body = response.json::<SaveRes>().await?;
-    Ok(response_body.hash)
-}
-
-async fn load_retriable(cli: &Client, url: &str) -> Result<Vec<u8>> {
-    log::info!("loading from: {}", url);
-    let response = cli.get(url).send().await;
-    log::info!("response obj: {:?}", response);
-    let response = response?;
-    log::info!("Got response: {:?}", response);
-    let response_body = response.bytes().await?;
-    Ok(Vec::from(&response_body[..]))
-}
-
 impl IpfsService {
     /// Creates a new [`IpfsService`].
     /// # Panics
@@ -102,6 +59,36 @@ impl IpfsService {
         })
     }
 
+    fn retry_strategy(&self) -> impl Iterator<Item = Duration> {
+        // TODO: parametrize the retry strategy via builder and take from self
+        ExponentialBackoff::from_millis(100)
+            .factor(3)
+            .max_delay(MAX_RETRY_DURATION)
+            .map(|d| {
+                log::info!("Retry in {d:?} ...");
+                d
+            })
+            .take(MAX_RETRIES)
+    }
+
+    async fn save_body<U, B>(cli: &Client, url: U, body: B) -> Result<String>
+    where
+        U: reqwest::IntoUrl,
+        B: Into<reqwest::Body>,
+    {
+        let part = multipart::Part::stream(body);
+        let form = multipart::Form::new().part("file", part);
+        let response = cli.post(url).multipart(form).send().await?;
+        let response_body = response.json::<SaveRes>().await?;
+        Ok(response_body.hash)
+    }
+
+    async fn save_blob_retriable(cli: &Client, url: &str, blob: &[u8]) -> Result<String> {
+        // TODO: to_owned is not really necessary since reqwest doesn't modify body
+        // so may be there's more clever way to not to copy blob
+        IpfsService::save_body(cli, url, blob.to_owned()).await
+    }
+
     #[instrument(level = "debug")]
     pub async fn save_blob(&self, blob: &[u8]) -> Result<String> {
         log::debug!("Uploading blob to IPFS");
@@ -111,17 +98,23 @@ impl IpfsService {
             self.ipfs_endpoint_address,
         );
 
-        let retry_strategy = default_retry_strategy()
-            .map(|d| {
-                log::info!("Retry in {d:?} ...");
-                d
-            })
-            .take(MAX_RETRIES);
-
-        Retry::spawn(retry_strategy, || {
-            save_blob_retriable(&self.cli, &url, &blob)
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_blob_retriable(&self.cli, &url, &blob)
         })
         .await
+    }
+
+    async fn save_file_retriable(
+        cli: &Client,
+        url: &str,
+        path: impl AsRef<Path>,
+    ) -> Result<String> {
+        // in case of file upload usually you want to store metadata, but:
+        // 1) reqwest async has no support for file
+        // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
+        let file = File::open(path).await?;
+        let body = reqwest::Body::from(file);
+        IpfsService::save_body(cli, url, body).await
     }
 
     #[instrument(level = "debug")]
@@ -130,8 +123,8 @@ impl IpfsService {
         T: AsRef<Path> + std::fmt::Debug,
     {
         log::debug!(
-            "Uploading file by path to IPFS: {}",
-            path.as_ref().to_string_lossy().clone()
+            "Uploading file to IPFS: {}",
+            path.as_ref().to_string_lossy()
         );
 
         let url = format!(
@@ -139,30 +132,30 @@ impl IpfsService {
             self.ipfs_endpoint_address
         );
 
-        let retry_strategy = default_retry_strategy()
-            .map(|d| {
-                log::info!("Retry in {d:?} ...");
-                d
-            })
-            .take(MAX_RETRIES);
-
-        Retry::spawn(retry_strategy, || {
-            save_file_retriable(&self.cli, &url, &path)
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_file_retriable(&self.cli, &url, &path)
         })
         .await
+    }
+
+    async fn load_retriable(cli: &Client, url: &str) -> Result<Vec<u8>> {
+        log::info!("loading from: {}", url);
+        let response = cli.get(url).send().await;
+        log::info!("response obj: {:?}", response);
+        let response = response?;
+        log::info!("Got response: {:?}", response);
+        let response_body = response.bytes().await?;
+        Ok(Vec::from(&response_body[..]))
     }
 
     #[instrument(level = "debug")]
     pub async fn load(&self, cid: &str) -> Result<Vec<u8>> {
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
-        let retry_strategy = default_retry_strategy()
-            .map(|d| {
-                log::info!("Retry in {d:?} ...");
-                d
-            })
-            .take(MAX_RETRIES);
 
-        Retry::spawn(retry_strategy, || load_retriable(&self.cli, &url)).await
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::load_retriable(&self.cli, &url)
+        })
+        .await
     }
 }
 
