@@ -56,9 +56,6 @@ impl GitHelper {
         )
         .await
     }
-    pub fn new_ipfs_client(&self) -> Result<IpfsService, Box<dyn Error>> {
-         Ok(IpfsService::build(self.config.ipfs_http_endpoint())?)
-    }
 
     pub fn new_es_client(&self) -> Result<TonClient, Box<dyn Error>> {
         Ok(create_client(&self.config, &self.remote.network)?)
@@ -142,6 +139,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
             if is_batching_operation_in_progress {
                 is_batching_operation_in_progress = false;
                 stdout.write_all("\n".as_bytes()).await?;     
+                continue;
             } else {
                 return Ok(());
             }

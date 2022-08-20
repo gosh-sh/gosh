@@ -10,6 +10,9 @@ use git_hash;
 use reqwest::multipart;
 use snapshot::Snapshot;
 
+
+const PUSH_DIFF_MAX_TRIES: i32 = 3;
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Deserialize, Debug)]
@@ -164,7 +167,7 @@ pub async fn push_diff(
     let original_snapshot_content = original_snapshot_content.clone();
     let diff = diff.clone();
     let new_snapshot_content = new_snapshot_content.clone();
-    let ipfs_service = context.new_ipfs_client()?;
+    let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
     let es_client = context.es_client.clone();
     let repo_name = context.remote.repo.clone();
     let commit_id = commit_id.clone(); 
@@ -181,7 +184,7 @@ pub async fn push_diff(
                 repo_name.clone(),
                 snapshot_addr.clone(),
                 wallet.clone(),
-                ipfs_service.clone(),
+                &ipfs_endpoint,
                 es_client.clone(),
                 &commit_id,
                 &branch_name,
@@ -194,10 +197,10 @@ pub async fn push_diff(
                 &diff,
                 &new_snapshot_content
             ).await;
-            if result.is_ok() || attempt > 3 {
+            if result.is_ok() || attempt > PUSH_DIFF_MAX_TRIES {
                 break result;
             } else {
-                log::debug!("inner_push_diff error: {}", result.unwrap_err().to_string());
+                log::debug!("inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}", diff_coordinate, result.unwrap_err());
                 std::thread::sleep(std::time::Duration::from_secs(5)); 
             }
         };
@@ -209,7 +212,7 @@ pub async fn inner_push_diff(
     repo_name: String,
     snapshot_addr: String,
     wallet: GoshContract, 
-    ipfs_client: IpfsService,
+    ipfs_endpoint: &str,
     es_client: TonClient,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
@@ -225,6 +228,7 @@ pub async fn inner_push_diff(
     let diff = ton_client::utils::compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
+    let ipfs_client = IpfsService::new(ipfs_endpoint);
     let (patch, ipfs) = {
         let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
@@ -249,7 +253,16 @@ pub async fn inner_push_diff(
             }
         }
         if is_going_to_ipfs {
-            let ipfs = Some(save_data_to_ipfs(&ipfs_client, &diff).await?);
+            log::debug!("inner_push_diff->save_data_to_ipfs");
+            let content: Vec<u8> = ton_client::utils::compress_zstd(new_snapshot_content, None)?;
+            let ipfs = Some(
+                save_data_to_ipfs(&ipfs_client, &content)
+                .await
+                .map_err(|e|{
+                    log::debug!("save_data_to_ipfs error: {}", e);
+                    e
+                })?
+            );
             (None, ipfs)
         } else {
             (Some(hex::encode(diff)), None)
@@ -275,7 +288,11 @@ pub async fn inner_push_diff(
         sha256: content_sha256,
     };
 
-    log::trace!("push_diff: {:?}", diff);
+    if diff.ipfs.is_some() {
+        log::debug!("push_diff: {:?}", diff);
+    } else {
+        log::trace!("push_diff: {:?}", diff);
+    }
     let diffs: Vec<Diff> = vec![diff];
 
     let args = DeployDiffParams {
@@ -307,7 +324,15 @@ pub async fn push_new_branch_snapshot(
     log::debug!("compressed to {} size", content.len());
 
     let (content, ipfs) = if content.len() > 15000 {
-        let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &content).await?);
+        log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
+        let ipfs = Some(
+            save_data_to_ipfs(&&context.ipfs_client, &content)
+            .await
+            .map_err(|e|{
+                log::debug!("save_data_to_ipfs error: {}", e);
+                e
+            })?
+        );
         ("".to_string(), ipfs)
     } else {
         let content: String = content.iter().map(|e| format!("{:x?}", e)).collect();

@@ -97,6 +97,7 @@ impl ParallelDiffsUploadSupport {
                 &self.last_commit_id,
                 &diff_coordinates
             ).await?;
+            log::debug!("diff_contract_address <commit: {}, coord: {:?}>: {}", self.last_commit_id, diff_coordinates, diff_contract_address);
             self.expecting_deployed_contacts_addresses.push(diff_contract_address);
         } 
         Ok(())

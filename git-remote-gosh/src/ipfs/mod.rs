@@ -13,7 +13,7 @@ struct SaveRes {
     hash: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IpfsService {
     pub ipfs_endpoint_address: String,
     pub cli: reqwest_middleware::ClientWithMiddleware,
@@ -28,7 +28,7 @@ impl IpfsService {
     ///
     /// Use [`IpfsService::build()`] if you wish to handle the failure as an `Error`
     /// instead of panicking.
-    fn new(ipfs_endpoint_address: &str) -> Self {
+    pub fn new(ipfs_endpoint_address: &str) -> Self {
         Self {
             ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
             cli: reqwest_middleware::ClientWithMiddleware::new(reqwest::Client::new(), Vec::new()),
