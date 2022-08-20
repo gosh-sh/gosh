@@ -457,7 +457,7 @@ export class GoshWallet implements IGoshWallet {
                 }
 
                 const hashes = {
-                    sha1: sha1(modified, 'blob', 'sha1'),
+                    sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
                     sha256: ipfs
                         ? sha256(modified, true)
                         : await goshRoot.getTvmHash(modified),
