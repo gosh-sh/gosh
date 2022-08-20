@@ -281,7 +281,7 @@ export const getRepoTree = async (
 
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i]
-            const treeAddr = await goshRoot.getTreeAddr(repo.address, tree.sha1)
+            const treeAddr = await repo.getTreeAddr(tree.sha1)
             const treeBlob = new GoshTree(goshClient, treeAddr)
 
             const treeItems = (await treeBlob.getTree()).tree

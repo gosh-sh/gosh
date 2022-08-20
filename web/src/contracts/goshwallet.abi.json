@@ -365,16 +365,6 @@
 			]
 		},
 		{
-			"name": "getTreeAddr",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"treeName","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "getSnapshotCode",
 			"inputs": [
 				{"name":"branch","type":"string"},

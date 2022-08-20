@@ -154,14 +154,6 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            repo: repoAddr,
-            treeName,
-        })
-        return result.decoded?.output.value0
-    }
-
     async getSmvPlatformCode(): Promise<string> {
         const result = await this.account.runLocal('getSMVPlatformCode', {})
         return result.decoded?.output.value0
@@ -506,10 +498,7 @@ export class GoshWallet implements IGoshWallet {
         const updatedTree = getTreeFromItems(items)
         calculateSubtrees(updatedTree)
         const updatedTreeRootSha = sha1Tree(updatedTree[''], 'sha1')
-        const updatedTreeRootAddr = await this.getTreeAddr(
-            repo.address,
-            updatedTreeRootSha,
-        )
+        const updatedTreeRootAddr = await repo.getTreeAddr(updatedTreeRootSha)
         !!callback && callback({ diffsPrepare: true, treePrepare: true })
         console.debug('Updated tree', updatedTree)
 
@@ -893,7 +882,7 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Check if not deployed
-        const addr = await this.getTreeAddr(repo.address, sha)
+        const addr = await repo.getTreeAddr(sha)
         console.debug('Tree addr', addr)
         const blob = new GoshTree(this.account.client, addr)
         const blobAcc = await blob.account.getAccount()
@@ -1082,15 +1071,6 @@ export class GoshWallet implements IGoshWallet {
             repoName,
             branchName,
         })
-    }
-
-    async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            commit: '',
-            repo: repoAddr,
-            treeName,
-        })
-        return result.decoded?.output.value0
     }
 
     async getDiffAddr(
@@ -1380,6 +1360,13 @@ export class GoshRepository implements IGoshRepository {
         const result = await this.account.runLocal('getSnapshotAddr', {
             branch,
             name: filename,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getTreeAddr(treeName: string): Promise<string> {
+        const result = await this.account.runLocal('getTreeAddr', {
+            treeName,
         })
         return result.decoded?.output.value0
     }
