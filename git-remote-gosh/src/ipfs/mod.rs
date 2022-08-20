@@ -1,11 +1,15 @@
 use reqwest::multipart;
-use reqwest_middleware;
-use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
-
+use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
 use std::{error::Error, path::Path, time::Duration};
+use tokio::fs::File;
+use tokio_retry::{strategy::ExponentialBackoff, Retry};
 
-use tokio::{fs::File, io::AsyncReadExt};
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
+type Client = reqwest_middleware::ClientWithMiddleware;
+
+static MAX_RETRIES: usize = 20;
+static MAX_RETRY_DURATION: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Deserialize)]
 struct SaveRes {
@@ -16,7 +20,7 @@ struct SaveRes {
 #[derive(Debug)]
 pub struct IpfsService {
     pub ipfs_endpoint_address: String,
-    pub cli: reqwest_middleware::ClientWithMiddleware,
+    pub cli: Client,
 }
 
 impl IpfsService {
@@ -31,58 +35,127 @@ impl IpfsService {
     pub fn new(ipfs_endpoint_address: &str) -> Self {
         Self {
             ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            cli: reqwest_middleware::ClientWithMiddleware::new(reqwest::Client::new(), Vec::new()),
+            cli: reqwest_middleware::ClientBuilder::new(reqwest::Client::new()).build(),
         }
     }
 
     ///
-    pub(crate) fn build(ipfs_endpoint_address: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn build(ipfs_endpoint_address: &str) -> Result<Self> {
+        let client = reqwest::Client::builder().build()?;
+
         Ok(Self {
             ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            cli: reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
-                .with(RetryTransientMiddleware::new_with_policy(
-                    ExponentialBackoff::builder()
-                        .retry_bounds(Duration::from_secs(1), Duration::from_secs(60))
-                        .build_with_max_retries(10),
-                ))
+            // WARNING:
+            // reqwest_retry doesn't work with streaming data
+            cli: reqwest_middleware::ClientBuilder::new(client)
+                // Trace HTTP requests. See the tracing crate to make use of these traces.
+                .with(TracingMiddleware::default())
+                // .with(RetryTransientMiddleware::new_with_policy(
+                //     ExponentialBackoff::builder()
+                //         .retry_bounds(Duration::from_secs(1), Duration::from_secs(60))
+                //         .build_with_max_retries(10),
+                // ))
                 .build(),
         })
     }
 
-    pub(crate) async fn save<T>(&self, filename: T) -> Result<String, Box<dyn Error>>
+    fn retry_strategy(&self) -> impl Iterator<Item = Duration> {
+        // TODO: parametrize the retry strategy via builder and take from self
+        ExponentialBackoff::from_millis(100)
+            .factor(3)
+            .max_delay(MAX_RETRY_DURATION)
+            .map(|d| {
+                log::info!("Retry in {d:?} ...");
+                d
+            })
+            .take(MAX_RETRIES)
+    }
+
+    async fn save_body<U, B>(cli: &Client, url: U, body: B) -> Result<String>
+    where
+        U: reqwest::IntoUrl,
+        B: Into<reqwest::Body>,
+    {
+        let part = multipart::Part::stream(body);
+        let form = multipart::Form::new().part("file", part);
+        let response = cli.post(url).multipart(form).send().await?;
+        let response_body = response.json::<SaveRes>().await?;
+        Ok(response_body.hash)
+    }
+
+    async fn save_blob_retriable(cli: &Client, url: &str, blob: &[u8]) -> Result<String> {
+        // TODO: to_owned is not really necessary since reqwest doesn't modify body
+        // so may be there's more clever way to not to copy blob
+        IpfsService::save_body(cli, url, blob.to_owned()).await
+    }
+
+    #[instrument(level = "debug")]
+    pub async fn save_blob(&self, blob: &[u8]) -> Result<String> {
+        log::debug!("Uploading blob to IPFS");
+
+        let url = format!(
+            "{}/api/v0/add?pin=true&quiet=true",
+            self.ipfs_endpoint_address,
+        );
+
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_blob_retriable(&self.cli, &url, &blob)
+        })
+        .await
+    }
+
+    async fn save_file_retriable(
+        cli: &Client,
+        url: &str,
+        path: impl AsRef<Path>,
+    ) -> Result<String> {
+        // in case of file upload usually you want to store metadata, but:
+        // 1) reqwest async has no support for file
+        // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
+        let file = File::open(path).await?;
+        let body = reqwest::Body::from(file);
+        IpfsService::save_body(cli, url, body).await
+    }
+
+    #[instrument(level = "debug")]
+    pub async fn save_file<T>(&self, path: T) -> Result<String>
     where
         T: AsRef<Path> + std::fmt::Debug,
     {
-        log::debug!("Uploading {filename:?}");
+        log::debug!(
+            "Uploading file to IPFS: {}",
+            path.as_ref().to_string_lossy()
+        );
 
         let url = format!(
             "{}/api/v0/add?pin=true&quiet=true",
             self.ipfs_endpoint_address
         );
 
-        let mut file = File::open(filename).await?;
-
-        // TODO: rewrite with stream api
-        let mut contents = vec![];
-        file.read_to_end(&mut contents).await?;
-        let part = multipart::Part::bytes(contents);
-
-        let form = multipart::Form::new().part("file", part);
-
-        let response = self.cli.post(&url).multipart(form).send().await?;
-        let response_body = response.json::<SaveRes>().await?;
-        Ok(response_body.hash)
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_file_retriable(&self.cli, &url, &path)
+        })
+        .await
     }
 
-    pub(crate) async fn load(&self, cid: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-        let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
+    async fn load_retriable(cli: &Client, url: &str) -> Result<Vec<u8>> {
         log::info!("loading from: {}", url);
-        let response = self.cli.get(url).send().await;
+        let response = cli.get(url).send().await;
         log::info!("response obj: {:?}", response);
         let response = response?;
         log::info!("Got response: {:?}", response);
         let response_body = response.bytes().await?;
         Ok(Vec::from(&response_body[..]))
+    }
+
+    #[instrument(level = "debug")]
+    pub async fn load(&self, cid: &str) -> Result<Vec<u8>> {
+        let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
+
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::load_retriable(&self.cli, &url)
+        })
+        .await
     }
 }
 
@@ -99,30 +172,53 @@ mod tests {
         let s = r#"{"Hash": "1"}"#;
         assert!(serde_json::from_str::<SaveRes>(s).is_ok());
     }
-    #[tokio::test]
-    async fn save_test() {
+
+    #[test_log::test(tokio::test)]
+    async fn save_blob_test() {
+        let blob = "fӅoAٲ";
+        let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
+            .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
+        let cid = ipfs
+            .save_blob(blob.as_bytes())
+            .await
+            .unwrap_or_else(|e| panic!("Can't upload to ipfs: {e}"));
+
+        eprintln!("CID = {cid}");
+        let data = ipfs
+            .load(&cid)
+            .await
+            .unwrap_or_else(|e| panic!("Failed to load from ipfs: {e}"));
+
+        assert_eq!(data, blob.as_bytes());
+    }
+
+    #[test_log::test(tokio::test)]
+    async fn save_file() {
         let mut path = env::temp_dir();
         path.push("test");
 
-        let mut res = OpenOptions::new()
+        OpenOptions::new()
             .create(true)
             .write(true)
             .open(&path)
             .await
-            .is_ok();
+            .unwrap_or_else(|e| panic!("Can't prepare test file: {e}"));
 
-        res &= if let Ok(ipfs) = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS) {
-            if let Ok(cid) = ipfs.save(&path).await {
-                eprintln!("CID = {cid}");
-                ipfs.load(&cid).await.is_ok()
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+        let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
+            .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
+        let cid = ipfs
+            .save_file(&path)
+            .await
+            .unwrap_or_else(|e| panic!("Can't upload to ipfs: {e}"));
+
+        eprintln!("CID = {cid}");
+        let data = ipfs
+            .load(&cid)
+            .await
+            .unwrap_or_else(|e| panic!("Failed to load from ipfs: {e}"));
+
+        assert!(data.len() == 0);
 
         assert!(remove_file(&path).await.is_ok());
-        assert!(res);
     }
 }

@@ -10,7 +10,6 @@ use git_hash;
 use reqwest::multipart;
 use snapshot::Snapshot;
 
-
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -95,17 +94,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
     let content = base64::encode(content);
     let content = content.as_bytes().to_vec();
 
-    let url = format!(
-        "{}/api/v0/add?pin=true&quiet=true",
-        ipfs_client.ipfs_endpoint_address,
-    );
-
-    let part = multipart::Part::bytes(content);
-    let form = multipart::Form::new().part("file", part);
-
-    let response = ipfs_client.cli.post(&url).multipart(form).send().await?;
-    let response_body = response.json::<SaveRes>().await?;
-    Ok(response_body.hash)
+    ipfs_client.save_blob(&content).await
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -165,7 +154,8 @@ pub async fn push_diff(
         &context.repo_addr,
         branch_name,
         file_path,
-    )).await?;
+    ))
+    .await?;
 
     let original_snapshot_content = original_snapshot_content.clone();
     let diff = diff.clone();
@@ -173,7 +163,7 @@ pub async fn push_diff(
     let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
     let es_client = context.es_client.clone();
     let repo_name = context.remote.repo.clone();
-    let commit_id = commit_id.clone(); 
+    let commit_id = commit_id.clone();
     let branch_name = branch_name.to_owned();
     let blob_id = blob_id.clone();
     let file_path = file_path.to_owned();
@@ -198,23 +188,24 @@ pub async fn push_diff(
                 is_last,
                 &original_snapshot_content,
                 &diff,
-                &new_snapshot_content
-            ).await;
+                &new_snapshot_content,
+            )
+            .await;
             if result.is_ok() || attempt > PUSH_DIFF_MAX_TRIES {
                 break result;
             } else {
                 log::debug!("inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}", diff_coordinate, result.unwrap_err());
-                std::thread::sleep(std::time::Duration::from_secs(5)); 
+                std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };
         result.map_err(|e| e.description().to_string())
     }));
 }
- 
+
 pub async fn inner_push_diff(
     repo_name: String,
     snapshot_addr: String,
-    wallet: GoshContract, 
+    wallet: GoshContract,
     ipfs_endpoint: &str,
     es_client: TonClient,
     commit_id: &git_hash::ObjectId,
@@ -259,11 +250,11 @@ pub async fn inner_push_diff(
             log::debug!("inner_push_diff->save_data_to_ipfs");
             let ipfs = Some(
                 save_data_to_ipfs(&ipfs_client, &new_snapshot_content)
-                .await
-                .map_err(|e|{
-                    log::debug!("save_data_to_ipfs error: {}", e);
-                    e
-                })?
+                    .await
+                    .map_err(|e| {
+                        log::debug!("save_data_to_ipfs error: {}", e);
+                        e
+                    })?,
             );
             (None, ipfs)
         } else {
@@ -274,10 +265,7 @@ pub async fn inner_push_diff(
         if ipfs.is_some() {
             format!("0x{}", sha256::digest_bytes(new_snapshot_content))
         } else {
-            format!(
-                "0x{}",
-                tvm_hash(&es_client, new_snapshot_content).await?
-            )
+            format!("0x{}", tvm_hash(&es_client, new_snapshot_content).await?)
         }
     };
 
@@ -329,11 +317,11 @@ pub async fn push_new_branch_snapshot(
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&&context.ipfs_client, &original_content)
-            .await
-            .map_err(|e|{
-                log::debug!("save_data_to_ipfs error: {}", e);
-                e
-            })?
+                .await
+                .map_err(|e| {
+                    log::debug!("save_data_to_ipfs error: {}", e);
+                    e
+                })?,
         );
         ("".to_string(), ipfs)
     } else {
