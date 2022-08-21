@@ -21,7 +21,9 @@ async fn load_data_from_ipfs(
     ipfs_address: &str,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let ipfs_data = ipfs_client.load(&ipfs_address).await?;
-    let data = base64::decode(ipfs_data)?;
+    let compressed_data = base64::decode(ipfs_data)?;
+    let data = ton_client::utils::decompress_zstd(&compressed_data)?;
+    
     return Ok(data);
 }
 

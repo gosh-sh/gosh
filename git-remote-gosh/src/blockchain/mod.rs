@@ -22,7 +22,7 @@ use ton_client::{
     ClientConfig, ClientContext,
 };
 
-mod commit;
+pub mod commit;
 mod serde_number;
 pub mod snapshot;
 pub mod tree;
@@ -380,7 +380,7 @@ async fn run_static(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    eprintln!("cb: {:#?}", pe);
+    log::debug!("cb: {:#?}", pe);
 }
 
 #[instrument(level = "debug", skip(context))]
