@@ -24,7 +24,7 @@ pub struct DiffMessage {
 #[derive(Debug)]
 enum NextChunk {
     MessagesPage(String, Option<String>),
-    JumpToAnotherBranchSnapshot(String, String)
+    JumpToAnotherBranchSnapshot(String, u64)
 }
 
 #[derive(Debug)]
@@ -86,7 +86,7 @@ impl DiffMessagesIterator {
         return Ok(self.try_take_next_item());
     }
 
-    async fn into_next_page(client: &TonClient, current_snapshot_address: &str, repository_address: &str, next_page_info: Option<String>) -> Result<Option<NextChunk>, Box<dyn Error>> {
+    async fn into_next_page(client: &TonClient, current_snapshot_address: &str, repository_contract_address: &str, next_page_info: Option<String>) -> Result<Option<NextChunk>, Box<dyn Error>> {
         let address = current_snapshot_address;
         return Ok(match next_page_info {
             Some(next_page_info) => Some(
@@ -99,7 +99,11 @@ impl DiffMessagesIterator {
                 // find last commit
                 let Snapshot { original_commit, .. } = Snapshot::load(client, &address).await?;
                 let file_path = Snapshot::get_file_path(client, &address).await?;
-                let commit_addr = get_commit_address(client, repository_address, &original_commit).await?;
+                let commit_addr = get_commit_address(
+                    client, 
+                    repository_contract_address, 
+                    &original_commit
+                ).await?;
                 let commit_data = get_commit_by_addr(client, &commit_addr)
                     .await?
                     .expect("commit data should be here");
@@ -107,13 +111,19 @@ impl DiffMessagesIterator {
                 // find what is it pointing to
                 let original_snapshot = Snapshot::calculate_address(
                     client,
-                    repository_address,
+                    repository_contract_address,
                     &original_branch,
                     &file_path
                 ).await?;
                 log::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
                 // generate filter
-                Some(NextChunk::JumpToAnotherBranchSnapshot(original_snapshot, original_commit))
+                let created_at:u64 = crate::blockchain::commit::get_set_commit_created_at_time(
+                    client, 
+                    repository_contract_address, 
+                    &original_commit, 
+                    &original_branch
+                ).await?;
+                Some(NextChunk::JumpToAnotherBranchSnapshot(original_snapshot, created_at))
             }
         });
     } 
@@ -123,8 +133,8 @@ impl DiffMessagesIterator {
         log::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
-            Some(NextChunk::JumpToAnotherBranchSnapshot(snapshot_address, ignore_commits_after)) => {
-                log::info!("Jumping to another branch: {} - commit {}", snapshot_address, ignore_commits_after);
+            Some(NextChunk::JumpToAnotherBranchSnapshot(snapshot_address, ignore_commits_created_after)) => {
+                log::info!("Jumping to another branch: {} - commit {}", snapshot_address, ignore_commits_created_after);
                 let address = snapshot_address;
                 // Now we will be loading page by page till 
                 // we find a message with the expected commit
@@ -137,8 +147,9 @@ impl DiffMessagesIterator {
                     let (buffer, possible_next_page_info, stop_on) = load_messages_to(client, &address, &cursor, None).await?;
                     log::info!("messages: {:?}", buffer);
                     for i in 0..buffer.len() {
-                        if &buffer[i].diff.commit == ignore_commits_after {
+                        if &buffer[i].created_at <= ignore_commits_created_after {
                             index = Some(i);
+                            break;
                         }
                     }
                     self.buffer = buffer;

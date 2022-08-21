@@ -21,7 +21,7 @@ use ton_client::{
     ClientConfig, ClientContext,
 };
 
-mod commit;
+pub mod commit;
 mod serde_number;
 pub mod snapshot;
 pub mod tree;
