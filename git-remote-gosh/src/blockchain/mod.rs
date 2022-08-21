@@ -504,12 +504,11 @@ pub async fn remote_rev_parse(
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
     context: &TonClient,
-    repository_address: &str,
+    repo_contract: &mut GoshContract,
     sha: &str,
 ) -> Result<String> {
-    let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let result: GetCommitAddrResult = contract
-        .run_local(
+    let result: GetCommitAddrResult = repo_contract
+        .run_static(
             context,
             "getCommitAddr",
             gosh_abi::get_commit_addr_args(sha),

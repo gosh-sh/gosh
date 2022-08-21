@@ -60,7 +60,6 @@ impl GitHelper {
     ) -> Result<String, Box<dyn Error>> {
         Tree::calculate_address(
             &self.es_client,
-            self.remote.gosh.as_str(),
             self.repo_addr.as_str(),
             &tree_id.to_string(),
         )

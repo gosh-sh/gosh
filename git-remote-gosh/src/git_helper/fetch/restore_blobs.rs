@@ -191,7 +191,7 @@ impl BlobsRebuildingPlan {
             let mut messages =
                 blockchain::snapshot::diffs::DiffMessagesIterator::new(
                     snapshot_address,
-                    git_helper.repo_addr.clone()
+                    &mut git_helper.repo_contract
                 );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);

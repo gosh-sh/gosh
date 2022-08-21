@@ -48,13 +48,13 @@ pub async fn get_user_wallet(client: &TonClient, dao_address: &str, pubkey: &str
 }
 
 lazy_static! {
-    static ref _user_wallet: std::sync::RwLock<Option<GoshContract>> = std::sync::RwLock::new(None);
+    static ref _USER_WALLET: std::sync::RwLock<Option<GoshContract>> = std::sync::RwLock::new(None);
 }
 
 #[instrument(level = "debug", skip(context))]
 pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
-    if _user_wallet.read().unwrap().is_none() {
-        let mut user_wallet = _user_wallet.write().unwrap();
+    if _USER_WALLET.read().unwrap().is_none() {
+        let mut user_wallet = _USER_WALLET.write().unwrap();
         if user_wallet.is_none() {
             let config = user_wallet_config(context);
             if config.is_none() {
@@ -70,7 +70,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         }
     };
 
-    Ok(_user_wallet.read().unwrap().as_ref().unwrap().clone())
+    Ok(_USER_WALLET.read().unwrap().as_ref().unwrap().clone())
 }
 
 fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
