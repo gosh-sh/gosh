@@ -25,6 +25,7 @@ contract Repository is Modifiers{
     TvmCell m_WalletCode;
     TvmCell m_codeTag;
     TvmCell m_codeTree;
+    TvmCell m_codeDiff;
     address _rootGosh;
     string static _name;
     address _goshdao;
@@ -43,6 +44,7 @@ contract Repository is Modifiers{
         TvmCell codeTag,
         TvmCell SnapshotCode,
         TvmCell codeTree,
+        TvmCell codeDiff,
         uint128 index
         ) public {
         require(_name != "", ERR_NO_DATA);
@@ -57,6 +59,7 @@ contract Repository is Modifiers{
         m_codeTag = codeTag;
         m_codeTree = codeTree;
         m_SnapshotCode = SnapshotCode;
+        m_codeDiff = codeDiff;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
         _head = "main";
@@ -185,6 +188,12 @@ contract Repository is Modifiers{
         return stateInit;
     }
 
+    function _composeDiffStateInit(string _commit, address repo, uint128 index1, uint128 index2) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, repo, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _commit, _index1: index1, _index2: index2}});
+        return stateInit;
+    }
+    
     //Getters
         
     function isBranchProtected(string branch) external view returns(bool) {
@@ -227,6 +236,11 @@ contract Repository is Modifiers{
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, address(this), branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
+    
+    function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {
+        TvmCell s1 = _composeDiffStateInit(commitName, address(this), index1, index2);
+        return  address(tvm.hash(s1));
     }
 
     function getCommitCode() external view returns(TvmCell) {

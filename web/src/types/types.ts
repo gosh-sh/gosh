@@ -24,8 +24,8 @@ export type TGoshDaoDetails = {
 
 export type TGoshDaoWalletConfig = {
     wallets: number
-    time: number
-    messages: number
+    // time: number
+    // messages: number
 }
 
 export type TGoshWalletDetails = {
@@ -318,6 +318,9 @@ export interface IGoshWallet extends IContract {
     getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
     getConfig(): Promise<TGoshDaoWalletConfig>
     updateConfig(): Promise<void>
+    getWalletCount(): Promise<number>
+    deployWallet(): Promise<void>
+    destroyWallet(): Promise<void>
 }
 
 export interface IGoshRepository extends IContract {
@@ -345,6 +348,7 @@ export interface IGoshRepository extends IContract {
     getSnapshotCode(branch: string): Promise<string>
     getSnapshotAddr(branch: string, filename: string): Promise<string>
     getTreeAddr(treeName: string): Promise<string>
+    getDiffAddr(commitName: string, index1: number, index2: number): Promise<string>
     isBranchProtected(branch: string): Promise<boolean>
 }
 

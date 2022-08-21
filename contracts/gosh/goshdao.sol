@@ -21,7 +21,7 @@ import "../smv/TokenRootOwner.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.5.3";
     
-    uint128 _limit_wallets = 5;
+    uint128 _limit_wallets = 10;
     uint128 _limit_time = 100;
     uint128 _limit_messages = 10;
     
@@ -205,11 +205,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     //Setters
-    function setConfig(uint128 limit_wallets, uint128 limit_time, uint128 limit_messages) public onlyOwnerPubkey(_rootpubkey) {
+    function setConfig(uint128 limit_wallets /*, uint128 limit_time, uint128 limit_messages */) public onlyOwnerPubkey(_rootpubkey) {
         tvm.accept();    
         _limit_wallets = limit_wallets;
-        _limit_time = limit_time;
-        _limit_messages = limit_messages;
+//        _limit_time = limit_time;
+//        _limit_messages = limit_messages;
         getMoney();
     }
     
@@ -256,8 +256,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _nameDao;
     }
     
-    function getConfig() external view returns(uint128, uint128, uint128) {
-        return (_limit_wallets, _limit_time, _limit_messages);
+    function getConfig() external view returns(uint128/*, uint128, uint128*/) {
+        return (_limit_wallets/*, _limit_time, _limit_messages*/);
     }
     
     function getRootPubkey() external view returns(uint256) {

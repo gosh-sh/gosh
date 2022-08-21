@@ -16,6 +16,7 @@
 				{"name":"codeTag","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"codeTree","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -196,6 +197,17 @@
 			]
 		},
 		{
+			"name": "getDiffAddr",
+			"inputs": [
+				{"name":"commitName","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getCommitCode",
 			"inputs": [
 			],
@@ -276,6 +288,7 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
 		{"name":"m_codeTree","type":"cell"},
+		{"name":"m_codeDiff","type":"cell"},
 		{"name":"_rootGosh","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
