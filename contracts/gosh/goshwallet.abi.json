@@ -47,6 +47,13 @@
 			]
 		},
 		{
+			"name": "_deployWallet",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroyWallet",
 			"inputs": [
 			],

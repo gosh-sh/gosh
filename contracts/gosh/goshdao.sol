@@ -205,11 +205,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     //Setters
-    function setConfig(uint128 limit_wallets, uint128 limit_time, uint128 limit_messages) public onlyOwnerPubkey(_rootpubkey) {
+    function setConfig(uint128 limit_wallets /*, uint128 limit_time, uint128 limit_messages */) public onlyOwnerPubkey(_rootpubkey) {
         tvm.accept();    
         _limit_wallets = limit_wallets;
-        _limit_time = limit_time;
-        _limit_messages = limit_messages;
+//        _limit_time = limit_time;
+//        _limit_messages = limit_messages;
         getMoney();
     }
     
