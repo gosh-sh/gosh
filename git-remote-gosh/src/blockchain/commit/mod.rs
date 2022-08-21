@@ -64,6 +64,7 @@ struct SetCommitArgs {
     #[serde(rename = "namecommit")]
     commit_id: String,
     #[serde(rename = "number")]
+    #[serde(with = "ton_sdk::json_helper::uint")]
     num_of_files: u128
 }
 
