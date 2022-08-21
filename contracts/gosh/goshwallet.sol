@@ -152,6 +152,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
     function deployWallet() public onlyOwner accept saveMsg {
         if (_walletcounter >= _limit_wallets) { return; }
+        if (_index != 0) { return; }
         _walletcounter += 1;
         TvmCell s1 = _composeWalletStateInit(tvm.pubkey(), _walletcounter - 1);
         new GoshWallet {
@@ -167,6 +168,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
     function destroyWallet() public onlyOwner accept saveMsg {
         if (_walletcounter <= 1) { return; }
+        if (_index != 0) { return; }
          GoshWallet(_getWalletAddr(_walletcounter - 1)).askForDestroy{value : 0.2 ton, flag: 1}();
          _walletcounter -= 1;
     }
