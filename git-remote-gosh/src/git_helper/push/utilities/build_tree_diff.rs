@@ -67,6 +67,24 @@ fn all_files(repository: &Repository, tree_root: ObjectId) -> Result<Vec<recorde
         .collect());
 }
 
+pub fn build_tree_diff_from_commits(
+    repository: &Repository,
+    original_commit_id: ObjectId,
+    next_commit_id: ObjectId
+) -> Result<TreeDiff> {
+    let original_tree_root_id = repository
+        .find_object(original_commit_id)?
+        .into_commit()
+        .tree()?
+        .id;
+    let next_tree_root_id = repository
+        .find_object(next_commit_id)?
+        .into_commit()
+        .tree()?
+        .id;
+    return build_tree_diff(repository, original_tree_root_id, next_tree_root_id);
+}
+
 pub fn build_tree_diff(
     repository: &Repository,
     original_tree_root_id: ObjectId, 
