@@ -144,9 +144,11 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 */
 
+/*
     function askForDeploy(uint128 index) public senderIs(_getWalletAddr(index)) {
         _deployWallet();
     }
+*/
 
     function _deployWallet() public onlyOwner accept saveMsg {
         if (_walletcounter >= _limit_wallets) { return; }

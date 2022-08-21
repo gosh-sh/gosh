@@ -39,14 +39,6 @@
 			]
 		},
 		{
-			"name": "askForDeploy",
-			"inputs": [
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "_deployWallet",
 			"inputs": [
 			],
