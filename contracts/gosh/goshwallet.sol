@@ -670,8 +670,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         return GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
     }
     
-    function getConfig() external view returns(uint128, uint128, uint128) {
-        return (_limit_wallets, _limit_time, _limit_messages);
+    function getConfig() external view returns(uint128 /*, uint128, uint128*/) {
+        return (_limit_wallets /*, _limit_time, _limit_messages */);
     }
 
     function getWalletAddr(uint128 index) external view returns(address) {

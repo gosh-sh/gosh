@@ -145,9 +145,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint128"},
-				{"name":"value1","type":"uint128"},
-				{"name":"value2","type":"uint128"}
+				{"name":"value0","type":"uint128"}
 			]
 		},
 		{

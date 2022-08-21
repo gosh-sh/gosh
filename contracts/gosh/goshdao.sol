@@ -256,8 +256,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _nameDao;
     }
     
-    function getConfig() external view returns(uint128, uint128, uint128) {
-        return (_limit_wallets, _limit_time, _limit_messages);
+    function getConfig() external view returns(uint128/*, uint128, uint128*/) {
+        return (_limit_wallets/*, _limit_time, _limit_messages*/);
     }
     
     function getRootPubkey() external view returns(uint256) {
