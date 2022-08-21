@@ -96,7 +96,7 @@ pub async fn get_set_commit_created_at_time(
         ParamsOfQuery {
             query,
             variables: Some(serde_json::json!({
-                "addr": repo_address,
+                "repo_address": repo_address,
                 "after": ""
             })),
             ..Default::default()
@@ -154,14 +154,14 @@ mod tests {
     use crate::config;
 
     pub struct TestEnv {
-        config: Config,
+        config: config::Config,
         client: TonClient,
     }
 
     impl TestEnv {
         fn new() -> Self {
             let cfg = config::Config::init().unwrap();
-            let client = create_client(&cfg, "vps23.ton.dev").unwrap();
+            let client = crate::blockchain::create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
                 config: cfg,
                 client,
