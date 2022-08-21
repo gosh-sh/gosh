@@ -202,6 +202,13 @@ impl GitHelper {
     // find ancestor commit
     #[instrument(level = "debug", skip(self))]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
+        // Note:
+        // Here is the problem. We have file snapshot per branch per path.
+        // However in git file is not attached to a branch neither it is bound to a path.
+        // Our first approach was to take what objects are different in git.
+        // This led to a problem that some files were copied from one place to another
+        // and snapshots were not created since git didn't count them as changed.
+        // Our second attempt is to calculated tree diff from one commit to another.
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit("/");
