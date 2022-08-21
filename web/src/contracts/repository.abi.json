@@ -15,6 +15,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeTag","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
+				{"name":"codeTree","type":"cell"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -142,6 +143,15 @@
 			]
 		},
 		{
+			"name": "getTreeAddr",
+			"inputs": [
+				{"name":"treeName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getProtectedBranch",
 			"inputs": [
 			],
@@ -265,6 +275,7 @@
 		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
+		{"name":"m_codeTree","type":"cell"},
 		{"name":"_rootGosh","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
