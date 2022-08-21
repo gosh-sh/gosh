@@ -108,7 +108,7 @@ impl DiffMessagesIterator {
                 // find what is it pointing to
                 let original_snapshot = Snapshot::calculate_address(
                     client,
-                    &repo_contract.address,
+                    repo_contract,
                     &original_branch,
                     &file_path
                 ).await?;

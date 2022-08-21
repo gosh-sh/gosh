@@ -151,7 +151,7 @@ impl GitHelper {
                             // Removing prefixing "/" in the path
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &self.es_client,
-                                &self.repo_addr,
+                                &mut self.repo_contract,
                                 &branch,
                                 &file_path[1..],
                             )

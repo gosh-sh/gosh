@@ -162,7 +162,7 @@ pub async fn push_diff(
     let wallet = user_wallet(context).await?;
     let snapshot_addr = Snapshot::calculate_address(
         &context.es_client,
-        &context.repo_addr,
+        &mut context.repo_contract,
         branch_name,
         file_path
     ).await?;
@@ -176,15 +176,15 @@ pub async fn push_diff(
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
             let data = serde_json::json!({
-                "state": hex::encode(original_snapshot_content), 
+                "state": hex::encode(original_snapshot_content),
                 "diff": hex::encode(&diff)
             });
             let apply_patch_result = wallet.run_local::<GetDiffResultResult>(
-                &context.es_client, 
-                "getDiffResult", 
+                &context.es_client,
+                "getDiffResult",
                 Some(data)
             ).await;
-            
+
             if apply_patch_result.is_ok() {
                 if apply_patch_result.unwrap().content.is_none() {
                     is_going_to_ipfs = true;
@@ -195,7 +195,7 @@ pub async fn push_diff(
                 is_going_to_ipfs = message.contains("Contract execution was terminated with error: invalid opcode");
             }
         }
-        if is_going_to_ipfs { 
+        if is_going_to_ipfs {
             let ipfs = Some(save_data_to_ipfs(&&context.ipfs_client, &diff).await?);
             (None, ipfs)
         } else {
@@ -212,7 +212,7 @@ pub async fn push_diff(
             format!(
                 "0x{}", 
                 tvm_hash(
-                    &context.es_client, 
+                    &context.es_client,
                     new_snapshot_content
                 ).await?
             )
