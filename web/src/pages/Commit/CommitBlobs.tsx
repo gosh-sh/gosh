@@ -26,7 +26,8 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
 
         let prev
-        if (!curr.deployed) {
+        // Old check if (!curr.deployed)
+        if (curr.prevcommit) {
             prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
         }
 

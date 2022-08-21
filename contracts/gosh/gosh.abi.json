@@ -181,16 +181,6 @@
 			]
 		},
 		{
-			"name": "getTreeAddr",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"treeName","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}

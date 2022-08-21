@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+echo $PATH
 # start after deploy.sh
 
 export NETWORK=vps23.ton.dev
@@ -9,8 +10,11 @@ tonos-cli config --url $NETWORK
 
 # Should exist gosh root and Dao creater
 
-export GOSH_ROOT_ADDR=`cat ../contracts/GoshRoot.addr`
-export DAO_CREATOR_ADDR=`cat ../contracts/GoshDaoCreator.addr`
+export GOSH_ROOT_ADDR=`cat ../contracts/gosh/GoshRoot.addr`
+export DAO_CREATOR_ADDR=`cat ../contracts/gosh/GoshDaoCreator.addr`
+
+echo $GOSH_ROOT_ADDR
+echo $DAO_CREATOR_ADDR
 
 GOSH_ABI=../contracts/gosh/gosh.abi.json
 DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
@@ -50,6 +54,8 @@ WALLET_ABI=../contracts/gosh/goshwallet.abi.json
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
+
+sleep 10
 # clone repo
 
 git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME

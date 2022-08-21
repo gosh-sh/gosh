@@ -34,6 +34,7 @@ import {
     getPaginatedAccounts,
     splitByChunk,
     goshRoot,
+    sha256,
 } from '../helpers'
 import {
     IGoshTree,
@@ -62,6 +63,7 @@ import {
     TGoshEventDetails,
     TGoshCommitDetails,
     IGoshContentSignature,
+    TGoshDaoWalletConfig,
 } from './types'
 import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
@@ -149,14 +151,6 @@ export class GoshRoot implements IGoshRoot {
     async getDaoRepoCode(daoAddress: string): Promise<string> {
         const result = await this.account.runLocal('getRepoDaoCode', {
             dao: daoAddress,
-        })
-        return result.decoded?.output.value0
-    }
-
-    async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            repo: repoAddr,
-            treeName,
         })
         return result.decoded?.output.value0
     }
@@ -340,6 +334,28 @@ export class GoshDao implements IGoshDao {
             },
         )
     }
+
+    async getConfig(): Promise<TGoshDaoWalletConfig> {
+        const result = await this.account.runLocal('getConfig', {})
+        const decoded = result.decoded?.output
+        return {
+            wallets: decoded.value0,
+            time: decoded.value1,
+            messages: decoded.value2,
+        }
+    }
+
+    async setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void> {
+        await this.account.run(
+            'setConfig',
+            {
+                limit_wallets: config.wallets,
+                limit_time: config.time,
+                limit_messages: config.messages,
+            },
+            { signer: signerKeys(daoOwnerKeys) },
+        )
+    }
 }
 
 export class GoshWallet implements IGoshWallet {
@@ -433,7 +449,10 @@ export class GoshWallet implements IGoshWallet {
                     patch = await zstd.compress(this.account.client, patch)
                     patch = Buffer.from(patch, 'base64').toString('hex')
 
-                    if (Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE) {
+                    if (
+                        Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE ||
+                        Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                    ) {
                         const compressed = await zstd.compress(
                             this.account.client,
                             modified,
@@ -452,6 +471,13 @@ export class GoshWallet implements IGoshWallet {
                     ipfs = await saveToIPFS(content)
                 }
 
+                const hashes = {
+                    sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
+                    sha256: ipfs
+                        ? sha256(modified, true)
+                        : await goshRoot.getTvmHash(modified),
+                }
+
                 processedBlobs.push({
                     ...blob,
                     created: false,
@@ -460,15 +486,15 @@ export class GoshWallet implements IGoshWallet {
                         patch: ipfs ? null : patch,
                         ipfs,
                         commit: '',
-                        sha1: sha1(modified, 'blob', 'sha1'),
-                        sha256: await goshRoot.getTvmHash(modified),
+                        sha1: hashes.sha1,
+                        sha256: hashes.sha256,
                     },
                 })
 
                 // Update tree
                 const blobPathItems = await getTreeItemsFromPath(
                     blob.name,
-                    blob.modified,
+                    hashes,
                     flags,
                     treeItem,
                 )
@@ -495,10 +521,7 @@ export class GoshWallet implements IGoshWallet {
         const updatedTree = getTreeFromItems(items)
         calculateSubtrees(updatedTree)
         const updatedTreeRootSha = sha1Tree(updatedTree[''], 'sha1')
-        const updatedTreeRootAddr = await this.getTreeAddr(
-            repo.address,
-            updatedTreeRootSha,
-        )
+        const updatedTreeRootAddr = await repo.getTreeAddr(updatedTreeRootSha)
         !!callback && callback({ diffsPrepare: true, treePrepare: true })
         console.debug('Updated tree', updatedTree)
 
@@ -689,15 +712,18 @@ export class GoshWallet implements IGoshWallet {
                 chunk.map(async (item) => {
                     if (!item) return
                     const { snap, name, treeItem } = item
-                    const { content } = await snap.getSnapshot(fromCommit, treeItem)
+                    const { content, isIpfs } = await snap.getSnapshot(
+                        fromCommit,
+                        treeItem,
+                    )
 
                     let ipfs = null
                     let snapdata = ''
                     const compressed = await zstd.compress(this.account.client, content)
                     if (
+                        isIpfs ||
                         Buffer.isBuffer(content) ||
-                        Buffer.from(compressed, 'base64').byteLength >=
-                            MAX_ONCHAIN_FILE_SIZE
+                        Buffer.from(content).byteLength >= MAX_ONCHAIN_FILE_SIZE
                     ) {
                         ipfs = await saveToIPFS(compressed)
                     } else {
@@ -879,7 +905,7 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Check if not deployed
-        const addr = await this.getTreeAddr(repo.address, sha)
+        const addr = await repo.getTreeAddr(sha)
         console.debug('Tree addr', addr)
         const blob = new GoshTree(this.account.client, addr)
         const blobAcc = await blob.account.getAccount()
@@ -1070,15 +1096,6 @@ export class GoshWallet implements IGoshWallet {
         })
     }
 
-    async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            commit: '',
-            repo: repoAddr,
-            treeName,
-        })
-        return result.decoded?.output.value0
-    }
-
     async getDiffAddr(
         repoName: string,
         commitName: string,
@@ -1174,6 +1191,20 @@ export class GoshWallet implements IGoshWallet {
             label,
         })
         return result.decoded?.output.value0
+    }
+
+    async getConfig(): Promise<TGoshDaoWalletConfig> {
+        const result = await this.account.runLocal('getConfig', {})
+        const decoded = result.decoded?.output
+        return {
+            wallets: decoded.value0,
+            time: decoded.value1,
+            messages: decoded.value2,
+        }
+    }
+
+    async updateConfig(): Promise<void> {
+        await this.run('updateConfig', {})
     }
 
     async run(
@@ -1366,6 +1397,13 @@ export class GoshRepository implements IGoshRepository {
         const result = await this.account.runLocal('getSnapshotAddr', {
             branch,
             name: filename,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getTreeAddr(treeName: string): Promise<string> {
+        const result = await this.account.runLocal('getTreeAddr', {
+            treeName,
         })
         return result.decoded?.output.value0
     }
