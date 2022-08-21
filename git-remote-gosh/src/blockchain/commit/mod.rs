@@ -12,6 +12,7 @@ pub use save::{
     push_commit,
     notify_commit
 };
+use crate::blockchain::serde_number::NumberU64;
 use crate::blockchain::Result;
 
 #[derive(Deserialize, Debug, DataContract)]
@@ -64,8 +65,7 @@ struct SetCommitArgs {
     #[serde(rename = "namecommit")]
     commit_id: String,
     #[serde(rename = "number")]
-    #[serde(with = "ton_sdk::json_helper::uint")]
-    num_of_files: u128
+    num_of_files: NumberU64
 }
 
 
