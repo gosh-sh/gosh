@@ -75,7 +75,21 @@ async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Resul
                 .objects
                 .find_blob(e.oid, &mut buffer)?
                 .data;
-           tvm_hash(&context.es_client, content).await? 
+            if content.len() > crate::config::IPFS_CONTENT_THRESHOLD {
+                // NOTE:
+                // Here is a problem: we calculate if this blob is going to ipfs
+                // one way (blockchain::snapshot::save::is_going_to_ipfs)
+                // and it's different here.
+                // However! 
+                // 1. This sha will be validated for files NOT in IPFS
+                // 2. We can be sure if this check passed than this file surely 
+                //    goes to IPFS
+                // 3. If we though that this file DOES NOT go to IPFS and calculated
+                //    tvm_hash instead it will not break
+                sha256::digest_bytes(&content)
+            } else {
+                tvm_hash(&context.es_client, content).await?
+            }
         },
         Commit => unimplemented!() 
     };

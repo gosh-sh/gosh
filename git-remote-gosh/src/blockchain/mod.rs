@@ -21,7 +21,7 @@ use ton_client::{
     ClientConfig, ClientContext,
 };
 
-mod commit;
+pub mod commit;
 mod serde_number;
 pub mod snapshot;
 pub mod tree;
@@ -51,6 +51,7 @@ pub enum GoshBlobBitFlags {
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
 
+#[derive(Clone)]
 pub struct GoshContract {
     address: String,
     pretty_name: String,
@@ -273,7 +274,7 @@ async fn run_local(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    eprintln!("cb: {:#?}", pe);
+    log::debug!("cb: {:#?}", pe);
 }
 
 #[instrument(level = "debug", skip(context))]
