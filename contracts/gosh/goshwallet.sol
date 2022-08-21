@@ -150,7 +150,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 */
 
-    function _deployWallet() public onlyOwner accept saveMsg {
+    function deployWallet() public onlyOwner accept saveMsg {
         if (_walletcounter >= _limit_wallets) { return; }
         _walletcounter += 1;
         TvmCell s1 = _composeWalletStateInit(tvm.pubkey(), _walletcounter - 1);

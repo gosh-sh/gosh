@@ -21,7 +21,7 @@ import "../smv/TokenRootOwner.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.5.3";
     
-    uint128 _limit_wallets = 5;
+    uint128 _limit_wallets = 10;
     uint128 _limit_time = 100;
     uint128 _limit_messages = 10;
     
