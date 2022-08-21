@@ -116,10 +116,8 @@ impl GitHelper {
                 log::info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
-                let remote_gosh_root_contract_address = &self.remote.gosh;
                 let address = blockchain::Tree::calculate_address(
                     &self.es_client,
-                    remote_gosh_root_contract_address,
                     &self.repo_addr,
                     &tree_object_id,
                 )
