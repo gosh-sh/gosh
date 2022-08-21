@@ -340,8 +340,8 @@ export class GoshDao implements IGoshDao {
         const decoded = result.decoded?.output
         return {
             wallets: decoded.value0,
-            time: decoded.value1,
-            messages: decoded.value2,
+            // time: decoded.value1,
+            // messages: decoded.value2,
         }
     }
 
@@ -350,8 +350,8 @@ export class GoshDao implements IGoshDao {
             'setConfig',
             {
                 limit_wallets: config.wallets,
-                limit_time: config.time,
-                limit_messages: config.messages,
+                // limit_time: config.time,
+                // limit_messages: config.messages,
             },
             { signer: signerKeys(daoOwnerKeys) },
         )
@@ -858,7 +858,7 @@ export class GoshWallet implements IGoshWallet {
                             index2: 0,
                             last: true,
                         },
-                        await this.getDiffAddr(repoName, commitName, index, 0),
+                        await repo.getDiffAddr(commitName, index, 0),
                     )
                     await this.run('deployDiff', {
                         repoName,
@@ -1198,13 +1198,26 @@ export class GoshWallet implements IGoshWallet {
         const decoded = result.decoded?.output
         return {
             wallets: decoded.value0,
-            time: decoded.value1,
-            messages: decoded.value2,
+            // time: decoded.value1,
+            // messages: decoded.value2,
         }
     }
 
     async updateConfig(): Promise<void> {
         await this.run('updateConfig', {})
+    }
+
+    async getWalletCount(): Promise<number> {
+        const result = await this.account.runLocal('getWalletsCount', {})
+        return +result.decoded?.output.value0
+    }
+
+    async deployWallet(): Promise<void> {
+        await this.run('deployWallet', {})
+    }
+
+    async destroyWallet(): Promise<void> {
+        await this.run('destroyWallet', {})
     }
 
     async run(
@@ -1404,6 +1417,19 @@ export class GoshRepository implements IGoshRepository {
     async getTreeAddr(treeName: string): Promise<string> {
         const result = await this.account.runLocal('getTreeAddr', {
             treeName,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getDiffAddr(
+        commitName: string,
+        index1: number,
+        index2: number,
+    ): Promise<string> {
+        const result = await this.account.runLocal('getDiffAddr', {
+            commitName,
+            index1,
+            index2,
         })
         return result.decoded?.output.value0
     }
