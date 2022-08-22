@@ -115,9 +115,9 @@ impl DiffMessagesIterator {
                 log::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
                 // generate filter
                 let created_at:u64 = crate::blockchain::commit::get_set_commit_created_at_time(
-                    client, 
-                    repository_contract_address, 
-                    &original_commit, 
+                    client,
+                    repo_contract,
+                    &original_commit,
                     &original_branch
                 ).await?;
                 Some(NextChunk::JumpToAnotherBranchSnapshot(original_snapshot, created_at))
