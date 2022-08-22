@@ -20,7 +20,7 @@ use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
 use git_repository;
 
-static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "optio&n"];
+static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper {
     pub config: Config,
