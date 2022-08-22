@@ -136,7 +136,7 @@ pub async fn get_set_commit_created_at_time(
         if decoded.name == "setCommit" {
             let value = decoded.value.unwrap();
             let args: SetCommitArgs = serde_json::from_value(value)?;
-            eprintln!("branch name: {}", args.branch);
+            log::debug!("branch name: {}", args.branch);
             if args.branch == branch_name && args.commit_id == commit_id {
                 created_at = raw_msg.created_at;
                 break;
@@ -168,7 +168,7 @@ mod tests {
             }
         }
     }
-
+/*
     #[tokio::test]
     async fn ensure_get_created_at_of_set_commit() {
         // TODO fix type
@@ -182,4 +182,5 @@ mod tests {
         //     .unwrap();
         // eprintln!("created_at: {}", ts);
     }
+*/
 }

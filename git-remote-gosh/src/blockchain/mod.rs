@@ -301,10 +301,10 @@ async fn run_static(
     args: Option<serde_json::Value>,
 ) -> Result<serde_json::Value> {
     let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
-        eprintln!("run_static: use cached boc ref");
+        log::debug!("run_static: use cached boc ref");
         (boc_ref, Some(BocCacheType::Unpinned))
     } else {
-        eprintln!("run_static: load account' boc");
+        log::debug!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
             "id": { "eq": contract.address }
         }));
