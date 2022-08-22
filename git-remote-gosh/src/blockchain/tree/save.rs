@@ -1,5 +1,3 @@
-use crate::git_helper::GitHelper;
-
 use ::git_object;
 use git_repository::Repository;
 

@@ -83,12 +83,16 @@ impl ParallelDiffsUploadSupport {
         ) in self.dangling_diffs.values().into_iter()
         {
             let wallet = user_wallet(context).await?;
+            let mut repo_contract = context.repo_contract.clone();
             self.pushed_blobs.push(
                 blockchain::snapshot::push_diff(
-                    context,
+                    &context.ipfs_client,
+                    &context.es_client,
                     &wallet,
+                    &mut repo_contract,
                     &commit_id,
                     &branch_name,
+                    &context.remote.repo,
                     &blob_id,
                     &file_path,
                     &diff_coordinates,
@@ -179,12 +183,16 @@ impl ParallelDiffsUploadSupport {
                 },
             )) => {
                 let wallet = user_wallet(context).await?;
+                let mut repo_contract = context.repo_contract.clone();
                 self.pushed_blobs.push(
                     blockchain::snapshot::push_diff(
-                        context,
+                        &context.ipfs_client,
+                        &context.es_client,
                         &wallet,
+                        &mut repo_contract,
                         &commit_id,
                         &branch_name,
+                        &context.remote.repo,
                         &blob_id,
                         &file_path,
                         &diff_coordinates,

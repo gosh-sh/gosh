@@ -135,12 +135,15 @@ pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
     return is_going_to_ipfs;
 }
 
-#[instrument(level = "debug", skip(diff))]
+#[instrument(level = "debug", skip(cli, diff))]
 pub async fn push_diff(
-    context: &mut GitHelper,
+    ipfs_client: &IpfsService,
+    cli: &TonClient,
     wallet: &GoshContract,
+    mut repo_contract: &mut GoshContract,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
+    repo_name: &str,
     blob_id: &git_hash::ObjectId,
     file_path: &str,
     diff_coordinate: &PushDiffCoordinate,
@@ -150,20 +153,13 @@ pub async fn push_diff(
     diff: &Vec<u8>,
     new_snapshot_content: &Vec<u8>,
 ) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
-    let snapshot_addr: String = (Snapshot::calculate_address(
-        &context.es_client,
-        &mut context.repo_contract,
-        branch_name,
-        file_path,
-    ))
-    .await?;
+    let snapshot_addr: String =
+        (Snapshot::calculate_address(&cli, &mut repo_contract, branch_name, file_path)).await?;
 
     let original_snapshot_content = original_snapshot_content.clone();
     let diff = diff.clone();
     let new_snapshot_content = new_snapshot_content.clone();
-    let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-    let es_client = context.es_client.clone();
-    let repo_name = context.remote.repo.clone();
+    let ipfs_endpoint = ipfs_client.ipfs_endpoint_address.to_string();
     let commit_id = commit_id.clone();
     let branch_name = branch_name.to_owned();
     let blob_id = blob_id.clone();
@@ -171,18 +167,19 @@ pub async fn push_diff(
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = last_commit_id.clone();
 
-    let cli = es_client.clone();
-    let wallet_clone = wallet.clone();
+    let wallet = wallet.clone();
+    let cli = cli.clone();
+    let repo_name = repo_name.to_string();
     return Ok(tokio::spawn(async move {
         let mut attempt = 0;
         let result = loop {
             attempt += 1;
             let result = inner_push_diff(
-                repo_name.clone(),
-                snapshot_addr.clone(),
-                &wallet_clone,
-                &ipfs_endpoint,
                 &cli,
+                &wallet,
+                &repo_name,
+                &snapshot_addr,
+                &ipfs_endpoint,
                 &commit_id,
                 &branch_name,
                 &blob_id,
@@ -207,11 +204,11 @@ pub async fn push_diff(
 }
 
 pub async fn inner_push_diff(
-    repo_name: String,
-    snapshot_addr: String,
+    cli: &TonClient,
     wallet: &GoshContract,
+    repo_name: &str,
+    snapshot_addr: &str,
     ipfs_endpoint: &str,
-    es_client: &TonClient,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -226,7 +223,7 @@ pub async fn inner_push_diff(
     let diff = ton_client::utils::compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
-    let ipfs_client = IpfsService::new(ipfs_endpoint);
+    let ipfs_client = IpfsService::build(ipfs_endpoint)?;
     let (patch, ipfs) = {
         let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
@@ -236,7 +233,7 @@ pub async fn inner_push_diff(
                 "diff": hex::encode(&diff)
             });
             let apply_patch_result = wallet
-                .run_local::<GetDiffResultResult>(&es_client, "getDiffResult", Some(data))
+                .run_local::<GetDiffResultResult>(&cli, "getDiffResult", Some(data))
                 .await;
 
             if apply_patch_result.is_ok() {
@@ -269,12 +266,12 @@ pub async fn inner_push_diff(
         if ipfs.is_some() {
             format!("0x{}", sha256::digest_bytes(new_snapshot_content))
         } else {
-            format!("0x{}", tvm_hash(&es_client, new_snapshot_content).await?)
+            format!("0x{}", tvm_hash(&cli, new_snapshot_content).await?)
         }
     };
 
     let diff = Diff {
-        snapshot_addr,
+        snapshot_addr: snapshot_addr.to_string(),
         commit_id: commit_id.to_string(),
         patch,
         ipfs,
@@ -290,7 +287,7 @@ pub async fn inner_push_diff(
     let diffs: Vec<Diff> = vec![diff];
 
     let args = DeployDiffParams {
-        repo_name: repo_name,
+        repo_name: repo_name.to_string(),
         branch_name: branch_name.to_string(),
         commit_id: last_commit_id.to_string(),
         diffs,
@@ -300,7 +297,7 @@ pub async fn inner_push_diff(
     };
 
     let params = serde_json::to_value(args)?;
-    let result = call(&es_client, &wallet, "deployDiff", Some(params)).await?;
+    let result = call(&cli, &wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
 
     Ok(())
