@@ -144,10 +144,12 @@ const BlobCreatePage = () => {
                                                 setBlobCodeLanguage(language)
 
                                                 // Set commit title
-                                                setFieldValue(
-                                                    'title',
-                                                    `Create ${e.target.value}`,
-                                                )
+                                                if (!values.title) {
+                                                    setFieldValue(
+                                                        'title',
+                                                        `Create ${e.target.value}`,
+                                                    )
+                                                }
                                             },
                                         }}
                                     />

@@ -47,21 +47,21 @@ thread_local! {
 
 static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 
-async fn get_user_wallet(client: &TonClient, gosh_root_contract_address: &str, dao_name: &str, pubkey: &str, secret: &str, user_wallet_index: u32)  -> Result<GoshContract> {
-    let gosh_root_contract = GoshContract::new(
-        gosh_root_contract_address,
-        abi::GOSH
-    );
+pub async fn get_user_wallet(client: &TonClient, dao_address: &str, pubkey: &str, secret: &str, user_wallet_index: u32)  -> Result<GoshContract> {
+    // let gosh_root_contract = GoshContract::new(
+    //     gosh_root_contract_address,
+    //     abi::GOSH
+    // );
      
-    let dao_address: GetAddrDaoResult = gosh_root_contract.run_local(
-        &client,
-        "getAddrDao",
-        Some(serde_json::json!({
-            "name": dao_name
-        }))
-    ).await?;
+    // let dao_address: GetAddrDaoResult = gosh_root_contract.run_static(
+    //     &client,
+    //     "getAddrDao",
+    //     Some(serde_json::json!({
+    //         "name": dao_name
+    //     }))
+    // ).await?;
     let dao_contract = GoshContract::new(
-        &dao_address.address,
+        &dao_address,
         abi::DAO
     );
     let result: GetAddrWalletResult = dao_contract.run_local(
@@ -72,13 +72,39 @@ async fn get_user_wallet(client: &TonClient, gosh_root_contract_address: &str, d
             "index": user_wallet_index
         }))
     ).await?;
-    let user_wallet_address = result.address; 
+    let user_wallet_address = result.address;
     log::trace!("user_wallet address: {:?}", user_wallet_address);
     let secrets = KeyPair::new(pubkey.into(), secret.into());
 
     let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
-    return Ok(contract);   
-    
+    Ok(contract)
+}
+
+lazy_static! {
+    static ref _USER_WALLET: std::sync::RwLock<Option<GoshContract>> = std::sync::RwLock::new(None);
+}
+
+#[instrument(level = "debug", skip(context))]
+async fn zero_user_wallet(context: &GitHelper) -> Result<GoshContract> {
+    if _USER_WALLET.read().unwrap().is_none() {
+        let mut user_wallet = _USER_WALLET.write().unwrap();
+        if user_wallet.is_none() {
+            let config = user_wallet_config(context);
+            if config.is_none() {
+                return Err("User wallet config must be set".into());
+            }
+            let config = config.expect("Guarded");
+            *user_wallet = Some(get_user_wallet(
+                &context.es_client,
+                &context.dao_addr,
+                &config.pubkey,
+                &config.secret,
+                0
+            ).await?);
+        }
+    };
+
+    Ok(_USER_WALLET.read().unwrap().as_ref().unwrap().clone())
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -88,14 +114,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         return Err("User wallet config must be set".into());
     }
     let config = config.expect("Guarded");
-    let zero_wallet = get_user_wallet(
-        &context.es_client,
-        &context.remote.gosh,
-        &context.remote.dao,
-        &config.pubkey,
-        &config.secret,
-        0
-    ).await?;
+    let zero_wallet = zero_user_wallet(context).await?;
 
     let (user_wallet_index, max_number_of_user_wallets) = {
         match user_wallet_config_max_number_of_mirrors (&context.es_client, &zero_wallet).await {
@@ -126,9 +145,8 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
 
     return Ok(get_user_wallet(
         &context.es_client,
-        &context.remote.gosh,
-        &context.remote.dao,
-        &config.pubkey, 
+        &context.dao_addr,
+        &config.pubkey,
         &config.secret,
         user_wallet_index
     ).await?);

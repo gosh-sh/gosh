@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain::{CreateBranchOperation, ZERO_SHA};
+use crate::blockchain::{CreateBranchOperation, ZERO_SHA, user_wallet};
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use git2::Repository;
 use git_diff;

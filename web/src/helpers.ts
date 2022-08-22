@@ -143,6 +143,7 @@ export const sha1 = (
     type: 'blob' | 'commit' | 'tree' | 'tag' | 'blobExecutable' | 'link',
     mode: 'sha1' | 'sha256',
 ): string => {
+    if (type === 'blobExecutable') type = 'blob'
     let content = data
 
     const size = Buffer.isBuffer(content)
@@ -289,7 +290,7 @@ export const getRepoTree = async (
 
             treeItems.forEach((item) => (item.path = treePath))
             items.push(...treeItems)
-            await new Promise((resolve) => setInterval(resolve, 150))
+            await sleep(300)
             await blobTreeWalker(treePath, treeItems)
         }
     }

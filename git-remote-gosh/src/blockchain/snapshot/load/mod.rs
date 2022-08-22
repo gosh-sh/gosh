@@ -58,17 +58,16 @@ impl Snapshot {
     #[instrument(level = "debug", skip(context))]
     pub async fn calculate_address(
         context: &TonClient,
-        repository_address: &str,
+        repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
     ) -> Result<String, Box<dyn Error>> {
-        let repo = GoshContract::new(repository_address, gosh_abi::REPO);
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
         });
-        let result: GetSnapshotAddrResult = repo
-            .run_local(context, "getSnapshotAddr", Some(params))
+        let result: GetSnapshotAddrResult = repo_contract
+            .run_static(context, "getSnapshotAddr", Some(params))
             .await?;
         return Ok(result.address);
     }

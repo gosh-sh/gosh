@@ -111,15 +111,14 @@ pub async fn diff_address(
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
 ) -> Result<String> {
-    let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
-        "reponame": context.remote.repo.clone(),
         "commitName": last_commit_id.to_string(),
         "index1": diff_coordinate.index_of_parallel_thread,
         "index2": diff_coordinate.order_of_diff_in_the_parallel_thread,
     });
-    let result: GetDiffAddrResult = wallet
-        .run_local(&context.es_client, "getDiffAddr", Some(params))
+    let result: GetDiffAddrResult = context
+        .repo_contract
+        .run_static(&context.es_client, "getDiffAddr", Some(params))
         .await?;
     return Ok(result.address);
 }
@@ -151,7 +150,7 @@ pub async fn push_diff(
     let wallet = user_wallet(context).await?;
     let snapshot_addr: String = (Snapshot::calculate_address(
         &context.es_client,
-        &context.repo_addr,
+        &mut context.repo_contract,
         branch_name,
         file_path,
     ))

@@ -3,7 +3,7 @@ DOCKER_BUILDER_NAME ?= public-gosh-builder
 PLATFORM            ?= linux/amd64,linux/arm64
 PROGRESS            ?= auto
 # PROGRESS            ?= plain
-DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build 
+DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
 
 .DEFAULT_GOAL := test
 
@@ -37,6 +37,10 @@ copy_abi: clear_abi
 .PHONY: build
 build: copy_abi clear_screen
 	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
+
+.PHONY: install
+install: copy_abi clear_screen
+	cargo install --path .
 
 .PHONY: test
 test: copy_abi clear_screen

@@ -1,0 +1,69 @@
+pipeline {
+	agent {
+        docker {
+            image 'jenkins-docker-agent:1'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+        }  
+    }
+    parameters {
+        gitParameter name: 'TAG', type: 'PT_TAG', quickFilterEnabled: true
+        booleanParam name: 'LATEST', defaultValue: false, description: 'If true will create latest tags for git helper and extension docker images.'
+    }
+
+    stages {
+        stage("Publish: update release") {
+            steps {
+                script {
+                    env.VERSION = sh script: "echo ${TAG} | tr -d '\\-rc' | tr -d '\n'", returnStdout: true
+                    dir ('.ci/scripts') {
+                        withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                            sh './update-github-release.sh $TOKEN ${VERSION} ${VERSION}'
+                        }
+                    }
+                    currentBuild.displayName = "#${BUILD_NUMBER}_release_${VERSION}"
+                }
+            }   
+        }
+        stage("Publish: push Git Helper Docker image") {
+            steps {
+                script {
+                    dir ('git-remote-gosh') {
+                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                            sh 'docker login -u $USERNAME -p $PASSWORD'
+                        }
+                        sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
+                        sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:${VERSION}"
+                        sh "docker push teamgosh/git:${VERSION}"
+                        if (params.LATEST) {
+                            sh "docker tag teamgosh/git:${VERSION} teamgosh/git:latest"
+                            sh "docker push teamgosh/git:latest"
+                        }
+                    }
+                }
+            }   
+        }
+        stage("Publish: push Docker Extension image") {
+            steps {
+                script {
+                    dir ('docker-extension') {
+                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                            sh 'docker login -u $USERNAME -p $PASSWORD'
+                        }
+                        sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
+                        sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:${VERSION}"
+                        sh "docker push teamgosh/docker-extension:${VERSION}"
+                        if (params.LATEST) {
+                            sh "docker tag teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:latest"
+                            sh "docker push teamgosh/docker-extension:latest"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post { 
+        always { 
+            cleanWs()
+        }
+    }
+}

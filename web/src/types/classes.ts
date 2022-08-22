@@ -843,7 +843,11 @@ export class GoshWallet implements IGoshWallet {
         console.debug('Commit addr', await repo.getCommitAddr(commitName))
 
         // Deploy diffs (split by chunks)
-        for (const chunk of splitByChunk(diffs)) {
+        const chunkSize = 10
+        const chunks = splitByChunk(diffs, chunkSize)
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i]
+
             await Promise.all(
                 chunk.map(async (diff, index) => {
                     diff.commit = commitName
@@ -854,7 +858,7 @@ export class GoshWallet implements IGoshWallet {
                             branchName: branch.name,
                             commitName,
                             diffs: [diff],
-                            index1: index,
+                            index1: i * chunkSize + index,
                             index2: 0,
                             last: true,
                         },
@@ -865,7 +869,7 @@ export class GoshWallet implements IGoshWallet {
                         branchName: branch.name,
                         commitName,
                         diffs: [diff],
-                        index1: index,
+                        index1: i * chunkSize + index,
                         index2: 0,
                         last: true,
                     })
