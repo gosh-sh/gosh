@@ -143,6 +143,7 @@ export const sha1 = (
     type: 'blob' | 'commit' | 'tree' | 'tag' | 'blobExecutable' | 'link',
     mode: 'sha1' | 'sha256',
 ): string => {
+    if (type === 'blobExecutable') type = 'blob'
     let content = data
 
     const size = Buffer.isBuffer(content)
