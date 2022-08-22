@@ -289,7 +289,7 @@ export const getRepoTree = async (
 
             treeItems.forEach((item) => (item.path = treePath))
             items.push(...treeItems)
-            await new Promise((resolve) => setInterval(resolve, 150))
+            await sleep(300)
             await blobTreeWalker(treePath, treeItems)
         }
     }
