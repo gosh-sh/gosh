@@ -139,7 +139,7 @@ pub async fn get_set_commit_created_at_time(
         if decoded.name == "setCommit" {
             let value = decoded.value.unwrap();
             let args: SetCommitArgs = serde_json::from_value(value)?;
-            eprintln!("branch name: {}", args.branch);
+            log::debug!("branch name: {}", args.branch);
             if args.branch == branch_name && args.commit_id == commit_id {
                 created_at = raw_msg.created_at;
                 break;
