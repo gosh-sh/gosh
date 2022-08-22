@@ -7,7 +7,7 @@ use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 
-use super::ZERO_SHA;
+use super::{user_wallet, ZERO_SHA};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -43,7 +43,7 @@ impl<'a> CreateBranchOperation<'a> {
 
     #[instrument(level = "debug")]
     async fn preinit_branch(&mut self) -> Result<()> {
-        let wallet_contract = blockchain::user_wallet(self.context).await?;
+        let wallet = blockchain::user_wallet(self.context).await?;
         let params = serde_json::json!({
             "repoName": self.context.remote.repo,
             "newName": self.new_branch,
@@ -51,7 +51,7 @@ impl<'a> CreateBranchOperation<'a> {
         });
         blockchain::call(
             &self.context.es_client,
-            &wallet_contract,
+            &wallet,
             "deployBranch",
             Some(params),
         )
@@ -72,10 +72,15 @@ impl<'a> CreateBranchOperation<'a> {
             .as_blob()
             .expect("It must be a blob object")
             .data;
+
+        let wallet = user_wallet(self.context).await?;
         blockchain::snapshot::push_new_branch_snapshot(
-            self.context,
+            &self.context.es_client,
+            &self.context.ipfs_client,
+            &wallet,
             &self.ancestor_commit,
             &self.new_branch,
+            &self.context.repo_addr,
             file_path,
             content,
         )

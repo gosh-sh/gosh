@@ -382,7 +382,17 @@ impl GitHelper {
                         }
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
-                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
+                        git_object::Kind::Tree => {
+                            let wallet = user_wallet(self).await?;
+                            blockchain::push_tree(
+                                &self.es_client,
+                                &self.local_git_repository,
+                                &wallet,
+                                &self.remote.repo,
+                                &object_id,
+                            )
+                            .await?
+                        }
                     }
                 }
                 None => break,

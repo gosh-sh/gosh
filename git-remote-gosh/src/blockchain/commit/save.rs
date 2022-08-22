@@ -1,7 +1,4 @@
-use crate::{
-    blockchain::{call, get_commit_address, user_wallet, GoshContract, TonClient, ZERO_SHA},
-    git_helper::GitHelper,
-};
+use crate::blockchain::{call, get_commit_address, GoshContract, TonClient, Tree, ZERO_SHA};
 use git_hash::ObjectId;
 use git_object::Data;
 use git_odb::Find;
@@ -22,6 +19,14 @@ pub struct DeployCommitParams {
     pub tree_addr: String,
 }
 
+pub async fn pure_calculate_tree_address(
+    cli: &TonClient,
+    repo_addr: &str,
+    tree_id: git_hash::ObjectId,
+) -> Result<String, Box<dyn Error>> {
+    Tree::calculate_address(&cli, repo_addr, &tree_id.to_string()).await
+}
+
 #[instrument(level = "debug", skip(cli))]
 pub async fn push_commit(
     cli: &TonClient,
@@ -36,7 +41,7 @@ pub async fn push_commit(
 
     let mut commit_iter = commit.clone().try_into_commit_iter().unwrap();
     let tree_id = commit_iter.tree_id()?;
-    let tree_addr = GitHelper::pure_calculate_tree_address(&cli, &repo_name, tree_id).await?;
+    let tree_addr = pure_calculate_tree_address(&cli, &repo_name, tree_id).await?;
     let tree_id = commit_iter.tree_id()?;
     let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
     let mut parents: Vec<String> = vec![];

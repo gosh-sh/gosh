@@ -30,7 +30,7 @@ pub struct GitHelper {
     pub remote: Remote,
     pub dao_addr: String,
     pub repo_addr: String,
-    local_git_repository: git_repository::Repository,
+    pub local_git_repository: git_repository::Repository,
     logger: Logger,
     gosh_root_contract: GoshContract,
     pub repo_contract: GoshContract,
@@ -53,14 +53,6 @@ mod fmt;
 impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         return &mut self.local_git_repository;
-    }
-
-    pub async fn pure_calculate_tree_address(
-        cli: &TonClient,
-        repo_addr: &str,
-        tree_id: git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
-        Tree::calculate_address(&cli, repo_addr, &tree_id.to_string()).await
     }
 
     #[deprecated(note = "use pure version instead")]
