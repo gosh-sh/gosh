@@ -10,8 +10,9 @@ use crate::blockchain::{
     get_repo_address,
     // set_head,
     TonClient,
-    Tree,
+    Tree, GoshContract,
 };
+use crate::abi as gosh_abi;
 use crate::config::Config;
 use crate::git::get_refs;
 use crate::ipfs::IpfsService;
@@ -19,16 +20,25 @@ use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
 use git_repository;
 
-static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
+static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "optio&n"];
 
 pub struct GitHelper {
     pub config: Config,
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
     pub remote: Remote,
+    pub dao_addr: String,
     pub repo_addr: String,
     local_git_repository: git_repository::Repository,
     logger: Logger,
+    gosh_root_contract: GoshContract,
+    pub repo_contract: GoshContract,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetAddrDaoResult {
+    #[serde(rename = "value0")]
+    pub address: String,
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -64,8 +74,18 @@ impl GitHelper {
     async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
+
+        let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+
+        let dao: GetAddrDaoResult = gosh_root_contract.run_static(
+            &es_client,
+            "getAddrDao",
+            Some(serde_json::json!({ "name": remote.dao }))
+        ).await?;
+
         let repo_addr =
             get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
+        let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
         let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
@@ -75,9 +95,12 @@ impl GitHelper {
             es_client,
             ipfs_client,
             remote,
+            dao_addr: dao.address,
             repo_addr,
             local_git_repository,
             logger,
+            gosh_root_contract,
+            repo_contract,
         })
     }
 
