@@ -327,8 +327,11 @@ impl GitHelper {
             let originating_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op = CreateBranchOperation::new(branching_point, branch_name, self);
-            create_branch_op.run().await?;
-            prev_commit_id = Some(originating_commit);
+            let is_first_ever_branch = create_branch_op.run().await?;
+            prev_commit_id = {
+                if is_first_ever_branch { None }
+                else { Some(originating_commit) }
+            };
         }
 
         for line in out.lines() {
@@ -341,7 +344,7 @@ impl GitHelper {
                             blockchain::push_commit(self, &object_id, branch_name).await?;
                             let mut tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
-                                prev_commit_id.unwrap(),
+                                prev_commit_id,
                                 object_id.clone()
                             )?;
                             for added in tree_diff.added {
