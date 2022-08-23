@@ -257,11 +257,16 @@ impl GitHelper {
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
-        let mut ancestor_commit_id = if parsed_remote_ref == None {
-            // prev_commit_id is not filled up here. It's Ok.
+        let mut ancestor_commit_id = if parsed_remote_ref.is_none() {
+            // prev_commit_id is not filled up here. It's Ok. 
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
+            let is_protected =
+                blockchain::is_branch_protected(&self.es_client, &self.repo_addr, remote_branch_name).await?;
+            if is_protected {
+                return Err("This branch '{branch_name}' is protected. Go to app.gosh.sh and create a proposal to apply this branch change.".into());
+            }
             let remote_commit_addr = parsed_remote_ref.clone().unwrap();
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?
@@ -406,15 +411,15 @@ impl GitHelper {
     }
 
     #[instrument(level = "debug", skip(self))]
-    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
+    pub async fn push(&mut self, refs: &str) -> Result<String> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
             [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
-
-        Ok(vec![result])
+        log::debug!("push ref result: {result}");
+        Ok(result)
     }
 }
 

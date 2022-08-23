@@ -156,11 +156,17 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
     // with an empty line prior the next operation 
     let mut is_batching_operation_in_progress = false;
 
+    let mut batch_response: Vec<String> = Vec::new();
     while let Some(line) = lines.next_line().await? {
         if line.is_empty() {
             if is_batching_operation_in_progress {
                 is_batching_operation_in_progress = false;
-                stdout.write_all("\n".as_bytes()).await?;     
+                for line in batch_response.clone() {
+                    log::debug!("[batched] < {line}");
+                    stdout.write_all(format!("{line}\n").as_bytes()).await?;
+                }
+                log::debug!("[batched] < {line}");
+                stdout.write_all("\n".as_bytes()).await?;
                 continue;
             } else {
                 return Ok(());
@@ -174,11 +180,13 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let msg = line.clone();
         log::debug!("Line: {line}");
         log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
-         let response = match (cmd, arg1, arg2) {
+
+        let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => {
                 is_batching_operation_in_progress = true;
-                helper.push(ref_arg).await?;
+                let push_result = helper.push(ref_arg).await?;
+                batch_response.push(push_result);
                 vec![]
             },
             (Some("fetch"), Some(sha), Some(name)) => {
