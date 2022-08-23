@@ -79,6 +79,7 @@ publish: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile \
 		.
@@ -91,6 +92,7 @@ publish-alpine: copy_abi prepare-builder
 		--progress=plain \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME}-alpine \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile.alpine \
 		.
