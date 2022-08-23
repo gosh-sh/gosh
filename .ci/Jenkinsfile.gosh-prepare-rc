@@ -121,13 +121,15 @@ pipeline {
         }
         stage("Prerelease: push rc Git Helper Docker image") {
             steps {
-                script {
-                    if (params.PRERELEASE || params.RELEASE ) {
-                        dir ('git-remote-gosh') {
-                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                                sh 'docker login -u $USERNAME -p $PASSWORD'
+                retry(3) {
+                    script {
+                        if (params.PRERELEASE || params.RELEASE ) {
+                            dir ('git-remote-gosh') {
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                                }
+                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
                             }
-                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
                         }
                     }
                 }
@@ -135,13 +137,15 @@ pipeline {
         }
         stage("Prerelease: push rc Docker Extension image") {
             steps {
-                script {
-                    if (params.PRERELEASE || params.RELEASE ) {
-                        dir ('docker-extension') {
-                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                                sh 'docker login -u $USERNAME -p $PASSWORD'
+                retry(3) {
+                    script {
+                        if (params.PRERELEASE || params.RELEASE ) {
+                            dir ('docker-extension') {
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                                }
+                                sh "make build-ci IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                             }
-                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                         }
                     }
                 }
