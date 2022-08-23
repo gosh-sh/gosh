@@ -55,6 +55,7 @@ build: clean_temp prepare-builder build-ui-v2 build-gosh-git-image ## Build serv
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --platform $(PLATFORM) \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
@@ -65,10 +66,11 @@ build: clean_temp prepare-builder build-ui-v2 build-gosh-git-image ## Build serv
 	  .
 
 build-ci: prepare-builder build-ui-v2
-	mkdir $(LOCAL_TEMP_DIR)/gosh
+	mkdir -p $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --platform $(PLATFORM) \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
@@ -83,6 +85,7 @@ build-debug: clean_temp prepare-builder build-ui-v2 ## Install the extension
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
@@ -108,6 +111,7 @@ publish: clean_temp build-ui-v2 build-gosh-git-image ## Publish the extension
 	  --platform $(PLATFORM) \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
