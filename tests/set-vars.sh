@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 # start after deploy.sh
 
 export NETWORK=vps23.ton.dev
@@ -17,7 +15,7 @@ DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
 
 # create DAO
 
-export DAO1_NAME=dao005
+export DAO1_NAME=dao-001
 
 # generate dao1 keys
 SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
@@ -52,14 +50,14 @@ WALLET_SECRET=$(cat $WALLET_KEYS | sed -n '/secret/ s/.*\([[:xdigit:]]\{64\}\).*
 tee $USER_CONFIG <<EOF
 {
   "ipfs": "https://ipfs.network.gosh.sh",
-  "primary-network": "vps23.ton.dev",
+  "primary-network": "$NETWORK",
   "networks": {
-    "vps23.ton.dev": {
+    "$NETWORK": {
       "user-wallet": {
         "pubkey": "$WALLET_PUBKEY",
         "secret": "$WALLET_SECRET"
       },
-      "endpoints": ["https://vps23.ton.dev/"]
+      "endpoints": ["https://$NETWORK/"]
     }
   }
 }
