@@ -1,9 +1,9 @@
 DOCKER              ?= docker
 DOCKER_BUILDER_NAME ?= public-gosh-builder
-DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
+DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build ${DOCKER_BUILDER_ARGS}
 PLATFORM       ?= linux/amd64,linux/arm64
 IMAGE          ?= teamgosh/docker-extension
-TAG            ?= 2.0.5
+TAG            ?= 2.0.6
 LOCAL_TEMP_DIR ?= ./.tmp
 
 GIT_COMMIT := $(shell git rev-parse HEAD)
@@ -41,12 +41,21 @@ build-gosh-git-image:
 	cd ../git-remote-gosh \
 		&& make pull FULL_IMAGE_NAME=${GOSH_GIT_IMAGE} PLATFORM=${PLATFORM}
 
-build: clean_temp build-ui-v2 build-gosh-git-image ## Build service image to be deployed as a desktop extension
+.PHONY: prepare-builder
+prepare-builder: ## prepare docker buildx builder
+	@echo === prepare-builder
+	( ${DOCKER} buildx inspect ${DOCKER_BUILDER_NAME} ) || ${DOCKER} buildx create \
+		--name ${DOCKER_BUILDER_NAME} \
+		${DOCKER_BUILDER_ARGS} \
+		--driver docker-container
+
+build: clean_temp prepare-builder build-ui-v2 build-gosh-git-image ## Build service image to be deployed as a desktop extension
 	mkdir $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
-	docker buildx build \
+	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --platform $(PLATFORM) \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
@@ -56,12 +65,27 @@ build: clean_temp build-ui-v2 build-gosh-git-image ## Build service image to be 
 	  --output=type=docker \
 	  .
 
-build-ci: build-ui-v2
-	mkdir $(LOCAL_TEMP_DIR)/gosh
+build-ci: prepare-builder build-ui-v2
+	mkdir -p $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
-	docker buildx build \
+	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
-	  --tag=$(IMAGE):latest \
+	  ${DOCKER_BUILDX_ARGS} \
+	  --platform $(PLATFORM) \
+	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
+	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
+	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
+	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
+	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
+	  --push \
+	  .
+
+build-debug: clean_temp prepare-builder build-ui-v2 ## Install the extension
+	-mkdir $(LOCAL_TEMP_DIR)/gosh
+	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	${DOCKER_BUILDX} \
+	  --tag=$(IMAGE):$(TAG) \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
@@ -70,10 +94,10 @@ build-ci: build-ui-v2
 	  --output=type=docker \
 	  .
 
-install: rm build ## Install the extension
+install: rm build-debug
 	docker extension install $(IMAGE):$(TAG)
 
-update: build ## Update the extension
+update: build-debug ## Update the extension
 	docker extension update $(IMAGE):$(TAG)
 
 debug: ## Debug the extension
@@ -87,6 +111,7 @@ publish: clean_temp build-ui-v2 build-gosh-git-image ## Publish the extension
 	  --platform $(PLATFORM) \
 	  --tag=$(IMAGE):$(TAG) \
 	  --tag=$(IMAGE):latest \
+	  ${DOCKER_BUILDX_ARGS} \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
 	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \

@@ -41,11 +41,11 @@ pub async fn push_commit(
     let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
     let mut parents: Vec<String> = vec![];
     for id in parent_ids {
-        let parent = get_commit_address(&context.es_client, &context.repo_addr, &id.to_string()).await?;
+        let parent = get_commit_address(&context.es_client, &mut context.repo_contract, &id.to_string()).await?;
         parents.push(parent);
     }
     if parents.len() == 0 {
-        let bogus_parent = get_commit_address(&context.es_client, &context.repo_addr, ZERO_SHA).await?;
+        let bogus_parent = get_commit_address(&context.es_client, &mut context.repo_contract, ZERO_SHA).await?;
         parents.push(bogus_parent);
     }
     let tree_addr = context.calculate_tree_address(tree_id).await?;

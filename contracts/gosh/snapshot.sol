@@ -88,7 +88,7 @@ contract Snapshot is Modifiers {
         }
         else {
             //ignore ipfs snapshot check
-            if (ipfsdata.hasValue() == true) { return; }
+            if (ipfsdata.hasValue() == true) { _ready = true; return; }
             
             Commit(_buildCommitAddr(_oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);

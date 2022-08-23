@@ -50,7 +50,12 @@ export const goshRepoTreeSelector = selectorFamily({
             const { tree, items } = treeObject
             const path = params.path || ''
             if (params.type === 'tree') {
-                return [...tree[path]].sort((a, b) => (a.type > b.type ? -1 : 1))
+                return (
+                    [...tree[path]]
+                        //@ts-ignore
+                        .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
+                        .sort((a, b) => (a.type > b.type ? -1 : 1))
+                )
             } else if (params.type === 'items') {
                 const filtered = [...items]
                 return filtered

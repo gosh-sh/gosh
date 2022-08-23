@@ -22,6 +22,12 @@ export type TGoshDaoDetails = {
     supply: number
 }
 
+export type TGoshDaoWalletConfig = {
+    wallets: number
+    // time: number
+    // messages: number
+}
+
 export type TGoshWalletDetails = {
     address: string
     keys?: KeyPair
@@ -160,7 +166,6 @@ export interface IGoshRoot extends IContract {
     getRepoAddr(name: string, daoName: string): Promise<string>
     getDaoRepoCode(daoAddress: string): Promise<string>
     getSmvPlatformCode(): Promise<string>
-    getTreeAddr(repoAddr: string, treeName: string): Promise<string>
     getContentAddress(
         daoName: string,
         repoName: string,
@@ -197,6 +202,8 @@ export interface IGoshDao extends IContract {
         payload: string,
         keys: KeyPair,
     ): Promise<void>
+    getConfig(): Promise<TGoshDaoWalletConfig>
+    setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 export interface IGoshWallet extends IContract {
@@ -295,7 +302,6 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
-    getTreeAddr(repoAddr: string, treeName: string): Promise<string>
     getDiffAddr(
         repoName: string,
         commitName: string,
@@ -310,6 +316,11 @@ export interface IGoshWallet extends IContract {
         content: string,
     ): Promise<void>
     getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
+    getConfig(): Promise<TGoshDaoWalletConfig>
+    updateConfig(): Promise<void>
+    getWalletCount(): Promise<number>
+    deployWallet(): Promise<void>
+    destroyWallet(): Promise<void>
 }
 
 export interface IGoshRepository extends IContract {
@@ -336,6 +347,8 @@ export interface IGoshRepository extends IContract {
     getGoshAddr(): Promise<string>
     getSnapshotCode(branch: string): Promise<string>
     getSnapshotAddr(branch: string, filename: string): Promise<string>
+    getTreeAddr(treeName: string): Promise<string>
+    getDiffAddr(commitName: string, index1: number, index2: number): Promise<string>
     isBranchProtected(branch: string): Promise<boolean>
 }
 

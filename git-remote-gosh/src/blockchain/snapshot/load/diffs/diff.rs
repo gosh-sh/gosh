@@ -4,7 +4,7 @@ use std::iter::Iterator;
 pub struct Diff {
     #[serde(rename = "snap")]
     snapshot_contract_address: String,
-    commit: String,
+    pub commit: String,
     patch: Option<String>,
     pub ipfs: Option<String>,
     #[serde(rename = "sha1")]
