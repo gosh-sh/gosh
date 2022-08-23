@@ -134,14 +134,19 @@ impl<'a> CreateBranchOperation<'a> {
         Ok(())
     }
 
+    /// Run create branch operation.
+    /// Returns false if it was a branch from a commit
+    /// and true if it was the first ever branch
     #[instrument(level = "debug", skip(self))]
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn run(&mut self) -> Result<bool> {
+        let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
         self.preinit_branch().await?;
         if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
             self.push_initial_snapshots().await?;
+            is_first_branch = false;
         }
         self.wait_branch_ready().await?;
-        Ok(())
+        Ok(is_first_branch)
     }
 }

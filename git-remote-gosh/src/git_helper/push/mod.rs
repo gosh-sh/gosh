@@ -329,8 +329,14 @@ impl GitHelper {
                 branch_name,
                 &self.repo_addr,
             );
-            create_branch_op.run().await?;
-            prev_commit_id = Some(originating_commit);
+            let is_first_ever_branch = create_branch_op.run().await?;
+            prev_commit_id = {
+                if is_first_ever_branch {
+                    None
+                } else {
+                    Some(originating_commit)
+                }
+            };
         }
 
         for line in out.lines() {
@@ -359,7 +365,7 @@ impl GitHelper {
                             .await?;
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
-                                prev_commit_id.unwrap(),
+                                prev_commit_id,
                                 object_id.clone(),
                             )?;
                             for added in tree_diff.added {
