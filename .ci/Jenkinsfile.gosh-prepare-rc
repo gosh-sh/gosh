@@ -120,13 +120,15 @@ pipeline {
         stage("Prerelease: push rc Git Helper Docker image") {
             steps {
                 script {
-                    dir ('git-remote-gosh') {
-                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                            sh 'docker login -u $USERNAME -p $PASSWORD'
+                    if (params.PRERELEASE || params.RELEASE ) {
+                        dir ('git-remote-gosh') {
+                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                sh 'docker login -u $USERNAME -p $PASSWORD'
+                            }
+                            sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
+                            sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:rc-${VERSION}"
+                            sh "docker push teamgosh/git:rc-${VERSION}"
                         }
-                        sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:rc-${VERSION}"
-                        sh "docker push teamgosh/git:rc-${VERSION}"
                     }
                 }
             }   
@@ -134,13 +136,15 @@ pipeline {
         stage("Prerelease: push rc Docker Extension image") {
             steps {
                 script {
-                    dir ('docker-extension') {
-                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                            sh 'docker login -u $USERNAME -p $PASSWORD'
+                    if (params.PRERELEASE || params.RELEASE ) {
+                        dir ('docker-extension') {
+                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                                sh 'docker login -u $USERNAME -p $PASSWORD'
+                            }
+                            sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
+                            sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:rc-${VERSION}"
+                            sh "docker push teamgosh/docker-extension:rc-${VERSION}"
                         }
-                        sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:rc-${VERSION}"
-                        sh "docker push teamgosh/docker-extension:rc-${VERSION}"
                     }
                 }
             }
