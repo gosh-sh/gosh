@@ -166,14 +166,14 @@ fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
 }
 
 async fn init_user_wallet_mirrors(
-    client: &TonClient,
+    cli: &TonClient,
     wallet: GoshContract,
     max_number_of_mirrors: u32,
 ) -> Result<()> {
     let result: GetWalletMirrorsCountResult =
-        wallet.run_local(client, "getWalletsCount", None).await?;
+        wallet.run_local(&cli, "getWalletsCount", None).await?;
     for _ in 1..result.number_of_mirrors {
-        blockchain::call(client, &wallet, "deployWallet", None).await;
+        blockchain::call(&cli, &wallet, "deployWallet", None).await?;
     }
     Ok(())
 }

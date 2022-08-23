@@ -85,7 +85,15 @@ impl GitHelper {
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> Result<()> {
-        blockchain::snapshot::push_initial_snapshot(self, branch_name, file_path).await?;
+        let wallet = user_wallet(self).await?;
+        blockchain::snapshot::push_initial_snapshot(
+            &self.es_client,
+            &wallet,
+            branch_name,
+            &self.repo_addr,
+            file_path,
+        )
+        .await?;
 
         let file_diff =
             utilities::generate_blob_diff(&self.local_repository().objects, None, blob_id).await?;
@@ -310,8 +318,17 @@ impl GitHelper {
             }
             let originating_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
             let branching_point = self.get_parent_id(&originating_commit)?;
-            let mut create_branch_op =
-                CreateBranchOperation::new(branching_point, branch_name, self);
+            let wallet = user_wallet(self).await?;
+            let mut create_branch_op = CreateBranchOperation::new(
+                branching_point,
+                &self.es_client,
+                &self.ipfs_client,
+                &self.local_git_repository,
+                &self.remote.repo,
+                &wallet,
+                branch_name,
+                &self.repo_addr,
+            );
             create_branch_op.run().await?;
             prev_commit_id = Some(originating_commit);
         }

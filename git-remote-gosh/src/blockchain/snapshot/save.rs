@@ -1,15 +1,11 @@
 #![allow(unused_variables)]
-use std::borrow::Borrow;
-
 use crate::abi as gosh_abi;
 use crate::blockchain::{tvm_hash, GoshContract, TonClient};
 use crate::{
-    blockchain::{call, snapshot, user_wallet},
-    git_helper::GitHelper,
+    blockchain::{call, snapshot},
     ipfs::IpfsService,
 };
 use git_hash;
-use reqwest::multipart;
 use snapshot::Snapshot;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
@@ -348,14 +344,16 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(cli))]
 pub async fn push_initial_snapshot(
-    context: &mut GitHelper,
+    cli: &TonClient,
+    wallet: &GoshContract,
     branch_name: &str,
+    repo_addr: &str,
     file_path: &str,
 ) -> Result<()> {
     let args = DeploySnapshotParams {
-        repo_address: context.repo_addr.clone(),
+        repo_address: repo_addr.to_owned(),
         branch_name: branch_name.to_string(),
         commit_id: "".to_string(),
         file_path: file_path.to_string(),
@@ -363,15 +361,8 @@ pub async fn push_initial_snapshot(
         ipfs: None,
     };
 
-    let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(
-        &context.es_client,
-        &wallet,
-        "deployNewSnapshot",
-        Some(params),
-    )
-    .await?;
+    let result = call(&cli, &wallet, "deployNewSnapshot", Some(params)).await?;
     log::debug!("deployNewSnapshot result: {:?}", result);
     Ok(())
 }
