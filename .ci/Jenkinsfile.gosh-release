@@ -31,12 +31,9 @@ pipeline {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                             sh 'docker login -u $USERNAME -p $PASSWORD'
                         }
-                        sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:${VERSION}"
-                        sh "docker push teamgosh/git:${VERSION}"
+                        sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                         if (params.LATEST) {
-                            sh "docker tag teamgosh/git:${VERSION} teamgosh/git:latest"
-                            sh "docker push teamgosh/git:latest"
+                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:latest PLATFORM=linux/amd64,linux/arm64"
                         }
                     }
                 }
@@ -49,12 +46,9 @@ pipeline {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                             sh 'docker login -u $USERNAME -p $PASSWORD'
                         }
-                        sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:${VERSION}"
-                        sh "docker push teamgosh/docker-extension:${VERSION}"
+                        sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                         if (params.LATEST) {
-                            sh "docker tag teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:latest"
-                            sh "docker push teamgosh/docker-extension:latest"
+                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=latest PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                         }
                     }
                 }

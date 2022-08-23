@@ -65,7 +65,7 @@ build: clean_temp prepare-builder build-ui-v2 build-gosh-git-image ## Build serv
 	  .
 
 build-ci: prepare-builder build-ui-v2
-	mkdir $(LOCAL_TEMP_DIR)/gosh
+	mkdir -p $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
