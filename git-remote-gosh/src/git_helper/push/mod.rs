@@ -37,8 +37,8 @@ struct PushBlobStatistics {
 }
 
 impl PushBlobStatistics {
-    pub fn new() -> Self { 
-        Self { new_snapshots: 0, diffs: 0 } 
+    pub fn new() -> Self {
+        Self { new_snapshots: 0, diffs: 0 }
     }
 
     pub fn add(&mut self, another: &Self) {
@@ -56,8 +56,8 @@ impl GitHelper {
         next_state_blob_id: &ObjectId,
         commit_id: &ObjectId,
         branch_name: &str,
-        statistics: &mut PushBlobStatistics, 
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport 
+        statistics: &mut PushBlobStatistics,
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
     ) -> Result<()> {
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
@@ -88,8 +88,8 @@ impl GitHelper {
         blob_id: &ObjectId,
         commit_id: &ObjectId,
         branch_name: &str,
-        statistics: &mut PushBlobStatistics, 
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport 
+        statistics: &mut PushBlobStatistics,
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
     ) -> Result<()> {
         blockchain::snapshot::push_initial_snapshot(
             self,
@@ -176,9 +176,9 @@ impl GitHelper {
                     // This path is new
                     // (we're not handling renames yet)
                     self.push_new_blob(
-                        &file_path, 
-                        blob_id, 
-                        current_commit_id, 
+                        &file_path,
+                        blob_id,
+                        current_commit_id,
                         branch_name,
                         &mut statistics,
                         parallel_diffs_upload_support,
@@ -258,7 +258,7 @@ impl GitHelper {
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
         let mut ancestor_commit_id = if parsed_remote_ref == None {
-            // prev_commit_id is not filled up here. It's Ok. 
+            // prev_commit_id is not filled up here. It's Ok.
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
@@ -357,7 +357,7 @@ impl GitHelper {
                                     &mut parallel_diffs_upload_support
                                 ).await?;
                             }
-                            
+
                             for update in tree_diff.updated {
                                 self.push_blob_update(
                                     &update.1.filepath.to_string(),
@@ -370,9 +370,9 @@ impl GitHelper {
                                 )
                                 .await?;
                             }
-                            
-                            prev_commit_id = commit_id;
+
                             commit_id = Some(object_id);
+                            prev_commit_id = commit_id;
                         }
                         git_object::Kind::Blob => {
                             // Note: handled in the Commit section
@@ -389,14 +389,14 @@ impl GitHelper {
                 None => break,
             }
         }
-        parallel_diffs_upload_support.push_dangling(self).await?; 
+        parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
         // 9. Set commit (move HEAD)
         blockchain::notify_commit(
-            self, 
-            &latest_commit_id, 
-            branch_name, 
-            parallel_diffs_upload_support.get_parallels_number() 
+            self,
+            &latest_commit_id,
+            branch_name,
+            parallel_diffs_upload_support.get_parallels_number()
         ).await?;
 
         // 10. move HEAD
