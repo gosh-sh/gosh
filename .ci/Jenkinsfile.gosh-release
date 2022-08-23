@@ -14,7 +14,7 @@ pipeline {
         stage("Publish: update release") {
             steps {
                 script {
-                    env.VERSION = sh script: "echo ${TAG} | tr -d '\\-rc' | tr -d '\n'", returnStdout: true
+                    env.VERSION = sh script: "echo ${TAG} | tr -d '\n'", returnStdout: true
                     dir ('.ci/scripts') {
                         withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                             sh './update-github-release.sh $TOKEN ${VERSION} ${VERSION}'
