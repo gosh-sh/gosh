@@ -127,9 +127,7 @@ pipeline {
                             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                 sh 'docker login -u $USERNAME -p $PASSWORD'
                             }
-                            sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
-                            sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:rc-${VERSION}"
-                            sh "docker push teamgosh/git:rc-${VERSION}"
+                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
                         }
                     }
                 }
@@ -143,9 +141,7 @@ pipeline {
                             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                 sh 'docker login -u $USERNAME -p $PASSWORD'
                             }
-                            sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
-                            sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:rc-${VERSION}"
-                            sh "docker push teamgosh/docker-extension:rc-${VERSION}"
+                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                         }
                     }
                 }
