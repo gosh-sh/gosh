@@ -223,7 +223,11 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
 
         getDetails()
         const interval = setInterval(async () => {
-            await getDetails()
+            try {
+                await getDetails()
+            } catch (e: any) {
+                console.error(e.message)
+            }
         }, 5000)
 
         return () => {

@@ -426,93 +426,102 @@ export class GoshWallet implements IGoshWallet {
         const { items } = await getRepoTree(repo, branch.commitAddr)
         const updatedPaths: string[] = []
         const processedBlobs: any[] = []
-        await Promise.all(
-            blobs.map(async (blob) => {
-                const { name, modified, original, treeItem, isIpfs = false } = blob
+        for (const chunk of splitByChunk(blobs)) {
+            await Promise.all(
+                chunk.map(async (blob) => {
+                    const { name, modified, original, treeItem, isIpfs = false } = blob
 
-                // Deploy empty snapshot
-                const snap = await this.deployNewSnapshot(
-                    repo.address,
-                    branch.name,
-                    '',
-                    name,
-                    '',
-                    null,
-                )
+                    // Deploy empty snapshot
+                    const snap = await this.deployNewSnapshot(
+                        repo.address,
+                        branch.name,
+                        '',
+                        name,
+                        '',
+                        null,
+                    )
 
-                // Generate patch or upload to ipfs
-                let flags = 0
-                let patch: string = ''
-                let ipfs = null
-                if (!Buffer.isBuffer(modified) && !Buffer.isBuffer(original) && !isIpfs) {
-                    patch = getBlobDiffPatch(name, modified, original || '')
-                    patch = await zstd.compress(this.account.client, patch)
-                    patch = Buffer.from(patch, 'base64').toString('hex')
-
+                    // Generate patch or upload to ipfs
+                    let flags = 0
+                    let patch: string = ''
+                    let ipfs = null
                     if (
-                        Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE ||
-                        Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                        !Buffer.isBuffer(modified) &&
+                        !Buffer.isBuffer(original) &&
+                        !isIpfs
                     ) {
-                        const compressed = await zstd.compress(
-                            this.account.client,
-                            modified,
-                        )
-                        ipfs = await saveToIPFS(compressed)
-                        flags |= EGoshBlobFlag.IPFS
+                        patch = getBlobDiffPatch(name, modified, original || '')
+                        patch = await zstd.compress(this.account.client, patch)
+                        patch = Buffer.from(patch, 'base64').toString('hex')
+
+                        if (
+                            Buffer.from(patch, 'hex').byteLength >
+                                MAX_ONCHAIN_DIFF_SIZE ||
+                            Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                        ) {
+                            const compressed = await zstd.compress(
+                                this.account.client,
+                                modified,
+                            )
+                            ipfs = await saveToIPFS(compressed)
+                            flags |= EGoshBlobFlag.IPFS
+                        }
+
+                        flags |= EGoshBlobFlag.COMPRESSED
+                    } else {
+                        flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED
+
+                        let content = modified
+                        if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
+                        content = await zstd.compress(this.account.client, content)
+                        ipfs = await saveToIPFS(content)
                     }
 
-                    flags |= EGoshBlobFlag.COMPRESSED
-                } else {
-                    flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED
+                    const hashes = {
+                        sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
+                        sha256: ipfs
+                            ? sha256(modified, true)
+                            : await goshRoot.getTvmHash(modified),
+                    }
 
-                    let content = modified
-                    if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
-                    content = await zstd.compress(this.account.client, content)
-                    ipfs = await saveToIPFS(content)
-                }
+                    processedBlobs.push({
+                        ...blob,
+                        created: false,
+                        diff: {
+                            snap,
+                            patch: ipfs ? null : patch,
+                            ipfs,
+                            commit: '',
+                            sha1: hashes.sha1,
+                            sha256: hashes.sha256,
+                        },
+                    })
 
-                const hashes = {
-                    sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
-                    sha256: ipfs
-                        ? sha256(modified, true)
-                        : await goshRoot.getTvmHash(modified),
-                }
-
-                processedBlobs.push({
-                    ...blob,
-                    created: false,
-                    diff: {
-                        snap,
-                        patch: ipfs ? null : patch,
-                        ipfs,
-                        commit: '',
-                        sha1: hashes.sha1,
-                        sha256: hashes.sha256,
-                    },
-                })
-
-                // Update tree
-                const blobPathItems = await getTreeItemsFromPath(
-                    blob.name,
-                    hashes,
-                    flags,
-                    treeItem,
-                )
-                blobPathItems.forEach((pathItem) => {
-                    const pathIndex = updatedPaths.findIndex(
-                        (path) => path === pathItem.path,
+                    // Update tree
+                    const blobPathItems = await getTreeItemsFromPath(
+                        blob.name,
+                        hashes,
+                        flags,
+                        treeItem,
                     )
-                    if (pathIndex < 0) updatedPaths.push(pathItem.path)
+                    blobPathItems.forEach((pathItem) => {
+                        const pathIndex = updatedPaths.findIndex(
+                            (path) => path === pathItem.path,
+                        )
+                        if (pathIndex < 0) updatedPaths.push(pathItem.path)
 
-                    const itemIndex = items.findIndex(
-                        (item) =>
-                            item.path === pathItem.path && item.name === pathItem.name,
-                    )
-                    if (itemIndex >= 0) items[itemIndex] = pathItem
-                    else items.push(pathItem)
-                })
-            }),
-        )
+                        const itemIndex = items.findIndex(
+                            (item) =>
+                                item.path === pathItem.path &&
+                                item.name === pathItem.name,
+                        )
+                        if (itemIndex >= 0) items[itemIndex] = pathItem
+                        else items.push(pathItem)
+                    })
+                }),
+            )
+            await sleep(200)
+        }
         console.debug('New tree items', items)
         console.debug('Updated paths', updatedPaths)
         console.debug('Processed blobs', processedBlobs)
@@ -843,7 +852,11 @@ export class GoshWallet implements IGoshWallet {
         console.debug('Commit addr', await repo.getCommitAddr(commitName))
 
         // Deploy diffs (split by chunks)
-        for (const chunk of splitByChunk(diffs)) {
+        const chunkSize = 10
+        const chunks = splitByChunk(diffs, chunkSize)
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i]
+
             await Promise.all(
                 chunk.map(async (diff, index) => {
                     diff.commit = commitName
@@ -854,7 +867,7 @@ export class GoshWallet implements IGoshWallet {
                             branchName: branch.name,
                             commitName,
                             diffs: [diff],
-                            index1: index,
+                            index1: i * chunkSize + index,
                             index2: 0,
                             last: true,
                         },
@@ -865,7 +878,7 @@ export class GoshWallet implements IGoshWallet {
                         branchName: branch.name,
                         commitName,
                         diffs: [diff],
-                        index1: index,
+                        index1: i * chunkSize + index,
                         index2: 0,
                         last: true,
                     })
