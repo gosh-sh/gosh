@@ -166,12 +166,13 @@ async fn init_user_wallet_mirrors(
     user_wallet_contract: GoshContract,
     max_number_of_mirrors: u64
 ) -> Result<()>{
+    let n = user_wallet_config_max_number_of_mirrors(client, &user_wallet_contract).await?;
     let result: GetWalletMirrorsCountResult = user_wallet_contract.run_local(
         client,
         "getWalletsCount",
         None
     ).await?;
-    for _ in 1..result.number_of_mirrors.into() {
+    for _ in result.number_of_mirrors.into()..n {
         blockchain::call(client, user_wallet_contract.clone(), "deployWallet", None).await;
     }
     Ok(())
