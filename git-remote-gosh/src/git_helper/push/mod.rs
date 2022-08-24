@@ -247,6 +247,8 @@ impl GitHelper {
             let mut iter = local_ref.rsplit("/");
             iter.next().unwrap()
         };
+
+        let mut visitedTrees: HashSet<ObjectId> = HashSet::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
             let mut iter = remote_ref.rsplit("/");
@@ -388,7 +390,7 @@ impl GitHelper {
                         }
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
-                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
+                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id, &mut visitedTrees).await?,
                     }
                 }
                 None => break,
