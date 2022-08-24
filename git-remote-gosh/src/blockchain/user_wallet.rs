@@ -13,6 +13,8 @@ use crate::git_helper::GitHelper;
 use crate::blockchain::TonClient;
 use ton_client::crypto::KeyPair;
 
+use super::serde_number::NumberU64;
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 
@@ -31,23 +33,23 @@ struct GetAddrDaoResult {
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {
     #[serde(rename = "value0")]
-    pub max_number_of_mirror_wallets: u32,
+    pub max_number_of_mirror_wallets: NumberU64,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetWalletMirrorsCountResult {
     #[serde(rename = "value0")]
-    pub number_of_mirrors: u32,
+    pub number_of_mirrors: NumberU64,
 }
 
 // Note: it's default DAO config. Will be read from DAO in the next versions
 thread_local! {
-    static USER_WALLET_INDEX: RefCell<u32> = RefCell::new(0);
+    static USER_WALLET_INDEX: RefCell<u64> = RefCell::new(0);
 }
 
 static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 
-pub async fn get_user_wallet(client: &TonClient, dao_address: &str, pubkey: &str, secret: &str, user_wallet_index: u32)  -> Result<GoshContract> {
+pub async fn get_user_wallet(client: &TonClient, dao_address: &str, pubkey: &str, secret: &str, user_wallet_index: u64)  -> Result<GoshContract> {
     // let gosh_root_contract = GoshContract::new(
     //     gosh_root_contract_address,
     //     abi::GOSH
@@ -117,7 +119,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     let zero_wallet = zero_user_wallet(context).await?;
 
     let (user_wallet_index, max_number_of_user_wallets) = {
-        match user_wallet_config_max_number_of_mirrors (&context.es_client, &zero_wallet).await {
+        match user_wallet_config_max_number_of_mirrors(&context.es_client, &zero_wallet).await {
             Err(e) => {
                 log::warn!("user_wallet_config_max_number_of_mirrors error: {}", e);
                 return Ok(zero_wallet);
@@ -162,14 +164,14 @@ fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
 async fn init_user_wallet_mirrors(
     client: &TonClient,
     user_wallet_contract: GoshContract,
-    max_number_of_mirrors: u32
+    max_number_of_mirrors: u64
 ) -> Result<()>{
     let result: GetWalletMirrorsCountResult = user_wallet_contract.run_local(
         client,
         "getWalletsCount",
         None
     ).await?;
-    for _ in 1..result.number_of_mirrors {
+    for _ in 1..result.number_of_mirrors.into() {
         blockchain::call(client, user_wallet_contract.clone(), "deployWallet", None).await;
     }
     Ok(())
@@ -178,18 +180,18 @@ async fn init_user_wallet_mirrors(
 // Note: explicitly removing caching keys so it becomes RO global
 #[cached(
     result = true, 
-    type = "SizedCache<String, u32>", 
+    type = "SizedCache<String, u64>", 
     create = "{ SizedCache::with_size(1) }",
     convert = r#"{ "user_wallet_config_max_number_of_mirrors".to_string() }"#
 )]
 async fn user_wallet_config_max_number_of_mirrors(
     client: &TonClient, 
     user_wallet_contract: &GoshContract
-) -> Result<u32> {
+) -> Result<u64> {
     let result: GetConfigResult = user_wallet_contract.run_local(
         client, 
         "getConfig", 
         None
     ).await?;
-    Ok(result.max_number_of_mirror_wallets)
+    Ok(result.max_number_of_mirror_wallets.into())
 }
