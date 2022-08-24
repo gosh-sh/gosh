@@ -104,8 +104,7 @@ async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Resul
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId) -> Result<(), Box<dyn Error>> {
-    let mut visited = HashSet::new();
+pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId, visited: &mut HashSet<ObjectId>) -> Result<(), Box<dyn Error>> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(tree_id.clone());
     while let Some(tree_id) = to_deploy.pop_front() {
