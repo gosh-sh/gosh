@@ -63,6 +63,7 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
+    uint128 constant FEE_DEPLOY_WALLET = 60 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
