@@ -21,6 +21,8 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 mod utilities;
 mod parallel_diffs_upload_support;
 use parallel_diffs_upload_support::{
@@ -89,13 +91,15 @@ impl GitHelper {
         commit_id: &ObjectId,
         branch_name: &str,
         statistics: &mut PushBlobStatistics,
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
-    ) -> Result<()> {
-        blockchain::snapshot::push_initial_snapshot(
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
+        parallel_snapshot_uploads: &mut FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>>
+    ) -> Result<()> { 
+        let join_handler = blockchain::snapshot::push_initial_snapshot(
             self,
             branch_name,
             file_path,
         ).await?;
+        parallel_snapshot_uploads.push(join_handler);
 
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
@@ -143,7 +147,8 @@ impl GitHelper {
         prev_commit_id: &Option<ObjectId>,
         current_commit_id: &ObjectId,
         branch_name: &str,
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
+        parallel_snapshot_uploads: &mut FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>> 
     ) -> Result<PushBlobStatistics> {
         let mut statistics = PushBlobStatistics::new();
         let prev_tree_root_id: Option<ObjectId> = {
@@ -182,6 +187,7 @@ impl GitHelper {
                         branch_name,
                         &mut statistics,
                         parallel_diffs_upload_support,
+                        parallel_snapshot_uploads
                     ).await?;
                 },
                 Some(prev_state_blob_id) => {
@@ -249,6 +255,7 @@ impl GitHelper {
         };
 
         let mut visitedTrees: HashSet<ObjectId> = HashSet::new();
+        let mut parallel_snapshot_uploads: FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>> = FuturesUnordered::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
             let mut iter = remote_ref.rsplit("/");
@@ -361,7 +368,8 @@ impl GitHelper {
                                     &object_id,
                                     branch_name,
                                     &mut statistics,
-                                    &mut parallel_diffs_upload_support
+                                    &mut parallel_diffs_upload_support,
+                                    &mut parallel_snapshot_uploads
                                 ).await?;
                             }
 
@@ -398,6 +406,12 @@ impl GitHelper {
         }
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
+        while let Some(finished_task) = parallel_snapshot_uploads.next().await {
+            match finished_task {
+                Err(e) => { panic!("{}",e); },
+                Ok(result) => {}
+            }
+        }
         // 9. Set commit (move HEAD)
         blockchain::notify_commit(
             self,
