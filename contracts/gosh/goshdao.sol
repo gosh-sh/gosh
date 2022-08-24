@@ -19,7 +19,7 @@ import "../smv/TokenRootOwner.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "0.5.3";
+    string constant version = "0.9.0";
     
     uint128 _limit_wallets = 10;
     uint128 _limit_time = 100;
@@ -111,10 +111,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 30000 ton) { return; }
+        if (address(this).balance > 50000 ton) { return; }
         tvm.accept();
         _flag = true;
-        DaoCreator(_creator).sendMoneyDao{value : 0.2 ton}(_nameDao, 30000 ton);
+        DaoCreator(_creator).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
@@ -122,7 +122,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        addr.transfer(50 ton);
+        addr.transfer(100 ton);
         getMoney();
     }
     
@@ -137,7 +137,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        addr.transfer(100 ton);
+        addr.transfer(1400 ton);
         getMoney();
     }
     
@@ -152,7 +152,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        addr.transfer(80 ton);
+        addr.transfer(100 ton);
         getMoney();
     }
     
@@ -169,7 +169,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         _wallets[pubkey] = _lastAccountAddress;
         new GoshWallet {
-            stateInit: s1, value: 60 ton, wid: 0
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
         }(_creator, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,

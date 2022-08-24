@@ -7,7 +7,7 @@
 pragma ton-solidity >=0.61.2;
 
 library GoshLib {
-    string constant versionLib = "0.5.3";
+    string constant versionLib = "0.9.0";
 
     function buildSignatureCode(
         TvmCell originalCode,
