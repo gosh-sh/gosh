@@ -85,7 +85,7 @@ contract Commit is Modifiers {
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 800 ton) { return; }
+        if (address(this).balance > 1400 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
     }
