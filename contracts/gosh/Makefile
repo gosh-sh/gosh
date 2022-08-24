@@ -1,4 +1,4 @@
-tvcs = tree tag snapshot repository goshwallet goshdao goshconfig gosh diff daocreator commit content-signature
+tvcs = tree tag snapshot repository goshwallet goshdao gosh diff daocreator commit content-signature
 KEYS_PATH = ${CURDIR}
 clean:
 	rm -f *.tvc *.abi.json

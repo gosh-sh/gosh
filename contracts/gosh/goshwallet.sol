@@ -38,7 +38,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _ ;
     }
 
-    string constant version = "0.5.3";
+    string constant version = "0.9.0";
 
     address _creator;
     uint256 static _rootRepoPubkey;
