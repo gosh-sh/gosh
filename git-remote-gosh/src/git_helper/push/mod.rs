@@ -21,6 +21,7 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
+use tokio::task::JoinError;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 mod utilities;
@@ -407,9 +408,11 @@ impl GitHelper {
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
         while let Some(finished_task) = parallel_snapshot_uploads.next().await {
+            let finished_task: std::result::Result<std::result::Result<(), std::string::String>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => { panic!("{}",e); },
-                Ok(result) => {}
+                Ok(Err(e)) => { panic!("{}",e)},
+                Ok(Ok(_)) => {}
             }
         }
         // 9. Set commit (move HEAD)
