@@ -16,7 +16,7 @@ import "content-signature.sol";
 
 /* Root contract of gosh */
 contract Gosh is Modifiers, Upgradable {
-    string constant version = "0.9.0";
+    string constant version = "0.10.0";
 
     address _creator;
     TvmCell m_RepositoryCode;
