@@ -301,6 +301,7 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
+
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
     context: &mut GitHelper,
@@ -350,12 +351,12 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
     context: &mut GitHelper,
     branch_name: &str,
     file_path: &str,
-) -> Result<()> {
+) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
     let args = DeploySnapshotParams {
         repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
@@ -364,16 +365,20 @@ pub async fn push_initial_snapshot(
         content: "".to_string(),
         ipfs: None,
     };
-
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(
-        &context.es_client,
-        wallet,
-        "deployNewSnapshot",
-        Some(params),
-    )
-    .await?;
-    log::debug!("deployNewSnapshot result: {:?}", result);
-    Ok(())
+    let es_client = context.es_client.clone();
+    Ok(tokio::spawn(async move {
+        let result = call(
+            &es_client,
+            wallet,
+            "deployNewSnapshot",
+            Some(params),
+        )
+        .await
+        .map_err(|e| e.description().to_string())
+        .and_then(|e| Ok(()));
+        log::debug!("deployNewSnapshot result: {:?}", result);
+        result
+    }))
 }
