@@ -410,8 +410,8 @@ impl GitHelper {
         while let Some(finished_task) = parallel_snapshot_uploads.next().await {
             let finished_task: std::result::Result<std::result::Result<(), std::string::String>, JoinError> = finished_task;
             match finished_task {
-                Err(e) => { panic!("{}",e); },
-                Ok(Err(e)) => { panic!("{}",e)},
+                Err(e) => { panic!("snapshots join-hanlder: {}",e); },
+                Ok(Err(e)) => { panic!("snapshots inner: {}",e)},
                 Ok(Ok(_)) => {}
             }
         }
