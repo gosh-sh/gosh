@@ -11,6 +11,7 @@ use reqwest::multipart;
 use snapshot::Snapshot;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
+const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -197,7 +198,7 @@ pub async fn push_diff(
                 std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };
-        result.map_err(|e| e.description().to_string())
+        result.map_err(|e| e.to_string())
     }));
 }
 
@@ -301,6 +302,7 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
+
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
     context: &mut GitHelper,
@@ -350,12 +352,12 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
     context: &mut GitHelper,
     branch_name: &str,
     file_path: &str,
-) -> Result<()> {
+) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
     let args = DeploySnapshotParams {
         repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
@@ -364,16 +366,33 @@ pub async fn push_initial_snapshot(
         content: "".to_string(),
         ipfs: None,
     };
-
+    let branch_name = branch_name.to_string();
+    let file_path = file_path.to_string();
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(
-        &context.es_client,
-        wallet,
-        "deployNewSnapshot",
-        Some(params),
-    )
-    .await?;
-    log::debug!("deployNewSnapshot result: {:?}", result);
-    Ok(())
+    let es_client = context.es_client.clone();
+    Ok(tokio::spawn(async move {
+        let mut attempt = 0;
+        let result = loop {
+            attempt += 1;
+            let result = call(
+                &es_client,
+                wallet.clone(),
+                "deployNewSnapshot",
+                Some(params.clone()),
+            )
+            .await
+            .map_err(|e| e.to_string())
+            .and_then(|e| Ok(()));
+
+            if result.is_ok() || attempt > PUSH_SNAPSHOT_MAX_TRIES {
+                break result;
+            } else {
+                log::debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
+                std::thread::sleep(std::time::Duration::from_secs(5));
+            }
+        };
+        log::debug!("deployNewSnapshot <branch: {branch_name}, path: {file_path}> result: {:?}", result);
+        result
+    }))
 }

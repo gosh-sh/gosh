@@ -122,11 +122,11 @@ const BlobUpdatePage = () => {
                     </div>
                 )}
             </div>
-            {monaco && blob.path && blob.content && (
+            {monaco && blob.path && !blob.isFetching && (
                 <Formik
                     initialValues={{
                         name: splitByPath(blob.path)[1],
-                        content: blob.content.toString(),
+                        content: blob.content ? blob.content.toString() : '',
                         title: '',
                         message: '',
                         tags: '',

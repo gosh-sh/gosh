@@ -14,7 +14,7 @@ pipeline {
         stage("Publish: update release") {
             steps {
                 script {
-                    env.VERSION = sh script: "echo ${TAG} | tr -d '\\-rc' | tr -d '\n'", returnStdout: true
+                    env.VERSION = sh script: "echo ${TAG} | tr -d '\n'", returnStdout: true
                     dir ('.ci/scripts') {
                         withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                             sh './update-github-release.sh $TOKEN ${VERSION} ${VERSION}'
@@ -31,12 +31,10 @@ pipeline {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                             sh 'docker login -u $USERNAME -p $PASSWORD'
                         }
-                        sh "docker pull localhost:5000/teamgosh/git:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/git:${VERSION} teamgosh/git:${VERSION}"
-                        sh "docker push teamgosh/git:${VERSION}"
                         if (params.LATEST) {
-                            sh "docker tag teamgosh/git:${VERSION} teamgosh/git:latest"
-                            sh "docker push teamgosh/git:latest"
+                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--tag=teamgosh/git:latest' PLATFORM=linux/amd64,linux/arm64"
+                        } else {
+                            sh "make publish FULL_IMAGE_NAME=teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                         }
                     }
                 }
@@ -49,12 +47,10 @@ pipeline {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                             sh 'docker login -u $USERNAME -p $PASSWORD'
                         }
-                        sh "docker pull localhost:5000/teamgosh/docker-extension:${VERSION}"
-                        sh "docker tag localhost:5000/teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:${VERSION}"
-                        sh "docker push teamgosh/docker-extension:${VERSION}"
                         if (params.LATEST) {
-                            sh "docker tag teamgosh/docker-extension:${VERSION} teamgosh/docker-extension:latest"
-                            sh "docker push teamgosh/docker-extension:latest"
+                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} DOCKER_BUILDX_ARGS='--tag=teamgosh/docker-extension:latest' PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                        } else {
+                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                         }
                     }
                 }

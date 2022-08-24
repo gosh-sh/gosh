@@ -14,6 +14,11 @@ pub struct Number(u8);
 #[serde(transparent)]
 pub struct NumberU64(u64);
 
+impl Into <u64> for NumberU64{
+    fn into(self) -> u64 {
+        self.0
+    }
+}
 
 impl<'de> Deserialize<'de> for Number {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

@@ -111,8 +111,9 @@ impl ParallelDiffsUploadSupport {
         log::debug!("Expecting the following diff contracts to be deployed: {:?}", self.expecting_deployed_contacts_addresses);
         while let Some(finished_task) = self.pushed_blobs.next().await {
             match finished_task {
-                Err(e) => { panic!("{}",e); },
-                Ok(result) => {}
+                Err(e) => { panic!("diffs joih-handler: {}",e); },
+                Ok(Err(e)) => {panic!("diffs inner: {}", e); },
+                Ok(Ok(_)) => {}
             }
         }
         let mut attempt = 0;

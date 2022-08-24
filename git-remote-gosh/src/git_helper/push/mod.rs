@@ -21,6 +21,9 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
+use tokio::task::JoinError;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 mod utilities;
 mod parallel_diffs_upload_support;
 use parallel_diffs_upload_support::{
@@ -37,8 +40,8 @@ struct PushBlobStatistics {
 }
 
 impl PushBlobStatistics {
-    pub fn new() -> Self { 
-        Self { new_snapshots: 0, diffs: 0 } 
+    pub fn new() -> Self {
+        Self { new_snapshots: 0, diffs: 0 }
     }
 
     pub fn add(&mut self, another: &Self) {
@@ -56,8 +59,8 @@ impl GitHelper {
         next_state_blob_id: &ObjectId,
         commit_id: &ObjectId,
         branch_name: &str,
-        statistics: &mut PushBlobStatistics, 
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport 
+        statistics: &mut PushBlobStatistics,
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
     ) -> Result<()> {
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
@@ -88,14 +91,16 @@ impl GitHelper {
         blob_id: &ObjectId,
         commit_id: &ObjectId,
         branch_name: &str,
-        statistics: &mut PushBlobStatistics, 
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport 
-    ) -> Result<()> {
-        blockchain::snapshot::push_initial_snapshot(
+        statistics: &mut PushBlobStatistics,
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
+        parallel_snapshot_uploads: &mut FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>>
+    ) -> Result<()> { 
+        let join_handler = blockchain::snapshot::push_initial_snapshot(
             self,
             branch_name,
             file_path,
         ).await?;
+        parallel_snapshot_uploads.push(join_handler);
 
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
@@ -143,7 +148,8 @@ impl GitHelper {
         prev_commit_id: &Option<ObjectId>,
         current_commit_id: &ObjectId,
         branch_name: &str,
-        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
+        parallel_snapshot_uploads: &mut FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>> 
     ) -> Result<PushBlobStatistics> {
         let mut statistics = PushBlobStatistics::new();
         let prev_tree_root_id: Option<ObjectId> = {
@@ -176,12 +182,13 @@ impl GitHelper {
                     // This path is new
                     // (we're not handling renames yet)
                     self.push_new_blob(
-                        &file_path, 
-                        blob_id, 
-                        current_commit_id, 
+                        &file_path,
+                        blob_id,
+                        current_commit_id,
                         branch_name,
                         &mut statistics,
                         parallel_diffs_upload_support,
+                        parallel_snapshot_uploads
                     ).await?;
                 },
                 Some(prev_state_blob_id) => {
@@ -247,6 +254,9 @@ impl GitHelper {
             let mut iter = local_ref.rsplit("/");
             iter.next().unwrap()
         };
+
+        let mut visitedTrees: HashSet<ObjectId> = HashSet::new();
+        let mut parallel_snapshot_uploads: FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), String>>> = FuturesUnordered::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
             let mut iter = remote_ref.rsplit("/");
@@ -257,11 +267,16 @@ impl GitHelper {
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
-        let mut ancestor_commit_id = if parsed_remote_ref == None {
+        let mut ancestor_commit_id = if parsed_remote_ref.is_none() {
             // prev_commit_id is not filled up here. It's Ok. 
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
+            let is_protected =
+                blockchain::is_branch_protected(&self.es_client, &self.repo_addr, remote_branch_name).await?;
+            if is_protected {
+                return Err("This branch '{branch_name}' is protected. Go to app.gosh.sh and create a proposal to apply this branch change.".into());
+            }
             let remote_commit_addr = parsed_remote_ref.clone().unwrap();
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?
@@ -354,10 +369,11 @@ impl GitHelper {
                                     &object_id,
                                     branch_name,
                                     &mut statistics,
-                                    &mut parallel_diffs_upload_support
+                                    &mut parallel_diffs_upload_support,
+                                    &mut parallel_snapshot_uploads
                                 ).await?;
                             }
-                            
+
                             for update in tree_diff.updated {
                                 self.push_blob_update(
                                     &update.1.filepath.to_string(),
@@ -370,9 +386,9 @@ impl GitHelper {
                                 )
                                 .await?;
                             }
-                            
-                            prev_commit_id = commit_id;
+
                             commit_id = Some(object_id);
+                            prev_commit_id = commit_id;
                         }
                         git_object::Kind::Blob => {
                             // Note: handled in the Commit section
@@ -383,20 +399,28 @@ impl GitHelper {
                         }
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
-                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id).await?,
+                        git_object::Kind::Tree => blockchain::push_tree(self, &object_id, &mut visitedTrees).await?,
                     }
                 }
                 None => break,
             }
         }
-        parallel_diffs_upload_support.push_dangling(self).await?; 
+        parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
+        while let Some(finished_task) = parallel_snapshot_uploads.next().await {
+            let finished_task: std::result::Result<std::result::Result<(), std::string::String>, JoinError> = finished_task;
+            match finished_task {
+                Err(e) => { panic!("snapshots join-hanlder: {}",e); },
+                Ok(Err(e)) => { panic!("snapshots inner: {}",e)},
+                Ok(Ok(_)) => {}
+            }
+        }
         // 9. Set commit (move HEAD)
         blockchain::notify_commit(
-            self, 
-            &latest_commit_id, 
-            branch_name, 
-            parallel_diffs_upload_support.get_parallels_number() 
+            self,
+            &latest_commit_id,
+            branch_name,
+            parallel_diffs_upload_support.get_parallels_number()
         ).await?;
 
         // 10. move HEAD
@@ -406,15 +430,15 @@ impl GitHelper {
     }
 
     #[instrument(level = "debug", skip(self))]
-    pub async fn push(&mut self, refs: &str) -> Result<Vec<String>> {
+    pub async fn push(&mut self, refs: &str) -> Result<String> {
         let splitted: Vec<&str> = refs.split(":").collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
             [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
-
-        Ok(vec![result])
+        log::debug!("push ref result: {result}");
+        Ok(result)
     }
 }
 

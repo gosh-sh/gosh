@@ -232,19 +232,19 @@ const PullCreatePage = () => {
                 throw new GoshError(EGoshError.PR_NO_MERGE)
 
             // Prepare blobs
-            const blobs = compare.map(({ from, to }) => {
-                if (!from.item || !from.blob.content)
-                    throw new GoshError(EGoshError.FILE_EMPTY)
-                return {
-                    name: `${from.item.path ? `${from.item.path}/` : ''}${
-                        from.item.name
-                    }`,
-                    modified: from.blob.content ?? '',
-                    original: to?.blob.content,
-                    isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
-                    treeItem: from.item,
-                }
-            })
+            const blobs = compare
+                .filter(({ from }) => !!from.item)
+                .map(({ from, to }) => {
+                    return {
+                        name: `${from.item.path ? `${from.item.path}/` : ''}${
+                            from.item.name
+                        }`,
+                        modified: from.blob.content ?? '',
+                        original: to?.blob.content,
+                        isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
+                        treeItem: from.item,
+                    }
+                })
             console.debug('Blobs', blobs)
 
             if (branchTo.isProtected) {

@@ -18,7 +18,7 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of Commit */
 contract Commit is Modifiers {
-    string constant version = "0.5.3";
+    string constant version = "0.10.0";
     
     uint256 _pubkey;
     address _rootRepo;
@@ -85,7 +85,7 @@ contract Commit is Modifiers {
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 80 ton) { return; }
+        if (address(this).balance > 1400 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
     }
