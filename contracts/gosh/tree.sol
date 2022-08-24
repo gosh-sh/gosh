@@ -124,7 +124,7 @@ contract Tree is Modifiers {
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 80 ton) { return; }
+        if (address(this).balance > 100 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
     }
