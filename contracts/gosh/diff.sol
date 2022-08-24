@@ -19,7 +19,7 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "0.9.0";
+    string constant version = "0.10.0";
     
     uint128 static _index1;
     uint128 static _index2;
@@ -269,7 +269,7 @@ contract DiffC is Modifiers {
     
     function checkSender(uint128 index, address sender) public view senderIs(address(this)) {
         if (index >= _diff.length) { return; }
-        if (_diff[index].snap == sender) { this.cancelCommit{value: 0.1 ton, flag: 1}(); return; }
+        if (_diff[index].snap == sender) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1); return; }
         this.checkSender{value: 0.2 ton, flag: 1}(index + 1, msg.sender);
     }
     

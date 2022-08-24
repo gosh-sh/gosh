@@ -16,7 +16,7 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string version = "0.9.0";
+    string version = "0.10.0";
     
     string _baseCommit;
     string _basemaybe = "";

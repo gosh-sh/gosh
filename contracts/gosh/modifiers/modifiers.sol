@@ -49,7 +49,7 @@ struct GlobalConfig {
 }
 
 abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.9.0";
+    string constant versionModifiers = "0.10.0";
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
