@@ -43,7 +43,7 @@ async fn convert_snapshot_into_blob(
         Some(_) => ipfs_data,
     };
 
-    log::info!("got: {:?}", raw_data);
+    // log::info!("got: {:?}", raw_data);
 
     let data = git_object::Data::new(git_object::Kind::Blob, &raw_data);
     let obj = git_object::Object::from(data.decode()?);

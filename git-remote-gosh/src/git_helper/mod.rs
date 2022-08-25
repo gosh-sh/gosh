@@ -55,12 +55,12 @@ impl GitHelper {
     }
 
     pub async fn calculate_tree_address(
-        &self,
+        &mut self,
         tree_id: git_hash::ObjectId,
     ) -> Result<String, Box<dyn Error>> {
         Tree::calculate_address(
             &self.es_client,
-            self.repo_addr.as_str(),
+            &mut self.repo_contract,
             &tree_id.to_string(),
         )
         .await

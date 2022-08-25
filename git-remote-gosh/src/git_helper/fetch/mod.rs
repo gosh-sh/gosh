@@ -118,7 +118,7 @@ impl GitHelper {
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let address = blockchain::Tree::calculate_address(
                     &self.es_client,
-                    &self.repo_addr,
+                    &mut self.repo_contract,
                     &tree_object_id,
                 )
                 .await?;
