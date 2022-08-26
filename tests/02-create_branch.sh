@@ -2,7 +2,9 @@
 set -e
 
 REPO_NAME=repo2
-[ -d $REPO_NAME ] && rm -rf $REPO_NAME
+
+[ -d $REPO_NAME ] && rm -rf $REPO_NAME 
+[ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 
 # create repo
 WALLET_ABI=../contracts/gosh/goshwallet.abi.json
@@ -46,4 +48,5 @@ DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
     DIFF_STATUS=0
 fi
+
 exit $DIFF_STATUS
