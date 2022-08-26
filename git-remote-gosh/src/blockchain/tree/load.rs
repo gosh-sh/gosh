@@ -35,15 +35,14 @@ struct GetTreeResult {
 impl Tree {
     pub async fn calculate_address(
         context: &TonClient,
-        repository_address: &str,
+        repo_contract: &mut GoshContract,
         tree_obj_sha1: &str,
     ) -> Result<String, Box<dyn Error>> {
-        let repo_contract = GoshContract::new(repository_address, gosh_abi::REPO);
         let params = serde_json::json!({
             "treeName": tree_obj_sha1
         });
         let result: GetTreeResult = repo_contract
-            .run_local(context, "getTreeAddr", Some(params))
+            .run_static(context, "getTreeAddr", Some(params))
             .await?;
         return Ok(result.address);
     }
