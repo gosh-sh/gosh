@@ -1,5 +1,7 @@
 #!/bin/bash
 # start after deploy.sh
+set -e 
+set -o pipefail
 
 export NETWORK=vps23.ton.dev
 

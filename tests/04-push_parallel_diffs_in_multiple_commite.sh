@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+set -e 
+set -o pipefail
 
 # create repo
 REPO_NAME=repo4

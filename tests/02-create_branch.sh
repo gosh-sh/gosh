@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+set -e 
+set -o pipefail
 
 REPO_NAME=repo2
 
