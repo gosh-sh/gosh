@@ -21,8 +21,6 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
-DOCKER_BUILDX_ARGS ?= 
-
 .PHONY: clear_screen
 clear_screen:
 	-clear && printf '\e[3J'
@@ -40,6 +38,10 @@ copy_abi: clear_abi
 build: copy_abi clear_screen
 	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
 
+.PHONY: install
+install: copy_abi clear_screen
+	cargo install --path .
+
 .PHONY: test
 test: copy_abi clear_screen
 	cargo test
@@ -54,6 +56,7 @@ prepare-builder: qemu ## prepare docker buildx builder
 	@echo === prepare-builder
 	( ${DOCKER} buildx inspect ${DOCKER_BUILDER_NAME} ) || ${DOCKER} buildx create \
 		--name ${DOCKER_BUILDER_NAME} \
+		${DOCKER_BUILDER_ARGS} \
 		--driver docker-container
 
 .PHONY: bench
@@ -76,6 +79,7 @@ publish: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile \
 		.
@@ -88,6 +92,7 @@ publish-alpine: copy_abi prepare-builder
 		--progress=plain \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME}-alpine \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile.alpine \
 		.

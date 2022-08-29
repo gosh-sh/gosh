@@ -40,6 +40,7 @@ import {
     getPaginatedAccounts,
     splitByChunk,
     goshRoot,
+    sha256,
 } from './helpers'
 import {
     IGoshTree,
@@ -178,14 +179,6 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getTreeAddr(repoAddr: string, treeHash: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            repo: repoAddr,
-            treeName: treeHash,
-        })
-        return result.decoded?.output.value0
-    }
-
     async getSmvPlatformCode(): Promise<string> {
         const result = await this.account.runLocal('getSMVPlatformCode', {})
         return result.decoded?.output.value0
@@ -304,20 +297,34 @@ export class GoshDao extends BaseContract implements IGoshDao {
 
     async mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void> {
         const tokenRoot = await this.getSmvRootTokenAddr()
-        await this.run(
-            'mint',
-            {
-                tokenRoot,
-                amount,
-                recipient,
-                deployWalletValue: 0,
-                remainingGasTo: this.address,
-                notify: true,
-                payload: '',
-            },
+        await this.run('mint', {
+            tokenRoot,
+            amount,
+            recipient,
+            deployWalletValue: 0,
+            remainingGasTo: this.address,
+            notify: true,
+            payload: '',
+        })
+    }
+
+    async getConfig(): Promise<TGoshDaoWalletConfig> {
+        const result = await this.account.runLocal('getConfig', {})
+        const decoded = result.decoded?.output
+        return {
+            wallets: decoded.value0,
+            // time: decoded.value1,
+            // messages: decoded.value2,
+        }
+    }
+
+    async setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void> {
+        await this.account.run(
+            'setConfig',
             {
                 signer: signerKeys(daoOwnerKeys),
             },
+            { signer: signerKeys(daoOwnerKeys) },
         )
     }
 }
@@ -389,83 +396,102 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         const { items } = await getRepoTree(repo, branch.commitAddr)
         const updatedPaths: string[] = []
         const processedBlobs: any[] = []
-        await Promise.all(
-            blobs.map(async (blob) => {
-                const { name, modified, original, treeItem, isIpfs = false } = blob
+        for (const chunk of splitByChunk(blobs)) {
+            await Promise.all(
+                chunk.map(async (blob) => {
+                    const { name, modified, original, treeItem, isIpfs = false } = blob
 
-                // Deploy empty snapshot
-                const snap = await this.deployNewSnapshot(
-                    repo.address,
-                    branch.name,
-                    '',
-                    name,
-                    '',
-                    null,
-                )
+                    // Deploy empty snapshot
+                    const snap = await this.deployNewSnapshot(
+                        repo.address,
+                        branch.name,
+                        '',
+                        name,
+                        '',
+                        null,
+                    )
 
-                // Generate patch or upload to ipfs
-                let flags = 0
-                let patch: string = ''
-                let ipfs = null
-                if (!Buffer.isBuffer(modified) && !Buffer.isBuffer(original) && !isIpfs) {
-                    patch = getBlobDiffPatch(name, modified, original || '')
-                    patch = await zstd.compress(this.account.client, patch)
-                    patch = Buffer.from(patch, 'base64').toString('hex')
+                    // Generate patch or upload to ipfs
+                    let flags = 0
+                    let patch: string = ''
+                    let ipfs = null
+                    if (
+                        !Buffer.isBuffer(modified) &&
+                        !Buffer.isBuffer(original) &&
+                        !isIpfs
+                    ) {
+                        patch = getBlobDiffPatch(name, modified, original || '')
+                        patch = await zstd.compress(this.account.client, patch)
+                        patch = Buffer.from(patch, 'base64').toString('hex')
 
-                    if (Buffer.from(patch, 'hex').byteLength > MAX_ONCHAIN_DIFF_SIZE) {
-                        const compressed = await zstd.compress(
-                            this.account.client,
-                            modified,
-                        )
-                        ipfs = await saveToIPFS(compressed)
-                        flags |= EGoshBlobFlag.IPFS
+                        if (
+                            Buffer.from(patch, 'hex').byteLength >
+                                MAX_ONCHAIN_DIFF_SIZE ||
+                            Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                        ) {
+                            const compressed = await zstd.compress(
+                                this.account.client,
+                                modified,
+                            )
+                            ipfs = await saveToIPFS(compressed)
+                            flags |= EGoshBlobFlag.IPFS
+                        }
+
+                        flags |= EGoshBlobFlag.COMPRESSED
+                    } else {
+                        flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED
+
+                        let content = modified
+                        if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
+                        content = await zstd.compress(this.account.client, content)
+                        ipfs = await saveToIPFS(content)
                     }
 
-                    flags |= EGoshBlobFlag.COMPRESSED
-                } else {
-                    flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED
+                    const hashes = {
+                        sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
+                        sha256: ipfs
+                            ? sha256(modified, true)
+                            : await goshRoot.getTvmHash(modified),
+                    }
 
-                    let content = modified
-                    if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
-                    content = await zstd.compress(this.account.client, content)
-                    ipfs = await saveToIPFS(content)
-                }
+                    processedBlobs.push({
+                        ...blob,
+                        created: false,
+                        diff: {
+                            snap,
+                            patch: ipfs ? null : patch,
+                            ipfs,
+                            commit: '',
+                            sha1: hashes.sha1,
+                            sha256: hashes.sha256,
+                        },
+                    })
 
-                processedBlobs.push({
-                    ...blob,
-                    created: false,
-                    diff: {
-                        snap,
-                        patch: ipfs ? null : patch,
-                        ipfs,
-                        commit: '',
-                        sha1: sha1(modified, 'blob', 'sha1'),
-                        sha256: await goshRoot.getTvmHash(modified),
-                    },
-                })
-
-                // Update tree
-                const blobPathItems = await getTreeItemsFromPath(
-                    blob.name,
-                    blob.modified,
-                    flags,
-                    treeItem,
-                )
-                blobPathItems.forEach((pathItem) => {
-                    const pathIndex = updatedPaths.findIndex(
-                        (path) => path === pathItem.path,
+                    // Update tree
+                    const blobPathItems = await getTreeItemsFromPath(
+                        blob.name,
+                        hashes,
+                        flags,
+                        treeItem,
                     )
-                    if (pathIndex < 0) updatedPaths.push(pathItem.path)
+                    blobPathItems.forEach((pathItem) => {
+                        const pathIndex = updatedPaths.findIndex(
+                            (path) => path === pathItem.path,
+                        )
+                        if (pathIndex < 0) updatedPaths.push(pathItem.path)
 
-                    const itemIndex = items.findIndex(
-                        (item) =>
-                            item.path === pathItem.path && item.name === pathItem.name,
-                    )
-                    if (itemIndex >= 0) items[itemIndex] = pathItem
-                    else items.push(pathItem)
-                })
-            }),
-        )
+                        const itemIndex = items.findIndex(
+                            (item) =>
+                                item.path === pathItem.path &&
+                                item.name === pathItem.name,
+                        )
+                        if (itemIndex >= 0) items[itemIndex] = pathItem
+                        else items.push(pathItem)
+                    })
+                }),
+            )
+            await sleep(200)
+        }
         console.debug('New tree items', items)
         console.debug('Updated paths', updatedPaths)
         console.debug('Processed blobs', processedBlobs)
@@ -474,10 +500,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         const updatedTree = getTreeFromItems(items)
         calculateSubtrees(updatedTree)
         const updatedTreeRootSha = sha1Tree(updatedTree[''], 'sha1')
-        const updatedTreeRootAddr = await this.getTreeAddr(
-            repo.address,
-            updatedTreeRootSha,
-        )
+        const updatedTreeRootAddr = await repo.getTreeAddr(updatedTreeRootSha)
         !!callback && callback({ diffsPrepare: true, treePrepare: true })
         console.debug('Updated tree', updatedTree)
 
@@ -664,15 +687,18 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 chunk.map(async (item) => {
                     if (!item) return
                     const { snap, name, treeItem } = item
-                    const { content } = await snap.getSnapshot(fromCommit, treeItem)
+                    const { content, isIpfs } = await snap.getSnapshot(
+                        fromCommit,
+                        treeItem,
+                    )
 
                     let ipfs = null
                     let snapdata = ''
                     const compressed = await zstd.compress(this.account.client, content)
                     if (
+                        isIpfs ||
                         Buffer.isBuffer(content) ||
-                        Buffer.from(compressed, 'base64').byteLength >=
-                            MAX_ONCHAIN_FILE_SIZE
+                        Buffer.from(content).byteLength >= MAX_ONCHAIN_FILE_SIZE
                     ) {
                         ipfs = await saveToIPFS(compressed)
                     } else {
@@ -792,7 +818,11 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         console.debug('Commit addr', await repo.getCommitAddr(commitName))
 
         // Deploy diffs (split by chunks)
-        for (const chunk of splitByChunk(diffs)) {
+        const chunkSize = 10
+        const chunks = splitByChunk(diffs, chunkSize)
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i]
+
             await Promise.all(
                 chunk.map(async (diff, index) => {
                     diff.commit = commitName
@@ -803,18 +833,18 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                             branchName: branch.name,
                             commitName,
                             diffs: [diff],
-                            index1: index,
+                            index1: i * chunkSize + index,
                             index2: 0,
                             last: true,
                         },
-                        await this.getDiffAddr(repoName, commitName, index, 0),
+                        await repo.getDiffAddr(commitName, index, 0),
                     )
                     await this.run('deployDiff', {
                         repoName,
                         branchName: branch.name,
                         commitName,
                         diffs: [diff],
-                        index1: index,
+                        index1: i * chunkSize + index,
                         index2: 0,
                         last: true,
                     })
@@ -854,7 +884,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         }
 
         // Check if not deployed
-        const addr = await this.getTreeAddr(repo.address, sha)
+        const addr = await repo.getTreeAddr(sha)
         console.debug('Tree addr', addr)
         const blob = new GoshTree(this.account.client, addr)
         const blobAcc = await blob.account.getAccount()
@@ -1043,15 +1073,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             repoName,
             branchName,
         })
-    }
-
-    async getTreeAddr(repoAddr: string, treeName: string): Promise<string> {
-        const result = await this.account.runLocal('getTreeAddr', {
-            commit: '',
-            repo: repoAddr,
-            treeName,
-        })
-        return result.decoded?.output.value0
     }
 
     async getDiffAddr(
@@ -1329,6 +1350,26 @@ export class GoshRepository extends BaseContract implements IGoshRepository {
         const result = await this.account.runLocal('getSnapshotAddr', {
             branch,
             name: filename,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getTreeAddr(treeName: string): Promise<string> {
+        const result = await this.account.runLocal('getTreeAddr', {
+            treeName,
+        })
+        return result.decoded?.output.value0
+    }
+
+    async getDiffAddr(
+        commitName: string,
+        index1: number,
+        index2: number,
+    ): Promise<string> {
+        const result = await this.account.runLocal('getDiffAddr', {
+            commitName,
+            index1,
+            index2,
         })
         return result.decoded?.output.value0
     }

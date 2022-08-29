@@ -37,10 +37,10 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     let object_type = odb_object.kind();
 
     if object_type == ObjectType::Blob {
-        eprintln!("unsupported type: {} (sha: {})", object_type, sha);
+        log::debug!("unsupported type: {} (sha: {})", object_type, sha);
         None
     } else if object_type == ObjectType::Tag {
-        eprintln!("unsupported type: {} (sha: {})", object_type, sha);
+        log::debug!("unsupported type: {} (sha: {})", object_type, sha);
         None
     } else if object_type == ObjectType::Tree {
         eprintln!("unsupported type: {} (sha: {})", object_type, sha);

@@ -58,17 +58,16 @@ impl Snapshot {
     #[instrument(level = "debug", skip(context))]
     pub async fn calculate_address(
         context: &TonClient,
-        repository_address: &str,
+        repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
     ) -> Result<String, Box<dyn Error>> {
-        let repo = GoshContract::new(repository_address, gosh_abi::REPO);
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
         });
-        let result: GetSnapshotAddrResult = repo
-            .run_local(context, "getSnapshotAddr", Some(params))
+        let result: GetSnapshotAddrResult = repo_contract
+            .run_static(context, "getSnapshotAddr", Some(params))
             .await?;
         return Ok(result.address);
     }
@@ -109,7 +108,7 @@ where
                 // It is certainly not a hex string
                 return Err(E::custom("Not a hex string"));
             } else if v.len() == 0 {
-                return Err(E::custom("Empty string"));
+                return Ok(vec![]);
             }
             let compressed_data: Vec<u8> = (0..v.len())
                 .step_by(2)

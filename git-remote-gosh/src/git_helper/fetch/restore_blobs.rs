@@ -21,7 +21,9 @@ async fn load_data_from_ipfs(
     ipfs_address: &str,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let ipfs_data = ipfs_client.load(&ipfs_address).await?;
-    let data = base64::decode(ipfs_data)?;
+    let compressed_data = base64::decode(ipfs_data)?;
+    let data = ton_client::utils::decompress_zstd(&compressed_data)?;
+    
     return Ok(data);
 }
 
@@ -41,7 +43,7 @@ async fn convert_snapshot_into_blob(
         Some(_) => ipfs_data,
     };
 
-    log::info!("got: {:?}", raw_data);
+    // log::info!("got: {:?}", raw_data);
 
     let data = git_object::Data::new(git_object::Kind::Blob, &raw_data);
     let obj = git_object::Object::from(data.decode()?);
@@ -191,7 +193,7 @@ impl BlobsRebuildingPlan {
             let mut messages =
                 blockchain::snapshot::diffs::DiffMessagesIterator::new(
                     snapshot_address,
-                    git_helper.repo_addr.clone()
+                    &mut git_helper.repo_contract
                 );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);

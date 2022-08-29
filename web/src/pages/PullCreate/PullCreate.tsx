@@ -12,7 +12,6 @@ import {
 } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { getCodeLanguageFromFilename, getRepoTree } from 'react-gosh'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
@@ -30,9 +29,16 @@ import {
     TGoshBranch,
     TGoshTreeItem,
     userStateAtom,
+    getCodeLanguageFromFilename,
+    getRepoTree,
+    splitByChunk,
+    EGoshError,
+    GoshError,
+    GoshCommit,
+    GoshSnapshot,
+    sleep,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
-import { EGoshError, GoshError, GoshCommit, GoshSnapshot } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
 
@@ -151,49 +157,61 @@ const PullCreatePage = () => {
                     showDiff?: boolean
                 }[] = []
 
-                await Promise.all(
-                    intersected.map(async (item) => {
-                        const from = fromTreeItems.find(
-                            (fItem) =>
-                                fItem.path === item.path && fItem.name === item.name,
-                        )
-                        const to = toTreeItems.find(
-                            (tItem) =>
-                                tItem.path === item.path && tItem.name === item.name,
-                        )
-                        if (from && to) {
-                            const fromBlob = await getBlob(wallet, repo, branchFrom, from)
-                            const toBlob = await getBlob(wallet, repo, branchTo, to)
-                            compare.push({
-                                to: { item: to, blob: toBlob },
-                                from: { item: from, blob: fromBlob },
-                                showDiff:
-                                    compare.length < 10 ||
-                                    Buffer.isBuffer(toBlob) ||
-                                    Buffer.isBuffer(fromBlob),
-                            })
-                        }
-                        setBlobProgress((currVal) => ({
-                            ...currVal,
-                            count: currVal?.count + 1,
-                        }))
-                    }),
-                )
+                for (const chunk of splitByChunk(intersected, 5)) {
+                    await Promise.all(
+                        chunk.map(async (item) => {
+                            const from = fromTreeItems.find(
+                                (fItem) =>
+                                    fItem.path === item.path && fItem.name === item.name,
+                            )
+                            const to = toTreeItems.find(
+                                (tItem) =>
+                                    tItem.path === item.path && tItem.name === item.name,
+                            )
+                            if (from && to) {
+                                const fromBlob = await getBlob(
+                                    wallet,
+                                    repo,
+                                    branchFrom,
+                                    from,
+                                )
+                                const toBlob = await getBlob(wallet, repo, branchTo, to)
+                                compare.push({
+                                    to: { item: to, blob: toBlob },
+                                    from: { item: from, blob: fromBlob },
+                                    showDiff:
+                                        compare.length < 10 ||
+                                        Buffer.isBuffer(toBlob) ||
+                                        Buffer.isBuffer(fromBlob),
+                                })
+                            }
+                            setBlobProgress((currVal) => ({
+                                ...currVal,
+                                count: currVal?.count + 1,
+                            }))
+                        }),
+                    )
+                    await sleep(300)
+                }
 
-                await Promise.all(
-                    added.map(async (item) => {
-                        const fromBlob = await getBlob(wallet, repo, branchFrom, item)
-                        compare.push({
-                            to: undefined,
-                            from: { item, blob: fromBlob },
-                            showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
-                        })
-                        setBlobProgress((currVal) => ({
-                            ...currVal,
-                            count: currVal?.count + 1,
-                        }))
-                    }),
-                )
+                for (const chunk of splitByChunk(added, 10)) {
+                    await Promise.all(
+                        chunk.map(async (item) => {
+                            const fromBlob = await getBlob(wallet, repo, branchFrom, item)
+                            compare.push({
+                                to: undefined,
+                                from: { item, blob: fromBlob },
+                                showDiff:
+                                    compare.length < 10 || Buffer.isBuffer(fromBlob),
+                            })
+                            setBlobProgress((currVal) => ({
+                                ...currVal,
+                                count: currVal?.count + 1,
+                            }))
+                        }),
+                    )
+                    await sleep(300)
+                }
 
                 console.debug('[Pull create] - Compare list:', compare)
                 setCompare(compare)
@@ -218,19 +236,19 @@ const PullCreatePage = () => {
                 throw new GoshError(EGoshError.PR_NO_MERGE)
 
             // Prepare blobs
-            const blobs = compare.map(({ from, to }) => {
-                if (!from.item || !from.blob.content)
-                    throw new GoshError(EGoshError.FILE_EMPTY)
-                return {
-                    name: `${from.item.path ? `${from.item.path}/` : ''}${
-                        from.item.name
-                    }`,
-                    modified: from.blob.content ?? '',
-                    original: to?.blob.content,
-                    isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
-                    treeItem: from.item,
-                }
-            })
+            const blobs = compare
+                .filter(({ from }) => !!from.item)
+                .map(({ from, to }) => {
+                    return {
+                        name: `${from.item.path ? `${from.item.path}/` : ''}${
+                            from.item.name
+                        }`,
+                        modified: from.blob.content ?? '',
+                        original: to?.blob.content,
+                        isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
+                        treeItem: from.item,
+                    }
+                })
             console.debug('Blobs', blobs)
 
             if (branchTo.isProtected) {

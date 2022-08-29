@@ -83,7 +83,7 @@ const PREvent = (props: TCommitBlobsType) => {
             const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
 
             let prev
-            if (!curr.deployed) {
+            if (curr.prevcommit) {
                 prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
             }
 

@@ -6,7 +6,10 @@ use crate::blockchain::{
     snapshot::PushDiffCoordinate
 };
 use crate::git_helper::GitHelper;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 
+const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u32>,
@@ -14,7 +17,8 @@ pub struct ParallelDiffsUploadSupport {
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses: Vec<String>
+    expecting_deployed_contacts_addresses: Vec<String>,
+    pushed_blobs: FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>>
 }
 
 pub struct ParallelDiff {
@@ -60,7 +64,8 @@ impl ParallelDiffsUploadSupport {
             dangling_diffs: HashMap::new(),
             next_parallel_index: 0,
             last_commit_id: last_commit_id.clone(),
-            expecting_deployed_contacts_addresses: vec![]
+            expecting_deployed_contacts_addresses: vec![],
+            pushed_blobs: FuturesUnordered::new()
         }
     }
 
@@ -74,7 +79,7 @@ impl ParallelDiffsUploadSupport {
                 diff,
                 new_snapshot_content
             }) in self.dangling_diffs.values().into_iter() {
-            blockchain::snapshot::push_diff(
+            self.pushed_blobs.push(blockchain::snapshot::push_diff(
                 context,
                 &commit_id,
                 &branch_name,
@@ -86,12 +91,13 @@ impl ParallelDiffsUploadSupport {
                 original_snapshot_content,
                 diff,
                 new_snapshot_content
-            ).await?;
+            ).await?);
             let diff_contract_address = blockchain::snapshot::diff_address(
                 context,
                 &self.last_commit_id,
                 &diff_coordinates
             ).await?;
+            log::debug!("diff_contract_address <commit: {}, coord: {:?}>: {}", self.last_commit_id, diff_coordinates, diff_contract_address);
             self.expecting_deployed_contacts_addresses.push(diff_contract_address);
         } 
         Ok(())
@@ -99,11 +105,18 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn wait_all_diffs(&mut self, context: &mut GitHelper) -> Result<()> {
         // TODO: 
-        // - Add max retries number
         // - Let user know if we reached it 
         // - Make it configurable
         let mut index = 0;
-        log::trace!("Expecting the following diff contracts to be deployed: {:?}", self.expecting_deployed_contacts_addresses);
+        log::debug!("Expecting the following diff contracts to be deployed: {:?}", self.expecting_deployed_contacts_addresses);
+        while let Some(finished_task) = self.pushed_blobs.next().await {
+            match finished_task {
+                Err(e) => { panic!("diffs joih-handler: {}",e); },
+                Ok(Err(e)) => {panic!("diffs inner: {}", e); },
+                Ok(Ok(_)) => {}
+            }
+        }
+        let mut attempt = 0;
         loop {
             if index >= self.expecting_deployed_contacts_addresses.len() {
                 return Ok(());
@@ -111,9 +124,14 @@ impl ParallelDiffsUploadSupport {
             let expecting_address = self.expecting_deployed_contacts_addresses.get(index).unwrap();
             if blockchain::snapshot::is_diff_deployed(&context.es_client, expecting_address).await? {
                 index += 1;
+                attempt = 0;
             } else {
                 //TODO: replace with web-socket listen
                 std::thread::sleep(std::time::Duration::from_secs(3)); 
+                attempt += 1;
+                if attempt == MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
+                    panic!("Some contracts didn't appear in time: {}", expecting_address);
+                }
             } 
         } 
     }
@@ -131,7 +149,7 @@ impl ParallelDiffsUploadSupport {
                 diff,
                 new_snapshot_content 
             })) => {
-                blockchain::snapshot::push_diff(
+                self.pushed_blobs.push(blockchain::snapshot::push_diff(
                     context,
                     &commit_id,
                     &branch_name,
@@ -143,7 +161,7 @@ impl ParallelDiffsUploadSupport {
                     original_snapshot_content,
                     diff,
                     new_snapshot_content
-                ).await?;
+                ).await?);
             }
         }
         let diff_coordinates = self.next_diff(&diff.file_path);

@@ -9,12 +9,11 @@ use git_odb::Write;
 use std::collections::{HashSet, VecDeque};
 use std::error::Error;
 use std::str::FromStr;
-use std::vec::Vec;
 mod restore_blobs;
 
 impl GitHelper {
     pub async fn calculate_commit_address(
-        &self,
+        &mut self,
         commit_id: &git_hash::ObjectId,
     ) -> Result<String, Box<dyn Error>> {
         let commit_id = format!("{}", commit_id);
@@ -23,8 +22,9 @@ impl GitHelper {
             self.repo_addr,
             commit_id
         );
+        let mut repo_contract = &mut self.repo_contract;
         return Ok(
-            blockchain::get_commit_address(&self.es_client, &self.repo_addr, &commit_id).await?,
+            blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await?,
         );
     }
 
@@ -116,11 +116,9 @@ impl GitHelper {
                 log::info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
-                let remote_gosh_root_contract_address = &self.remote.gosh;
                 let address = blockchain::Tree::calculate_address(
                     &self.es_client,
-                    remote_gosh_root_contract_address,
-                    &self.repo_addr,
+                    &mut self.repo_contract,
                     &tree_object_id,
                 )
                 .await?;
@@ -153,7 +151,7 @@ impl GitHelper {
                             // Removing prefixing "/" in the path
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &self.es_client,
-                                &self.repo_addr,
+                                &mut self.repo_contract,
                                 &branch,
                                 &file_path[1..],
                             )

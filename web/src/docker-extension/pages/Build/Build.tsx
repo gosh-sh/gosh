@@ -3,9 +3,8 @@ import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../../../pages/RepoLayout'
 import BranchSelect from '../../../components/BranchSelect'
 import * as Yup from 'yup'
-import { useGoshRepoBranches, useGoshRepoTree } from '../../../hooks/gosh.hooks'
+import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
-import SwitchField from '../../../components/FormikForms/SwitchField'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
 import { userStateAtom, getCommit } from 'react-gosh'
@@ -18,13 +17,10 @@ type TBuildFormValues = {
 
 const BuildPage = () => {
     const userState = useRecoilValue(userStateAtom)
-    const treePath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
-    const tree = useGoshRepoTree(repo, branch, treePath)
-    const subtree = useRecoilValue(tree.getSubtree(treePath))
     const [output, setOutput] = useState('')
 
     // const [dirUp] = splitByPath(treePath)

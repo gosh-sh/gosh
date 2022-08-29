@@ -29,6 +29,35 @@
 			]
 		},
 		{
+			"name": "sendMoneyDiff",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyCommit",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyTree",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"shaTree","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
@@ -45,11 +74,18 @@
 			]
 		},
 		{
+			"name": "getConfigInfo",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setConfig",
 			"inputs": [
-				{"name":"limit_wallets","type":"uint128"},
-				{"name":"limit_time","type":"uint128"},
-				{"name":"limit_messages","type":"uint128"}
+				{"name":"limit_wallets","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -102,6 +138,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
 			]
 		},
 		{
@@ -246,6 +290,7 @@
 		{"name":"m_TokenRootCode","type":"cell"},
 		{"name":"m_TokenWalletCode","type":"cell"},
 		{"name":"_rootTokenRoot","type":"address"},
-		{"name":"_lastAccountAddress","type":"address"}
+		{"name":"_lastAccountAddress","type":"address"},
+		{"name":"_flag","type":"bool"}
 	]
 }

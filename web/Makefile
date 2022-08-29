@@ -31,7 +31,7 @@ run:
 	  --name gosh-web \
 	  -p 3000:3000 \
 	  node:18.2.0-alpine \
-	  sh -c "npm install && cp -r ./eversdk-patch/lib-web/* ./node_modules/@eversdk/lib-web/ && \
+	  sh -c "npm install && \
 	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run start:$(ENV)"
 
 .PHONY: build
