@@ -66,38 +66,6 @@ export const getPaginatedAccounts = async (params: {
     }
 }
 
-// export const getEndpoints = (): string[] => {
-//     switch (process.env.REACT_APP_EVER_NETWORK) {
-//         case 'devnet':
-//             return ['https://vps23.ton.dev'];
-//         case 'mainnet':
-//             return ['https://network.gosh.sh'];
-//         case 'se':
-//         default:
-//             return ['http://localhost'];
-//     }
-// };
-
-// export const fsExists = async (pathname: string): Promise<boolean> => {
-//     try {
-//         await fs.promises.stat(pathname);
-//         return true;
-//     } catch (e: any) {
-//         if (e.code === 'ENOENT' || e.code === 'ENOTDIR') {
-//             return false;
-//         } else {
-//             console.debug('Unhandled error in `fs.exists()`', e);
-//             throw e;
-//         }
-//     }
-// };
-
-// export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
-//     const address = process.env.REACT_APP_CREATOR_ADDR;
-//     if (!address) throw new GoshError(EGoshError.NO_CREATOR_ADDR);
-//     return new GoshDaoCreator(client, address);
-// };
-
 export const getCodeLanguageFromFilename = (monaco: any, filename: string): string => {
     let splitted = filename.split('.')
     const ext = `.${splitted.slice(-1)}`
@@ -132,6 +100,7 @@ export const sha1 = (
     type: 'blob' | 'commit' | 'tree' | 'tag' | 'blobExecutable' | 'link',
     mode: 'sha1' | 'sha256',
 ): string => {
+    if (type === 'blobExecutable') type = 'blob'
     let content = data
 
     const size = Buffer.isBuffer(content)
@@ -168,25 +137,32 @@ export const sha1Tree = (items: TGoshTreeItem[], mode: 'sha1' | 'sha256') => {
     return sha1(buffer, 'tree', mode)
 }
 
+export const sha256 = (content: string | Buffer, prefix: boolean): string => {
+    const hash = SHA256(
+        Buffer.isBuffer(content)
+            ? cryptoJs.enc.Hex.parse(content.toString('hex'))
+            : cryptoJs.enc.Utf8.parse(content),
+    ).toString()
+
+    if (prefix) return `0x${hash}`
+    return hash
+}
+
 export const getTreeItemsFromPath = async (
     fullpath: string,
-    content: string | Buffer,
+    hashes: { sha1: string; sha256: string },
     flags: number,
     treeItem?: TGoshTreeItem,
 ): Promise<TGoshTreeItem[]> => {
     const items: TGoshTreeItem[] = []
 
-    // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(fullpath)
-    const sha = sha1(content, treeItem?.type || 'blob', 'sha1')
-    const sha256 = await goshRoot.getTvmHash(content)
-
     items.push({
         flags,
         mode: treeItem?.mode || '100644',
         type: treeItem?.type || 'blob',
-        sha1: sha,
-        sha256,
+        sha1: hashes.sha1,
+        sha256: hashes.sha256,
         path,
         name,
     })
@@ -263,7 +239,7 @@ export const getRepoTree = async (
 
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i]
-            const treeAddr = await goshRoot.getTreeAddr(repo.address, tree.sha1)
+            const treeAddr = await repo.getTreeAddr(tree.sha1)
             const treeBlob = new GoshTree(goshClient, treeAddr)
 
             const treeItems = (await treeBlob.getTree()).tree
@@ -271,7 +247,7 @@ export const getRepoTree = async (
 
             treeItems.forEach((item) => (item.path = treePath))
             items.push(...treeItems)
-            await new Promise((resolve) => setInterval(resolve, 150))
+            await sleep(300)
             await blobTreeWalker(treePath, treeItems)
         }
     }
@@ -397,7 +373,7 @@ export const getBlobAtCommit = async (
                   edges{
                     node{
                       boc
-                      created_at
+                      created_lt
                     }
                     cursor
                   }
@@ -413,13 +389,11 @@ export const getBlobAtCommit = async (
             query: queryString,
         })
         const messages = query.result.data.blockchain.account.messages
-        messages.edges.sort(
-            (a: any, b: any) =>
-                //@ts-ignore
-                (a.node.created_at < b.node.created_at) -
-                //@ts-ignore
-                (a.node.created_at > b.node.created_at),
-        )
+        messages.edges.sort((a: any, b: any) => {
+            const a_lt = parseInt(a.node.created_lt, 16)
+            const b_lt = parseInt(b.node.created_lt, 16)
+            return a_lt < b_lt ? 1 : -1
+        })
         for (const item of messages.edges) {
             try {
                 const decoded = await repo.account.client.abi.decode_message({
@@ -497,12 +471,12 @@ export const getBlobAtCommit = async (
             const compressed = (await loadFromIPFS(msgipfs)).toString()
             const decompressed = await zstd.decompress(goshClient, compressed, true)
             content = decompressed
-            if (message.ipfsdata) deployed = true
+            // if (message.ipfsdata) deployed = true
         } else if (msgdata) {
             const compressed = Buffer.from(msgdata, 'hex').toString('base64')
             const decompressed = await zstd.decompress(goshClient, compressed, true)
             content = decompressed
-            deployed = true
+            // deployed = true
         } else if (msgpatch && msgcommit !== commit) {
             const patch = await zstd.decompress(
                 repo.account.client,
@@ -515,7 +489,7 @@ export const getBlobAtCommit = async (
         }
 
         if (msgcommit === commit) break
-        if (msgcommit) {
+        if (msgcommit && !msgipfs) {
             const msgcommitAddr = await repo.getCommitAddr(msgcommit)
             const msgcommitObj = new GoshCommit(goshClient, msgcommitAddr)
             const msgcommitParents = await msgcommitObj.getParents()
