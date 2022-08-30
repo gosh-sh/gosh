@@ -17,6 +17,12 @@ import "tree.sol";
 import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 
+struct PauseDiff {
+    uint128 send;
+    address branchcommit;
+    uint128 index;
+}
+
 /* Root contract of Diff */
 contract DiffC is Modifiers {
     string constant version = "0.10.0";
@@ -42,6 +48,9 @@ contract DiffC is Modifiers {
     bool _last;
     bool _entry;
     bool _flag = false;
+    bool _isCancel = false;
+    
+    optional(PauseDiff) _saved; 
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -123,6 +132,7 @@ contract DiffC is Modifiers {
     function cancelCommit() public {
         tvm.accept();
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
+        _isCancel = true;
         this.cancelDiff{value: 0.1 ton, flag: 1}(0);
         getMoney();
     }
@@ -162,6 +172,8 @@ contract DiffC is Modifiers {
     
     function sendDiff(uint128 index, address branchcommit) public senderIs(address(this)) {
         tvm.accept();
+        if (_isCancel == true) { return; }
+        if (address(this).balance < 5 ton) { _saved = PauseDiff(0, branchcommit, index); return; }
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
             if (_last == false) { 
@@ -196,7 +208,7 @@ contract DiffC is Modifiers {
     function approveDiffFinal(bool res) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (res != true) { this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
+        if (res != true) { _isCancel = true; this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
         uint256 need = _diff.length;
         if (_last == false) { need += 1; }
@@ -212,6 +224,7 @@ contract DiffC is Modifiers {
         if (res != true) { 
             if (_index2 == 0) { 
                 Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1); 
+                _isCancel = true;
                 this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             }
             else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
@@ -231,6 +244,7 @@ contract DiffC is Modifiers {
     function applyDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
             if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
@@ -245,6 +259,7 @@ contract DiffC is Modifiers {
     function cancelDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
         if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
         if (index > _diff.length) { delete _diff; _approved = 0; return; }
         if (index == _diff.length) { 
@@ -277,6 +292,19 @@ contract DiffC is Modifiers {
     receive() external {
         if (msg.sender == _goshdao) {
             _flag = false;
+            if (_saved.hasValue() == true) {
+                PauseDiff val = _saved.get();
+                if (val.send == 0) {
+                    this.sendDiff{value: 0.1 ton, flag: 1}(val.index, val.branchcommit);
+                }
+                if (val.send == 1) {
+                    this.applyDiff{value: 0.1 ton, flag: 1}(val.index);
+                }
+                if (val.send == 2) {
+                    this.cancelDiff{value: 0.1 ton, flag: 1}(val.index);
+                }               
+                _saved = null;
+            }
         }
     }
     

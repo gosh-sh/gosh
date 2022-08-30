@@ -16,6 +16,14 @@ import "repository.sol";
 import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 
+struct Pause {
+    bool send;
+    string branch;
+    address branchcommit;
+    uint128 index;
+    uint128 number;
+}
+
 /* Root contract of Commit */
 contract Commit is Modifiers {
     string constant version = "0.10.0";
@@ -47,6 +55,7 @@ contract Commit is Modifiers {
     uint128 _number;
     uint128 _approved;
     bool _flag = false;
+    optional(Pause) _saved; 
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -141,6 +150,7 @@ contract Commit is Modifiers {
     function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         if (index >= number) { return; }
+        if (address(this).balance < 5 ton) { _saved = Pause(false, "", address.makeAddrNone(), index, number); return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
         getMoney();
@@ -164,6 +174,8 @@ contract Commit is Modifiers {
     
     function _sendAllDiff(string branch, address branchcommit, uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
+        if (_continueDiff == false) { return; }
+        if (address(this).balance < 5 ton) { _saved = Pause(true, branch, branchcommit, index, number); return; }
         if ((number == 0) && (index == 0)) { 
             _approved = 0;
             _continueDiff = false;
@@ -333,8 +345,19 @@ contract Commit is Modifiers {
     
     //Fallback/Receive
     receive() external {
+        tvm.accept();
         if (msg.sender == _goshdao) {
             _flag = false;
+            if (_saved.hasValue() == true) {
+                Pause val = _saved.get();
+                if (val.send == true) {
+                    this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(val.branch, val.branchcommit, val.index, val.number);
+                }
+                else {
+                    this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(val.index, val.number);
+                }                
+                _saved = null;
+            }
         }
     }
     
