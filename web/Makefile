@@ -1,31 +1,38 @@
 CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 TARGET_DIR := $(abspath $(target-dir))
+DOCKER_WEB_PORT_OUT ?= 3000
+DOCKER_WEB_CONTAINER_NAME ?= gosh-web
+DOCKER_RUN_ARGS ?= -p ${DOCKER_WEB_PORT_OUT}:3000
+REACT_APP_ISDOCKEREXT ?= true
+ENV ?= dockerprod
+MOUNT_DIR ?= $(CURRENT_DIR)
+
 
 build:
 	mkdir -p build
 	docker run \
 	  --rm \
 	  --volume $(CURRENT_DIR):/workdir \
-	  --env REACT_APP_ISDOCKEREXT=true \
+	  --env REACT_APP_ISDOCKEREXT=${REACT_APP_ISDOCKEREXT} \
 	  --env BUILD_PATH=/dest \
 	  --volume $(abspath ./build):/dest \
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  node:18.2.0-alpine \
 	  sh -c "npm install && \
-	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run build:dockerprod"
+	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run build:$(ENV)"
 	cp -r ./build/* $(TARGET_DIR)
 
 run:
 	mkdir -p build
 	docker run \
 	  -d \
-	  --volume $(CURRENT_DIR):/workdir \
-	  --env REACT_APP_ISDOCKEREXT=false \
+	  --volume ${MOUNT_DIR}:/workdir \
+	  --env REACT_APP_ISDOCKEREXT=${REACT_APP_ISDOCKEREXT} \
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
-	  --name gosh-web \
-	  -p 3000:3000 \
+	  --name ${DOCKER_WEB_CONTAINER_NAME} \
+	  ${DOCKER_RUN_ARGS} \
 	  node:18.2.0-alpine \
 	  sh -c "npm install && \
 	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run start:$(ENV)"
