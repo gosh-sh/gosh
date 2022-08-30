@@ -94,7 +94,9 @@ const App = () => {
             <main className="main grow">
                 <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/containers" element={<Containers />} />
+                    <Route path="/containers" element={<ProtectedLayout />}>
+                        <Route index element={<Containers />} />
+                    </Route>
                     <Route path="/account/signin" element={<SigninPage />} />
                     <Route path="/account/signup" element={<SignupPage />} />
                     <Route path="/account" element={<ProtectedLayout />}>
