@@ -29,7 +29,7 @@ const DaoMemberCreateProgress = (props: TDaoMemberCreateProgressProps) => {
                                     : item.isDeployed && item.isMinted
                             }
                         >
-                            Add participant {shortString(item.pubkey)}
+                            Add member {shortString(item.pubkey)}
                         </UILogItem>
 
                         <div className="pl-6">

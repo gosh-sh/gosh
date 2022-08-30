@@ -66,7 +66,7 @@ const BlobUpdatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
             if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
 

@@ -227,7 +227,7 @@ export class GoshDao extends BaseContract implements IGoshDao {
         return {
             address: this.address,
             name: await this.getName(),
-            participants: await this.getWallets(),
+            members: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
             ownerPubkey: await this.getRootPubkey(),
         }
@@ -297,34 +297,20 @@ export class GoshDao extends BaseContract implements IGoshDao {
 
     async mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void> {
         const tokenRoot = await this.getSmvRootTokenAddr()
-        await this.run('mint', {
-            tokenRoot,
-            amount,
-            recipient,
-            deployWalletValue: 0,
-            remainingGasTo: this.address,
-            notify: true,
-            payload: '',
-        })
-    }
-
-    async getConfig(): Promise<TGoshDaoWalletConfig> {
-        const result = await this.account.runLocal('getConfig', {})
-        const decoded = result.decoded?.output
-        return {
-            wallets: decoded.value0,
-            // time: decoded.value1,
-            // messages: decoded.value2,
-        }
-    }
-
-    async setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void> {
-        await this.account.run(
-            'setConfig',
+        await this.run(
+            'mint',
+            {
+                tokenRoot,
+                amount,
+                recipient,
+                deployWalletValue: 0,
+                remainingGasTo: this.address,
+                notify: true,
+                payload: '',
+            },
             {
                 signer: signerKeys(daoOwnerKeys),
             },
-            { signer: signerKeys(daoOwnerKeys) },
         )
     }
 }

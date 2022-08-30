@@ -64,7 +64,7 @@ const BlobCreatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`
             const exists = tree.tree?.items.find(
                 (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,

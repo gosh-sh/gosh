@@ -6,6 +6,7 @@ import { GoshDao, GoshWallet } from '../classes'
 import { sleep } from '../utils'
 import {
     IGoshDao,
+    IGoshWallet,
     TDaoCreateProgress,
     TDaoListItem,
     TDaoMemberCreateProgress,
@@ -179,49 +180,88 @@ function useDaoCreate() {
     const { keys } = useRecoilValue(userStateAtom)
     const [progress, setProgress] = useState<TDaoCreateProgress>({
         isFetching: false,
-        participants: [],
+        members: [],
     })
 
-    const createDao = async (name: string, participants: string[]) => {
+    const createDao = async (name: string, members: string[]) => {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
 
+        // Validate public keys
+        members.unshift(`0x${keys.public}`)
+        members = members
+            .filter((pubkey) => !!pubkey)
+            .map((pubkey) => {
+                pubkey = pubkey.trim().toLowerCase()
+                pubkey = pubkey.replace(/[\W_]/g, '')
+                if (!pubkey.startsWith('0x'))
+                    throw Error(`Pubkey '${pubkey}' is incorrect`)
+                return pubkey
+            })
+
+        // Set inital progress
         setProgress((state) => ({
             ...state,
             isFetching: true,
-            participants: participants.map((pubkey) => ({
+            members: members.map((pubkey) => ({
                 pubkey,
             })),
         }))
 
         // Deploy GoshDao
-        const dao = await goshRoot.deployDao(name.toLowerCase(), `0x${keys.public}`)
-        setProgress((state) => ({ ...state, isDaoDeployed: true }))
+        let isDaoDeployed: boolean
+        let dao: IGoshDao
+        try {
+            dao = await goshRoot.deployDao(name.toLowerCase(), `0x${keys.public}`)
+            isDaoDeployed = true
+        } catch (e) {
+            isDaoDeployed = false
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, isDaoDeployed }))
+        }
 
         // Deploy wallets
         await Promise.all(
-            participants.map(async (pubkey) => {
+            members.map(async (pubkey) => {
                 // Deploy wallet
-                const wallet = await dao.deployWallet(pubkey, keys)
-                setProgress((state) => ({
-                    ...state,
-                    participants: state.participants.map((item) => {
-                        if (item.pubkey === pubkey) return { ...item, isDeployed: true }
-                        return item
-                    }),
-                }))
+                let isDeployed: boolean
+                let wallet: IGoshWallet
+                try {
+                    wallet = await dao.deployWallet(pubkey, keys)
+                    isDeployed = true
+                } catch (e) {
+                    isDeployed = false
+                    throw e
+                } finally {
+                    setProgress((state) => ({
+                        ...state,
+                        members: state.members.map((item) => {
+                            if (item.pubkey === pubkey) return { ...item, isDeployed }
+                            return item
+                        }),
+                    }))
+                }
 
                 // Mint tokens
-                const smvTokenBalance = await wallet.getSmvTokenBalance()
-                if (!smvTokenBalance) {
-                    await dao.mint(100, wallet.address, keys)
+                let isMinted: boolean
+                try {
+                    const smvTokenBalance = await wallet.getSmvTokenBalance()
+                    if (!smvTokenBalance) {
+                        await dao.mint(100, wallet.address, keys)
+                    }
+                    isMinted = true
+                } catch (e) {
+                    isMinted = false
+                    throw e
+                } finally {
+                    setProgress((state) => ({
+                        ...state,
+                        members: state.members.map((item) => {
+                            if (item.pubkey === pubkey) return { ...item, isMinted }
+                            return item
+                        }),
+                    }))
                 }
-                setProgress((state) => ({
-                    ...state,
-                    participants: state.participants.map((item) => {
-                        if (item.pubkey === pubkey) return { ...item, isMinted: true }
-                        return item
-                    }),
-                }))
             }),
         )
 
@@ -285,7 +325,7 @@ function useDaoMemberList(perPage: number) {
         const getMemberList = async () => {
             if (!daoDetails?.address) return
 
-            const items = daoDetails.participants.map((address) => ({ wallet: address }))
+            const items = daoDetails.members.map((address) => ({ wallet: address }))
             setMembers((state) => ({
                 ...state,
                 items: items.sort((a, b) => (a.wallet > b.wallet ? 1 : -1)),
@@ -295,7 +335,7 @@ function useDaoMemberList(perPage: number) {
         }
 
         getMemberList()
-    }, [daoDetails?.address, daoDetails?.participants.length])
+    }, [daoDetails?.address, daoDetails?.members.length])
 
     /** Update filtered items and page depending on search */
     useEffect(() => {
@@ -312,6 +352,25 @@ function useDaoMemberList(perPage: number) {
             }
         })
     }, [search])
+
+    /** Refresh members details (reset `isLoadDetailsFired` flag) */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (members.isFetching) return
+
+            setMembers((state) => ({
+                ...state,
+                items: state.items.map((item) => ({
+                    ...item,
+                    isLoadDetailsFired: false,
+                })),
+            }))
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [members.isFetching])
 
     return {
         isFetching: members.isFetching,
@@ -334,49 +393,78 @@ function useDaoMemberCreate() {
         members: [],
     })
 
-    const createMember = async (pubkeys: string[]) => {
+    const createMember = async (members: string[]) => {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
         if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
 
+        // Validate public keys
+        members = members.map((pubkey) => {
+            pubkey = pubkey.trim().toLowerCase()
+            pubkey = pubkey.replace(/[\W_]/g, '')
+            console.debug('pub', pubkey)
+            if (!pubkey.startsWith('0x')) throw Error(`Pubkey '${pubkey}' is incorrect`)
+            return pubkey
+        })
+
+        // Set initial state
         setProgress((state) => ({
             ...state,
             isFetching: true,
-            members: pubkeys.map((pubkey) => ({
+            members: members.map((pubkey) => ({
                 pubkey,
             })),
         }))
 
         const dao = new GoshDao(goshClient, daoDetails.address)
         await Promise.all(
-            pubkeys.map(async (pubkey) => {
+            members.map(async (pubkey) => {
                 // Deploy wallet
-                const wallet = await dao.deployWallet(pubkey, keys)
-                setProgress((state) => ({
-                    ...state,
-                    members: state.members.map((item) => {
-                        if (item.pubkey === pubkey) return { ...item, isDeployed: true }
-                        return item
-                    }),
-                }))
+                let isDeployed: boolean
+                let wallet: IGoshWallet
+                try {
+                    wallet = await dao.deployWallet(pubkey, keys)
+                    isDeployed = true
+                } catch (e) {
+                    isDeployed = false
+                    throw e
+                } finally {
+                    setProgress((state) => ({
+                        ...state,
+                        members: state.members.map((item) => {
+                            if (item.pubkey === pubkey) return { ...item, isDeployed }
+                            return item
+                        }),
+                    }))
+                }
 
                 // Mint tokens
-                const smvTokenBalance = await wallet.getSmvTokenBalance()
-                if (!smvTokenBalance) {
-                    await dao.mint(100, wallet.address, keys)
+                let isMinted: boolean
+                try {
+                    const smvTokenBalance = await wallet.getSmvTokenBalance()
+                    if (!smvTokenBalance) {
+                        await dao.mint(100, wallet.address, keys)
+                    }
+                    isMinted = true
+                } catch (e) {
+                    isMinted = false
+                    throw e
+                } finally {
+                    setProgress((state) => ({
+                        ...state,
+                        members: state.members.map((item) => {
+                            if (item.pubkey === pubkey) return { ...item, isMinted }
+                            return item
+                        }),
+                    }))
                 }
-                setProgress((state) => ({
-                    ...state,
-                    members: state.members.map((item) => {
-                        if (item.pubkey === pubkey) return { ...item, isMinted: true }
-                        return item
-                    }),
-                }))
+
+                // Update dao details state
                 setDaoDetails((state) => {
                     if (!state) return
-                    if (state.participants.indexOf(wallet.address) >= 0) return state
+                    if (state.members.indexOf(wallet.address) >= 0) return state
                     return {
                         ...state,
-                        participants: [...state?.participants, wallet.address],
+                        members: [...state?.members, wallet.address],
                         supply: state.supply + 100,
                     }
                 })
@@ -412,7 +500,7 @@ function useDaoMemberDelete() {
                     if (!state) return
                     return {
                         ...state,
-                        participants: state.participants.filter(
+                        members: state.members.filter(
                             (address) => address !== walletAddr,
                         ),
                         supply: state.supply - 100,

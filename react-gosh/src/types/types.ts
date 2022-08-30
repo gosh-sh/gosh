@@ -290,11 +290,6 @@ export interface IGoshWallet extends IContract {
         content: string,
     ): Promise<void>
     getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
-    getConfig(): Promise<TGoshDaoWalletConfig>
-    updateConfig(): Promise<void>
-    getWalletCount(): Promise<number>
-    deployWallet(): Promise<void>
-    destroyWallet(): Promise<void>
 }
 
 export interface IGoshRepository extends IContract {

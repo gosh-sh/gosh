@@ -217,9 +217,7 @@ const DaoWalletPage = () => {
                             </pre>
                         </div>
                     ) : (
-                        <p className="text-sm text-rose-400">
-                            You are not a DAO participant
-                        </p>
+                        <p className="text-sm text-rose-400">You are not a DAO member</p>
                     )}
                 </div>
             </div>

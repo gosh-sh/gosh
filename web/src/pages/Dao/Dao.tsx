@@ -35,7 +35,7 @@ const DaoPage = () => {
                             Setup git remote
                         </Link>
                     ) : (
-                        <p className="text-sm text-rose-400">Not a DAO participant</p>
+                        <p className="text-sm text-rose-400">Not a DAO member</p>
                     )}
                 </div>
             </div>

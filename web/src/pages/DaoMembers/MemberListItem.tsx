@@ -46,7 +46,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                 {item.smvBalance}
             </div>
 
-            {isDaoOwner && (
+            {/* {isDaoOwner && (
                 <div>
                     <button
                         type="button"
@@ -64,7 +64,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                         <span className="ml-2">Delete</span>
                     </button>
                 </div>
-            )}
+            )} */}
         </div>
     )
 }

@@ -19,7 +19,7 @@ const DaoCreateProgress = (props: TDaoCreateProgressProps) => {
         >
             <code className="flex flex-col gap-2">
                 <UILogItem result={progress.isDaoDeployed}>Deploy DAO</UILogItem>
-                {progress.participants.map((item, index) => (
+                {progress.members.map((item, index) => (
                     <div key={index}>
                         <UILogItem
                             result={
@@ -30,7 +30,7 @@ const DaoCreateProgress = (props: TDaoCreateProgressProps) => {
                                     : item.isDeployed && item.isMinted
                             }
                         >
-                            Add participant {shortString(item.pubkey)}
+                            Add member {shortString(item.pubkey)}
                         </UILogItem>
 
                         <div className="pl-6">

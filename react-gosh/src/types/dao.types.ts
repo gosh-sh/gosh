@@ -1,13 +1,13 @@
 type TDaoDetails = {
     address: string
     name: string
-    participants: string[]
+    members: string[]
     supply: number
     ownerPubkey: string
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply' | 'ownerPubkey'> & {
-    participants?: string[]
+type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'ownerPubkey'> & {
+    members?: string[]
     supply?: number
     ownerPubkey?: string
     isLoadDetailsFired?: boolean
@@ -16,7 +16,7 @@ type TDaoListItem = Omit<TDaoDetails, 'participants' | 'supply' | 'ownerPubkey'>
 type TDaoCreateProgress = {
     isFetching: boolean
     isDaoDeployed?: boolean
-    participants: TDaoMemberCreateProgress['members']
+    members: TDaoMemberCreateProgress['members']
 }
 
 type TDaoMemberDetails = {

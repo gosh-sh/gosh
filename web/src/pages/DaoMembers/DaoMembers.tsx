@@ -6,7 +6,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import DaoMemberForm from './MemberForm'
 import { toast } from 'react-toastify'
 
-const DaoParticipantsPage = () => {
+const DaoMembersPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
     const daoMemberDeleteHook = useDaoMemberDelete()
@@ -40,7 +40,7 @@ const DaoParticipantsPage = () => {
                 {isFetching && (
                     <div className="text-gray-606060">
                         <Spinner className="mr-3" />
-                        Loading participants...
+                        Loading members...
                     </div>
                 )}
 
@@ -65,9 +65,13 @@ const DaoParticipantsPage = () => {
                 </div>
             </div>
 
-            {dao.isOwner && <DaoMemberForm />}
+            {dao.isOwner && (
+                <div className="mt-6">
+                    <DaoMemberForm />
+                </div>
+            )}
         </>
     )
 }
 
-export default DaoParticipantsPage
+export default DaoMembersPage

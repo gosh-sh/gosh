@@ -8,7 +8,7 @@ const DaoSettingsLayout = () => {
 
     const tabs = [
         { to: `/${daoName}/settings/wallet`, title: 'Wallet' },
-        { to: `/${daoName}/settings/participants`, title: 'Participants' },
+        { to: `/${daoName}/settings/members`, title: 'Members' },
     ]
 
     if (!daoContext.wallet) return <Navigate to={`/${daoName}`} />

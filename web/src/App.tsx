@@ -17,7 +17,7 @@ import DaosPage from './pages/Daos'
 import DaoPage from './pages/Dao'
 import DaoCreatePage from './pages/DaoCreate'
 import DaoWalletPage from './pages/DaoWallet'
-import DaoParticipantsPage from './pages/DaoParticipants'
+import DaoMembersPage from './pages/DaoMembers'
 import DaoReposPage from './pages/DaoRepos'
 import RepoCreatePage from './pages/RepoCreate'
 import ReposPage from './pages/Repos'
@@ -124,10 +124,7 @@ const App = () => {
                                     element={<Navigate to="wallet" replace={true} />}
                                 />
                                 <Route path="wallet" element={<DaoWalletPage />} />
-                                <Route
-                                    path="participants"
-                                    element={<DaoParticipantsPage />}
-                                />
+                                <Route path="members" element={<DaoMembersPage />} />
                             </Route>
                         </Route>
                         <Route path=":repoName" element={<RepoLayout />}>
