@@ -9,7 +9,6 @@ use std::fmt;
 use std::option::Option;
 pub mod diffs;
 
-
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
 #[abi_data_fn = "getSnapshot"]
@@ -39,7 +38,6 @@ pub struct Snapshot {
 
     #[serde(rename = "value7")]
     pub ready_for_diffs: bool,
-
 }
 
 #[derive(Deserialize, Debug)]
@@ -73,15 +71,20 @@ impl Snapshot {
     }
 
     #[instrument(level = "debug", skip(context))]
-    pub async fn get_file_path(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
+    pub async fn get_file_path(
+        context: &TonClient,
+        address: &str,
+    ) -> Result<String, Box<dyn Error>> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
-        let result: GetSnapshotFilePath = snapshot
-            .run_local(context, "getName", None)
-            .await?;
-        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}", );
+        let result: GetSnapshotFilePath = snapshot.run_local(context, "getName", None).await?;
+        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;
-        path = path.split_once("/").expect("Must be prefixed").1.to_string();
+        path = path
+            .split_once("/")
+            .expect("Must be prefixed")
+            .1
+            .to_string();
         return Ok(path);
     }
 }

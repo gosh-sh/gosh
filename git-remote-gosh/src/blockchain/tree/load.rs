@@ -38,9 +38,7 @@ impl Tree {
         repo_contract: &mut GoshContract,
         tree_obj_sha1: &str,
     ) -> Result<String, Box<dyn Error>> {
-        let params = serde_json::json!({
-            "treeName": tree_obj_sha1
-        });
+        let params = serde_json::json!({ "treeName": tree_obj_sha1 });
         let result: GetTreeResult = repo_contract
             .run_static(context, "getTreeAddr", Some(params))
             .await?;

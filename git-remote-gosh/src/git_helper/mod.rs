@@ -4,15 +4,16 @@ use std::error::Error;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::abi as gosh_abi;
 use crate::blockchain::{
     create_client,
     get_head,
     get_repo_address,
+    GoshContract,
     // set_head,
     TonClient,
-    Tree, GoshContract,
+    Tree,
 };
-use crate::abi as gosh_abi;
 use crate::config::Config;
 use crate::git::get_refs;
 use crate::ipfs::IpfsService;
@@ -77,11 +78,13 @@ impl GitHelper {
 
         let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
-        let dao: GetAddrDaoResult = gosh_root_contract.run_static(
-            &es_client,
-            "getAddrDao",
-            Some(serde_json::json!({ "name": remote.dao }))
-        ).await?;
+        let dao: GetAddrDaoResult = gosh_root_contract
+            .run_static(
+                &es_client,
+                "getAddrDao",
+                Some(serde_json::json!({ "name": remote.dao })),
+            )
+            .await?;
 
         let repo_addr =
             get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
@@ -153,7 +156,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
     let mut stdout = io::stdout();
 
     // Note: we assume git client will work correctly and will terminate this batch
-    // with an empty line prior the next operation 
+    // with an empty line prior the next operation
     let mut is_batching_operation_in_progress = false;
 
     let mut batch_response: Vec<String> = Vec::new();
@@ -179,7 +182,12 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let arg2 = iter.next();
         let msg = line.clone();
         log::debug!("Line: {line}");
-        log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
+        log::debug!(
+            "> {} {} {}",
+            cmd.unwrap(),
+            arg1.unwrap_or(""),
+            arg2.unwrap_or("")
+        );
 
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
@@ -188,12 +196,12 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
                 let push_result = helper.push(ref_arg).await?;
                 batch_response.push(push_result);
                 vec![]
-            },
+            }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_operation_in_progress = true;
                 helper.fetch(sha, name).await?;
                 vec![]
-            },
+            }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
