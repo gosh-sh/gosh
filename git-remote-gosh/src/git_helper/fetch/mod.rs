@@ -22,7 +22,7 @@ impl GitHelper {
             self.repo_addr,
             commit_id
         );
-        let mut repo_contract = &mut self.repo_contract;
+        let repo_contract = &mut self.repo_contract;
         return Ok(
             blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await?,
         );

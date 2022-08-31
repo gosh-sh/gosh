@@ -356,7 +356,7 @@ impl GitHelper {
                     match object_kind {
                         git_object::Kind::Commit => {
                             blockchain::push_commit(self, &object_id, branch_name).await?;
-                            let mut tree_diff = utilities::build_tree_diff_from_commits(
+                            let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
                                 prev_commit_id,
                                 object_id.clone(),

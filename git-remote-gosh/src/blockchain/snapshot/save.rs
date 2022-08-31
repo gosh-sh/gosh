@@ -7,7 +7,7 @@ use crate::{
     ipfs::IpfsService,
 };
 use git_hash;
-use reqwest::multipart;
+
 use snapshot::Snapshot;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
