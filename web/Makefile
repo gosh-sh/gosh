@@ -1,4 +1,5 @@
 CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+GOSH_PACKAGE_DIR := $(abspath $(CURRENT_DIR)/../react-gosh)
 TARGET_DIR := $(abspath $(target-dir))
 
 build:
@@ -6,14 +7,17 @@ build:
 	docker run \
 	  --rm \
 	  --volume $(CURRENT_DIR):/workdir \
+	  --volume $(GOSH_PACKAGE_DIR):/react-gosh \
 	  --env REACT_APP_ISDOCKEREXT=true \
 	  --env BUILD_PATH=/dest \
 	  --volume $(abspath ./build):/dest \
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  node:18.2.0-alpine \
-	  sh -c "npm install && \
-	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run build:dockerprod"
+	  sh -c "cd ../react-gosh && npm install && npm run build && cd - && \
+	  npm install && npm run wasm && \
+	  cd run-if-modified && npm link && cd - && npm link run-if-modified && \
+	  npm run build:dockerprod"
 	cp -r ./build/* $(TARGET_DIR)
 
 run:

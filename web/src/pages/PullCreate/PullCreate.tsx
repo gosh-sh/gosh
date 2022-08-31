@@ -12,7 +12,6 @@ import {
 } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { getCodeLanguageFromFilename, getRepoTree, splitByChunk } from '../../helpers'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
@@ -24,19 +23,24 @@ import {
     useGoshRepoBranches,
     useSmvBalance,
 } from '../../hooks/gosh.hooks'
-import { userStateAtom } from '../../store/user.state'
 import {
     IGoshRepository,
     IGoshWallet,
     TGoshBranch,
     TGoshTreeItem,
-} from '../../types/types'
+    userStateAtom,
+    getCodeLanguageFromFilename,
+    getRepoTree,
+    splitByChunk,
+    EGoshError,
+    GoshError,
+    GoshCommit,
+    GoshSnapshot,
+    sleep,
+} from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
-import { EGoshError, GoshError } from '../../types/errors'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
-import { GoshCommit, GoshSnapshot } from '../../types/classes'
-import { sleep } from '../../utils'
 
 type TCommitFormValues = {
     title: string
