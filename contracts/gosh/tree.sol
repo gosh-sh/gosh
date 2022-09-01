@@ -19,15 +19,15 @@ import "goshdao.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "0.10.0";
+    string constant version = "0.11.0";
     
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
     string static _shaTree;
     address static _repo;
     optional(string) _ipfs;
-    uint256 _pubkey;
-    address _rootGosh;
+    address _pubaddr;
+    address _goshroot;
     address _goshdao;
     TvmCell m_WalletCode;
     TvmCell m_codeDiff;
@@ -41,12 +41,11 @@ contract Tree is Modifiers {
     bool _flag = false;
     
     constructor(
-        uint256 pubkey,
+        address pubaddr,
         mapping(uint256 => TreeObject) data, 
         optional(string) ipfs, 
         address rootGosh,
         address goshdao,
-        uint256 rootPubkey,
         TvmCell WalletCode,
         TvmCell codeDiff,
         TvmCell codeTree,
@@ -55,10 +54,10 @@ contract Tree is Modifiers {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
-        _pubkey = rootPubkey;
-        _rootGosh = rootGosh;
+        _pubaddr = pubaddr;
+        _goshroot = rootGosh;
         _goshdao = goshdao;
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);  
         _ipfs = ipfs;      
         m_codeDiff = codeDiff;
         m_codeTree = codeTree;
@@ -67,8 +66,8 @@ contract Tree is Modifiers {
         getMoney();
     }    
     
-    function countAll(uint256 pubkey, uint128 index) public {
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
+    function countAll(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
         require(_count == false, ERR_PROCCESS_IS_EXIST);
         _count = true;
         getMoney();
@@ -217,25 +216,24 @@ contract Tree is Modifiers {
         return stateInit;
     }
 
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
   
-    function destroy(uint128 index) public {
-        require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
     }
     
@@ -255,5 +253,9 @@ contract Tree is Modifiers {
 
     function getVersion() external pure returns(string) {
         return version;
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

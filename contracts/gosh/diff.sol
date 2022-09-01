@@ -25,12 +25,12 @@ struct PauseDiff {
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "0.10.0";
+    string constant version = "0.11.0";
     
     uint128 static _index1;
     uint128 static _index2;
     string static _nameCommit;
-    uint256 _pubkey;
+    address _pubaddr;
     address _rootRepo;
     address _goshdao;
     string _nameBranch;
@@ -40,7 +40,7 @@ contract DiffC is Modifiers {
     TvmCell m_WalletCode;
     TvmCell m_codeDiff;
     TvmCell m_CommitCode;
-    address _rootGosh;
+    address _goshroot;
     uint128 _approved = 0;
     string _branchName;
     address _branchcommit;
@@ -54,8 +54,7 @@ contract DiffC is Modifiers {
 
     constructor(address goshdao, 
         address rootGosh, 
-        uint256 pubkey,
-        uint256 pubkeysender, 
+        address pubaddr,
         string nameRepo, 
         string nameBranch, 
         address repo,
@@ -69,10 +68,10 @@ contract DiffC is Modifiers {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;        
-        _rootGosh = rootGosh;
+        _goshroot = rootGosh;
         _goshdao = goshdao;
-        _pubkey = pubkey;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _pubaddr = pubaddr;
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
@@ -90,8 +89,8 @@ contract DiffC is Modifiers {
         GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }
     
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
@@ -104,13 +103,12 @@ contract DiffC is Modifiers {
         return false;
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
@@ -318,8 +316,8 @@ contract DiffC is Modifiers {
     }
     
     //Selfdestruct
-    function destroy(uint128 index) public {
-        require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
     }
     
@@ -334,5 +332,9 @@ contract DiffC is Modifiers {
     
     function getVersion() external pure returns(string) {
         return version;
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

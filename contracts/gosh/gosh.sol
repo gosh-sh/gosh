@@ -9,16 +9,19 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "./modifiers/modifiers.sol";
-import "repository.sol";
+import "goshwallet.sol";
 import "goshdao.sol";
-import "tree.sol";
+import "Upgradable.sol";
+import "repository.sol";
+import "commit.sol";
+import "profile.sol";
 import "content-signature.sol";
+import "./libraries/GoshLib.sol";
 
-/* Root contract of gosh */
-contract Gosh is Modifiers, Upgradable {
-    string constant version = "0.10.0";
-
-    address _creator;
+/* Root contract of Gosh */
+contract GoshRoot is Modifiers, Upgradable{
+    string constant version = "0.11.0";
+    
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
     TvmCell m_WalletCode;
@@ -28,6 +31,7 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
     TvmCell m_contentSignature;
+    TvmCell m_codeProfile;
 
     //SMV
     TvmCell m_TokenLockerCode;
@@ -40,64 +44,35 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_TokenWalletCode;
 
     address public _lastGoshDao;
-
-    constructor(address creator) public onlyOwner {
+    
+    constructor() public onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
-        _creator = creator;
     }
-
-    function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildRepositoryCode(
-            m_RepositoryCode, address(this), goshdao, version
-        );
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: Repository,
-            varInit: {_name: name}
-        });
-    }
-
-    function _composeWalletStateInit(uint256 pubkey, uint256 rootpubkey, address dao, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
-        TvmCell _contractflex = tvm.buildStateInit({
-            code: deployCode,
-            pubkey: pubkey,
-            contr: GoshWallet,
-            varInit: {_rootRepoPubkey: rootpubkey, _rootgosh : address(this), _goshdao: dao, _index: index}
-        });
-        return _contractflex;
-    }
-
-    function checkAccess(uint256 pubkey, uint256 rootpubkey, address sender, address dao, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, rootpubkey, dao, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
-    }
-
-    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
-        TvmBuilder b;
-        b.store(address(this));
-        b.store(name);
-        b.store(version);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        TvmCell deployCode = tvm.setCodeSalt(m_codeDao, b.toCell());
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshDao,
-            varInit: {}
-        });
-    }
-
-    function deployDao(string name, uint256 root_pubkey) public minValue(91 ton) {
+    
+    function deployProfile(uint256 pubkey) public view accept {
         tvm.accept();
+        TvmCell s1 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
+            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+        });
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}();
+    }
+
+    
+    function deployDao(uint256 pubkey, string name, address pubaddr) public accept {
+        tvm.accept();
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
+            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+        });
+        require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = _composeDaoStateInit(name);
-        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO - 5 ton, wid: 0, flag: 1}(
-            address(this),
-            _creator,
-            root_pubkey,
+        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
+            pubaddr,
             name,
             m_CommitCode,
             m_RepositoryCode,
@@ -116,14 +91,70 @@ contract Gosh is Modifiers, Upgradable {
         );
     }
 
+    function sendMoney(address pubaddr, address goshdao, uint128 value, uint128 index) public view {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, goshdao, index);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function sendMoneyDao(string name, uint128 value) public view {
+        TvmCell s1 = _composeDaoStateInit(name);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            m_RepositoryCode, address(this), goshdao, version
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: {_name: name}
+        });
+    }
+
+    function _composeWalletStateInit(address pubaddr, address dao, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell _contractflex = tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshWallet,
+            varInit: {_goshroot : address(this), _goshdao: dao, _index: index}
+        });
+        return _contractflex;
+    }
+
+    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
+        TvmBuilder b;
+        b.store(name);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        TvmCell deployCode = tvm.setCodeSalt(m_codeDao, b.toCell());
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshDao,
+            varInit: { _goshroot : address(this) }
+        });
+    }
+
     function _composeCommitStateInit(string _commit, address repo) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
         return stateInit;
     }
-
+    
+    // Upgradable
+    function onCodeUpgrade() internal override {
+        tvm.resetStorage();
+    }
+    
     //Setters
-
     //SMV
 
     /* TvmCell m_TokenLockerCode;
@@ -163,6 +194,11 @@ contract Gosh is Modifiers, Upgradable {
 
     //////////////////////////////////////////////////////////////////////
 
+    function setProfile(TvmCell code) public  onlyOwner {
+        tvm.accept();
+        m_codeProfile = code;
+    }
+    
     function setDiff(TvmCell code) public  onlyOwner {
         tvm.accept();
         m_codeDiff = code;
@@ -236,8 +272,8 @@ contract Gosh is Modifiers, Upgradable {
         );
     }
 
-    function getDaoWalletCode(uint256 pubkey) external view returns(TvmCell) {
-        return GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
+        return GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
     }
 
     function getSMVProposalCode() external view returns(TvmCell) {
@@ -274,10 +310,5 @@ contract Gosh is Modifiers, Upgradable {
 
     function getVersion() external pure returns(string) {
         return version;
-    }
-
-    // Upgradable
-    function onCodeUpgrade() internal override {
-        tvm.resetStorage();
     }
 }

@@ -26,9 +26,9 @@ struct Pause {
 
 /* Root contract of Commit */
 contract Commit is Modifiers {
-    string constant version = "0.10.0";
+    string constant version = "0.11.0";
     
-    uint256 _pubkey;
+    address _pubaddr;
     address _rootRepo;
     address _goshdao;
     string static _nameCommit;
@@ -41,7 +41,7 @@ contract Commit is Modifiers {
     TvmCell m_SnapshotCode;
     TvmCell m_codeDiff;
     address[] _parents;
-    address _rootGosh;
+    address _goshroot;
     address _tree;
     string _branchName;
     address _branchCommit;
@@ -59,8 +59,7 @@ contract Commit is Modifiers {
 
     constructor(address goshdao, 
         address rootGosh, 
-        uint256 pubkey,
-        uint256 pubkeysender, 
+        address pubaddr,
         string nameRepo, 
         string nameBranch, 
         string commit, 
@@ -73,13 +72,13 @@ contract Commit is Modifiers {
         address tree,
         uint128 index
         ) public {
-        _rootGosh = rootGosh;
+        _goshroot = rootGosh;
         _goshdao = goshdao;
-        _pubkey = pubkey;
+        _pubaddr = pubaddr;
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _parents = parents;
         _name = nameRepo;
         _rootRepo = repo;
@@ -99,19 +98,18 @@ contract Commit is Modifiers {
         GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
     }
     
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
@@ -166,7 +164,7 @@ contract Commit is Modifiers {
         _number = number;
         _approved = 0;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(_pubkey, branch, branchcommit, address(this));
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this));
         _continueChain = true;
         _continueDiff = true;
         getMoney();
@@ -211,7 +209,7 @@ contract Commit is Modifiers {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
         
-    function _checkChain(uint256 pubkey,
+    function _checkChain(
         string branchName,
         address branchCommit,
         address newC) public senderIs(address(this)) {
@@ -220,7 +218,7 @@ contract Commit is Modifiers {
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , newC);
+            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit , newC);
         }
         getMoney();
     }     
@@ -300,14 +298,13 @@ contract Commit is Modifiers {
     }
     
     function CommitCheckCommit(
-        uint256 pubkey,
         string nameCommit,
         string branchName,
         address branchCommit ,  
         address newC) public {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(pubkey, branchName, branchCommit, newC);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC);
         getMoney();
     }
     
@@ -383,18 +380,10 @@ contract Commit is Modifiers {
     }
     
     //Selfdestruct
-    function destroy(uint128 index) public {
-        require(checkAccess(msg.pubkey(), msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
     }
-    
-    //Setters
-    function setTree(uint256 pubkey, address tree, uint128 index) public {
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        tvm.accept();
-        _tree = tree  ;
-        getMoney();
-    } 
     
     //Getters
     
@@ -450,5 +439,9 @@ contract Commit is Modifiers {
 
     function getVersion() external pure returns(string) {
         return version;
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

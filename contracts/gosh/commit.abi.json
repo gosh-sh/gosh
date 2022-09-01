@@ -8,8 +8,7 @@
 			"inputs": [
 				{"name":"goshdao","type":"address"},
 				{"name":"rootGosh","type":"address"},
-				{"name":"pubkey","type":"uint256"},
-				{"name":"pubkeysender","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"commit","type":"string"},
@@ -114,7 +113,6 @@
 		{
 			"name": "_checkChain",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"}
@@ -192,7 +190,6 @@
 		{
 			"name": "CommitCheckCommit",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"nameCommit","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
@@ -221,16 +218,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"tree","type":"address"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -314,6 +302,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
 		}
 	],
 	"data": [
@@ -325,7 +321,7 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameCommit","type":"string"},
@@ -338,7 +334,7 @@
 		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"_parents","type":"address[]"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_tree","type":"address"},
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchCommit","type":"address"},

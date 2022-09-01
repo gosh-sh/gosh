@@ -1,0 +1,290 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deletePubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployContent",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyWallet",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyObject",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"obj","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRepository",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"nameRepo","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployNewSnapshot",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"snapshotdata","type":"bytes"},
+				{"name":"snapshotipfs","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteSnapshot",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"snap","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDiff",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"name":"last","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployCommit",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"fullCommit","type":"string"},
+				{"name":"parents","type":"address[]"},
+				{"name":"tree","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCommit",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployBranch",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteBranch",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"Name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setHEAD",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTag",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteTag",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateConfig",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setConfig",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"limit_time","type":"uint128"},
+				{"name":"limit_messages","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTree",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"shaTree","type":"string"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"datatree","type":"map(uint256,tuple)"},
+				{"name":"ipfs","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForSetCommit",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForAddProtectedBranch",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForDeleteProtectedBranch",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "tryProposalResult",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_pubkey","type":"uint256"},
+		{"key":2,"name":"_goshroot","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"m_messages","type":"map(uint256,uint32)"},
+		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_goshroot","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_owners","type":"map(uint256,bool)"}
+	]
+}

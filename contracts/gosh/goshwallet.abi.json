@@ -6,7 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"creator","type":"address"},
+				{"name":"rootpubaddr","type":"address"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -205,16 +206,6 @@
 			]
 		},
 		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commitName","type":"string"},
-				{"name":"tree","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -325,19 +316,19 @@
 			]
 		},
 		{
-			"name": "getRootPubkey",
+			"name": "getRootAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
-			"name": "getWalletPubkey",
+			"name": "getWalletAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -379,6 +370,14 @@
 			]
 		},
 		{
+			"name": "getWalletOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getWalletsCount",
 			"inputs": [
 			],
@@ -411,6 +410,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -627,10 +634,9 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_rootRepoPubkey","type":"uint256"},
-		{"key":2,"name":"_rootgosh","type":"address"},
-		{"key":3,"name":"_goshdao","type":"address"},
-		{"key":4,"name":"_index","type":"uint128"}
+		{"key":1,"name":"_goshroot","type":"address"},
+		{"key":2,"name":"_goshdao","type":"address"},
+		{"key":3,"name":"_index","type":"uint128"}
 	],
 	"events": [
 	],
@@ -656,9 +662,9 @@
 		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
 		{"name":"lastVoteResult","type":"optional(bool)"},
 		{"name":"lockingAmount","type":"uint128"},
-		{"name":"_creator","type":"address"},
-		{"name":"_rootRepoPubkey","type":"uint256"},
-		{"name":"_rootgosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
+		{"name":"_rootpubaddr","type":"address"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_index","type":"uint128"},
 		{"name":"_flag","type":"bool"},

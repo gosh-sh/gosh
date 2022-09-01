@@ -16,15 +16,15 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string version = "0.10.0";
+    string version = "0.11.0";
     
     string _baseCommit;
     string _basemaybe = "";
-    uint256 _pubkey;
+    address _pubaddr;
     address _rootRepo;
     bytes _snapshot;
     bytes _oldsnapshot;
-    address _rootgosh;
+    address _goshroot;
     address _goshdao;
     string _oldcommits;
     string _commits;
@@ -42,8 +42,7 @@ contract Snapshot is Modifiers {
     bool _ready = false;
 
     constructor(
-        uint256 pubkeysender,
-        uint256 pubkey,
+        address pubaddr,
         address rootgosh,
         address goshdao,
         address rootrepo,
@@ -60,7 +59,7 @@ contract Snapshot is Modifiers {
         string commit
     ) public {
         tvm.accept();
-        _pubkey = pubkey;
+        _pubaddr = pubaddr;
         _rootRepo = rootrepo;
         m_codeSnapshot = codeSnapshot;
         m_CommitCode = codeCommit;
@@ -69,10 +68,10 @@ contract Snapshot is Modifiers {
         _oldsnapshot = _snapshot;
         _branch = branch;
         _name = name;
-        _rootgosh = rootgosh;
+        _goshroot = rootgosh;
         _goshdao = goshdao;
         m_WalletCode = WalletCode;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _oldcommits = commit;
         _commits = commit;
         _oldsnapshot = data;
@@ -121,19 +120,18 @@ contract Snapshot is Modifiers {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
 
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootgosh, _goshdao: _goshdao, _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
@@ -238,8 +236,8 @@ contract Snapshot is Modifiers {
     }
 
     //Selfdestruct
-    function destroy(uint256 value, uint128 index) public {
-        require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         selfdestruct(msg.sender);
     }
 
@@ -264,5 +262,9 @@ contract Snapshot is Modifiers {
 
     function getVersion() external view returns(string) {
         return version;
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

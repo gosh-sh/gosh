@@ -7,7 +7,7 @@
 pragma ton-solidity >=0.61.2;
 
 abstract contract Errors {
-    string constant versionErrors = "0.10.0";
+    string constant versionErrors = "0.11.0";
     
     uint constant ERR_NO_SALT = 200;
     uint constant ERR_SENDER_NOT_DAO = 202;
@@ -42,4 +42,5 @@ abstract contract Errors {
     uint constant ERR_WRONG_DATA = 231;
     uint constant ERR_NOT_EMPTY_DATA = 232;
     uint constant ERR_SNAPSHOT_NOT_READY = 233;
+    uint constant ERR_EMPTY_BRANCH = 234;
 }

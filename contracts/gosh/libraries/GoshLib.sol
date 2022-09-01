@@ -7,7 +7,7 @@
 pragma ton-solidity >=0.61.2;
 
 library GoshLib {
-    string constant versionLib = "0.10.0";
+    string constant versionLib = "0.11.0";
 
     function buildSignatureCode(
         TvmCell originalCode,
@@ -25,11 +25,11 @@ library GoshLib {
     
     function buildWalletCode(
         TvmCell originalCode,
-        uint256 pubkey,
+        address pubaddr,
         string version
     ) public returns (TvmCell) {
         TvmBuilder b;
-        b.store(pubkey);
+        b.store(pubaddr);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

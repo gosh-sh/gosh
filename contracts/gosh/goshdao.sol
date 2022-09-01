@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
-import "daocreator.sol";
+import "gosh.sol";
 import "tree.sol";
 import "diff.sol";
 import "commit.sol";
@@ -19,13 +19,12 @@ import "../smv/TokenRootOwner.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "0.10.0";
+    string constant version = "0.11.0";
     
     uint128 _limit_wallets = 10;
     uint128 _limit_time = 100;
     uint128 _limit_messages = 10;
     
-    address _creator;
     TvmCell m_WalletCode;   
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -34,7 +33,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
     TvmCell m_contentSignature;
-    address _rootgosh;
+    address static _goshroot;
+    address _pubaddr;
     string _nameDao;
     mapping(uint256 => address  ) _wallets;
     
@@ -52,9 +52,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool _flag = false;
 
     constructor(
-        address rootgosh, 
-        address creator,
-        uint256 pubkey, 
+        address pubaddr, 
         string name, 
         TvmCell CommitCode,
         TvmCell RepositoryCode,
@@ -79,11 +77,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         bool burnByRootDisabled,
         bool burnPaused,
         address remainingGasTo,
-        uint256 randomNonce */ ) public onlyOwner TokenRootOwner (TokenRootCode, TokenWalletCode) {
+        uint256 randomNonce */ ) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
         tvm.accept();
-        _creator = creator;
-        _rootgosh = rootgosh;
-        _rootpubkey = pubkey;
+        _pubaddr = pubaddr;
         _nameDao = name;
         m_WalletCode = WalletCode;
         m_RepositoryCode = RepositoryCode;
@@ -114,7 +110,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (address(this).balance > 50000 ton) { return; }
         tvm.accept();
         _flag = true;
-        DaoCreator(_creator).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
+        GoshRoot(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
@@ -163,14 +159,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Wallet part
-    function deployWallet(uint256 pubkey) public onlyOwnerPubkey(_rootpubkey) {
+    function deployWallet(address pubaddr) public senderIs(_pubaddr) {
         tvm.accept();
-        TvmCell s1 = _composeWalletStateInit(pubkey, 0);
+        TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _wallets[pubkey] = _lastAccountAddress;
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        _wallets[keyaddr] = _lastAccountAddress;
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(_creator, m_CommitCode, 
+        }(  _pubaddr, pubaddr, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,
             m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 
@@ -179,7 +177,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deleteWallet(uint256 pubkey) public onlyOwnerPubkey(_rootpubkey) {
+    function deleteWallet(uint256 pubkey) public senderIs(_pubaddr) {
         tvm.accept();
         require(_wallets.exists(pubkey) == true, ERR_WALLET_NOT_EXIST);
         GoshWallet(_wallets[pubkey]).destroy{value : 0.2 ton}();
@@ -187,20 +185,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _rootpubkey, _rootgosh : _rootgosh, _goshdao: address(this), _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: address(this), _index: index}
         });
         return _contractflex;
     }
     
-    function getConfigInfo(uint256 pubkey, uint128 index) public view senderIs(getAddrWalletIn(pubkey, index)) {
+    function getConfigInfo(address pubaddr, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index)) {
         tvm.accept();
-        require(_wallets.exists(pubkey) == true, ERR_WALLET_NOT_EXIST);
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST);
         GoshWallet(msg.sender).setConfig{value : 0.2 ton}(_limit_wallets, _limit_time, _limit_messages);
     }
     
@@ -213,21 +212,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function getAddrWalletIn(uint256 pubkey, uint128 index) private view returns(address) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function getAddrWalletIn(address pubaddr, uint128 index) private view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
     
     //Fallback/Receive
     receive() external {
-        if (msg.sender == _creator) {
+        if (msg.sender == _goshroot) {
             _flag = false;
         }
     }
 
     //Getters    
-    function getAddrWallet(uint256 pubkey, uint128 index) external view returns(address) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function getAddrWallet(address pubaddr, uint128 index) external view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
@@ -259,12 +258,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getConfig() external view returns(uint128/*, uint128, uint128*/) {
         return (_limit_wallets/*, _limit_time, _limit_messages*/);
     }
-    
-    function getRootPubkey() external view returns(uint256) {
-        return _rootpubkey;
-    }
 
     function getVersion() external pure returns(string) {
         return version;
+    }
+        
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

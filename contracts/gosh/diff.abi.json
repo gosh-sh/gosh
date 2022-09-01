@@ -8,8 +8,7 @@
 			"inputs": [
 				{"name":"goshdao","type":"address"},
 				{"name":"rootGosh","type":"address"},
-				{"name":"pubkey","type":"uint256"},
-				{"name":"pubkeysender","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"repo","type":"address"},
@@ -119,6 +118,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -147,6 +147,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
 		}
 	],
 	"data": [
@@ -163,7 +171,7 @@
 		{"name":"_index1","type":"uint128"},
 		{"name":"_index2","type":"uint128"},
 		{"name":"_nameCommit","type":"string"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameBranch","type":"string"},
@@ -173,7 +181,7 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_approved","type":"uint128"},
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchcommit","type":"address"},
