@@ -72,12 +72,9 @@ impl fmt::Debug for GoshContract {
 }
 
 impl GoshContract {
-    pub fn new<T>(
-        address: T,
-        (pretty_name, abi): (&str, &str),
-    ) -> Self 
+    pub fn new<T>(address: T, (pretty_name, abi): (&str, &str)) -> Self
     where
-        T: Into<BlockchainContractAddress>
+        T: Into<BlockchainContractAddress>,
     {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
@@ -88,11 +85,10 @@ impl GoshContract {
         }
     }
 
-    pub fn new_with_keys(
-        address: impl Into<BlockchainContractAddress>,
-        (pretty_name, abi): (&str, &str),
-        keys: KeyPair,
-    ) -> Self {
+    pub fn new_with_keys<T>(address: T, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self
+    where
+        T: Into<BlockchainContractAddress>,
+    {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
             address: address.into(),
