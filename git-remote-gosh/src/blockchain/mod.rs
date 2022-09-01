@@ -21,7 +21,8 @@ use ton_client::{
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientConfig, ClientContext,
 };
-
+mod blockchain_contract_address;
+pub use blockchain_contract_address::BlockchainContractAddress;
 pub mod commit;
 mod serde_number;
 pub mod snapshot;
@@ -39,7 +40,6 @@ pub use user_wallet::user_wallet;
 use crate::abi as gosh_abi;
 use crate::config::Config;
 
-pub const ZERO_ADDRESS: &str = "0:0000000000000000000000000000000000000000000000000000000000000000";
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 const CACHE_PIN_STATIC: &str = "static";
@@ -55,7 +55,7 @@ base64_serde_type!(Base64Standard, base64::STANDARD);
 
 #[derive(Clone)]
 pub struct GoshContract {
-    address: String,
+    address: BlockchainContractAddress,
     pretty_name: String,
     abi: Abi,
     keys: Option<KeyPair>,
@@ -75,7 +75,7 @@ impl GoshContract {
     pub fn new(address: &str, (pretty_name, abi): (&str, &str)) -> Self {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
-            address: address.to_owned(),
+            address: BlockchainContractAddress::new(address),
             abi: Abi::Json(abi.to_string()),
             keys: None,
             boc_ref: None,
@@ -85,7 +85,7 @@ impl GoshContract {
     pub fn new_with_keys(address: &str, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
-            address: address.to_owned(),
+            address: BlockchainContractAddress::new(address),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
             boc_ref: None,
@@ -271,7 +271,7 @@ async fn run_local(
         context.clone(),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
-            address: Some(contract.address.to_owned()),
+            address: Some(String::from(contract.address.clone())),
             call_set: call_set,
             signer: Signer::None,
             deploy_set: None,
@@ -356,7 +356,7 @@ async fn run_static(
         context.clone(),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
-            address: Some(contract.address.to_owned()),
+            address: Some(String::from(contract.address.clone())),
             call_set: call_set,
             signer: Signer::None,
             deploy_set: None,
@@ -406,7 +406,7 @@ async fn call(
 
     let message_encode_params = ParamsOfEncodeMessage {
         abi: contract.abi,
-        address: Some(contract.address),
+        address: Some(String::from(contract.address.clone())),
         call_set,
         signer,
         deploy_set: None,
