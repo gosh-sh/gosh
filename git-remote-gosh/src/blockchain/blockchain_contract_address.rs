@@ -14,7 +14,7 @@ impl std::fmt::Display for BlockchainContractAddress {
     }
 }
 
-impl std::convert::From<BlockchainContractAddress> for String{
+impl std::convert::From<BlockchainContractAddress> for String {
     fn from(address: BlockchainContractAddress) -> String {
         address.0 
     }
@@ -28,5 +28,11 @@ mod tests {
     pub fn ensure_formatting(){
         let address = BlockchainContractAddress::new("0:0000000000123");   
         assert_eq!("<0:0000000000123>", format!("{}", address));
+    }
+
+    #[test]
+    pub fn ensure_into_string_returns_pure_address() {
+        let address = BlockchainContractAddress::new("0:0000000000123");
+        assert_eq!("0:0000000000123", String::from(address));
     }
 }
