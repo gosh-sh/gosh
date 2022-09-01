@@ -7,7 +7,7 @@ use crate::{
     ipfs::IpfsService,
 };
 use git_hash;
-use reqwest::multipart;
+
 use snapshot::Snapshot;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
@@ -302,7 +302,6 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
-
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
     context: &mut GitHelper,
@@ -392,7 +391,10 @@ pub async fn push_initial_snapshot(
                 std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };
-        log::debug!("deployNewSnapshot <branch: {branch_name}, path: {file_path}> result: {:?}", result);
+        log::debug!(
+            "deployNewSnapshot <branch: {branch_name}, path: {file_path}> result: {:?}",
+            result
+        );
         result
     }))
 }

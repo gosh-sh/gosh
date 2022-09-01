@@ -23,7 +23,7 @@ async fn load_data_from_ipfs(
     let ipfs_data = ipfs_client.load(&ipfs_address).await?;
     let compressed_data = base64::decode(ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
-    
+
     return Ok(data);
 }
 
@@ -66,7 +66,11 @@ impl BlobsRebuildingPlan {
         appeared_at_snapshot_address: String,
         blob_sha1: ObjectId,
     ) {
-        log::info!("Mark blob: {} -> {}", blob_sha1, appeared_at_snapshot_address);
+        log::info!(
+            "Mark blob: {} -> {}",
+            blob_sha1,
+            appeared_at_snapshot_address
+        );
         self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
             .and_modify(|blobs| {
@@ -190,11 +194,10 @@ impl BlobsRebuildingPlan {
 
             // TODO: convert to async iterator
             // This should download next messages seemless
-            let mut messages =
-                blockchain::snapshot::diffs::DiffMessagesIterator::new(
-                    snapshot_address,
-                    &mut git_helper.repo_contract
-                );
+            let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+                snapshot_address,
+                &mut git_helper.repo_contract,
+            );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot

@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
+use crate::blockchain;
 use crate::git_helper::GitHelper;
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
-use crate::blockchain;
 
 use super::ZERO_SHA;
 
@@ -45,16 +45,17 @@ impl<'a> CreateBranchOperation<'a> {
     async fn preinit_branch(&mut self) -> Result<()> {
         let wallet_contract = blockchain::user_wallet(self.context).await?;
         let params = serde_json::json!({
-            "repoName": self.context.remote.repo, 
+            "repoName": self.context.remote.repo,
             "newName": self.new_branch,
             "fromCommit": self.ancestor_commit.to_string(),
-        });  
+        });
         blockchain::call(
             &self.context.es_client,
             wallet_contract,
             "deployBranch",
-            Some(params)
-        ).await?; 
+            Some(params),
+        )
+        .await?;
         Ok(())
     }
 
@@ -70,20 +71,21 @@ impl<'a> CreateBranchOperation<'a> {
             .decode()?
             .as_blob()
             .expect("It must be a blob object")
-            .data; 
+            .data;
         blockchain::snapshot::push_new_branch_snapshot(
             self.context,
             &self.ancestor_commit,
             &self.new_branch,
             file_path,
-            content
-        ).await?;
+            content,
+        )
+        .await?;
         Ok(())
     }
 
     #[instrument(level = "debug")]
     async fn push_initial_snapshots(&mut self) -> Result<()> {
-        let all_files:Vec<recorder::Entry> = {
+        let all_files: Vec<recorder::Entry> = {
             self.context
                 .local_repository()
                 .find_object(self.ancestor_commit)?
@@ -124,7 +126,7 @@ impl<'a> CreateBranchOperation<'a> {
 
     /// Run create branch operation.
     /// Returns false if it was a branch from a commit
-    /// and true if it was the first ever branch 
+    /// and true if it was the first ever branch
     #[instrument(level = "debug")]
     pub async fn run(&mut self) -> Result<bool> {
         let mut is_first_branch = true;
