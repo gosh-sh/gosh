@@ -2,10 +2,7 @@ use super::GitHelper;
 use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
 use crate::ipfs::IpfsService;
-use diffy;
-use git_hash;
 use git_hash::ObjectId;
-use git_object;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
 
