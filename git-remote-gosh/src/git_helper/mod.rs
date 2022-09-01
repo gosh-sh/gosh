@@ -14,7 +14,6 @@ use crate::blockchain::{
 };
 use crate::abi as gosh_abi;
 use crate::config::Config;
-use crate::git::get_refs;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
@@ -46,6 +45,8 @@ mod fetch;
 
 // Note: this module implements push method on GitHelper
 mod push;
+
+mod list;
 
 mod fmt;
 
@@ -112,7 +113,7 @@ impl GitHelper {
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
-        let refs = get_refs(&self.es_client, self.repo_addr.as_str()).await?;
+        let refs = list::get_refs(&self.es_client, self.repo_addr.as_str()).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
             let head = get_head(&self.es_client, self.repo_addr.as_str()).await?;
