@@ -2,6 +2,7 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::{GoshContract, TonClient};
 
+use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::error::Error;
@@ -43,7 +44,7 @@ pub struct Snapshot {
 #[derive(Deserialize, Debug)]
 struct GetSnapshotAddrResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -59,7 +60,7 @@ impl Snapshot {
         repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
@@ -73,7 +74,7 @@ impl Snapshot {
     #[instrument(level = "debug", skip(context))]
     pub async fn get_file_path(
         context: &TonClient,
-        address: &str,
+        address: &BlockchainContractAddress,
     ) -> Result<String, Box<dyn Error>> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.run_local(context, "getName", None).await?;

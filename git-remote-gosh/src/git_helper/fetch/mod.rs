@@ -1,5 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use git_hash;
 use git_object;
 use git_odb;
@@ -15,7 +16,7 @@ impl GitHelper {
     pub async fn calculate_commit_address(
         &mut self,
         commit_id: &git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let commit_id = format!("{}", commit_id);
         log::info!(
             "Calculating commit address for repository <{}> and commit id <{}>",

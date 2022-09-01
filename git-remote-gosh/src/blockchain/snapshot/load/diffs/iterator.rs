@@ -1,7 +1,8 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::GoshContract;
 use crate::blockchain::{
-    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, Snapshot, TonClient,
+    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, BlockchainContractAddress,
+    Snapshot, TonClient,
 };
 use std::{error::Error, iter::Iterator};
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
@@ -16,8 +17,8 @@ pub struct DiffMessage {
 
 #[derive(Debug)]
 enum NextChunk {
-    MessagesPage(String, Option<String>),
-    JumpToAnotherBranchSnapshot(String, u64),
+    MessagesPage(BlockchainContractAddress, Option<String>),
+    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64),
 }
 
 #[derive(Debug)]
@@ -61,7 +62,10 @@ struct Messages {
 
 impl DiffMessagesIterator {
     #[instrument(level = "debug", skip(snapshot_address))]
-    pub fn new(snapshot_address: impl Into<String>, repo_contract: &mut GoshContract) -> Self {
+    pub fn new(
+        snapshot_address: impl Into<BlockchainContractAddress>,
+        repo_contract: &mut GoshContract,
+    ) -> Self {
         Self {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
@@ -83,14 +87,14 @@ impl DiffMessagesIterator {
 
     async fn into_next_page(
         client: &TonClient,
-        current_snapshot_address: &str,
+        current_snapshot_address: &BlockchainContractAddress,
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
     ) -> Result<Option<NextChunk>, Box<dyn Error>> {
         let address = current_snapshot_address;
         return Ok(match next_page_info {
             Some(next_page_info) => Some(NextChunk::MessagesPage(
-                address.to_string(),
+                address.clone(),
                 Some(next_page_info),
             )),
             None => {
@@ -221,7 +225,7 @@ impl DiffMessagesIterator {
 #[instrument(level = "debug", skip(context))]
 pub async fn load_messages_to(
     context: &TonClient,
-    address: &str,
+    address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
 ) -> Result<(Vec<DiffMessage>, Option<String>, Option<u64>), Box<dyn Error>> {

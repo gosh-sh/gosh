@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{call, get_commit_address, user_wallet, ZERO_SHA},
+    blockchain::{call, get_commit_address, user_wallet, BlockchainContractAddress, ZERO_SHA},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -16,9 +16,9 @@ pub struct DeployCommitParams {
     pub commit_id: String,
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
-    pub parents: Vec<String>,
+    pub parents: Vec<BlockchainContractAddress>,
     #[serde(rename = "tree")]
-    pub tree_addr: String,
+    pub tree_addr: BlockchainContractAddress,
 }
 
 #[instrument(level = "debug")]
@@ -39,7 +39,7 @@ pub async fn push_commit(
     let mut commit_iter = commit.try_into_commit_iter().unwrap();
     let tree_id = commit_iter.tree_id()?;
     let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
-    let mut parents: Vec<String> = vec![];
+    let mut parents: Vec<BlockchainContractAddress> = vec![];
     for id in parent_ids {
         let parent = get_commit_address(
             &context.es_client,

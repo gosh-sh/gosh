@@ -5,6 +5,7 @@ use std::error::Error;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::abi as gosh_abi;
+use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::{
     create_client,
     get_head,
@@ -27,8 +28,8 @@ pub struct GitHelper {
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
     pub remote: Remote,
-    pub dao_addr: String,
-    pub repo_addr: String,
+    pub dao_addr: BlockchainContractAddress,
+    pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
     logger: Logger,
     gosh_root_contract: GoshContract,
@@ -38,7 +39,7 @@ pub struct GitHelper {
 #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -59,7 +60,7 @@ impl GitHelper {
     pub async fn calculate_tree_address(
         &mut self,
         tree_id: git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         Tree::calculate_address(
             &self.es_client,
             &mut self.repo_contract,
@@ -116,10 +117,10 @@ impl GitHelper {
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
-        let refs = list::get_refs(&self.es_client, self.repo_addr.as_str()).await?;
+        let refs = list::get_refs(&self.es_client, &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
-            let head = get_head(&self.es_client, self.repo_addr.as_str()).await?;
+            let head = get_head(&self.es_client, &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());

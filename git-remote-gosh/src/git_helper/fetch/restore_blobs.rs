@@ -1,5 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::ipfs::IpfsService;
 use diffy;
 use git_hash;
@@ -13,7 +14,7 @@ use std::str::FromStr;
 use std::vec::Vec;
 
 pub struct BlobsRebuildingPlan {
-    snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
+    snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
 async fn load_data_from_ipfs(
@@ -63,7 +64,7 @@ impl BlobsRebuildingPlan {
     #[instrument(level = "debug", skip(self))]
     pub fn mark_blob_to_restore(
         &mut self,
-        appeared_at_snapshot_address: String,
+        appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
         log::info!(
@@ -86,7 +87,7 @@ impl BlobsRebuildingPlan {
 
     async fn restore_snapshot_blob(
         git_helper: &mut GitHelper,
-        snapshot_address: &str,
+        snapshot_address: &BlockchainContractAddress,
     ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
         let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
