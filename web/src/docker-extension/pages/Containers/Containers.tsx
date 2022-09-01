@@ -23,9 +23,8 @@ import {
     Container as ContainerType,
 } from './../../interfaces'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../../store/user.state'
+import { userStateAtom, shortString } from 'react-gosh'
 import CopyClipboard from '../../../components/CopyClipboard'
-import { shortString } from '../../../utils'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>

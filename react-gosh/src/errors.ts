@@ -1,6 +1,6 @@
 export enum EGoshError {
     NO_USER = 'User undefined',
-    NOT_PARTICIPANT = 'Not a DAO participant',
+    NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
     NO_CREATOR_ADDR = 'Gosh creator address undefined',

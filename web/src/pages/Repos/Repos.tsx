@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { goshRoot } from '../../helpers'
-import { userStateAtom } from '../../store/user.state'
-import { GoshDao, GoshRepository, GoshWallet } from '../../types/classes'
-import { TGoshRepoDetails } from '../../types/types'
+import { goshRoot } from 'react-gosh'
+import {
+    GoshDao,
+    GoshRepository,
+    GoshWallet,
+    userStateAtom,
+    TGoshRepoDetails,
+} from 'react-gosh'
 import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {
@@ -59,7 +63,6 @@ const RepositoriesPage = () => {
                         result: 'id',
                     })
 
-                    await dao.load()
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {
                             const repo = new GoshRepository(
@@ -69,7 +72,9 @@ const RepositoriesPage = () => {
                             return await repo.getDetails()
                         }),
                     )
-                    return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
+                    // TODO: Get dao name
+                    // return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
+                    return repos.map((repo) => ({ repo, daoName: '' }))
                 }),
             )
 

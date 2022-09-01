@@ -1,7 +1,6 @@
 import { Disclosure } from '@headlessui/react'
 import { Link, useLocation } from 'react-router-dom'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import { userStatePersistAtom } from '../../store/user.state'
 import logoBlack from '../../assets/images/logo-black.svg'
 import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -9,7 +8,7 @@ import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-ic
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
-import { dockerClient } from '../../helpers'
+import { dockerClient, userStatePersistAtom } from 'react-gosh'
 
 const Header = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)

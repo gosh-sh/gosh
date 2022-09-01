@@ -1,4 +1,3 @@
-use crate::abi as gosh_abi;
 use crate::blockchain::{GoshContract, Number, TonClient};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
@@ -38,9 +37,7 @@ impl Tree {
         repo_contract: &mut GoshContract,
         tree_obj_sha1: &str,
     ) -> Result<String, Box<dyn Error>> {
-        let params = serde_json::json!({
-            "treeName": tree_obj_sha1
-        });
+        let params = serde_json::json!({ "treeName": tree_obj_sha1 });
         let result: GetTreeResult = repo_contract
             .run_static(context, "getTreeAddr", Some(params))
             .await?;

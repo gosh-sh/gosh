@@ -1,20 +1,26 @@
 import { Account, AccountRunOptions, AccountType } from '@eversdk/appkit'
-import { KeyPair, signerKeys, signerNone, TonClient } from '@eversdk/core'
-import GoshDaoCreatorABI from '../contracts/daocreator.abi.json'
-import GoshABI from '../contracts/gosh.abi.json'
-import GoshDaoABI from '../contracts/goshdao.abi.json'
-import GoshWalletABI from '../contracts/goshwallet.abi.json'
-import GoshRepositoryABI from '../contracts/repository.abi.json'
-import GoshCommitABI from '../contracts/commit.abi.json'
-import GoshDiffABI from '../contracts/diff.abi.json'
-import GoshTreeABI from '../contracts/tree.abi.json'
-import GoshSnapshotABI from '../contracts/snapshot.abi.json'
-import GoshTagABI from '../contracts/tag.abi.json'
-import GoshContentSignatureABI from '../contracts/content-signature.abi.json'
-import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json'
-import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json'
-import GoshSmvClientABI from '../contracts/SMVClient.abi.json'
-import GoshSmvTokenRootABI from '../contracts/TokenRoot.abi.json'
+import {
+    KeyPair,
+    ResultOfProcessMessage,
+    signerKeys,
+    signerNone,
+    TonClient,
+} from '@eversdk/core'
+import GoshDaoCreatorABI from './contracts/daocreator.abi.json'
+import GoshABI from './contracts/gosh.abi.json'
+import GoshDaoABI from './contracts/goshdao.abi.json'
+import GoshWalletABI from './contracts/goshwallet.abi.json'
+import GoshRepositoryABI from './contracts/repository.abi.json'
+import GoshCommitABI from './contracts/commit.abi.json'
+import GoshDiffABI from './contracts/diff.abi.json'
+import GoshTreeABI from './contracts/tree.abi.json'
+import GoshSnapshotABI from './contracts/snapshot.abi.json'
+import GoshTagABI from './contracts/tag.abi.json'
+import GoshContentSignatureABI from './contracts/content-signature.abi.json'
+import GoshSmvProposalABI from './contracts/SMVProposal.abi.json'
+import GoshSmvLockerABI from './contracts/SMVTokenLocker.abi.json'
+import GoshSmvClientABI from './contracts/SMVClient.abi.json'
+import GoshSmvTokenRootABI from './contracts/TokenRoot.abi.json'
 import {
     calculateSubtrees,
     getRepoTree,
@@ -35,7 +41,7 @@ import {
     splitByChunk,
     goshRoot,
     sha256,
-} from '../helpers'
+} from './helpers'
 import {
     IGoshTree,
     TGoshBranch,
@@ -57,75 +63,93 @@ import {
     IGoshSnapshot,
     TGoshDiff,
     IGoshDiff,
-    TGoshDaoDetails,
     TGoshTagDetails,
     TGoshRepoDetails,
     TGoshEventDetails,
     TGoshCommitDetails,
     IGoshContentSignature,
-    TGoshDaoWalletConfig,
-} from './types'
+    IContract,
+} from './types/types'
 import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
-import { sleep } from '../utils'
+import { sleep } from './utils'
+import { TDaoDetails } from './types/dao.types'
 
-export class GoshDaoCreator implements IGoshDaoCreator {
+export class BaseContract implements IContract {
+    abi: any
+    tvc?: string
+    account: any
+
+    async run(
+        functionName: string,
+        input: object,
+        options?: AccountRunOptions,
+        writeLog: boolean = true,
+    ): Promise<ResultOfProcessMessage> {
+        if (writeLog) console.debug('[Run]', { functionName, input, options })
+        const result = await this.account.run(functionName, input, options)
+        if (writeLog) console.debug('[Run result]', { functionName, result })
+        return result
+    }
+}
+
+export class GoshDaoCreator extends BaseContract implements IGoshDaoCreator {
     abi: any = GoshDaoCreatorABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
-    async deployDao(name: string, rootPubkey: string): Promise<void> {
-        await this.account.run('deployDao', { name, root_pubkey: rootPubkey })
+    async deployDao(name: string, ownerPubkey: string): Promise<ResultOfProcessMessage> {
+        return await this.run('deployDao', {
+            name,
+            root_pubkey: ownerPubkey,
+        })
     }
 }
-export class GoshRoot implements IGoshRoot {
+export class GoshRoot extends BaseContract implements IGoshRoot {
     abi: any = GoshABI
     account: Account
     address: string
-    daoCreator: IGoshDaoCreator
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
-        this.daoCreator = goshDaoCreator
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
     /**
      *  Deploy new DAO and wait until account is active
      * @param name DAO name
-     * @param rootPubkey Creator's public key as `0x0000....`
+     * @param ownerPubkey Creator's public key as `0x0000....`
      * @returns IGoshDao instance
      */
-    async createDao(name: string, rootPubkey: string): Promise<IGoshDao> {
+    async deployDao(name: string, ownerPubkey: string): Promise<IGoshDao> {
         // Get DAO address and check it's status
         const daoAddr = await this.getDaoAddr(name)
-        console.debug('[Create DAO] - Address:', daoAddr)
         const dao = new GoshDao(this.account.client, daoAddr)
         const acc = await dao.account.getAccount()
         if (acc.acc_type === AccountType.active) {
             const daoRootPubkey = await dao.getRootPubkey()
-            if (daoRootPubkey !== rootPubkey)
+            if (daoRootPubkey !== ownerPubkey) {
                 throw new GoshError(EGoshError.DAO_EXISTS, { name })
+            }
             return dao
         }
 
         // If DAO is not active (deployed), deploy and wait for status `active`
-        await this.daoCreator.deployDao(name, rootPubkey)
-        return new Promise((resolve) => {
-            const interval = setInterval(async () => {
-                const acc = await dao.account.getAccount()
-                console.debug('[Create DAO] - Account:', acc)
-                if (acc.acc_type === AccountType.active) {
-                    clearInterval(interval)
-                    resolve(dao)
-                }
-            }, 1500)
-        })
+        await goshDaoCreator.deployDao(name, ownerPubkey)
+        while (true) {
+            const acc = await dao.account.getAccount()
+            console.debug('[Create DAO]: Wait for account', acc)
+            if (acc.acc_type === AccountType.active) break
+            await sleep(5000)
+        }
+        return dao
     }
 
     async getDaoAddr(name: string): Promise<string> {
@@ -148,9 +172,9 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getDaoRepoCode(daoAddress: string): Promise<string> {
+    async getDaoRepoCode(daoAddr: string): Promise<string> {
         const result = await this.account.runLocal('getRepoDaoCode', {
-            dao: daoAddress,
+            dao: daoAddr,
         })
         return result.decoded?.output.value0
     }
@@ -163,13 +187,13 @@ export class GoshRoot implements IGoshRoot {
     async getContentAddress(
         daoName: string,
         repoName: string,
-        commitName: string,
+        commitHash: string,
         label: string,
     ): Promise<string> {
         const result = await this.account.runLocal('getContentAdress', {
             daoName,
             repoName,
-            commit: commitName,
+            commit: commitHash,
             label,
         })
         return result.decoded?.output.value0
@@ -186,88 +210,51 @@ export class GoshRoot implements IGoshRoot {
     }
 }
 
-export class GoshDao implements IGoshDao {
+export class GoshDao extends BaseContract implements IGoshDao {
     abi: any = GoshDaoABI
     account: Account
     address: string
-    daoCreator: IGoshDaoCreator
-    meta?: IGoshDao['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
-        this.daoCreator = goshDaoCreator
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
-    async load(): Promise<void> {
-        this.meta = {
-            name: await this.getName(),
-        }
-    }
-
-    async getDetails(): Promise<TGoshDaoDetails> {
+    async getDetails(): Promise<TDaoDetails> {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr()
         const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
         return {
             address: this.address,
             name: await this.getName(),
-            participants: await this.getWallets(),
+            members: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
+            ownerPubkey: await this.getRootPubkey(),
         }
     }
 
-    async deployWallet(pubkey: string, keys: KeyPair): Promise<string> {
-        if (!this.meta) await this.load()
-        if (!this.meta?.name)
-            throw new GoshError(EGoshError.META_LOAD, {
-                type: 'dao',
-                address: this.address,
-            })
-
-        // Topup GoshDao, deploy and topup GoshWallet
-        const walletAddr = await this.getWalletAddr(pubkey, 0)
-        console.debug('[Deploy wallet] - GoshWallet addr:', walletAddr)
-        const wallet = new GoshWallet(this.account.client, walletAddr)
+    async deployWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<IGoshWallet> {
+        const address = await this.getWalletAddr(pubkey, 0)
+        const wallet = new GoshWallet(this.account.client, address)
         const acc = await wallet.account.getAccount()
         if (acc.acc_type !== AccountType.active) {
-            // const daoBalance = await this.account.getBalance();
-            // if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
-            await this.account.run(
+            await this.run(
                 'deployWallet',
                 { pubkey },
-                { signer: signerKeys(keys) },
+                { signer: signerKeys(daoOwnerKeys) },
             )
-            await new Promise<void>((resolve) => {
-                const interval = setInterval(async () => {
-                    const acc = await wallet.account.getAccount()
-                    console.debug('[Deploy wallet] - Account:', acc)
-                    if (acc.acc_type === AccountType.active) {
-                        clearInterval(interval)
-                        resolve()
-                    }
-                }, 1500)
-            })
+            while (true) {
+                const acc = await wallet.account.getAccount()
+                console.debug('[Deploy wallet]: Wait for account', acc)
+                if (acc.acc_type === AccountType.active) break
+                await sleep(5000)
+            }
         }
+        return wallet
+    }
 
-        // Check wallet SMV token balance and mint if needed
-        const smvTokenBalance = await wallet.getSmvTokenBalance()
-        console.debug('[Deploy wallet] - SMV token balance:', smvTokenBalance)
-        if (!smvTokenBalance) {
-            const rootTokenAddr = await this.getSmvRootTokenAddr()
-            console.debug('[Deploy wallet] - Root token addr:', rootTokenAddr)
-            await this.mint(
-                rootTokenAddr,
-                100,
-                walletAddr,
-                0,
-                this.address,
-                true,
-                '',
-                keys,
-            )
-        }
-
-        return walletAddr
+    async deleteWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<void> {
+        await this.run('deleteWallet', { pubkey }, { signer: signerKeys(daoOwnerKeys) })
     }
 
     async getWalletAddr(pubkey: string, index: number): Promise<string> {
@@ -308,63 +295,34 @@ export class GoshDao implements IGoshDao {
         return result.decoded?.output.value0
     }
 
-    async mint(
-        rootTokenAddr: string,
-        amount: number,
-        recipient: string,
-        deployWalletValue: number,
-        remainingGasTo: string,
-        notify: boolean,
-        payload: string,
-        keys: KeyPair,
-    ): Promise<void> {
-        await this.account.run(
+    async mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void> {
+        const tokenRoot = await this.getSmvRootTokenAddr()
+        await this.run(
             'mint',
             {
-                tokenRoot: rootTokenAddr,
+                tokenRoot,
                 amount,
                 recipient,
-                deployWalletValue,
-                remainingGasTo,
-                notify,
-                payload,
+                deployWalletValue: 0,
+                remainingGasTo: this.address,
+                notify: true,
+                payload: '',
             },
             {
-                signer: signerKeys(keys),
+                signer: signerKeys(daoOwnerKeys),
             },
-        )
-    }
-
-    async getConfig(): Promise<TGoshDaoWalletConfig> {
-        const result = await this.account.runLocal('getConfig', {})
-        const decoded = result.decoded?.output
-        return {
-            wallets: decoded.value0,
-            // time: decoded.value1,
-            // messages: decoded.value2,
-        }
-    }
-
-    async setConfig(config: TGoshDaoWalletConfig, daoOwnerKeys: KeyPair): Promise<void> {
-        await this.account.run(
-            'setConfig',
-            {
-                limit_wallets: config.wallets,
-                // limit_time: config.time,
-                // limit_messages: config.messages,
-            },
-            { signer: signerKeys(daoOwnerKeys) },
         )
     }
 }
 
-export class GoshWallet implements IGoshWallet {
+export class GoshWallet extends BaseContract implements IGoshWallet {
     abi: any = GoshWalletABI
     account: Account
     address: string
     isDaoParticipant: boolean
 
     constructor(client: TonClient, address: string, keys?: KeyPair) {
+        super()
         this.address = address
         this.isDaoParticipant = false
         this.account = new Account(
@@ -379,9 +337,7 @@ export class GoshWallet implements IGoshWallet {
 
     async getDao(): Promise<IGoshDao> {
         const daoAddr = await this.getDaoAddr()
-        const dao = new GoshDao(this.account.client, daoAddr)
-        await dao.load()
-        return dao
+        return new GoshDao(this.account.client, daoAddr)
     }
 
     async getRoot(): Promise<IGoshRoot> {
@@ -630,14 +586,10 @@ export class GoshWallet implements IGoshWallet {
     async deployRepo(name: string): Promise<void> {
         // Get repo instance, check if it is not deployed
         const dao = await this.getDao()
-        if (!dao.meta?.name)
-            throw new GoshError(EGoshError.META_LOAD, {
-                type: 'dao',
-                address: dao.address,
-            })
+        const daoName = await dao.getName()
 
         const root = await this.getRoot()
-        const repoAddr = await root.getRepoAddr(name, dao.meta.name)
+        const repoAddr = await root.getRepoAddr(name, daoName)
         const repo = new GoshRepository(this.account.client, repoAddr)
         const acc = await repo.account.getAccount()
         if (acc.acc_type === AccountType.active) return
@@ -1206,46 +1158,6 @@ export class GoshWallet implements IGoshWallet {
         return result.decoded?.output.value0
     }
 
-    async getConfig(): Promise<TGoshDaoWalletConfig> {
-        const result = await this.account.runLocal('getConfig', {})
-        const decoded = result.decoded?.output
-        return {
-            wallets: decoded.value0,
-            // time: decoded.value1,
-            // messages: decoded.value2,
-        }
-    }
-
-    async updateConfig(): Promise<void> {
-        await this.run('updateConfig', {})
-    }
-
-    async getWalletCount(): Promise<number> {
-        const result = await this.account.runLocal('getWalletsCount', {})
-        return +result.decoded?.output.value0
-    }
-
-    async deployWallet(): Promise<void> {
-        await this.run('deployWallet', {})
-    }
-
-    async destroyWallet(): Promise<void> {
-        await this.run('destroyWallet', {})
-    }
-
-    async run(
-        functionName: string,
-        input: object,
-        options?: AccountRunOptions,
-    ): Promise<void> {
-        // Check wallet balance and topup if needed
-        // const balance = await this.account.getBalance();
-        // if (+balance <= fromEvers(10000)) await this.getMoney();
-
-        // Run contract
-        await this.account.run(functionName, input, options)
-    }
-
     private async prepareCommit(
         branch: TGoshBranch,
         treeRootSha: string,
@@ -1293,13 +1205,14 @@ export class GoshWallet implements IGoshWallet {
     }
 }
 
-export class GoshRepository implements IGoshRepository {
+export class GoshRepository extends BaseContract implements IGoshRepository {
     abi: any = GoshRepositoryABI
     account: Account
     address: string
     meta?: IGoshRepository['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1455,13 +1368,14 @@ export class GoshRepository implements IGoshRepository {
     }
 }
 
-export class GoshCommit implements IGoshCommit {
+export class GoshCommit extends BaseContract implements IGoshCommit {
     abi: any = GoshCommitABI
     account: Account
     address: string
     meta?: IGoshCommit['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1548,12 +1462,13 @@ export class GoshCommit implements IGoshCommit {
     }
 }
 
-export class GoshDiff implements IGoshDiff {
+export class GoshDiff extends BaseContract implements IGoshDiff {
     abi: any = GoshDiffABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1569,12 +1484,13 @@ export class GoshDiff implements IGoshDiff {
     }
 }
 
-export class GoshSnapshot implements IGoshSnapshot {
+export class GoshSnapshot extends BaseContract implements IGoshSnapshot {
     abi: any = GoshSnapshotABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1639,12 +1555,13 @@ export class GoshSnapshot implements IGoshSnapshot {
     }
 }
 
-export class GoshTree implements IGoshTree {
+export class GoshTree extends BaseContract implements IGoshTree {
     abi: any = GoshTreeABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1669,13 +1586,14 @@ export class GoshTree implements IGoshTree {
     }
 }
 
-export class GoshTag implements IGoshTag {
+export class GoshTag extends BaseContract implements IGoshTag {
     abi: any = GoshTagABI
     account: Account
     address: string
     meta?: IGoshTag['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1704,12 +1622,13 @@ export class GoshTag implements IGoshTag {
     }
 }
 
-export class GoshContentSignature implements IGoshContentSignature {
+export class GoshContentSignature extends BaseContract implements IGoshContentSignature {
     abi: any = GoshContentSignatureABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1720,13 +1639,14 @@ export class GoshContentSignature implements IGoshContentSignature {
     }
 }
 
-export class GoshSmvProposal implements IGoshSmvProposal {
+export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     abi: any = GoshSmvProposalABI
     address: string
     account: Account
     meta?: IGoshSmvProposal['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1847,13 +1767,14 @@ export class GoshSmvProposal implements IGoshSmvProposal {
     }
 }
 
-export class GoshSmvLocker implements IGoshSmvLocker {
+export class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
     abi: any = GoshSmvLockerABI
     account: Account
     address: string
     meta?: IGoshSmvLocker['meta']
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1891,12 +1812,13 @@ export class GoshSmvLocker implements IGoshSmvLocker {
     }
 }
 
-export class GoshSmvClient implements IGoshSmvClient {
+export class GoshSmvClient extends BaseContract implements IGoshSmvClient {
     abi: any = GoshSmvClientABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
@@ -1907,12 +1829,13 @@ export class GoshSmvClient implements IGoshSmvClient {
     }
 }
 
-export class GoshSmvTokenRoot implements IGoshSmvTokenRoot {
+export class GoshSmvTokenRoot extends BaseContract implements IGoshSmvTokenRoot {
     abi: any = GoshSmvTokenRootABI
     account: Account
     address: string
 
     constructor(client: TonClient, address: string) {
+        super()
         this.address = address
         this.account = new Account({ abi: this.abi }, { client, address })
     }
