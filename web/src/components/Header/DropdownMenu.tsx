@@ -1,9 +1,8 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames } from '../../utils'
+import { classNames, userStateAtom, userStatePersistAtom } from 'react-gosh'
 import { useResetRecoilState } from 'recoil'
-import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 
 const DropdownMenu = () => {
     const resetUserState = useResetRecoilState(userStateAtom)

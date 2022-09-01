@@ -10,10 +10,11 @@
         "start:prod": "dotenv -e .env.production react-scripts start",
         "build:dev": "dotenv -e .env.development react-scripts build",
         "build:prod": "dotenv -e .env.production react-scripts build",
-        "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.development' -s 'rim.cache.json' dotenv -e .env.docker.development react-scripts build",
-        "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
+        "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.development | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.development react-scripts build",
+        "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
-        "eject": "react-scripts eject"
+        "eject": "react-scripts eject",
+        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run build && cd ../web && rm -rf ./node_modules/react-gosh || true && npm update react-gosh"
     },
     "eslintConfig": {
         "extends": [
@@ -57,9 +58,10 @@
         "file-saver": "^2.0.5",
         "formik": "^2.2.9",
         "github-markdown-css": "^5.1.0",
-        "react": "^18.1.0",
+        "react": "^18.2.0",
         "react-copy-to-clipboard": "^5.0.4",
-        "react-dom": "^18.1.0",
+        "react-dom": "^18.2.0",
+        "react-gosh": "file:../react-gosh/react-gosh-1.0.0.tgz",
         "react-markdown": "^8.0.0",
         "react-query": "^3.34.19",
         "react-router-dom": "^6.2.1",

@@ -1,19 +1,11 @@
-use std::{error::Error, iter::Iterator};
+use crate::abi as gosh_abi;
 use crate::blockchain::GoshContract;
 use crate::blockchain::{
-    get_commit_address,
-    get_commit_by_addr,
-    snapshot::diffs::Diff,
-    Snapshot,
-    TonClient,
+    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, Snapshot, TonClient,
 };
+use std::{error::Error, iter::Iterator};
+use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use ton_client::abi::{
-    Abi,
-    decode_message_body,
-    ParamsOfDecodeMessageBody
-};
-use crate::abi as gosh_abi;
 
 #[derive(Debug, Clone)]
 pub struct DiffMessage {
@@ -25,7 +17,7 @@ pub struct DiffMessage {
 #[derive(Debug)]
 enum NextChunk {
     MessagesPage(String, Option<String>),
-    JumpToAnotherBranchSnapshot(String, u64)
+    JumpToAnotherBranchSnapshot(String, u64),
 }
 
 #[derive(Debug)]
@@ -33,7 +25,7 @@ pub struct DiffMessagesIterator {
     repo_contract: GoshContract,
     buffer: Vec<DiffMessage>,
     buffer_cursor: usize,
-    next: Option<NextChunk>
+    next: Option<NextChunk>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -50,23 +42,22 @@ struct Message {
 #[derive(Deserialize, Debug)]
 struct Node {
     #[serde(rename = "node")]
-    message: Message
+    message: Message,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct PageInfo {
     has_next_page: bool,
-    end_cursor: String
+    end_cursor: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Messages {
     edges: Vec<Node>,
-    page_info: PageInfo
+    page_info: PageInfo,
 }
-
 
 impl DiffMessagesIterator {
     #[instrument(level = "debug", skip(snapshot_address))]
@@ -75,32 +66,41 @@ impl DiffMessagesIterator {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
             buffer_cursor: 0,
-            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None))
+            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None)),
         }
     }
 
     #[instrument(level = "debug", skip(client))]
-    pub async fn next(&mut self, client: &TonClient) -> Result<Option<DiffMessage>, Box<dyn Error>> {
-        while !self.is_buffer_ready() && self.next.is_some(){
+    pub async fn next(
+        &mut self,
+        client: &TonClient,
+    ) -> Result<Option<DiffMessage>, Box<dyn Error>> {
+        while !self.is_buffer_ready() && self.next.is_some() {
             self.try_load_next_chunk(client).await?;
         }
         return Ok(self.try_take_next_item());
     }
 
-    async fn into_next_page(client: &TonClient, current_snapshot_address: &str, repo_contract: &mut GoshContract, next_page_info: Option<String>) -> Result<Option<NextChunk>, Box<dyn Error>> {
+    async fn into_next_page(
+        client: &TonClient,
+        current_snapshot_address: &str,
+        repo_contract: &mut GoshContract,
+        next_page_info: Option<String>,
+    ) -> Result<Option<NextChunk>, Box<dyn Error>> {
         let address = current_snapshot_address;
         return Ok(match next_page_info {
-            Some(next_page_info) => Some(
-                NextChunk::MessagesPage(
-                    address.to_string(),
-                    Some(next_page_info)
-                )
-            ),
+            Some(next_page_info) => Some(NextChunk::MessagesPage(
+                address.to_string(),
+                Some(next_page_info),
+            )),
             None => {
                 // find last commit
-                let Snapshot { original_commit, .. } = Snapshot::load(client, &address).await?;
+                let Snapshot {
+                    original_commit, ..
+                } = Snapshot::load(client, &address).await?;
                 let file_path = Snapshot::get_file_path(client, &address).await?;
-                let commit_addr = get_commit_address(client, repo_contract, &original_commit).await?;
+                let commit_addr =
+                    get_commit_address(client, repo_contract, &original_commit).await?;
                 let commit_data = get_commit_by_addr(client, &commit_addr)
                     .await?
                     .expect("commit data should be here");
@@ -110,38 +110,51 @@ impl DiffMessagesIterator {
                     client,
                     repo_contract,
                     &original_branch,
-                    &file_path
-                ).await?;
+                    &file_path,
+                )
+                .await?;
                 log::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
                 // generate filter
-                let created_at:u64 = crate::blockchain::commit::get_set_commit_created_at_time(
+                let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
                     client,
                     repo_contract,
                     &original_commit,
-                    &original_branch
-                ).await?;
-                Some(NextChunk::JumpToAnotherBranchSnapshot(original_snapshot, created_at))
+                    &original_branch,
+                )
+                .await?;
+                Some(NextChunk::JumpToAnotherBranchSnapshot(
+                    original_snapshot,
+                    created_at,
+                ))
             }
         });
-    } 
+    }
 
     #[instrument(level = "debug", skip(client))]
     async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
         log::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
-            Some(NextChunk::JumpToAnotherBranchSnapshot(snapshot_address, ignore_commits_created_after)) => {
-                log::info!("Jumping to another branch: {} - commit {}", snapshot_address, ignore_commits_created_after);
+            Some(NextChunk::JumpToAnotherBranchSnapshot(
+                snapshot_address,
+                ignore_commits_created_after,
+            )) => {
+                log::info!(
+                    "Jumping to another branch: {} - commit {}",
+                    snapshot_address,
+                    ignore_commits_created_after
+                );
                 let address = snapshot_address;
-                // Now we will be loading page by page till 
+                // Now we will be loading page by page till
                 // we find a message with the expected commit
                 // Fail if not found: it must be there
                 let mut cursor = None;
                 let mut index = None;
                 let mut next_page_info = None;
-                while index.is_none() { 
+                while index.is_none() {
                     log::info!("loading messages");
-                    let (buffer, possible_next_page_info, stop_on) = load_messages_to(client, &address, &cursor, None).await?;
+                    let (buffer, possible_next_page_info, stop_on) =
+                        load_messages_to(client, &address, &cursor, None).await?;
                     log::info!("messages: {:?}", buffer);
                     for i in 0..buffer.len() {
                         if &buffer[i].created_at <= ignore_commits_created_after {
@@ -150,7 +163,7 @@ impl DiffMessagesIterator {
                         }
                     }
                     self.buffer = buffer;
-                    if index.is_none() { 
+                    if index.is_none() {
                         log::info!("Expected commit was not found");
                         if possible_next_page_info.is_some() {
                             cursor = possible_next_page_info;
@@ -163,14 +176,27 @@ impl DiffMessagesIterator {
                     }
                 }
                 self.buffer_cursor = index.unwrap();
-                DiffMessagesIterator::into_next_page(client, &address, &mut self.repo_contract, next_page_info).await?
-            },
+                DiffMessagesIterator::into_next_page(
+                    client,
+                    &address,
+                    &mut self.repo_contract,
+                    next_page_info,
+                )
+                .await?
+            }
             Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, next_page_info, stop_on) = load_messages_to(client, &address, cursor, None).await?;
+                let (buffer, next_page_info, stop_on) =
+                    load_messages_to(client, &address, cursor, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
-                DiffMessagesIterator::into_next_page(client, &address, &mut self.repo_contract, next_page_info).await?
-            },
+                DiffMessagesIterator::into_next_page(
+                    client,
+                    &address,
+                    &mut self.repo_contract,
+                    next_page_info,
+                )
+                .await?
+            }
         };
         Ok(())
     }
@@ -190,7 +216,6 @@ impl DiffMessagesIterator {
         self.buffer_cursor += 1;
         return Some(item);
     }
-    
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -217,15 +242,15 @@ pub async fn load_messages_to(
 
     let after = match cursor.as_ref() {
         Some(page_info) => page_info,
-        None => ""
+        None => "",
     };
-    
+
     let result = ton_client::net::query(
         context.clone(),
         ParamsOfQuery {
             query,
-            variables: Some(serde_json::json!({ 
-                "addr": address, 
+            variables: Some(serde_json::json!({
+                "addr": address,
                 "after": after
             })),
             ..Default::default()
@@ -281,7 +306,7 @@ pub async fn load_messages_to(
 
     let oldest_timestamp = match messages.len() {
         0 => None,
-        n => Some(messages[n - 1].created_at)
+        n => Some(messages[n - 1].created_at),
     };
     Ok((messages, next_page_info, oldest_timestamp))
 }

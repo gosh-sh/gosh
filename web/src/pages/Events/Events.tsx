@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from '../../types/classes'
-import { sleep } from '../../utils'
+import { GoshSmvProposal } from 'react-gosh'
+import { sleep } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { getPaginatedAccounts, goshClient } from '../../helpers'
+import { getPaginatedAccounts, goshClient } from 'react-gosh'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -41,7 +41,7 @@ const EventsPage = () => {
             }),
         }))
 
-        const event = new GoshSmvProposal(dao.account.client, address)
+        const event = new GoshSmvProposal(dao.instance.account.client, address)
         const details = await event.getDetails()
 
         setEvents((state) => ({
@@ -57,7 +57,7 @@ const EventsPage = () => {
     useEffect(() => {
         const getEventList = async () => {
             // Get events accounts by code
-            const code = await dao.getSmvProposalCode()
+            const code = await dao.instance.getSmvProposalCode()
             const codeHash = await goshClient.boc.get_boc_hash({ boc: code })
             const list: any[] = []
             let next: string | undefined
@@ -69,7 +69,7 @@ const EventsPage = () => {
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const event = new GoshSmvProposal(dao.account.client, id)
+                        const event = new GoshSmvProposal(dao.instance.account.client, id)
                         return {
                             address: event.address,
                             params: await event.getParams(),

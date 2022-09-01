@@ -4,10 +4,9 @@ import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../store/user.state'
 import CopyClipboard from '../../components/CopyClipboard'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError, userStateAtom } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -218,9 +217,7 @@ const DaoWalletPage = () => {
                             </pre>
                         </div>
                     ) : (
-                        <p className="text-sm text-rose-400">
-                            You are not a DAO participant
-                        </p>
+                        <p className="text-sm text-rose-400">You are not a DAO member</p>
                     )}
                 </div>
             </div>

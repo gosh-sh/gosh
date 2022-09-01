@@ -2,11 +2,11 @@ use crate::git_helper::GitHelper;
 
 use ::git_object;
 
-use crate::blockchain::{self, GoshBlobBitFlags, tvm_hash};
+use crate::blockchain::{self, tvm_hash, GoshBlobBitFlags};
 use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
-use std::collections::{HashSet, VecDeque, HashMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
 use std::vec::Vec;
 
@@ -60,18 +60,23 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 }
 
 #[instrument(level = "debug", skip(context))]
-async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Result<(String, TreeNode), Box<dyn Error>> {
+async fn construct_tree_node(
+    context: &mut GitHelper,
+    e: &EntryRef<'_>,
+) -> Result<(String, TreeNode), Box<dyn Error>> {
     let mut buffer = vec![];
     use git_object::tree::EntryMode::*;
     let content_hash = match e.mode {
         Tree | Link => {
-            let _ = context.local_repository()
-                .objects 
+            let _ = context
+                .local_repository()
+                .objects
                 .try_find(e.oid, &mut buffer)?;
-             sha256::digest_bytes(&buffer)
-        }, 
+            sha256::digest_bytes(&buffer)
+        }
         Blob | BlobExecutable => {
-            let content = context.local_repository()
+            let content = context
+                .local_repository()
                 .objects
                 .find_blob(e.oid, &mut buffer)?
                 .data;
@@ -80,9 +85,9 @@ async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Resul
                 // Here is a problem: we calculate if this blob is going to ipfs
                 // one way (blockchain::snapshot::save::is_going_to_ipfs)
                 // and it's different here.
-                // However! 
+                // However!
                 // 1. This sha will be validated for files NOT in IPFS
-                // 2. We can be sure if this check passed than this file surely 
+                // 2. We can be sure if this check passed than this file surely
                 //    goes to IPFS
                 // 3. If we though that this file DOES NOT go to IPFS and calculated
                 //    tvm_hash instead it will not break
@@ -90,21 +95,26 @@ async fn construct_tree_node(context: &mut GitHelper, e: &EntryRef<'_>) -> Resul
             } else {
                 tvm_hash(&context.es_client, content).await?
             }
-        },
-        Commit => unimplemented!() 
+        }
+        Commit => unimplemented!(),
     };
     let file_name = e.filename.to_string();
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
     let type_obj = &tree_node.type_obj;
     let key = tvm_hash(
         &context.es_client,
-        format!("{}:{}", type_obj, file_name).as_bytes()
-    ).await?;
+        format!("{}:{}", type_obj, file_name).as_bytes(),
+    )
+    .await?;
     Ok((format!("0x{}", key), tree_node))
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn push_tree(context: &mut GitHelper, tree_id: &ObjectId, visited: &mut HashSet<ObjectId>) -> Result<(), Box<dyn Error>> {
+pub async fn push_tree(
+    context: &mut GitHelper,
+    tree_id: &ObjectId,
+    visited: &mut HashSet<ObjectId>,
+) -> Result<(), Box<dyn Error>> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(tree_id.clone());
     while let Some(tree_id) = to_deploy.pop_front() {
