@@ -1,4 +1,3 @@
-
 use crate::blockchain::{GoshContract, Number, TonClient};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
