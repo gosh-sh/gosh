@@ -1,5 +1,7 @@
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
+#[allow(dead_code)]
 pub struct BlockchainContractAddress(String);
 
 impl BlockchainContractAddress {
