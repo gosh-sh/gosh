@@ -209,7 +209,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
         .find_network_endpoints(network)
         .expect("Unknown network");
     let proto = env::var("GOSH_PROTO")
-        .unwrap_or(".git".to_string())
+        .unwrap_or_else(|_| ".git".to_string())
         .to_lowercase();
 
     let config = ClientConfig {
@@ -217,7 +217,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
             endpoints: if endpoints.is_empty() {
                 None
             } else {
-                Some(endpoints.to_owned())
+                Some(endpoints)
             },
             queries_protocol: if proto.starts_with("http") {
                 NetworkQueriesProtocol::HTTP
@@ -278,7 +278,7 @@ async fn run_local(
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
-            call_set: call_set,
+            call_set,
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
@@ -363,7 +363,7 @@ async fn run_static(
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
-            call_set: call_set,
+            call_set,
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
@@ -506,10 +506,10 @@ pub async fn remote_rev_parse(
     let result: GetAddrBranchResult = contract
         .run_local(context, "getAddrBranch", Some(args))
         .await?;
-    if result.branch.branch_name != "" {
-        return Ok(Some(result.branch.commit_address));
+    if result.branch.branch_name.is_empty() {
+        Ok(None)
     } else {
-        return Ok(None);
+        Ok(Some(result.branch.commit_address))
     }
 }
 
@@ -526,7 +526,7 @@ pub async fn get_commit_address(
             gosh_abi::get_commit_addr_args(sha),
         )
         .await?;
-    return Ok(result.address);
+    Ok(result.address)
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -541,7 +541,7 @@ pub async fn get_commit_by_addr(
 pub async fn get_head(context: &TonClient, address: &BlockchainContractAddress) -> Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
-    return Ok(result.head);
+    Ok(result.head)
 }
 
 #[cfg(test)]

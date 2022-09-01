@@ -19,7 +19,6 @@ use crate::config::Config;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
-use git_repository;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
@@ -54,7 +53,7 @@ mod fmt;
 
 impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
-        return &mut self.local_git_repository;
+        &mut self.local_git_repository
     }
 
     pub async fn calculate_tree_address(
@@ -123,12 +122,10 @@ impl GitHelper {
             let head = get_head(&self.es_client, &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
-                ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
-            } else {
-                if ref_list.len() > 0 {
-                    let mut splitted = ref_list[0].split(' ');
-                    ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()).to_owned());
-                }
+                ref_list.push(format!("@refs/heads/{} HEAD", head));
+            } else if !ref_list.is_empty() {
+                let mut splitted = ref_list[0].split(' ');
+                ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()));
             }
         }
         log::trace!("list: {:?}", ref_list);

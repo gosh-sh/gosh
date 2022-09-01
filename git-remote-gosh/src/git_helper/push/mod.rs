@@ -6,9 +6,7 @@ use crate::blockchain::{user_wallet, BlockchainContractAddress, CreateBranchOper
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use git2::Repository;
-use git_diff;
 use git_hash::{self, ObjectId};
-use git_object;
 use git_odb::{Find, Write};
 use std::env::current_dir;
 use std::path::PathBuf;
@@ -60,14 +58,14 @@ impl GitHelper {
     ) -> Result<()> {
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
-            Some(&original_blob_id),
+            Some(original_blob_id),
             next_state_blob_id,
         )
         .await?;
         let diff = ParallelDiff::new(
-            commit_id.clone(),
+            *commit_id,
             branch_name.to_string(),
-            next_state_blob_id.clone(),
+            *next_state_blob_id,
             file_path.to_string(),
             file_diff.original.clone(),
             file_diff.patch.clone(),
@@ -98,9 +96,9 @@ impl GitHelper {
         let file_diff =
             utilities::generate_blob_diff(&self.local_repository().objects, None, blob_id).await?;
         let diff = ParallelDiff::new(
-            commit_id.clone(),
+            *commit_id,
             branch_name.to_string(),
-            blob_id.clone(),
+            *blob_id,
             file_path.to_string(),
             file_diff.original.clone(),
             file_diff.patch.clone(),
@@ -143,10 +141,9 @@ impl GitHelper {
         let mut statistics = PushBlobStatistics::new();
         let prev_tree_root_id: Option<ObjectId> = {
             let buffer: Vec<u8> = Vec::new();
-            match prev_commit_id {
-                None => None,
-                Some(id) => Some(self.tree_root_for_commit(id)),
-            }
+            prev_commit_id
+                .as_ref()
+                .map(|id| self.tree_root_for_commit(id))
         };
         let mut blob_file_path_occurrences: Vec<PathBuf> = Vec::new();
         {
@@ -155,7 +152,7 @@ impl GitHelper {
                 &PathBuf::new(),
                 &self.local_repository().objects,
                 &tree_root_id,
-                &blob_id,
+                blob_id,
                 &mut blob_file_path_occurrences,
             )?;
         }
@@ -189,9 +186,9 @@ impl GitHelper {
                     )
                     .await?;
                     let diff = ParallelDiff::new(
-                        current_commit_id.clone(),
+                        *current_commit_id,
                         branch_name.to_string(),
-                        blob_id.clone(),
+                        *blob_id,
                         file_path.clone(),
                         file_diff.original.clone(),
                         file_diff.patch.clone(),
@@ -221,8 +218,8 @@ impl GitHelper {
             .parent_ids()
             .map(|e| e.to_string())
             .into_iter()
-            .nth(0)
-            .unwrap_or(ZERO_SHA.to_string());
+            .next()
+            .unwrap_or_else(|| ZERO_SHA.to_string());
 
         Ok(git_hash::ObjectId::from_str(&parent_id)?)
     }
@@ -239,17 +236,17 @@ impl GitHelper {
         // Our second attempt is to calculated tree diff from one commit to another.
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
-            let mut iter = local_ref.rsplit("/");
+            let mut iter = local_ref.rsplit('/');
             iter.next().unwrap()
         };
 
-        let mut visitedTrees: HashSet<ObjectId> = HashSet::new();
+        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut parallel_snapshot_uploads: FuturesUnordered<
             tokio::task::JoinHandle<std::result::Result<(), String>>,
         > = FuturesUnordered::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
-            let mut iter = remote_ref.rsplit("/");
+            let mut iter = remote_ref.rsplit('/');
             iter.next().unwrap()
         };
         let parsed_remote_ref =
@@ -304,7 +301,7 @@ impl GitHelper {
 
         let exclude;
         let mut commit_id: Option<ObjectId> = None;
-        if ancestor_commit_id != "" {
+        if !ancestor_commit_id.is_empty() {
             exclude = format!("^{}", ancestor_commit_id);
             cmd_args.push(&exclude);
             commit_id = Some(ObjectId::from_str(&ancestor_commit_id)?);
@@ -335,7 +332,7 @@ impl GitHelper {
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            if ancestor_commit_id == "" {
+            if ancestor_commit_id.is_empty() {
                 ancestor_commit_id = out.lines().next().unwrap().to_string();
             }
             let originating_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
@@ -353,7 +350,7 @@ impl GitHelper {
         }
 
         for line in out.lines() {
-            match line.split_ascii_whitespace().nth(0) {
+            match line.split_ascii_whitespace().next() {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
@@ -363,7 +360,7 @@ impl GitHelper {
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
                                 prev_commit_id,
-                                object_id.clone(),
+                                object_id,
                             )?;
                             for added in tree_diff.added {
                                 self.push_new_blob(
@@ -404,7 +401,7 @@ impl GitHelper {
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            blockchain::push_tree(self, &object_id, &mut visitedTrees).await?
+                            blockchain::push_tree(self, &object_id, &mut visited_trees).await?
                         }
                     }
                 }
@@ -445,7 +442,7 @@ impl GitHelper {
 
     #[instrument(level = "debug", skip(self))]
     pub async fn push(&mut self, refs: &str) -> Result<String> {
-        let splitted: Vec<&str> = refs.split(":").collect();
+        let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
             [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,

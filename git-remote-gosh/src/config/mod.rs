@@ -70,21 +70,21 @@ impl Default for Config {
 
 impl Config {
     pub fn ipfs_http_endpoint(&self) -> &str {
-        return &self.ipfs_http_endpoint;
+        &self.ipfs_http_endpoint
     }
 
     pub fn primary_network(&self) -> &str {
-        return &self.primary_network;
+        &self.primary_network
     }
 
     fn load<TReader: Read + Sized>(config_reader: TReader) -> Result<Self, Box<dyn Error>> {
         let config: Config = serde_json::from_reader(config_reader)?;
-        return Ok(config);
+        Ok(config)
     }
 
     pub fn init() -> Result<Self, Box<dyn Error>> {
         let config_path =
-            env::var("GOSH_CONFIG_PATH").unwrap_or(defaults::CONFIG_LOCATION.to_string());
+            env::var("GOSH_CONFIG_PATH").unwrap_or_else(|_| defaults::CONFIG_LOCATION.to_string());
         let config_path = shellexpand::tilde(&config_path).into_owned();
         let config_path = Path::new(&config_path);
         if !config_path.exists() {
@@ -92,24 +92,21 @@ impl Config {
         }
         let config_file = std::fs::File::open(config_path)?;
         let config_reader = BufReader::new(config_file);
-        return Self::load(config_reader);
+        Self::load(config_reader)
     }
 
     #[instrument(level = "debug")]
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
-        return self
-            .networks
+        self.networks
             .get(network)
-            .map(|network_config| network_config.endpoints.clone());
+            .map(|network_config| network_config.endpoints.clone())
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        return self
-            .networks
+        self.networks
             .get(network)
-            .map(|network_config| network_config.user_wallet.as_ref())
-            .flatten()
-            .cloned();
+            .and_then(|network_config| network_config.user_wallet.as_ref())
+            .cloned()
     }
 }
 

@@ -45,7 +45,7 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     } else if object_type == ObjectType::Tree {
         eprintln!("unsupported type: {} (sha: {})", object_type, sha);
         None
-    } else if object_type == ObjectType::Commit {
+    } else if object_type != ObjectType::Commit {
         eprintln!("unsupported type: {} (sha: {})", object_type, sha);
         None
     } else {
@@ -62,7 +62,7 @@ pub async fn get_refs(
         .await
         .map_err(|e| e.to_string())?
         .branch_ref;
-    if _list.len() == 0 {
+    if _list.is_empty() {
         return Ok(None);
     }
 

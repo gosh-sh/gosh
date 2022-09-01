@@ -99,7 +99,7 @@ impl IpfsService {
         );
 
         Retry::spawn(self.retry_strategy(), || {
-            IpfsService::save_blob_retriable(&self.cli, &url, &blob)
+            IpfsService::save_blob_retriable(&self.cli, &url, blob)
         })
         .await
     }
