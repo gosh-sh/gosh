@@ -3,11 +3,17 @@
 pub struct BlockchainContractAddress(String);
 
 impl BlockchainContractAddress {
-    pub fn new(address: impl Into<String>) -> Self {
+    pub fn new<T>(address: T) -> Self
+    where
+        T: Into<String>,
+    {
         Self(address.into())
     }
 
-    pub fn todo_investigate_unexpected_convertion(address: impl Into<String>) -> Self {
+    pub fn todo_investigate_unexpected_convertion<T>(address: T) -> Self
+    where
+        T: Into<String>,
+    {
         Self::new(address)
     }
 }
@@ -26,7 +32,7 @@ impl std::convert::Into<BlockchainContractAddress> for &BlockchainContractAddres
 
 impl std::convert::From<BlockchainContractAddress> for String {
     fn from(address: BlockchainContractAddress) -> String {
-        address.0 
+        address.0
     }
 }
 
@@ -35,8 +41,8 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn ensure_formatting(){
-        let address = BlockchainContractAddress::new("0:0000000000123");   
+    pub fn ensure_formatting() {
+        let address = BlockchainContractAddress::new("0:0000000000123");
         assert_eq!("<0:0000000000123>", format!("{}", address));
     }
 

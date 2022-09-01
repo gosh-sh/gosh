@@ -7,9 +7,9 @@ use tokio::task;
 
 use crate::abi;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::GoshContract;
 use crate::blockchain::TonClient;
-use crate::blockchain::BlockchainContractAddress;
 use crate::config::UserWalletConfig;
 use crate::git_helper::GitHelper;
 use ton_client::crypto::KeyPair;

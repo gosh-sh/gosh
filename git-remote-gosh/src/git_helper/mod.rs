@@ -5,6 +5,7 @@ use std::error::Error;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::abi as gosh_abi;
+use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::{
     create_client,
     get_head,
@@ -19,7 +20,6 @@ use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
 use git_repository;
-use crate::blockchain::BlockchainContractAddress;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 

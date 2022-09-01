@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{call, get_commit_address, user_wallet, ZERO_SHA, BlockchainContractAddress},
+    blockchain::{call, get_commit_address, user_wallet, BlockchainContractAddress, ZERO_SHA},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;

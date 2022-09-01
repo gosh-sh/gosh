@@ -1,5 +1,5 @@
-use crate::config::Config;
 use crate::blockchain::BlockchainContractAddress;
+use crate::config::Config;
 
 #[derive(Debug)]
 pub struct Remote {
@@ -88,7 +88,9 @@ mod tests {
         assert_eq!(remote.repo, "binary-experiments");
         assert_eq!(
             remote.gosh,
-            BlockchainContractAddress::new("0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358")
+            BlockchainContractAddress::new(
+                "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            )
         );
     }
 
@@ -102,7 +104,9 @@ mod tests {
         assert_eq!(remote.repo, "binary-experiments");
         assert_eq!(
             remote.gosh,
-            BlockchainContractAddress::new("0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358")
+            BlockchainContractAddress::new(
+                "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            )
         );
     }
 }

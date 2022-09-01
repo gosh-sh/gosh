@@ -2,11 +2,11 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::{GoshContract, TonClient};
 
+use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::error::Error;
 use std::fmt;
-use crate::blockchain::BlockchainContractAddress;
 use std::option::Option;
 pub mod diffs;
 

@@ -72,7 +72,10 @@ impl fmt::Debug for GoshContract {
 }
 
 impl GoshContract {
-    pub fn new(address: impl Into<BlockchainContractAddress>, (pretty_name, abi): (&str, &str)) -> Self {
+    pub fn new(
+        address: impl Into<BlockchainContractAddress>,
+        (pretty_name, abi): (&str, &str),
+    ) -> Self {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
             address: address.into(),
@@ -82,7 +85,11 @@ impl GoshContract {
         }
     }
 
-    pub fn new_with_keys(address: impl Into<BlockchainContractAddress>, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self {
+    pub fn new_with_keys(
+        address: impl Into<BlockchainContractAddress>,
+        (pretty_name, abi): (&str, &str),
+        keys: KeyPair,
+    ) -> Self {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
             address: address.into(),
@@ -450,7 +457,10 @@ pub async fn get_repo_address(
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn branch_list(context: &TonClient, repo_addr: &BlockchainContractAddress) -> Result<GetAllAddressResult> {
+pub async fn branch_list(
+    context: &TonClient,
+    repo_addr: &BlockchainContractAddress,
+) -> Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.run_local(context, "getAllAddress", None).await?;
@@ -521,7 +531,10 @@ pub async fn get_commit_address(
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn get_commit_by_addr(context: &TonClient, address: &BlockchainContractAddress) -> Result<Option<GoshCommit>> {
+pub async fn get_commit_by_addr(
+    context: &TonClient,
+    address: &BlockchainContractAddress,
+) -> Result<Option<GoshCommit>> {
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
@@ -553,7 +566,9 @@ mod tests {
             TestEnv {
                 config: cfg,
                 client,
-                gosh: BlockchainContractAddress::new("0:bb1ab825fe9fa51fb4eabb830347c7ee648951cb125182c793a0ca0f0b2cbe35"),
+                gosh: BlockchainContractAddress::new(
+                    "0:bb1ab825fe9fa51fb4eabb830347c7ee648951cb125182c793a0ca0f0b2cbe35",
+                ),
                 dao: "dao-x".to_string(),
                 repo: "repo-01".to_string(),
             }
@@ -641,7 +656,9 @@ mod tests {
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
-        let expected = BlockchainContractAddress::new("0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6");
+        let expected = BlockchainContractAddress::new(
+            "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6",
+        );
         assert_eq!(expected, repo_addr.unwrap());
     }
 

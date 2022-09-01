@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
-use crate::blockchain::{tvm_hash, GoshContract, TonClient, BlockchainContractAddress};
+use crate::blockchain::{tvm_hash, BlockchainContractAddress, GoshContract, TonClient};
 use crate::{
     blockchain::{call, snapshot, user_wallet},
     git_helper::GitHelper,
@@ -99,7 +99,10 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn is_diff_deployed(context: &TonClient, contract_address: &BlockchainContractAddress) -> Result<bool> {
+pub async fn is_diff_deployed(
+    context: &TonClient,
+    contract_address: &BlockchainContractAddress,
+) -> Result<bool> {
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: Result<GetVersionResult> =
         diff_contract.run_local(context, "getVersion", None).await;

@@ -1,8 +1,8 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::GoshContract;
 use crate::blockchain::{
-    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, Snapshot, TonClient,
-    BlockchainContractAddress
+    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, BlockchainContractAddress,
+    Snapshot, TonClient,
 };
 use std::{error::Error, iter::Iterator};
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
@@ -62,7 +62,10 @@ struct Messages {
 
 impl DiffMessagesIterator {
     #[instrument(level = "debug", skip(snapshot_address))]
-    pub fn new(snapshot_address: impl Into<BlockchainContractAddress>, repo_contract: &mut GoshContract) -> Self {
+    pub fn new(
+        snapshot_address: impl Into<BlockchainContractAddress>,
+        repo_contract: &mut GoshContract,
+    ) -> Self {
         Self {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
