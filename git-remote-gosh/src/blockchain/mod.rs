@@ -7,6 +7,7 @@ use serde_json;
 
 use std::{env, fmt, sync::Arc};
 
+mod contract;
 mod error;
 use error::RunLocalError;
 mod create_branch;
