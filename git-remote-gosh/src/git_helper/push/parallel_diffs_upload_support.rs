@@ -1,5 +1,5 @@
 use super::Result;
-use crate::blockchain::{self, snapshot::PushDiffCoordinate};
+use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -14,7 +14,7 @@ pub struct ParallelDiffsUploadSupport {
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses: Vec<String>,
+    expecting_deployed_contacts_addresses: Vec<BlockchainContractAddress>,
     pushed_blobs:
         FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>>,
 }

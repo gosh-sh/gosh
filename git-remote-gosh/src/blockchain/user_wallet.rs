@@ -9,6 +9,7 @@ use crate::abi;
 use crate::blockchain;
 use crate::blockchain::GoshContract;
 use crate::blockchain::TonClient;
+use crate::blockchain::BlockchainContractAddress;
 use crate::config::UserWalletConfig;
 use crate::git_helper::GitHelper;
 use ton_client::crypto::KeyPair;
@@ -20,13 +21,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Deserialize, Debug)]
 struct GetAddrWalletResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -50,7 +51,7 @@ static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 
 pub async fn get_user_wallet(
     client: &TonClient,
-    dao_address: &str,
+    dao_address: &BlockchainContractAddress,
     pubkey: &str,
     secret: &str,
     user_wallet_index: u64,
@@ -67,7 +68,7 @@ pub async fn get_user_wallet(
     //         "name": dao_name
     //     }))
     // ).await?;
-    let dao_contract = GoshContract::new(&dao_address, abi::DAO);
+    let dao_contract = GoshContract::new(dao_address, abi::DAO);
     let result: GetAddrWalletResult = dao_contract
         .run_local(
             &client,

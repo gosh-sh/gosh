@@ -2,7 +2,7 @@
 #![allow(unused_imports)]
 use super::GitHelper;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
-use crate::blockchain::{user_wallet, CreateBranchOperation, ZERO_SHA};
+use crate::blockchain::{user_wallet, CreateBranchOperation, ZERO_SHA, BlockchainContractAddress};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use git2::Repository;
@@ -273,6 +273,7 @@ impl GitHelper {
                 return Err("This branch '{branch_name}' is protected. Go to app.gosh.sh and create a proposal to apply this branch change.".into());
             }
             let remote_commit_addr = parsed_remote_ref.clone().unwrap();
+            let remote_commit_addr = BlockchainContractAddress::todo_investigate_unexpected_convertion(remote_commit_addr);
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?
                 .unwrap();

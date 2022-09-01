@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
-use crate::blockchain::{tvm_hash, GoshContract, TonClient};
+use crate::blockchain::{tvm_hash, GoshContract, TonClient, BlockchainContractAddress};
 use crate::{
     blockchain::{call, snapshot, user_wallet},
     git_helper::GitHelper,
@@ -18,7 +18,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Deserialize, Debug)]
 struct GetDiffAddrResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,7 +36,7 @@ struct GetVersionResult {
 #[derive(Serialize, Debug)]
 struct Diff {
     #[serde(rename = "snap")]
-    snapshot_addr: String,
+    snapshot_addr: BlockchainContractAddress,
     #[serde(rename = "commit")]
     commit_id: String,
     patch: Option<String>,
@@ -61,7 +61,7 @@ struct DeployDiffParams {
 #[derive(Serialize, Debug)]
 struct DeploySnapshotParams {
     #[serde(rename = "repo")]
-    repo_address: String,
+    repo_address: BlockchainContractAddress,
     #[serde(rename = "branch")]
     branch_name: String,
     #[serde(rename = "commit")]
@@ -99,7 +99,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn is_diff_deployed(context: &TonClient, contract_address: &str) -> Result<bool> {
+pub async fn is_diff_deployed(context: &TonClient, contract_address: &BlockchainContractAddress) -> Result<bool> {
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: Result<GetVersionResult> =
         diff_contract.run_local(context, "getVersion", None).await;
@@ -111,7 +111,7 @@ pub async fn diff_address(
     context: &mut GitHelper,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
-) -> Result<String> {
+) -> Result<BlockchainContractAddress> {
     let params = serde_json::json!({
         "commitName": last_commit_id.to_string(),
         "index1": diff_coordinate.index_of_parallel_thread,
@@ -149,7 +149,7 @@ pub async fn push_diff(
     new_snapshot_content: &Vec<u8>,
 ) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
     let wallet = user_wallet(context).await?;
-    let snapshot_addr: String = (Snapshot::calculate_address(
+    let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &context.es_client,
         &mut context.repo_contract,
         branch_name,
@@ -204,7 +204,7 @@ pub async fn push_diff(
 
 pub async fn inner_push_diff(
     repo_name: String,
-    snapshot_addr: String,
+    snapshot_addr: BlockchainContractAddress,
     wallet: GoshContract,
     ipfs_endpoint: &str,
     es_client: TonClient,
