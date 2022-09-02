@@ -160,6 +160,12 @@ contract Profile is Modifiers {
         selfdestruct(_goshroot);
     }
     
+    //Setters
+    function setNewGoshRoot(address goshroot) public onlyOwnerPubkeyList {
+        tvm.accept();
+        _goshroot = goshroot;
+    }
+    
     //Getters
     function getAccess() external view returns(mapping(uint256 => bool)) {
         return _owners;

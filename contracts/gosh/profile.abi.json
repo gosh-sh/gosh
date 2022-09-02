@@ -96,6 +96,14 @@
 			]
 		},
 		{
+			"name": "setNewGoshRoot",
+			"inputs": [
+				{"name":"goshroot","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getAccess",
 			"inputs": [
 			],
