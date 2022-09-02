@@ -67,7 +67,7 @@
 		{
 			"name": "deleteWallet",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]

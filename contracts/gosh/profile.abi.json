@@ -54,6 +54,15 @@
 			]
 		},
 		{
+			"name": "deleteWallet",
+			"inputs": [
+				{"name":"dao","type":"address"},
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},

@@ -103,6 +103,10 @@ contract Profile is Modifiers {
         GoshDao(dao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr);
     }
     
+    function deleteWallet(address dao, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
+        GoshDao(dao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr);
+    }
+    
     function deployDao(string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
