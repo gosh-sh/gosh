@@ -12,10 +12,14 @@ pragma AbiHeader time;
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "gosh.sol";
+import "goshdao.sol";
+import "profiledao.sol";
 
 contract Profile is Modifiers {
 
     string constant version = "0.11.0";
+    
+    TvmCell m_codeProfileDao;
     
     // mapping to store hashes of inbound messages;
     mapping(uint256 => uint32) m_messages;
@@ -61,38 +65,77 @@ contract Profile is Modifiers {
         _;
     }
     
-    address static _goshroot;
+    address _goshroot;
     bool _flag = false;
     mapping(uint256 => bool) _owners;
 
-    constructor(
-    ) public senderIs(_goshroot) {
+    constructor( TvmCell codeProfileDao
+    ) public {
+        _goshroot = msg.sender;
+        m_codeProfileDao = codeProfileDao;
         _owners[_pubkey] = true;
-//        getMoney();
+        getMoney();
     }
     
     function addPubkey(
         uint256 pubkey
     ) public onlyOwnerPubkeyList  accept saveMsg {
         _owners[pubkey] = true;
-//        getMoney();
+        getMoney();
     }
 
     function deletePubkey(
         uint256 pubkey
     ) public onlyOwnerPubkeyList  accept saveMsg {
         delete _owners[pubkey];
-//        getMoney();
+        getMoney();
     }
     
     function turnOn(address wallet, uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
         GoshWallet(wallet).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
-//        getMoney();
+        getMoney();
     }
     
     function turnOff(address wallet) public onlyOwnerPubkeyList  accept saveMsg {
         GoshWallet(wallet).turnOffPubkey{value: 0.1 ton, flag : 1}();
-//        getMoney();
+        getMoney();
+    }
+    
+    function deployWallet(address dao, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
+        GoshDao(dao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr);
+    }
+    
+    function deployDao(string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
+        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(_goshroot, previous);
+    }
+    
+    function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        address daoprofile = address.makeAddrStd(0, tvm.hash(s0));
+        ProfileDao(daoprofile).destroy{value: 0.1 ton, flag : 1}();
+    }
+    
+    function sendMoneyProfileDao(string name, uint128 value) public view {
+        tvm.accept();
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
+        require(daoprofile == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        daoprofile.transfer(value);
     }
 
     //Money part

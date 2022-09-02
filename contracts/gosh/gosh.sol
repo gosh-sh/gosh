@@ -33,6 +33,7 @@ contract GoshRoot is Modifiers, Upgradable{
     TvmCell m_codeDiff;
     TvmCell m_contentSignature;
     TvmCell m_codeProfile;
+    TvmCell m_codeProfileDao;
 
     //SMV
     TvmCell m_TokenLockerCode;
@@ -56,19 +57,19 @@ contract GoshRoot is Modifiers, Upgradable{
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
-            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+            varInit: {_pubkey: pubkey}
         });
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}();
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao);
     }
 
     
-    function deployDao(uint256 pubkey, string name, address pubaddr, optional(address) previous) public accept {
+    function deployDao(string name, address pubaddr, optional(address) previous) public accept {
         tvm.accept();
         require(_flag == false, ERR_GOSH_UPDATE);
         TvmCell s0 = tvm.buildStateInit({
-            code: m_codeProfile,
-            contr: Profile,
-            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
         });
         require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(checkName(name), ERR_WRONG_NAME);
@@ -107,7 +108,7 @@ contract GoshRoot is Modifiers, Upgradable{
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
-            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+            varInit: {_pubkey: pubkey}
         });
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -218,6 +219,11 @@ contract GoshRoot is Modifiers, Upgradable{
     function setProfile(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         m_codeProfile = code;
+    }
+    
+    function setProfileDao(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        m_codeProfileDao = code;
     }
     
     function setDiff(TvmCell code) public  onlyOwner accept {

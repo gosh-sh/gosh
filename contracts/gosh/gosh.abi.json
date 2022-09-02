@@ -21,7 +21,6 @@
 		{
 			"name": "deployDao",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"previous","type":"optional(address)"}
@@ -116,6 +115,14 @@
 		},
 		{
 			"name": "setProfile",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setProfileDao",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],
@@ -352,6 +359,7 @@
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_codeProfile","type":"cell"},
+		{"name":"m_codeProfileDao","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
