@@ -242,6 +242,15 @@
 			]
 		},
 		{
+			"name": "getProfileAddr",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
