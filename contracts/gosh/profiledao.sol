@@ -16,8 +16,6 @@ import "goshdao.sol";
 import "profile.sol";
 
 contract ProfileDao is Modifiers {
-
-    string constant version = "0.11.0";
     string static _name;
     address _pubaddr;
     bool _flag = false;
