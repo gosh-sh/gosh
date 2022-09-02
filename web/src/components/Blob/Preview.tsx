@@ -1,7 +1,6 @@
-import React from 'react'
 import Editor from '@monaco-editor/react'
 import ReactMarkdown from 'react-markdown'
-import { classNames } from '../../utils'
+import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 
 type TBlobPreviewProps = {

@@ -4,17 +4,18 @@ use std::error::Error;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::abi as gosh_abi;
+use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::{
     create_client,
     get_head,
     get_repo_address,
+    GoshContract,
     // set_head,
     TonClient,
-    Tree, GoshContract,
+    Tree,
 };
-use crate::abi as gosh_abi;
 use crate::config::Config;
-use crate::git::get_refs;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
@@ -27,8 +28,8 @@ pub struct GitHelper {
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
     pub remote: Remote,
-    pub dao_addr: String,
-    pub repo_addr: String,
+    pub dao_addr: BlockchainContractAddress,
+    pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
     logger: Logger,
     gosh_root_contract: GoshContract,
@@ -38,7 +39,7 @@ pub struct GitHelper {
 #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 // Note: this module implements fetch method on GitHelper
@@ -46,6 +47,8 @@ mod fetch;
 
 // Note: this module implements push method on GitHelper
 mod push;
+
+mod list;
 
 mod fmt;
 
@@ -57,7 +60,7 @@ impl GitHelper {
     pub async fn calculate_tree_address(
         &mut self,
         tree_id: git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         Tree::calculate_address(
             &self.es_client,
             &mut self.repo_contract,
@@ -77,11 +80,13 @@ impl GitHelper {
 
         let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
-        let dao: GetAddrDaoResult = gosh_root_contract.run_static(
-            &es_client,
-            "getAddrDao",
-            Some(serde_json::json!({ "name": remote.dao }))
-        ).await?;
+        let dao: GetAddrDaoResult = gosh_root_contract
+            .run_static(
+                &es_client,
+                "getAddrDao",
+                Some(serde_json::json!({ "name": remote.dao })),
+            )
+            .await?;
 
         let repo_addr =
             get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
@@ -112,10 +117,10 @@ impl GitHelper {
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
-        let refs = get_refs(&self.es_client, self.repo_addr.as_str()).await?;
+        let refs = list::get_refs(&self.es_client, &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
-            let head = get_head(&self.es_client, self.repo_addr.as_str()).await?;
+            let head = get_head(&self.es_client, &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head).to_owned());
@@ -153,7 +158,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
     let mut stdout = io::stdout();
 
     // Note: we assume git client will work correctly and will terminate this batch
-    // with an empty line prior the next operation 
+    // with an empty line prior the next operation
     let mut is_batching_operation_in_progress = false;
 
     let mut batch_response: Vec<String> = Vec::new();
@@ -179,7 +184,12 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         let arg2 = iter.next();
         let msg = line.clone();
         log::debug!("Line: {line}");
-        log::debug!("> {} {} {}", cmd.unwrap(), arg1.unwrap_or(""), arg2.unwrap_or(""));
+        log::debug!(
+            "> {} {} {}",
+            cmd.unwrap(),
+            arg1.unwrap_or(""),
+            arg2.unwrap_or("")
+        );
 
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
@@ -188,12 +198,12 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
                 let push_result = helper.push(ref_arg).await?;
                 batch_response.push(push_result);
                 vec![]
-            },
+            }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_operation_in_progress = true;
                 helper.fetch(sha, name).await?;
                 vec![]
-            },
+            }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,

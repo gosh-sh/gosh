@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { GoshRepository } from '../../types/classes'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
+import { GoshRepository } from 'react-gosh'
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient, goshRoot } from '../../helpers'
-import { sleep } from '../../utils'
+import { getPaginatedAccounts, goshClient, goshRoot } from 'react-gosh'
+import { sleep } from 'react-gosh'
 
 const DaoRepositoriesPage = () => {
     const pageSize = 10
@@ -64,7 +64,7 @@ const DaoRepositoriesPage = () => {
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const repoCode = await goshRoot.getDaoRepoCode(dao.address)
+            const repoCode = await goshRoot.getDaoRepoCode(dao.instance.address)
             const repoCodeHash = await goshClient.boc.get_boc_hash({ boc: repoCode })
             const list: any[] = []
             let next: string | undefined
@@ -95,7 +95,7 @@ const DaoRepositoriesPage = () => {
         }
 
         getRepoList()
-    }, [dao.address])
+    }, [dao.instance.address])
 
     /** Update filtered items and page depending on search */
     useEffect(() => {

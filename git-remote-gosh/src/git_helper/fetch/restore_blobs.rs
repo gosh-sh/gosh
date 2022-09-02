@@ -1,5 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::ipfs::IpfsService;
 use diffy;
 use git_hash;
@@ -13,7 +14,7 @@ use std::str::FromStr;
 use std::vec::Vec;
 
 pub struct BlobsRebuildingPlan {
-    snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
+    snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
 async fn load_data_from_ipfs(
@@ -23,7 +24,7 @@ async fn load_data_from_ipfs(
     let ipfs_data = ipfs_client.load(&ipfs_address).await?;
     let compressed_data = base64::decode(ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
-    
+
     return Ok(data);
 }
 
@@ -63,10 +64,14 @@ impl BlobsRebuildingPlan {
     #[instrument(level = "debug", skip(self))]
     pub fn mark_blob_to_restore(
         &mut self,
-        appeared_at_snapshot_address: String,
+        appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
-        log::info!("Mark blob: {} -> {}", blob_sha1, appeared_at_snapshot_address);
+        log::info!(
+            "Mark blob: {} -> {}",
+            blob_sha1,
+            appeared_at_snapshot_address
+        );
         self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
             .and_modify(|blobs| {
@@ -82,7 +87,7 @@ impl BlobsRebuildingPlan {
 
     async fn restore_snapshot_blob(
         git_helper: &mut GitHelper,
-        snapshot_address: &str,
+        snapshot_address: &BlockchainContractAddress,
     ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
         let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
@@ -190,11 +195,10 @@ impl BlobsRebuildingPlan {
 
             // TODO: convert to async iterator
             // This should download next messages seemless
-            let mut messages =
-                blockchain::snapshot::diffs::DiffMessagesIterator::new(
-                    snapshot_address,
-                    &mut git_helper.repo_contract
-                );
+            let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+                snapshot_address,
+                &mut git_helper.repo_contract,
+            );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot

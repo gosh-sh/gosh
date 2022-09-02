@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
-import { userStatePersistAtom } from '../../store/user.state'
+import { userStatePersistAtom } from 'react-gosh'
 
 const HomePage = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)

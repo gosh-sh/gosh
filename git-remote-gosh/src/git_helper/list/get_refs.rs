@@ -1,7 +1,7 @@
 use git2::{Object, ObjectType, Oid, Repository};
 use std::collections::HashMap;
 
-use crate::blockchain::{branch_list, get_commit_by_addr, TonClient};
+use crate::blockchain::{branch_list, get_commit_by_addr, BlockchainContractAddress, TonClient};
 
 const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
 // pub const EMPTY_TREE_SHA: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"; // $ echo -n '' | git hash-object --stdin -t tree
@@ -54,7 +54,10 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     }
 }
 
-pub async fn get_refs(context: &TonClient, repo_addr: &str) -> Result<Option<Vec<String>>, String> {
+pub async fn get_refs(
+    context: &TonClient,
+    repo_addr: &BlockchainContractAddress,
+) -> Result<Option<Vec<String>>, String> {
     let _list = branch_list(context, repo_addr)
         .await
         .map_err(|e| e.to_string())?
@@ -65,7 +68,7 @@ pub async fn get_refs(context: &TonClient, repo_addr: &str) -> Result<Option<Vec
 
     let mut ref_list: Vec<String> = Vec::new(); //_list.iter().map(|branch| format!("<SHA> refs/heads/{}", branch.branch_name)).collect();
     for branch in _list {
-        let _commit = get_commit_by_addr(context, &branch.commit_sha)
+        let _commit = get_commit_by_addr(context, &branch.commit_address)
             .await
             .unwrap()
             .unwrap();
