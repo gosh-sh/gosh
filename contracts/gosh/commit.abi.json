@@ -19,7 +19,8 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"tree","type":"address"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"upgrade","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -348,6 +349,7 @@
 		{"name":"_number","type":"uint128"},
 		{"name":"_approved","type":"uint128"},
 		{"name":"_flag","type":"bool"},
-		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"}
+		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"_initupgrade","type":"bool"}
 	]
 }

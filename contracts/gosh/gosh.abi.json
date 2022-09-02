@@ -23,7 +23,8 @@
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubaddr","type":"address"},
+				{"name":"previous","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -40,10 +41,27 @@
 			]
 		},
 		{
+			"name": "sendMoneyProfile",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyDao",
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setFlag",
+			"inputs": [
+				{"name":"flag","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -323,6 +341,7 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},

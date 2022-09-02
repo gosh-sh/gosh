@@ -66,6 +66,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 _limit_messages;
     uint128 _limit_time;
     uint128 _walletcounter = 1;
+    
+    optional(uint256) _access;
 
     constructor(
         address rootpubaddr,
@@ -114,6 +116,41 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _tip3root = _tip3Root;
         getMoney();
     }
+    
+    //Profile part
+    function turnOnPubkey(
+        uint256 pubkey
+    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+        _access = pubkey;        
+        getMoney();
+        if (_index != _walletcounter - 1) { return; }
+        GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
+    }
+    
+    function turnOffPubkey(
+    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+        _access = null;
+        getMoney();
+        if (_index != _walletcounter - 1) { return; }
+        GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
+    }
+    
+    function turnOnPubkeyIn(
+        uint256 pubkey
+    ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)){
+        _access = pubkey;        
+        getMoney();
+        if (_index != _walletcounter - 1) { return; }
+        GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
+    }
+    
+    function turnOffPubkeyIn(
+    ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)) {
+        _access = null;
+        getMoney();
+        if (_index != _walletcounter - 1) { return; }
+        GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
+    }
 
     //Content part
     function deployContent(
@@ -121,7 +158,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         string label,
         string content
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildSignatureCode(m_contentSignature, repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _goshroot : _goshroot, _goshdao : _goshdao}});
@@ -150,7 +187,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 */
 
-    function deployWallet() public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function deployWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
         if (_walletcounter >= _limit_wallets) { return; }
         if (_index != 0) { return; }
         _walletcounter += 1;
@@ -167,7 +204,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function destroyWallet() public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function destroyWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
         if (_walletcounter <= 1) { return; }
         if (_index != 0) { return; }
          GoshWallet(_getWalletAddr(_walletcounter - 1)).askForDestroy{value : 0.2 ton, flag: 1}();
@@ -197,20 +234,20 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         GoshRoot(_goshroot).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
 
-    function destroyObject(address obj) public onlyOwnerAddress(_pubaddr)  accept view {
+    function destroyObject(address obj) public onlyOwnerPubkey(_access.get())  accept view {
         Object(obj).destroy{value : 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     //Repository part
-    function deployRepository(string nameRepo) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function deployRepository(string nameRepo, optional(address) previous) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(checkName(nameRepo), ERR_WRONG_NAME);
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address[] emptyArr;
-        _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone());
+        _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
-            _pubaddr, nameRepo, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index);
+            _pubaddr, nameRepo, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index, previous);
         getMoney();
     }
 
@@ -227,7 +264,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
 
     //Snapshot part
-    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerAddress(_pubaddr)  accept saveMsg{
+    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkey(_access.get())  accept saveMsg{
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
@@ -236,7 +273,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function deleteSnapshot(address snap) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function deleteSnapshot(address snap) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         Snapshot(snap).destroy{
@@ -254,7 +291,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 index1,
         uint128 index2,
         bool last
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         _deployDiff(repoName, branchName, commitName, diffs, index1, index2, last);
@@ -289,12 +326,13 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         address[] parents,
-        address tree
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+        address tree,
+        bool upgrade
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
-        _deployCommit(repoName, branchName, commitName, fullCommit, parents, tree);
+        _deployCommit(repoName, branchName, commitName, fullCommit, parents, tree, upgrade);
     }
 
     function _deployCommit(
@@ -303,12 +341,13 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         address[] parents,
-        address tree
+        address tree,
+        bool upgrade
     ) internal {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeCommitStateInit(commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _goshroot, _pubaddr, repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, tree, _index);
+            _goshdao, _goshroot, _pubaddr, repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, tree, _index, upgrade);
         getMoney();
     }
 
@@ -317,7 +356,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commit,
         uint128 numberChangedFiles
-    ) public onlyOwnerAddress(_pubaddr)  {
+    ) public onlyOwnerPubkey(_access.get())  {
         tvm.accept();
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
@@ -341,7 +380,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string newName,
         string fromCommit
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(checkName(newName), ERR_WRONG_NAME);
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
@@ -354,7 +393,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function deleteBranch(
         string repoName,
         string Name
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
@@ -366,7 +405,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function setHEAD(
         string repoName,
         string branchName
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
@@ -381,7 +420,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string nameCommit,
         string content,
         address commit
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
@@ -393,7 +432,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function deleteTag(string repoName, string nametag) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function deleteTag(string repoName, string nametag) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
@@ -407,7 +446,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     //Config
-    function updateConfig() public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    function updateConfig() public onlyOwnerPubkey(_access.get())  accept saveMsg {
         GoshDao(_goshdao).getConfigInfo{value: 0.15 ton, bounce: true, flag: 1}(_pubaddr, _index);
     }  
     
@@ -426,7 +465,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string shaTree,
         mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         _deployTree(repoName, shaTree, datatree, ipfs);
@@ -477,7 +516,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commit,
         uint128 numberChangedFiles
-    ) public onlyOwnerAddress(_pubaddr)  {
+    ) public onlyOwnerPubkey(_access.get())  {
         tvm.accept();
         _saveMsg();
 
@@ -494,7 +533,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForAddProtectedBranch(
         string repoName,
         string branchName
-    ) public onlyOwnerAddress(_pubaddr)  {
+    ) public onlyOwnerPubkey(_access.get())  {
         tvm.accept();
         _saveMsg();
 
@@ -511,7 +550,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeleteProtectedBranch(
         string repoName,
         string branchName
-    ) public onlyOwnerAddress(_pubaddr)  {
+    ) public onlyOwnerPubkey(_access.get())  {
         tvm.accept();
         _saveMsg();
 
@@ -525,7 +564,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function tryProposalResult(address proposal) public onlyOwnerAddress(_pubaddr)  accept saveMsg{
+    function tryProposalResult(address proposal) public onlyOwnerPubkey(_access.get())  accept saveMsg{
         ISMVProposal(proposal).isCompleted{
             value: SMVConstants.VOTING_COMPLETION_FEE + SMVConstants.EPSILON_FEE
         }();

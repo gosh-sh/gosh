@@ -19,6 +19,8 @@ import "./modifiers/modifiers.sol";
 contract Repository is Modifiers{
     string constant version = "0.11.0";
 
+    bool _timestone = false;
+    optional(address) _previousversion;
     address _pubaddr;
     TvmCell m_CommitCode;
     TvmCell m_SnapshotCode;
@@ -44,7 +46,8 @@ contract Repository is Modifiers{
         TvmCell SnapshotCode,
         TvmCell codeTree,
         TvmCell codeDiff,
-        uint128 index
+        uint128 index,
+        optional(address) previousversion
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
@@ -59,6 +62,7 @@ contract Repository is Modifiers{
         m_codeTree = codeTree;
         m_SnapshotCode = SnapshotCode;
         m_codeDiff = codeDiff;
+        _previousversion = previousversion;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
         _head = "main";
@@ -66,6 +70,7 @@ contract Repository is Modifiers{
 
     //Branch part  
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
@@ -81,6 +86,7 @@ contract Repository is Modifiers{
     }
     
     function deleteBranch(address pubaddr, string name, uint128 index) public minValue(0.3 ton){
+        require(_timestone == false, ERR_OLD_CONTRACT);
         tvm.accept();
         require(_Branches.exists(name), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -109,6 +115,22 @@ contract Repository is Modifiers{
         });
         return _contractflex;
     }
+    
+    function initCommit(string namecommit, string branch) public view senderIs(getCommitAddr(namecommit)) accept {
+        require(_previousversion.hasValue(), ERR_WRONG_DATA);
+        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
+        Repository(_previousversion.get()).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch);
+    }
+
+    function isCorrectCommit(string namecommit, string branch) public view {
+        if (_Branches[branch].value == getCommitAddr(namecommit)) { 
+            Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
+        }
+    }
+
+    function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get()) accept {
+        _Branches[branch] = Item(branch, getCommitAddr(namecommit));
+    }
 
     //Diff part
     function SendDiff(string branch, address commit, uint128 number) public view senderIs(address(this)){
@@ -132,6 +154,7 @@ contract Repository is Modifiers{
 
     //Setters    
     function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         if (_Branches[nameBranch].value != oldcommit) {
@@ -143,6 +166,7 @@ contract Repository is Modifiers{
     }
 
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index),ERR_SENDER_NO_ALLOWED);
         require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
@@ -152,6 +176,7 @@ contract Repository is Modifiers{
     //Protected branch
         
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == true) { return; }
@@ -159,6 +184,7 @@ contract Repository is Modifiers{
     }
     
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch.exists(tvm.hash(branch)) == false) { return; }
@@ -175,6 +201,7 @@ contract Repository is Modifiers{
     }
     
     function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 index) public view {
+        require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == false) {
@@ -275,5 +302,9 @@ contract Repository is Modifiers{
     
     function getOwner() external view returns(address) {
         return _pubaddr;
+    }
+      
+    function getPrevious() external view returns(optional(address)) {
+        return _previousversion;
     }
 }

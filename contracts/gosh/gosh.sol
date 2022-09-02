@@ -22,6 +22,7 @@ import "./libraries/GoshLib.sol";
 contract GoshRoot is Modifiers, Upgradable{
     string constant version = "0.11.0";
     
+    bool _flag = true;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
     TvmCell m_WalletCode;
@@ -61,8 +62,9 @@ contract GoshRoot is Modifiers, Upgradable{
     }
 
     
-    function deployDao(uint256 pubkey, string name, address pubaddr) public accept {
+    function deployDao(uint256 pubkey, string name, address pubaddr, optional(address) previous) public accept {
         tvm.accept();
+        require(_flag == false, ERR_GOSH_UPDATE);
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
@@ -87,12 +89,26 @@ contract GoshRoot is Modifiers, Upgradable{
             m_SMVClientCode,
             m_SMVProposalCode,
             m_TokenRootCode,
-            m_TokenWalletCode
+            m_TokenWalletCode,
+            previous
         );
     }
 
     function sendMoney(address pubaddr, address goshdao, uint128 value, uint128 index) public view {
         TvmCell s1 = _composeWalletStateInit(pubaddr, goshdao, index);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function sendMoneyProfile(uint256 pubkey, uint128 value) public view {
+        tvm.accept();
+        TvmCell s1 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
+            varInit: {_pubkey: pubkey, _goshroot : address(this)}
+        });
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
@@ -155,6 +171,11 @@ contract GoshRoot is Modifiers, Upgradable{
     }
     
     //Setters
+    
+    function setFlag(bool flag) public onlyOwner accept {
+        _flag = flag;
+    }
+    
     //SMV
 
     /* TvmCell m_TokenLockerCode;
@@ -162,85 +183,85 @@ contract GoshRoot is Modifiers, Upgradable{
     TvmCell m_SMVClientCode;
     TvmCell m_SMVProposalCode; */
 
-    function setTokenRoot(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenRoot(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenRootCode = code;
     }
 
-    function setTokenWallet(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenWallet(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenWalletCode = code;
     }
 
-    function setTokenLocker(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenLocker(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenLockerCode = code;
     }
 
-    function setSMVPlatform(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVPlatform(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVPlatformCode = code;
     }
 
-    function setSMVClient(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVClient(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVClientCode = code;
     }
 
-    function setSMVProposal(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVProposal(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVProposalCode = code;
     }
 
     //////////////////////////////////////////////////////////////////////
 
-    function setProfile(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setProfile(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeProfile = code;
     }
     
-    function setDiff(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setDiff(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeDiff = code;
     }
 
-    function setRepository(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setRepository(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_RepositoryCode = code;
     }
 
-    function setCommit(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setCommit(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_CommitCode = code;
     }
 
-    function setSnapshot(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSnapshot(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeSnapshot = code;
     }
 
-    function setcontentSignature(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setcontentSignature(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_contentSignature = code;
     }
 
-    function setWallet(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setWallet(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_WalletCode = code;
     }
 
-    function setDao(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setDao(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeDao = code;
     }
 
-    function setTree(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTree(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeTree = code;
     }
 
-    function setTag(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTag(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeTag = code;
     }
 

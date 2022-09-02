@@ -55,7 +55,8 @@ contract Commit is Modifiers {
     uint128 _number;
     uint128 _approved;
     bool _flag = false;
-    optional(Pause) _saved; 
+    optional(Pause) _saved;     
+    bool _initupgrade;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -70,7 +71,8 @@ contract Commit is Modifiers {
         TvmCell codeDiff,
         TvmCell SnapshotCode,
         address tree,
-        uint128 index
+        uint128 index,
+        bool upgrade
         ) public {
         _goshroot = rootGosh;
         _goshdao = goshdao;
@@ -88,6 +90,8 @@ contract Commit is Modifiers {
         m_SnapshotCode = SnapshotCode;
         m_codeDiff = codeDiff;
         _tree = tree;
+        _initupgrade = upgrade;
+        if (_initupgrade == true) { require(parents.length == 0, ERR_TOO_MANY_PARENTS); }
         getMoney();
     }
     
@@ -156,6 +160,7 @@ contract Commit is Modifiers {
     
     function SendDiff(string branch, address branchcommit, uint128 number) public senderIs(_rootRepo){
         tvm.accept();
+        if (_initupgrade == true) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch); return; }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
@@ -304,6 +309,7 @@ contract Commit is Modifiers {
         address newC) public {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        if (branchCommit  != address(this)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC);
         getMoney();
     }

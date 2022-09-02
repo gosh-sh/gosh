@@ -43,4 +43,7 @@ abstract contract Errors {
     uint constant ERR_NOT_EMPTY_DATA = 232;
     uint constant ERR_SNAPSHOT_NOT_READY = 233;
     uint constant ERR_EMPTY_BRANCH = 234;
+    uint constant ERR_GOSH_UPDATE = 235;
+    uint constant ERR_OLD_CONTRACT = 236;
+    uint constant ERR_GOSH_BAD_VERSION = 237;
 }

@@ -64,6 +64,7 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
     uint128 constant FEE_DEPLOY_WALLET = 60 ton;
     uint128 constant FEE_DEPLOY_PROFILE = 10000 ton;
+    uint128 constant FEE_DEPLOY_GOSH = 51 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
@@ -82,6 +83,12 @@ abstract contract Modifiers is Errors {
     
     modifier onlyOwner {
         require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);
+        _;
+    }
+    
+    modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
+        require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
+        require(msg.pubkey() == rootpubkey.get(), ERR_NOT_OWNER);
         _;
     }
 

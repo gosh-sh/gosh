@@ -16,7 +16,8 @@
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"previousversion","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -47,6 +48,33 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "initCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCorrectCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "correctCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -272,6 +300,14 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "getPrevious",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(address)"}
+			]
 		}
 	],
 	"data": [
@@ -283,6 +319,8 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"_timestone","type":"bool"},
+		{"name":"_previousversion","type":"optional(address)"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"m_CommitCode","type":"cell"},
 		{"name":"m_SnapshotCode","type":"cell"},

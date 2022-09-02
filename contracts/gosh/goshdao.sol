@@ -36,6 +36,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     address static _goshroot;
     address _pubaddr;
     string _nameDao;
+    address _previous;
     mapping(uint256 => address  ) _wallets;
     
     //added for SMV
@@ -68,7 +69,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell SMVClientCode,
         TvmCell SMVProposalCode,
         TvmCell TokenRootCode,
-        TvmCell TokenWalletCode
+        TvmCell TokenWalletCode,
         ////////////////////////
         /* address initialSupplyTo,
         uint128 initialSupply,
@@ -77,7 +78,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         bool burnByRootDisabled,
         bool burnPaused,
         address remainingGasTo,
-        uint256 randomNonce */ ) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
+        uint256 randomNonce */ 
+        optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
         tvm.accept();
         _pubaddr = pubaddr;
         _nameDao = name;
@@ -103,6 +105,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
+        if (previous.hasValue()) { _previous = previous.get(); /* this.getPreviousInfo{value: 0.1 ton, flag: 1}(); */ }
     }
     
     function getMoney() private {
@@ -265,5 +268,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         
     function getOwner() external view returns(address) {
         return _pubaddr;
+    }
+    
+    function getPreviousDaoAddr() external view returns(address) {
+        return _previous;
     }
 }

@@ -21,7 +21,8 @@
 				{"name":"SMVClientCode","type":"cell"},
 				{"name":"SMVProposalCode","type":"cell"},
 				{"name":"TokenRootCode","type":"cell"},
-				{"name":"TokenWalletCode","type":"cell"}
+				{"name":"TokenWalletCode","type":"cell"},
+				{"name":"previous","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -163,6 +164,14 @@
 			]
 		},
 		{
+			"name": "getPreviousDaoAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "onAcceptTokensTransfer",
 			"inputs": [
 				{"name":"tokenRoot","type":"address"},
@@ -281,6 +290,7 @@
 		{"name":"_goshroot","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
+		{"name":"_previous","type":"address"},
 		{"name":"_wallets","type":"map(uint256,address)"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
