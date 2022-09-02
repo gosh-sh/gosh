@@ -47,7 +47,7 @@ contract GoshRoot is Modifiers, Upgradable{
 
     address public _lastGoshDao;
     
-    constructor() public onlyOwner {
+    constructor() public {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
     }
