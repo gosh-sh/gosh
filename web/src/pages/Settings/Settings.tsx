@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useRecoilValue } from 'recoil'
 import CopyClipboard from '../../components/CopyClipboard'
-import { userStateAtom } from '../../store/user.state'
-import { shortString } from '../../utils'
+import { shortString, userStateAtom } from 'react-gosh'
 
 const SettingsPage = () => {
     const userState = useRecoilValue(userStateAtom)
@@ -17,7 +16,7 @@ const SettingsPage = () => {
         <div>
             <div>
                 <h3 className="text-xl font-semibold">My public key</h3>
-                <p>Share it with DAO owner to add you to participants list</p>
+                <p>Share it with DAO owner to add you to members list</p>
                 {userState.keys && (
                     <CopyClipboard
                         className="mt-4"

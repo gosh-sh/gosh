@@ -27,7 +27,6 @@ extern crate lru;
 pub mod abi;
 pub mod blockchain;
 pub mod config;
-pub mod git;
 pub(crate) mod git_helper;
 pub mod ipfs;
 pub(crate) mod logger;

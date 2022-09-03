@@ -14,7 +14,7 @@ pub struct Number(u8);
 #[serde(transparent)]
 pub struct NumberU64(u64);
 
-impl Into <u64> for NumberU64{
+impl Into<u64> for NumberU64 {
     fn into(self) -> u64 {
         self.0
     }

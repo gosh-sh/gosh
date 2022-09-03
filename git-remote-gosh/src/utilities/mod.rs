@@ -1,3 +1,4 @@
+use crate::blockchain::BlockchainContractAddress;
 use crate::config::Config;
 
 #[derive(Debug)]
@@ -7,7 +8,7 @@ pub struct Remote {
     pub account: String,
     pub dao: String,
     pub repo: String,
-    pub gosh: String,
+    pub gosh: BlockchainContractAddress,
 }
 
 impl Remote {
@@ -68,7 +69,7 @@ fn deconstruct_remote(input: &str, config: &Config) -> Result<Remote, String> {
         account: account.to_string(),
         dao: dao.to_string(),
         repo: repo.to_string(),
-        gosh: gosh.to_string(),
+        gosh: BlockchainContractAddress::new(gosh),
     })
 }
 
@@ -87,7 +88,9 @@ mod tests {
         assert_eq!(remote.repo, "binary-experiments");
         assert_eq!(
             remote.gosh,
-            "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            BlockchainContractAddress::new(
+                "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            )
         );
     }
 
@@ -101,7 +104,9 @@ mod tests {
         assert_eq!(remote.repo, "binary-experiments");
         assert_eq!(
             remote.gosh,
-            "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            BlockchainContractAddress::new(
+                "0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358"
+            )
         );
     }
 }

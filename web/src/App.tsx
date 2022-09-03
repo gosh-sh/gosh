@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import { goshClient } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -16,7 +17,7 @@ import DaosPage from './pages/Daos'
 import DaoPage from './pages/Dao'
 import DaoCreatePage from './pages/DaoCreate'
 import DaoWalletPage from './pages/DaoWallet'
-import DaoParticipantsPage from './pages/DaoParticipants'
+import DaoMembersPage from './pages/DaoMembers'
 import DaoReposPage from './pages/DaoRepos'
 import RepoCreatePage from './pages/RepoCreate'
 import ReposPage from './pages/Repos'
@@ -35,8 +36,8 @@ import EventPage from './pages/Event'
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
-import { goshClient, ToastOptionsShortcuts } from './helpers'
-import { shortString } from './utils'
+import { ToastOptionsShortcuts } from './helpers'
+import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
 
@@ -123,10 +124,7 @@ const App = () => {
                                     element={<Navigate to="wallet" replace={true} />}
                                 />
                                 <Route path="wallet" element={<DaoWalletPage />} />
-                                <Route
-                                    path="participants"
-                                    element={<DaoParticipantsPage />}
-                                />
+                                <Route path="members" element={<DaoMembersPage />} />
                             </Route>
                         </Route>
                         <Route path=":repoName" element={<RepoLayout />}>
