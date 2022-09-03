@@ -110,7 +110,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 50000 ton) { return; }
+        if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
         _flag = true;
         GoshRoot(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
@@ -180,11 +180,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deleteWallet(uint256 pubkey) public senderIs(_pubaddr) {
+    function deleteWallet(address pubaddr) public senderIs(_pubaddr) {
         tvm.accept();
-        require(_wallets.exists(pubkey) == true, ERR_WALLET_NOT_EXIST);
-        GoshWallet(_wallets[pubkey]).destroy{value : 0.2 ton}();
-        delete _wallets[pubkey];
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST);
+        GoshWallet(_wallets[keyaddr]).destroy{value : 0.2 ton}();
+        delete _wallets[keyaddr];
         getMoney();
     }
     

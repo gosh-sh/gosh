@@ -74,8 +74,7 @@ contract Repository is Modifiers{
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
-        TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
-        require(_Branches[newname].value != address.makeAddrStd(0, tvm.hash(s1)), ERR_EMPTY_BRANCH);
+        require("0000000000000000000000000000000000000000" != fromcommit, ERR_EMPTY_BRANCH);
         Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
     }
     
