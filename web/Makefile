@@ -39,7 +39,7 @@ run:
 	  --name ${DOCKER_WEB_CONTAINER_NAME} \
 	  ${DOCKER_RUN_ARGS} \
 	  node:18.2.0-alpine \
-	  sh -c "cd ../react-gosh && npm install && npm run build && cd - && npm install && \
+	  sh -c "cd ../react-gosh && npm install && npm run start && cd - && npm install && \
 	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run start:$(ENV)"
 
 .PHONY: build
