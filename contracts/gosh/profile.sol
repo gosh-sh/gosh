@@ -16,7 +16,7 @@ import "goshdao.sol";
 import "profiledao.sol";
 
 contract Profile is Modifiers {
-    
+    string constant version = "1.0.0";
     TvmCell m_codeProfileDao;
     
     // mapping to store hashes of inbound messages;
