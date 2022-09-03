@@ -46,4 +46,5 @@ abstract contract Errors {
     uint constant ERR_GOSH_UPDATE = 235;
     uint constant ERR_OLD_CONTRACT = 236;
     uint constant ERR_GOSH_BAD_VERSION = 237;
+    uint constant ERR_BAD_COUNT_PARENTS = 238;
 }

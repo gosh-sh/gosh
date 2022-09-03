@@ -115,14 +115,14 @@ contract Repository is Modifiers{
         return _contractflex;
     }
     
-    function initCommit(string namecommit, string branch) public view senderIs(getCommitAddr(namecommit)) accept {
+    function initCommit(string namecommit, string branch, address commit) public view senderIs(getCommitAddr(namecommit)) accept {
         require(_previousversion.hasValue(), ERR_WRONG_DATA);
         require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
-        Repository(_previousversion.get()).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch);
+        Repository(_previousversion.get()).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch, commit);
     }
 
-    function isCorrectCommit(string namecommit, string branch) public view {
-        if (_Branches[branch].value == getCommitAddr(namecommit)) { 
+    function isCorrectCommit(string namecommit, string branch, address commit) public view {
+        if ((_Branches[branch].value == getCommitAddr(namecommit)) && (commit == _Branches[branch].value)) { 
             Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
         }
     }

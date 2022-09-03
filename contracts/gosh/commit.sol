@@ -91,7 +91,7 @@ contract Commit is Modifiers {
         m_codeDiff = codeDiff;
         _tree = tree;
         _initupgrade = upgrade;
-        if (_initupgrade == true) { require(parents.length == 0, ERR_TOO_MANY_PARENTS); }
+        if (_initupgrade == true) { require(parents.length == 1, ERR_BAD_COUNT_PARENTS); }
         getMoney();
     }
     
@@ -160,7 +160,7 @@ contract Commit is Modifiers {
     
     function SendDiff(string branch, address branchcommit, uint128 number) public senderIs(_rootRepo){
         tvm.accept();
-        if (_initupgrade == true) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch); return; }
+        if (_initupgrade == true) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); return; }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
