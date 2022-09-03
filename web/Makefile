@@ -21,7 +21,7 @@ build:
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  node:18.2.0-alpine \
-	  sh -c "cd ../react-gosh && npm install && npm run build && cd - && \
+	  sh -c "cd ../react-gosh && npm install && npm run prepublish && npm pack && cd - && \
 	  npm install && npm run wasm && \
 	  cd run-if-modified && npm link && cd - && npm link run-if-modified && \
 	  npm run build:dockerprod"
@@ -32,13 +32,14 @@ run:
 	docker run \
 	  -d \
 	  --volume ${MOUNT_DIR}:/workdir \
+	  --volume $(GOSH_PACKAGE_DIR):/react-gosh \
 	  --env REACT_APP_ISDOCKEREXT=${REACT_APP_ISDOCKEREXT} \
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  --name ${DOCKER_WEB_CONTAINER_NAME} \
 	  ${DOCKER_RUN_ARGS} \
 	  node:18.2.0-alpine \
-	  sh -c "npm install && \
+	  sh -c "cd ../react-gosh && npm install && npm run prepublish && npm pack && cd - && npm install && \
 	  npm run wasm && cd run-if-modified && npm link && cd - && npm link run-if-modified && npm run start:$(ENV)"
 
 .PHONY: build

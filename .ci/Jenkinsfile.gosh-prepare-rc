@@ -104,19 +104,21 @@ pipeline {
                     env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_CREATOR_ADDR = sh script: "cat contracts/gosh/GoshDaoCreator.addr | tr -d '\n'", returnStdout: true 
                     sh """
+                        touch ${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh:8000
                         sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' web/.env.ci
                         sed -i '/REACT_APP_CREATOR_ADDR/s/\$/${REACT_APP_CREATOR_ADDR}/' web/.env.ci
                         mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
                     """
                     dir('web') {     
                         sh """      
-                        if [ `docker ps | grep -o "gosh-web.*" | wc -l` -gt 2 ]; then docker ps | grep -o "gosh-web.*" | while read -r line ; do echo \$line ; done | sort | docker rm -f `head -n 1`; fi                                                    
+                        if [ `docker ps | grep -o "gosh-web.*" | wc -l` -gt 1 ]; then docker ps | grep -o "gosh-web.*" | while read -r line ; do echo \$line ; done | sort | docker rm -f `head -n 1`; fi                                                    
                         make run MOUNT_DIR=/opt/${DOCKER_WEB_CONTAINER_NAME}/web ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
                         echo 'server_names_hash_bucket_size 1024;' > /opt/nginx/proxy.conf
                         docker ps | grep -o "gosh-web.*" | while read -r line ; do sed "s/GOSH_WEB_VERSION/\$line/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf; done
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
+                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh*"
                 }
             }
         }
@@ -135,14 +137,16 @@ pipeline {
         stage('Prerelease: Git Helper - bin') {
             steps {
                 script {
-                    archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
-                    archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
-                    if (!params.DRYRUN) {
-                        dir('.ci/scripts') {
-                            withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                                sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
-                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
-                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
+                    if (!params.ONLYWEB) {
+                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
+                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
+                        if (!params.DRYRUN && !params.ONLYWEB) {
+                            dir('.ci/scripts') {
+                                withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                                    sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
+                                }
                             }
                         }
                     }
@@ -153,7 +157,7 @@ pipeline {
             steps {
                 retry(3) {
                     script {
-                        if (!params.DRYRUN) {
+                        if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('git-remote-gosh') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
@@ -169,7 +173,7 @@ pipeline {
             steps {
                 retry(3) {
                     script {
-                        if (!params.DRYRUN) {
+                        if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('docker-extension') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
