@@ -37,9 +37,10 @@ copy_abi: clear_abi
 .PHONY: build
 build: copy_abi clear_screen
 	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
-	mkdir -p $(TARGET_DIR)/git-remote-gosh || true
-	if [ "${TARGET_ARCH}" = "x86_64-pc-windows-gnu" ]; then cp ./target/${TARGET_ARCH}/release/git-remote-gosh.exe $(TARGET_DIR)/git-remote-gosh-windows.exe; fi;
-	if [ "${TARGET_ARCH}" = "x86_64-unknown-linux-gnu" ]; then cp ./target/${TARGET_ARCH}/release/git-remote-gosh $(TARGET_DIR)/git-remote-gosh-linux; fi;
+
+.PHONY: install
+install: copy_abi clear_screen
+	cargo install --path .
 
 .PHONY: test
 test: copy_abi clear_screen
@@ -55,6 +56,7 @@ prepare-builder: qemu ## prepare docker buildx builder
 	@echo === prepare-builder
 	( ${DOCKER} buildx inspect ${DOCKER_BUILDER_NAME} ) || ${DOCKER} buildx create \
 		--name ${DOCKER_BUILDER_NAME} \
+		${DOCKER_BUILDER_ARGS} \
 		--driver docker-container
 
 .PHONY: bench
@@ -64,6 +66,7 @@ bench: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile \
 		.
@@ -76,6 +79,7 @@ publish: copy_abi prepare-builder
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile \
 		.
@@ -88,6 +92,7 @@ publish-alpine: copy_abi prepare-builder
 		--progress=plain \
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME}-alpine \
+		${DOCKER_BUILDX_ARGS} \
 		\
 		-f Dockerfile.alpine \
 		.

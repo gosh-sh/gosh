@@ -1,5 +1,5 @@
 import Spinner from '../../components/Spinner'
-import { TCreateCommitCallbackParams } from '../../types/types'
+import { TCreateCommitCallbackParams } from 'react-gosh'
 
 const Result = (props: any) => {
     return <span className="mr-3">{!props.flag ? <Spinner size="sm" /> : 'OK'}</span>

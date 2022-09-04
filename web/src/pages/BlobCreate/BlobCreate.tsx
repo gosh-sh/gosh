@@ -4,12 +4,10 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import TextField from '../../components/FormikForms/TextField'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from '../../helpers'
 import * as Yup from 'yup'
 import { Tab } from '@headlessui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
-import { classNames } from '../../utils'
 import BlobEditor from '../../components/Blob/Editor'
 import BlobPreview from '../../components/Blob/Preview'
 import FormCommitBlock from './FormCommitBlock'
@@ -20,9 +18,14 @@ import {
     useGoshRepoBranches,
     useGoshRepoTree,
 } from '../../hooks/gosh.hooks'
-import { userStateAtom } from '../../store/user.state'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { EGoshError, GoshError } from '../../types/errors'
+import {
+    EGoshError,
+    GoshError,
+    userStateAtom,
+    getCodeLanguageFromFilename,
+    classNames,
+} from 'react-gosh'
 import { toast } from 'react-toastify'
 
 type TFormValues = {
@@ -61,7 +64,7 @@ const BlobCreatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`
             const exists = tree.tree?.items.find(
                 (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,
@@ -144,10 +147,12 @@ const BlobCreatePage = () => {
                                                 setBlobCodeLanguage(language)
 
                                                 // Set commit title
-                                                setFieldValue(
-                                                    'title',
-                                                    `Create ${e.target.value}`,
-                                                )
+                                                if (!values.title) {
+                                                    setFieldValue(
+                                                        'title',
+                                                        `Create ${e.target.value}`,
+                                                    )
+                                                }
                                             },
                                         }}
                                     />

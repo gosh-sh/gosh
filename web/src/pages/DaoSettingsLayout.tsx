@@ -1,5 +1,5 @@
 import { Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom'
-import { classNames } from '../utils'
+import { classNames } from 'react-gosh'
 import { TDaoLayoutOutletContext } from './DaoLayout'
 
 const DaoSettingsLayout = () => {
@@ -8,7 +8,7 @@ const DaoSettingsLayout = () => {
 
     const tabs = [
         { to: `/${daoName}/settings/wallet`, title: 'Wallet' },
-        { to: `/${daoName}/settings/participants`, title: 'Participants' },
+        { to: `/${daoName}/settings/members`, title: 'Members' },
     ]
 
     if (!daoContext.wallet) return <Navigate to={`/${daoName}`} />

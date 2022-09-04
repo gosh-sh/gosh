@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{call, get_commit_address, user_wallet, ZERO_SHA},
+    blockchain::{call, get_commit_address, user_wallet, BlockchainContractAddress, ZERO_SHA},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -16,9 +16,9 @@ pub struct DeployCommitParams {
     pub commit_id: String,
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
-    pub parents: Vec<String>,
+    pub parents: Vec<BlockchainContractAddress>,
     #[serde(rename = "tree")]
-    pub tree_addr: String,
+    pub tree_addr: BlockchainContractAddress,
 }
 
 #[instrument(level = "debug")]
@@ -39,13 +39,19 @@ pub async fn push_commit(
     let mut commit_iter = commit.try_into_commit_iter().unwrap();
     let tree_id = commit_iter.tree_id()?;
     let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
-    let mut parents: Vec<String> = vec![];
+    let mut parents: Vec<BlockchainContractAddress> = vec![];
     for id in parent_ids {
-        let parent = get_commit_address(&context.es_client, &context.repo_addr, &id.to_string()).await?;
+        let parent = get_commit_address(
+            &context.es_client,
+            &mut context.repo_contract,
+            &id.to_string(),
+        )
+        .await?;
         parents.push(parent);
     }
     if parents.len() == 0 {
-        let bogus_parent = get_commit_address(&context.es_client, &context.repo_addr, ZERO_SHA).await?;
+        let bogus_parent =
+            get_commit_address(&context.es_client, &mut context.repo_contract, ZERO_SHA).await?;
         parents.push(bogus_parent);
     }
     let tree_addr = context.calculate_tree_address(tree_id).await?;
@@ -72,7 +78,7 @@ pub async fn notify_commit(
     context: &mut GitHelper,
     commit_id: &ObjectId,
     branch: &str,
-    number_of_files_changed: u32
+    number_of_files_changed: u32,
 ) -> Result<(), Box<dyn Error>> {
     let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
@@ -85,5 +91,3 @@ pub async fn notify_commit(
     log::debug!("setCommit result: {:?}", result);
     Ok(())
 }
-
-

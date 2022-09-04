@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
-import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons'
+import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from '../hooks/gosh.hooks'
 import {
-    useGoshRepo,
-    useGoshWallet,
-    useGoshRepoBranches,
-    useGoshDao,
-} from '../hooks/gosh.hooks'
-import { IGoshRepository, IGoshWallet } from '../types/types'
-import { classNames } from '../utils'
+    IGoshRepository,
+    IGoshWallet,
+    classNames,
+    userStatePersistAtom,
+    useDao,
+} from 'react-gosh'
 import { useRecoilValue } from 'recoil'
-import { userStatePersistAtom } from '../store/user.state'
 
 export type TRepoLayoutOutletContext = {
     repo: IGoshRepository
@@ -23,8 +22,8 @@ const RepoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const repo = useGoshRepo(daoName, repoName)
-    const dao = useGoshDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName)
+    const wallet = useGoshWallet(dao.instance)
     const { updateBranches } = useGoshRepoBranches(repo)
     const [isFetched, setIsFetched] = useState<boolean>(false)
 
@@ -42,6 +41,15 @@ const RepoLayout = () => {
             public: false,
         },
     ]
+
+    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+        tabs.push({
+            to: `/${daoName}/${repoName}/build/${branchName}`,
+            title: 'Build image',
+            icon: faCube,
+            public: false,
+        })
+    }
 
     useEffect(() => {
         const init = async () => {

@@ -13,11 +13,12 @@ import "goshwallet.sol";
 import "commit.sol";
 import "snapshot.sol";
 import "repository.sol";
+import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 
 /* Root contract of Commit */
 contract Commit is Modifiers {
-    string constant version = "0.5.3";
+    string constant version = "0.10.0";
     
     uint256 _pubkey;
     address _rootRepo;
@@ -45,6 +46,7 @@ contract Commit is Modifiers {
     bool _continueDiff = false;
     uint128 _number;
     uint128 _approved;
+    bool _flag = false;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -78,14 +80,14 @@ contract Commit is Modifiers {
         m_SnapshotCode = SnapshotCode;
         m_codeDiff = codeDiff;
         _tree = tree;
-        getMoney(_pubkey);
+        getMoney();
     }
     
-    function getMoney(uint256 pubkey) private view{
-        TvmCell s1 = _composeWalletStateInit(pubkey, 0);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        if (address(this).balance > 80 ton) { return; }
-        GoshWallet(addr).sendMoney{value : 0.2 ton}(_rootRepo, _nameCommit);
+    function getMoney() private {
+        if (_flag == true) { return; }
+        if (address(this).balance > 1400 ton) { return; }
+        _flag = true;
+        GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
     }
     
     function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
@@ -111,10 +113,10 @@ contract Commit is Modifiers {
         Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, fromcommit);
     }
     
-    function allCorrect(uint128 number) public view senderIs(_rootRepo){
+    function allCorrect(uint128 number) public senderIs(_rootRepo){
         tvm.accept();
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number);
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function _acceptCommitRepo(uint128 index, uint128 number) public senderIs(address(this)) {
@@ -126,22 +128,22 @@ contract Commit is Modifiers {
         }
         DiffC(getDiffAddress(_nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}();
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
-        getMoney(_pubkey);
+        getMoney();
     }
     
-    function cancelCommit(string namecommit, uint128 number) public view {
+    function cancelCommit(string namecommit, uint128 number) public {
         tvm.accept();
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        getMoney(_pubkey);
+        getMoney();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
     
-    function _cancelAllDiff(uint128 index, uint128 number) public view senderIs(address(this)) {
+    function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         if (index >= number) { return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function SendDiff(string branch, address branchcommit, uint128 number) public senderIs(_rootRepo){
@@ -157,7 +159,7 @@ contract Commit is Modifiers {
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(_pubkey, branch, branchcommit, address(this));
         _continueChain = true;
         _continueDiff = true;
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function _sendAllDiff(string branch, address branchcommit, uint128 index, uint128 number) public senderIs(address(this)) {
@@ -166,7 +168,7 @@ contract Commit is Modifiers {
             _approved = 0;
             _continueDiff = false;
             _diffcheck = true;
-            getMoney(_pubkey);
+            getMoney();
             if (_continueChain == true) { return; }
             this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchcommit);
             return;
@@ -174,16 +176,16 @@ contract Commit is Modifiers {
         if (index >= number) { return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index + 1, number);
-        getMoney(_pubkey);
+        getMoney();
     }
     
-    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2) public view senderIs(getDiffAddress(_nameCommit, index1, index2)){
+    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2) public senderIs(getDiffAddress(_nameCommit, index1, index2)){
         value0;
-        getMoney(_pubkey);
+        getMoney();
     }
     
-    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path) public view senderIs(getSnapshotAddr(branch, path)){
-        getMoney(_pubkey);
+    function getAcceptedContent(bytes value0, optional(string) value1, string branch, string path) public senderIs(getSnapshotAddr(branch, path)){
+        getMoney();
         tvm.accept();
         if (value1.hasValue()) { 
             Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
@@ -200,7 +202,7 @@ contract Commit is Modifiers {
     function _checkChain(uint256 pubkey,
         string branchName,
         address branchCommit,
-        address newC) public view senderIs(address(this)) {
+        address newC) public senderIs(address(this)) {
         if (branchCommit  == address(this)) {
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit, newC);
         }
@@ -208,20 +210,20 @@ contract Commit is Modifiers {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
             Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(pubkey, _nameCommit, branchName, branchCommit , newC);
         }
-        getMoney(pubkey);
+        getMoney();
     }     
     
-    function abortDiff(uint256 pubkey, string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
+    function abortDiff(string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
         tvm.accept();    
         _continueDiff = false;
         _diffcheck = false;
-        getMoney(pubkey);
+        getMoney();
         _approved = 0;
         if (_continueChain == true) { return; }
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
     
-    function DiffCheckCommit(uint256 pubkey, string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
+    function DiffCheckCommit(string branch, address branchCommit, uint128 index) public senderIs(getDiffAddress(_nameCommit, index, 0)) {
         tvm.accept();    
         _approved += 1;
         if (_continueDiff == false) { return; }
@@ -229,7 +231,7 @@ contract Commit is Modifiers {
         _approved = 0;
         _continueDiff = false;
         _diffcheck = true;
-        getMoney(pubkey);
+        getMoney();
         if (_continueChain == true) { return; }
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
@@ -240,7 +242,7 @@ contract Commit is Modifiers {
         require(newC == address(this), ERR_WRONG_DATA);
         _continueChain = false;
         _commitcheck = true;
-        getMoney(_pubkey);
+        getMoney();
         if (_continueDiff == true) { return; }
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branchName, branchCommit);
     }
@@ -251,7 +253,7 @@ contract Commit is Modifiers {
         tvm.accept();
         _continueChain = false;
         _commitcheck = false;
-        getMoney(_pubkey);
+        getMoney();
         if (_continueDiff == true) { return; }
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
@@ -267,9 +269,9 @@ contract Commit is Modifiers {
         }
     }
     
-    function NotCorrectRepo(uint128 number) public view senderIs(_rootRepo){
+    function NotCorrectRepo(uint128 number) public senderIs(_rootRepo){
         tvm.accept();
-        getMoney(_pubkey);
+        getMoney();
         if (number != 0) { this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number); }
     }
     
@@ -282,7 +284,7 @@ contract Commit is Modifiers {
         }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function CommitCheckCommit(
@@ -290,11 +292,11 @@ contract Commit is Modifiers {
         string nameCommit,
         string branchName,
         address branchCommit ,  
-        address newC) public view {
+        address newC) public {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(pubkey, branchName, branchCommit, newC);
-        getMoney(pubkey);
+        getMoney();
     }
     
     function getDiffAddress(string commit, uint128 index1, uint128 index2) private view returns(address) {
@@ -311,7 +313,7 @@ contract Commit is Modifiers {
     function gotCount(uint128 count) public senderIs(_tree) {
         _count = count;
         _countready = true;
-        getMoney(_pubkey);
+        getMoney();
     }
     
     function checkFallbackDiff (uint128 index, address sender) public senderIs(address(this)){
@@ -320,16 +322,22 @@ contract Commit is Modifiers {
         if (sender == getDiffAddress(_nameCommit, index, 0)) { 
             _continueDiff = false;
             _diffcheck = false;
-            getMoney(_pubkey);
+            getMoney();
             _approved = 0;
             if (_continueChain == true) { return; }
             this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}("", sender);
         }
         this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, sender);
-        getMoney(_pubkey);
+        getMoney();
     }
     
     //Fallback/Receive
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
+    }
+    
     onBounce(TvmSlice body) external view {
         tvm.accept();
         body;
@@ -362,7 +370,7 @@ contract Commit is Modifiers {
         require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _tree = tree  ;
-        getMoney(pubkey);
+        getMoney();
     } 
     
     //Getters

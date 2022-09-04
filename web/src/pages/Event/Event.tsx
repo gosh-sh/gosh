@@ -3,19 +3,19 @@ import { Field, Form, Formik } from 'formik'
 import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from '../../types/classes'
-import { EEventType, TGoshEventDetails } from '../../types/types'
+import { GoshSmvProposal } from 'react-gosh'
+import { EEventType, TGoshEventDetails } from 'react-gosh'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import PREvent from './PREvent'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { eventTypes, goshClient, goshRoot } from '../../helpers'
-import { EGoshError, GoshError } from '../../types/errors'
+import { eventTypes, goshClient, goshRoot } from 'react-gosh'
+import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
 
@@ -69,7 +69,7 @@ const EventPage = () => {
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
-            const smvClientCode = await dao.getSmvClientCode()
+            const smvClientCode = await dao.instance.getSmvClientCode()
             const choice = values.approve === 'true'
             await wallet.voteFor(
                 smvPlatformCode,

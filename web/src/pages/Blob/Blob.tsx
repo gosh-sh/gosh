@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from '../../helpers'
+import { getCodeLanguageFromFilename } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -69,14 +69,14 @@ const BlobPage = () => {
                     Loading file...
                 </div>
             )}
-            {monaco && blob.path && blob.content && (
+            {monaco && blob.path && !blob.isFetching && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
                         {!Buffer.isBuffer(blob.content) ? (
                             <>
                                 <CopyClipboard
                                     componentProps={{
-                                        text: blob.content,
+                                        text: blob.content || '',
                                     }}
                                     iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
                                     iconProps={{

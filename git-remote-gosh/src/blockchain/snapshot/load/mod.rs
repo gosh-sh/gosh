@@ -2,13 +2,13 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::{GoshContract, TonClient};
 
+use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::error::Error;
 use std::fmt;
 use std::option::Option;
 pub mod diffs;
-
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "snapshot.abi.json"]
@@ -39,13 +39,12 @@ pub struct Snapshot {
 
     #[serde(rename = "value7")]
     pub ready_for_diffs: bool,
-
 }
 
 #[derive(Deserialize, Debug)]
 struct GetSnapshotAddrResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -58,29 +57,36 @@ impl Snapshot {
     #[instrument(level = "debug", skip(context))]
     pub async fn calculate_address(
         context: &TonClient,
-        repository_address: &str,
+        repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
-    ) -> Result<String, Box<dyn Error>> {
-        let repo = GoshContract::new(repository_address, gosh_abi::REPO);
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
         });
-        let result: GetSnapshotAddrResult = repo
-            .run_local(context, "getSnapshotAddr", Some(params))
+        let result: GetSnapshotAddrResult = repo_contract
+            .run_static(context, "getSnapshotAddr", Some(params))
             .await?;
         return Ok(result.address);
     }
 
     #[instrument(level = "debug", skip(context))]
-    pub async fn get_file_path(context: &TonClient, address: &str) -> Result<String, Box<dyn Error>> {
+    pub async fn get_file_path(
+        context: &TonClient,
+        address: &BlockchainContractAddress,
+    ) -> Result<String, Box<dyn Error>> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
-        let result: GetSnapshotFilePath = snapshot
-            .run_local(context, "getName", None)
-            .await?;
-        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}", );
-        return Ok(result.file_path);
+        let result: GetSnapshotFilePath = snapshot.run_local(context, "getName", None).await?;
+        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
+        // Note: Fix! Contract returns file path prefixed with a branch name
+        let mut path = result.file_path;
+        path = path
+            .split_once("/")
+            .expect("Must be prefixed")
+            .1
+            .to_string();
+        return Ok(path);
     }
 }
 
@@ -106,7 +112,7 @@ where
                 // It is certainly not a hex string
                 return Err(E::custom("Not a hex string"));
             } else if v.len() == 0 {
-                return Err(E::custom("Empty string"));
+                return Ok(vec![]);
             }
             let compressed_data: Vec<u8> = (0..v.len())
                 .step_by(2)

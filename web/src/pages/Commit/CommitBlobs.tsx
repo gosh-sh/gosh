@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import Spinner from '../../components/Spinner'
-import { getBlobAtCommit, getRepoTree } from '../../helpers'
-import { IGoshRepository, TGoshTreeItem } from '../../types/types'
+import { getBlobAtCommit, getRepoTree } from 'react-gosh'
+import { IGoshRepository, TGoshTreeItem } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { GoshCommit } from '../../types/classes'
+import { GoshCommit } from 'react-gosh'
 
 type TCommitBlobsType = {
     className?: string
@@ -26,7 +26,8 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
 
         let prev
-        if (!curr.deployed) {
+        // Old check if (!curr.deployed)
+        if (curr.prevcommit) {
             prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
         }
 

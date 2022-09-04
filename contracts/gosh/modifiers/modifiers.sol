@@ -49,10 +49,10 @@ struct GlobalConfig {
 }
 
 abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.5.3";
+    string constant versionModifiers = "0.10.0";
     
     //Deploy constants
-    uint128 constant FEE_DEPLOY_DAO = 11000 ton;
+    uint128 constant FEE_DEPLOY_DAO = 31000 ton;
     uint128 constant FEE_DEPLOY_REPO = 15 ton;
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
@@ -63,6 +63,7 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
+    uint128 constant FEE_DEPLOY_WALLET = 60 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;

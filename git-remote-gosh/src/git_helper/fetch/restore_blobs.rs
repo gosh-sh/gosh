@@ -1,19 +1,20 @@
 use super::GitHelper;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::ipfs::IpfsService;
 use diffy;
 use git_hash;
 use git_hash::ObjectId;
 use git_object;
 use lru::LruCache;
-use std::collections::{hash_map, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use std::error::Error;
 use std::str::FromStr;
 use std::vec::Vec;
 
 pub struct BlobsRebuildingPlan {
-    snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
+    snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
 async fn load_data_from_ipfs(
@@ -21,7 +22,9 @@ async fn load_data_from_ipfs(
     ipfs_address: &str,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let ipfs_data = ipfs_client.load(&ipfs_address).await?;
-    let data = base64::decode(ipfs_data)?;
+    let compressed_data = base64::decode(ipfs_data)?;
+    let data = ton_client::utils::decompress_zstd(&compressed_data)?;
+
     return Ok(data);
 }
 
@@ -41,7 +44,7 @@ async fn convert_snapshot_into_blob(
         Some(_) => ipfs_data,
     };
 
-    log::info!("got: {:?}", raw_data);
+    // log::info!("got: {:?}", raw_data);
 
     let data = git_object::Data::new(git_object::Kind::Blob, &raw_data);
     let obj = git_object::Object::from(data.decode()?);
@@ -49,6 +52,9 @@ async fn convert_snapshot_into_blob(
 }
 
 impl BlobsRebuildingPlan {
+    pub fn is_available(&self) -> bool {
+        return !self.snapshot_address_to_blob_sha.is_empty();
+    }
     pub fn new() -> Self {
         Self {
             snapshot_address_to_blob_sha: HashMap::new(),
@@ -58,22 +64,30 @@ impl BlobsRebuildingPlan {
     #[instrument(level = "debug", skip(self))]
     pub fn mark_blob_to_restore(
         &mut self,
-        appeared_at_snapshot_address: String,
+        appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
-        let blobs_queue = match self
-            .snapshot_address_to_blob_sha
+        log::info!(
+            "Mark blob: {} -> {}",
+            blob_sha1,
+            appeared_at_snapshot_address
+        );
+        self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
-        {
-            hash_map::Entry::Occupied(o) => o.into_mut(),
-            hash_map::Entry::Vacant(v) => v.insert(HashSet::<ObjectId>::new()),
-        };
-        blobs_queue.insert(blob_sha1);
+            .and_modify(|blobs| {
+                blobs.insert(blob_sha1);
+            })
+            .or_insert({
+                let mut blobs = HashSet::<ObjectId>::new();
+                blobs.insert(blob_sha1);
+                blobs
+            });
+        log::info!("new state: {:?}", self.snapshot_address_to_blob_sha);
     }
 
     async fn restore_snapshot_blob(
         git_helper: &mut GitHelper,
-        snapshot_address: &str,
+        snapshot_address: &BlockchainContractAddress,
     ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
         let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
@@ -128,7 +142,7 @@ impl BlobsRebuildingPlan {
         // TODO: fix this
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
-        log::info!("Restoring blobs");
+        log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -147,7 +161,9 @@ impl BlobsRebuildingPlan {
         }
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
+            log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
             blobs.retain(|e| !visited.contains(e));
+            log::info!("remaining: {:?}", blobs);
             if blobs.is_empty() {
                 continue;
             }
@@ -179,11 +195,10 @@ impl BlobsRebuildingPlan {
 
             // TODO: convert to async iterator
             // This should download next messages seemless
-            let mut messages =
-                blockchain::snapshot::diffs::DiffMessagesIterator::new(
-                    snapshot_address,
-                    git_helper.repo_addr.clone()
-                );
+            let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+                snapshot_address,
+                &mut git_helper.repo_contract,
+            );
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot
