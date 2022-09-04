@@ -1,5 +1,5 @@
 use super::Result;
-use crate::blockchain::{self, snapshot::PushDiffCoordinate};
+use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -14,7 +14,7 @@ pub struct ParallelDiffsUploadSupport {
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses: Vec<String>,
+    expecting_deployed_contacts_addresses: Vec<BlockchainContractAddress>,
     pushed_blobs:
         FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>>,
 }
@@ -61,7 +61,7 @@ impl ParallelDiffsUploadSupport {
             next_index: HashMap::new(),
             dangling_diffs: HashMap::new(),
             next_parallel_index: 0,
-            last_commit_id: last_commit_id.clone(),
+            last_commit_id: *last_commit_id,
             expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: FuturesUnordered::new(),
         }
@@ -79,16 +79,16 @@ impl ParallelDiffsUploadSupport {
                 diff,
                 new_snapshot_content,
             },
-        ) in self.dangling_diffs.values().into_iter()
+        ) in self.dangling_diffs.values()
         {
             self.pushed_blobs.push(
                 blockchain::snapshot::push_diff(
                     context,
-                    &commit_id,
-                    &branch_name,
-                    &blob_id,
-                    &file_path,
-                    &diff_coordinates,
+                    commit_id,
+                    branch_name,
+                    blob_id,
+                    file_path,
+                    diff_coordinates,
                     &self.last_commit_id,
                     true, // <- It is known now
                     original_snapshot_content,
@@ -97,12 +97,9 @@ impl ParallelDiffsUploadSupport {
                 )
                 .await?,
             );
-            let diff_contract_address = blockchain::snapshot::diff_address(
-                context,
-                &self.last_commit_id,
-                &diff_coordinates,
-            )
-            .await?;
+            let diff_contract_address =
+                blockchain::snapshot::diff_address(context, &self.last_commit_id, diff_coordinates)
+                    .await?;
             log::debug!(
                 "diff_contract_address <commit: {}, coord: {:?}>: {}",
                 self.last_commit_id,
@@ -180,11 +177,11 @@ impl ParallelDiffsUploadSupport {
                 self.pushed_blobs.push(
                     blockchain::snapshot::push_diff(
                         context,
-                        &commit_id,
-                        &branch_name,
-                        &blob_id,
-                        &file_path,
-                        &diff_coordinates,
+                        commit_id,
+                        branch_name,
+                        blob_id,
+                        file_path,
+                        diff_coordinates,
                         &self.last_commit_id,
                         false, // <- It is known now
                         original_snapshot_content,
@@ -215,9 +212,9 @@ impl ParallelDiffsUploadSupport {
             file_path.to_string(),
             order_of_diff_in_the_parallel_thread + 1,
         );
-        return PushDiffCoordinate {
+        PushDiffCoordinate {
             index_of_parallel_thread,
             order_of_diff_in_the_parallel_thread,
-        };
+        }
     }
 }

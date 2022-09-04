@@ -1,7 +1,8 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::GoshContract;
 use crate::blockchain::{
-    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, Snapshot, TonClient,
+    get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, BlockchainContractAddress,
+    Snapshot, TonClient,
 };
 use std::{error::Error, iter::Iterator};
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
@@ -16,8 +17,8 @@ pub struct DiffMessage {
 
 #[derive(Debug)]
 enum NextChunk {
-    MessagesPage(String, Option<String>),
-    JumpToAnotherBranchSnapshot(String, u64),
+    MessagesPage(BlockchainContractAddress, Option<String>),
+    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64),
 }
 
 #[derive(Debug)]
@@ -61,7 +62,10 @@ struct Messages {
 
 impl DiffMessagesIterator {
     #[instrument(level = "debug", skip(snapshot_address))]
-    pub fn new(snapshot_address: impl Into<String>, repo_contract: &mut GoshContract) -> Self {
+    pub fn new(
+        snapshot_address: impl Into<BlockchainContractAddress>,
+        repo_contract: &mut GoshContract,
+    ) -> Self {
         Self {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
@@ -78,27 +82,27 @@ impl DiffMessagesIterator {
         while !self.is_buffer_ready() && self.next.is_some() {
             self.try_load_next_chunk(client).await?;
         }
-        return Ok(self.try_take_next_item());
+        Ok(self.try_take_next_item())
     }
 
     async fn into_next_page(
         client: &TonClient,
-        current_snapshot_address: &str,
+        current_snapshot_address: &BlockchainContractAddress,
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
     ) -> Result<Option<NextChunk>, Box<dyn Error>> {
         let address = current_snapshot_address;
-        return Ok(match next_page_info {
+        Ok(match next_page_info {
             Some(next_page_info) => Some(NextChunk::MessagesPage(
-                address.to_string(),
+                address.clone(),
                 Some(next_page_info),
             )),
             None => {
                 // find last commit
                 let Snapshot {
                     original_commit, ..
-                } = Snapshot::load(client, &address).await?;
-                let file_path = Snapshot::get_file_path(client, &address).await?;
+                } = Snapshot::load(client, address).await?;
+                let file_path = Snapshot::get_file_path(client, address).await?;
                 let commit_addr =
                     get_commit_address(client, repo_contract, &original_commit).await?;
                 let commit_data = get_commit_by_addr(client, &commit_addr)
@@ -127,7 +131,7 @@ impl DiffMessagesIterator {
                     created_at,
                 ))
             }
-        });
+        })
     }
 
     #[instrument(level = "debug", skip(client))]
@@ -154,10 +158,10 @@ impl DiffMessagesIterator {
                 while index.is_none() {
                     log::info!("loading messages");
                     let (buffer, possible_next_page_info, stop_on) =
-                        load_messages_to(client, &address, &cursor, None).await?;
+                        load_messages_to(client, address, &cursor, None).await?;
                     log::info!("messages: {:?}", buffer);
-                    for i in 0..buffer.len() {
-                        if &buffer[i].created_at <= ignore_commits_created_after {
+                    for (i, item) in buffer.iter().enumerate() {
+                        if &item.created_at <= ignore_commits_created_after {
                             index = Some(i);
                             break;
                         }
@@ -178,7 +182,7 @@ impl DiffMessagesIterator {
                 self.buffer_cursor = index.unwrap();
                 DiffMessagesIterator::into_next_page(
                     client,
-                    &address,
+                    address,
                     &mut self.repo_contract,
                     next_page_info,
                 )
@@ -186,12 +190,12 @@ impl DiffMessagesIterator {
             }
             Some(NextChunk::MessagesPage(address, cursor)) => {
                 let (buffer, next_page_info, stop_on) =
-                    load_messages_to(client, &address, cursor, None).await?;
+                    load_messages_to(client, address, cursor, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 DiffMessagesIterator::into_next_page(
                     client,
-                    &address,
+                    address,
                     &mut self.repo_contract,
                     next_page_info,
                 )
@@ -203,7 +207,7 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug")]
     fn is_buffer_ready(&self) -> bool {
-        return self.buffer_cursor < self.buffer.len();
+        self.buffer_cursor < self.buffer.len()
     }
 
     #[instrument(level = "debug")]
@@ -214,14 +218,14 @@ impl DiffMessagesIterator {
         }
         let item = self.buffer[self.buffer_cursor].clone();
         self.buffer_cursor += 1;
-        return Some(item);
+        Some(item)
     }
 }
 
 #[instrument(level = "debug", skip(context))]
 pub async fn load_messages_to(
     context: &TonClient,
-    address: &str,
+    address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
 ) -> Result<(Vec<DiffMessage>, Option<String>, Option<u64>), Box<dyn Error>> {

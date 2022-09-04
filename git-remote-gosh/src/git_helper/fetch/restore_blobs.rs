@@ -1,10 +1,8 @@
 use super::GitHelper;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::ipfs::IpfsService;
-use diffy;
-use git_hash;
 use git_hash::ObjectId;
-use git_object;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
 
@@ -13,33 +11,33 @@ use std::str::FromStr;
 use std::vec::Vec;
 
 pub struct BlobsRebuildingPlan {
-    snapshot_address_to_blob_sha: HashMap<String, HashSet<ObjectId>>,
+    snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
 async fn load_data_from_ipfs(
     ipfs_client: &IpfsService,
     ipfs_address: &str,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
-    let ipfs_data = ipfs_client.load(&ipfs_address).await?;
+    let ipfs_data = ipfs_client.load(ipfs_address).await?;
     let compressed_data = base64::decode(ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
 
-    return Ok(data);
+    Ok(data)
 }
 
 async fn convert_snapshot_into_blob(
     helper: &mut GitHelper,
-    content: &Vec<u8>,
+    content: &[u8],
     ipfs: &Option<String>,
 ) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>> {
     let ipfs_data = if let Some(ipfs_address) = ipfs {
-        load_data_from_ipfs(&helper.ipfs_client, &ipfs_address).await?
+        load_data_from_ipfs(&helper.ipfs_client, ipfs_address).await?
     } else {
         vec![]
     };
 
     let raw_data: Vec<u8> = match ipfs {
-        None => content.clone(),
+        None => content.to_owned(),
         Some(_) => ipfs_data,
     };
 
@@ -52,7 +50,7 @@ async fn convert_snapshot_into_blob(
 
 impl BlobsRebuildingPlan {
     pub fn is_available(&self) -> bool {
-        return !self.snapshot_address_to_blob_sha.is_empty();
+        !self.snapshot_address_to_blob_sha.is_empty()
     }
     pub fn new() -> Self {
         Self {
@@ -63,7 +61,7 @@ impl BlobsRebuildingPlan {
     #[instrument(level = "debug", skip(self))]
     pub fn mark_blob_to_restore(
         &mut self,
-        appeared_at_snapshot_address: String,
+        appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
         log::info!(
@@ -86,9 +84,9 @@ impl BlobsRebuildingPlan {
 
     async fn restore_snapshot_blob(
         git_helper: &mut GitHelper,
-        snapshot_address: &str,
+        snapshot_address: &BlockchainContractAddress,
     ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
-        let snapshot = blockchain::Snapshot::load(&git_helper.es_client, &snapshot_address).await?;
+        let snapshot = blockchain::Snapshot::load(&git_helper.es_client, snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
@@ -118,7 +116,7 @@ impl BlobsRebuildingPlan {
             restored_snapshots != (None, None),
             "It is clear that something is wrong. Better to fail now"
         );
-        return Ok(restored_snapshots);
+        Ok(restored_snapshots)
     }
 
     pub async fn restore<'a, 'b>(
@@ -208,7 +206,7 @@ impl BlobsRebuildingPlan {
                     .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
 
                 let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
-                    load_data_from_ipfs(&git_helper.ipfs_client, &ipfs).await?
+                    load_data_from_ipfs(&git_helper.ipfs_client, ipfs).await?
                 } else {
                     message.diff.with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
                         Some(patch) => {
@@ -217,7 +215,7 @@ impl BlobsRebuildingPlan {
                             let patched_blob = last_restored_snapshots.get(&patched_blob_sha)
                                 .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
                             let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
-                            return Ok(blob_data);
+                            Ok(blob_data)
                         },
                         None => panic!("Broken diff detected: no ipfs neither patch exists")
                     })?

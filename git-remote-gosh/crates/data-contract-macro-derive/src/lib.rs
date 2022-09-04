@@ -40,7 +40,7 @@ fn impl_data_contract(ast: &syn::DeriveInput) -> quote::Tokens {
     quote! {
         impl #name {
 
-            pub async fn load(context: &std::sync::Arc<::ton_client::ClientContext>, address: &str) -> std::result::Result<#name, Box<dyn std::error::Error>>
+            pub async fn load(context: &std::sync::Arc<::ton_client::ClientContext>, address: &crate::blockchain::BlockchainContractAddress) -> std::result::Result<#name, Box<dyn std::error::Error>>
             {
                 let abi = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/", #abi));
                 let contract = crate::blockchain::GoshContract::new(address, (#abi, abi));

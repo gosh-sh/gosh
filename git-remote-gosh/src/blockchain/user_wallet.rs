@@ -7,6 +7,7 @@ use tokio::task;
 
 use crate::abi;
 use crate::blockchain;
+use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::GoshContract;
 use crate::blockchain::TonClient;
 use crate::config::UserWalletConfig;
@@ -20,13 +21,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Deserialize, Debug)]
 struct GetAddrWalletResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -50,7 +51,7 @@ static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 
 pub async fn get_user_wallet(
     client: &TonClient,
-    dao_address: &str,
+    dao_address: &BlockchainContractAddress,
     pubkey: &str,
     secret: &str,
     user_wallet_index: u64,
@@ -67,10 +68,10 @@ pub async fn get_user_wallet(
     //         "name": dao_name
     //     }))
     // ).await?;
-    let dao_contract = GoshContract::new(&dao_address, abi::DAO);
+    let dao_contract = GoshContract::new(dao_address, abi::DAO);
     let result: GetAddrWalletResult = dao_contract
         .run_local(
-            &client,
+            client,
             "getAddrWallet",
             Some(serde_json::json!({
                 "pubkey": format!("0x{}", pubkey),
@@ -151,20 +152,20 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         });
     });
 
-    return Ok(get_user_wallet(
+    get_user_wallet(
         &context.es_client,
         &context.dao_addr,
         &config.pubkey,
         &config.secret,
         user_wallet_index,
     )
-    .await?);
+    .await
 }
 
 fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
-    return context
+    context
         .config
-        .find_network_user_wallet(&context.remote.network);
+        .find_network_user_wallet(&context.remote.network)
 }
 
 async fn init_user_wallet_mirrors(

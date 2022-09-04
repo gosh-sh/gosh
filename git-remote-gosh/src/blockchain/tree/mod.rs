@@ -22,7 +22,7 @@ use serde::{
 };
 
 fn escape_slashes(s: &str) -> String {
-    s.replace("/", "\\/")
+    s.replace('/', "\\/")
 }
 
 fn unescape_slashes(s: &str) -> String {
@@ -60,10 +60,7 @@ impl GoshPath {
     where
         T: AsRef<str>,
     {
-        match value.as_ref() {
-            "." | ".." => false,
-            _ => true,
-        }
+        !matches!(value.as_ref(), "." | "..")
     }
 
     pub fn try_join<T>(&mut self, value: T) -> Result<(), GoshPathError>
@@ -87,7 +84,7 @@ impl Serialize for GoshPath {
     {
         let mut buf = String::new();
         for component in &self.inner {
-            buf.push_str(&escape_slashes(&component));
+            buf.push_str(&escape_slashes(component));
             buf.push('/');
         }
         if buf.ends_with("/") {
@@ -104,6 +101,29 @@ impl<'de> Visitor<'de> for GoshPathVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("expected valid gosh path string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let mut gosh_path = GoshPath { inner: vec![] };
+        let mut cur = String::new();
+        for ch in v.chars() {
+            cur.push(ch);
+            // split by / but not \/
+            if cur.ends_with("/") && !cur.ends_with("\\/") {
+                cur.pop();
+                gosh_path
+                    .try_join(unescape_slashes(&cur))
+                    .map_err(E::custom)?;
+                cur = String::new();
+            }
+        }
+        gosh_path
+            .try_join(unescape_slashes(&cur))
+            .map_err(E::custom)?;
+        Ok(gosh_path)
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
