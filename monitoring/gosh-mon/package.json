@@ -1,7 +1,6 @@
 {
   "name": "gosh-mon",
   "version": "1.0.0",
-  "description": "Gosh monitoring",
   "main": "app.js",
   "scripts": {
     "tsc": "tsc",
@@ -10,10 +9,6 @@
     "ons": "tsc && set ONESHOT_DEBUG=2 & node ./app/app.js",
     "fastons": "tsc && set ONESHOT_DEBUG=1 & node ./app/app.js"
   },
-  "keywords": [],
-  "author": "Oleksandr Murzin <oleksandr.m@tonlabs.io>",
-  "license": "UNLICENSED",
-  "private": true,
   "dependencies": {
     "express": "^4.18.1",
     "js-yaml": "^4.1.0",
