@@ -449,5 +449,9 @@ contract Commit is Modifiers {
     
     function getOwner() external view returns(address) {
         return _pubaddr;
+    }    
+    
+    function getInitUpgrade() external view returns(bool) {
+        return _initupgrade;
     }
 }

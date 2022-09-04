@@ -311,6 +311,14 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "getInitUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
 		}
 	],
 	"data": [
