@@ -135,14 +135,16 @@ pipeline {
         stage('Prerelease: Git Helper - bin') {
             steps {
                 script {
-                    archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
-                    archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
-                    if (!params.DRYRUN) {
-                        dir('.ci/scripts') {
-                            withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                                sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
-                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
-                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
+                    if (!params.ONLYWEB) {
+                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
+                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
+                        if (!params.DRYRUN) {
+                            dir('.ci/scripts') {
+                                withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                                    sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
+                                }
                             }
                         }
                     }
