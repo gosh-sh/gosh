@@ -138,7 +138,7 @@ pipeline {
                     if (!params.ONLYWEB) {
                         archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
                         archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
-                        if (!params.DRYRUN) {
+                        if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('.ci/scripts') {
                                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                                     sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
@@ -155,7 +155,7 @@ pipeline {
             steps {
                 retry(3) {
                     script {
-                        if (!params.DRYRUN) {
+                        if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('git-remote-gosh') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
@@ -171,7 +171,7 @@ pipeline {
             steps {
                 retry(3) {
                     script {
-                        if (!params.DRYRUN) {
+                        if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('docker-extension') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
