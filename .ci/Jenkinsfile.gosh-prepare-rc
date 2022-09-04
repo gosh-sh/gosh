@@ -118,7 +118,7 @@ pipeline {
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
-                    archiveArtifacts artifacts: '${DOCKER_WEB_CONTAINER_NAME}.app.test.gosh.sh*'
+                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.app.test.gosh.sh*"
                 }
             }
         }
