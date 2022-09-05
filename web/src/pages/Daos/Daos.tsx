@@ -17,22 +17,36 @@ const DaosPage = () => {
     } = useDaoList(5)
     const { keys } = useRecoilValue(userStateAtom)
 
+    const onGetVersions = async () => {
+        const versions = await AppConfig.goshroot.getVersions()
+        console.debug(versions)
+    }
+
+    const onGetGosh = async () => {
+        const gosh = await AppConfig.goshroot.getGosh('0.1.203')
+        console.debug(gosh)
+    }
+
     const onSetGosh = async () => {
         if (!keys) return
 
         const profile = new GoshProfile(
             AppConfig.goshclient,
-            '0:1194a4a099e844fc974412b7cd3a6c40b7a76b14fd91be3fc6f94efa0a83ab32',
+            '0:825956b94a536906bf0f1fb89feb56d9bc13e51dcc717a3686db94caed1b66ec',
             keys,
         )
         await profile.setGosh(
-            '0:271c35ae906cc68d142609d2c548d690ab2a35be08ce86c7a80a6fcbb5aaa8ae',
+            '0:f03920fec66868626f1cd8d869833076487ca44d1ad47c75c772f114abe27267',
         )
     }
 
     return (
         <>
             <div>
+                <button onClick={onGetVersions}>Get versions</button>
+                <button onClick={onGetGosh} className="mx-3">
+                    Get gosh
+                </button>
                 <button onClick={onSetGosh}>Set gosh</button>
             </div>
             <div className="flex flex-wrap justify-between items-center gap-3">

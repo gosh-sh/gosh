@@ -36,26 +36,27 @@ const RepoPage = () => {
     const onUpgrade = async () => {
         if (!wallet || !repo || !branch) return
         await repo.load()
+        console.debug('Wallet address', wallet.address)
 
-        // // Deploy tree
-        // // {
-        // //     "functionName": "deployTree",
-        // //     "input": {
-        // //         "repoName": "repo",
-        // //         "shaTree": "b39954843ff6e09ec3aa2b942938c30c6bd1629e",
-        // //         "datatree": {
-        // //             "0xf094c4df7d4e19775b9cc4b1f74317adf5559a5d66b280411be91a18ab33d4b5": {
-        // //                 "flags": "2",
-        // //                 "mode": "100644",
-        // //                 "typeObj": "blob",
-        // //                 "name": "a",
-        // //                 "sha1": "2e65efe2a145dda7ee51d1741299f848e5bf752e",
-        // //                 "sha256": "0x0d8b99522ffa09a6c3d9d25025f759acd6261159dec1c6754048fc17d9a3c386"
-        // //             }
-        // //         },
-        // //         "ipfs": null
-        // //     }
-        // // }
+        // Deploy tree
+        // {
+        //     "functionName": "deployTree",
+        //     "input": {
+        //         "repoName": "repo-0-1-200",
+        //         "shaTree": "b39954843ff6e09ec3aa2b942938c30c6bd1629e",
+        //         "datatree": {
+        //             "0xf094c4df7d4e19775b9cc4b1f74317adf5559a5d66b280411be91a18ab33d4b5": {
+        //                 "flags": "2",
+        //                 "mode": "100644",
+        //                 "typeObj": "blob",
+        //                 "name": "a",
+        //                 "sha1": "2e65efe2a145dda7ee51d1741299f848e5bf752e",
+        //                 "sha256": "0x0d8b99522ffa09a6c3d9d25025f759acd6261159dec1c6754048fc17d9a3c386"
+        //             }
+        //         },
+        //         "ipfs": null
+        //     }
+        // }
         // await wallet.deployTree(repo, [
         //     {
         //         flags: 2,
@@ -72,66 +73,69 @@ const RepoPage = () => {
         )
         console.debug('Tree addr', treeAddr)
 
-        // // Deploy commit
-        // // {
-        // //     "functionName": "deployCommit",
-        // //     "input": {
-        // //         "repoName": "repo",
-        // //         "branchName": "main",
-        // //         "commitName": "6e0fab95a305334a25cc80fa7464e49cc92be690",
-        // //         "fullCommit": "tree b39954843ff6e09ec3aa2b942938c30c6bd1629e\nauthor 7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8 <7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8@gosh.sh> 1662225047 +0300\ncommitter 7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8 <7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8@gosh.sh> 1662225047 +0300\n\nCreate a",
-        // //         "parents": [
-        // //             "0:079bcdd1eccf8cc662111669ead0eb2553f0507b8de16e83798b4107f3f1b5fc"
-        // //         ],
-        // //         "tree": "0:8e04ed08e7a974d659ac0ed08f40fb6ffaa080a8e45091043d2671272b14c8cf",
-        // //         "upgrade": false
-        // //     }
-        // // }
+        // Deploy commit
+        // {
+        //     "functionName": "deployCommit",
+        //     "input": {
+        //         "repoName": "repo-0-1-200",
+        //         "branchName": "main",
+        //         "commitName": "8fa2abe02453ee20efb116b5b1807c12a1b73997",
+        //         "fullCommit": "tree b39954843ff6e09ec3aa2b942938c30c6bd1629e\nauthor 6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe <6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe@gosh.sh> 1662376239 +0300\ncommitter 6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe <6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe@gosh.sh> 1662376239 +0300\n\nCreate a",
+        //         "parents": [
+        //             "0:1af0b931f432fd13df1face9406d8c6c2ced2cc22719af7bca7257caf96e0e0d"
+        //         ],
+        //         "tree": "0:bbba8f56b2a72ada68903079f25069360ace7fb4aef36cafcbc6fd3da98419b6",
+        //         "upgrade": false
+        //     }
+        // }
         // await wallet.deployCommit(
         //     repo,
         //     branch,
-        //     '6e0fab95a305334a25cc80fa7464e49cc92be690',
-        //     'tree b39954843ff6e09ec3aa2b942938c30c6bd1629e\nauthor 7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8 <7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8@gosh.sh> 1662225047 +0300\ncommitter 7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8 <7389d5f8218667cddeef649b38ad34404b615324a49b3a8872287e38f93db5e8@gosh.sh> 1662225047 +0300\n\nCreate a',
-        //     [],
+        //     '8fa2abe02453ee20efb116b5b1807c12a1b73997',
+        //     'tree b39954843ff6e09ec3aa2b942938c30c6bd1629e\nauthor 6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe <6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe@gosh.sh> 1662376239 +0300\ncommitter 6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe <6e62ccb5af238477010c6191f4e2363de013587f80cdf11897c2ee738c8038fe@gosh.sh> 1662376239 +0300\n\nCreate a',
+        //     ['0:046d984c691abd96cdc0dbd6e9e1f58133e96bf092e61d74404d17831a4435ac'],
         //     treeAddr,
         //     true,
         //     [],
         // )
 
-        // // Deploy snapshot
-        // // {
-        // //     "functionName": "deployNewSnapshot",
-        // //     "input": {
-        // //         "branch": "main",
-        // //         "commit": "",
-        // //         "repo": "0:91bc8aa7d4575ce5a9a8fa22eca9fb74b27d3a4777cdf7b4cbd3864cec79b29b",
-        // //         "name": "a",
-        // //         "snapshotdata": "",
-        // //         "snapshotipfs": null
-        // //     }
-        // // }
+        // Deploy snapshot
+        // {
+        //     "functionName": "deployNewSnapshot",
+        //     "input": {
+        //         "branch": "main",
+        //         "commit": "",
+        //         "repo": "0:da466c1717297b41c59cff4c24bbfbd685ef7c385fc1b204c430dabab9a0b94f",
+        //         "name": "a",
+        //         "snapshotdata": "",
+        //         "snapshotipfs": null
+        //     }
+        // }
         // const compressed = await zstd.compress(AppConfig.goshclient, 'a')
         // const snapdata = Buffer.from(compressed, 'base64').toString('hex')
         // await wallet.deployNewSnapshot(
         //     repo.address,
         //     'main',
-        //     '6e0fab95a305334a25cc80fa7464e49cc92be690',
+        //     '8fa2abe02453ee20efb116b5b1807c12a1b73997',
         //     'a',
         //     snapdata,
         //     null,
         // )
 
-        // // Set commit
-        // // {
-        // //     "repoName": "repo",
-        // //     "branchName": "main",
-        // //     "commit": "6e0fab95a305334a25cc80fa7464e49cc92be690",
-        // //     "numberChangedFiles": 1
-        // // }
+        // Set commit
+        // {
+        //     "functionName": "setCommit",
+        //     "input": {
+        //         "repoName": "repo-0-1-200",
+        //         "branchName": "main",
+        //         "commit": "8fa2abe02453ee20efb116b5b1807c12a1b73997",
+        //         "numberChangedFiles": 1
+        //     }
+        // }
         // await wallet.setCommit(
-        //     'repo',
+        //     await repo.getName(),
         //     'main',
-        //     '6e0fab95a305334a25cc80fa7464e49cc92be690',
+        //     '8fa2abe02453ee20efb116b5b1807c12a1b73997',
         //     1,
         // )
     }

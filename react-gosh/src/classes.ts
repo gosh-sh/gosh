@@ -6,22 +6,22 @@ import {
     signerNone,
     TonClient,
 } from '@eversdk/core'
-import GoshRootABI from './contracts/0.1.3/root.abi.json'
-import GoshABI from './contracts/0.1.3/gosh.abi.json'
-import GoshProfileABI from './contracts/0.1.3/profile.abi.json'
-import GoshDaoABI from './contracts/0.1.3/goshdao.abi.json'
-import GoshWalletABI from './contracts/0.1.3/goshwallet.abi.json'
-import GoshRepositoryABI from './contracts/0.1.3/repository.abi.json'
-import GoshCommitABI from './contracts/0.1.3/commit.abi.json'
-import GoshDiffABI from './contracts/0.1.3/diff.abi.json'
-import GoshTreeABI from './contracts/0.1.3/tree.abi.json'
-import GoshSnapshotABI from './contracts/0.1.3/snapshot.abi.json'
-import GoshTagABI from './contracts/0.1.3/tag.abi.json'
-import GoshContentSignatureABI from './contracts/0.1.3/content-signature.abi.json'
-import GoshSmvProposalABI from './contracts/0.1.3/SMVProposal.abi.json'
-import GoshSmvLockerABI from './contracts/0.1.3/SMVTokenLocker.abi.json'
-import GoshSmvClientABI from './contracts/0.1.3/SMVClient.abi.json'
-import GoshSmvTokenRootABI from './contracts/0.1.3/TokenRoot.abi.json'
+import GoshRootABI from './contracts/0.1.200/root.abi.json'
+import GoshABI from './contracts/0.1.200/gosh.abi.json'
+import GoshProfileABI from './contracts/0.1.200/profile.abi.json'
+import GoshDaoABI from './contracts/0.1.200/goshdao.abi.json'
+import GoshWalletABI from './contracts/0.1.200/goshwallet.abi.json'
+import GoshRepositoryABI from './contracts/0.1.200/repository.abi.json'
+import GoshCommitABI from './contracts/0.1.200/commit.abi.json'
+import GoshDiffABI from './contracts/0.1.200/diff.abi.json'
+import GoshTreeABI from './contracts/0.1.200/tree.abi.json'
+import GoshSnapshotABI from './contracts/0.1.200/snapshot.abi.json'
+import GoshTagABI from './contracts/0.1.200/tag.abi.json'
+import GoshContentSignatureABI from './contracts/0.1.200/content-signature.abi.json'
+import GoshSmvProposalABI from './contracts/0.1.200/SMVProposal.abi.json'
+import GoshSmvLockerABI from './contracts/0.1.200/SMVTokenLocker.abi.json'
+import GoshSmvClientABI from './contracts/0.1.200/SMVClient.abi.json'
+import GoshSmvTokenRootABI from './contracts/0.1.200/TokenRoot.abi.json'
 import {
     calculateSubtrees,
     getRepoTree,
@@ -109,6 +109,11 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         const result = await this.account.runLocal('getGoshAddr', { version })
         const address = result.decoded?.output.value0
         return new Gosh(this.account.client, address)
+    }
+
+    async getVersions(): Promise<any> {
+        const result = await this.account.runLocal('getVersions', {})
+        return result.decoded?.output.value0
     }
 }
 

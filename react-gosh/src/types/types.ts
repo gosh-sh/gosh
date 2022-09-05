@@ -144,6 +144,7 @@ export interface IGoshRoot extends IContract {
     address: string
 
     getGosh(version: string): Promise<IGosh>
+    getVersions(): Promise<any>
 }
 
 export interface IGosh extends IContract {

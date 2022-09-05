@@ -284,7 +284,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"sha","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"content","type":"string"}
+				{"name":"content","type":"string"},
+				{"name":"initupgrade","type":"bool"}
 			]
 		},
 		{
@@ -310,6 +311,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getInitUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
 			]
 		}
 	],
