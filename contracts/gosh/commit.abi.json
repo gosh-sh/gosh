@@ -284,7 +284,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"sha","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"content","type":"string"}
+				{"name":"content","type":"string"},
+				{"name":"initupgrade","type":"bool"}
 			]
 		},
 		{

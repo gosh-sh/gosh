@@ -434,9 +434,10 @@ contract Commit is Modifiers {
         string branch,
         string sha,
         address[] parents,
-        string content
+        string content,
+        bool initupgrade
     ) {
-        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit);
+        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade);
     }
      
     function getCount() external view returns(uint128, bool) {
