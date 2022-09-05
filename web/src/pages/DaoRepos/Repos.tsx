@@ -5,7 +5,7 @@ import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Spinner from '../../components/Spinner'
-import { getPaginatedAccounts, goshClient, goshRoot } from 'react-gosh'
+import { getPaginatedAccounts, AppConfig } from 'react-gosh'
 import { sleep } from 'react-gosh'
 
 const DaoRepositoriesPage = () => {
@@ -46,7 +46,7 @@ const DaoRepositoriesPage = () => {
             }),
         }))
 
-        const repo = new GoshRepository(goshClient, address)
+        const repo = new GoshRepository(AppConfig.goshclient, address)
         const details = await repo.getDetails()
 
         setRepos((state) => ({
@@ -64,8 +64,11 @@ const DaoRepositoriesPage = () => {
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const repoCode = await goshRoot.getDaoRepoCode(dao.instance.address)
-            const repoCodeHash = await goshClient.boc.get_boc_hash({ boc: repoCode })
+            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            const repoCode = await gosh.getDaoRepoCode(dao.instance.address)
+            const repoCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
+                boc: repoCode,
+            })
             const list: any[] = []
             let next: string | undefined
             while (true) {
@@ -76,7 +79,10 @@ const DaoRepositoriesPage = () => {
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const repo = new GoshRepository(goshRoot.account.client, id)
+                        const repo = new GoshRepository(
+                            AppConfig.goshroot.account.client,
+                            id,
+                        )
                         return { address: repo.address, name: await repo.getName() }
                     }),
                 )

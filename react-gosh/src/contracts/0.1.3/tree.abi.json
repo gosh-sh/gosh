@@ -6,12 +6,11 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"data","type":"map(uint256,tuple)"},
 				{"name":"ipfs","type":"optional(string)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
-				{"name":"rootPubkey","type":"uint256"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"codeTree","type":"cell"},
@@ -24,7 +23,7 @@
 		{
 			"name": "countAll",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -104,6 +103,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -142,6 +142,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
 		}
 	],
 	"data": [
@@ -159,8 +167,8 @@
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
 		{"name":"_ipfs","type":"optional(string)"},
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},

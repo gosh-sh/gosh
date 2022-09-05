@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { goshClient, userStatePersistAtom } from 'react-gosh'
+import { AppConfig, userStatePersistAtom } from 'react-gosh'
 
 type TFormValues = {
     phrase: string
@@ -21,12 +21,22 @@ const SigninPage = () => {
         values: TFormValues,
         helpers: FormikHelpers<TFormValues>,
     ) => {
-        const result = await goshClient.crypto.mnemonic_verify({ phrase: values.phrase })
+        const result = await AppConfig.goshclient.crypto.mnemonic_verify({
+            phrase: values.phrase,
+        })
         if (!result.valid) {
             helpers.setFieldError('phrase', 'Phrase is invalid')
             return
         }
 
+        // Derive sign keys from phrase and deploy profile
+        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
+            phrase: values.phrase,
+        })
+        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        await gosh.deployProfile(`0x${derived.public}`)
+
+        // Reset state and create PIN-code
         userStatePersistReset()
         setModal({
             static: true,

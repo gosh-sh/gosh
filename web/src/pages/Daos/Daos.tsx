@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { useDaoList } from 'react-gosh'
+import { AppConfig, GoshProfile, useDaoList, userStateAtom } from 'react-gosh'
 import DaoListItem from './DaoListItem'
+import { useRecoilValue } from 'recoil'
 
 const DaosPage = () => {
     const {
@@ -14,9 +15,26 @@ const DaosPage = () => {
         loadNext,
         loadItemDetails,
     } = useDaoList(5)
+    const { keys } = useRecoilValue(userStateAtom)
+
+    const onSetGosh = async () => {
+        if (!keys) return
+
+        const profile = new GoshProfile(
+            AppConfig.goshclient,
+            '0:1194a4a099e844fc974412b7cd3a6c40b7a76b14fd91be3fc6f94efa0a83ab32',
+            keys,
+        )
+        await profile.setGosh(
+            '0:271c35ae906cc68d142609d2c548d690ab2a35be08ce86c7a80a6fcbb5aaa8ae',
+        )
+    }
 
     return (
         <>
+            <div>
+                <button onClick={onSetGosh}>Set gosh</button>
+            </div>
             <div className="flex flex-wrap justify-between items-center gap-3">
                 <div className="input basis-full sm:basis-1/2">
                     <input

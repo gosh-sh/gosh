@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getPaginatedAccounts, goshClient, goshRoot } from '../helpers'
+import { getPaginatedAccounts } from '../helpers'
 import { userStateAtom, daoAtom } from '../store'
-import { GoshDao, GoshWallet } from '../classes'
+import { GoshDao, GoshProfile, GoshWallet } from '../classes'
 import { sleep } from '../utils'
 import {
     IGoshDao,
@@ -13,6 +13,7 @@ import {
     TDaoMemberListItem,
 } from '../types'
 import { EGoshError, GoshError } from '../errors'
+import { AppConfig } from '../appconfig'
 
 function useDaoList(perPage: number) {
     const { keys } = useRecoilValue(userStateAtom)
@@ -48,7 +49,7 @@ function useDaoList(perPage: number) {
             }),
         }))
 
-        const dao = new GoshDao(goshClient, item.address)
+        const dao = new GoshDao(AppConfig.goshclient, item.address)
         const details = await dao.getDetails()
 
         setDaos((state) => ({
@@ -66,8 +67,10 @@ function useDaoList(perPage: number) {
             if (!keys?.public) return
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(`0x${keys.public}`)
-            const walletCodeHash = await goshClient.boc.get_boc_hash({
+            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
+            const walletCode = await gosh.getDaoWalletCode(profileAddr)
+            const walletCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
                 boc: walletCode,
             })
             const wallets: string[] = []
@@ -89,7 +92,7 @@ function useDaoList(perPage: number) {
             const uniqueDaoAddresses = new Set(
                 await Promise.all(
                     wallets.map(async (address) => {
-                        const wallet = new GoshWallet(goshClient, address)
+                        const wallet = new GoshWallet(AppConfig.goshclient, address)
                         return await wallet.getDaoAddr()
                     }),
                 ),
@@ -98,7 +101,7 @@ function useDaoList(perPage: number) {
             // Get daos details from unique dao addressed
             const items = await Promise.all(
                 Array.from(uniqueDaoAddresses).map(async (address) => {
-                    const dao = new GoshDao(goshClient, address)
+                    const dao = new GoshDao(AppConfig.goshclient, address)
                     return { address, name: await dao.getName() }
                 }),
             )
@@ -155,14 +158,15 @@ function useDao(name?: string) {
 
             if (!details?.address || details?.name !== name) {
                 console.debug('Get dao hook (blockchain)')
-                const address = await goshRoot.getDaoAddr(name)
-                const dao = new GoshDao(goshClient, address)
+                const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+                const address = await gosh.getDaoAddr(name)
+                const dao = new GoshDao(AppConfig.goshclient, address)
                 const details = await dao.getDetails()
                 setDao(dao)
                 setDetails(details)
             } else {
                 console.debug('Get dao hook (from state)')
-                setDao(new GoshDao(goshClient, details.address))
+                setDao(new GoshDao(AppConfig.goshclient, details.address))
             }
         }
 
@@ -185,6 +189,10 @@ function useDaoCreate() {
 
     const createDao = async (name: string, members: string[]) => {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
+
+        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
+        const profile = new GoshProfile(AppConfig.goshclient, profileAddr, keys)
 
         // Validate public keys
         members.unshift(`0x${keys.public}`)
@@ -211,7 +219,7 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         let dao: IGoshDao
         try {
-            dao = await goshRoot.deployDao(name.toLowerCase(), `0x${keys.public}`)
+            dao = await profile.deployDao(name.toLowerCase())
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -227,7 +235,8 @@ function useDaoCreate() {
                 let isDeployed: boolean
                 let wallet: IGoshWallet
                 try {
-                    wallet = await dao.deployWallet(pubkey, keys)
+                    wallet = await profile.deployWallet(dao.address, profile.address)
+                    await profile.turnOn(wallet.address, pubkey)
                     isDeployed = true
                 } catch (e) {
                     isDeployed = false
@@ -245,10 +254,10 @@ function useDaoCreate() {
                 // Mint tokens
                 let isMinted: boolean
                 try {
-                    const smvTokenBalance = await wallet.getSmvTokenBalance()
-                    if (!smvTokenBalance) {
-                        await dao.mint(100, wallet.address, keys)
-                    }
+                    // const smvTokenBalance = await wallet.getSmvTokenBalance()
+                    // if (!smvTokenBalance) {
+                    //     await dao.mint(100, wallet.address, keys)
+                    // }
                     isMinted = true
                 } catch (e) {
                     isMinted = false
@@ -305,7 +314,7 @@ function useDaoMemberList(perPage: number) {
             }),
         }))
 
-        const wallet = new GoshWallet(goshClient, item.wallet)
+        const wallet = new GoshWallet(AppConfig.goshclient, item.wallet)
         const details = {
             pubkey: await wallet.getPubkey(),
             smvBalance: await wallet.getSmvTokenBalance(),
@@ -397,6 +406,10 @@ function useDaoMemberCreate() {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
         if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
 
+        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
+        const profile = new GoshProfile(AppConfig.goshclient, profileAddr, keys)
+
         // Validate public keys
         members = members.map((pubkey) => {
             pubkey = pubkey.trim().toLowerCase()
@@ -415,14 +428,15 @@ function useDaoMemberCreate() {
             })),
         }))
 
-        const dao = new GoshDao(goshClient, daoDetails.address)
+        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address)
         await Promise.all(
             members.map(async (pubkey) => {
                 // Deploy wallet
                 let isDeployed: boolean
                 let wallet: IGoshWallet
                 try {
-                    wallet = await dao.deployWallet(pubkey, keys)
+                    wallet = await profile.deployWallet(dao.address, profile.address)
+                    await profile.turnOn(wallet.address, pubkey)
                     isDeployed = true
                 } catch (e) {
                     isDeployed = false
@@ -440,10 +454,10 @@ function useDaoMemberCreate() {
                 // Mint tokens
                 let isMinted: boolean
                 try {
-                    const smvTokenBalance = await wallet.getSmvTokenBalance()
-                    if (!smvTokenBalance) {
-                        await dao.mint(100, wallet.address, keys)
-                    }
+                    // const smvTokenBalance = await wallet.getSmvTokenBalance()
+                    // if (!smvTokenBalance) {
+                    //     await dao.mint(100, wallet.address, keys)
+                    // }
                     isMinted = true
                 } catch (e) {
                     isMinted = false
@@ -490,11 +504,11 @@ function useDaoMemberDelete() {
 
         setFetching((state) => [...state, ...pubkeys])
 
-        const dao = new GoshDao(goshClient, daoDetails.address)
+        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address)
         await Promise.all(
             pubkeys.map(async (pubkey) => {
                 const walletAddr = await dao.getWalletAddr(pubkey, 0)
-                await dao.deleteWallet(pubkey, keys)
+                // await dao.deleteWallet(pubkey, keys)
                 setFetching((state) => state.filter((_pubkey) => _pubkey !== pubkey))
                 setDaoDetails((state) => {
                     if (!state) return

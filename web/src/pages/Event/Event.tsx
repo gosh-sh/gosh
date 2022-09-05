@@ -14,7 +14,7 @@ import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import PREvent from './PREvent'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { eventTypes, goshClient, goshRoot } from 'react-gosh'
+import { eventTypes, AppConfig } from 'react-gosh'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
@@ -68,7 +68,9 @@ const EventPage = () => {
                 })
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            const smvPlatformCode = await goshRoot.getSmvPlatformCode()
+
+            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            const smvPlatformCode = await gosh.getSmvPlatformCode()
             const smvClientCode = await dao.instance.getSmvClientCode()
             const choice = values.approve === 'true'
             await wallet.voteFor(
@@ -89,7 +91,7 @@ const EventPage = () => {
         const getEvent = async () => {
             if (!eventAddr) return
 
-            const event = new GoshSmvProposal(goshClient, eventAddr)
+            const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
             const details = await event.getDetails()
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }

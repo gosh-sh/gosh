@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import { goshClient } from 'react-gosh'
+import { AppConfig } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -40,6 +40,7 @@ import { ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
+import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -48,9 +49,9 @@ const App = () => {
     const timerRestart = () => {
         if (timer) clearInterval(timer)
         timer = setInterval(async () => {
-            await goshClient.net.suspend()
+            await AppConfig.goshclient.net.suspend()
             console.debug('Gosh client suspended')
-            await goshClient.net.resume()
+            await AppConfig.goshclient.net.resume()
             console.debug('Gosh client resumed')
         }, 1000 * 60 * 10)
     }
@@ -58,8 +59,22 @@ const App = () => {
     const onMouseMove = () => timerRestart()
 
     useEffect(() => {
-        if (!goshClient) return
-        goshClient.client.version().then(() => {
+        AppConfig.setup({
+            goshclient: {
+                network: {
+                    endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+                    queries_protocol:
+                        process.env.REACT_APP_ISDOCKEREXT === 'true'
+                            ? NetworkQueriesProtocol.HTTP
+                            : NetworkQueriesProtocol.WS,
+                },
+            },
+            goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
+            goshversion: process.env.REACT_APP_GOSH_VERSION || '',
+            ipfs: process.env.REACT_APP_IPFS || '',
+            isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
+        })
+        AppConfig.goshclient.client.version().then(() => {
             setIsInitialized(true)
         })
     }, [])
@@ -156,10 +171,9 @@ const App = () => {
             <footer className="footer">
                 <div className="text-right text-xs text-gray-050a15">
                     {process.env.REACT_APP_GOSH_NETWORK}
-                    <span className="mx-2">
-                        {shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}
+                    <span className="ml-2">
+                        {shortString(process.env.REACT_APP_GOSH_ROOTADDR ?? '', 6, 4)}
                     </span>
-                    {shortString(process.env.REACT_APP_CREATOR_ADDR ?? '', 6, 4)}
                 </div>
             </footer>
 

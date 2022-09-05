@@ -8,7 +8,7 @@ import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-ic
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
-import { dockerClient, userStatePersistAtom } from 'react-gosh'
+import { AppConfig, userStatePersistAtom } from 'react-gosh'
 
 const Header = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
@@ -97,7 +97,7 @@ const Header = () => {
                                 onClick={(e) => {
                                     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
                                         e.preventDefault()
-                                        dockerClient?.host.openExternal(
+                                        AppConfig.dockerclient?.host.openExternal(
                                             'https://t.me/gosh_sh',
                                         )
                                     }

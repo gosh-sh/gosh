@@ -106,7 +106,6 @@ export type TCreateCommitCallbackParams = {
     diffsPrepare?: boolean
     treePrepare?: boolean
     treeDeploy?: boolean
-    treeSet?: boolean
     commitDeploy?: boolean
     tagsDeploy?: boolean
     completed?: boolean
@@ -141,39 +140,47 @@ export interface IContract {
     ): Promise<ResultOfProcessMessage>
 }
 
-export interface IGoshDaoCreator extends IContract {
-    address: string
-
-    deployDao(name: string, ownerPubkey: string): Promise<ResultOfProcessMessage>
-}
 export interface IGoshRoot extends IContract {
     address: string
 
-    deployDao(name: string, rootPubkey: string): Promise<IGoshDao>
+    getGosh(version: string): Promise<IGosh>
+}
+
+export interface IGosh extends IContract {
+    address: string
+
+    deployProfile(pubkey: string): Promise<IGoshProfile>
     getDaoAddr(name: string): Promise<string>
-    getDaoWalletCode(pubkey: string): Promise<string>
+    getDaoWalletCode(profileAddr: string): Promise<string>
     getRepoAddr(name: string, daoName: string): Promise<string>
     getDaoRepoCode(daoAddr: string): Promise<string>
     getSmvPlatformCode(): Promise<string>
-    getContentAddress(
+    getContentAddr(
         daoName: string,
         repoName: string,
         commitHash: string,
         label: string,
     ): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
+    getProfileAddr(pubkey: string): Promise<string>
+}
+
+export interface IGoshProfile extends IContract {
+    address: string
+
+    setGosh(goshAddr: string): Promise<void>
+    deployDao(name: string, prevAddr?: string): Promise<IGoshDao>
+    deployWallet(daoAddr: string, profileAddr: string): Promise<IGoshWallet>
+    turnOn(walletAddr: string, pubkey: string): Promise<void>
 }
 
 export interface IGoshDao extends IContract {
     address: string
 
     getDetails(): Promise<TDaoDetails>
-    deployWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<IGoshWallet>
-    deleteWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<void>
-    getWalletAddr(pubkey: string, index: number): Promise<string>
+    getWalletAddr(profileAddr: string, index: number): Promise<string>
     getWallets(): Promise<string[]>
     getName(): Promise<string>
-    getRootPubkey(): Promise<string>
     getSmvRootTokenAddr(): Promise<string>
     getSmvProposalCode(): Promise<string>
     getSmvClientCode(): Promise<string>
@@ -185,7 +192,7 @@ export interface IGoshWallet extends IContract {
     isDaoParticipant: boolean
 
     getDao(): Promise<IGoshDao>
-    getRoot(): Promise<IGoshRoot>
+    getGosh(version: string): Promise<IGosh>
     getSmvLocker(): Promise<IGoshSmvLocker>
     createCommit(
         repo: IGoshRepository,
@@ -207,7 +214,7 @@ export interface IGoshWallet extends IContract {
     getDaoAddr(): Promise<string>
     getRootAddr(): Promise<string>
     getPubkey(): Promise<string>
-    deployRepo(name: string): Promise<void>
+    deployRepo(name: string, prevAddr?: string): Promise<void>
     deployBranch(
         repo: IGoshRepository,
         newName: string,
@@ -222,6 +229,7 @@ export interface IGoshWallet extends IContract {
         commitContent: string,
         parentAddrs: string[],
         treeAddr: string,
+        upgrade: boolean,
         diffs: TGoshDiff[],
     ): Promise<void>
     deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string>
@@ -241,7 +249,6 @@ export interface IGoshWallet extends IContract {
         branchName: string,
         filename: string,
     ): Promise<string>
-    setTree(repoName: string, commitName: string, treeAddr: string): Promise<void>
     setCommit(
         repoName: string,
         branchName: string,
@@ -304,7 +311,7 @@ export interface IGoshRepository extends IContract {
     }
 
     load(): Promise<void>
-    getGoshRoot(): Promise<IGoshRoot>
+    getGosh(): Promise<IGosh>
     getName(): Promise<string>
     getBranches(): Promise<TGoshBranch[]>
     getBranch(name: string): Promise<TGoshBranch>

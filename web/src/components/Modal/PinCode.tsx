@@ -6,7 +6,7 @@ import { Buffer } from 'buffer'
 import {
     chacha20,
     generateRandomBytes,
-    goshClient,
+    AppConfig,
     userStateAtom,
     userStatePersistAtom,
     TUserStatePersist,
@@ -39,9 +39,9 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             const pinKey = Number(pin).toString(16)
 
             if (phrase) {
-                const nonce = await generateRandomBytes(goshClient, 12, true)
+                const nonce = await generateRandomBytes(AppConfig.goshclient, 12, true)
                 const encrypted = await chacha20.encrypt(
-                    goshClient,
+                    AppConfig.goshclient,
                     Buffer.from(phrase).toString('base64'),
                     pinKey,
                     nonce,
@@ -60,13 +60,13 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 }
 
                 let decrypted = await chacha20.decrypt(
-                    goshClient,
+                    AppConfig.goshclient,
                     tmp.phrase,
                     pinKey,
                     tmp.nonce,
                 )
                 decrypted = Buffer.from(decrypted, 'base64').toString()
-                const keys = await goshClient.crypto.mnemonic_derive_sign_keys({
+                const keys = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                     phrase: decrypted,
                 })
 

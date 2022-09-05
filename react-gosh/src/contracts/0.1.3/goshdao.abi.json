@@ -6,9 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"rootgosh","type":"address"},
-				{"name":"creator","type":"address"},
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
@@ -23,7 +21,8 @@
 				{"name":"SMVClientCode","type":"cell"},
 				{"name":"SMVProposalCode","type":"cell"},
 				{"name":"TokenRootCode","type":"cell"},
-				{"name":"TokenWalletCode","type":"cell"}
+				{"name":"TokenWalletCode","type":"cell"},
+				{"name":"previous","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -60,7 +59,7 @@
 		{
 			"name": "deployWallet",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -68,7 +67,7 @@
 		{
 			"name": "deleteWallet",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -76,7 +75,7 @@
 		{
 			"name": "getConfigInfo",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -93,7 +92,7 @@
 		{
 			"name": "getAddrWallet",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -149,19 +148,27 @@
 			]
 		},
 		{
-			"name": "getRootPubkey",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
 			"name": "getVersion",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPreviousDaoAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -256,6 +263,7 @@
 		}
 	],
 	"data": [
+		{"key":1,"name":"_goshroot","type":"address"}
 	],
 	"events": [
 	],
@@ -271,7 +279,6 @@
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_limit_time","type":"uint128"},
 		{"name":"_limit_messages","type":"uint128"},
-		{"name":"_creator","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
@@ -280,8 +287,10 @@
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
-		{"name":"_rootgosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
+		{"name":"_previous","type":"address"},
 		{"name":"_wallets","type":"map(uint256,address)"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},

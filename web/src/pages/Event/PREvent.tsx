@@ -4,8 +4,7 @@ import {
     getBlobAtCommit,
     getCommitTime,
     getRepoTree,
-    goshClient,
-    goshRoot,
+    AppConfig,
     loadFromIPFS,
     zstd,
 } from 'react-gosh'
@@ -59,7 +58,7 @@ const PREvent = (props: TCommitBlobsType) => {
             let index2 = 0
             while (true) {
                 const address = await commit.getDiffAddr(index1, index2)
-                const diff = new GoshDiff(goshClient, address)
+                const diff = new GoshDiff(AppConfig.goshclient, address)
                 const acc = await diff.account.getAccount()
                 if (acc.acc_type !== AccountType.active) break
 
@@ -97,7 +96,7 @@ const PREvent = (props: TCommitBlobsType) => {
                 if (ipfs) {
                     const compressed = (await loadFromIPFS(ipfs)).toString()
                     const decompressed = await zstd.decompress(
-                        goshClient,
+                        AppConfig.goshclient,
                         compressed,
                         true,
                     )
@@ -145,8 +144,9 @@ const PREvent = (props: TCommitBlobsType) => {
 
             setIsFetched(false)
 
-            const repoAddr = await goshRoot.getRepoAddr(_repoName, daoName)
-            const repo = new GoshRepository(goshClient, repoAddr)
+            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            const repoAddr = await gosh.getRepoAddr(_repoName, daoName)
+            const repo = new GoshRepository(AppConfig.goshclient, repoAddr)
 
             const commitAddr = await repo.getCommitAddr(_commitName)
             const commit = new GoshCommit(repo.account.client, commitAddr)

@@ -6,21 +6,22 @@ import {
     signerNone,
     TonClient,
 } from '@eversdk/core'
-import GoshDaoCreatorABI from './contracts/daocreator.abi.json'
-import GoshABI from './contracts/gosh.abi.json'
-import GoshDaoABI from './contracts/goshdao.abi.json'
-import GoshWalletABI from './contracts/goshwallet.abi.json'
-import GoshRepositoryABI from './contracts/repository.abi.json'
-import GoshCommitABI from './contracts/commit.abi.json'
-import GoshDiffABI from './contracts/diff.abi.json'
-import GoshTreeABI from './contracts/tree.abi.json'
-import GoshSnapshotABI from './contracts/snapshot.abi.json'
-import GoshTagABI from './contracts/tag.abi.json'
-import GoshContentSignatureABI from './contracts/content-signature.abi.json'
-import GoshSmvProposalABI from './contracts/SMVProposal.abi.json'
-import GoshSmvLockerABI from './contracts/SMVTokenLocker.abi.json'
-import GoshSmvClientABI from './contracts/SMVClient.abi.json'
-import GoshSmvTokenRootABI from './contracts/TokenRoot.abi.json'
+import GoshRootABI from './contracts/0.1.3/root.abi.json'
+import GoshABI from './contracts/0.1.3/gosh.abi.json'
+import GoshProfileABI from './contracts/0.1.3/profile.abi.json'
+import GoshDaoABI from './contracts/0.1.3/goshdao.abi.json'
+import GoshWalletABI from './contracts/0.1.3/goshwallet.abi.json'
+import GoshRepositoryABI from './contracts/0.1.3/repository.abi.json'
+import GoshCommitABI from './contracts/0.1.3/commit.abi.json'
+import GoshDiffABI from './contracts/0.1.3/diff.abi.json'
+import GoshTreeABI from './contracts/0.1.3/tree.abi.json'
+import GoshSnapshotABI from './contracts/0.1.3/snapshot.abi.json'
+import GoshTagABI from './contracts/0.1.3/tag.abi.json'
+import GoshContentSignatureABI from './contracts/0.1.3/content-signature.abi.json'
+import GoshSmvProposalABI from './contracts/0.1.3/SMVProposal.abi.json'
+import GoshSmvLockerABI from './contracts/0.1.3/SMVTokenLocker.abi.json'
+import GoshSmvClientABI from './contracts/0.1.3/SMVClient.abi.json'
+import GoshSmvTokenRootABI from './contracts/0.1.3/TokenRoot.abi.json'
 import {
     calculateSubtrees,
     getRepoTree,
@@ -36,10 +37,8 @@ import {
     ZERO_COMMIT,
     getBlobDiffPatch,
     MAX_ONCHAIN_FILE_SIZE,
-    goshDaoCreator,
     getPaginatedAccounts,
     splitByChunk,
-    goshRoot,
     sha256,
 } from './helpers'
 import {
@@ -47,10 +46,9 @@ import {
     TGoshBranch,
     IGoshCommit,
     IGoshRepository,
-    IGoshRoot,
+    IGosh,
     IGoshDao,
     IGoshWallet,
-    IGoshDaoCreator,
     TGoshCommitContent,
     IGoshSmvProposal,
     IGoshSmvLocker,
@@ -69,11 +67,14 @@ import {
     TGoshCommitDetails,
     IGoshContentSignature,
     IContract,
+    IGoshRoot,
+    IGoshProfile,
 } from './types/types'
 import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
 import { sleep } from './utils'
 import { TDaoDetails } from './types/dao.types'
+import { AppConfig } from './appconfig'
 
 export class BaseContract implements IContract {
     abi: any
@@ -93,8 +94,8 @@ export class BaseContract implements IContract {
     }
 }
 
-export class GoshDaoCreator extends BaseContract implements IGoshDaoCreator {
-    abi: any = GoshDaoCreatorABI
+export class GoshRoot extends BaseContract implements IGoshRoot {
+    abi: any = GoshRootABI
     account: Account
     address: string
 
@@ -104,14 +105,14 @@ export class GoshDaoCreator extends BaseContract implements IGoshDaoCreator {
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
-    async deployDao(name: string, ownerPubkey: string): Promise<ResultOfProcessMessage> {
-        return await this.run('deployDao', {
-            name,
-            root_pubkey: ownerPubkey,
-        })
+    async getGosh(version: string): Promise<IGosh> {
+        const result = await this.account.runLocal('getGoshAddr', { version })
+        const address = result.decoded?.output.value0
+        return new Gosh(this.account.client, address)
     }
 }
-export class GoshRoot extends BaseContract implements IGoshRoot {
+
+export class Gosh extends BaseContract implements IGosh {
     abi: any = GoshABI
     account: Account
     address: string
@@ -122,34 +123,22 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         this.account = new Account({ abi: this.abi }, { client, address })
     }
 
-    /**
-     *  Deploy new DAO and wait until account is active
-     * @param name DAO name
-     * @param ownerPubkey Creator's public key as `0x0000....`
-     * @returns IGoshDao instance
-     */
-    async deployDao(name: string, ownerPubkey: string): Promise<IGoshDao> {
-        // Get DAO address and check it's status
-        const daoAddr = await this.getDaoAddr(name)
-        const dao = new GoshDao(this.account.client, daoAddr)
-        const acc = await dao.account.getAccount()
-        if (acc.acc_type === AccountType.active) {
-            const daoRootPubkey = await dao.getRootPubkey()
-            if (daoRootPubkey !== ownerPubkey) {
-                throw new GoshError(EGoshError.DAO_EXISTS, { name })
-            }
-            return dao
-        }
+    async deployProfile(pubkey: string): Promise<IGoshProfile> {
+        // Get profile address and check it's status
+        const profileAddr = await this.getProfileAddr(pubkey)
+        const profile = new GoshProfile(this.account.client, profileAddr)
+        const acc = await profile.account.getAccount()
+        if (acc.acc_type === AccountType.active) return profile
 
-        // If DAO is not active (deployed), deploy and wait for status `active`
-        await goshDaoCreator.deployDao(name, ownerPubkey)
+        // If profile is not active (deployed), deploy and wait for status `active`
+        await this.run('deployProfile', { pubkey })
         while (true) {
-            const acc = await dao.account.getAccount()
-            console.debug('[Create DAO]: Wait for account', acc)
+            const acc = await profile.account.getAccount()
+            console.debug('[Create profile]: Wait for account', acc)
             if (acc.acc_type === AccountType.active) break
             await sleep(5000)
         }
-        return dao
+        return profile
     }
 
     async getDaoAddr(name: string): Promise<string> {
@@ -157,9 +146,9 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getDaoWalletCode(pubkey: string): Promise<string> {
+    async getDaoWalletCode(profileAddr: string): Promise<string> {
         const result = await this.account.runLocal('getDaoWalletCode', {
-            pubkey,
+            pubaddr: profileAddr,
         })
         return result.decoded?.output.value0
     }
@@ -184,7 +173,7 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         return result.decoded?.output.value0
     }
 
-    async getContentAddress(
+    async getContentAddr(
         daoName: string,
         repoName: string,
         commitHash: string,
@@ -208,6 +197,77 @@ export class GoshRoot extends BaseContract implements IGoshRoot {
         })
         return result.decoded?.output.value0
     }
+
+    async getProfileAddr(pubkey: string): Promise<string> {
+        const result = await this.account.runLocal('getProfileAddr', { pubkey })
+        return result.decoded?.output.value0
+    }
+}
+
+export class GoshProfile extends BaseContract implements IGoshProfile {
+    abi: any = GoshProfileABI
+    account: Account
+    address: string
+
+    constructor(client: TonClient, address: string, keys?: KeyPair) {
+        super()
+        this.address = address
+        this.account = new Account(
+            { abi: this.abi },
+            { client, address, signer: keys ? signerKeys(keys) : signerNone() },
+        )
+    }
+
+    async setGosh(goshAddr: string): Promise<void> {
+        await this.run('setNewGoshRoot', { goshroot: goshAddr })
+    }
+
+    async deployDao(name: string, prevAddr?: string): Promise<IGoshDao> {
+        // Get DAO address and check it's status
+        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        const daoAddr = await gosh.getDaoAddr(name)
+        const dao = new GoshDao(this.account.client, daoAddr)
+        const acc = await dao.account.getAccount()
+        if (acc.acc_type === AccountType.active) {
+            // TODO: Check DAO ownership and dao
+            // const daoRootPubkey = await dao.getRootPubkey()
+            // if (daoRootPubkey !== ownerPubkey) {
+            //     throw new GoshError(EGoshError.DAO_EXISTS, { name })
+            // }
+            return dao
+        }
+
+        // If DAO is not active (deployed), deploy and wait for status `active`
+        await this.run('deployDao', { name, previous: prevAddr || null })
+        while (true) {
+            const acc = await dao.account.getAccount()
+            console.debug('[Create DAO]: Wait for account', acc)
+            if (acc.acc_type === AccountType.active) break
+            await sleep(5000)
+        }
+        return dao
+    }
+
+    async deployWallet(daoAddr: string, profileAddr: string): Promise<IGoshWallet> {
+        const dao = new GoshDao(this.account.client, daoAddr)
+        const address = await dao.getWalletAddr(profileAddr, 0)
+        const wallet = new GoshWallet(this.account.client, address)
+        const acc = await wallet.account.getAccount()
+        if (acc.acc_type !== AccountType.active) {
+            await this.run('deployWallet', { dao: daoAddr, pubaddr: profileAddr })
+            while (true) {
+                const acc = await wallet.account.getAccount()
+                console.debug('[Deploy wallet]: Wait for account', acc)
+                if (acc.acc_type === AccountType.active) break
+                await sleep(5000)
+            }
+        }
+        return wallet
+    }
+
+    async turnOn(walletAddr: string, pubkey: string): Promise<void> {
+        await this.run('turnOn', { wallet: walletAddr, pubkey })
+    }
 }
 
 export class GoshDao extends BaseContract implements IGoshDao {
@@ -224,42 +284,19 @@ export class GoshDao extends BaseContract implements IGoshDao {
     async getDetails(): Promise<TDaoDetails> {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr()
         const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
+        // TODO: Get DAO owner pubkey
         return {
             address: this.address,
             name: await this.getName(),
             members: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
-            ownerPubkey: await this.getRootPubkey(),
+            ownerPubkey: '',
         }
     }
 
-    async deployWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<IGoshWallet> {
-        const address = await this.getWalletAddr(pubkey, 0)
-        const wallet = new GoshWallet(this.account.client, address)
-        const acc = await wallet.account.getAccount()
-        if (acc.acc_type !== AccountType.active) {
-            await this.run(
-                'deployWallet',
-                { pubkey },
-                { signer: signerKeys(daoOwnerKeys) },
-            )
-            while (true) {
-                const acc = await wallet.account.getAccount()
-                console.debug('[Deploy wallet]: Wait for account', acc)
-                if (acc.acc_type === AccountType.active) break
-                await sleep(5000)
-            }
-        }
-        return wallet
-    }
-
-    async deleteWallet(pubkey: string, daoOwnerKeys: KeyPair): Promise<void> {
-        await this.run('deleteWallet', { pubkey }, { signer: signerKeys(daoOwnerKeys) })
-    }
-
-    async getWalletAddr(pubkey: string, index: number): Promise<string> {
+    async getWalletAddr(profileAddr: string, index: number): Promise<string> {
         const result = await this.account.runLocal('getAddrWallet', {
-            pubkey,
+            pubaddr: profileAddr,
             index,
         })
         return result.decoded?.output.value0
@@ -272,11 +309,6 @@ export class GoshDao extends BaseContract implements IGoshDao {
 
     async getName(): Promise<string> {
         const result = await this.account.runLocal('getNameDao', {})
-        return result.decoded?.output.value0
-    }
-
-    async getRootPubkey(): Promise<string> {
-        const result = await this.account.runLocal('getRootPubkey', {})
         return result.decoded?.output.value0
     }
 
@@ -340,9 +372,8 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         return new GoshDao(this.account.client, daoAddr)
     }
 
-    async getRoot(): Promise<IGoshRoot> {
-        const rootAddr = await this.getRootAddr()
-        return new GoshRoot(this.account.client, rootAddr)
+    async getGosh(version: string): Promise<IGosh> {
+        return AppConfig.goshroot.getGosh(version)
     }
 
     async getSmvLocker(): Promise<IGoshSmvLocker> {
@@ -374,6 +405,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             })
+        const gosh = await this.getGosh(AppConfig.goshversion)
 
         // Generate current branch full tree and get it's items (TGoshTreeItem[]).
         // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
@@ -437,7 +469,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                         sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
                         sha256: ipfs
                             ? sha256(modified, true)
-                            : await goshRoot.getTvmHash(modified),
+                            : await gosh.getTvmHash(modified),
                     }
 
                     processedBlobs.push({
@@ -523,6 +555,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                     futureCommit.content,
                     futureCommit.parents,
                     updatedTreeRootAddr,
+                    false,
                     processedBlobs.map(({ diff }) => diff),
                 )
                 !!callback && callback({ commitDeploy: true })
@@ -537,10 +570,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 !!callback && callback({ tagsDeploy: true })
             })(),
         ])
-
-        // Set tree
-        await this.setTree(repo.meta.name, futureCommit.name, updatedTreeRootAddr)
-        !!callback && callback({ treeSet: true })
 
         const isBranchProtected = await repo.isBranchProtected(branch.name)
         if (!isBranchProtected) {
@@ -583,19 +612,19 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         return result.decoded?.output.value0
     }
 
-    async deployRepo(name: string): Promise<void> {
+    async deployRepo(name: string, prevAddr?: string): Promise<void> {
         // Get repo instance, check if it is not deployed
         const dao = await this.getDao()
         const daoName = await dao.getName()
 
-        const root = await this.getRoot()
-        const repoAddr = await root.getRepoAddr(name, daoName)
+        const gosh = await this.getGosh(AppConfig.goshversion)
+        const repoAddr = await gosh.getRepoAddr(name, daoName)
         const repo = new GoshRepository(this.account.client, repoAddr)
         const acc = await repo.account.getAccount()
         if (acc.acc_type === AccountType.active) return
 
         // If repo is not deployed, deploy and wait for status `active`
-        await this.run('deployRepository', { nameRepo: name })
+        await this.run('deployRepository', { nameRepo: name, previous: prevAddr || null })
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
                 const acc = await repo.account.getAccount()
@@ -791,6 +820,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         commitContent: string,
         parentAddrs: string[],
         treeAddr: string,
+        upgrade: boolean,
         diffs: TGoshDiff[],
     ): Promise<void> {
         if (!repo.meta) await repo.load()
@@ -812,19 +842,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             await Promise.all(
                 chunk.map(async (diff, index) => {
                     diff.commit = commitName
-                    console.debug(
-                        'Deploy diff',
-                        {
-                            repoName,
-                            branchName: branch.name,
-                            commitName,
-                            diffs: [diff],
-                            index1: i * chunkSize + index,
-                            index2: 0,
-                            last: true,
-                        },
-                        await repo.getDiffAddr(commitName, index, 0),
-                    )
                     await this.run('deployDiff', {
                         repoName,
                         branchName: branch.name,
@@ -840,14 +857,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         }
 
         // Deploy commit
-        console.debug('Deploy commit', {
-            repoName,
-            branchName: branch.name,
-            commitName,
-            fullCommit: commitContent,
-            parents: parentAddrs,
-            tree: treeAddr,
-        })
         await this.run('deployCommit', {
             repoName,
             branchName: branch.name,
@@ -855,11 +864,14 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             fullCommit: commitContent,
             parents: parentAddrs,
             tree: treeAddr,
+            upgrade,
         })
     }
 
     async deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string> {
         if (!repo.meta) throw new GoshError(EGoshError.NO_REPO)
+
+        const gosh = await this.getGosh(AppConfig.goshversion)
 
         const sha = sha1Tree(items, 'sha1')
         if (!sha) {
@@ -881,7 +893,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         // Deploy tree and get address
         const datatree: any = {}
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = await goshRoot.getTvmHash(`${type}:${name}`)
+            const key = await gosh.getTvmHash(`${type}:${name}`)
             datatree[key] = {
                 flags: flags.toString(),
                 mode,
@@ -993,10 +1005,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             name: filename,
         })
         return result.decoded?.output.value0
-    }
-
-    async setTree(repoName: string, commitName: string, treeAddr: string): Promise<void> {
-        await this.run('setTree', { repoName, commitName, tree: treeAddr })
     }
 
     async setCommit(
@@ -1238,9 +1246,9 @@ export class GoshRepository extends BaseContract implements IGoshRepository {
         }
     }
 
-    async getGoshRoot(): Promise<IGoshRoot> {
+    async getGosh(): Promise<IGosh> {
         const addr = await this.getGoshAddr()
-        return new GoshRoot(this.account.client, addr)
+        return new Gosh(this.account.client, addr)
     }
 
     async getName(): Promise<string> {

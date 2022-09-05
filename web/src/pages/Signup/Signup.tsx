@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom'
 import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { goshClient, userStatePersistAtom } from 'react-gosh'
+import { AppConfig, userStatePersistAtom } from 'react-gosh'
+import Spinner from '../../components/Spinner'
 
 type TFormValues = {
     phrase: string
@@ -26,7 +27,15 @@ const SignupPage = () => {
         setPhrase(result.phrase)
     }
 
-    const onFormSubmit = (values: TFormValues) => {
+    const onFormSubmit = async (values: TFormValues) => {
+        // Derive sign keys from phrase and deploy profile
+        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
+            phrase: values.phrase,
+        })
+        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        await gosh.deployProfile(`0x${derived.public}`)
+
+        // Reset state and create PIN-code
         userStatePersistReset()
         setModal({
             static: true,
@@ -41,7 +50,7 @@ const SignupPage = () => {
     }
 
     useEffect(() => {
-        generatePhrase(goshClient)
+        generatePhrase(AppConfig.goshclient)
     }, [])
 
     return (
@@ -62,7 +71,7 @@ const SignupPage = () => {
                 })}
                 enableReinitialize={true}
             >
-                {() => (
+                {({ isSubmitting }) => (
                     <Form className="px-5 sm:px-124px">
                         <div>
                             <Field
@@ -92,8 +101,10 @@ const SignupPage = () => {
                         <div className="mt-6">
                             <button
                                 type="submit"
+                                disabled={isSubmitting}
                                 className="btn btn--body w-full py-3 text-xl leading-normal"
                             >
+                                {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                                 Create account
                             </button>
                         </div>

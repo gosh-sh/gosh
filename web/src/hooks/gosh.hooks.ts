@@ -17,8 +17,7 @@ import {
     GoshCommit,
     GoshSnapshot,
     getRepoTree,
-    goshClient,
-    goshRoot,
+    AppConfig,
     ZERO_COMMIT,
     userStateAtom,
     IGoshDao,
@@ -42,11 +41,13 @@ export const useGoshWallet = (dao?: IGoshDao) => {
             state: { address?: string; daoAddress?: string },
         ) => {
             const { address, daoAddress } = state
+            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            const profileAddr = await gosh.getProfileAddr(`0x${_keys.public}`)
 
             let _wallet
             if (!address || daoAddress !== _dao.address) {
                 console.debug('Get wallet hook (blockchain)')
-                const _address = await _dao.getWalletAddr(`0x${_keys.public}`, 0)
+                const _address = await _dao.getWalletAddr(profileAddr, 0)
                 _wallet = new GoshWallet(_dao.account.client, _address, _keys)
             } else {
                 console.debug('Get wallet hook (from state)')
@@ -89,12 +90,14 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
 
     useEffect(() => {
         const createRepo = async (root: IGoshRoot, daoName: string, name: string) => {
-            const repoAddr = await root.getRepoAddr(name, daoName)
+            const gosh = await root.getGosh(AppConfig.goshversion)
+            const repoAddr = await gosh.getRepoAddr(name, daoName)
             const repository = new GoshRepository(root.account.client, repoAddr)
             setGoshRepo(repository)
         }
 
-        if (goshRoot && daoName && name) createRepo(goshRoot, daoName, name)
+        if (AppConfig.goshroot && daoName && name)
+            createRepo(AppConfig.goshroot, daoName, name)
     }, [daoName, name])
 
     return goshRepo
@@ -181,7 +184,7 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
 
             const balance = await wallet.getSmvTokenBalance()
             const lockerAddr = await wallet.getSmvLockerAddr()
-            const locker = new GoshSmvLocker(goshClient, lockerAddr)
+            const locker = new GoshSmvLocker(AppConfig.goshclient, lockerAddr)
             const details = await locker.getDetails()
             setDetails((state) => ({
                 ...state,
@@ -230,7 +233,7 @@ export const useGoshBlob = (
                 return
             }
 
-            const commit = new GoshCommit(goshClient, branch.commitAddr)
+            const commit = new GoshCommit(AppConfig.goshclient, branch.commitAddr)
             const commitName = await commit.getName()
             if (commitName === ZERO_COMMIT) {
                 setBlob({ isFetching: false })
@@ -255,7 +258,7 @@ export const useGoshBlob = (
             if (!blob.address || !blob.commit || !treeItem) return
 
             console.debug('Tree item', treeItem)
-            const snap = new GoshSnapshot(goshClient, blob.address)
+            const snap = new GoshSnapshot(AppConfig.goshclient, blob.address)
             const data = await snap.getSnapshot(blob.commit, treeItem)
             setBlob((state) => ({
                 ...state,

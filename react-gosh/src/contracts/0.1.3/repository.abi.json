@@ -6,8 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"pubkeysender","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootgosh","type":"address"},
@@ -17,7 +16,8 @@
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"previousversion","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -25,7 +25,7 @@
 		{
 			"name": "deployBranch",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"newname","type":"string"},
 				{"name":"fromcommit","type":"string"},
 				{"name":"index","type":"uint128"}
@@ -45,9 +45,36 @@
 		{
 			"name": "deleteBranch",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "initCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCorrectCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "correctCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -65,7 +92,7 @@
 		{
 			"name": "SendDiffSmv",
 			"inputs": [
-				{"name":"value1","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
@@ -77,6 +104,8 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -95,7 +124,7 @@
 		{
 			"name": "setHEAD",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"index","type":"uint128"}
 			],
@@ -105,7 +134,7 @@
 		{
 			"name": "addProtectedBranch",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
 				{"name":"index","type":"uint128"}
 			],
@@ -115,7 +144,7 @@
 		{
 			"name": "deleteProtectedBranch",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
 				{"name":"index","type":"uint128"}
 			],
@@ -125,7 +154,7 @@
 		{
 			"name": "isNotProtected",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
@@ -232,14 +261,6 @@
 			]
 		},
 		{
-			"name": "getRepoPubkey",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
 			"name": "getName",
 			"inputs": [
 			],
@@ -271,6 +292,22 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPrevious",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(address)"}
+			]
 		}
 	],
 	"data": [
@@ -282,14 +319,16 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestone","type":"bool"},
+		{"name":"_previousversion","type":"optional(address)"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"m_CommitCode","type":"cell"},
 		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_head","type":"string"},
