@@ -3,7 +3,8 @@ import { createDockerDesktopClient } from '@docker/extension-api-client'
 import { GoshRoot } from './classes'
 
 class AppConfig {
-    private static _goshclient?: ClientConfig
+    private static _goshclientconfig?: ClientConfig
+    private static _goshclient?: TonClient
     private static _goshroot?: string
     static _goshversion?: string
     static ipfs?: string
@@ -17,7 +18,7 @@ class AppConfig {
         isDockerExt: boolean
     }) {
         const { goshclient, goshroot, goshversion, ipfs, isDockerExt } = params
-        AppConfig._goshclient = goshclient
+        AppConfig._goshclientconfig = goshclient
         AppConfig._goshroot = goshroot
         AppConfig._goshversion = goshversion
         AppConfig.ipfs = ipfs
@@ -25,8 +26,11 @@ class AppConfig {
     }
 
     static get goshclient() {
-        if (!AppConfig._goshclient) throw Error('Gosh client config is undefined')
-        return new TonClient(AppConfig._goshclient)
+        if (!AppConfig._goshclientconfig) throw Error('Gosh client config is undefined')
+        if (!AppConfig._goshclient) {
+            AppConfig._goshclient = new TonClient(AppConfig._goshclientconfig)
+        }
+        return AppConfig._goshclient
     }
 
     static get goshroot() {
