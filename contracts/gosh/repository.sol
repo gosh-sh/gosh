@@ -88,6 +88,11 @@ contract Repository is Modifiers{
         _head = head;
         _ready = true;
     } 
+    
+    function setTimestone(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _timestone = true;
+    }
 
     //Branch part  
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
