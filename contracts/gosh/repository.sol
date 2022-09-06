@@ -86,6 +86,7 @@ contract Repository is Modifiers{
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
+        _ready = true;
     } 
 
     //Branch part  
