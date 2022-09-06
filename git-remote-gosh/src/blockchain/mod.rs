@@ -174,7 +174,7 @@ struct GetBoolResult {
     pub is_ok: bool,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BranchRef {
     #[serde(rename = "key")]
     pub branch_name: String,
@@ -189,7 +189,7 @@ pub struct GetAllAddressResult {
     pub branch_ref: Vec<BranchRef>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct GetAddrBranchResult {
     #[serde(rename = "value0")]
     pub branch: BranchRef,
@@ -546,21 +546,21 @@ pub async fn get_head(context: &TonClient, address: &BlockchainContractAddress) 
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
 
     use super::*;
     use crate::config;
 
     pub struct TestEnv {
         config: Config,
-        client: TonClient,
+        pub client: TonClient,
         gosh: BlockchainContractAddress,
         dao: String,
         repo: String,
     }
 
     impl TestEnv {
-        fn new() -> Self {
+        pub fn new() -> Self {
             let cfg = config::Config::init().unwrap();
             let client = create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
