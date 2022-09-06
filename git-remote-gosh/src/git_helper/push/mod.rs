@@ -243,7 +243,7 @@ impl GitHelper {
             iter.next().unwrap()
         };
 
-        let mut visitedTrees: HashSet<ObjectId> = HashSet::new();
+        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut parallel_snapshot_uploads: FuturesUnordered<
             tokio::task::JoinHandle<std::result::Result<(), String>>,
         > = FuturesUnordered::new();
@@ -404,7 +404,7 @@ impl GitHelper {
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            blockchain::push_tree(self, &object_id, &mut visitedTrees).await?
+                            blockchain::push_tree(self, &object_id, &mut visited_trees).await?
                         }
                     }
                 }
