@@ -106,7 +106,7 @@ pub async fn is_diff_deployed(
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: Result<GetVersionResult> =
         diff_contract.run_local(context, "getVersion", None).await;
-    return Ok(result.is_ok());
+    Ok(result.is_ok())
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -124,7 +124,7 @@ pub async fn diff_address(
         .repo_contract
         .run_static(&context.es_client, "getDiffAddr", Some(params))
         .await?;
-    return Ok(result.address);
+    Ok(result.address)
 }
 
 pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
@@ -132,9 +132,9 @@ pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
         || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
         is_going_to_ipfs =
-            content_inspector::ContentType::BINARY == content_inspector::inspect(&new_content);
+            content_inspector::ContentType::BINARY == content_inspector::inspect(new_content);
     }
-    return is_going_to_ipfs;
+    is_going_to_ipfs
 }
 
 #[instrument(level = "debug", skip(diff))]
@@ -148,7 +148,7 @@ pub async fn push_diff(
     last_commit_id: &git_hash::ObjectId,
     is_last: bool,
     original_snapshot_content: &Vec<u8>,
-    diff: &Vec<u8>,
+    diff: &[u8],
     new_snapshot_content: &Vec<u8>,
 ) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
     let wallet = user_wallet(context).await?;
@@ -161,18 +161,18 @@ pub async fn push_diff(
     .await?;
 
     let original_snapshot_content = original_snapshot_content.clone();
-    let diff = diff.clone();
+    let diff = diff.to_owned();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
     let es_client = context.es_client.clone();
     let repo_name = context.remote.repo.clone();
-    let commit_id = commit_id.clone();
+    let commit_id = *commit_id;
     let branch_name = branch_name.to_owned();
-    let blob_id = blob_id.clone();
+    let blob_id = *blob_id;
     let file_path = file_path.to_owned();
     let diff_coordinate = diff_coordinate.clone();
-    let last_commit_id = last_commit_id.clone();
-    return Ok(tokio::spawn(async move {
+    let last_commit_id = *last_commit_id;
+    Ok(tokio::spawn(async move {
         let mut attempt = 0;
         let result = loop {
             attempt += 1;
@@ -202,7 +202,7 @@ pub async fn push_diff(
             }
         };
         result.map_err(|e| e.to_string())
-    }));
+    }))
 }
 
 pub async fn inner_push_diff(
@@ -219,7 +219,7 @@ pub async fn inner_push_diff(
     last_commit_id: &git_hash::ObjectId,
     is_last: bool,
     original_snapshot_content: &Vec<u8>,
-    diff: &Vec<u8>,
+    diff: &[u8],
     new_snapshot_content: &Vec<u8>,
 ) -> Result<()> {
     let diff = ton_client::utils::compress_zstd(diff, None)?;
@@ -252,7 +252,7 @@ pub async fn inner_push_diff(
         if is_going_to_ipfs {
             log::debug!("inner_push_diff->save_data_to_ipfs");
             let ipfs = Some(
-                save_data_to_ipfs(&ipfs_client, &new_snapshot_content)
+                save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                     .await
                     .map_err(|e| {
                         log::debug!("save_data_to_ipfs error: {}", e);
@@ -289,7 +289,7 @@ pub async fn inner_push_diff(
     let diffs: Vec<Diff> = vec![diff];
 
     let args = DeployDiffParams {
-        repo_name: repo_name,
+        repo_name,
         branch_name: branch_name.to_string(),
         commit_id: last_commit_id.to_string(),
         diffs,
@@ -319,7 +319,7 @@ pub async fn push_new_branch_snapshot(
     let (content, ipfs) = if content.len() > 15000 {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
-            save_data_to_ipfs(&&context.ipfs_client, &original_content)
+            save_data_to_ipfs(&context.ipfs_client, original_content)
                 .await
                 .map_err(|e| {
                     log::debug!("save_data_to_ipfs error: {}", e);
@@ -385,7 +385,7 @@ pub async fn push_initial_snapshot(
             )
             .await
             .map_err(|e| e.to_string())
-            .and_then(|e| Ok(()));
+            .map(|e| ());
 
             if result.is_ok() || attempt > PUSH_SNAPSHOT_MAX_TRIES {
                 break result;

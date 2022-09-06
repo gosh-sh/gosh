@@ -41,7 +41,7 @@ impl Tree {
         let result: GetTreeResult = repo_contract
             .run_static(context, "getTreeAddr", Some(params))
             .await?;
-        return Ok(result.address);
+        Ok(result.address)
     }
 }
 
@@ -57,11 +57,11 @@ impl Into<git_object::tree::Entry> for TreeComponent {
         };
         let filename = self.name.into();
         let oid = git_hash::ObjectId::from_hex(self.sha1.as_bytes()).expect("SHA1 must be correct");
-        return git_object::tree::Entry {
+        git_object::tree::Entry {
             mode,
             filename,
             oid,
-        };
+        }
     }
 }
 
@@ -70,6 +70,6 @@ impl Into<git_object::Tree> for Tree {
         let mut entries: Vec<git_object::tree::Entry> =
             self.objects.into_values().map(|e| e.into()).collect();
         entries.sort();
-        return git_object::Tree { entries };
+        git_object::Tree { entries }
     }
 }
