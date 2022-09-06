@@ -8,6 +8,7 @@
         "start:ci": "dotenv -e .env.ci react-scripts start",
         "start:dev": "dotenv -e .env.development react-scripts start",
         "start:prod": "dotenv -e .env.production react-scripts start",
+        "build:ci": "dotenv -e .ci.development react-scripts build",
         "build:dev": "dotenv -e .env.development react-scripts build",
         "build:prod": "dotenv -e .env.production react-scripts build",
         "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.development | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.development react-scripts build",
