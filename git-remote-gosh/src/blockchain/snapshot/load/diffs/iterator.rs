@@ -29,6 +29,13 @@ pub struct DiffMessagesIterator {
     next: Option<NextChunk>,
 }
 
+#[derive(Debug, Clone)]
+pub struct PageIterator {
+    cursor: Option<String>,
+    stop_on: Option<u64>,
+    skip_series: bool,
+}
+
 #[derive(Deserialize, Debug)]
 struct Message {
     id: String,
@@ -161,7 +168,7 @@ impl DiffMessagesIterator {
                 let mut skip_series = false;
                 while index.is_none() {
                     log::info!("loading messages");
-                    let (buffer, possible_next_page_info, stop_on, skip) =
+                    let (buffer, page) =
                         load_messages_to(client, &address, &cursor, None, false).await?;
                     log::info!("messages: {:?}", buffer);
                     for (i, item) in buffer.iter().enumerate() {
@@ -173,16 +180,16 @@ impl DiffMessagesIterator {
                     self.buffer = buffer;
                     if index.is_none() {
                         log::info!("Expected commit was not found");
-                        if possible_next_page_info.is_some() {
-                            cursor = possible_next_page_info;
+                        if page.cursor.is_some() {
+                            cursor = page.cursor;
                         } else {
                             panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
                         }
                     } else {
                         log::info!("Commit found at {}", index.unwrap());
-                        next_page_info = possible_next_page_info;
+                        next_page_info = page.cursor;
                     }
-                    skip_series = skip;
+                    skip_series = page.skip_series;
                 }
                 self.buffer_cursor = index.unwrap();
                 DiffMessagesIterator::into_next_page(
@@ -195,7 +202,7 @@ impl DiffMessagesIterator {
                 .await?
             },
             Some(NextChunk::MessagesPage(address, cursor, skip)) => {
-                let (buffer, next_page_info, stop_on, skip) =
+                let (buffer, page) =
                     load_messages_to(client, &address, cursor, None, *skip).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
@@ -203,8 +210,8 @@ impl DiffMessagesIterator {
                     client,
                     &address,
                     &mut self.repo_contract,
-                    next_page_info,
-                    skip,
+                    page.cursor,
+                    page.skip_series
                 )
                 .await?
             },
@@ -236,8 +243,8 @@ pub async fn load_messages_to(
     cursor: &Option<String>,
     stop_on: Option<u64>,
     skip_series: bool,
-) -> Result<(Vec<DiffMessage>, Option<String>, Option<u64>, bool), Box<dyn Error>> {
-    let mut next_page_info: Option<String> = None;
+) -> Result<(Vec<DiffMessage>, PageIterator), Box<dyn Error>> {
+    let mut subsequent_page_info: Option<String> = None;
     let mut skip = skip_series;
     let query = r#"query($addr: String!, $before: String){
       blockchain {
@@ -277,14 +284,14 @@ pub async fn load_messages_to(
     log::trace!("trying to decode: {:?}", nodes);
     let edges: Messages = serde_json::from_value(nodes.clone())?;
     if edges.page_info.has_previous_page {
-        next_page_info = Some(edges.page_info.start_cursor);
+        subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
     log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
-    for elem in edges.edges {
-        let raw_msg = elem.message;
+    for elem in edges.edges.iter().rev() {
+        let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
-            next_page_info = None;
+            subsequent_page_info = None;
             break;
         }
         if raw_msg.status != 5 || raw_msg.bounced {
@@ -295,7 +302,7 @@ pub async fn load_messages_to(
             context.clone(),
             ParamsOfDecodeMessageBody {
                 abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
-                body: raw_msg.body,
+                body: raw_msg.body.clone(),
                 is_internal: true,
                 ..Default::default()
             },
@@ -326,5 +333,10 @@ pub async fn load_messages_to(
         0 => None,
         n => Some(messages[n - 1].created_at),
     };
-    Ok((messages, next_page_info, oldest_timestamp, skip))
+    let page = PageIterator {
+        cursor: subsequent_page_info,
+        stop_on: oldest_timestamp,
+        skip_series: skip
+    };
+    Ok((messages, page))
 }
