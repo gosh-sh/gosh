@@ -130,23 +130,7 @@ impl<'de> Visitor<'de> for GoshPathVisitor {
     where
         E: de::Error,
     {
-        let mut gosh_path = GoshPath { inner: vec![] };
-        let mut cur = String::new();
-        for ch in v.chars() {
-            cur.push(ch);
-            // split by / but not \/
-            if cur.ends_with("/") && !cur.ends_with("\\/") {
-                cur.pop();
-                gosh_path
-                    .try_join(unescape_slashes(&cur))
-                    .map_err(E::custom)?;
-                cur = String::new();
-            }
-        }
-        gosh_path
-            .try_join(unescape_slashes(&cur))
-            .map_err(E::custom)?;
-        Ok(gosh_path)
+        self.visit_str(&v)
     }
 }
 
