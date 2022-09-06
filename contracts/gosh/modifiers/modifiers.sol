@@ -42,6 +42,12 @@ struct Diff {
 struct Item {
     string key;
     address value;
+    string version;
+}
+
+struct AddrVersion {
+    address addr;
+    string version;
 }
 
 struct GlobalConfig {

@@ -20,7 +20,7 @@ contract Repository is Modifiers{
     string constant version = "0.11.0";
 
     bool _timestone = false;
-    optional(address) _previousversion;
+    optional(AddrVersion) _previousversion;
     address _pubaddr;
     TvmCell m_CommitCode;
     TvmCell m_SnapshotCode;
@@ -30,14 +30,17 @@ contract Repository is Modifiers{
     TvmCell m_codeDiff;
     address _goshroot;
     string static _name;
+    string _nameDao;
     address _goshdao;
     string _head;
-    mapping(string => Item) _Branches;
+    mapping(uint256 => Item) _Branches;
     mapping(uint256 => bool) _protectedBranch;
+    bool _ready = false;
 
     constructor(
         address pubaddr, 
         string name, 
+        string nameDao,
         address goshdao,
         address rootgosh,
         TvmCell CommitCode,
@@ -47,7 +50,7 @@ contract Repository is Modifiers{
         TvmCell codeTree,
         TvmCell codeDiff,
         uint128 index,
-        optional(address) previousversion
+        optional(AddrVersion) previousversion
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
@@ -55,6 +58,7 @@ contract Repository is Modifiers{
         _pubaddr = pubaddr;
         _goshroot = rootgosh;
         _goshdao = goshdao;
+        _nameDao = nameDao;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _name = name;
         m_CommitCode = CommitCode;
@@ -63,33 +67,51 @@ contract Repository is Modifiers{
         m_SnapshotCode = SnapshotCode;
         m_codeDiff = codeDiff;
         _previousversion = previousversion;
+        if (_previousversion.hasValue()) { GoshRoot(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
+        _ready = true;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
-        _Branches["main"] = Item("main", address.makeAddrStd(0, tvm.hash(s1)));
+        _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
         _head = "main";
     }
+    
+    function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_goshroot) accept {
+        if (prev.addr != address(this)) { 
+            Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(false, _Branches, _protectedBranch, _head);
+        }
+        Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(true, _Branches, _protectedBranch, _head);
+    } 
+    
+    function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
+        if (ans == false) { selfdestruct(_goshdao); }
+        _Branches = Branches;
+        _protectedBranch = protectedBranch;
+        _head = head;
+    } 
 
     //Branch part  
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
+        require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
         require("0000000000000000000000000000000000000000" != fromcommit, ERR_EMPTY_BRANCH);
         Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
     }
     
     function commitCorrect(string newname, string fromcommit) public senderIs(getCommitAddr(fromcommit)) {
         tvm.accept();
-         require(_Branches.exists(newname) == false, ERR_BRANCH_EXIST);
-        _Branches[newname] = Item(newname, getCommitAddr(fromcommit));
+         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
+        _Branches[tvm.hash(newname)] = Item(newname, getCommitAddr(fromcommit), version);
     }
     
     function deleteBranch(address pubaddr, string name, uint128 index) public minValue(0.3 ton){
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         tvm.accept();
-        require(_Branches.exists(name), ERR_BRANCH_NOT_EXIST);
+        require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        delete _Branches[name]; 
+        delete _Branches[tvm.hash(name)]; 
     }
 
     //Access part
@@ -117,32 +139,32 @@ contract Repository is Modifiers{
     
     function initCommit(string namecommit, string branch, address commit) public view senderIs(getCommitAddr(namecommit)) accept {
         require(_previousversion.hasValue(), ERR_WRONG_DATA);
-        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
-        Repository(_previousversion.get()).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch, commit);
+        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
+        Repository(_previousversion.get().addr).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch, commit);
     }
 
     function isCorrectCommit(string namecommit, string branch, address commit) public view {
-        if ((_Branches[branch].value == getCommitAddr(namecommit)) && (commit == _Branches[branch].value)) { 
+        if ((_Branches[tvm.hash(branch)].value == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].value)) { 
             Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
         }
     }
 
-    function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get()) accept {
-        _Branches[branch] = Item(branch, getCommitAddr(namecommit));
+    function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {
+        _Branches[tvm.hash(branch)] = Item(branch, getCommitAddr(namecommit), version);
     }
 
     //Diff part
     function SendDiff(string branch, address commit, uint128 number) public view senderIs(address(this)){
         tvm.accept();
-        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value, number);
+        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number);
     }
     
-    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number) public view {
-        tvm.accept();
-        require(_Branches.exists(branch), ERR_BRANCH_NOT_EXIST);
+    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number) public view accept {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[branch].value, number);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number);
     }
 
     //Selfdestruct
@@ -153,21 +175,23 @@ contract Repository is Modifiers{
 
     //Setters    
     function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
-        require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
+        require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if (_Branches[nameBranch].value != oldcommit) {
+        if (_Branches[tvm.hash(nameBranch)].value != oldcommit) {
             Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}(number);
             return;
         }
-        _Branches[nameBranch] = Item(nameBranch, getCommitAddr(namecommit));
+        _Branches[tvm.hash(nameBranch)] = Item(nameBranch, getCommitAddr(namecommit), version);
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index),ERR_SENDER_NO_ALLOWED);
-        require(_Branches.exists(nameBranch), ERR_BRANCH_NOT_EXIST);
+        require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         _head = nameBranch;
     }
@@ -175,6 +199,7 @@ contract Repository is Modifiers{
     //Protected branch
         
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
@@ -183,6 +208,7 @@ contract Repository is Modifiers{
     }
     
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
@@ -200,6 +226,7 @@ contract Repository is Modifiers{
     }
     
     function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 index) public view {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_timestone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
@@ -247,7 +274,7 @@ contract Repository is Modifiers{
     }
 
     function getAddrBranch(string name) external view returns(Item) {
-        return _Branches[name];
+        return _Branches[tvm.hash(name)];
     }
 
     function getAllAddress() external view returns(Item[]) {
@@ -303,7 +330,11 @@ contract Repository is Modifiers{
         return _pubaddr;
     }
       
-    function getPrevious() external view returns(optional(address)) {
+    function getPrevious() external view returns(optional(AddrVersion)) {
         return _previousversion;
+    }
+          
+    function getReady() external view returns(bool) {
+        return _ready;
     }
 }

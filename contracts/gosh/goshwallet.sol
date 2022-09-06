@@ -44,6 +44,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     address _pubaddr;
     address static _goshdao;
     uint128 static _index;
+    string _nameDao;
     bool _flag = false;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -72,6 +73,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     constructor(
         address rootpubaddr,
         address pubaddr,
+        string nameDao,
         TvmCell commitCode,
         TvmCell repositoryCode,
         TvmCell WalletCode,
@@ -95,6 +97,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     ) {
         _rootpubaddr = rootpubaddr;
         _pubaddr = pubaddr;
+        _nameDao = nameDao;
         m_WalletCode = WalletCode;
         if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
@@ -194,7 +197,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 60 ton, wid: 0
-        }(  _rootpubaddr, _pubaddr, 
+        }(  _rootpubaddr, _pubaddr, _nameDao, 
             m_CommitCode,
             m_RepositoryCode,
             m_WalletCode,
@@ -239,7 +242,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Repository part
-    function deployRepository(string nameRepo, optional(address) previous) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(checkName(nameRepo), ERR_WRONG_NAME);
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
@@ -247,7 +250,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
-            _pubaddr, nameRepo, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index, previous);
+            _pubaddr, nameRepo, _nameDao, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index, previous);
         getMoney();
     }
 

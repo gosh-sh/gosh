@@ -108,6 +108,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (previous.hasValue()) { _previous = previous.get(); /* this.getPreviousInfo{value: 0.1 ton, flag: 1}(); */ }
     }
     
+    function _buildRepositoryAddr(string name) private view returns (address) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            m_RepositoryCode, _goshroot, address(this), version
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: { _name: name }
+        })));
+    }
+    
     function getMoney() private {
         if (_flag == true) { return; }
         if (address(this).balance > 30000 ton) { return; }
@@ -171,7 +182,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr] = _lastAccountAddress;
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _pubaddr, pubaddr, m_CommitCode, 
+        }(  _pubaddr, pubaddr, _nameDao, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,
             m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 

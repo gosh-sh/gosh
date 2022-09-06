@@ -15,6 +15,7 @@ import "Upgradable.sol";
 import "repository.sol";
 import "commit.sol";
 import "profile.sol";
+import "root.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 
@@ -22,6 +23,7 @@ import "./libraries/GoshLib.sol";
 contract GoshRoot is Modifiers, Upgradable{
     string constant version = "0.11.0";
     
+    address _root;
     bool _flag = true;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -50,6 +52,32 @@ contract GoshRoot is Modifiers, Upgradable{
     constructor() public {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
+        _root = msg.sender;
+    }
+    
+    function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view accept {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        Root(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
+    }
+    
+    function checkUpdateRepo3(string name, string namedao, AddrVersion prev, address answer) public view senderIs(_root) accept {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address repo = _buildRepositoryAddr(name, addr);
+        Repository(repo).checkUpdateRepo4{value : 0.15 ton, flag: 1}(prev, answer);
+    }   
+    
+    function _buildRepositoryAddr(string name, address dao) private view returns (address) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            m_RepositoryCode, address(this), dao, version
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: { _name: name }
+        })));
     }
     
     function deployProfile(uint256 pubkey) public view accept {

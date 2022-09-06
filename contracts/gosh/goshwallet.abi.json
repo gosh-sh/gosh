@@ -1,6 +1,6 @@
 {
 	"ABI version": 2,
-	"version": "2.2",
+	"version": "2.3",
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
@@ -8,6 +8,7 @@
 			"inputs": [
 				{"name":"rootpubaddr","type":"address"},
 				{"name":"pubaddr","type":"address"},
+				{"name":"nameDao","type":"string"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -95,7 +96,7 @@
 			"name": "deployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
-				{"name":"previous","type":"optional(address)"}
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]
@@ -699,6 +700,7 @@
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_index","type":"uint128"},
+		{"name":"_nameDao","type":"string"},
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},

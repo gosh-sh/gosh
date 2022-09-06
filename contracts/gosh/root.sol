@@ -41,6 +41,28 @@ contract Root is Modifiers {
         require(_GoshCode.exists(tvm.hash(version)) == false, ERR_GOSH_BAD_VERSION);
         _GoshCode[tvm.hash(version)] = GoshV(version, code);
     }
+    
+    function checkUpdateRepo2(string name, string namedao, string version, AddrVersion prev, address answer) public view {
+        require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
+        require(_GoshCode.exists(tvm.hash(prev.version)), ERR_GOSH_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _GoshCode[tvm.hash(version)].Value,
+            contr: GoshRoot,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        s1 = tvm.buildStateInit({
+            code: _GoshCode[tvm.hash(prev.version)].Value,
+            contr: GoshRoot,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshRoot(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
+    }
 
     //Getters
     function getGoshCode(string version) external view returns(GoshV) {

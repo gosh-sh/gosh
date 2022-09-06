@@ -47,4 +47,6 @@ abstract contract Errors {
     uint constant ERR_OLD_CONTRACT = 236;
     uint constant ERR_GOSH_BAD_VERSION = 237;
     uint constant ERR_BAD_COUNT_PARENTS = 238;
+    uint constant ERR_REPOSITORY_NOT_READY = 239;
+    uint constant ERR_PREV_NOT_EXIST = 240;
 }
