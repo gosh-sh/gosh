@@ -36,21 +36,27 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
     let odb_object = odb.read(oid).ok()?;
     let object_type = odb_object.kind();
 
-    if object_type == ObjectType::Blob {
-        log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-        None
-    } else if object_type == ObjectType::Tag {
-        log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-        None
-    } else if object_type == ObjectType::Tree {
-        eprintln!("unsupported type: {} (sha: {})", object_type, sha);
-        None
-    } else if object_type == ObjectType::Commit {
-        eprintln!("unsupported type: {} (sha: {})", object_type, sha);
-        None
-    } else {
-        eprintln!("unsupported type: {} (sha: {})", object_type, sha);
-        None
+    match object_type {
+        ObjectType::Any => {
+            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+            None
+        }
+        ObjectType::Commit => {
+            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+            None
+        }
+        ObjectType::Tree => {
+            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+            None
+        }
+        ObjectType::Blob => {
+            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+            None
+        }
+        ObjectType::Tag => {
+            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+            None
+        }
     }
 }
 
@@ -62,7 +68,7 @@ pub async fn get_refs(
         .await
         .map_err(|e| e.to_string())?
         .branch_ref;
-    if _list.len() == 0 {
+    if _list.is_empty() {
         return Ok(None);
     }
 

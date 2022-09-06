@@ -49,7 +49,7 @@ pub async fn push_commit(
         .await?;
         parents.push(parent);
     }
-    if parents.len() == 0 {
+    if parents.is_empty() {
         let bogus_parent =
             get_commit_address(&context.es_client, &mut context.repo_contract, ZERO_SHA).await?;
         parents.push(bogus_parent);
