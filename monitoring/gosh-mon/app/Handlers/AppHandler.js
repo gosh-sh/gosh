@@ -35,4 +35,6 @@ class AppHandler extends GoshHandler_1.default {
     }
 }
 exports.default = AppHandler;
+AppHandler.indexSteps = 2;
+AppHandler.userSteps = 9;
 AppHandler.branchSteps = 12;

@@ -38,6 +38,26 @@ scrape_configs:
     static_configs:
       - targets: ['trcnt-stat:9123']
 
+  - job_name: 'gosh-mon-read'
+    scrape_interval: 60s
+    scrape_timeout: 50s
+    static_configs:
+      - targets:
+        - 'gosh-mon-app-sm-rd:9600'
+        - 'gosh-mon-app-la-rd:9600'
+        - 'gosh-mon-rem-sm-rd:9600'
+        - 'gosh-mon-rem-la-rd:9600'
+
+  - job_name: 'gosh-mon-write'
+    scrape_interval: 300s
+    scrape_timeout: 290s
+    static_configs:
+      - targets:
+        - 'gosh-mon-app-sm-wr:9600'
+        - 'gosh-mon-app-la-wr:9600'
+        - 'gosh-mon-rem-sm-wr:9600'
+        - 'gosh-mon-rem-la-wr:9600'
+
 alerting:
   alertmanagers:
   - scheme: http

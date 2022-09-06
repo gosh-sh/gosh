@@ -3,6 +3,8 @@ import {StepFunction} from "./ScenarioHandler";
 
 export default abstract class AppHandler extends GoshHandler {
 
+    static readonly indexSteps: number = 2;
+    static readonly userSteps: number = 9;
     static readonly branchSteps: number = 12;
 
     protected appurl: string = 'https://app.gosh.sh/';

@@ -8,17 +8,13 @@ global:
   large:         false
   prefix:        gosh_mon_
   timeout:       20000
-  root:          0:ac3c0b77666343d8a3497469a9a26a8c8eed4d8fba8dfa3c64e0503f81d74ab0
+  root:          0:457cd81c98f745217825d8c955973a5b0149babc27228b6e90658ffe7e84b01e
   interval:      45
   subinterval:   0
   origin:        INVALID
   cron:          false
   appurl:        https://app.gosh.sh/
   pupextraflags: []
-# pupextraflags: ['--unsafely-treat-insecure-origin-as-secure=http://gosh.matusevich.pro']
-# gosh_repo_url: https://github.com/tonlabs/gosh.git
-# gosh_branch:   main
-# gosh_bin_path: git-remote-gosh/git-remote-gosh.js
   gosh_repo_url: https://github.com/gosh-sh/gosh.git
   gosh_branch:   "release:latest"
   gosh_bin_path: last-git-remote-gosh
@@ -28,20 +24,16 @@ global:
 includes:
 
   next: &next
-    # for app.gosh.sh
-    appurl: https://goshnext.services.tonlabs.io/
-    # for remote
-    # gosh_repo_url: https://github.com/gosh-sh/gosh.git
-    # gosh_branch:   "release:latest"
-    # gosh_bin_path: git-remote-gosh/bin/git-remote-gosh
-
-#  cron-rotate: &cron-rotate
-#    origin: ticker-root
-#    handler: app-rotate
-#    cron: true
+    appurl: https://next-app.monitoring.gosh.sh/
 
 
 modes:
+
+  seed-read:
+    handler: seed-read
+
+  root-check:
+    handler: root-check
 
 # app.gosh.sh
   app-small-read: &app-small-read
@@ -84,18 +76,6 @@ modes:
     <<: *app-large-write
     <<: *next
 
-  # extension-ui.gosh.sh
-  ext-small-read:
-    branch:  ticker-app-small
-    handler: extui-read
-    large:   false
-
-  ext-large-read:
-    branch:  ticker-app-large
-    handler: extui-read
-    large:   true
-    timeout: 15000
-
 # git-remote-gosh
   rem-small-read: &rem-small-read
     branch:  ticker-remote-small
@@ -122,33 +102,3 @@ modes:
     large:   true
     interval: 450
     timeout: 270
-
-#  rem-small-read-next:
-#    <<: *rem-small-read
-#    <<: *next
-#
-#  rem-small-write-next:
-#    <<: *rem-small-write
-#    <<: *next
-#
-#  rem-large-read-next:
-#    <<: *rem-large-read
-#    <<: *next
-#
-#  rem-large-write-next:
-#    <<: *rem-large-write
-#    <<: *next
-#
-# rotation cron
-#  cron-rem-rotate-test:
-#    <<: *cron-rotate
-#    branch:  test-branch
-#
-#  cron-rem-rotate-small:
-#    <<: *cron-rotate
-#    branch:  ticker-remote-small
-#
-#  cron-rem-rotate-large:
-#    <<: *cron-rotate
-#    branch:  ticker-remote-large
-#    large:   true

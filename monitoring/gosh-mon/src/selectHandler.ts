@@ -5,11 +5,15 @@ import ExtReadHandler from "./Handlers/ExtReadHandler";
 import RemoteReadHandler from "./Handlers/RemoteReadHandler";
 import RemoteWriteHandler from "./Handlers/RemoteWriteHandler";
 import AppRotateHandler from "./Handlers/AppRotateHandler";
+import SeedReadHandler from "./Handlers/SeedReadHandler";
+import RootCheckHandler from "./Handlers/RootCheckHandler";
 
 export type HandlerType = 'app-read' | 'extui-read' | 'remote-read'
-    | 'app-write' | 'extui-write' | 'remote-write' | 'app-rotate';
+    | 'app-write' | 'extui-write' | 'remote-write' | 'app-rotate'
+    | 'seed-read' | 'root-check';
 
 export default function selectHandler(type: HandlerType): GoshHandler {
+    console.log('selectHandler, type:', type);
     switch (type) {
         case    'app-read':  return new AppReadHandler();
         case  'extui-read':  return new ExtReadHandler();
@@ -18,6 +22,8 @@ export default function selectHandler(type: HandlerType): GoshHandler {
         case  'extui-write': throw new TypeError('Not implemented');
         case 'remote-write': return new RemoteWriteHandler();
         case   'app-rotate': return new AppRotateHandler();
+        case    'seed-read': return new SeedReadHandler();
+        case   'root-check': return new RootCheckHandler();
     }
     throw new TypeError('Invalid type');
 }

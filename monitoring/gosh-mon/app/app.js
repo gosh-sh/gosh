@@ -52,6 +52,11 @@ const c = conf['global'];
 for (let k in mode_config) {
     c[k] = mode_config[k];
 }
+for (let k in process.env) {
+    if (k.startsWith('CONFIG_')) {
+        c[k.slice(7).toLowerCase()] = process.env[k];
+    }
+}
 const app = new Application_1.default();
 app.handlerFactory = () => {
     const handler = (0, selectHandler_1.default)(c['handler']);
@@ -65,12 +70,12 @@ app.setInterval(c['interval'] - c['subinterval']);
 app.transformer.prefix = c['prefix'];
 app.transformer.tagpfx = `mode="${mode}"`;
 console.log('Configured mode: ' + mode.replaceAll('-', ' '));
-if (process.env.ONESHOT_DEBUG || c['cron']) {
-    const level = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0');
+if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
+    let level = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0');
     app.steps = true;
     if (level >= 2)
         app.setDebug(true);
-    console.log("Executing one-shot inquiry");
+    console.log("Executing immediate inquiry");
     console.log("Handler: " + app.handlerFactory().describe());
     app.inquiry(level >= 2)
         .then(res => {

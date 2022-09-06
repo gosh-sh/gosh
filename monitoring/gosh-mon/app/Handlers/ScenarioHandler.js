@@ -92,6 +92,11 @@ class ScenarioHandler extends Handler_1.default {
             await this.page.waitForXPath(elem, timeoutArg) :
             await this.page.waitForSelector(elem, timeoutArg);
     }
+    async findMultipleNow(elem) {
+        return elem.startsWith('/') ?
+            await this.page.$x(elem) :
+            await this.page.$$(elem);
+    }
     async onlyOne(elem) {
         const elems = await this.page.$$(elem);
         if (elems.length != 1)
@@ -115,6 +120,9 @@ class ScenarioHandler extends Handler_1.default {
             if (e.toString().includes('Node is detached from document'))
                 await (await this.find(elem)).click();
         }
+    }
+    async clickNow(elem, index = 0) {
+        await (await this.findMultipleNow(elem))[index].click();
     }
     async focus(elem, timeout) {
         await (await this.find(elem, timeout)).focus();
@@ -219,7 +227,7 @@ class ScenarioHandler extends Handler_1.default {
     }
     say(msg, loud = false) {
         this.log.push(msg);
-        if (loud || this.debug)
+        if (loud || this.debug || process.env.RUN_NOW)
             console.log(msg);
     }
 }
