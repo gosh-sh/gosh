@@ -24,11 +24,11 @@ impl<'a> CreateBranchOperation<'a> {
         branch_name: impl Into<String>,
         context: &'a mut GitHelper,
     ) -> Self {
-        return Self {
-            ancestor_commit: ancestor_commit,
+        Self {
+            ancestor_commit,
             new_branch: branch_name.into(),
-            context: context,
-        };
+            context,
+        }
     }
 
     async fn prepare_commit_for_branching(&mut self) -> Result<()> {

@@ -68,7 +68,7 @@ impl Snapshot {
         let result: GetSnapshotAddrResult = repo_contract
             .run_static(context, "getSnapshotAddr", Some(params))
             .await?;
-        return Ok(result.address);
+        Ok(result.address)
     }
 
     #[instrument(level = "debug", skip(context))]
@@ -82,11 +82,11 @@ impl Snapshot {
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;
         path = path
-            .split_once("/")
+            .split_once('/')
             .expect("Must be prefixed")
             .1
             .to_string();
-        return Ok(path);
+        Ok(path)
     }
 }
 
@@ -111,7 +111,7 @@ where
             if v.len() % 2 != 0 {
                 // It is certainly not a hex string
                 return Err(E::custom("Not a hex string"));
-            } else if v.len() == 0 {
+            } else if v.is_empty() {
                 return Ok(vec![]);
             }
             let compressed_data: Vec<u8> = (0..v.len())
@@ -126,7 +126,7 @@ where
             //            let base64_encoded_compressed_data = base64::encode(&compressed_data);
             //            let base64_encoded_decompressed_data = ton_client::utils::decompress_zstd(&base64_encoded_compressed_data)?;
             //            let data = base64::decode(base64_encoded_decompressed_data)?;
-            return Ok(data);
+            Ok(data)
         }
     }
 

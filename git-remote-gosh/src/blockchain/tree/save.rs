@@ -91,7 +91,7 @@ async fn construct_tree_node(
                 //    goes to IPFS
                 // 3. If we though that this file DOES NOT go to IPFS and calculated
                 //    tvm_hash instead it will not break
-                sha256::digest_bytes(&content)
+                sha256::digest_bytes(content)
             } else {
                 tvm_hash(&context.es_client, content).await?
             }
@@ -116,7 +116,7 @@ pub async fn push_tree(
     visited: &mut HashSet<ObjectId>,
 ) -> Result<(), Box<dyn Error>> {
     let mut to_deploy = VecDeque::new();
-    to_deploy.push_back(tree_id.clone());
+    to_deploy.push_back(*tree_id);
     while let Some(tree_id) = to_deploy.pop_front() {
         if visited.contains(&tree_id) {
             continue;
