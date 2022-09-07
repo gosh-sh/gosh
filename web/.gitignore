@@ -26,3 +26,4 @@ contracts*.sh
 
 node_modules
 rim.cache.json
+public/envs.json
