@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import { AppConfig } from 'react-gosh'
+import { AppConfig, useGoshVersions } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -43,6 +43,7 @@ import BuildPage from './docker-extension/pages/Build'
 import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
+    const { versions, updateVersions } = useGoshVersions()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
     let timer: NodeJS.Timeout | null = null
 
@@ -70,14 +71,15 @@ const App = () => {
                 },
             },
             goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
-            goshversion: process.env.REACT_APP_GOSH_VERSION || '',
             ipfs: process.env.REACT_APP_IPFS || '',
             isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         })
-        AppConfig.goshclient.client.version().then(() => {
-            setIsInitialized(true)
-        })
+        updateVersions()
     }, [])
+
+    useEffect(() => {
+        if (versions.latest) setIsInitialized(true)
+    }, [versions.latest])
 
     useEffect(() => {
         // Initialize gosh client suspend/resume timer

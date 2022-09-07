@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { getPaginatedAccounts } from '../helpers'
 import { userStateAtom, daoAtom } from '../store'
-import { GoshDao, GoshProfile, GoshWallet } from '../classes'
-import { sleep } from '../utils'
 import {
+    GoshDao,
+    GoshProfile,
+    GoshWallet,
     IGoshDao,
     IGoshWallet,
+} from '../resources/contracts'
+import { sleep } from '../utils'
+import {
     TDaoCreateProgress,
     TDaoListItem,
     TDaoMemberCreateProgress,
@@ -49,7 +53,8 @@ function useDaoList(perPage: number) {
             }),
         }))
 
-        const dao = new GoshDao(AppConfig.goshclient, item.address)
+        // TODO: version
+        const dao = new GoshDao(AppConfig.goshclient, item.address, '')
         const details = await dao.getDetails()
 
         setDaos((state) => ({
@@ -67,7 +72,8 @@ function useDaoList(perPage: number) {
             if (!keys?.public) return
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+            // TODO: version
+            const gosh = await AppConfig.goshroot.getGosh('')
             const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
             const walletCode = await gosh.getDaoWalletCode(profileAddr)
             const walletCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
@@ -92,7 +98,8 @@ function useDaoList(perPage: number) {
             const uniqueDaoAddresses = new Set(
                 await Promise.all(
                     wallets.map(async (address) => {
-                        const wallet = new GoshWallet(AppConfig.goshclient, address)
+                        // TODO: version
+                        const wallet = new GoshWallet(AppConfig.goshclient, address, '')
                         return await wallet.getDaoAddr()
                     }),
                 ),
@@ -101,7 +108,8 @@ function useDaoList(perPage: number) {
             // Get daos details from unique dao addressed
             const items = await Promise.all(
                 Array.from(uniqueDaoAddresses).map(async (address) => {
-                    const dao = new GoshDao(AppConfig.goshclient, address)
+                    // TODO: version
+                    const dao = new GoshDao(AppConfig.goshclient, address, '')
                     return { address, name: await dao.getName() }
                 }),
             )
@@ -158,15 +166,18 @@ function useDao(name?: string) {
 
             if (!details?.address || details?.name !== name) {
                 console.debug('Get dao hook (blockchain)')
-                const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+                // TODO: version
+                const gosh = await AppConfig.goshroot.getGosh('')
                 const address = await gosh.getDaoAddr(name)
-                const dao = new GoshDao(AppConfig.goshclient, address)
+                // TODO: version
+                const dao = new GoshDao(AppConfig.goshclient, address, '')
                 const details = await dao.getDetails()
                 setDao(dao)
                 setDetails(details)
             } else {
                 console.debug('Get dao hook (from state)')
-                setDao(new GoshDao(AppConfig.goshclient, details.address))
+                // TODO: version
+                setDao(new GoshDao(AppConfig.goshclient, details.address, ''))
             }
         }
 
@@ -190,7 +201,8 @@ function useDaoCreate() {
     const createDao = async (name: string, members: string[]) => {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
 
-        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        // TODO: version
+        const gosh = await AppConfig.goshroot.getGosh('')
         const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
         const profile = new GoshProfile(AppConfig.goshclient, profileAddr, keys)
 
@@ -314,7 +326,8 @@ function useDaoMemberList(perPage: number) {
             }),
         }))
 
-        const wallet = new GoshWallet(AppConfig.goshclient, item.wallet)
+        // TODO: version
+        const wallet = new GoshWallet(AppConfig.goshclient, item.wallet, '')
         const details = {
             pubkey: await wallet.getPubkey(),
             smvBalance: await wallet.getSmvTokenBalance(),
@@ -406,7 +419,8 @@ function useDaoMemberCreate() {
         if (!keys) throw new GoshError(EGoshError.NO_USER)
         if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
 
-        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
+        // TODO: version
+        const gosh = await AppConfig.goshroot.getGosh('')
         const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
         const profile = new GoshProfile(AppConfig.goshclient, profileAddr, keys)
 
@@ -428,7 +442,8 @@ function useDaoMemberCreate() {
             })),
         }))
 
-        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address)
+        // TODO: version
+        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address, '')
         await Promise.all(
             members.map(async (pubkey) => {
                 // Deploy wallet
@@ -504,7 +519,8 @@ function useDaoMemberDelete() {
 
         setFetching((state) => [...state, ...pubkeys])
 
-        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address)
+        // TODO: version
+        const dao = new GoshDao(AppConfig.goshclient, daoDetails.address, '')
         await Promise.all(
             pubkeys.map(async (pubkey) => {
                 const walletAddr = await dao.getWalletAddr(pubkey, 0)

@@ -1,8 +1,6 @@
 import { atom } from 'recoil'
-import { recoilPersist } from 'recoil-persist'
 import { TUserState, TUserStatePersist } from '../types'
-
-const { persistAtom } = recoilPersist({ key: 'recoil' })
+import { persistAtom } from './base'
 
 const userStatePersistAtom = atom<TUserStatePersist>({
     key: 'UserStatePersistAtom',

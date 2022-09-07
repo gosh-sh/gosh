@@ -1,46 +1,27 @@
 import { TonClient, ClientConfig } from '@eversdk/core'
 import { createDockerDesktopClient } from '@docker/extension-api-client'
-import { GoshRoot } from './classes'
+import { GoshRoot, IGoshRoot } from './resources/contracts'
 
 class AppConfig {
-    private static _goshclientconfig?: ClientConfig
-    private static _goshclient?: TonClient
-    private static _goshroot?: string
-    static _goshversion?: string
-    static ipfs?: string
+    static goshroot: IGoshRoot
+    static goshclient: TonClient
+    static ipfs: string
     static dockerclient?: any
 
     static setup(params: {
         goshclient: ClientConfig
         goshroot: string
-        goshversion: string
         ipfs: string
         isDockerExt: boolean
     }) {
-        const { goshclient, goshroot, goshversion, ipfs, isDockerExt } = params
-        AppConfig._goshclientconfig = goshclient
-        AppConfig._goshroot = goshroot
-        AppConfig._goshversion = goshversion
-        AppConfig.ipfs = ipfs
+        const { goshclient, goshroot, ipfs, isDockerExt } = params
+        if (!goshroot) throw Error('Gosh root address is undefined')
+        if (!ipfs) throw Error('IPFS url is undefined')
+
         AppConfig.dockerclient = isDockerExt ? createDockerDesktopClient() : null
-    }
-
-    static get goshclient() {
-        if (!AppConfig._goshclientconfig) throw Error('Gosh client config is undefined')
-        if (!AppConfig._goshclient) {
-            AppConfig._goshclient = new TonClient(AppConfig._goshclientconfig)
-        }
-        return AppConfig._goshclient
-    }
-
-    static get goshroot() {
-        if (!AppConfig._goshroot) throw Error('Gosh root is undefined')
-        return new GoshRoot(AppConfig.goshclient, AppConfig._goshroot)
-    }
-
-    static get goshversion() {
-        if (!AppConfig._goshversion) throw Error('Gosh version is undefined')
-        return AppConfig._goshversion
+        AppConfig.goshclient = new TonClient(goshclient)
+        AppConfig.goshroot = new GoshRoot(AppConfig.goshclient, goshroot)
+        AppConfig.ipfs = ipfs
     }
 }
 
