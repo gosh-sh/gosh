@@ -3,7 +3,7 @@ import {
     Browser, BrowserContext, Page,
     BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent, puppeteerErrors
 } from "puppeteer";
-import {MetricsMap} from "../Transformer";
+import {MetricsMap} from "../PrometheusFormatter";
 import {nls, now, nowms} from "../Utils";
 import {writeFileSync} from "fs";
 import {setTimeout} from 'timers/promises';

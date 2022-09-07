@@ -1,6 +1,11 @@
 export type MetricsMap = Map<string, number>;
 
-export default class Transformer {
+/**
+ * Formats MetricsMap into text string to be fed to Prometheus
+ * Takes care of neccessary # HELP and # TYPE comments in output
+ * Also attaches prefix and tag prefix to metrics if required
+ */
+export default class PrometheusFormatter {
 
     prefix: string = '';
     tagpfx: string = '';

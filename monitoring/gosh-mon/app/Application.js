@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const DummyHandler_1 = __importDefault(require("./Handlers/DummyHandler"));
-const Transformer_1 = __importDefault(require("./Transformer"));
+const PrometheusFormatter_1 = __importDefault(require("./PrometheusFormatter"));
 class Application {
     constructor() {
         this.interval = 50;
@@ -15,7 +15,7 @@ class Application {
         this.steps = false;
         this.app = (0, express_1.default)();
         this.handlerFactory = () => new DummyHandler_1.default();
-        this.transformer = new Transformer_1.default();
+        this.promformatter = new PrometheusFormatter_1.default();
     }
     setInterval(interval) {
         this.interval = interval;
@@ -30,7 +30,7 @@ class Application {
         const result = debug ? await handler.handle(true) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result');
-        return this.transformer.process(result, debug);
+        return this.promformatter.process(result, debug);
     }
     prepare() {
         this.app.use(function (req, res, next) {
@@ -47,7 +47,7 @@ class Application {
     run(port = 9600) {
         this.app.listen(port, () => {
             console.log('GOSH monitoring service started on port ' + port);
-            console.log('Handler: ' + this.handlerFactory().describe() + ', Prefix: ' + this.transformer.prefix);
+            console.log('Handler: ' + this.handlerFactory().describe() + ', Prefix: ' + this.promformatter.prefix);
         });
     }
 }

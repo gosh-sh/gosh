@@ -67,8 +67,8 @@ app.handlerFactory = () => {
     return handler;
 };
 app.setInterval(c['interval'] - c['subinterval']);
-app.transformer.prefix = c['prefix'];
-app.transformer.tagpfx = `mode="${mode}"`;
+app.promformatter.prefix = c['prefix'];
+app.promformatter.tagpfx = `mode="${mode}"`;
 console.log('Configured mode: ' + mode.replaceAll('-', ' '));
 if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
     let level = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0');

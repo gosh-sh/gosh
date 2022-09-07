@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-class Transformer {
+/**
+ * Formats MetricsMap into text string to be fed to Prometheus
+ * Takes care of neccessary # HELP and # TYPE comments in output
+ * Also attaches prefix and tag prefix to metrics if required
+ */
+class PrometheusFormatter {
     constructor(prefix = '', tagpfx = '') {
         this.prefix = '';
         this.tagpfx = '';
@@ -30,4 +35,4 @@ class Transformer {
         return out.join("\n");
     }
 }
-exports.default = Transformer;
+exports.default = PrometheusFormatter;

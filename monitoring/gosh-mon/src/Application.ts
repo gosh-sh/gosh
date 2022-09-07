@@ -1,13 +1,13 @@
 import express, { Express, Request, Response } from 'express';
 import Handler from "./Handler";
 import DummyHandler from "./Handlers/DummyHandler";
-import Transformer, {MetricsMap} from "./Transformer";
+import PrometheusFormatter, {MetricsMap} from "./PrometheusFormatter";
 
 export default class Application {
 
     app: Express;
     handlerFactory: (() => Handler);
-    transformer: Transformer;
+    promformatter: PrometheusFormatter;
 
     interval: number = 50;
     lastFetched: number = 0;
@@ -29,7 +29,7 @@ export default class Application {
     constructor() {
         this.app = express();
         this.handlerFactory = () => new DummyHandler();
-        this.transformer = new Transformer();
+        this.promformatter = new PrometheusFormatter();
     }
 
     async inquiry(debug: boolean): Promise<string> {
@@ -39,7 +39,7 @@ export default class Application {
         const result = debug ? await handler.handle(true) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result')!;
-        return this.transformer.process(result, debug);
+        return this.promformatter.process(result, debug);
     }
 
     prepare() {
@@ -60,7 +60,7 @@ export default class Application {
     run(port: number = 9600) {
         this.app.listen(port, () => {
             console.log('GOSH monitoring service started on port ' + port);
-            console.log('Handler: ' + this.handlerFactory().describe() + ', Prefix: ' + this.transformer.prefix);
+            console.log('Handler: ' + this.handlerFactory().describe() + ', Prefix: ' + this.promformatter.prefix);
         });
     }
 

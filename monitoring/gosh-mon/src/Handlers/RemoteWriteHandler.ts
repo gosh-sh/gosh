@@ -1,5 +1,5 @@
 import RemoteHandler from "./RemoteHandler";
-import {MetricsMap} from "../Transformer";
+import {MetricsMap} from "../PrometheusFormatter";
 import * as fs from "fs";
 import {nls} from "../Utils";
 

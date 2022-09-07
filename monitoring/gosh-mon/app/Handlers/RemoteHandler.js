@@ -39,10 +39,10 @@ class RemoteHandler extends GoshHandler_1.default {
     constructor() {
         super(...arguments);
         this.root = '';
-        this.gosh_branch = 'main';
-        this.gosh_repo_url = 'https://github.com/tonlabs/gosh.git';
-        this.gosh_bin_path = 'git-remote-gosh/git-remote-gosh.js';
-        this.release_name = 'latest';
+        this.gosh_branch = '';
+        this.gosh_repo_url = '';
+        this.gosh_bin_path = '';
+        this.release_name = '';
         this.release_asset = '';
     }
     applyExtraConfiguration(c) {
@@ -57,10 +57,9 @@ class RemoteHandler extends GoshHandler_1.default {
     async findRoot() {
         if (this.root !== '') // Use one in config IF set in config!
             return;
-        // src="/static/js/main.11759a3a.js"
-        // text:"gosh://".concat("0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358","/")
-        this.root = '0:078d7efa815982bb5622065e7658f89b29ce8a24bce90e5ca0906cdfd2cc6358'; // TODO: dynamic fallback
-        this.log.push(`${(0, Utils_1.nls)()} [${this.stepsDone}] Root contract resolved to ${this.root}`);
+        // html: src="/static/js/main.xxxxxxxx.js" -> in js file :"gosh://".concat("0:...","/")
+        throw new Error('Please set root contract address in config');
+        // this.log.push(`${nls()} [${this.stepsDone}] Root contract resolved to ${this.root}`);
     }
     async copyFile(src, dst) {
         this.say(`${(0, Utils_1.nls)()} [${this.stepsDone}] Copy file ${src} -> ${dst}`);
@@ -139,87 +138,92 @@ class RemoteHandler extends GoshHandler_1.default {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
     initialSteps(debug) {
+        return this.gosh_branch.startsWith('release:') ?
+            this.initialStepsFromRelease(debug) :
+            this.initialStepsFromRepository(debug);
+    }
+    initialStepsFromRelease(debug) {
         let data = null;
         let updated = '';
         let download = '';
-        return this.gosh_branch.startsWith('release:') ?
-            [
-                /* 0*/ () => this.ensureDir('../.gosh'),
-                /* 1*/ () => this.copyFile('config/config.json', '../.gosh/config.json'),
-                () => this.nodeWait(this.getRandomInt(1000, 5000)),
-                /* 2*/ async () => {
-                    // https://github.com/tonlabs/gosh.git
-                    const split = this.gosh_repo_url.split('/');
-                    const orgrepo = split[3] + '/' + split[4].replace('.git', '');
-                    const response = await (0, node_fetch_1.default)(`https://api.github.com/repos/${orgrepo}/releases/${this.release_name}`);
-                    if (!response.ok) {
-                        if (response.statusText != 'rate limit exceeded')
-                            throw new Error(`unexpected response ${response.statusText}`);
-                        else {
-                            this.say("warning: github rate limit exceeded", true);
-                            data = null;
-                        }
+        return [
+            /* 0*/ () => this.ensureDir('../.gosh'),
+            /* 1*/ () => this.copyFile('config/config.json', '../.gosh/config.json'),
+            () => this.nodeWait(this.getRandomInt(1000, 5000)),
+            /* 2*/ async () => {
+                // https://github.com/<organization>/<repository>.git
+                const split = this.gosh_repo_url.split('/');
+                const orgrepo = split[3] + '/' + split[4].replace('.git', '');
+                const response = await (0, node_fetch_1.default)(`https://api.github.com/repos/${orgrepo}/releases/${this.release_name}`);
+                if (!response.ok) {
+                    if (response.statusText != 'rate limit exceeded')
+                        throw new Error(`unexpected response ${response.statusText}`);
+                    else {
+                        this.say("warning: github rate limit exceeded", true);
+                        data = null;
                     }
-                    else
-                        data = await response.json();
-                },
-                /* 3*/ async () => {
-                    if (!data)
-                        return;
-                    let found = false;
-                    for (let a of data['assets']) {
-                        if (a['name'] == this.release_asset) {
-                            found = true;
-                            updated = a['updated_at'];
-                            download = a['browser_download_url'];
-                            break;
-                        }
+                }
+                else
+                    data = await response.json();
+            },
+            /* 3*/ async () => {
+                if (!data)
+                    return;
+                let found = false;
+                for (let a of data['assets']) {
+                    if (a['name'] == this.release_asset) {
+                        found = true;
+                        updated = a['updated_at'];
+                        download = a['browser_download_url'];
+                        break;
                     }
-                    if (!found) {
-                        throw Error(this.release_asset + ' not found');
-                    }
-                },
-                /* 4*/ async () => {
-                    if (!data)
-                        return;
-                    const last_updated = fs.existsSync('data/last-updated') ? fs.readFileSync('data/last-updated', 'utf-8') : '';
-                    this.say(`${(0, Utils_1.nls)()} last updated: ${last_updated}, updated: ${updated}`);
-                    if (last_updated != updated) {
-                        const response = await (0, node_fetch_1.default)(download);
-                        if (!response.ok || !response.body)
-                            throw new Error(`unexpected response ${response.statusText}`);
-                        await streamPipeline(response.body, fs.createWriteStream('./data/last-git-remote-gosh'));
-                        fs.writeFileSync('data/last-updated', updated, 'utf-8');
-                    }
-                },
-                /* 5*/ async () => { fs.chmodSync('./data/last-git-remote-gosh', 0o755); },
-                /* 6*/ () => this.nop(),
-                /* 7*/ () => this.deleteDir(this.repoDir()),
-                /* 8*/ () => this.findRoot(),
-                /* 9*/ () => this.execute(['ln', '-s', '-f', 'last-git-remote-gosh', 'data/git-remote-gosh']),
-                /*10*/ () => this.execute(['git', 'clone', '-vv', '--branch', this.branch, '--single-branch',
-                    `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
-            ]
-            :
-                [
-                    /* 0*/ () => this.ensureDir('../.gosh'),
-                    /* 1*/ () => this.copyFile('config/credentials.json', '../.gosh/credentials.json'),
-                    /* 2*/ () => (fs.existsSync('data/gosh') &&
-                        (this.get_git_url('data/gosh') !== this.gosh_repo_url)) ?
-                        this.deleteDir('data/gosh') : this.nop(),
-                    /* 3*/ () => (fs.existsSync('data/gosh')) ?
-                        this.execute(['git', 'checkout', this.gosh_branch], 'data/gosh') : this.nop(),
-                    /* 4*/ () => (fs.existsSync('data/gosh')) ?
-                        this.execute(['git', 'pull'], 'data/gosh') :
-                        this.execute(['git', 'clone', '-b', this.gosh_branch, this.gosh_repo_url, 'data/gosh']),
-                    /* 5*/ () => this.execute(['npm', 'install'], 'data/gosh/git-remote-gosh'),
-                    /* 6*/ () => this.ensureDir('data/temp'),
-                    /* 7*/ () => this.deleteDir(this.repoDir()),
-                    /* 8*/ () => this.findRoot(),
-                    /* 9*/ () => this.execute(['ln', '-s', '-f', 'gosh/' + this.gosh_bin_path, 'data/git-remote-gosh']),
-                    /*10*/ () => this.execute(['git', 'clone', '-v', '--branch', this.branch, '--single-branch',
-                        `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
-                ];
+                }
+                if (!found) {
+                    throw Error(this.release_asset + ' not found');
+                }
+            },
+            /* 4*/ async () => {
+                if (!data)
+                    return;
+                const last_updated = fs.existsSync('data/last-updated') ? fs.readFileSync('data/last-updated', 'utf-8') : '';
+                this.say(`${(0, Utils_1.nls)()} last updated: ${last_updated}, updated: ${updated}`);
+                if (last_updated != updated) {
+                    const response = await (0, node_fetch_1.default)(download);
+                    if (!response.ok || !response.body)
+                        throw new Error(`unexpected response ${response.statusText}`);
+                    await streamPipeline(response.body, fs.createWriteStream('./data/last-git-remote-gosh'));
+                    fs.writeFileSync('data/last-updated', updated, 'utf-8');
+                }
+            },
+            /* 5*/ async () => { fs.chmodSync('./data/last-git-remote-gosh', 0o755); },
+            /* 6*/ () => this.nop(),
+            /* 7*/ () => this.deleteDir(this.repoDir()),
+            /* 8*/ () => this.findRoot(),
+            /* 9*/ () => this.execute(['ln', '-s', '-f', 'last-git-remote-gosh', 'data/git-remote-gosh']),
+            /*10*/ () => this.execute(['git', 'clone', '-vv', '--branch', this.branch, '--single-branch',
+                `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
+        ];
+    }
+    initialStepsFromRepository(debug) {
+        return [
+            /* 0*/ () => this.ensureDir('../.gosh'),
+            /* 1*/ () => this.copyFile('config/credentials.json', '../.gosh/credentials.json'),
+            /* 2*/ () => (fs.existsSync('data/gosh') &&
+                (this.get_git_url('data/gosh') !== this.gosh_repo_url)) ?
+                this.deleteDir('data/gosh') : this.nop(),
+            /* 3*/ () => (fs.existsSync('data/gosh')) ?
+                this.execute(['git', 'checkout', this.gosh_branch], 'data/gosh') : this.nop(),
+            /* 4*/ () => (fs.existsSync('data/gosh')) ?
+                this.execute(['git', 'pull'], 'data/gosh') :
+                this.execute(['git', 'clone', '-b', this.gosh_branch, this.gosh_repo_url, 'data/gosh']),
+            /* 5*/ () => this.execute(['npm', 'install'], 'data/gosh/git-remote-gosh'),
+            /* 6*/ () => this.ensureDir('data/temp'),
+            /* 7*/ () => this.deleteDir(this.repoDir()),
+            /* 8*/ () => this.findRoot(),
+            /* 9*/ () => this.execute(['ln', '-s', '-f', 'gosh/' + this.gosh_bin_path, 'data/git-remote-gosh']),
+            /*10*/ () => this.execute(['git', 'clone', '-v', '--branch', this.branch, '--single-branch',
+                `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
+        ];
     }
 }
 exports.default = RemoteHandler;

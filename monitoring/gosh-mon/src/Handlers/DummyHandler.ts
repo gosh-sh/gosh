@@ -1,5 +1,5 @@
 import {now} from "../Utils";
-import {MetricsMap} from "../Transformer";
+import {MetricsMap} from "../PrometheusFormatter";
 import Handler from "../Handler";
 
 export default class DummyHandler extends Handler {

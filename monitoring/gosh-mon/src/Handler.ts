@@ -1,4 +1,4 @@
-import {MetricsMap} from "./Transformer";
+import {MetricsMap} from "./PrometheusFormatter";
 import {Metrics} from "puppeteer";
 import {now} from "./Utils";
 import Application from "./Application";

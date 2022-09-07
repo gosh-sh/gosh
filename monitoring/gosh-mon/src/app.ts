@@ -45,8 +45,8 @@ app.handlerFactory = () => {
     return handler;
 };
 app.setInterval(c['interval'] - c['subinterval']);
-app.transformer.prefix = c['prefix'];
-app.transformer.tagpfx = `mode="${mode}"`;
+app.promformatter.prefix = c['prefix'];
+app.promformatter.tagpfx = `mode="${mode}"`;
 
 console.log('Configured mode: ' + mode.replaceAll('-', ' '));
 

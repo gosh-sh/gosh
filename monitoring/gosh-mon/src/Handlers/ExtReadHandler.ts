@@ -1,5 +1,5 @@
 import ExtHandler from "./ExtHandler";
-import {MetricsMap} from "../Transformer";
+import {MetricsMap} from "../PrometheusFormatter";
 
 export default class ExtReadHandler extends ExtHandler {
 

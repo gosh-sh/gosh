@@ -1,5 +1,5 @@
 import AppHandler from "./AppHandler";
-import {MetricsMap} from "../Transformer";
+import {MetricsMap} from "../PrometheusFormatter";
 
 export default class RootCheckHandler extends AppHandler {
 
