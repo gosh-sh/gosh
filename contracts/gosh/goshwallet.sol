@@ -266,7 +266,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function setTimestone(string nameRepo) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-    	Repository(_buildRepositoryAddr(nameRepo)).setTimestone{value : 0.1 ton, flag : 1}(_pubaddr, _index);
+    	Repository(_buildRepositoryAddr(nameRepo)).setTumbstone{value : 0.1 ton, flag : 1}(_pubaddr, _index);
     }
 
 
