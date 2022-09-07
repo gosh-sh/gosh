@@ -1,0 +1,129 @@
+version: '3'
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+
+services:
+
+  gosh-prometheus:
+    image: prom/prometheus:v2.38.0
+    container_name: gosh-prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=365d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    expose:
+      - 9090
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-alertmanager:
+    image: prom/alertmanager:v0.24.0
+    container_name: gosh-alertmanager
+    volumes:
+      - ./data/alertmanager:/alertmanager
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    expose:
+      - 9093
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-nodeexporter:
+    image: prom/node-exporter:v1.3.1
+    container_name: gosh-nodeexporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /:/host:ro,rslave
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-cadvisor:
+    image: gcr.io/google-containers/cadvisor:v0.35.0
+    container_name: gosh-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-grafana:
+    image: grafana/grafana:9.1.2
+    container_name: gosh-grafana
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana:/etc/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_RENDERING_SERVER_URL=http://gosh-renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://gosh-grafana:3000/
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/gosh/home.json
+    restart: unless-stopped
+    expose:
+      - 3000
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-renderer:
+    image: grafana/grafana-image-renderer:3.6.1
+    container_name: gosh-renderer
+    restart: unless-stopped
+    expose:
+      - 8081
+#    environment:
+#      ENABLE_METRICS: 'true'
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"
+
+  gosh-pushgateway:
+    image: prom/pushgateway:v1.4.3
+    container_name: gosh-pushgateway
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - gosh-monitoring
+    labels:
+      org.label-schema.group: "gosh-monitoring"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import ReactTooltip from 'react-tooltip'
 import { AppConfig, useGoshVersions } from 'react-gosh'
 
 import Header from './components/Header'
@@ -40,6 +41,7 @@ import { ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
+import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
@@ -171,15 +173,37 @@ const App = () => {
                 </Routes>
             </main>
             <footer className="footer">
-                <div className="text-right text-xs text-gray-050a15">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end text-xs text-gray-050a15 px-3 py-2">
                     {process.env.REACT_APP_GOSH_NETWORK}
-                    <span className="ml-2">
-                        {shortString(process.env.REACT_APP_GOSH_ROOTADDR ?? '', 6, 4)}
-                    </span>
+                    <CopyClipboard
+                        label={
+                            <span data-tip={process.env.REACT_APP_GOSH_ADDR}>
+                                {shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}
+                            </span>
+                        }
+                        componentProps={{
+                            text: process.env.REACT_APP_GOSH_ADDR ?? '',
+                        }}
+                    />
+                    <CopyClipboard
+                        label={
+                            <span data-tip={process.env.REACT_APP_CREATOR_ADDR}>
+                                {shortString(
+                                    process.env.REACT_APP_CREATOR_ADDR ?? '',
+                                    6,
+                                    4,
+                                )}
+                            </span>
+                        }
+                        componentProps={{
+                            text: process.env.REACT_APP_CREATOR_ADDR ?? '',
+                        }}
+                    />
                 </div>
             </footer>
 
             <ToastContainer {...ToastOptionsShortcuts.Default} />
+            <ReactTooltip clickable />
             <BaseModal />
         </div>
     )

@@ -1,0 +1,8 @@
+route:
+    group_by: [...]
+    group_wait: 5s
+    group_interval: 1m
+    receiver: 'drop'
+
+receivers:
+    - name: 'drop'
