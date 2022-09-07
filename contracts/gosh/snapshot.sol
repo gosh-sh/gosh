@@ -181,7 +181,8 @@ contract Snapshot is Modifiers {
         }
     }
 
-    function cancelDiff(uint128 index1, uint128 index2) public {
+    function cancelDiff(uint128 index1, uint128 index2, string commit) public {
+        commit;
         require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _basemaybe = "";
@@ -191,7 +192,8 @@ contract Snapshot is Modifiers {
         _applying = false;
     }
 
-    function approve(uint128 index1, uint128 index2) public {
+    function approve(uint128 index1, uint128 index2, string commit) public {
+        commit;
         require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_baseCommit.empty()) { 

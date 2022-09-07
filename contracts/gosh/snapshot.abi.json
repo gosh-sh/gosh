@@ -50,7 +50,8 @@
 			"name": "cancelDiff",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -59,7 +60,8 @@
 			"name": "approve",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
