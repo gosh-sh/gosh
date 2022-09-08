@@ -81,7 +81,7 @@ pipeline {
             }
         }
 
-        /*stage('Tests: functional') {
+        stage('Tests: functional') {
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -95,7 +95,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
         stage('Web: deploy') {
             steps {
@@ -158,7 +158,7 @@ pipeline {
                 retry(3) {
                     script {
                         if (!params.DRYRUN && !params.ONLYWEB) {
-                            dir('git-remote-gosh') {:wq
+                            dir('git-remote-gosh') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
                                 }
