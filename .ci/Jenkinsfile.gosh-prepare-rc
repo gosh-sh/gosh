@@ -81,7 +81,7 @@ pipeline {
             }
         }
 
-        stage('Tests: functional') {
+        /*stage('Tests: functional') {
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -95,7 +95,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Web: deploy') {
             steps {
