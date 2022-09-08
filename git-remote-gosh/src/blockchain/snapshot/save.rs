@@ -127,6 +127,7 @@ pub async fn diff_address(
     Ok(result.address)
 }
 
+#[instrument(level = "debug")]
 pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
     let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
         || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
