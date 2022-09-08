@@ -2,7 +2,7 @@
 server {
 
     listen 80;
-    server_name GOSH_WEB_VERSION-test-app.gosh.sh;
+    server_name GOSH_WEB_VERSION.gosh.sh;
 
 	location / {
 		proxy_set_header        Host $host:$server_port;
