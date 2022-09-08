@@ -49,4 +49,5 @@ abstract contract Errors {
     uint constant ERR_BAD_COUNT_PARENTS = 238;
     uint constant ERR_REPOSITORY_NOT_READY = 239;
     uint constant ERR_PREV_NOT_EXIST = 240;
+    uint constant ERR_WRONG_DAO = 241;
 }

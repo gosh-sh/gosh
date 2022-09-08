@@ -13,6 +13,24 @@
 			]
 		},
 		{
+			"name": "deployedProfileDao",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployedWallet",
+			"inputs": [
+				{"name":"goshroot","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addPubkey",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}

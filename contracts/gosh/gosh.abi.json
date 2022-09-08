@@ -256,6 +256,17 @@
 			]
 		},
 		{
+			"name": "getAddrWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"dao","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getRepoDaoCode",
 			"inputs": [
 				{"name":"dao","type":"address"}

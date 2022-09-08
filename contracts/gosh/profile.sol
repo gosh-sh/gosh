@@ -76,6 +76,19 @@ contract Profile is Modifiers {
         getMoney();
     }
     
+    function deployedProfileDao(string name) public view {
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        require(address(tvm.hash(s0)) == msg.sender, ERR_WRONG_DAO);
+    }
+    
+    function deployedWallet(address goshroot, address goshdao, uint128 index) public pure {
+        goshroot; goshdao; index;
+    }
+    
     function addPubkey(
         uint256 pubkey
     ) public onlyOwnerPubkeyList  accept saveMsg {

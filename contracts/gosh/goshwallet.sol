@@ -18,6 +18,7 @@ import "gosh.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
+import "profile.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
@@ -117,6 +118,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
         _tip3root = _tip3Root;
+        Profile(_pubaddr).deployedWallet(_goshroot, _goshdao, _index);
         getMoney();
     }
     
