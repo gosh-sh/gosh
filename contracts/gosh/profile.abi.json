@@ -13,14 +13,6 @@
 			]
 		},
 		{
-			"name": "deployedProfileDao",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployedWallet",
 			"inputs": [
 				{"name":"goshroot","type":"address"},

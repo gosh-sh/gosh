@@ -24,7 +24,6 @@ contract ProfileDao is Modifiers {
 
     constructor() public {
         _pubaddr = msg.sender;
-        Profile(_pubaddr).deployedProfileDao{value: 0.1 ton, flag: 1}(_name);
         getMoney();
     }
     
