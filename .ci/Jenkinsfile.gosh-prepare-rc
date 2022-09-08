@@ -68,7 +68,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: deploy smart-contracts') {
+        stage('Deploy: deploy smart-contracts') {
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -80,7 +80,6 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/GoshDaoCreator.addr'
             }
         }
-
         stage('Tests: functional') {
             steps {
                 script {
@@ -96,7 +95,6 @@ pipeline {
                 }
             }
         }
-
         stage('Web: deploy') {
             steps {
                 script {
@@ -131,6 +129,29 @@ pipeline {
                             return r == 0
                         }  
                     }
+                }
+            }
+        }
+        stage('Web: run tests') {
+            steps {
+                script {
+                    dir('monitoring/gosh-mon') {     
+                        sh """      
+                            docker build -t gosh-mon monitoring/gosh-mon
+                            docker run --rm \
+                                -e GM_MODE=seed-read \
+                                -e RUN_NOW=1 \
+                                -e CONFIG_SEED='palm rebel eye blade write excess avoid define card mimic gas call' \
+                                -e CONFIG_APPURL='${DOCKER_WEB_CONTAINER_NAME}.gosh.sh' \
+                                -v $(pwd)/config:/home/node/app/config:ro gosh-mon \
+                                -v $(pwd)/test-errors:/home/node/app/errors
+                        """  
+                    }   
+                }
+            }
+            post {
+                failure {
+                    archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*"
                 }
             }
         }
