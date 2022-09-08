@@ -111,6 +111,15 @@
 			"outputs": [
 				{"name":"value0","type":"map(uint256,bool)"}
 			]
+		},
+		{
+			"name": "isPubkeyCorrect",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
 		}
 	],
 	"data": [
