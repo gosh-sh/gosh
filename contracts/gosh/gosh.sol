@@ -80,14 +80,14 @@ contract GoshRoot is Modifiers, Upgradable{
         })));
     }
     
-    function deployProfile(uint256 pubkey) public view accept {
+    function deployProfile(string name, uint256 pubkey) public view accept {
         tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
-            varInit: {_pubkey: pubkey}
+            varInit: {_name: name}
         });
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao);
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao, pubkey);
     }
 
     
@@ -131,12 +131,12 @@ contract GoshRoot is Modifiers, Upgradable{
         addr.transfer(value);
     }
     
-    function sendMoneyProfile(uint256 pubkey, uint128 value) public view {
+    function sendMoneyProfile(string name, uint128 value) public view {
         tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
-            varInit: {_pubkey: pubkey}
+            varInit: {_name : name}
         });
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -327,11 +327,11 @@ contract GoshRoot is Modifiers, Upgradable{
         );
     }
     
-    function getProfileAddr(uint256 pubkey) external view returns(address) {
+    function getProfileAddr(string name) external view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
-            varInit: {_pubkey: pubkey}
+            varInit: {_name : name}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }

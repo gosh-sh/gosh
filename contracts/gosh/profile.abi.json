@@ -6,7 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"codeProfileDao","type":"cell"}
+				{"name":"codeProfileDao","type":"cell"},
+				{"name":"pubkey","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -113,7 +114,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_pubkey","type":"uint256"}
+		{"key":1,"name":"_name","type":"string"}
 	],
 	"events": [
 	],
@@ -124,7 +125,7 @@
 		{"name":"m_codeProfileDao","type":"cell"},
 		{"name":"m_messages","type":"map(uint256,uint32)"},
 		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_name","type":"string"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_owners","type":"map(uint256,bool)"}

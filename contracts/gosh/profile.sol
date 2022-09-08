@@ -32,7 +32,7 @@ contract Profile is Modifiers {
         _;
     }
 
-    uint256 static _pubkey;
+    string static _name;
 
     function _saveMsg() inline internal {
         m_messages[m_lastMsg.msgHash] = m_lastMsg.expireAt;
@@ -67,11 +67,12 @@ contract Profile is Modifiers {
     bool _flag = false;
     mapping(uint256 => bool) _owners;
 
-    constructor( TvmCell codeProfileDao
+    constructor( TvmCell codeProfileDao, 
+        uint256 pubkey
     ) public {
         _goshroot = msg.sender;
         m_codeProfileDao = codeProfileDao;
-        _owners[_pubkey] = true;
+        _owners[pubkey] = true;
         getMoney();
     }
     
@@ -145,7 +146,7 @@ contract Profile is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        GoshRoot(_goshroot).sendMoneyProfile{value : 0.2 ton}(_pubkey, 1000 ton);
+        GoshRoot(_goshroot).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
     }
     
     //Fallback/Receive
