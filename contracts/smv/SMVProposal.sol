@@ -12,17 +12,10 @@ import "Interfaces/IVotingResultRecipient.sol";
 
 import "LockableBase.sol";
 
-
-/* function amount_locked () virtual internal view returns(uint128);
-function performAction (uint128 amountToLock, TvmCell inputCell) virtual external;
-function onCodeUpgrade (uint256 _platform_id, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell) virtual internal;
-function getLockedAmount () virtual external view  responsible returns(uint128);
- */
-
-abstract contract SMVProposalBase is LockableBase, ISMVProposal , IVotingResultRecipient {
+abstract contract SMVProposalBase is LockableBase, ISMVProposal  {
 
 uint256 public propId;
-uint32   creationTime;
+uint32  creationTime;
 address public tokenRoot;
 
 TvmCell propData;
@@ -34,31 +27,32 @@ uint128 public votesYes;
 uint128 public votesNo;
 optional (bool) public votingResult;
 uint128 public amountLocked;
-bool public proposalBusy;
-bool public proposalPerformed;
+uint128 public totalSupply;
+//bool public proposalBusy;
+//uint128 total_votes;
 
 function amount_locked () internal override view returns(uint128)
 {
     return amountLocked;
 }
 
-function calcExternalClientAddress (address _tokenLocker, uint256 _platform_id) internal view returns(uint256)
+function calcExternalClientAddress (address /* _tokenLocker */, uint256 _platform_id) internal view returns(uint256)
 {
-  TvmCell dataCell = tvm.buildDataInit ( {contr:LockerPlatform,
-                                          varInit:{
-                                             tokenLocker: _tokenLocker,
-                                             platform_id: _platform_id } } );
-  uint256 dataHash = tvm.hash (dataCell);
-  uint16 dataDepth = dataCell.depth();
+    TvmCell dataCell = tvm.buildDataInit ( {contr:LockerPlatform,
+                                            varInit:{
+                                                /* tokenLocker: _tokenLocker, */
+                                                platform_id: _platform_id } } );
+    uint256 dataHash = tvm.hash (dataCell);
+    uint16 dataDepth = dataCell.depth();
 
-  uint256 add_std_address = tvm.stateInitHash (platformCodeHash, dataHash , platformCodeDepth, dataDepth);
-  return add_std_address ;
+    uint256 add_std_address = tvm.stateInitHash (platformCodeHash, dataHash , platformCodeDepth, dataDepth);
+    return add_std_address ;
 }
 
 modifier check_external_client (address _tokenLocker, uint256 _platform_id) {
-  uint256 expected = calcExternalClientAddress (_tokenLocker, _platform_id);
-  require ( msg.sender.value == expected, SMVErrors.error_not_my_external_client) ;
-  _ ;
+    uint256 expected = calcExternalClientAddress (_tokenLocker, _platform_id);
+    require ( msg.sender.value == expected, SMVErrors.error_not_my_external_client) ;
+    _ ;
 }
 
 modifier check_token_root {
@@ -66,7 +60,11 @@ modifier check_token_root {
     _ ;
 }
 
-function onCodeUpgrade (uint256 _platform_id, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell) internal override
+function onCodeUpgrade (uint256 _platform_id, 
+                        uint128 amountToLock,
+                        uint128 /* totalVotes */, 
+                        TvmCell staticCell, 
+                        TvmCell inputCell) internal override
 {
     tvm.resetStorage();
 
@@ -74,11 +72,12 @@ function onCodeUpgrade (uint256 _platform_id, uint128 amountToLock, TvmCell stat
     votingResult.reset();
     leftBro.reset();
     rightBro.reset();
+    rightAmount.reset();
     currentHead.reset();
     platform_id = _platform_id;
     amountLocked = amountToLock;
-    proposalBusy = false;
-    proposalPerformed = false;
+    //proposalBusy = false;
+    //total_votes = totalVotes;
 
     ( , tokenLocker , propId, platformCodeHash, platformCodeDepth) = staticCell.toSlice().decode(uint8, address, uint256, uint256, uint16);
 
@@ -91,46 +90,30 @@ function onCodeUpgrade (uint256 _platform_id, uint128 amountToLock, TvmCell stat
 
     currentHead = s.decode(optional(address));
 
-    //tvm.rawReserve(SMVConstants.PROPOSAL_INIT_VALUE, 2);
-    //ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128} (platform_id, true, address(this));
-
     uint128 extra = 0;
     if (address(this).balance > SMVConstants.PROPOSAL_INIT_VALUE)
         {extra = address(this).balance - SMVConstants.PROPOSAL_INIT_VALUE;}
 
-    if (extra == 0 )
+    if (extra == 0)
     {
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128+32} (platform_id, false, address(this));
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue; 
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128+32} (platform_id, false, emptyAddress, emptyValue);
     }
     else
     {
-        ISMVTokenLocker(tokenLocker).onInitialized {value: SMVConstants.EPSILON_FEE, flag: 1} (platform_id);
+        //ISMVTokenLocker(tokenLocker).onInitialized {value: SMVConstants.EPSILON_FEE, flag: 1} (platform_id);
+        delete_and_do_action();    
     }
 }
 
-function continueLeftBro() private
+function onContinueAction(uint128 t) external check_token_root
 {
-    if (!isTail())
-    {
-        LockableBase(rightBro.get()).setLeftBro {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVProposalBase.onSetLeftBro} (platform_id, leftBro);
-    }
-    else do_action();
-}
+    totalSupply = t;
 
-function onSetRightBro (uint256 _platform_id) external check_client(_platform_id)
-{
-    continueLeftBro();
-}
-
-function onSetLeftBro (uint256 _platform_id) external check_client(_platform_id)
-{
-    do_action();
-}
-
-function do_action() private
-{
     leftBro.reset();
     rightBro.reset();
+    rightAmount.reset();
 
     if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
         uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
@@ -138,31 +121,24 @@ function do_action() private
     }
     else
     {
-        currentHead.set(address(this));
+        //currentHead.set(address(this));
         uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value: extra, flag:1} (platform_id, true, address(this));
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value: extra, flag:1} (platform_id, true, address(this), amount_locked());
     }
 }
 
-function performAction (uint128 amountToLock, uint128 total_votes, TvmCell /* inputCell */) external override check_locker
+function do_action() internal override
 {
-    require(!proposalPerformed, SMVErrors.error_proposol_already_performed);
-    require(initialized, SMVErrors.error_not_initialized);
-    //require(now < propFinishTime, SMVErrors.error_proposal_ended);
-    require(address(this).balance >= SMVConstants.PROPOSAL_MIN_BALANCE +
-                                     SMVConstants.VOTING_FEE+
-                                     SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    require(amountToLock <= total_votes, SMVErrors.error_not_enough_votes);                                 
-    tvm.accept();
+    ITokenRoot(tokenRoot).totalSupply {value: SMVConstants.ACTION_FEE, flag: 1, callback:SMVProposalBase.onContinueAction} ();
+}
 
-    proposalPerformed = true;
-
-    if (!isHead())
-    {
-        LockableBase(leftBro.get()).setRightBro {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVProposalBase.onSetRightBro} (platform_id, rightBro);
-    }
-    else continueLeftBro();
-
+//this prevents hang when creating the same proposal
+function performAction (uint128 /* amountToLock */, uint128 /* total_votes */, TvmCell /* inputCell */) external override check_locker
+{
+    optional (address) emptyAddress;
+    optional (uint128) emptyValue; 
+    uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
+    ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue);
 }
 
 function getInitialize(address _tokenLocker, uint256 _platform_id) external override check_external_client(_tokenLocker, _platform_id)
@@ -171,139 +147,63 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     //require(!proposalBusy, SMVErrors.proposal_is_busy);
     tvm.accept();
 
-    bool allowed = (!proposalBusy) && (now >= startTime) &&  (now < finishTime) && (!votingResult.hasValue());
+    bool allowed = //(!proposalBusy) && 
+                   (now >= startTime) &&  (now < finishTime) && (!votingResult.hasValue());
 
     if (!allowed)
         ISMVClient(msg.sender).initialize {value:0, flag: 64} (false, finishTime);
     else {
-        proposalBusy = true;
-        currentCaller = msg.sender;
-        ITokenRoot(tokenRoot).totalSupply {value: 0, flag: 64, callback:SMVProposalBase.onContinueInitialize} ();
+        tryEarlyComplete(totalSupply);
+        /* bool  */allowed = !votingResult.hasValue();
+        ISMVClient(msg.sender).initialize {value:0, flag: 64} (allowed, finishTime);
     }
-}
-
-function onContinueInitialize(uint128 t) external check_token_root
-{
-    tryEarlyComplete(t);
-
-    bool allowed = !votingResult.hasValue();
-
-    if (!currentCaller.isStdZero()) {
-        ISMVClient(currentCaller).initialize {value:0, flag: 64} (allowed, finishTime);
-    }
-
-    proposalBusy = false;
-    currentCaller = address.makeAddrStd(0,0);
-}
-
-
-function onContinueVoting(uint128 t) external check_token_root
-{
-    tryEarlyComplete(t);
-
-    if (votingResult.hasValue()) {
-        if (!currentCaller.isStdZero()) {
-            ISMVClient(currentCaller).onProposalVoted {value:0, flag: 64} (false);
-        }
-    }
-    else
-    {
-        if (currentChoice)
-        {
-            votesYes += currentAmount;
-        }
-        else
-        {
-            votesNo += currentAmount;
-        }
-
-        if (!currentCaller.isStdZero()) {
-            ISMVClient(currentCaller).onProposalVoted {value:0, flag: 64} (true);
-        }
-    }
-
-    proposalBusy = false;
-    currentCaller = address.makeAddrStd(0,0);
-    currentAmount = 0;
 }
 
 function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount) external override check_external_client(_locker,_platform_id) 
 {
     require(msg.value >= SMVConstants.PROPOSAL_VOTING_FEE, SMVErrors.error_balance_too_low);
-    //require(!proposalBusy, SMVErrors.proposal_is_busy);
-    //require(!votingResult.hasValue(), SMVErrors.proposal_is_completed);
+
     tvm.accept();
 
-    if ((proposalBusy) || (now < startTime) || (now >= finishTime) || (votingResult.hasValue()) )
+    if (/* (proposalBusy) || */ (now < startTime) || (now >= finishTime) || (votingResult.hasValue()) )
         //return {value:0, flag: 64} false; 
         ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
     else {    
-        proposalBusy = true;
-        currentCaller = msg.sender;
-        currentAmount = amount;
-        currentChoice = choice;
-        ITokenRoot(tokenRoot).totalSupply {value: 0, flag: 64, callback:SMVProposalBase.onContinueVoting} ();
-        /* tvm.commit();
-        tvm.exit(); */
-    }
-}
+        tryEarlyComplete(totalSupply);
 
-function completeVoting (uint128 t) external check_token_root
-{
-    if (now < finishTime)
-    {
-        tryEarlyComplete(t);
-    }
-    else
-    {
-        calcVotingResult(t);
-    }
-
-    if (!currentCaller.isStdZero())
-    {
-        IVotingResultRecipient(currentCaller).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
-    }
-
-    currentCaller = address.makeAddrStd(0,0);
-    proposalBusy = false;
-}
-
-address currentCaller;
-uint128 currentAmount;
-bool currentChoice;
-
-
-function isCompleted () override external /* responsible */ /* returns (optional (bool)) */
-{
-    require (msg.value > SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
-    //require(!proposalBusy, SMVErrors.proposal_is_busy);
-
-    if ((msg.value <= SMVConstants.VOTING_COMPLETION_FEE) || (proposalBusy))
-        //return {value:0, flag: 64} votingResult;
-        IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
-    else
-    {
-        optional (bool) empty;
-
-        if (now < startTime)
-            //return {value:0, flag: 64} empty;
-            IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, empty, propData);
-        else    
+        if (votingResult.hasValue()) 
+            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
+        else
         {
-            if (!votingResult.hasValue())
-            {
-                currentCaller = msg.sender;
-                proposalBusy = true;
-                ITokenRoot(tokenRoot).totalSupply {value: 0, flag: 64, callback: SMVProposalBase.completeVoting} ();
-                /* tvm.commit();
-                tvm.exit(); */
-            }
-            else {
-                //return {value:0, flag: 64} votingResult;
-                IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
-            }
+            if (choice)
+                votesYes += amount;
+            else
+                votesNo += amount;
+            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
         }
     }
+}
+
+function completeVoting() internal
+{
+    if ((address(this).balance > SMVConstants.PROPOSAL_MIN_BALANCE + SMVConstants.VOTING_COMPLETION_FEE) && 
+        (now >= startTime) && 
+        (!votingResult.hasValue())/* || (proposalBusy) */)
+    {
+        if (now < finishTime)
+            tryEarlyComplete(totalSupply);
+        else
+            calcVotingResult(totalSupply);
+    }
+}
+
+function isCompleted () override public
+{
+    require (msg.value > SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
+
+    completeVoting();
+
+    IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
 }
 
 function _isCompleted () public view returns (optional (bool))
@@ -311,12 +211,7 @@ function _isCompleted () public view returns (optional (bool))
     return votingResult;
 }
 
-function isInitialized () external override view responsible check_locker returns(uint256)
-{
-    /* if (initialized)
-        return {value:0, flag: 64} platform_id; */
-    revert();    
-}
+
 
 //gosh only
 //b.store(proposalKind, repoName, branchName, commitName, fullCommit, parent1, parent2);
@@ -327,20 +222,6 @@ function getGoshSetCommitProposalParams () external view
     (proposalKind,  repoName,  branchName,  commit) = s.decode(uint256, string, string, string);
 }
 
-function getGoshAddProtectedBranchProposalParams () external view 
-         returns( uint256  proposalKind,  string repoName, string  branchName)
-{
-    TvmSlice s = propData.toSlice();
-    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
-}
-
-function getGoshDeleteProtectedBranchProposalParams () external view 
-         returns( uint256  proposalKind,  string repoName, string  branchName)
-{
-    TvmSlice s = propData.toSlice();
-    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
-}
-
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}
@@ -348,20 +229,24 @@ function calcVotingResult (uint128 t) internal virtual {}
 
 function continueUpdateHead (uint256 _platform_id) external override check_client(_platform_id)
 {
-    leftBro.reset();
-    uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
+     leftBro.reset();
+/*    uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
 
     if (extra > SMVConstants.VOTING_COMPLETION_FEE)
         ISMVProposal(address(this)).isCompleted {value: extra, flag: 1+2} ();
     else
-        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id, address(this));
+        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id, address(this), amount_locked());
+ */
+    completeVoting();
+    continueUpdateHeadHere();
+
 }
 
 
 /* function onProposalCompletedWhileUpdateHead (optional (bool) completed) external check_myself */
-function isCompletedCallback (uint256 /* _platform_id */, address /* tokenLocker */, optional (bool) completed, TvmCell /* data */ ) external override check_myself
+function continueUpdateHeadHere () internal view
 {   
-    if (completed.hasValue())
+    if (votingResult.hasValue())
     {
         if (rightBro.hasValue())
         {
@@ -372,14 +257,15 @@ function isCompletedCallback (uint256 /* _platform_id */, address /* tokenLocker
         else
         {
             uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
-            optional (address) empty;
-            ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, empty);
+            optional (address) emptyAddress;
+            optional (uint128) emptyValue;
+            ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, emptyAddress, emptyValue);
         }
     }
     else
     {
         uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
-        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, address(this));
+        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, address(this), amount_locked());
     }
 }
 
@@ -389,12 +275,9 @@ function updateHead() external override check_locker()
     require(address(this).balance >= SMVConstants.PROPOSAL_MIN_BALANCE +
                                      SMVConstants.VOTING_COMPLETION_FEE +                               
                                      2*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    require(!proposalBusy, SMVErrors.error_proposal_is_busy);
-
-    SMVProposalBase(address(this)).isCompleted {value: SMVConstants.VOTING_COMPLETION_FEE + SMVConstants.ACTION_FEE, 
-                                                 flag: 1/* , 
-                                                 callback: SMVProposalBase.onProposalCompletedWhileUpdateHead */} ();
-
+    
+    completeVoting();
+    continueUpdateHeadHere();
 }
 
 }

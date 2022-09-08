@@ -55,12 +55,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     TvmCell m_codeDiff;
     TvmCell m_contentSignature;
 
-    TvmCell m_SMVPlatformCode;
-    TvmCell m_SMVClientCode;
-    TvmCell m_SMVProposalCode;
-    TvmCell m_lockerCode;
-    address _tip3root;
-
+/*     TvmCell m_SMVPlatformCode;
+ */    TvmCell m_SMVClientCode;
+/*     TvmCell m_SMVProposalCode;
+ */    TvmCell m_lockerCode;
+/*     address _tip3root;
+ */
     uint128 counter = 0;
     uint128 _last_time = 0;
     uint128 _limit_wallets;
@@ -87,7 +87,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell clientCode,
         TvmCell proposalCode,
         address _tip3Root
-    ) public SMVAccount(lockerCode, tvm.hash(platformCode), platformCode.depth(),
+    ) public SMVAccount(lockerCode, WalletCode, tvm.hash(platformCode), platformCode.depth(),
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
                         proposalCode.depth(), _tip3Root
     ) {
@@ -111,8 +111,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVClientCode = clientCode;
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
-        _tip3root = _tip3Root;
-        getMoney();
+/*         _tip3root = _tip3Root;
+ */        getMoney();
     }
 
     //Content part
@@ -162,7 +162,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
             m_WalletCode,
             m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages,
             m_lockerCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, _tip3root);
+            m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
         getMoney();
     }
 
@@ -479,19 +479,20 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //SMV part
-    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime) internal view
+    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients) internal view
     {
         uint256 prop_id = tvm.hash(dataCell);
         uint32 startTime = now + startTimeAfter;
         uint32 finishTime = now + startTimeAfter + durationTime;
-        startProposal(m_SMVPlatformCode, m_SMVProposalCode, prop_id, dataCell, startTime, finishTime);
+        startProposal(/* m_SMVPlatformCode, m_SMVProposalCode, */ prop_id, dataCell, startTime, finishTime, num_clients );
     }
 
     function startProposalForSetCommit(
         string repoName,
         string branchName,
         string commit,
-        uint128 numberChangedFiles
+        uint128 numberChangedFiles,
+        uint128 num_clients
     ) public onlyOwner {
         tvm.accept();
         _saveMsg();
@@ -501,14 +502,15 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles);
         TvmCell c = proposalBuilder.toCell();
 
-        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION);
+        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
 
     function startProposalForAddProtectedBranch(
         string repoName,
-        string branchName
+        string branchName,
+        uint128 num_clients
     ) public onlyOwner {
         tvm.accept();
         _saveMsg();
@@ -518,14 +520,15 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         proposalBuilder.store(proposalKind, repoName, branchName, now);
         TvmCell c = proposalBuilder.toCell();
 
-        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION);
+        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
 
     function startProposalForDeleteProtectedBranch(
         string repoName,
-        string branchName
+        string branchName,
+        uint128 num_clients
     ) public onlyOwner {
         tvm.accept();
         _saveMsg();
@@ -535,7 +538,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         proposalBuilder.store(proposalKind, repoName, branchName, now);
         TvmCell c = proposalBuilder.toCell();
 
-        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION);
+        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
@@ -551,7 +554,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell dataCell = tvm.buildDataInit({
             contr: LockerPlatform,
             varInit: {
-                tokenLocker: _tokenLocker,
+                /* tokenLocker: _tokenLocker, */
                 platform_id: _platform_id
             }
         });
