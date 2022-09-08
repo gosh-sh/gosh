@@ -105,7 +105,32 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
-        if (previous.hasValue()) { _previous = previous.get(); /* this.getPreviousInfo{value: 0.1 ton, flag: 1}(); */ }
+        if (previous.hasValue()) { _previous = previous.get(); GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); }
+    }
+    
+    function getPreviousInfo(string name) public view {
+        require(_nameDao == name, ERR_WRONG_DAO);
+        tvm.accept();
+        GoshDao(msg.sender).getPreviousInfo1{value: 0.1 ton, flag: 1}(_wallets);
+    }
+    
+    function getPreviousInfo1(mapping(uint256 => address) wallets) public view {
+        require(_previous == msg.sender, ERR_WRONG_DAO);
+        tvm.accept();
+        uint256 zero;
+        this.returnWallets{value: 0.1 ton}(zero, wallets);
+    }
+    
+    function returnWallets(uint256 key, mapping(uint256 => address) wallets) public senderIs(address(this)) accept {
+        optional(uint256, address) res = wallets.next(key);
+        if (res.hasValue()) {
+            address pub;
+            (key, pub) = res.get();
+            this.deployWalletIn{value: 0.1 ton, flag: 1}(pub);
+            this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
+        }
+        else { _wallets = wallets; }
+        getMoney();
     }
     
     function _buildRepositoryAddr(string name) private view returns (address) {
@@ -174,6 +199,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     //Wallet part
     function deployWallet(address pubaddr) public senderIs(_pubaddr) {
+        tvm.accept();
+        this.deployWalletIn{value: 0.1 ton, flag: 1}(pubaddr);
+        getMoney();
+    }
+    
+    function deployWalletIn(address pubaddr) public senderIs(address(this)) {
         tvm.accept();
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));

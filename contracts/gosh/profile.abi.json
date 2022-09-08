@@ -17,7 +17,8 @@
 			"inputs": [
 				{"name":"goshroot","type":"address"},
 				{"name":"goshdao","type":"address"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
 			],
 			"outputs": [
 			]

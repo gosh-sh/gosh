@@ -76,8 +76,8 @@ contract Profile is Modifiers {
         getMoney();
     }
     
-    function deployedWallet(address goshroot, address goshdao, uint128 index) public pure {
-        goshroot; goshdao; index;
+    function deployedWallet(address goshroot, address goshdao, uint128 index, string ver) public pure {
+        goshroot; goshdao; index; ver;
     }
     
     function addPubkey(

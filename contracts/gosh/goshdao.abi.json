@@ -28,6 +28,31 @@
 			]
 		},
 		{
+			"name": "getPreviousInfo",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfo1",
+			"inputs": [
+				{"name":"wallets","type":"map(uint256,address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWallets",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"wallets","type":"map(uint256,address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyDiff",
 			"inputs": [
 				{"name":"repo","type":"address"},
@@ -58,6 +83,14 @@
 		},
 		{
 			"name": "deployWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletIn",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
 			],
