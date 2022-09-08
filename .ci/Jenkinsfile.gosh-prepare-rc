@@ -104,7 +104,7 @@ pipeline {
                     env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_CREATOR_ADDR = sh script: "cat contracts/gosh/GoshDaoCreator.addr | tr -d '\n'", returnStdout: true 
                     sh """
-                        touch ${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh:8000
+                        touch ${DOCKER_WEB_CONTAINER_NAME}.gosh.sh
                         sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' web/.env.ci
                         sed -i '/REACT_APP_CREATOR_ADDR/s/\$/${REACT_APP_CREATOR_ADDR}/' web/.env.ci
                         mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
@@ -118,7 +118,7 @@ pipeline {
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
-                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh*"
+                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.gosh.sh*"
                 }
             }
         }
@@ -127,7 +127,7 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 http://${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh:8000 > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
