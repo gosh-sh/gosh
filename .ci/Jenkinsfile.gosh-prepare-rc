@@ -142,7 +142,7 @@ pipeline {
                                 -e GM_MODE=seed-read \
                                 -e RUN_NOW=1 \
                                 -e CONFIG_SEED=\'palm rebel eye blade write excess avoid define card mimic gas call\' \
-                                -e CONFIG_APPURL=https://gosh-web-150-cicd-feature-web-testing-2-1-14.gosh.sh \
+                                -e CONFIG_APPURL=https://gosh-web-150-cicd-feature-web-testing-2-1-14.gosh.sssh \
                                 -v \$(pwd)/config:/home/node/app/config:ro \
                                 -v \$(pwd)/test-errors:/home/node/app/errors \
                                 gosh-mon
