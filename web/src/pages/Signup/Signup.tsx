@@ -8,7 +8,13 @@ import { useNavigate } from 'react-router-dom'
 import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { AppConfig, userStatePersistAtom } from 'react-gosh'
+import {
+    AppConfig,
+    EGoshError,
+    GoshError,
+    useGosh,
+    userStatePersistAtom,
+} from 'react-gosh'
 import Spinner from '../../components/Spinner'
 
 type TFormValues = {
@@ -20,6 +26,7 @@ const SignupPage = () => {
     const navigate = useNavigate()
     const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
     const setModal = useSetRecoilState(appModalStateAtom)
+    const gosh = useGosh()
     const [phrase, setPhrase] = useState<string>('')
 
     const generatePhrase = async (client: TonClient | any) => {
@@ -28,11 +35,12 @@ const SignupPage = () => {
     }
 
     const onFormSubmit = async (values: TFormValues) => {
+        if (!gosh) throw new GoshError(EGoshError.NO_GOSH)
+
         // Derive sign keys from phrase and deploy profile
         const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
             phrase: values.phrase,
         })
-        const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
         await gosh.deployProfile(`0x${derived.public}`)
 
         // Reset state and create PIN-code

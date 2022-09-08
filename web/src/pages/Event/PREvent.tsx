@@ -7,6 +7,8 @@ import {
     AppConfig,
     loadFromIPFS,
     zstd,
+    useGoshVersions,
+    useGosh,
 } from 'react-gosh'
 import {
     IGoshCommit,
@@ -35,6 +37,8 @@ type TCommitBlobsType = {
 
 const PREvent = (props: TCommitBlobsType) => {
     const { className, daoName, repoName, branchName, commitName, status } = props
+    const { versions } = useGoshVersions()
+    const gosh = useGosh()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
     const [details, setDetails] = useState<TGoshCommitDetails>()
@@ -58,7 +62,7 @@ const PREvent = (props: TCommitBlobsType) => {
             let index2 = 0
             while (true) {
                 const address = await commit.getDiffAddr(index1, index2)
-                const diff = new GoshDiff(AppConfig.goshclient, address)
+                const diff = new GoshDiff(AppConfig.goshclient, address, versions.latest)
                 const acc = await diff.account.getAccount()
                 if (acc.acc_type !== AccountType.active) break
 
@@ -140,21 +144,32 @@ const PREvent = (props: TCommitBlobsType) => {
             _branchName: string,
             _commitName: string,
         ) => {
-            if (!daoName) return
+            if (!daoName || !gosh) return
 
             setIsFetched(false)
 
-            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
             const repoAddr = await gosh.getRepoAddr(_repoName, daoName)
-            const repo = new GoshRepository(AppConfig.goshclient, repoAddr)
+            const repo = new GoshRepository(
+                AppConfig.goshclient,
+                repoAddr,
+                versions.latest,
+            )
 
             const commitAddr = await repo.getCommitAddr(_commitName)
-            const commit = new GoshCommit(repo.account.client, commitAddr)
+            const commit = new GoshCommit(
+                repo.account.client,
+                commitAddr,
+                versions.latest,
+            )
             const commitDetails = await commit.getDetails()
             setDetails(commitDetails)
 
             const parents = await commit.getParents()
-            const parent = new GoshCommit(repo.account.client, parents[0])
+            const parent = new GoshCommit(
+                repo.account.client,
+                parents[0],
+                versions.latest,
+            )
             const parentName = await parent.getName()
 
             const tree = await getRepoTree(repo, commitAddr)

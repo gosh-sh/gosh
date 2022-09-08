@@ -3,7 +3,7 @@ import { Field, Form, Formik } from 'formik'
 import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from 'react-gosh'
+import { GoshSmvProposal, useGosh, useGoshVersions } from 'react-gosh'
 import { EEventType, TGoshEventDetails } from 'react-gosh'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -27,6 +27,8 @@ type TFormValues = {
 const EventPage = () => {
     const { daoName, eventAddr } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { versions } = useGoshVersions()
+    const gosh = useGosh()
     const smvBalance = useSmvBalance(wallet)
     const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
@@ -56,6 +58,7 @@ const EventPage = () => {
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
+            if (!gosh) throw new GoshError(EGoshError.NO_GOSH)
             if (!dao) throw new GoshError(EGoshError.NO_DAO)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
@@ -69,7 +72,6 @@ const EventPage = () => {
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
             const smvPlatformCode = await gosh.getSmvPlatformCode()
             const smvClientCode = await dao.instance.getSmvClientCode()
             const choice = values.approve === 'true'
@@ -91,7 +93,11 @@ const EventPage = () => {
         const getEvent = async () => {
             if (!eventAddr) return
 
-            const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
+            const event = new GoshSmvProposal(
+                AppConfig.goshclient,
+                eventAddr,
+                versions.latest,
+            )
             const details = await event.getDetails()
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }

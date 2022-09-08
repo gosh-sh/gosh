@@ -37,6 +37,7 @@ import {
     GoshCommit,
     GoshSnapshot,
     sleep,
+    useGoshVersions,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
@@ -58,6 +59,7 @@ const PullCreatePage = () => {
     const monaco = useMonaco()
     const smvBalance = useSmvBalance(wallet)
     const { branches, updateBranches } = useGoshRepoBranches(repo)
+    const { versions } = useGoshVersions()
     const [compare, setCompare] = useState<
         {
             to?: { item: TGoshTreeItem; blob: any }
@@ -96,12 +98,20 @@ const PullCreatePage = () => {
             branch: TGoshBranch,
             item: TGoshTreeItem,
         ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
-            const commit = new GoshCommit(wallet.account.client, branch.commitAddr)
+            const commit = new GoshCommit(
+                wallet.account.client,
+                branch.commitAddr,
+                versions.latest,
+            )
             const commitName = await commit.getName()
 
             const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
             const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
-            const snap = new GoshSnapshot(wallet.account.client, snapAddr)
+            const snap = new GoshSnapshot(
+                wallet.account.client,
+                snapAddr,
+                versions.latest,
+            )
             const data = await snap.getSnapshot(commitName, item)
             return data
         }

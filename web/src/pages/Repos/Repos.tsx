@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { AppConfig } from 'react-gosh'
+import { AppConfig, useGosh, useGoshVersions } from 'react-gosh'
 import {
     GoshDao,
     GoshRepository,
@@ -14,14 +14,15 @@ import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {
     const userState = useRecoilValue(userStateAtom)
+    const gosh = useGosh()
+    const { versions } = useGoshVersions()
     const [search, setSearch] = useState<string>()
     const repoListQuery = useQuery(
         ['userRepositoryList'],
         async (): Promise<{ repo: TGoshRepoDetails; daoName?: string }[]> => {
-            if (!userState.keys) return []
+            if (!userState.keys || !gosh) return []
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
             const walletCode = await gosh.getDaoWalletCode(`0x${userState.keys.public}`)
             const walletCodeHash = await gosh.account.client.boc.get_boc_hash({
                 boc: walletCode,
@@ -41,13 +42,14 @@ const RepositoriesPage = () => {
                         const wallet = new GoshWallet(
                             AppConfig.goshroot.account.client,
                             item.id,
+                            versions.latest,
                         )
                         return await wallet.getDaoAddr()
                     }),
                 ),
             )
             const daos = Array.from(daoAddrs).map((addr) => {
-                return new GoshDao(AppConfig.goshroot.account.client, addr)
+                return new GoshDao(AppConfig.goshclient, addr, versions.latest)
             })
 
             // Get repos for each DAO
@@ -70,8 +72,9 @@ const RepositoriesPage = () => {
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {
                             const repo = new GoshRepository(
-                                AppConfig.goshroot.account.client,
+                                AppConfig.goshclient,
                                 item.id,
+                                versions.latest,
                             )
                             return await repo.getDetails()
                         }),

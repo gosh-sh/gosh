@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from 'react-gosh'
+import { EGoshError, GoshError, GoshSmvProposal, useGoshVersions } from 'react-gosh'
 import { sleep } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { getPaginatedAccounts, AppConfig } from 'react-gosh'
@@ -14,6 +14,7 @@ const EventsPage = () => {
 
     const { daoName } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { versions } = useGoshVersions()
     const smvBalance = useSmvBalance(wallet)
     const [events, setEvents] = useState<{
         items: any[]
@@ -41,7 +42,11 @@ const EventsPage = () => {
             }),
         }))
 
-        const event = new GoshSmvProposal(dao.instance.account.client, address)
+        const event = new GoshSmvProposal(
+            dao.instance.account.client,
+            address,
+            versions.latest,
+        )
         const details = await event.getDetails()
 
         setEvents((state) => ({
@@ -69,7 +74,11 @@ const EventsPage = () => {
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const event = new GoshSmvProposal(dao.instance.account.client, id)
+                        const event = new GoshSmvProposal(
+                            dao.instance.account.client,
+                            id,
+                            versions.latest,
+                        )
                         return {
                             address: event.address,
                             params: await event.getParams(),

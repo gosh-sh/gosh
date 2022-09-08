@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Spinner from '../../components/Spinner'
-import { getBlobAtCommit, getRepoTree } from 'react-gosh'
+import { getBlobAtCommit, getRepoTree, useGoshVersions } from 'react-gosh'
 import { IGoshRepository, TGoshTreeItem } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import { GoshCommit } from 'react-gosh'
@@ -14,6 +14,7 @@ type TCommitBlobsType = {
 
 const CommitBlobs = (props: TCommitBlobsType) => {
     const { className, repo, branch, commit } = props
+    const { versions } = useGoshVersions()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
 
@@ -61,7 +62,11 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             setIsFetched(false)
 
             const commitAddr = await repo.getCommitAddr(commitName)
-            const commit = new GoshCommit(repo.account.client, commitAddr)
+            const commit = new GoshCommit(
+                repo.account.client,
+                commitAddr,
+                versions.latest,
+            )
             const parents = await commit.getParents()
 
             const tree = await getRepoTree(repo, commitAddr)

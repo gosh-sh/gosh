@@ -46,6 +46,7 @@ const BuildPage = () => {
             const commit = await getCommit(repo, branch.commitAddr)
             console.log('commit', commit)
 
+            // TODO: Get GOSH version?
             await DockerClient.buildImage(
                 `gosh://${rootContract}/${daoName}/${repoName}`,
                 commit.name,
@@ -53,6 +54,7 @@ const BuildPage = () => {
                 values.tag,
                 appendLog,
                 userState,
+                '0.11.0',
             )
         } else {
             console.error(`Error: branch has no commit address`)

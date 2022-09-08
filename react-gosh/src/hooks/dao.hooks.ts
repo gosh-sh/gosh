@@ -3,6 +3,7 @@ import { useRecoilState, useRecoilValue } from 'recoil'
 import { getPaginatedAccounts } from '../helpers'
 import { userStateAtom, daoAtom } from '../store'
 import {
+    Gosh,
     GoshDao,
     GoshProfile,
     GoshWallet,
@@ -18,9 +19,11 @@ import {
 } from '../types'
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
+import { goshVersionsAtom } from '../store/gosh.state'
 
 function useDaoList(perPage: number) {
     const { keys } = useRecoilValue(userStateAtom)
+    const versions = useRecoilValue(goshVersionsAtom)
     const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
         items: TDaoListItem[]
@@ -72,27 +75,51 @@ function useDaoList(perPage: number) {
             if (!keys?.public) return
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            // TODO: version
-            const gosh = await AppConfig.goshroot.getGosh('')
-            const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
-            const walletCode = await gosh.getDaoWalletCode(profileAddr)
-            const walletCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
-                boc: walletCode,
+            const goshs = versions.all.map((item) => {
+                return new Gosh(AppConfig.goshclient, item.address, item.version)
             })
-            const wallets: string[] = []
-            let next: string | undefined
-            while (true) {
-                const accounts = await getPaginatedAccounts({
-                    filters: [`code_hash: {eq:"${walletCodeHash.hash}"}`],
-                    limit: 50,
-                    lastId: next,
-                })
-                wallets.push(...accounts.results.map(({ id }) => id))
-                next = accounts.lastId
+            // TODO: Check profile address for miltiple gosh versions
+            const profileAddr = await goshs[0].getProfileAddr(`0x${keys.public}`)
+            const walletCodes = await Promise.all(
+                goshs.map(async (gosh) => {
+                    const code = await gosh.getDaoWalletCode(profileAddr)
+                    const result = await AppConfig.goshclient.boc.get_boc_hash({
+                        boc: code,
+                    })
+                    return { version: gosh.version, hash: result.hash }
+                }),
+            )
 
-                if (accounts.completed) break
-                sleep(200)
+            const wallets: IGoshWallet[] = []
+            for (const item in walletCodes) {
+                let next: string | undefined
+                while (true) {
+                    const accounts = await getPaginatedAccounts({
+                        filters: [`code_hash: {eq: "${item.hash}"}`],
+                        limit: 50,
+                        lastId: next,
+                    })
+                    console.debug('Accounts', accounts)
+
+                    accounts.results.forEach((result: any) => {
+                        if (!wallets.find((wallet) => wallet.address === result.id)) {
+                            wallets.push(
+                                new GoshWallet(
+                                    AppConfig.goshclient,
+                                    result.id,
+                                    item.version,
+                                ),
+                            )
+                        }
+                    })
+                    next = accounts.lastId
+
+                    if (accounts.completed) break
+                    sleep(200)
+                }
             }
+
+            console.debug('Wallets', wallets)
 
             // Get unique dao addresses from wallets
             const uniqueDaoAddresses = new Set(

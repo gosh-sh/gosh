@@ -14,6 +14,7 @@ import {
 interface IContract {
     address: string
     account: Account
+    version: string
 
     run(
         functionName: string,
@@ -27,6 +28,7 @@ interface IGoshRoot extends IContract {
     address: string
 
     getGosh(version: string): Promise<IGosh>
+    getGoshAddr(version: string): Promise<string>
     getVersions(): Promise<any>
 }
 

@@ -435,6 +435,7 @@ const Main = () => {
         }
         setValidation(validation)
 
+        // TODO: Get GOSH version?
         await DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
@@ -452,6 +453,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             userState,
+            '0.11.0',
         )
     }
 
@@ -464,6 +466,7 @@ const Main = () => {
             stdout: '',
         }
         setValidation(validation)
+        // TODO: Get GOSH version?
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
@@ -481,6 +484,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             userState,
+            '0.11.0',
         )
     }
 

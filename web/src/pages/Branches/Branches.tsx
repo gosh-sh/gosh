@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { TGoshBranch } from 'react-gosh'
+import { TGoshBranch, useGoshVersions } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
@@ -30,6 +30,7 @@ export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
+    const { versions } = useGoshVersions()
     const smvBalance = useSmvBalance(wallet)
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, updateBranches } = useGoshRepoBranches(repo)
@@ -107,7 +108,11 @@ export const BranchesPage = () => {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
+            const commit = new GoshCommit(
+                wallet.account.client,
+                values.from.commitAddr,
+                versions.latest,
+            )
             await wallet.deployBranch(
                 repo,
                 values.newName.toLowerCase(),

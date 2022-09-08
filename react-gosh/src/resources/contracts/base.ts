@@ -12,6 +12,7 @@ import ABI from './abi.json'
 class BaseContract implements IContract {
     address: string
     account: Account
+    version: string
 
     constructor(
         client: TonClient,
@@ -29,6 +30,7 @@ class BaseContract implements IContract {
                 signer: options?.keys ? signerKeys(options.keys) : signerNone(),
             },
         )
+        this.version = options?.version ?? ''
     }
 
     async run(

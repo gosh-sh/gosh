@@ -4,7 +4,7 @@ export enum EGoshError {
     META_LOAD = 'Error loading meta',
 
     NO_CREATOR_ADDR = 'Gosh creator address undefined',
-    NO_ROOT = 'Gosh root undefined',
+    NO_GOSH = 'Gosh undefined',
     NO_DAO = 'Gosh DAO undefined',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',

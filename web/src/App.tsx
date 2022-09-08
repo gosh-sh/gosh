@@ -80,8 +80,8 @@ const App = () => {
     }, [])
 
     useEffect(() => {
-        if (versions.latest) setIsInitialized(true)
-    }, [versions.latest])
+        if (!versions.isFetching) setIsInitialized(true)
+    }, [versions.isFetching])
 
     useEffect(() => {
         // Initialize gosh client suspend/resume timer

@@ -1,13 +1,18 @@
 import { atom } from 'recoil'
+import { persistAtom } from './base'
 
-const goshStateAtom = atom<{
-    latest?: string
-    all: string[]
+const goshVersionsAtom = atom<{
+    latest: string
+    all: { version: string; address: string }[]
+    isFetching: boolean
 }>({
-    key: 'GoshStateAtom',
+    key: 'GoshVersionsAtom',
     default: {
+        latest: '',
         all: [],
+        isFetching: true,
     },
+    effects_UNSTABLE: [persistAtom],
 })
 
-export { goshStateAtom }
+export { goshVersionsAtom }

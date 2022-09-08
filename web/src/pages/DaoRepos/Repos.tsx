@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { GoshRepository } from 'react-gosh'
+import {
+    EGoshError,
+    GoshError,
+    GoshRepository,
+    useGosh,
+    useGoshVersions,
+} from 'react-gosh'
 import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -13,6 +19,8 @@ const DaoRepositoriesPage = () => {
 
     const { daoName } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { versions } = useGoshVersions()
+    const gosh = useGosh()
     const [search, setSearch] = useState<string>('')
     const [repos, setRepos] = useState<{
         items: (Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
@@ -46,7 +54,7 @@ const DaoRepositoriesPage = () => {
             }),
         }))
 
-        const repo = new GoshRepository(AppConfig.goshclient, address)
+        const repo = new GoshRepository(AppConfig.goshclient, address, versions.latest)
         const details = await repo.getDetails()
 
         setRepos((state) => ({
@@ -61,10 +69,11 @@ const DaoRepositoriesPage = () => {
     /** Initial load of all repo accounts with repo names */
     useEffect(() => {
         const getRepoList = async () => {
+            if (!gosh) throw new GoshError(EGoshError.NO_GOSH)
+
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const gosh = await AppConfig.goshroot.getGosh(AppConfig.goshversion)
             const repoCode = await gosh.getDaoRepoCode(dao.instance.address)
             const repoCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
                 boc: repoCode,
@@ -82,6 +91,7 @@ const DaoRepositoriesPage = () => {
                         const repo = new GoshRepository(
                             AppConfig.goshroot.account.client,
                             id,
+                            versions.latest,
                         )
                         return { address: repo.address, name: await repo.getName() }
                     }),

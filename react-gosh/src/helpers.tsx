@@ -391,7 +391,7 @@ export const getBlobAtCommit = async (
             try {
                 // TODO: version
                 const decoded = await repo.account.client.abi.decode_message({
-                    abi: abiSerialized(ABI['0.1.100']['snapshot']),
+                    abi: abiSerialized(ABI['0.11.0']['snapshot']),
                     message: item.node.boc,
                     allow_partial: true,
                 })
