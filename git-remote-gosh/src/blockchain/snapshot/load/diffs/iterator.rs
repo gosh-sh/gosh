@@ -269,8 +269,8 @@ pub async fn load_messages_to(
         context.clone(),
         ParamsOfQuery {
             query,
-            variables: Some(serde_json::json!({ 
-                "addr": address, 
+            variables: Some(serde_json::json!({
+                "addr": address,
                 "before": before
             })),
             ..Default::default()
