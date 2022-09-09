@@ -6,7 +6,7 @@ import { useGoshWallet } from '../hooks/gosh.hooks'
 import {
     IGoshDao,
     IGoshWallet,
-    userStatePersistAtom,
+    userPersistAtom,
     classNames,
     useDao,
     TDaoDetails,
@@ -22,7 +22,7 @@ export type TDaoLayoutOutletContext = {
 }
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName } = useParams()
     const dao = useDao(daoName)
     const wallet = useGoshWallet(dao.instance)

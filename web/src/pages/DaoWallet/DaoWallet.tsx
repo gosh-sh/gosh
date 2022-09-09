@@ -6,7 +6,7 @@ import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
 import CopyClipboard from '../../components/CopyClipboard'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError, userStateAtom } from 'react-gosh'
+import { EGoshError, GoshError, userAtom } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -16,7 +16,7 @@ type TMoveBalanceFormValues = {
 }
 
 const DaoWalletPage = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
     const smvBalance = useSmvBalance(wallet)
 

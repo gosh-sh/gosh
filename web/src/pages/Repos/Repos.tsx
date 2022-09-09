@@ -7,13 +7,13 @@ import {
     GoshDao,
     GoshRepository,
     GoshWallet,
-    userStateAtom,
+    userAtom,
     TGoshRepoDetails,
 } from 'react-gosh'
 import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const gosh = useGosh()
     const { versions } = useGoshVersions()
     const [search, setSearch] = useState<string>()

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { AppConfig, GoshProfile, useDaoList, userStateAtom } from 'react-gosh'
+import { AppConfig, GoshProfile, useDaoList, userAtom } from 'react-gosh'
 import DaoListItem from './DaoListItem'
 import { useRecoilValue } from 'recoil'
 
@@ -15,7 +15,7 @@ const DaosPage = () => {
         loadNext,
         loadItemDetails,
     } = useDaoList(5)
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
 
     const onGetVersions = async () => {
         const versions = await AppConfig.goshroot.getVersions()

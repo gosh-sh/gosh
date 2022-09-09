@@ -69,7 +69,7 @@ const DaoRepositoriesPage = () => {
     /** Initial load of all repo accounts with repo names */
     useEffect(() => {
         const getRepoList = async () => {
-            if (!gosh) throw new GoshError(EGoshError.NO_GOSH)
+            if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
 
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 

@@ -28,7 +28,7 @@ import {
     IGoshWallet,
     TGoshBranch,
     TGoshTreeItem,
-    userStateAtom,
+    userAtom,
     getCodeLanguageFromFilename,
     getRepoTree,
     splitByChunk,
@@ -52,7 +52,7 @@ type TCommitFormValues = {
 
 const PullCreatePage = () => {
     const [searchParams] = useSearchParams()
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { daoName, repoName } = useParams()
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()

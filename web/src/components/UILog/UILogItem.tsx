@@ -31,4 +31,4 @@ const UILogItem = (props: TUILogItemProps) => {
     )
 }
 
-export default UILogItem
+export { UILogItem }

@@ -1,61 +1,46 @@
-import { Form, Formik, Field, ErrorMessage, FormikHelpers } from 'formik'
+import { Form, Formik, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import TextareaField from '../../components/FormikForms/TextareaField'
-import { useResetRecoilState, useSetRecoilState } from 'recoil'
+import { useSetRecoilState } from 'recoil'
 import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import {
-    AppConfig,
-    EGoshError,
-    GoshError,
-    useGosh,
-    userStatePersistAtom,
-} from 'react-gosh'
+import { useUser } from 'react-gosh'
+import TextField from '../../components/FormikForms/TextField'
+import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
+    username: string
     phrase: string
 }
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
+    const { userSignin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
-    const gosh = useGosh()
 
-    const onFormSubmit = async (
-        values: TFormValues,
-        helpers: FormikHelpers<TFormValues>,
-    ) => {
-        if (!gosh) throw new GoshError(EGoshError.NO_GOSH)
+    const onFormSubmit = async (values: TFormValues) => {
+        try {
+            await userSignin(values)
 
-        const result = await AppConfig.goshclient.crypto.mnemonic_verify({
-            phrase: values.phrase,
-        })
-        if (!result.valid) {
-            helpers.setFieldError('phrase', 'Phrase is invalid')
+            // Create PIN-code
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal
+                        phrase={values.phrase}
+                        onUnlock={() => navigate('/account/orgs', { replace: true })}
+                    />
+                ),
+            })
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
             return
         }
-
-        // Derive sign keys from phrase and deploy profile
-        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-            phrase: values.phrase,
-        })
-        await gosh.deployProfile(`0x${derived.public}`)
-
-        // Reset state and create PIN-code
-        userStatePersistReset()
-        setModal({
-            static: true,
-            isOpen: true,
-            element: (
-                <PinCodeModal
-                    phrase={values.phrase}
-                    onUnlock={() => navigate('/account/orgs', { replace: true })}
-                />
-            ),
-        })
     }
 
     return (
@@ -68,14 +53,29 @@ const SigninPage = () => {
             </div>
 
             <Formik
-                initialValues={{ phrase: '' }}
+                initialValues={{ username: '', phrase: '' }}
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
+                    username: Yup.string()
+                        .matches(/^[\w-]+$/, 'Username has invalid characters')
+                        .max(64, 'Max length is 64 characters')
+                        .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),
                 })}
             >
                 {({ isSubmitting, touched, errors }) => (
                     <Form className="px-5 sm:px-124px">
+                        <div className="mb-3">
+                            <Field
+                                name="username"
+                                component={TextField}
+                                inputProps={{
+                                    autoComplete: 'off',
+                                    placeholder: 'Username',
+                                }}
+                            />
+                        </div>
+
                         <div>
                             <Field
                                 name="phrase"
@@ -84,7 +84,7 @@ const SigninPage = () => {
                                 inputProps={{
                                     className: '!px-7 !py-6',
                                     autoComplete: 'off',
-                                    placeholder: 'GOSH root seed phrase',
+                                    placeholder: 'Seed phrase',
                                 }}
                             />
                         </div>

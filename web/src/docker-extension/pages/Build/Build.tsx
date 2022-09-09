@@ -7,7 +7,7 @@ import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom, getCommit } from 'react-gosh'
+import { userAtom, getCommit } from 'react-gosh'
 import TextField from '../../../components/FormikForms/TextField'
 
 type TBuildFormValues = {
@@ -16,7 +16,7 @@ type TBuildFormValues = {
 }
 
 const BuildPage = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()

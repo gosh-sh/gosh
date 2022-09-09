@@ -21,7 +21,7 @@ import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
-    userStateAtom,
+    userAtom,
     getCodeLanguageFromFilename,
     splitByPath,
     classNames,
@@ -45,7 +45,7 @@ const BlobUpdatePage = () => {
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
     const { blob, treeItem } = useGoshBlob(repo, branchName, treePath, true)

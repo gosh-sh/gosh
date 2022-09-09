@@ -12,16 +12,15 @@ class Gosh extends BaseContract implements IGosh {
         super(client, Gosh.key, address, { version })
     }
 
-    async deployProfile(pubkey: string): Promise<IGoshProfile> {
+    async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile address and check it's status
-        const profileAddr = await this.getProfileAddr(pubkey)
-        // TODO: version
+        const profileAddr = await this.getProfileAddr(username)
         const profile = new GoshProfile(this.account.client, profileAddr)
         const acc = await profile.account.getAccount()
         if (acc.acc_type === AccountType.active) return profile
 
         // If profile is not active (deployed), deploy and wait for status `active`
-        await this.run('deployProfile', { pubkey })
+        await this.run('deployProfile', { name: username, pubkey })
         while (true) {
             const acc = await profile.account.getAccount()
             console.debug('[Create profile]: Wait for account', acc)
@@ -88,8 +87,8 @@ class Gosh extends BaseContract implements IGosh {
         return result.decoded?.output.value0
     }
 
-    async getProfileAddr(pubkey: string): Promise<string> {
-        const result = await this.account.runLocal('getProfileAddr', { pubkey })
+    async getProfileAddr(username: string): Promise<string> {
+        const result = await this.account.runLocal('getProfileAddr', { name: username })
         return result.decoded?.output.value0
     }
 }

@@ -8,7 +8,7 @@ import {
     IGoshRepository,
     IGoshWallet,
     classNames,
-    userStatePersistAtom,
+    userPersistAtom,
     useDao,
 } from 'react-gosh'
 import { useRecoilValue } from 'recoil'
@@ -19,7 +19,7 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const repo = useGoshRepo(daoName, repoName)
     const dao = useDao(daoName)

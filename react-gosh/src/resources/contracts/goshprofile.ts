@@ -68,6 +68,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     async turnOn(walletAddr: string, pubkey: string): Promise<void> {
         await this.run('turnOn', { wallet: walletAddr, pubkey })
     }
+
+    async isPubkeyCorrect(pubkey: string): Promise<boolean> {
+        const result = await this.account.runLocal('isPubkeyCorrect', { pubkey })
+        return result.decoded?.output.value0
+    }
 }
 
 export { GoshProfile }

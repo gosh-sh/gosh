@@ -19,7 +19,7 @@ import {
     getRepoTree,
     AppConfig,
     ZERO_COMMIT,
-    userStateAtom,
+    userAtom,
     IGoshDao,
     IGoshRepository,
     IGoshRoot,
@@ -33,7 +33,7 @@ import {
 } from 'react-gosh'
 
 export const useGoshWallet = (dao?: IGoshDao) => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { versions } = useGoshVersions()
     const gosh = useGosh()
     const [details, setDetails] = useRecoilState(goshWalletAtom)

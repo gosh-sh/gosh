@@ -1,15 +1,5 @@
 import { KeyPair } from '@eversdk/core'
 
-export type TUserStatePersist = {
-    phrase?: string
-    nonce?: string
-    pin?: string
-}
-
-export type TUserState = TUserStatePersist & {
-    keys?: KeyPair
-}
-
 export type TGoshWalletDetails = {
     address: string
     keys?: KeyPair

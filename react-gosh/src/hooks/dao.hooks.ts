@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { getPaginatedAccounts } from '../helpers'
-import { userStateAtom, daoAtom } from '../store'
+import { userAtom, daoAtom } from '../store'
 import {
     Gosh,
     GoshDao,
@@ -22,7 +22,7 @@ import { AppConfig } from '../appconfig'
 import { goshVersionsAtom } from '../store/gosh.state'
 
 function useDaoList(perPage: number) {
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
     const versions = useRecoilValue(goshVersionsAtom)
     const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
@@ -93,30 +93,30 @@ function useDaoList(perPage: number) {
             const wallets: IGoshWallet[] = []
             for (const item in walletCodes) {
                 let next: string | undefined
-                while (true) {
-                    const accounts = await getPaginatedAccounts({
-                        filters: [`code_hash: {eq: "${item.hash}"}`],
-                        limit: 50,
-                        lastId: next,
-                    })
-                    console.debug('Accounts', accounts)
+                // while (true) {
+                //     const accounts = await getPaginatedAccounts({
+                //         filters: [`code_hash: {eq: "${item.hash}"}`],
+                //         limit: 50,
+                //         lastId: next,
+                //     })
+                //     console.debug('Accounts', accounts)
 
-                    accounts.results.forEach((result: any) => {
-                        if (!wallets.find((wallet) => wallet.address === result.id)) {
-                            wallets.push(
-                                new GoshWallet(
-                                    AppConfig.goshclient,
-                                    result.id,
-                                    item.version,
-                                ),
-                            )
-                        }
-                    })
-                    next = accounts.lastId
+                //     accounts.results.forEach((result: any) => {
+                //         if (!wallets.find((wallet) => wallet.address === result.id)) {
+                //             wallets.push(
+                //                 new GoshWallet(
+                //                     AppConfig.goshclient,
+                //                     result.id,
+                //                     item.version,
+                //                 ),
+                //             )
+                //         }
+                //     })
+                //     next = accounts.lastId
 
-                    if (accounts.completed) break
-                    sleep(200)
-                }
+                //     if (accounts.completed) break
+                //     sleep(200)
+                // }
             }
 
             console.debug('Wallets', wallets)
@@ -124,9 +124,9 @@ function useDaoList(perPage: number) {
             // Get unique dao addresses from wallets
             const uniqueDaoAddresses = new Set(
                 await Promise.all(
-                    wallets.map(async (address) => {
+                    wallets.map(async (w) => {
                         // TODO: version
-                        const wallet = new GoshWallet(AppConfig.goshclient, address, '')
+                        const wallet = new GoshWallet(AppConfig.goshclient, w.address, '')
                         return await wallet.getDaoAddr()
                     }),
                 ),
@@ -183,7 +183,7 @@ function useDaoList(perPage: number) {
 }
 
 function useDao(name?: string) {
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
     const [details, setDetails] = useRecoilState(daoAtom)
     const [dao, setDao] = useState<IGoshDao>()
 
@@ -219,7 +219,7 @@ function useDao(name?: string) {
 }
 
 function useDaoCreate() {
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
     const [progress, setProgress] = useState<TDaoCreateProgress>({
         isFetching: false,
         members: [],
@@ -435,7 +435,7 @@ function useDaoMemberList(perPage: number) {
 }
 
 function useDaoMemberCreate() {
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [progress, setProgress] = useState<TDaoMemberCreateProgress>({
         isFetching: false,
@@ -534,7 +534,7 @@ function useDaoMemberCreate() {
 }
 
 function useDaoMemberDelete() {
-    const { keys } = useRecoilValue(userStateAtom)
+    const { keys } = useRecoilValue(userAtom)
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [fetching, setFetching] = useState<string[]>([])
 

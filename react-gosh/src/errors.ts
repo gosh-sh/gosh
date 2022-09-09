@@ -1,10 +1,15 @@
 export enum EGoshError {
+    PHRASE_INVALID = 'Seed phrase is invalid',
+
+    PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
+    PROFILE_EXISTS = 'Profile already exists',
+    PROFILE_INVALID_PUBKEY = 'Profile access denied with provided phrase/pubkey',
+
     NO_USER = 'User undefined',
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
-    NO_CREATOR_ADDR = 'Gosh creator address undefined',
-    NO_GOSH = 'Gosh undefined',
+    GOSH_UNDEFINED = 'Gosh undefined',
     NO_DAO = 'Gosh DAO undefined',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',

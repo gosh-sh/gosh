@@ -35,7 +35,7 @@ interface IGoshRoot extends IContract {
 interface IGosh extends IContract {
     address: string
 
-    deployProfile(pubkey: string): Promise<IGoshProfile>
+    deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
     getDaoAddr(name: string): Promise<string>
     getDaoWalletCode(profileAddr: string): Promise<string>
     getRepoAddr(name: string, daoName: string): Promise<string>
@@ -48,7 +48,7 @@ interface IGosh extends IContract {
         label: string,
     ): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
-    getProfileAddr(pubkey: string): Promise<string>
+    getProfileAddr(username: string): Promise<string>
 }
 
 interface IGoshProfile extends IContract {
@@ -58,6 +58,7 @@ interface IGoshProfile extends IContract {
     deployDao(name: string, prevAddr?: string): Promise<IGoshDao>
     deployWallet(daoAddr: string, profileAddr: string): Promise<IGoshWallet>
     turnOn(walletAddr: string, pubkey: string): Promise<void>
+    isPubkeyCorrect(pubkey: string): Promise<boolean>
 }
 
 interface IGoshDao extends IContract {

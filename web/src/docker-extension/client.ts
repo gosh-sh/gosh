@@ -14,9 +14,6 @@ const ENDPOINTS = process.env.REACT_APP_GOSH_NETWORK || ''
 const GOSH_NETWORK = ENDPOINTS.replace(/^https?:\/\//, '')
 const GOSH_ROOT_CONTRACT_ADDRESS = process.env.REACT_APP_GOSH_ADDR || ''
 
-console.debug('Endpoints', ENDPOINTS)
-console.debug('Gosh root', GOSH_ROOT_CONTRACT_ADDRESS)
-
 const IMAGE_LABELS = {
     GOSH_ADDRESS: 'gosh.address',
     GOSH_COMMIT: 'gosh.commit',

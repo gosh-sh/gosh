@@ -2,24 +2,15 @@ import { atom } from 'recoil'
 import { TUserState, TUserStatePersist } from '../types'
 import { persistAtom } from './base'
 
-const userStatePersistAtom = atom<TUserStatePersist>({
-    key: 'UserStatePersistAtom',
-    default: {
-        phrase: undefined,
-        nonce: undefined,
-        pin: undefined,
-    },
+const userPersistAtom = atom<TUserStatePersist>({
+    key: 'UserPersistAtom',
+    default: {},
     effects_UNSTABLE: [persistAtom],
 })
 
-const userStateAtom = atom<TUserState>({
-    key: 'UserStateAtom',
-    default: {
-        phrase: undefined,
-        nonce: undefined,
-        pin: undefined,
-        keys: undefined,
-    },
+const userAtom = atom<TUserState>({
+    key: 'UserAtom',
+    default: {},
 })
 
-export { userStateAtom, userStatePersistAtom }
+export { userAtom, userPersistAtom }
