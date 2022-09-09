@@ -18,7 +18,7 @@ contract TokenWalletOwner is IAcceptTokensTransferCallback,
 address public m_tokenRoot;
 address public m_tokenWallet;
 uint128 public m_tokenBalance;
-TvmCell public m_walletCode;
+TvmCell public m_tokenWalletCode;
 
 uint16 constant error_not_my_wallet = 1001;
 uint16 constant error_balance_too_low = 1002;
@@ -35,7 +35,7 @@ function _buildWalletInitData() internal view returns (TvmCell) {
                 owner_: address(this)
             },
             pubkey: 0,
-            code: m_walletCode
+            code: m_tokenWalletCode
         });
     }
 

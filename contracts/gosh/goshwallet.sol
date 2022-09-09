@@ -83,11 +83,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 limit_messages,
          //added for SMV
         TvmCell lockerCode,
+        TvmCell tokenWalletCode,
         TvmCell platformCode,
         TvmCell clientCode,
         TvmCell proposalCode,
         address _tip3Root
-    ) public SMVAccount(lockerCode, WalletCode, tvm.hash(platformCode), platformCode.depth(),
+    ) public SMVAccount(lockerCode, tokenWalletCode, tvm.hash(platformCode), platformCode.depth(),
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
                         proposalCode.depth(), _tip3Root
     ) {
@@ -161,7 +162,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
             m_RepositoryCode,
             m_WalletCode,
             m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages,
-            m_lockerCode, m_SMVPlatformCode,
+            m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
         getMoney();
     }

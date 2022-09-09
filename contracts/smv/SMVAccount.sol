@@ -89,7 +89,7 @@ modifier check_locker {
   _ ;
 }
 
-constructor(TvmCell lockerCode, TvmCell walletCode,
+constructor(TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
             uint256 _clientCodeHash, uint16 _clientCodeDepth,
             uint256 _proposalCodeHash, uint16 _proposalCodeDepth,
@@ -104,7 +104,7 @@ constructor(TvmCell lockerCode, TvmCell walletCode,
 
     initialized = false;
     m_tokenRoot = _tip3Root;
-    m_walletCode = walletCode;
+    m_tokenWalletCode = tokenWalletCode;
     ITokenRoot(m_tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
                                           flag: 1,
                                           callback: SMVAccount.onTokenWalletDeployed} (address(this), SMVConstants.TIP3_WALLET_INIT_VALUE);
@@ -129,7 +129,7 @@ constructor(TvmCell lockerCode, TvmCell walletCode,
 
     tip3VotingLocker = new SMVTokenLocker { value: SMVConstants.LOCKER_INIT_VALUE +
                                                    SMVConstants.ACTION_FEE,
-                                            stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_walletCode, m_tokenRoot);
+                                            stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot);
 }
 
 function onTokenWalletDeployed(address wallet) external view check_token_root

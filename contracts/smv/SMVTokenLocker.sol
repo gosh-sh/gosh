@@ -102,7 +102,7 @@ constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_wal
     tvm.accept();
 
     lockerBusy = false;
-    m_walletCode = _m_walletCode;
+    m_tokenWalletCode = _m_walletCode;
     m_tokenRoot = _m_tokenRoot;
     clientHead.reset();
     m_tokenBalance = 0;

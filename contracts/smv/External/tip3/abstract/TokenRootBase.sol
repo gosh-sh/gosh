@@ -25,7 +25,7 @@ abstract contract TokenRootBase is ITokenRoot, ICallbackParamsStructure {
 
     TvmCell static walletCode_;
 
-    uint128 totalSupply_;
+    uint128 public totalSupply_;
 
     fallback() external {
     }

@@ -213,6 +213,8 @@ function _isCompleted () public view returns (optional (bool))
 
 
 
+
+
 //gosh only
 //b.store(proposalKind, repoName, branchName, commitName, fullCommit, parent1, parent2);
 function getGoshSetCommitProposalParams () external view 
@@ -221,6 +223,21 @@ function getGoshSetCommitProposalParams () external view
     TvmSlice s = propData.toSlice();
     (proposalKind,  repoName,  branchName,  commit) = s.decode(uint256, string, string, string);
 }
+
+function getGoshAddProtectedBranchProposalParams () external view 
+         returns( uint256  proposalKind,  string repoName, string  branchName)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
+}
+
+function getGoshDeleteProtectedBranchProposalParams () external view 
+         returns( uint256  proposalKind,  string repoName, string  branchName)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
+}
+
 
 ////////////////////////////////////
 

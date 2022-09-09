@@ -19,6 +19,7 @@
 				{"name":"limit_time","type":"uint128"},
 				{"name":"limit_messages","type":"uint128"},
 				{"name":"lockerCode","type":"cell"},
+				{"name":"tokenWalletCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
@@ -614,11 +615,11 @@
 			]
 		},
 		{
-			"name": "m_walletCode",
+			"name": "m_tokenWalletCode",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"m_walletCode","type":"cell"}
+				{"name":"m_tokenWalletCode","type":"cell"}
 			]
 		},
 		{
@@ -668,7 +669,7 @@
 		{"name":"m_tokenRoot","type":"address"},
 		{"name":"m_tokenWallet","type":"address"},
 		{"name":"m_tokenBalance","type":"uint128"},
-		{"name":"m_walletCode","type":"cell"},
+		{"name":"m_tokenWalletCode","type":"cell"},
 		{"name":"nonce","type":"uint256"},
 		{"name":"lockerTip3Wallet","type":"address"},
 		{"name":"initialized","type":"bool"},

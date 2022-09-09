@@ -4,17 +4,9 @@
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
-			"name": "onSetRightBro",
+			"name": "onContinueAction",
 			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onSetLeftBro",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
+				{"name":"t","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -22,8 +14,8 @@
 		{
 			"name": "performAction",
 			"inputs": [
-				{"name":"amountToLock","type":"uint128"},
-				{"name":"total_votes","type":"uint128"},
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
 				{"name":"value2","type":"cell"}
 			],
 			"outputs": [
@@ -39,36 +31,12 @@
 			]
 		},
 		{
-			"name": "onContinueInitialize",
-			"inputs": [
-				{"name":"t","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onContinueVoting",
-			"inputs": [
-				{"name":"t","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "vote",
 			"inputs": [
 				{"name":"_locker","type":"address"},
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "completeVoting",
-			"inputs": [
-				{"name":"t","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -86,15 +54,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"optional(bool)"}
-			]
-		},
-		{
-			"name": "isInitialized",
-			"inputs": [
-				{"name":"answerId","type":"uint32"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
 			]
 		},
 		{
@@ -137,17 +96,6 @@
 			]
 		},
 		{
-			"name": "isCompletedCallback",
-			"inputs": [
-				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"address"},
-				{"name":"completed","type":"optional(bool)"},
-				{"name":"value3","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "updateHead",
 			"inputs": [
 			],
@@ -159,7 +107,8 @@
 			"inputs": [
 				{"name":"answerId","type":"uint32"},
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"rb","type":"optional(address)"}
+				{"name":"rb","type":"optional(address)"},
+				{"name":"ra","type":"optional(uint128)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
@@ -180,9 +129,17 @@
 			"name": "onClientInserted",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"newClientHead","type":"optional(address)"},
 				{"name":"leftClient","type":"optional(address)"},
-				{"name":"rightClient","type":"optional(address)"}
+				{"name":"rightClient","type":"optional(address)"},
+				{"name":"rightAmount_","type":"optional(uint128)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "nothing",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -198,21 +155,28 @@
 			]
 		},
 		{
-			"name": "onRightClientInserted",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"newClient","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getLockedAmount",
 			"inputs": [
 				{"name":"answerId","type":"uint32"}
 			],
 			"outputs": [
 				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "onSetRightBro",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onSetLeftBro",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
 			]
 		},
 		{
@@ -255,11 +219,27 @@
 			]
 		},
 		{
+			"name": "rightAmount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"rightAmount","type":"optional(uint128)"}
+			]
+		},
+		{
 			"name": "initialized",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"initialized","type":"bool"}
+			]
+		},
+		{
+			"name": "inserted",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"inserted","type":"bool"}
 			]
 		},
 		{
@@ -327,25 +307,16 @@
 			]
 		},
 		{
-			"name": "proposalBusy",
+			"name": "totalSupply",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"proposalBusy","type":"bool"}
-			]
-		},
-		{
-			"name": "proposalPerformed",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalPerformed","type":"bool"}
+				{"name":"totalSupply","type":"uint128"}
 			]
 		}
 	],
 	"data": [
-		{"key":1,"name":"tokenLocker","type":"address"},
-		{"key":2,"name":"platform_id","type":"uint256"}
+		{"key":1,"name":"platform_id","type":"uint256"}
 	],
 	"events": [
 	],
@@ -359,8 +330,10 @@
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"leftBro","type":"optional(address)"},
 		{"name":"rightBro","type":"optional(address)"},
+		{"name":"rightAmount","type":"optional(uint128)"},
 		{"name":"currentHead","type":"optional(address)"},
 		{"name":"initialized","type":"bool"},
+		{"name":"inserted","type":"bool"},
 		{"name":"propId","type":"uint256"},
 		{"name":"creationTime","type":"uint32"},
 		{"name":"tokenRoot","type":"address"},
@@ -372,10 +345,6 @@
 		{"name":"votesNo","type":"uint128"},
 		{"name":"votingResult","type":"optional(bool)"},
 		{"name":"amountLocked","type":"uint128"},
-		{"name":"proposalBusy","type":"bool"},
-		{"name":"proposalPerformed","type":"bool"},
-		{"name":"currentCaller","type":"address"},
-		{"name":"currentAmount","type":"uint128"},
-		{"name":"currentChoice","type":"bool"}
+		{"name":"totalSupply","type":"uint128"}
 	]
 }

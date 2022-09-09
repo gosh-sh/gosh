@@ -7,9 +7,20 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"_platformCodeHash","type":"uint256"},
-				{"name":"_platformCodeDepth","type":"uint16"}
+				{"name":"_platformCodeDepth","type":"uint16"},
+				{"name":"_m_walletCode","type":"cell"},
+				{"name":"_m_tokenRoot","type":"address"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "calcClientAddress",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
 			]
 		},
 		{
@@ -26,27 +37,6 @@
 			]
 		},
 		{
-			"name": "onInitialized",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onAcceptTokensTransfer",
-			"inputs": [
-				{"name":"root","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"value2","type":"address"},
-				{"name":"value3","type":"address"},
-				{"name":"gasTo","type":"address"},
-				{"name":"value5","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "unlockVoting",
 			"inputs": [
 				{"name":"amount","type":"uint128"}
@@ -58,7 +48,8 @@
 			"name": "onHeadUpdated",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"newClientHead","type":"optional(address)"}
+				{"name":"newClientHead","type":"optional(address)"},
+				{"name":"newHeadValue","type":"optional(uint128)"}
 			],
 			"outputs": [
 			]
@@ -68,15 +59,16 @@
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"success","type":"bool"},
-				{"name":"newClientHead","type":"optional(address)"}
+				{"name":"newClientHead","type":"optional(address)"},
+				{"name":"newHeadValue","type":"optional(uint128)"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "onLockAmountUpdate",
+			"name": "onClientInserted",
 			"inputs": [
-				{"name":"amount","type":"uint128"}
+				{"name":"_platform_id","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -89,19 +81,92 @@
 			]
 		},
 		{
+			"name": "onAcceptTokensMint",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"gasTo","type":"address"},
+				{"name":"value3","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onBounceTokensTransfer",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"value2","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"gasTo","type":"address"},
+				{"name":"value5","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateTokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onUpdateBalance",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "m_tokenRoot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenWallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWallet","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "m_tokenWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWalletCode","type":"cell"}
+			]
+		},
+		{
 			"name": "smvAccount",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"smvAccount","type":"address"}
-			]
-		},
-		{
-			"name": "tokenRoot",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"tokenRoot","type":"address"}
 			]
 		},
 		{
@@ -113,35 +178,11 @@
 			]
 		},
 		{
-			"name": "platformIsInitializedFailed",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformIsInitializedFailed","type":"bool"}
-			]
-		},
-		{
-			"name": "platformConstructorFailed",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformConstructorFailed","type":"bool"}
-			]
-		},
-		{
 			"name": "clientHead",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"clientHead","type":"optional(address)"}
-			]
-		},
-		{
-			"name": "total_votes",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"total_votes","type":"uint128"}
 			]
 		},
 		{
@@ -151,35 +192,10 @@
 			"outputs": [
 				{"name":"votes_locked","type":"uint128"}
 			]
-		},
-		{
-			"name": "tip3Wallet",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"tip3Wallet","type":"optional(address)"}
-			]
-		},
-		{
-			"name": "platformCodeHash",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformCodeHash","type":"uint256"}
-			]
-		},
-		{
-			"name": "platformCodeDepth",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformCodeDepth","type":"uint16"}
-			]
 		}
 	],
 	"data": [
-		{"key":1,"name":"smvAccount","type":"address"},
-		{"key":2,"name":"tokenRoot","type":"address"}
+		{"key":1,"name":"smvAccount","type":"address"}
 	],
 	"events": [
 	],
@@ -187,19 +203,15 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"m_tokenRoot","type":"address"},
+		{"name":"m_tokenWallet","type":"address"},
+		{"name":"m_tokenBalance","type":"uint128"},
+		{"name":"m_tokenWalletCode","type":"cell"},
 		{"name":"smvAccount","type":"address"},
-		{"name":"tokenRoot","type":"address"},
 		{"name":"lockerBusy","type":"bool"},
-		{"name":"platformIsInitializedFailed","type":"bool"},
-		{"name":"platformConstructorFailed","type":"bool"},
 		{"name":"clientHead","type":"optional(address)"},
-		{"name":"total_votes","type":"uint128"},
 		{"name":"votes_locked","type":"uint128"},
-		{"name":"tip3Wallet","type":"optional(address)"},
 		{"name":"platformCodeHash","type":"uint256"},
-		{"name":"platformCodeDepth","type":"uint16"},
-		{"name":"actionValue","type":"uint128"},
-		{"name":"actionLockAmount","type":"uint128"},
-		{"name":"actionInputCell","type":"cell"}
+		{"name":"platformCodeDepth","type":"uint16"}
 	]
 }

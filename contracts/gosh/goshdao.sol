@@ -44,9 +44,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     TvmCell m_SMVClientCode;
     TvmCell m_SMVProposalCode;
 
-    TvmCell m_TokenRootCode;
+/*     TvmCell m_TokenRootCode;
     TvmCell m_TokenWalletCode;
-    address public _rootTokenRoot;
+ */    address public _rootTokenRoot;
     address public _lastAccountAddress;
     
     bool _flag = false;
@@ -101,9 +101,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         m_SMVProposalCode = tvm.setCodeSalt(SMVProposalCode, b.toCell());
         m_SMVClientCode = tvm.setCodeSalt(SMVClientCode, b.toCell());
 
-        m_TokenRootCode = TokenRootCode;
-        m_TokenWalletCode = TokenWalletCode;
-        m_contentSignature = contentSignature;
+/*     m_TokenRootCode = TokenRootCode;
+       m_TokenWalletCode = TokenWalletCode;
+ */         m_contentSignature = contentSignature;
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
@@ -174,7 +174,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_RepositoryCode,
             m_WalletCode,
             m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 
-            m_TokenLockerCode, m_SMVPlatformCode,
+            m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _rootTokenRoot);
         getMoney();
     }

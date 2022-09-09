@@ -1047,6 +1047,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         await this.run('startProposalForAddProtectedBranch', {
             repoName,
             branchName,
+            num_clients: 0,
         })
     }
 
@@ -1090,8 +1091,8 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
     }
 
     async getSmvTokenBalance(): Promise<number> {
-        const result = await this.account.runLocal('_tokenBalance', {})
-        return +result.decoded?.output._tokenBalance
+        const result = await this.account.runLocal('m_tokenBalance', {})
+        return +result.decoded?.output.m_tokenBalance
     }
 
     async lockVoting(amount: number): Promise<void> {
@@ -1119,6 +1120,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             proposal: proposalAddr,
             choice,
             amount,
+            num_clients: 1,
         })
     }
 
@@ -1798,10 +1800,10 @@ export class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
     }
 
     async getVotes(): Promise<{ total: number; locked: number }> {
-        const total = await this.account.runLocal('total_votes', {})
+        const total = await this.account.runLocal('m_tokenBalance', {})
         const locked = await this.account.runLocal('votes_locked', {})
         return {
-            total: +total.decoded?.output.total_votes,
+            total: +total.decoded?.output.m_tokenBalance,
             locked: +locked.decoded?.output.votes_locked,
         }
     }

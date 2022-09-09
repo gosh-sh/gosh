@@ -12,8 +12,8 @@ import "./External/tip3/TokenRoot.sol";
 */
 contract TokenRootOwner is IAcceptTokensTransferCallback {
     uint256 static nonce;
-    TvmCell tokenRootCode;
-    TvmCell tokenWalletCode;
+    TvmCell m_tokenRootCode;
+    TvmCell m_tokenWalletCode;
     uint256 _rootpubkey;
 
 
@@ -53,8 +53,8 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
         tvm.accept(); */
         tvm.accept();
         _rootpubkey =  tvm.pubkey();
-        tokenRootCode = _tokenRootCode;
-        tokenWalletCode = _tokenWalletCode;
+        m_tokenRootCode = _tokenRootCode;
+        m_tokenWalletCode = _tokenWalletCode;
     }
 
     function deployRoot(
@@ -102,9 +102,9 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
                 symbol_: "",
                 decimals_: 1,
                 rootOwner_: this,
-                walletCode_: tokenWalletCode
+                walletCode_: m_tokenWalletCode
             },
-            code: tokenRootCode
+            code: m_tokenRootCode
         }(
             initialSupplyTo,
             initialSupply,
@@ -150,7 +150,7 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
         uint128 amount,
         address recipient,
         uint128 deployWalletValue,
-        address /* remainingGasTo */,
+        address remainingGasTo ,
         bool notify,
         TvmCell payload
     ) external view {
