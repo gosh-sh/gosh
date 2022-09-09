@@ -172,7 +172,9 @@ impl BlobsRebuildingPlan {
             // future changes that might break logic unnoticed
             let restored_snapshots =
                 BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
+            log::debug!("restored_snapshots: {:#?}", restored_snapshots);
             let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(2);
+            log::debug!("pre last_restored_snapshots: {:#?}", last_restored_snapshots);
             if let Some((blob_id, blob)) = restored_snapshots.0 {
                 visited.insert(blob_id);
                 last_restored_snapshots.put(blob_id, blob);
@@ -183,6 +185,7 @@ impl BlobsRebuildingPlan {
                 last_restored_snapshots.put(blob_id, blob);
                 blobs.remove(&blob_id);
             }
+            log::debug!("post last_restored_snapshots: {:#?}", last_restored_snapshots);
 
             log::info!(
                 "Expecting to restore blobs: {:?} from {}",
