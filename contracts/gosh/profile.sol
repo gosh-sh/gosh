@@ -112,14 +112,14 @@ contract Profile is Modifiers {
         GoshDao(dao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr);
     }
 
-    function deployDao(string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
+    function deployDao(address goshroot, string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
             varInit: {_name : name}
         });
         address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
-        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(_goshroot, previous);
+        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(goshroot, previous);
     }
 
     function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {

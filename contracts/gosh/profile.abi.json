@@ -77,6 +77,7 @@
 		{
 			"name": "deployDao",
 			"inputs": [
+				{"name":"goshroot","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"previous","type":"optional(address)"}
 			],
