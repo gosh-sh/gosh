@@ -18,7 +18,7 @@ import "profiledao.sol";
 contract Profile is Modifiers {
     string constant version = "1.0.0";
     TvmCell m_codeProfileDao;
-    
+
     // mapping to store hashes of inbound messages;
     mapping(uint256 => uint32) m_messages;
     LastMsg m_lastMsg;
@@ -57,17 +57,17 @@ contract Profile is Modifiers {
         }
     }
 
-    
+
     modifier onlyOwnerPubkeyList() {
         require (_owners.exists(msg.pubkey()) == true, ERR_SENDER_NO_ALLOWED) ;
         _;
     }
-    
+
     address _goshroot;
     bool _flag = false;
     mapping(uint256 => bool) _owners;
 
-    constructor( TvmCell codeProfileDao, 
+    constructor( TvmCell codeProfileDao,
         uint256 pubkey
     ) public {
         _goshroot = msg.sender;
@@ -75,11 +75,11 @@ contract Profile is Modifiers {
         _owners[pubkey] = true;
         getMoney();
     }
-    
+
     function deployedWallet(address goshroot, address goshdao, uint128 index, string ver) public pure {
         goshroot; goshdao; index; ver;
     }
-    
+
     function addPubkey(
         uint256 pubkey
     ) public onlyOwnerPubkeyList  accept saveMsg {
@@ -93,25 +93,25 @@ contract Profile is Modifiers {
         delete _owners[pubkey];
         getMoney();
     }
-    
+
     function turnOn(address wallet, uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
         GoshWallet(wallet).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
         getMoney();
     }
-    
+
     function turnOff(address wallet) public onlyOwnerPubkeyList  accept saveMsg {
         GoshWallet(wallet).turnOffPubkey{value: 0.1 ton, flag : 1}();
         getMoney();
     }
-    
+
     function deployWallet(address dao, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
         GoshDao(dao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr);
     }
-    
+
     function deleteWallet(address dao, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
         GoshDao(dao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr);
     }
-    
+
     function deployDao(string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
@@ -121,7 +121,7 @@ contract Profile is Modifiers {
         address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
         ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(_goshroot, previous);
     }
-    
+
     function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
@@ -131,7 +131,7 @@ contract Profile is Modifiers {
         address daoprofile = address.makeAddrStd(0, tvm.hash(s0));
         ProfileDao(daoprofile).destroy{value: 0.1 ton, flag : 1}();
     }
-    
+
     function sendMoneyProfileDao(string name, uint128 value) public view {
         tvm.accept();
         TvmCell s0 = tvm.buildStateInit({
@@ -152,7 +152,7 @@ contract Profile is Modifiers {
         _flag = true;
         GoshRoot(_goshroot).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
     }
-    
+
     //Fallback/Receive
     receive() external {
         if (msg.sender == _goshroot) {
@@ -164,19 +164,28 @@ contract Profile is Modifiers {
     function destroy() public onlyOwnerPubkeyList {
         selfdestruct(_goshroot);
     }
-    
+
     //Setters
     function setNewGoshRoot(address goshroot) public onlyOwnerPubkeyList {
         tvm.accept();
         _goshroot = goshroot;
     }
-    
+
     //Getters
     function getAccess() external view returns(mapping(uint256 => bool)) {
         return _owners;
     }
-    
+
     function isPubkeyCorrect(uint256 pubkey) external view returns(bool) {
         return _owners.exists(pubkey);
+    }
+
+    function getProfileDaoAddr(string name) external view returns(address){
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        return address(tvm.hash(s0));
     }
 }

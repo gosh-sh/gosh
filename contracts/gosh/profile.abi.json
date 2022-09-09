@@ -131,6 +131,15 @@
 			"outputs": [
 				{"name":"value0","type":"bool"}
 			]
+		},
+		{
+			"name": "getProfileDaoAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
 		}
 	],
 	"data": [
