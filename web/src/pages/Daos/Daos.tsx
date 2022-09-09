@@ -35,7 +35,7 @@ const DaosPage = () => {
             '0:825956b94a536906bf0f1fb89feb56d9bc13e51dcc717a3686db94caed1b66ec',
             keys,
         )
-        await profile.setGosh(
+        await profile.setGoshAddr(
             '0:f03920fec66868626f1cd8d869833076487ca44d1ad47c75c772f114abe27267',
         )
     }

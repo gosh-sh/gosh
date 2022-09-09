@@ -20,6 +20,8 @@ import {
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
 import { goshVersionsAtom } from '../store/gosh.state'
+import { useGosh } from './gosh.hooks'
+import { useProfile } from './user.hooks'
 
 function useDaoList(perPage: number) {
     const { keys } = useRecoilValue(userAtom)
@@ -220,18 +222,17 @@ function useDao(name?: string) {
 
 function useDaoCreate() {
     const { keys } = useRecoilValue(userAtom)
+    const gosh = useGosh()
+    const profile = useProfile()
     const [progress, setProgress] = useState<TDaoCreateProgress>({
         isFetching: false,
         members: [],
     })
 
     const createDao = async (name: string, members: string[]) => {
-        if (!keys) throw new GoshError(EGoshError.NO_USER)
-
-        // TODO: version
-        const gosh = await AppConfig.goshroot.getGosh('')
-        const profileAddr = await gosh.getProfileAddr(`0x${keys.public}`)
-        const profile = new GoshProfile(AppConfig.goshclient, profileAddr, keys)
+        if (!keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
+        if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
+        if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         // Validate public keys
         members.unshift(`0x${keys.public}`)
@@ -258,7 +259,7 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         let dao: IGoshDao
         try {
-            dao = await profile.deployDao(name.toLowerCase())
+            dao = await profile.deployDao(gosh.address, name.toLowerCase())
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -267,51 +268,51 @@ function useDaoCreate() {
             setProgress((state) => ({ ...state, isDaoDeployed }))
         }
 
-        // Deploy wallets
-        await Promise.all(
-            members.map(async (pubkey) => {
-                // Deploy wallet
-                let isDeployed: boolean
-                let wallet: IGoshWallet
-                try {
-                    wallet = await profile.deployWallet(dao.address, profile.address)
-                    await profile.turnOn(wallet.address, pubkey)
-                    isDeployed = true
-                } catch (e) {
-                    isDeployed = false
-                    throw e
-                } finally {
-                    setProgress((state) => ({
-                        ...state,
-                        members: state.members.map((item) => {
-                            if (item.pubkey === pubkey) return { ...item, isDeployed }
-                            return item
-                        }),
-                    }))
-                }
+        // // Deploy wallets
+        // await Promise.all(
+        //     members.map(async (pubkey) => {
+        //         // Deploy wallet
+        //         let isDeployed: boolean
+        //         let wallet: IGoshWallet
+        //         try {
+        //             wallet = await profile.deployWallet(dao.address, profile.address)
+        //             await profile.turnOn(wallet.address, pubkey)
+        //             isDeployed = true
+        //         } catch (e) {
+        //             isDeployed = false
+        //             throw e
+        //         } finally {
+        //             setProgress((state) => ({
+        //                 ...state,
+        //                 members: state.members.map((item) => {
+        //                     if (item.pubkey === pubkey) return { ...item, isDeployed }
+        //                     return item
+        //                 }),
+        //             }))
+        //         }
 
-                // Mint tokens
-                let isMinted: boolean
-                try {
-                    // const smvTokenBalance = await wallet.getSmvTokenBalance()
-                    // if (!smvTokenBalance) {
-                    //     await dao.mint(100, wallet.address, keys)
-                    // }
-                    isMinted = true
-                } catch (e) {
-                    isMinted = false
-                    throw e
-                } finally {
-                    setProgress((state) => ({
-                        ...state,
-                        members: state.members.map((item) => {
-                            if (item.pubkey === pubkey) return { ...item, isMinted }
-                            return item
-                        }),
-                    }))
-                }
-            }),
-        )
+        //         // Mint tokens
+        //         let isMinted: boolean
+        //         try {
+        //             // const smvTokenBalance = await wallet.getSmvTokenBalance()
+        //             // if (!smvTokenBalance) {
+        //             //     await dao.mint(100, wallet.address, keys)
+        //             // }
+        //             isMinted = true
+        //         } catch (e) {
+        //             isMinted = false
+        //             throw e
+        //         } finally {
+        //             setProgress((state) => ({
+        //                 ...state,
+        //                 members: state.members.map((item) => {
+        //                     if (item.pubkey === pubkey) return { ...item, isMinted }
+        //                     return item
+        //                 }),
+        //             }))
+        //         }
+        //     }),
+        // )
 
         setProgress((state) => ({ ...state, isFetching: false }))
     }
@@ -443,8 +444,8 @@ function useDaoMemberCreate() {
     })
 
     const createMember = async (members: string[]) => {
-        if (!keys) throw new GoshError(EGoshError.NO_USER)
-        if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
+        if (!keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
+        if (!daoDetails) throw new GoshError(EGoshError.DAO_UNDEFINED)
 
         // TODO: version
         const gosh = await AppConfig.goshroot.getGosh('')
@@ -541,8 +542,8 @@ function useDaoMemberDelete() {
     const isFetching = (pubkey: string) => fetching.indexOf(pubkey) >= 0
 
     const deleteMember = async (...pubkeys: string[]) => {
-        if (!keys) throw new GoshError(EGoshError.NO_USER)
-        if (!daoDetails) throw new GoshError(EGoshError.NO_DAO)
+        if (!keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
+        if (!daoDetails) throw new GoshError(EGoshError.DAO_UNDEFINED)
 
         setFetching((state) => [...state, ...pubkeys])
 

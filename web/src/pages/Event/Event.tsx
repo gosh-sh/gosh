@@ -59,7 +59,7 @@ const EventPage = () => {
     const onProposalSubmit = async (values: TFormValues) => {
         try {
             if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
-            if (!dao) throw new GoshError(EGoshError.NO_DAO)
+            if (!dao) throw new GoshError(EGoshError.DAO_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (

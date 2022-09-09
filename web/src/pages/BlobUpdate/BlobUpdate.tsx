@@ -58,7 +58,7 @@ const BlobUpdatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)

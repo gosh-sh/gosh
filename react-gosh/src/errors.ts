@@ -4,18 +4,19 @@ export enum EGoshError {
     PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
     PROFILE_EXISTS = 'Profile already exists',
     PROFILE_INVALID_PUBKEY = 'Profile access denied with provided phrase/pubkey',
+    PROFILE_UNDEFINED = 'Profile undefined',
 
-    NO_USER = 'User undefined',
+    USER_KEYS_UNDEFINED = 'User keys undefined',
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
     GOSH_UNDEFINED = 'Gosh undefined',
-    NO_DAO = 'Gosh DAO undefined',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',
     NO_BRANCH = 'Branch undefined',
 
     DAO_EXISTS = 'DAO already exists',
+    DAO_UNDEFINED = 'DAO undefined',
 
     PR_BRANCH = 'Branch is resticted for direct commit. Make PR instead',
     PR_NO_MERGE = 'Nothing to merge',

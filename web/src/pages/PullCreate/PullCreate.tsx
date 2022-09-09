@@ -238,7 +238,7 @@ const PullCreatePage = () => {
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH)

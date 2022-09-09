@@ -1,6 +1,6 @@
 import { AccountType } from '@eversdk/appkit'
 import { KeyPair } from '@eversdk/core'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRecoilState, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
@@ -111,4 +111,26 @@ function useUser() {
     }
 }
 
-export { useUser }
+function useProfile() {
+    const { user } = useUser()
+    const [profile, setProfile] = useState<IGoshProfile>()
+
+    useEffect(() => {
+        const _getProfile = async () => {
+            if (!user.profile) return
+
+            const instance = new GoshProfile(
+                AppConfig.goshclient,
+                user.profile,
+                user.keys,
+            )
+            setProfile(instance)
+        }
+
+        _getProfile()
+    }, [user.profile, user.keys])
+
+    return profile
+}
+
+export { useUser, useProfile }
