@@ -124,6 +124,14 @@
 			]
 		},
 		{
+			"name": "getCurrentGoshRoot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "isPubkeyCorrect",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}

@@ -175,6 +175,10 @@ contract Profile is Modifiers {
     function getAccess() external view returns(mapping(uint256 => bool)) {
         return _owners;
     }
+    
+    function getCurrentGoshRoot() external view returns(address) {
+        return _goshroot;
+    }
 
     function isPubkeyCorrect(uint256 pubkey) external view returns(bool) {
         return _owners.exists(pubkey);
