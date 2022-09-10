@@ -57,24 +57,6 @@
 			]
 		},
 		{
-			"name": "deployWallet",
-			"inputs": [
-				{"name":"dao","type":"address"},
-				{"name":"pubaddr","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deleteWallet",
-			"inputs": [
-				{"name":"dao","type":"address"},
-				{"name":"pubaddr","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"goshroot","type":"address"},

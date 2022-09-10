@@ -51,6 +51,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     address public _lastAccountAddress;
     
     bool _flag = false;
+    bool _tombstone = false;
 
     constructor(
         address pubaddr, 
@@ -106,6 +107,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { _previous = previous.get(); GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); }
+        this.deployWalletIn{value: 0.1 ton, flag: 1}(_pubaddr);
     }
     
     function getPreviousInfo(string name) public view {
@@ -198,9 +200,29 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Wallet part
-    function deployWallet(address pubaddr) public senderIs(_pubaddr) {
+    function setTombstone(address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _tombstone = true;
+        getMoney();
+        uint256 zero;
+        this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero);
+    }
+    
+    function askForTombstoneIn(uint256 key) public senderIs(address(this))  accept {
+        optional(uint256, address) res = _wallets.next(key);
+        if (res.hasValue()) {
+            address pub;
+            (key, pub) = res.get();
+            GoshWallet(getAddrWalletIn(pub, 0)).setTombstoneWallet{value: 0.1 ton, flag: 1}();
+            this.askForTombstoneIn{value: 0.1 ton, flag: 1}(key);
+        }
+        getMoney();
+    }
+        
+    function deployWallet(address pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
+        require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
-        this.deployWalletIn{value: 0.1 ton, flag: 1}(pubaddr);
+        this.deployWalletIn{value: 0.1 ton, flag: 1}(pubaddrdeploy);
         getMoney();
     }
     
@@ -222,9 +244,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deleteWallet(address pubaddr) public senderIs(_pubaddr) {
+    function deleteWallet(address pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
+        require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
-        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        (int8 _, uint256 keyaddr) = pubaddrdeploy.unpack();
         _;
         require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST);
         GoshWallet(_wallets[keyaddr]).destroy{value : 0.2 ton}();
@@ -243,6 +266,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getConfigInfo(address pubaddr, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index)) {
+        require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
@@ -252,6 +276,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     //Setters
     function setConfig(uint128 limit_wallets /*, uint128 limit_time, uint128 limit_messages */) public onlyOwnerPubkey(_rootpubkey) {
+        require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();    
         _limit_wallets = limit_wallets;
 //        _limit_time = limit_time;
