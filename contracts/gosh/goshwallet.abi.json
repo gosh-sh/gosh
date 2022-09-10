@@ -500,6 +500,14 @@
 			]
 		},
 		{
+			"name": "getAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(uint256)"}
+			]
+		},
+		{
 			"name": "onTokenWalletDeployed",
 			"inputs": [
 				{"name":"wallet","type":"address"}
