@@ -20,6 +20,14 @@
 			]
 		},
 		{
+			"name": "deployedDao",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 			],

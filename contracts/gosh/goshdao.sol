@@ -14,6 +14,7 @@ import "gosh.sol";
 import "tree.sol";
 import "diff.sol";
 import "commit.sol";
+import "profiledao.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 
@@ -35,6 +36,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     TvmCell m_contentSignature;
     address static _goshroot;
     address _pubaddr;
+    address _profiledao;
     string _nameDao;
     address _previous;
     mapping(uint256 => address  ) _wallets;
@@ -55,6 +57,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     constructor(
         address pubaddr, 
+        address profiledao,
         string name, 
         TvmCell CommitCode,
         TvmCell RepositoryCode,
@@ -82,6 +85,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint256 randomNonce */ 
         optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
         tvm.accept();
+        _profiledao = profiledao;
         _pubaddr = pubaddr;
         _nameDao = name;
         m_WalletCode = WalletCode;
@@ -108,6 +112,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { _previous = previous.get(); GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); }
         this.deployWalletIn{value: 0.1 ton, flag: 1}(_pubaddr);
+        ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao);
     }
     
     function getPreviousInfo(string name) public view {

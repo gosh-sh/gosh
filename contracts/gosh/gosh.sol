@@ -104,6 +104,7 @@ contract GoshRoot is Modifiers, Upgradable{
         TvmCell s1 = _composeDaoStateInit(name);
         _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
             pubaddr,
+            msg.sender,
             name,
             m_CommitCode,
             m_RepositoryCode,

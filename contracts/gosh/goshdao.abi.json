@@ -7,6 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
+				{"name":"profiledao","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
@@ -343,6 +344,7 @@
 		{"name":"m_contentSignature","type":"cell"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_pubaddr","type":"address"},
+		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_previous","type":"address"},
 		{"name":"_wallets","type":"map(uint256,address)"},

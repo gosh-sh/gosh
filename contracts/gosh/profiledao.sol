@@ -30,6 +30,10 @@ contract ProfileDao is Modifiers {
     function deployDao(address goshroot, optional(address) previous) public view onlyOwnerAddress(_pubaddr)  accept {
         GoshRoot(goshroot).deployDao{value: 0.1 ton, flag : 1}(_name, _pubaddr, previous);
     }
+    
+    function deployedDao(string name) public pure {
+        name;
+    }
 
     //Money part
     function getMoney() private {
