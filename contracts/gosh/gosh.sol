@@ -246,12 +246,22 @@ contract GoshRoot is Modifiers, Upgradable{
 
     function setProfile(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
-        m_codeProfile = code;
+        TvmBuilder b;
+        b.store(_root);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        m_codeProfile = tvm.setCodeSalt(code, b.toCell());
     }
     
     function setProfileDao(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
-        m_codeProfileDao = code;
+        TvmBuilder b;
+        b.store(_root);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        m_codeProfileDao = tvm.setCodeSalt(code, b.toCell());
     }
     
     function setDiff(TvmCell code) public  onlyOwner accept {
