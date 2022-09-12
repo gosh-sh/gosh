@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import { useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
 import TextareaField from '../../components/FormikForms/TextareaField'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -15,15 +16,15 @@ type TFormValues = {
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const { createDao, progress } = useDaoCreate()
+    const daocreate = useDaoCreate()
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            await createDao(values.name, values.members.split('\n'))
+            await daocreate.create(values.name, values.members.split('\n'))
             navigate('/account/orgs')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -74,12 +75,17 @@ const DaoCreatePage = () => {
                                     name="members"
                                     component={TextareaField}
                                     inputProps={{
-                                        placeholder: "Members' public keys",
+                                        placeholder: 'Username(s)',
                                         autoComplete: 'off',
                                         disabled: isSubmitting,
                                         rows: 5,
+                                        onChange: (e: any) =>
+                                            setFieldValue(
+                                                'members',
+                                                e.target.value.toLowerCase(),
+                                            ),
                                     }}
-                                    help="Put each public key (0x...) from new line"
+                                    help="Put each @username from new line"
                                 />
                             </div>
 
@@ -95,7 +101,7 @@ const DaoCreatePage = () => {
                     )}
                 </Formik>
 
-                <DaoCreateProgress progress={progress} className={'mt-4'} />
+                <DaoCreateProgress progress={daocreate.progress} className={'mt-4'} />
             </div>
         </div>
     )

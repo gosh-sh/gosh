@@ -23,7 +23,7 @@ type TFormValues = {
 
 const SignupPage = () => {
     const navigate = useNavigate()
-    const { userSignup, userSignupProgress } = useUser()
+    const user = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [phrase, setPhrase] = useState<string>('')
 
@@ -34,7 +34,13 @@ const SignupPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            await userSignup(values)
+            await user.signup({
+                ...values,
+                username: (values.username.startsWith('@')
+                    ? values.username
+                    : `@${values.username}`
+                ).trim(),
+            })
 
             // Create PIN-code
             setModal({
@@ -72,7 +78,7 @@ const SignupPage = () => {
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
                     username: Yup.string()
-                        .matches(/^[\w-]+$/, 'Username has invalid characters')
+                        .matches(/^@?[\w-]+$/, 'Username has invalid characters')
                         .max(64, 'Max length is 64 characters')
                         .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),
@@ -131,7 +137,7 @@ const SignupPage = () => {
                 )}
             </Formik>
 
-            <SignupProgress progress={userSignupProgress} className="mt-4" />
+            <SignupProgress progress={user.signupProgress} className="mt-4" />
         </div>
     )
 }

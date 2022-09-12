@@ -5,7 +5,7 @@ import {
     GoshDao,
     GoshWallet,
     IGosh,
-    TUserState,
+    TUser,
 } from 'react-gosh'
 
 const logger = console
@@ -41,7 +41,7 @@ export class DockerClient {
     /**
      * Get containers list
      **/
-    static async getContainers(userState: TUserState): Promise<Container[]> {
+    static async getContainers(userState: TUser): Promise<Container[]> {
         const containers =
             (await AppConfig.dockerclient?.docker.listContainers()) as IDockerContainer[]
         return await Promise.all(
@@ -89,7 +89,7 @@ export class DockerClient {
     /**
      * Get containers list
      **/
-    static async getImages(userState: TUserState): Promise<Image[]> {
+    static async getImages(userState: TUser): Promise<Image[]> {
         const images =
             (await AppConfig.dockerclient?.docker.listImages()) as IDockerImage[]
         return await Promise.all(
@@ -131,7 +131,7 @@ export class DockerClient {
     }
 
     static async _getWallet(
-        userState: TUserState,
+        userState: TUser,
         goshRootContract: string,
         goshDao: string,
         version: string,
@@ -168,7 +168,7 @@ export class DockerClient {
      **/
     static async getImageStatus(
         image: IDockerImage,
-        userState: TUserState,
+        userState: TUser,
         goshAddress: string,
         goshCommitHash: string,
         version: string,
@@ -230,7 +230,7 @@ export class DockerClient {
         imageId: string,
         appendValidationLog: any,
         closeValidationLog: any,
-        userState: TUserState,
+        userState: TUser,
         version: string,
     ): Promise<boolean> {
         const image: IDockerImage | undefined = await DockerClient._findImage(imageId)
@@ -383,7 +383,7 @@ export class DockerClient {
         imageDockerfile: string,
         imageTag: string,
         appendLog: any,
-        userState: TUserState,
+        userState: TUser,
         version: string,
     ): Promise<boolean> {
         console.log('buildImage', goshAddress, goshCommitHash, imageDockerfile)

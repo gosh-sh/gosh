@@ -1,5 +1,5 @@
 import { AccountType } from '@eversdk/appkit'
-import { TonClient } from '@eversdk/core'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { sleep } from '../../utils'
 import { BaseContract } from './base'
 import { GoshProfile } from './goshprofile'
@@ -20,7 +20,7 @@ class Gosh extends BaseContract implements IGosh {
         if (acc.acc_type === AccountType.active) return profile
 
         // If profile is not active (deployed), deploy and wait for status `active`
-        await this.run('deployProfile', { name: username, pubkey })
+        await this.run('deployProfile', { name: username.toLowerCase(), pubkey })
         while (true) {
             const acc = await profile.account.getAccount()
             console.debug('[Create profile]: Wait for account', acc)
@@ -31,7 +31,9 @@ class Gosh extends BaseContract implements IGosh {
     }
 
     async getDaoAddr(name: string): Promise<string> {
-        const result = await this.account.runLocal('getAddrDao', { name })
+        const result = await this.account.runLocal('getAddrDao', {
+            name: name.toLowerCase(),
+        })
         return result.decoded?.output.value0
     }
 
@@ -44,8 +46,8 @@ class Gosh extends BaseContract implements IGosh {
 
     async getRepoAddr(name: string, daoName: string): Promise<string> {
         const result = await this.account.runLocal('getAddrRepository', {
-            name,
-            dao: daoName,
+            name: name.toLowerCase(),
+            dao: daoName.toLowerCase(),
         })
         return result.decoded?.output.value0
     }
@@ -69,8 +71,8 @@ class Gosh extends BaseContract implements IGosh {
         label: string,
     ): Promise<string> {
         const result = await this.account.runLocal('getContentAdress', {
-            daoName,
-            repoName,
+            daoName: daoName.toLowerCase(),
+            repoName: repoName.toLowerCase(),
             commit: commitHash,
             label,
         })
@@ -88,8 +90,15 @@ class Gosh extends BaseContract implements IGosh {
     }
 
     async getProfileAddr(username: string): Promise<string> {
-        const result = await this.account.runLocal('getProfileAddr', { name: username })
+        const result = await this.account.runLocal('getProfileAddr', {
+            name: username.toLowerCase(),
+        })
         return result.decoded?.output.value0
+    }
+
+    async getProfile(username: string, keys?: KeyPair): Promise<IGoshProfile> {
+        const address = await this.getProfileAddr(username)
+        return new GoshProfile(this.account.client, address, keys)
     }
 }
 

@@ -32,6 +32,20 @@ const SettingsPage = () => {
     return (
         <div>
             <div>
+                <h3 className="text-xl font-semibold">My profile name</h3>
+                <p>Share it with DAO owner to add you to members list</p>
+                {user.username && (
+                    <CopyClipboard
+                        className="mt-2"
+                        label={shortString(user.username, 10, 10)}
+                        componentProps={{
+                            text: user.username,
+                        }}
+                    />
+                )}
+            </div>
+
+            <div className="mt-5">
                 <h3 className="text-xl font-semibold">My profile address</h3>
                 {user.profile && (
                     <CopyClipboard
@@ -46,10 +60,9 @@ const SettingsPage = () => {
 
             <div className="mt-5">
                 <h3 className="text-xl font-semibold">My public key</h3>
-                <p>Share it with DAO owner to add you to members list</p>
                 {user.keys && (
                     <CopyClipboard
-                        className="mt-4"
+                        className="mt-2"
                         label={shortString(`0x${user.keys.public}`, 10, 10)}
                         componentProps={{
                             text: `0x${user.keys.public}`,

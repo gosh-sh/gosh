@@ -7,7 +7,7 @@ import {
     chacha20,
     generateRandomBytes,
     AppConfig,
-    TUserStatePersist,
+    TUserPersist,
     useUser,
 } from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
@@ -22,12 +22,12 @@ type TPinCodeModalProps = {
 
 const PinCodeModal = (props: TPinCodeModalProps) => {
     const { phrase, unlock, onUnlock } = props
-    const { persist, userSetup, userSignout } = useUser()
+    const user = useUser()
 
     const setModal = useSetRecoilState(appModalStateAtom)
     const resetModal = useResetRecoilState(appModalStateAtom)
     const [pin, setPin] = useState<string>('')
-    const [tmp, setTmp] = useState<TUserStatePersist>({ ...persist })
+    const [tmp, setTmp] = useState<TUserPersist>({ ...user.persist })
 
     const onPinSubmit = useCallback(
         async (pin: string) => {
@@ -72,7 +72,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     phrase: decrypted,
                 })
 
-                userSetup(tmp, { phrase: decrypted, keys })
+                user.setup(tmp, { phrase: decrypted, keys })
                 setModal({ isOpen: false, element: null })
                 onUnlock && onUnlock()
             }
@@ -110,7 +110,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     type="button"
                     className="btn btn--body w-full py-2 mt-4 leading-normal"
                     onClick={() => {
-                        userSignout()
+                        user.signout()
                         resetModal()
                     }}
                 >

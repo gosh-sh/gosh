@@ -51,7 +51,7 @@ const DaoMembersPage = () => {
                             <DaoMemberListItem
                                 key={index}
                                 item={item}
-                                daoOwnerPubkey={dao.details.ownerPubkey}
+                                daoOwnerPubkey={dao.details.owner}
                                 isDaoOwner={dao.isOwner}
                                 isFetching={
                                     item.pubkey

@@ -1,6 +1,6 @@
 import { KeyPair } from '@eversdk/core'
 
-type TUserStatePersist = {
+type TUserPersist = {
     username?: string
     profile?: string
     phrase?: string
@@ -8,7 +8,7 @@ type TUserStatePersist = {
     pin?: string
 }
 
-type TUserState = TUserStatePersist & {
+type TUser = TUserPersist & {
     keys?: KeyPair
 }
 
@@ -17,4 +17,4 @@ type TUserSignupProgress = {
     isProfileDeployed?: boolean
 }
 
-export { TUserStatePersist, TUserState, TUserSignupProgress }
+export { TUserPersist, TUser, TUserSignupProgress }

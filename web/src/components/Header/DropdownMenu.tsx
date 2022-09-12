@@ -13,7 +13,7 @@ const DropdownMenu = () => {
             to: '',
             title: 'Sign out',
             className: 'text-red-dd3a3a',
-            onClick: user.userSignout,
+            onClick: user.signout,
         },
     ]
 

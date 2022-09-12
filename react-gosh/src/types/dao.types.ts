@@ -1,15 +1,16 @@
 type TDaoDetails = {
     address: string
     name: string
+    version: string
     members: string[]
     supply: number
-    ownerPubkey: string
+    owner: string
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'ownerPubkey'> & {
+type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
     members?: string[]
     supply?: number
-    ownerPubkey?: string
+    owner?: string
     isLoadDetailsFired?: boolean
 }
 
@@ -34,7 +35,7 @@ type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
 type TDaoMemberCreateProgress = {
     isFetching: boolean
     members: {
-        pubkey: string
+        member: string
         isDeployed?: boolean
         isMinted?: boolean
     }[]

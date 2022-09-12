@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { AppConfig, GoshProfile, useDaoList, userAtom } from 'react-gosh'
+import { useDaoList, userAtom } from 'react-gosh'
 import DaoListItem from './DaoListItem'
 import { useRecoilValue } from 'recoil'
 
@@ -17,38 +17,8 @@ const DaosPage = () => {
     } = useDaoList(5)
     const { keys } = useRecoilValue(userAtom)
 
-    const onGetVersions = async () => {
-        const versions = await AppConfig.goshroot.getVersions()
-        console.debug(versions)
-    }
-
-    const onGetGosh = async () => {
-        const gosh = await AppConfig.goshroot.getGosh('0.1.203')
-        console.debug(gosh)
-    }
-
-    const onSetGosh = async () => {
-        if (!keys) return
-
-        const profile = new GoshProfile(
-            AppConfig.goshclient,
-            '0:825956b94a536906bf0f1fb89feb56d9bc13e51dcc717a3686db94caed1b66ec',
-            keys,
-        )
-        await profile.setGoshAddr(
-            '0:f03920fec66868626f1cd8d869833076487ca44d1ad47c75c772f114abe27267',
-        )
-    }
-
     return (
         <>
-            <div>
-                <button onClick={onGetVersions}>Get versions</button>
-                <button onClick={onGetGosh} className="mx-3">
-                    Get gosh
-                </button>
-                <button onClick={onSetGosh}>Set gosh</button>
-            </div>
             <div className="flex flex-wrap justify-between items-center gap-3">
                 <div className="input basis-full sm:basis-1/2">
                     <input

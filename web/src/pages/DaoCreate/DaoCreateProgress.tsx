@@ -24,7 +24,7 @@ const DaoCreateProgress = (props: TDaoCreateProgressProps) => {
                                 : item.isDeployed && item.isMinted
                         }
                     >
-                        Add member {shortString(item.pubkey)}
+                        Add member {shortString(item.member)}
                     </UILogItem>
 
                     <div className="pl-6">

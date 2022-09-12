@@ -16,6 +16,18 @@ interface IContract {
     account: Account
     version: string
 
+    isDeployed(): Promise<boolean>
+    getMessages(
+        variables: {
+            msgType: string[]
+            node?: string[]
+            cursor?: string
+            limit?: number
+        },
+        decode?: boolean,
+        all?: boolean,
+        messages?: any[],
+    ): Promise<any[]>
     run(
         functionName: string,
         input: object,
@@ -49,18 +61,22 @@ interface IGosh extends IContract {
     ): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
     getProfileAddr(username: string): Promise<string>
+    getProfile(username: string, keys?: KeyPair): Promise<IGoshProfile>
 }
 
 interface IGoshProfile extends IContract {
     address: string
 
     setGoshAddr(addr: string): Promise<void>
-    deployDao(goshAddr: string, name: string, prevAddr?: string): Promise<IGoshDao>
-    deployWallet(daoAddr: string, profileAddr: string): Promise<IGoshWallet>
+    deployDao(gosh: IGosh, name: string, prevAddr?: string): Promise<IGoshDao>
     turnOn(walletAddr: string, pubkey: string): Promise<void>
     isPubkeyCorrect(pubkey: string): Promise<boolean>
     getCurrentGoshAddr(): Promise<string>
     getProfileDaoAddr(name: string): Promise<string>
+}
+
+interface IGoshProfileDao extends IContract {
+    address: string
 }
 
 interface IGoshDao extends IContract {
@@ -73,12 +89,16 @@ interface IGoshDao extends IContract {
     getSmvRootTokenAddr(): Promise<string>
     getSmvProposalCode(): Promise<string>
     getSmvClientCode(): Promise<string>
+    getOwner(): Promise<string>
+    getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet>
     mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 interface IGoshWallet extends IContract {
     address: string
     isDaoParticipant: boolean
+
+    deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
 
     getDao(): Promise<IGoshDao>
     getGosh(version: string): Promise<IGosh>
@@ -336,6 +356,7 @@ export {
     IGoshRoot,
     IGosh,
     IGoshProfile,
+    IGoshProfileDao,
     IGoshDao,
     IGoshWallet,
     IGoshRepository,

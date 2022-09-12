@@ -18,12 +18,18 @@ type TFormValues = {
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const { userSignin } = useUser()
+    const { signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            await userSignin(values)
+            await signin({
+                ...values,
+                username: (values.username.startsWith('@')
+                    ? values.username
+                    : `@${values.username}`
+                ).trim(),
+            })
 
             // Create PIN-code
             setModal({
@@ -57,7 +63,6 @@ const SigninPage = () => {
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
                     username: Yup.string()
-                        .matches(/^[\w-]+$/, 'Username has invalid characters')
                         .max(64, 'Max length is 64 characters')
                         .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),

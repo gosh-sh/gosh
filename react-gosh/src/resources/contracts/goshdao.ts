@@ -2,7 +2,8 @@ import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { TDaoDetails } from '../../types'
 import { BaseContract } from './base'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
-import { IGoshDao } from './interfaces'
+import { GoshWallet } from './goshwallet'
+import { IGoshDao, IGoshWallet } from './interfaces'
 
 class GoshDao extends BaseContract implements IGoshDao {
     static key: string = 'goshdao'
@@ -13,19 +14,18 @@ class GoshDao extends BaseContract implements IGoshDao {
 
     async getDetails(): Promise<TDaoDetails> {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr()
-        // TODO: version
         const smvTokenRoot = new GoshSmvTokenRoot(
             this.account.client,
             smvTokenRootAddr,
-            '',
+            this.version,
         )
-        // TODO: Get DAO owner pubkey
         return {
             address: this.address,
             name: await this.getName(),
+            version: this.version,
             members: await this.getWallets(),
             supply: await smvTokenRoot.getTotalSupply(),
-            ownerPubkey: '',
+            owner: await this.getOwner(),
         }
     }
 
@@ -60,6 +60,18 @@ class GoshDao extends BaseContract implements IGoshDao {
     async getSmvClientCode(): Promise<string> {
         const result = await this.account.runLocal('getClientCode', {})
         return result.decoded?.output.value0
+    }
+
+    async getOwner(): Promise<string> {
+        const result = await this.account.runLocal('getOwner', {})
+        return result.decoded?.output.value0
+    }
+
+    async getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet> {
+        const profile = await this.getOwner()
+        const address = await this.getWalletAddr(profile, 0)
+        const wallet = new GoshWallet(this.account.client, address, this.version, keys)
+        return wallet
     }
 
     async mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void> {

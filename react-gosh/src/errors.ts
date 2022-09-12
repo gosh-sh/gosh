@@ -3,10 +3,12 @@ export enum EGoshError {
 
     PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
     PROFILE_EXISTS = 'Profile already exists',
-    PROFILE_INVALID_PUBKEY = 'Profile access denied with provided phrase/pubkey',
+    PROFILE_PUBKEY_INVALID = 'Profile access denied with provided phrase/pubkey',
     PROFILE_UNDEFINED = 'Profile undefined',
+    PROFILE_NO_SIGNER = 'Profile has no signer keys defined',
 
     USER_KEYS_UNDEFINED = 'User keys undefined',
+    USER_NAME_INVALID = 'Incorrect username',
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
@@ -15,6 +17,7 @@ export enum EGoshError {
     NO_REPO = 'Repository undefined',
     NO_BRANCH = 'Branch undefined',
 
+    DAO_NAME_INVALID = 'Incorrect DAO name',
     DAO_EXISTS = 'DAO already exists',
     DAO_UNDEFINED = 'DAO undefined',
 
@@ -34,9 +37,9 @@ export enum EGoshError {
 
 export class GoshError extends Error {
     title: string
-    data?: object
+    data?: object | string
 
-    constructor(message: string, data?: object) {
+    constructor(message: string, data?: object | string) {
         super(message + (data ? ` (${JSON.stringify(data)})` : ''))
         this.name = 'GoshError'
         this.title = message
