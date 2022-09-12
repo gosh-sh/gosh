@@ -68,13 +68,11 @@ contract Profile is Modifiers {
     mapping(uint256 => bool) _owners;
 
     constructor( TvmCell codeProfileDao,
-        uint256 pubkey1, uint256 pubkey2, uint256 pubkey3
+        uint256 pubkey
     ) public {
         _goshroot = msg.sender;
         m_codeProfileDao = codeProfileDao;
-        _owners[pubkey1] = true;
-        _owners[pubkey2] = true;
-        _owners[pubkey3] = true;
+        _owners[pubkey] = true;
         getMoney();
     }
 

@@ -7,9 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"codeProfileDao","type":"cell"},
-				{"name":"pubkey1","type":"uint256"},
-				{"name":"pubkey2","type":"uint256"},
-				{"name":"pubkey3","type":"uint256"}
+				{"name":"pubkey","type":"uint256"}
 			],
 			"outputs": [
 			]
