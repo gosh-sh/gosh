@@ -135,6 +135,10 @@ contract Snapshot is Modifiers {
         });
         return _contractflex;
     }
+    
+    function isReady() public view minValue(0.15 ton) {
+        Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready);
+    }
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);

@@ -160,7 +160,7 @@ contract Commit is Modifiers {
     
     function SendDiff(string branch, address branchcommit, uint128 number) public senderIs(_rootRepo){
         tvm.accept();
-        if (_initupgrade == true) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); return; }
+        if (_initupgrade == true) { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); return; }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
@@ -173,6 +173,10 @@ contract Commit is Modifiers {
         _continueChain = true;
         _continueDiff = true;
         getMoney();
+    }
+    
+    function treeAccept(string branch) public view senderIs(_tree) {
+        Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]);
     }
     
     function _sendAllDiff(string branch, address branchcommit, uint128 index, uint128 number) public senderIs(address(this)) {

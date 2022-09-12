@@ -17,6 +17,11 @@ import "snapshot.sol";
 import "diff.sol";
 import "goshdao.sol";
 
+struct PauseTree {
+    uint256 index;
+    string path;
+}
+
 /* Root contract of Tree */
 contract Tree is Modifiers {
     string constant version = "0.11.0";
@@ -33,12 +38,15 @@ contract Tree is Modifiers {
     TvmCell m_codeDiff;
     TvmCell m_codeTree;
     TvmCell m_codeCommit;
+    TvmCell m_SnapshotCode;
     uint128 _countFiles = 0;
     uint128 _needAnswer = 0;
-    bool _count = false;
-    bool _countend = false;
-    TreeAnswer[] request;
+    bool _check = false;
+    bool _root = false;
+    string _checkbranch;
+    address _checkaddr;
     bool _flag = false;
+    optional(PauseTree) _saved; 
     
     constructor(
         address pubaddr,
@@ -50,10 +58,12 @@ contract Tree is Modifiers {
         TvmCell codeDiff,
         TvmCell codeTree,
         TvmCell codeCommit,
+        TvmCell SnapshotCode,
         uint128 index) public {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
         m_WalletCode = WalletCode;
+        m_SnapshotCode = SnapshotCode;
         _pubaddr = pubaddr;
         _goshroot = rootGosh;
         _goshdao = goshdao;
@@ -66,73 +76,119 @@ contract Tree is Modifiers {
         getMoney();
     }    
     
-    function countAll(address pubaddr, uint128 index) public {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED); 
-        require(_count == false, ERR_PROCCESS_IS_EXIST);
-        _count = true;
+    function checkFull(string namecommit, address repo, string branch) public senderIs(getCommitAddr(namecommit, repo)) {
+        require(_check == false, ERR_PROCCESS_IS_EXIST);
+        _check = true;
+        _checkbranch = branch;
+        _root = true;
         getMoney();
-        this.count{value: 0.2 ton, flag: 1}(0);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, "");
     }
     
-    function count(uint256 index) public senderIs(address(this)) {
+    function checkTree(uint256 index, string path) public senderIs(address(this)) {
+        require(_check == true, ERR_PROCCESS_END);
+        if (address(this).balance < 5 ton) { _saved = PauseTree(index, path); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
-            if (obj.mode == "040000") { _needAnswer += 1; Tree(getTreeAddr(obj.sha1)).getCountTree(_shaTree); }
-            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { _countFiles += 1; }
-            this.count{value: 0.2 ton, flag: 1}(index + 1);
+            if (obj.mode == "040000") { _needAnswer += 1; Tree(getTreeAddr(obj.sha1)).getCheckTree(_shaTree, _checkbranch, path); }
+            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { 
+                _needAnswer += 1;
+                Snapshot(getSnapshotAddr(_checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(); 
+            }
+            this.checkTree{value: 0.2 ton, flag: 1}(index + 1, path);
         }
         getMoney();
     }
     
-    function gotCount(string name, uint128 res) public senderIs(getTreeAddr(name)) {
+    function answerIs(string name, bool _ready) public senderIs(getSnapshotAddr(_checkbranch, name)) {
         tvm.accept();
-        require(_countend == true, ERR_PROCCESS_END);
+        require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
-        _countFiles += res;
+        if (_ready == false) { 
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); } 
+            _check = false; 
+            _needAnswer = 0; 
+            getMoney(); 
+            return; 
+        }
         _needAnswer -= 1;
-        if (_needAnswer == 0) { _countend = true; this.sendRequests{value: 0.1 ton, flag: 1}(0); }  
+        if (_needAnswer != 0) { getMoney(); return; }
+        if (_saved.hasValue() == true) { return; }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true); }  
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch); }
         getMoney();
     }
     
-    function sendRequests(uint256 index) public senderIs(address(this)) {
-        require(index < request.length, NOT_ERR);
-        if (request[index].isCommit == true) { Commit(msg.sender).gotCount(_countFiles); }
-        else { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
-        if (index == request.length - 1) { delete request; return; }
-        this.sendRequests{value: 0.1 ton, flag: 1}(index + 1);
-        getMoney();
-    }
-    
-    function getCountCommit(string commit, address repo) public senderIs(getCommitAddr(commit, repo)){
+    function getCheckTree(string name, string branch, string path) public senderIs(getTreeAddr(name)) {
         tvm.accept();
-        if (_countend == true) { Commit(msg.sender).gotCount(_countFiles); }
-        request.push(TreeAnswer(msg.sender, true));
+        path += "/";
+        require(_check == false, ERR_PROCCESS_IS_EXIST);
+        _check = true;
+        _checkbranch = branch;
+        _root = false;
         getMoney();
-        return;
+        this.checkTree{value: 0.2 ton, flag: 1}(0, path);
     }
     
-    function getCountTree(string name) public senderIs(getTreeAddr(name)) {
+    function gotCheckTree(string name, bool res) public senderIs(getTreeAddr(name)) {
         tvm.accept();
-        if (_countend == true) { Tree(msg.sender).gotCount(_shaTree, _countFiles); }
-        request.push(TreeAnswer(msg.sender, false));
+        require(_check == true, ERR_PROCCESS_END);
+        require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
+        if (res == false) { 
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); } 
+            _check = false; 
+            _needAnswer = 0; 
+            getMoney(); 
+            return; 
+        }
+        _needAnswer -= 1;
+        if (_needAnswer != 0) { getMoney(); return; }
+        if (_saved.hasValue() == true) { return; }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true); }  
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch); }
         getMoney();
-        return;
     }
     
     function getMoney() private {
         if (_flag == true) { return; }
-        if (address(this).balance > 100 ton) { return; }
+        if (address(this).balance > 300 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyTree{value : 0.2 ton}(_repo, _shaTree);
+    }
+    
+    function getSnapshotAddr(string branch, string name) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _repo, branch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
     
     //Fallback/Receive
     receive() external {
         if (msg.sender == _goshdao) {
             _flag = false;
+            if (_saved.hasValue() == true) {
+                PauseTree val = _saved.get();
+                this.checkTree{value: 0.1 ton, flag: 1}(val.index, val.path);           
+                _saved = null;
+            }
         }
+    }
+    
+    onBounce(TvmSlice body) external {
+        body;
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); }
+        _check = false;
+        _root = false;
+        _needAnswer = 0;
+    }
+    
+    fallback() external {
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); }
+        _check = false;
+        _root = false;
+        _needAnswer = 0;
     }
     
     function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public {

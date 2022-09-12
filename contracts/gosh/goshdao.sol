@@ -327,6 +327,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         return AllWallets;
     }
+    
+    function getWalletsFull() external view returns(mapping(uint256 => address)) {
+        return _wallets;
+    }
+    
+    function isMember(address pubaddr) external view returns(bool) {
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        return _wallets.exists(keyaddr);
+    }
 
     function getNameDao() external view returns(string) {
         return _nameDao;

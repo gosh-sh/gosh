@@ -36,6 +36,13 @@
 			]
 		},
 		{
+			"name": "isReady",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},

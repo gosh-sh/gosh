@@ -534,7 +534,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeTreeStateInit(shaTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, datatree, ipfs, _goshroot, _goshdao, m_WalletCode, m_codeDiff, m_codeTree, m_CommitCode, _index);
+        }(_pubaddr, datatree, ipfs, _goshroot, _goshdao, m_WalletCode, m_codeDiff, m_codeTree, m_CommitCode, m_SnapshotCode, _index);
         getMoney();
     }
 

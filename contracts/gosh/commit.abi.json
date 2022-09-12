@@ -80,6 +80,14 @@
 			]
 		},
 		{
+			"name": "treeAccept",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "_sendAllDiff",
 			"inputs": [
 				{"name":"branch","type":"string"},

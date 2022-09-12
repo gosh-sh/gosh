@@ -187,6 +187,23 @@
 			]
 		},
 		{
+			"name": "getWalletsFull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,address)"}
+			]
+		},
+		{
+			"name": "isMember",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "getNameDao",
 			"inputs": [
 			],
