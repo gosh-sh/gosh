@@ -36,7 +36,9 @@
 			"name": "deployProfile",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubkey1","type":"uint256"},
+				{"name":"pubkey2","type":"uint256"},
+				{"name":"pubkey3","type":"uint256"}
 			],
 			"outputs": [
 			]

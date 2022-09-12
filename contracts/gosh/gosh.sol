@@ -80,14 +80,14 @@ contract GoshRoot is Modifiers, Upgradable{
         })));
     }
     
-    function deployProfile(string name, uint256 pubkey) public view accept {
+    function deployProfile(string name, uint256 pubkey1, uint256 pubkey2, uint256 pubkey3) public view accept {
         tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
             contr: Profile,
             varInit: {_name: name}
         });
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao, pubkey);
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao, pubkey1, pubkey2, pubkey3);
     }
 
     

@@ -7,7 +7,9 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"codeProfileDao","type":"cell"},
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubkey1","type":"uint256"},
+				{"name":"pubkey2","type":"uint256"},
+				{"name":"pubkey3","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -96,6 +98,14 @@
 				{"name":"goshroot","type":"address"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getName",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
 			]
 		},
 		{

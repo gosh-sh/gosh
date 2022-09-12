@@ -68,11 +68,13 @@ contract Profile is Modifiers {
     mapping(uint256 => bool) _owners;
 
     constructor( TvmCell codeProfileDao,
-        uint256 pubkey
+        uint256 pubkey1, uint256 pubkey2, uint256 pubkey3
     ) public {
         _goshroot = msg.sender;
         m_codeProfileDao = codeProfileDao;
-        _owners[pubkey] = true;
+        _owners[pubkey1] = true;
+        _owners[pubkey2] = true;
+        _owners[pubkey3] = true;
         getMoney();
     }
 
@@ -164,6 +166,10 @@ contract Profile is Modifiers {
     }
 
     //Getters
+    function getName() external view returns(string) {
+        return _name;
+    }
+    
     function getAccess() external view returns(mapping(uint256 => bool)) {
         return _owners;
     }
