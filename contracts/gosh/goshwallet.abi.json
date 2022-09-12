@@ -492,14 +492,6 @@
 			]
 		},
 		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "getAccess",
 			"inputs": [
 			],

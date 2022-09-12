@@ -781,10 +781,6 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     function getHash(bytes state) external pure returns(uint256) {
         return tvm.hash(state);
     }
-        
-    function getOwner() external view returns(address) {
-        return _pubaddr;
-    }
     
     function getAccess() external view returns(optional(uint256)) {
         return _access;
