@@ -7,9 +7,11 @@ set -o pipefail
 ### Set during docker run. See Makefile and README.
 #NETWORK
 #GIVER_WALLET_ADDR
+#GOSHROOT_ADDR
 
 echo $NETWORK
 echo $GIVER_WALLET_ADDR
+echo $GOSHROOT_ADDR
 
 # envs
 SIGNER="GOSHRootSigner" # will be created automatically
@@ -26,9 +28,8 @@ GOSH_BALANCE=400000000000000
 GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/gosh.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 echo $GOSH_VERSION
 
-# Generate GOSH keys
+# Upload GOSH keys
 echo "========== Generate keys for GoshRoot"
-tonos-cli genphrase > $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT
 seed=`cat $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
 everdev signer add $SIGNER "$seed"
 
@@ -71,17 +72,10 @@ echo "========== GoshRoot address: $GOSHROOT_ADDR"
 echo $GOSHROOT_ADDR > $GOSH_PATH/GoshRoot.addr
 
 # ############################################################
-# Deploy GoshRoot and Gosh
+# Upgrade Gosh
 # ############################################################
-# Send tokens for deploy GoshRoot
-echo "========== Send 2000 tons for deploy GoshRoot"
-everdev contract run $GIVER_WALLET_ABI submitTransaction --input "{\"dest\": \"$GOSHROOT_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $WALLET_SIGNER --address $GIVER_WALLET_ADDR > /dev/null || exit 1
 
-# Deploy GoshRoot
-echo "========== Deploy GoshRoot"
-everdev contract deploy $GOSHROOT_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
-
-# Deploy Gosh from GoshRoot
+# Upgrade Gosh from GoshRoot
 echo "========== Set Gosh code"
 everdev contract run $GOSHROOT_ABI setGoshCode --input "{\"code\": \"$GOSH_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $GOSHROOT_ADDR > /dev/null || exit 1
 echo "========== Deploy Gosh"
