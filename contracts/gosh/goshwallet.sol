@@ -56,10 +56,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     TvmCell m_contentSignature;
 
 /*     TvmCell m_SMVPlatformCode;
- */    TvmCell m_SMVClientCode;
-/*     TvmCell m_SMVProposalCode;
- */    TvmCell m_lockerCode;
-/*     address _tip3root;
+    TvmCell m_SMVClientCode;
+     TvmCell m_SMVProposalCode;
+    TvmCell m_lockerCode;
+     address _tip3root;
  */
     uint128 counter = 0;
     uint128 _last_time = 0;

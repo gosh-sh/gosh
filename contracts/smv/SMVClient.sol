@@ -73,7 +73,7 @@ function initialize (bool success, uint32 finishTime) external override check_pr
     {
         optional (address) emptyAddress;
         optional (uint128) emptyValue;
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue); //destroy
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
     }
 }
 
@@ -95,7 +95,7 @@ function _performAction () internal
     if (!allowed) {
         optional (address) emptyAddress;
         optional (uint128) emptyValue; 
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, emptyAddress, emptyValue);
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, emptyAddress, emptyValue, false);
     }
     else {
         tvm.accept();
@@ -143,7 +143,7 @@ function onProposalVoted (bool success) external override check_proposal
             inserted = true;
             //currentHead.set(address(this));
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, address(this), amount_locked());
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, address(this), amount_locked(), false);
       }
     }
     else {
@@ -151,7 +151,7 @@ function onProposalVoted (bool success) external override check_proposal
         optional (address) emptyAddress;
         optional (uint128) emptyValue; 
         uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue);
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue, false);
     }
 }
 
@@ -179,6 +179,7 @@ function isCompletedCallback (uint256 /* _platform_id */,
 {   
     if (completed.hasValue())
     {
+        ISMVTokenLocker(tokenLocker).onClientRemoved {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id);
         if (rightBro.hasValue())
         {
             //uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
@@ -212,6 +213,14 @@ function updateHead() external override check_locker()
 
 }
 
-
+onBounce(TvmSlice body) external view {
+    uint32 functionId = body.decode(uint32);
+    if (functionId == tvm.functionId(ISMVProposal.getInitialize)) 
+    {
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue;
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
+    }
+}
 
 }

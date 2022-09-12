@@ -1044,10 +1044,11 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         branchName: string,
     ): Promise<void> {
         console.debug('Start add branch proposal', { repoName, branchName })
+        const locker = new GoshSmvLocker(this.account.client, await this.getSmvLockerAddr())
         await this.run('startProposalForAddProtectedBranch', {
             repoName,
             branchName,
-            num_clients: 0,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -1108,19 +1109,22 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
     }
 
     async voteFor(
-        platformCode: string,
+/*         platformCode: string,
         clientCode: string,
-        proposalAddr: string,
+ */     proposalAddr: string,
         choice: boolean,
         amount: number,
     ): Promise<void> {
+        const proposal = new GoshSmvProposal(this.account.client, proposalAddr)
+        const locker = new GoshSmvLocker(this.account.client, await this.getSmvLockerAddr())
         await this.run('voteFor', {
-            platformCode,
-            clientCode,
-            proposal: proposalAddr,
+            /* platformCode,
+            clientCode, 
+            proposal: proposalAddr */
+            platform_id: await proposal.getPlatformId(),
             choice,
             amount,
-            num_clients: 1,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -1707,6 +1711,11 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         return result.decoded?.output.propId
     }
 
+    async getPlatformId(): Promise<number> {
+        const result = await this.account.runLocal('platform_id', {})
+        return result.decoded?.output.platform_id
+    }
+
     async getGoshSetCommitProposalParams(): Promise<any> {
         const result = await this.account.runLocal('getGoshSetCommitProposalParams', {})
         const decoded = result.decoded?.output
@@ -1796,7 +1805,13 @@ export class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
             address: this.address,
             tokens: await this.getVotes(),
             isBusy: await this.getIsBusy(),
+            numClients: await this.getNumClients(),
         }
+    }
+
+    async getNumClients(): Promise<number> {
+        const result = await this.account.runLocal('m_num_clients', {})
+        return result.decoded?.output.m_num_clients
     }
 
     async getVotes(): Promise<{ total: number; locked: number }> {

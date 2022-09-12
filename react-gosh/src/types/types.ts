@@ -36,6 +36,7 @@ export type TSmvBalanceDetails = {
     smvBalance: number
     smvLocked: number
     smvBusy: boolean
+    numClients: number
 }
 
 export type TGoshEventDetails = {
@@ -268,8 +269,8 @@ export interface IGoshWallet extends IContract {
     lockVoting(amount: number): Promise<void>
     unlockVoting(amount: number): Promise<void>
     voteFor(
-        platformCode: string,
-        clientCode: string,
+/*         platformCode: string,
+        clientCode: string, */
         proposalAddr: string,
         choice: boolean,
         amount: number,

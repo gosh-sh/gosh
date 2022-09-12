@@ -98,7 +98,7 @@ function onCodeUpgrade (uint256 _platform_id,
     {
         optional (address) emptyAddress;
         optional (uint128) emptyValue; 
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128+32} (platform_id, false, emptyAddress, emptyValue);
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128+32} (platform_id, false, emptyAddress, emptyValue, true);
     }
     else
     {
@@ -123,7 +123,7 @@ function onContinueAction(uint128 t) external check_token_root
     {
         //currentHead.set(address(this));
         uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value: extra, flag:1} (platform_id, true, address(this), amount_locked());
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value: extra, flag:1} (platform_id, true, address(this), amount_locked(), false);
     }
 }
 
@@ -138,7 +138,7 @@ function performAction (uint128 /* amountToLock */, uint128 /* total_votes */, T
     optional (address) emptyAddress;
     optional (uint128) emptyValue; 
     uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
-    ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue);
+    ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue, false);
 }
 
 function getInitialize(address _tokenLocker, uint256 _platform_id) external override check_external_client(_tokenLocker, _platform_id)
@@ -265,6 +265,7 @@ function continueUpdateHeadHere () internal view
 {   
     if (votingResult.hasValue())
     {
+        ISMVTokenLocker(tokenLocker).onClientRemoved {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id);
         if (rightBro.hasValue())
         {
             uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);

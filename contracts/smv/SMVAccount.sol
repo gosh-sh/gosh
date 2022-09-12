@@ -41,6 +41,8 @@ uint16  lockerCodeDepth;
 
 TvmCell m_SMVPlatformCode;
 TvmCell m_SMVProposalCode;
+TvmCell m_SMVClientCode;
+TvmCell m_lockerCode;
 
 
 
@@ -221,7 +223,14 @@ function unlockVoting (uint128 amount) external  check_owner
                                                    (amount);
 }
 
-function voteFor (TvmCell platformCode, TvmCell clientCode, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  check_owner
+/* function voteFor ( uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  check_owner
+{
+    require(initialized, SMVErrors.error_not_initialized);
+    tvm.accept();
+    _saveMsg();
+}
+ */
+function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  check_owner
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -230,12 +239,12 @@ function voteFor (TvmCell platformCode, TvmCell clientCode, uint256 platform_id,
                                     SMVConstants.PROP_INITIALIZE_FEE +
                                     9*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+2000);
 
-    require(tvm.hash(platformCode) == platformCodeHash,SMVErrors.error_not_my_code_hash);
+/*     require(tvm.hash(platformCode) == platformCodeHash,SMVErrors.error_not_my_code_hash);
     require(platformCode.depth() == platformCodeDepth, SMVErrors.error_not_my_code_depth);
 
     require(tvm.hash(clientCode) == clientCodeHash,SMVErrors.error_not_my_code_hash);
     require(clientCode.depth() == clientCodeDepth, SMVErrors.error_not_my_code_depth);
-    tvm.accept();
+ */    tvm.accept();
     _saveMsg();
 
     TvmBuilder staticBuilder;
@@ -250,16 +259,16 @@ function voteFor (TvmCell platformCode, TvmCell clientCode, uint256 platform_id,
                              SMVConstants.CLIENT_INIT_VALUE +
                              SMVConstants.PROP_INITIALIZE_FEE +
                              8*SMVConstants.ACTION_FEE, flag: 1 }
-                    (platformCode, clientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
+                    (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
                                     SMVConstants.CLIENT_INIT_VALUE +
                                     SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE);
 }
 
-function getPlatfotmId (uint256 propId) public view returns (uint256)
+function getPlatfotmId (uint256 propId, uint8 platformType, address _tip3VotingLocker) public view returns (uint256)
 {
     TvmBuilder staticBuilder;
-    uint8 platformType = 1;
-    staticBuilder.store(platformType, tip3VotingLocker, propId, platformCodeHash, platformCodeDepth);
+/*     uint8 platformType = 1;
+ */    staticBuilder.store(platformType, _tip3VotingLocker, propId, platformCodeHash, platformCodeDepth);
     return tvm.hash(staticBuilder.toCell());
 }
 

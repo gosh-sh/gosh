@@ -22,6 +22,9 @@ contract SMVTokenLocker is ISMVTokenLocker , TokenWalletOwner {
 address public static smvAccount;
 
 bool public lockerBusy;
+bool public platformPerformActionFailed;
+bool public platformConstructorFailed;
+
 
 optional (address) public clientHead;
 /* uint128 public m_tokenBalance;
@@ -29,6 +32,7 @@ optional (address) public clientHead;
 
 uint256 platformCodeHash;
 uint16 platformCodeDepth;
+uint32 public m_num_clients;
 
 modifier check_account {
     require ( msg.sender == smvAccount, SMVErrors.error_not_my_account) ;
@@ -74,6 +78,9 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     tvm.accept();
 
     lockerBusy = true;
+    platformPerformActionFailed  = false;
+    platformConstructorFailed = false;
+
 
     TvmCell _dataInitCell = tvm.buildDataInit ( {contr: LockerPlatform,
                                                  varInit: {  /* tokenLocker: address(this), */
@@ -94,6 +101,7 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     new LockerPlatform {/* bounce: false, */
                         value: deployFee + actionValue,
                         stateInit: _stateInit } (clientCode, amountToLock, m_tokenBalance, staticCell, _inputCell);
+    m_num_clients ++;
 }
 
 constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_walletCode, address _m_tokenRoot) public check_account
@@ -107,6 +115,7 @@ constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_wal
     clientHead.reset();
     m_tokenBalance = 0;
     votes_locked = 0;
+    m_num_clients = 0;
     platformCodeHash = _platformCodeHash;
     platformCodeDepth = _platformCodeDepth;
     m_tokenWallet = address.makeAddrStd(0,tvm.hash(_buildWalletInitData()));
@@ -171,7 +180,8 @@ function onHeadUpdated (uint256 _platform_id,
 
 function onClientCompleted (uint256 _platform_id, bool success,
                             optional (address) newClientHead,
-                            optional (uint128) newHeadValue) external override check_client(_platform_id)
+                            optional (uint128) newHeadValue,
+                            bool isDead ) external override check_client(_platform_id)
 {
     tvm.accept();
 
@@ -187,7 +197,9 @@ function onClientCompleted (uint256 _platform_id, bool success,
         clientHead.set(newClientHead.get());
         votes_locked = newHeadValue.get();
     }
-
+    if (isDead) {
+        m_num_clients --;
+    }
     returnAllButInitBalance();
 }
 
@@ -196,6 +208,14 @@ function onClientInserted (uint256 _platform_id) external override check_client(
     tvm.accept();
     returnAllButInitBalance();
 }
+
+function onClientRemoved (uint256 _platform_id) external override check_client(_platform_id)
+{
+    tvm.accept();
+    m_num_clients --;
+}
+
+
 
 function updateHead() external override check_account
 {
@@ -211,5 +231,27 @@ function updateHead() external override check_account
                                      3*SMVConstants.ACTION_FEE, flag: 1} ();
     }
 }
-
+onBounce(TvmSlice body) external  {
+    uint32 functionId = body.decode(uint32);
+    if (functionId == tvm.functionId(LockableBase.performAction)) 
+    {
+       platformPerformActionFailed = true;
+       if (platformConstructorFailed)
+       {
+            lockerBusy = false;
+            returnAllButInitBalance();
+       }
+    }
+    else
+    if (functionId == tvm.functionId(LockerPlatform))
+    {
+       m_num_clients --;
+       platformConstructorFailed = true;
+       if (platformPerformActionFailed)
+       {
+            lockerBusy = false;
+            returnAllButInitBalance();
+       }
+    }
+}
 }

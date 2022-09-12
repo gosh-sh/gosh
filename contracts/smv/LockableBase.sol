@@ -176,7 +176,7 @@ function insertClient (uint256 _platform_id, address newClient, uint128 amount) 
         {
             require(_reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE)  > extra, 5000);
             extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE)  - extra ;
-            ISMVTokenLocker(tokenLocker).onClientCompleted {value:   extra , flag:1} (platform_id, true, emptyAddress, emptyValue);
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:   extra , flag:1} (platform_id, true, emptyAddress, emptyValue, false);
         }
     }
     else
@@ -187,7 +187,7 @@ function insertClient (uint256 _platform_id, address newClient, uint128 amount) 
             optional (address) empty;
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVConstants.ACTION_FEE);
             LockableBase(newClient).onClientInserted {value:SMVConstants.ACTION_FEE, flag:1} (platform_id, /* newClient, */ empty, address(this), amount_locked());
-            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, newClient, amount);
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, newClient, amount, false);
         }
         else
         {

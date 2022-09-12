@@ -60,13 +60,22 @@
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"success","type":"bool"},
 				{"name":"newClientHead","type":"optional(address)"},
-				{"name":"newHeadValue","type":"optional(uint128)"}
+				{"name":"newHeadValue","type":"optional(uint128)"},
+				{"name":"isDead","type":"bool"}
 			],
 			"outputs": [
 			]
 		},
 		{
 			"name": "onClientInserted",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onClientRemoved",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}
 			],
@@ -178,6 +187,22 @@
 			]
 		},
 		{
+			"name": "platformPerformActionFailed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformPerformActionFailed","type":"bool"}
+			]
+		},
+		{
+			"name": "platformConstructorFailed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platformConstructorFailed","type":"bool"}
+			]
+		},
+		{
 			"name": "clientHead",
 			"inputs": [
 			],
@@ -191,6 +216,14 @@
 			],
 			"outputs": [
 				{"name":"votes_locked","type":"uint128"}
+			]
+		},
+		{
+			"name": "m_num_clients",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_num_clients","type":"uint32"}
 			]
 		}
 	],
@@ -209,9 +242,12 @@
 		{"name":"m_tokenWalletCode","type":"cell"},
 		{"name":"smvAccount","type":"address"},
 		{"name":"lockerBusy","type":"bool"},
+		{"name":"platformPerformActionFailed","type":"bool"},
+		{"name":"platformConstructorFailed","type":"bool"},
 		{"name":"clientHead","type":"optional(address)"},
 		{"name":"votes_locked","type":"uint128"},
 		{"name":"platformCodeHash","type":"uint256"},
-		{"name":"platformCodeDepth","type":"uint16"}
+		{"name":"platformCodeDepth","type":"uint16"},
+		{"name":"m_num_clients","type":"uint32"}
 	]
 }
