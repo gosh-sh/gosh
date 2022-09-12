@@ -127,13 +127,11 @@ pub async fn diff_address(
     Ok(result.address)
 }
 
-#[instrument(level = "debug")]
-pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
+pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
     let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
         || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
-        is_going_to_ipfs =
-            content_inspector::ContentType::BINARY == content_inspector::inspect(new_content);
+        is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
     }
     is_going_to_ipfs
 }

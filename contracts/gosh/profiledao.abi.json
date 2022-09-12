@@ -22,7 +22,8 @@
 		{
 			"name": "deployedDao",
 			"inputs": [
-				{"name":"name","type":"string"}
+				{"name":"name","type":"string"},
+				{"name":"ver","type":"string"}
 			],
 			"outputs": [
 			]
