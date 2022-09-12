@@ -17,8 +17,8 @@ pub struct DiffMessage {
 
 #[derive(Debug)]
 enum NextChunk {
-    MessagesPage(BlockchainContractAddress, Option<String>),
-    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64),
+    MessagesPage(BlockchainContractAddress, Option<String>, bool),
+    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64)
 }
 
 #[derive(Debug)]
@@ -27,6 +27,13 @@ pub struct DiffMessagesIterator {
     buffer: Vec<DiffMessage>,
     buffer_cursor: usize,
     next: Option<NextChunk>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageIterator {
+    cursor: Option<String>,
+    stop_on: Option<u64>,
+    skip_series: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -49,8 +56,8 @@ struct Node {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct PageInfo {
-    has_next_page: bool,
-    end_cursor: String,
+    has_previous_page: bool,
+    start_cursor: String
 }
 
 #[derive(Deserialize, Debug)]
@@ -70,7 +77,7 @@ impl DiffMessagesIterator {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
             buffer_cursor: 0,
-            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None)),
+            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None, false))
         }
     }
 
@@ -90,13 +97,16 @@ impl DiffMessagesIterator {
         current_snapshot_address: &BlockchainContractAddress,
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
+        skip_series: bool,
     ) -> Result<Option<NextChunk>, Box<dyn Error>> {
         let address = current_snapshot_address;
         Ok(match next_page_info {
             Some(next_page_info) => Some(NextChunk::MessagesPage(
-                address.clone(),
-                Some(next_page_info),
-            )),
+                    address.clone(),
+                    Some(next_page_info),
+                    skip_series,
+                )
+            ),
             None => {
                 // find last commit
                 let Snapshot {
@@ -155,10 +165,11 @@ impl DiffMessagesIterator {
                 let mut cursor = None;
                 let mut index = None;
                 let mut next_page_info = None;
+                let mut skip_series = false;
                 while index.is_none() {
                     log::info!("loading messages");
-                    let (buffer, possible_next_page_info, stop_on) =
-                        load_messages_to(client, address, &cursor, None).await?;
+                    let (buffer, page) =
+                        load_messages_to(client, &address, &cursor, None, false).await?;
                     log::info!("messages: {:?}", buffer);
                     for (i, item) in buffer.iter().enumerate() {
                         if &item.created_at <= ignore_commits_created_after {
@@ -169,38 +180,41 @@ impl DiffMessagesIterator {
                     self.buffer = buffer;
                     if index.is_none() {
                         log::info!("Expected commit was not found");
-                        if possible_next_page_info.is_some() {
-                            cursor = possible_next_page_info;
+                        if page.cursor.is_some() {
+                            cursor = page.cursor;
                         } else {
                             panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
                         }
                     } else {
                         log::info!("Commit found at {}", index.unwrap());
-                        next_page_info = possible_next_page_info;
+                        next_page_info = page.cursor;
                     }
+                    skip_series = page.skip_series;
                 }
                 self.buffer_cursor = index.unwrap();
                 DiffMessagesIterator::into_next_page(
                     client,
-                    address,
+                    &address,
                     &mut self.repo_contract,
                     next_page_info,
+                    skip_series
                 )
                 .await?
-            }
-            Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, next_page_info, stop_on) =
-                    load_messages_to(client, address, cursor, None).await?;
+            },
+            Some(NextChunk::MessagesPage(address, cursor, skip)) => {
+                let (buffer, page) =
+                    load_messages_to(client, &address, cursor, None, *skip).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 DiffMessagesIterator::into_next_page(
                     client,
-                    address,
+                    &address,
                     &mut self.repo_contract,
-                    next_page_info,
+                    page.cursor,
+                    page.skip_series
                 )
                 .await?
-            }
+            },
         };
         Ok(())
     }
@@ -228,23 +242,25 @@ pub async fn load_messages_to(
     address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
-) -> Result<(Vec<DiffMessage>, Option<String>, Option<u64>), Box<dyn Error>> {
-    let mut next_page_info: Option<String> = None;
-    let query = r#"query($addr: String!, $after: String){
-      blockchain{
-        account(address:$addr) {
-          messages(msg_type:[IntIn], after:$after) {
+    skip_series: bool,
+) -> Result<(Vec<DiffMessage>, PageIterator), Box<dyn Error>> {
+    let mut subsequent_page_info: Option<String> = None;
+    let mut skip = skip_series;
+    let query = r#"query($addr: String!, $before: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], before: $before, last: 50) {
             edges {
-              node{ id body created_at created_lt status bounced }
+              node { id body created_at created_lt status bounced }
             }
-            pageInfo { hasNextPage endCursor }
+            pageInfo { hasPreviousPage startCursor }
           }
         }
       }
     }"#
     .to_string();
 
-    let after = match cursor.as_ref() {
+    let before = match cursor.as_ref() {
         Some(page_info) => page_info,
         None => "",
     };
@@ -255,7 +271,7 @@ pub async fn load_messages_to(
             query,
             variables: Some(serde_json::json!({
                 "addr": address,
-                "after": after
+                "before": before
             })),
             ..Default::default()
         },
@@ -267,15 +283,15 @@ pub async fn load_messages_to(
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
     log::trace!("trying to decode: {:?}", nodes);
     let edges: Messages = serde_json::from_value(nodes.clone())?;
-    if edges.page_info.has_next_page {
-        next_page_info = Some(edges.page_info.end_cursor);
+    if edges.page_info.has_previous_page {
+        subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
     log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
-    for elem in edges.edges {
-        let raw_msg = elem.message;
+    for elem in edges.edges.iter().rev() {
+        let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
-            next_page_info = None;
+            subsequent_page_info = None;
             break;
         }
         if raw_msg.status != 5 || raw_msg.bounced {
@@ -286,7 +302,7 @@ pub async fn load_messages_to(
             context.clone(),
             ParamsOfDecodeMessageBody {
                 abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
-                body: raw_msg.body,
+                body: raw_msg.body.clone(),
                 is_internal: true,
                 ..Default::default()
             },
@@ -295,6 +311,7 @@ pub async fn load_messages_to(
 
         log::debug!("Decoded message `{}`", decoded.name);
         if decoded.name == "applyDiff" {
+            if skip { continue };
             let value = decoded.value.unwrap();
             let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
             messages.insert(
@@ -305,6 +322,10 @@ pub async fn load_messages_to(
                     created_lt: raw_msg.created_lt,
                 },
             );
+        } else if decoded.name == "cancelDiff" {
+            skip = true;
+        } else if decoded.name == "approve" {
+            skip = false;
         }
     }
 
@@ -312,5 +333,10 @@ pub async fn load_messages_to(
         0 => None,
         n => Some(messages[n - 1].created_at),
     };
-    Ok((messages, next_page_info, oldest_timestamp))
+    let page = PageIterator {
+        cursor: subsequent_page_info,
+        stop_on: oldest_timestamp,
+        skip_series: skip
+    };
+    Ok((messages, page))
 }
