@@ -36,7 +36,7 @@ const RepoPage = () => {
     const onUpgrade = async () => {
         if (!wallet || !repo || !branch) return
         await repo.load()
-        console.debug('Wallet address', wallet.address)
+        console.debug('Wallet address', wallet.instance.address)
 
         // Deploy tree
         // {
@@ -189,7 +189,7 @@ const RepoPage = () => {
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!branch?.isProtected && wallet?.isDaoParticipant && (
+                    {!branch?.isProtected && wallet?.details.isDaoMember && (
                         <Link
                             to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
                                 treePath && `/${treePath}`

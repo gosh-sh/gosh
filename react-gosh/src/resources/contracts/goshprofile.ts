@@ -1,13 +1,9 @@
-import { AccountType } from '@eversdk/appkit'
 import { KeyPair, TonClient } from '@eversdk/core'
-import { AppConfig } from '../../appconfig'
-import { EGoshError, GoshError } from '../../errors'
 import { sleep } from '../../utils'
 import { BaseContract } from './base'
 import { GoshDao } from './goshdao'
 import { GoshProfileDao } from './goshprofiledao'
-import { GoshWallet } from './goshwallet'
-import { IGosh, IGoshDao, IGoshProfile, IGoshWallet } from './interfaces'
+import { IGosh, IGoshDao, IGoshProfile, IGoshProfileDao } from './interfaces'
 
 class GoshProfile extends BaseContract implements IGoshProfile {
     static key: string = 'profile'
@@ -55,6 +51,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
             name: name.toLowerCase(),
         })
         return result.decoded?.output.value0
+    }
+
+    async getProfileDao(name: string): Promise<IGoshProfileDao> {
+        const address = await this.getProfileDaoAddr(name)
+        return new GoshProfileDao(this.account.client, address)
     }
 }
 

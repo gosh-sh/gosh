@@ -73,6 +73,7 @@ interface IGoshProfile extends IContract {
     isPubkeyCorrect(pubkey: string): Promise<boolean>
     getCurrentGoshAddr(): Promise<string>
     getProfileDaoAddr(name: string): Promise<string>
+    getProfileDao(name: string): Promise<IGoshProfileDao>
 }
 
 interface IGoshProfileDao extends IContract {
@@ -91,12 +92,12 @@ interface IGoshDao extends IContract {
     getSmvClientCode(): Promise<string>
     getOwner(): Promise<string>
     getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet>
+    isMember(profileAddr: string): Promise<boolean>
     mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 interface IGoshWallet extends IContract {
     address: string
-    isDaoParticipant: boolean
 
     deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
 

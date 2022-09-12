@@ -1,3 +1,5 @@
+import { KeyPair } from '@eversdk/core'
+
 type TDaoDetails = {
     address: string
     name: string
@@ -41,6 +43,15 @@ type TDaoMemberCreateProgress = {
     }[]
 }
 
+type TWalletDetails = {
+    address: string
+    version: string
+    keys?: KeyPair
+    daoAddress: string
+    isDaoMember: boolean
+    isDaoOwner: boolean
+}
+
 export {
     TDaoDetails,
     TDaoListItem,
@@ -48,4 +59,5 @@ export {
     TDaoMemberDetails,
     TDaoMemberListItem,
     TDaoMemberCreateProgress,
+    TWalletDetails,
 }

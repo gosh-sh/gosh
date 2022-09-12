@@ -27,7 +27,7 @@ const DaoPage = () => {
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    {wallet?.isDaoParticipant ? (
+                    {wallet?.details.isDaoMember ? (
                         <Link
                             to={`/${daoName}/settings/wallet`}
                             className="hover:underline"

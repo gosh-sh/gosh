@@ -177,26 +177,16 @@ const App = () => {
                     {process.env.REACT_APP_GOSH_NETWORK}
                     <CopyClipboard
                         label={
-                            <span data-tip={process.env.REACT_APP_GOSH_ADDR}>
-                                {shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}
-                            </span>
-                        }
-                        componentProps={{
-                            text: process.env.REACT_APP_GOSH_ADDR ?? '',
-                        }}
-                    />
-                    <CopyClipboard
-                        label={
-                            <span data-tip={process.env.REACT_APP_CREATOR_ADDR}>
+                            <span data-tip={process.env.REACT_APP_GOSH_ROOTADDR}>
                                 {shortString(
-                                    process.env.REACT_APP_CREATOR_ADDR ?? '',
+                                    process.env.REACT_APP_GOSH_ROOTADDR ?? '',
                                     6,
                                     4,
                                 )}
                             </span>
                         }
                         componentProps={{
-                            text: process.env.REACT_APP_CREATOR_ADDR ?? '',
+                            text: process.env.REACT_APP_GOSH_ROOTADDR ?? '',
                         }}
                     />
                 </div>

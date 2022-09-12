@@ -66,13 +66,13 @@ const BlobUpdatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
+            if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
             if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
+            await wallet.instance.createCommit(
                 repo,
                 branch,
                 userState.keys.public,
@@ -112,7 +112,7 @@ const BlobUpdatePage = () => {
         }
     }, [monaco, treePath])
 
-    if (!wallet?.isDaoParticipant) return <Navigate to={urlBack} />
+    if (!wallet?.details.isDaoMember) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <div className="px-4 sm:px-7">

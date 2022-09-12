@@ -85,21 +85,20 @@ class BaseContract implements IContract {
         })
         const { edges, pageInfo } = response.result.data.blockchain.account.messages
 
-        let page = edges.map((edge: any) => edge.node)
+        const page = edges.map((edge: any) => ({ message: edge.node, decoded: null }))
         if (decode) {
-            page = await Promise.all(
-                page.map(async (message: any) => {
+            await Promise.all(
+                page.map(async (item: any) => {
                     try {
-                        return await this.account.client.abi.decode_message_body({
+                        item.decoded = await this.account.client.abi.decode_message_body({
                             abi: this.account.abi,
-                            body: message.body,
-                            is_internal: message.msg_type === 0,
+                            body: item.message.body,
+                            is_internal: item.message.msg_type === 0,
                             allow_partial: true,
                         })
                     } catch {}
                 }),
             )
-            page = page.filter((item: any) => !!item)
         }
         messages.push(...page)
 

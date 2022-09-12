@@ -1,5 +1,5 @@
 import Spinner from '../../components/Spinner'
-import { useDaoMemberList, useDaoMemberDelete } from 'react-gosh'
+import { useDaoMemberList, useDaoMemberDelete, useProfile } from 'react-gosh'
 import DaoMemberListItem from './MemberListItem'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -7,6 +7,7 @@ import DaoMemberForm from './MemberForm'
 import { toast } from 'react-toastify'
 
 const DaoMembersPage = () => {
+    const profile = useProfile()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
     const daoMemberDeleteHook = useDaoMemberDelete()
@@ -52,7 +53,7 @@ const DaoMembersPage = () => {
                                 key={index}
                                 item={item}
                                 daoOwnerPubkey={dao.details.owner}
-                                isDaoOwner={dao.isOwner}
+                                isDaoOwner={profile?.address === dao.details.owner}
                                 isFetching={
                                     item.pubkey
                                         ? daoMemberDeleteHook.isFetching(item.pubkey)
@@ -65,7 +66,7 @@ const DaoMembersPage = () => {
                 </div>
             </div>
 
-            {dao.isOwner && (
+            {profile?.address === dao.details.owner && (
                 <div className="mt-6">
                     <DaoMemberForm />
                 </div>

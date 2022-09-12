@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { retry } from '../helpers'
-import { userAtom, daoAtom } from '../store'
+import { userAtom, daoAtom, walletAtom } from '../store'
 import {
     GoshDao,
     GoshProfile,
@@ -153,19 +153,17 @@ function useDaoList(perPage: number) {
 
     /** Get initial DAO list */
     useEffect(() => {
-        const getDaoList = async () => {
+        const _getDaoList = async () => {
             if (!profile) return
 
             // Get IntIn messages to profile and generate DAO address list
             const messages = await profile.getMessages({ msgType: ['IntIn'] }, true, true)
-            console.debug('Messages', messages)
             const daos: { address: string; version: string }[] = messages
-                .filter((decoded) => decoded.name === 'deployedWallet')
-                .map(({ value }) => ({
-                    address: value.goshdao,
-                    version: value.ver,
+                .filter(({ decoded }) => decoded && decoded.name === 'deployedWallet')
+                .map(({ decoded }) => ({
+                    address: decoded.value.goshdao,
+                    version: decoded.value.ver,
                 }))
-            console.debug('Daos', daos)
 
             // TODO: Filter unique DAO addresses and check if DAO address exists
             // Get DAO details (prepare DAO list items)
@@ -191,7 +189,7 @@ function useDaoList(perPage: number) {
             })
         }
 
-        getDaoList()
+        _getDaoList()
     }, [profile?.address])
 
     /** Update filtered items and page depending on search */
@@ -225,39 +223,66 @@ function useDaoList(perPage: number) {
 }
 
 function useDao(name?: string) {
-    const { keys } = useRecoilValue(userAtom)
     const [details, setDetails] = useRecoilState(daoAtom)
     const profile = useProfile()
     const gosh = useGosh()
     const [dao, setDao] = useState<IGoshDao>()
+    const [errors, setErrors] = useState<string[]>([])
 
     useEffect(() => {
-        const getDao = async () => {
-            if (!gosh || !name) return
+        const _getDao = async () => {
+            if (!gosh || !profile || !name) return
 
             if (!details?.address || details?.name !== name) {
                 console.debug('Get dao hook (blockchain)')
-                const address = await gosh.getDaoAddr(name)
-                console.debug('DAO addr', address)
-                // TODO: version
-                // const dao = new GoshDao(AppConfig.goshclient, address, '')
-                // const details = await dao.getDetails()
-                // setDao(dao)
-                // setDetails(details)
+                const profileDao = await profile.getProfileDao(name)
+                const messages = await profileDao.getMessages(
+                    { msgType: ['IntIn'], node: ['src'] },
+                    true,
+                    true,
+                )
+                const found = messages.find(({ decoded }) => {
+                    return (
+                        decoded &&
+                        decoded.name === 'deployedDao' &&
+                        decoded.value.name === name
+                    )
+                })
+                if (!found) {
+                    setErrors((state) => [...state, 'DAO not found'])
+                    return
+                }
+
+                const dao = new GoshDao(
+                    AppConfig.goshclient,
+                    found.message.src,
+                    found.decoded.value.ver,
+                )
+                const details = await dao.getDetails()
+                setDao(dao)
+                setDetails(details)
             } else {
                 console.debug('Get dao hook (from state)')
-                // TODO: version
-                // setDao(new GoshDao(AppConfig.goshclient, details.address, ''))
+                const { address, version } = details
+                const dao = new GoshDao(AppConfig.goshclient, address, version)
+                setDao(dao)
             }
         }
 
-        getDao()
-    }, [gosh?.version, name, details?.name, details?.address, setDetails])
+        _getDao()
+    }, [
+        gosh?.version,
+        profile?.address,
+        name,
+        details?.name,
+        details?.address,
+        setDetails,
+    ])
 
     return {
         instance: dao,
         details,
-        isOwner: details && details.owner === profile?.address,
+        errors,
     }
 }
 
@@ -397,7 +422,7 @@ function useDaoMemberList(perPage: number) {
 
     /** Get initial DAO members list */
     useEffect(() => {
-        const getMemberList = async () => {
+        const _getMemberList = async () => {
             if (!daoDetails?.address) return
 
             const items = daoDetails.members.map((address) => ({ wallet: address }))
@@ -409,7 +434,7 @@ function useDaoMemberList(perPage: number) {
             }))
         }
 
-        getMemberList()
+        _getMemberList()
     }, [daoDetails?.address, daoDetails?.members.length])
 
     /** Update filtered items and page depending on search */
@@ -588,6 +613,53 @@ function useDaoMemberDelete() {
     return { deleteMember, isFetching }
 }
 
+function useWallet(dao?: IGoshDao) {
+    const profile = useProfile()
+    const [details, setDetails] = useRecoilState(walletAtom)
+    const [wallet, setWallet] = useState<IGoshWallet>()
+
+    useEffect(() => {
+        const _getWallet = async () => {
+            if (!profile || !dao) return
+            if (profile.account.signer.type !== 'Keys') return
+
+            const keys = profile.account.signer.keys
+            if (!details?.address || details?.daoAddress !== dao.address) {
+                console.debug('Get wallet hook (blockchain)')
+                const address = await dao.getWalletAddr(profile.address, 0)
+                const instance = new GoshWallet(
+                    AppConfig.goshclient,
+                    address,
+                    dao.version,
+                    keys,
+                )
+                setWallet(instance)
+                setDetails({
+                    address: instance.address,
+                    version: instance.version,
+                    keys,
+                    daoAddress: dao.address,
+                    isDaoOwner: profile.address === (await dao.getOwner()),
+                    isDaoMember: await dao.isMember(profile.address),
+                })
+            } else {
+                console.debug('Get wallet hook (state)')
+                const instance = new GoshWallet(
+                    AppConfig.goshclient,
+                    details.address,
+                    dao.version,
+                    keys,
+                )
+                setWallet(instance)
+            }
+        }
+
+        _getWallet()
+    }, [dao, details?.address, details?.daoAddress, setDetails])
+
+    return { instance: wallet, details }
+}
+
 export {
     useDaoList,
     useDao,
@@ -595,4 +667,5 @@ export {
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,
+    useWallet,
 }

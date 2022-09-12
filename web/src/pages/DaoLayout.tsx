@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { useGoshWallet } from '../hooks/gosh.hooks'
 import {
     IGoshDao,
     IGoshWallet,
@@ -10,22 +9,26 @@ import {
     classNames,
     useDao,
     TDaoDetails,
+    useWallet,
+    TWalletDetails,
 } from 'react-gosh'
 
 export type TDaoLayoutOutletContext = {
     dao: {
         instance: IGoshDao
         details: TDaoDetails
-        isOwner: boolean
     }
-    wallet?: IGoshWallet
+    wallet?: {
+        instance: IGoshWallet
+        details: TWalletDetails
+    }
 }
 
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName } = useParams()
     const dao = useDao(daoName)
-    const wallet = useGoshWallet(dao.instance)
+    const wallet = useWallet(dao.instance)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
@@ -49,10 +52,20 @@ const DaoLayout = () => {
                 </Link>
             </h1>
 
-            {!isReady && (
+            {!dao.errors.length && !isReady && (
                 <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading organization...
+                </div>
+            )}
+
+            {!!dao.errors.length && (
+                <div className="p-3 bg-rose-600 text-white rounded">
+                    <ul>
+                        {dao.errors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                        ))}
+                    </ul>
                 </div>
             )}
 

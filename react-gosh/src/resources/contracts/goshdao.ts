@@ -74,6 +74,11 @@ class GoshDao extends BaseContract implements IGoshDao {
         return wallet
     }
 
+    async isMember(profileAddr: string): Promise<boolean> {
+        const result = await this.account.runLocal('isMember', { pubaddr: profileAddr })
+        return result.decoded?.output.value0
+    }
+
     async mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void> {
         const tokenRoot = await this.getSmvRootTokenAddr()
         await this.run(

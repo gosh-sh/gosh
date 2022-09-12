@@ -41,7 +41,7 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.lockVoting(values.amount)
+            await wallet.instance.lockVoting(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -55,7 +55,7 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.unlockVoting(values.amount)
+            await wallet.instance.unlockVoting(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -68,7 +68,7 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.updateHead()
+            await wallet.instance.updateHead()
             toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
             console.error(e.message)
@@ -203,7 +203,7 @@ const DaoWalletPage = () => {
                 <div className="py-5">
                     <h3 className="text-lg font-semibold">Git remote</h3>
                     <div className="mb-3">~/.gosh/config.json</div>
-                    {wallet.isDaoParticipant ? (
+                    {wallet.details.isDaoMember ? (
                         <div className="relative text-sm rounded-md">
                             <CopyClipboard
                                 className="absolute right-3 top-3"

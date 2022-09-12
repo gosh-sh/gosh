@@ -45,7 +45,7 @@ const EventPage = () => {
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             setCheck(true)
-            await wallet.tryProposalResult(event.details.address)
+            await wallet.instance.tryProposalResult(event.details.address)
             toast.success('Re-check submitted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -75,7 +75,7 @@ const EventPage = () => {
             const smvPlatformCode = await gosh.getSmvPlatformCode()
             const smvClientCode = await dao.instance.getSmvClientCode()
             const choice = values.approve === 'true'
-            await wallet.voteFor(
+            await wallet.instance.voteFor(
                 smvPlatformCode,
                 smvClientCode,
                 event.details.address,
@@ -191,7 +191,7 @@ const EventPage = () => {
                                 </span>
                             </div>
                         </div>
-                        {wallet?.isDaoParticipant && !event.details.status.completed && (
+                        {wallet?.details.isDaoMember && !event.details.status.completed && (
                             <div>
                                 <button
                                     type="button"
@@ -206,7 +206,7 @@ const EventPage = () => {
                         )}
                     </div>
 
-                    {wallet?.isDaoParticipant && !event.details?.status.completed && (
+                    {wallet?.details.isDaoMember && !event.details?.status.completed && (
                         <Formik
                             initialValues={{
                                 approve: 'true',

@@ -3,19 +3,24 @@ import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
-import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from '../hooks/gosh.hooks'
+import { useGoshRepo, useGoshRepoBranches } from '../hooks/gosh.hooks'
 import {
     IGoshRepository,
     IGoshWallet,
     classNames,
     userPersistAtom,
     useDao,
+    useWallet,
+    TWalletDetails,
 } from 'react-gosh'
 import { useRecoilValue } from 'recoil'
 
 export type TRepoLayoutOutletContext = {
     repo: IGoshRepository
-    wallet?: IGoshWallet
+    wallet?: {
+        instance: IGoshWallet
+        details: TWalletDetails
+    }
 }
 
 const RepoLayout = () => {
@@ -23,7 +28,7 @@ const RepoLayout = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const repo = useGoshRepo(daoName, repoName)
     const dao = useDao(daoName)
-    const wallet = useGoshWallet(dao.instance)
+    const wallet = useWallet(dao.instance)
     const { updateBranches } = useGoshRepoBranches(repo)
     const [isFetched, setIsFetched] = useState<boolean>(false)
 

@@ -233,7 +233,8 @@ const PullCreatePage = () => {
         }
 
         setCompare([])
-        if (repo && wallet && compareParam !== 'main...main') onCompare(wallet, repo)
+        if (repo && wallet && compareParam !== 'main...main')
+            onCompare(wallet.instance, repo)
     }, [compareParam, repo, wallet])
 
     const onCommitMerge = async (values: TCommitFormValues) => {
@@ -268,7 +269,7 @@ const PullCreatePage = () => {
             }
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
+            await wallet.instance.createCommit(
                 repo,
                 branchTo,
                 userState.keys.public,
@@ -280,7 +281,9 @@ const PullCreatePage = () => {
             )
 
             // Delete branch after merge (if selected), update branches, redirect
-            if (values.deleteBranch) await wallet.deleteBranch(repo, branchFrom.name)
+            if (values.deleteBranch) {
+                await wallet.instance.deleteBranch(repo, branchFrom.name)
+            }
             await updateBranches()
             navigate(
                 branchTo.isProtected

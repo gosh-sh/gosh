@@ -46,11 +46,9 @@ import {
 
 class GoshWallet extends BaseContract implements IGoshWallet {
     static key: string = 'goshwallet'
-    isDaoParticipant: boolean
 
     constructor(client: TonClient, address: string, version: string, keys?: KeyPair) {
         super(client, GoshWallet.key, address, { version, keys })
-        this.isDaoParticipant = false
     }
 
     async getDao(): Promise<IGoshDao> {

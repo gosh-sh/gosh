@@ -8,7 +8,6 @@ import {
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
-    goshWalletAtom,
 } from '../store/gosh.state'
 import {
     GoshWallet,
@@ -30,74 +29,8 @@ import {
     useGosh,
     IGosh,
     useGoshVersions,
+    TWalletDetails,
 } from 'react-gosh'
-
-export const useGoshWallet = (dao?: IGoshDao) => {
-    const userState = useRecoilValue(userAtom)
-    const { versions } = useGoshVersions()
-    const gosh = useGosh()
-    const [details, setDetails] = useRecoilState(goshWalletAtom)
-    const [wallet, setWallet] = useState<IGoshWallet>()
-
-    useEffect(() => {
-        const getWallet = async (
-            _gosh: IGosh,
-            _dao: IGoshDao,
-            _keys: KeyPair,
-            state: { address?: string; daoAddress?: string },
-        ) => {
-            const { address, daoAddress } = state
-            const profileAddr = await _gosh.getProfileAddr(`0x${_keys.public}`)
-
-            let _wallet
-            if (!address || daoAddress !== _dao.address) {
-                console.debug('Get wallet hook (blockchain)')
-                const _address = await _dao.getWalletAddr(profileAddr, 0)
-                _wallet = new GoshWallet(
-                    _dao.account.client,
-                    _address,
-                    versions.latest,
-                    _keys,
-                )
-            } else {
-                console.debug('Get wallet hook (from state)')
-                _wallet = new GoshWallet(
-                    _dao.account.client,
-                    address,
-                    versions.latest,
-                    _keys,
-                )
-
-                /**
-                 * Get DAO participants list and check if wallet is a member only
-                 * in case of reading wallet from state, because hook works twice
-                 * in case of reading from blockchain (blockchain then state).
-                 *
-                 * TODO: Create subscription for DAO messages (add member message)
-                 * and apply it in this hook
-                 */
-                const _daoParticipants = await _dao.getWallets()
-                _wallet.isDaoParticipant = _daoParticipants.indexOf(_wallet.address) >= 0
-            }
-
-            setWallet(_wallet)
-            setDetails({
-                address: _wallet.address,
-                keys: _keys,
-                daoAddress: _dao.address,
-            })
-        }
-
-        if (gosh && dao && userState.keys) {
-            getWallet(gosh, dao, userState.keys, {
-                address: details?.address,
-                daoAddress: details?.daoAddress,
-            })
-        }
-    }, [gosh, dao, details?.address, details?.daoAddress, userState.keys, setDetails])
-
-    return wallet
-}
 
 /** Create GoshRepository object */
 export const useGoshRepo = (daoName?: string, name?: string) => {
@@ -189,7 +122,10 @@ export const useCommitProgress = () => {
     return { progress, progressCallback }
 }
 
-export const useSmvBalance = (wallet?: IGoshWallet) => {
+export const useSmvBalance = (wallet?: {
+    instance: IGoshWallet
+    details: TWalletDetails
+}) => {
     const { versions } = useGoshVersions()
     const [details, setDetails] = useState<TSmvBalanceDetails>({
         balance: 0,
@@ -200,10 +136,10 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
 
     useEffect(() => {
         const getDetails = async () => {
-            if (!wallet || !wallet.isDaoParticipant) return
+            if (!wallet || !wallet.details.isDaoMember) return
 
-            const balance = await wallet.getSmvTokenBalance()
-            const lockerAddr = await wallet.getSmvLockerAddr()
+            const balance = await wallet.instance.getSmvTokenBalance()
+            const lockerAddr = await wallet.instance.getSmvLockerAddr()
             const locker = new GoshSmvLocker(
                 AppConfig.goshclient,
                 lockerAddr,

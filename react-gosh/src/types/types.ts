@@ -1,11 +1,3 @@
-import { KeyPair } from '@eversdk/core'
-
-export type TGoshWalletDetails = {
-    address: string
-    keys?: KeyPair
-    daoAddress: string
-}
-
 export type TGoshRepoDetails = {
     address: string
     name: string

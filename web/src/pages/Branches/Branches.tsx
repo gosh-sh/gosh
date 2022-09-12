@@ -57,7 +57,7 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForAddProtectedBranch(repoName, name)
+            await wallet.instance.startProposalForAddProtectedBranch(repoName, name)
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -86,7 +86,7 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForDeleteProtectedBranch(repoName, name)
+            await wallet.instance.startProposalForDeleteProtectedBranch(repoName, name)
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -109,11 +109,11 @@ export const BranchesPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
             const commit = new GoshCommit(
-                wallet.account.client,
+                wallet.instance.account.client,
                 values.from.commitAddr,
                 versions.latest,
             )
-            await wallet.deployBranch(
+            await wallet.instance.deployBranch(
                 repo,
                 values.newName.toLowerCase(),
                 values.from.name,
@@ -141,7 +141,7 @@ export const BranchesPage = () => {
                 if (!repoName) throw new GoshError(EGoshError.NO_REPO)
                 if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await wallet.deleteBranch(repo, name)
+                await wallet.instance.deleteBranch(repo, name)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
@@ -170,7 +170,7 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex flex-wrap justify-between gap-4">
-                {wallet?.isDaoParticipant && (
+                {wallet?.details.isDaoMember && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -265,7 +265,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {wallet?.isDaoParticipant && (
+                            {wallet?.details.isDaoMember && (
                                 <>
                                     <button
                                         type="button"
