@@ -631,7 +631,7 @@ function useWallet(dao?: IGoshDao) {
                     AppConfig.goshclient,
                     address,
                     dao.version,
-                    keys,
+                    { keys, profile },
                 )
                 setWallet(instance)
                 setDetails({
@@ -648,7 +648,7 @@ function useWallet(dao?: IGoshDao) {
                     AppConfig.goshclient,
                     details.address,
                     dao.version,
-                    keys,
+                    { keys, profile },
                 )
                 setWallet(instance)
             }

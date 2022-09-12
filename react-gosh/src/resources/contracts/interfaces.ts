@@ -98,11 +98,14 @@ interface IGoshDao extends IContract {
 
 interface IGoshWallet extends IContract {
     address: string
-
-    deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
+    profile?: IGoshProfile
 
     getDao(): Promise<IGoshDao>
     getGosh(version: string): Promise<IGosh>
+    getAccess(): Promise<string | null>
+    deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
+    deployRepo(name: string, prev?: { addr: string; version: string }): Promise<void>
+
     getSmvLocker(): Promise<IGoshSmvLocker>
     createCommit(
         repo: IGoshRepository,
@@ -124,7 +127,7 @@ interface IGoshWallet extends IContract {
     getDaoAddr(): Promise<string>
     getRootAddr(): Promise<string>
     getPubkey(): Promise<string>
-    deployRepo(name: string, prevAddr?: string): Promise<void>
+
     deployBranch(
         repo: IGoshRepository,
         newName: string,

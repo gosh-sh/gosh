@@ -146,9 +146,6 @@ const RepoPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <div>
-                <button onClick={onUpgrade}>Upgrade</button>
-            </div>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-4">
                 <div className="grow flex items-center gap-y-2 gap-x-5">
                     <BranchSelect

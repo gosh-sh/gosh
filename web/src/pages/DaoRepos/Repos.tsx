@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import {
-    EGoshError,
-    GoshError,
-    GoshRepository,
-    useGosh,
-    useGoshVersions,
-} from 'react-gosh'
+import { GoshRepository, useGosh, useGoshVersions } from 'react-gosh'
 import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -69,7 +63,7 @@ const DaoRepositoriesPage = () => {
     /** Initial load of all repo accounts with repo names */
     useEffect(() => {
         const getRepoList = async () => {
-            if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
+            if (!gosh) return
 
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
@@ -111,7 +105,7 @@ const DaoRepositoriesPage = () => {
         }
 
         getRepoList()
-    }, [dao.instance.address])
+    }, [gosh, dao.instance.address])
 
     /** Update filtered items and page depending on search */
     useEffect(() => {

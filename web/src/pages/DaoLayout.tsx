@@ -40,7 +40,8 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
+            !userStatePersist.phrase ||
+            (userStatePersist.phrase && wallet.instance && wallet.details)
         if (dao.instance && walletAwaited) setIsReady(true)
     }, [dao.instance, userStatePersist.phrase, wallet])
 

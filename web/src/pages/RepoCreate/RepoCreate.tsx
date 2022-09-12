@@ -4,8 +4,9 @@ import TextField from '../../components/FormikForms/TextField'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from 'react-gosh'
+import { EGoshError, GoshError, retry } from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -20,11 +21,11 @@ const RepoCreatePage = () => {
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            await wallet.instance.deployRepo(values.name.toLowerCase())
+            await retry(() => wallet.instance.deployRepo(values.name), 3)
             navigate(`/${daoName}/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 

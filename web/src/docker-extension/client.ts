@@ -145,12 +145,9 @@ export class DockerClient {
         const dao = new GoshDao(AppConfig.goshclient, daoAddress, version)
         const walletAddr = await dao.getWalletAddr(`0x${userState.keys?.public}`, 0)
 
-        const wallet = new GoshWallet(
-            AppConfig.goshclient,
-            walletAddr,
-            version,
-            userState?.keys,
-        )
+        const wallet = new GoshWallet(AppConfig.goshclient, walletAddr, version, {
+            keys: userState?.keys,
+        })
         return wallet
     }
 

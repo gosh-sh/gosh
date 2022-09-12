@@ -1,5 +1,5 @@
-import { AccountType } from '@eversdk/appkit'
-import { KeyPair, TonClient } from '@eversdk/core'
+import { AccountRunOptions, AccountType } from '@eversdk/appkit'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import { AppConfig } from '../../appconfig'
 import { EGoshError, GoshError } from '../../errors'
@@ -39,6 +39,7 @@ import { GoshTree } from './goshtree'
 import {
     IGosh,
     IGoshDao,
+    IGoshProfile,
     IGoshRepository,
     IGoshSmvLocker,
     IGoshWallet,
@@ -46,15 +47,32 @@ import {
 
 class GoshWallet extends BaseContract implements IGoshWallet {
     static key: string = 'goshwallet'
+    profile?: IGoshProfile
 
-    constructor(client: TonClient, address: string, version: string, keys?: KeyPair) {
-        super(client, GoshWallet.key, address, { version, keys })
+    constructor(
+        client: TonClient,
+        address: string,
+        version: string,
+        optional?: { keys?: KeyPair; profile?: IGoshProfile },
+    ) {
+        super(client, GoshWallet.key, address, { version, keys: optional?.keys })
+        if (optional?.profile) this.profile = optional.profile
     }
 
     async getDao(): Promise<IGoshDao> {
         // TODO: Implement dao cache by version
         const address = await this.getDaoAddr()
         return new GoshDao(this.account.client, address, this.version)
+    }
+
+    async getGosh(): Promise<IGosh> {
+        // TODO: Implement gosh cache by version
+        return AppConfig.goshroot.getGosh(this.version)
+    }
+
+    async getAccess(): Promise<string | null> {
+        const result = await this.account.runLocal('getAccess', {})
+        return result.decoded?.output.value0
     }
 
     async deployDaoWallet(profileAddr: string): Promise<IGoshWallet> {
@@ -67,21 +85,38 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         await this.run('deployWalletDao', { pubaddr: profileAddr })
         while (true) {
             if (await wallet.isDeployed()) break
-            // TODO: Remove this log
-            console.debug('Deploy wallet: wait for accout')
             await sleep(5000)
         }
         return wallet
     }
 
-    async getGosh(version: string): Promise<IGosh> {
-        return AppConfig.goshroot.getGosh(version)
+    async deployRepo(
+        name: string,
+        prev?: { addr: string; version: string },
+    ): Promise<void> {
+        // Check if repo is already deployed
+        const gosh = await this.getGosh()
+        const dao = await this.getDao()
+        const daoName = await dao.getName()
+        const repoAddr = await gosh.getRepoAddr(name, daoName)
+        const repo = new GoshRepository(this.account.client, repoAddr, this.version)
+        if (await repo.isDeployed()) return
+
+        // Deploy repo
+        console.debug('wallet', this.account.signer, this.address)
+        await this.run('deployRepository', {
+            nameRepo: name.toLowerCase(),
+            previous: prev || null,
+        })
+        while (true) {
+            if (await repo.isDeployed()) break
+            await sleep(5000)
+        }
     }
 
     async getSmvLocker(): Promise<IGoshSmvLocker> {
         const addr = await this.getSmvLockerAddr()
-        // TODO: version
-        const locker = new GoshSmvLocker(this.account.client, addr, '')
+        const locker = new GoshSmvLocker(this.account.client, addr, this.version)
         await locker.load()
         return locker
     }
@@ -108,8 +143,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
                 type: 'repository',
                 address: repo.address,
             })
-        // TODO: version
-        const gosh = await this.getGosh('')
+        const gosh = await this.getGosh()
 
         // Generate current branch full tree and get it's items (TGoshTreeItem[]).
         // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
@@ -316,33 +350,6 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         return result.decoded?.output.value0
     }
 
-    async deployRepo(name: string, prevAddr?: string): Promise<void> {
-        // Get repo instance, check if it is not deployed
-        const dao = await this.getDao()
-        const daoName = await dao.getName()
-
-        // TODO: version
-        const gosh = await this.getGosh('')
-        const repoAddr = await gosh.getRepoAddr(name, daoName)
-        // TODO: version
-        const repo = new GoshRepository(this.account.client, repoAddr, '')
-        const acc = await repo.account.getAccount()
-        if (acc.acc_type === AccountType.active) return
-
-        // If repo is not deployed, deploy and wait for status `active`
-        await this.run('deployRepository', { nameRepo: name, previous: prevAddr || null })
-        return new Promise((resolve) => {
-            const interval = setInterval(async () => {
-                const acc = await repo.account.getAccount()
-                console.debug('[Deploy repo] - Account:', acc)
-                if (acc.acc_type === AccountType.active) {
-                    clearInterval(interval)
-                    resolve()
-                }
-            }, 1500)
-        })
-    }
-
     async deployBranch(
         repo: IGoshRepository,
         newName: string,
@@ -373,8 +380,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
             })
             const items = await Promise.all(
                 accounts.results.map(async ({ id }) => {
-                    // TODO: version
-                    return new GoshSnapshot(this.account.client, id, '')
+                    return new GoshSnapshot(this.account.client, id, this.version)
                 }),
             )
             snaps.push(...items)
@@ -577,9 +583,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
 
     async deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string> {
         if (!repo.meta) throw new GoshError(EGoshError.NO_REPO)
-
-        // TODO: version
-        const gosh = await this.getGosh('')
+        const gosh = await this.getGosh()
 
         const sha = sha1Tree(items, 'sha1')
         if (!sha) {
@@ -592,8 +596,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         // Check if not deployed
         const addr = await repo.getTreeAddr(sha)
         console.debug('Tree addr', addr)
-        // TODO: version
-        const blob = new GoshTree(this.account.client, addr, '')
+        const blob = new GoshTree(this.account.client, addr, this.version)
         const blobAcc = await blob.account.getAccount()
         if (blobAcc.acc_type === AccountType.active) {
             return addr
@@ -659,8 +662,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         ipfs: string | null,
     ): Promise<string> {
         const addr = await this.getSnapshotAddr(repoAddr, branchName, filename)
-        // TODO: version
-        const snapshot = new GoshSnapshot(this.account.client, addr, '')
+        const snapshot = new GoshSnapshot(this.account.client, addr, this.version)
 
         let isDeployed = false
         try {
@@ -886,19 +888,21 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         // Build commit data and calculate commit name
         let parentCommitName = ''
         if (branch.commitAddr) {
-            // TODO: version
-            const commit = new GoshCommit(this.account.client, branch.commitAddr, '')
+            const commit = new GoshCommit(
+                this.account.client,
+                branch.commitAddr,
+                this.version,
+            )
             const name = await commit.getName()
             if (name !== ZERO_COMMIT) parentCommitName = name
         }
 
         let parentBranchCommitName = ''
         if (parentBranch?.commitAddr) {
-            // TODO: version
             const commit = new GoshCommit(
                 this.account.client,
                 parentBranch.commitAddr,
-                '',
+                this.version,
             )
             const name = await commit.getName()
             if (name !== ZERO_COMMIT) parentBranchCommitName = name
@@ -926,6 +930,27 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         const commitName = sha1(commitData, 'commit', 'sha1')
 
         return { name: commitName, content: commitData, parents }
+    }
+
+    async run(
+        functionName: string,
+        input: object,
+        options?: AccountRunOptions,
+        writeLog?: boolean,
+    ): Promise<ResultOfProcessMessage> {
+        if (!this.profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (this.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.WALLET_NO_SIGNER)
+        }
+
+        // Check wallet access
+        const pubkey = `0x${this.account.signer.keys.public}`
+        const access = await this.getAccess()
+        if (access !== pubkey) {
+            await this.profile.turnOn(this.address, pubkey)
+        }
+
+        return super.run(functionName, input, options, writeLog)
     }
 }
 

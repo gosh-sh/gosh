@@ -63,7 +63,8 @@ const RepoLayout = () => {
         }
 
         const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
+            !userStatePersist.phrase ||
+            (userStatePersist.phrase && wallet.instance && wallet.details)
         if (repo && walletAwaited) init()
     }, [repo, wallet, userStatePersist.phrase, updateBranches])
 

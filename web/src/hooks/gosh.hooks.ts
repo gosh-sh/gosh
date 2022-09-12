@@ -34,22 +34,23 @@ import {
 
 /** Create GoshRepository object */
 export const useGoshRepo = (daoName?: string, name?: string) => {
-    const { versions } = useGoshVersions()
     const gosh = useGosh()
     const [goshRepo, setGoshRepo] = useState<IGoshRepository>()
 
     useEffect(() => {
-        const createRepo = async (_gosh: IGosh, daoName: string, name: string) => {
-            const repoAddr = await _gosh.getRepoAddr(name, daoName)
+        const _getRepo = async () => {
+            if (!gosh || !name || !daoName) return
+
+            const repoAddr = await gosh.getRepoAddr(name, daoName)
             const repository = new GoshRepository(
                 AppConfig.goshclient,
                 repoAddr,
-                versions.latest,
+                gosh.version,
             )
             setGoshRepo(repository)
         }
 
-        if (gosh && daoName && name) createRepo(gosh, daoName, name)
+        _getRepo()
     }, [gosh, daoName, name])
 
     return goshRepo

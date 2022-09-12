@@ -28,10 +28,7 @@ const DaoPage = () => {
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
                     {wallet?.details.isDaoMember ? (
-                        <Link
-                            to={`/${daoName}/settings/wallet`}
-                            className="hover:underline"
-                        >
+                        <Link to={`/account/settings`} className="hover:underline">
                             Setup git remote
                         </Link>
                     ) : (

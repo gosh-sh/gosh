@@ -70,7 +70,9 @@ class GoshDao extends BaseContract implements IGoshDao {
     async getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet> {
         const profile = await this.getOwner()
         const address = await this.getWalletAddr(profile, 0)
-        const wallet = new GoshWallet(this.account.client, address, this.version, keys)
+        const wallet = new GoshWallet(this.account.client, address, this.version, {
+            keys,
+        })
         return wallet
     }
 

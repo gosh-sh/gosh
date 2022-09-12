@@ -252,8 +252,7 @@ export const getRepoTree = async (
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i]
             const treeAddr = await repo.getTreeAddr(tree.sha1)
-            // TODO: version
-            const treeBlob = new GoshTree(AppConfig.goshclient, treeAddr, '')
+            const treeBlob = new GoshTree(AppConfig.goshclient, treeAddr, repo.version)
 
             const treeItems = (await treeBlob.getTree()).tree
             const treePath = `${path ? `${path}/` : ''}${tree.name}`
@@ -267,16 +266,14 @@ export const getRepoTree = async (
 
     // Get latest branch commit
     if (!commitAddr) return { tree: { '': [] }, items: [] }
-    // TODO: version
-    const commit = new GoshCommit(AppConfig.goshclient, commitAddr, '')
+    const commit = new GoshCommit(AppConfig.goshclient, commitAddr, repo.version)
     const commitName = await commit.getName()
 
     // Get root tree items and recursively get subtrees
     let items: TGoshTreeItem[] = []
     if (commitName !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree()
-        // TODO: version
-        const rootTree = new GoshTree(AppConfig.goshclient, rootTreeAddr, '')
+        const rootTree = new GoshTree(AppConfig.goshclient, rootTreeAddr, repo.version)
         items = (await rootTree.getTree()).tree
     }
     if (filterPath !== '') await blobTreeWalker('', items)
@@ -466,8 +463,7 @@ export const getBlobAtCommit = async (
     }
 
     /** Get snapshot content and messages and revert snapshot to commit */
-    // TODO: version
-    const snap = new GoshSnapshot(repo.account.client, snapaddr, '')
+    const snap = new GoshSnapshot(repo.account.client, snapaddr, repo.version)
     const snapdata = await snap.getSnapshot(commit, treeitem)
     console.debug('Snap data', snapdata)
     if (Buffer.isBuffer(snapdata.content))
@@ -516,11 +512,17 @@ export const getBlobAtCommit = async (
         if (msgcommit === commit) break
         if (msgcommit && !msgipfs) {
             const msgcommitAddr = await repo.getCommitAddr(msgcommit)
-            // TODO: version
-            const msgcommitObj = new GoshCommit(AppConfig.goshclient, msgcommitAddr, '')
+            const msgcommitObj = new GoshCommit(
+                AppConfig.goshclient,
+                msgcommitAddr,
+                repo.version,
+            )
             const msgcommitParents = await msgcommitObj.getParents()
-            // TODO: version
-            const parent = new GoshCommit(AppConfig.goshclient, msgcommitParents[0], '')
+            const parent = new GoshCommit(
+                AppConfig.goshclient,
+                msgcommitParents[0],
+                repo.version,
+            )
             const parentName = await parent.getName()
             if (parentName === commit) break
         }
@@ -533,8 +535,7 @@ export const getCommit = async (
     repo: IGoshRepository,
     commitAddr: string,
 ): Promise<TGoshCommit> => {
-    // TODO: version
-    const commit = new GoshCommit(repo.account.client, commitAddr, '')
+    const commit = new GoshCommit(repo.account.client, commitAddr, repo.version)
     const meta = await commit.getCommit()
     const commitData = {
         addr: commitAddr,
