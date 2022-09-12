@@ -39,7 +39,6 @@ contract Tree is Modifiers {
     TvmCell m_codeTree;
     TvmCell m_codeCommit;
     TvmCell m_SnapshotCode;
-    uint128 _countFiles = 0;
     uint128 _needAnswer = 0;
     bool _check = false;
     bool _root = false;
@@ -294,10 +293,6 @@ contract Tree is Modifiers {
     }
     
     //Getters
-         
-    function getCount() external view returns(uint128) {
-        return _countFiles;
-    }
     
     function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
         return (_tree, _ipfs);

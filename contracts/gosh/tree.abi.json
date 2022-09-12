@@ -107,14 +107,6 @@
 			]
 		},
 		{
-			"name": "getCount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
-			]
-		},
-		{
 			"name": "gettree",
 			"inputs": [
 			],
@@ -172,7 +164,6 @@
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeCommit","type":"cell"},
 		{"name":"m_SnapshotCode","type":"cell"},
-		{"name":"_countFiles","type":"uint128"},
 		{"name":"_needAnswer","type":"uint128"},
 		{"name":"_check","type":"bool"},
 		{"name":"_root","type":"bool"},
