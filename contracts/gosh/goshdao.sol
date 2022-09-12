@@ -112,7 +112,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { _previous = previous.get(); GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); }
         this.deployWalletIn{value: 0.1 ton, flag: 1}(_pubaddr);
-        ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao);
+        ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
     function getPreviousInfo(string name) public view {
