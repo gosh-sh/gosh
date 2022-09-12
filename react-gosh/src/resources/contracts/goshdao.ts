@@ -1,6 +1,7 @@
 import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { TDaoDetails } from '../../types'
 import { BaseContract } from './base'
+import { GoshProfile } from './goshprofile'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { GoshWallet } from './goshwallet'
 import { IGoshDao, IGoshWallet } from './interfaces'
@@ -23,7 +24,7 @@ class GoshDao extends BaseContract implements IGoshDao {
             address: this.address,
             name: await this.getName(),
             version: this.version,
-            members: await this.getWallets(),
+            members: await this.getProfiles(),
             supply: await smvTokenRoot.getTotalSupply(),
             owner: await this.getOwner(),
         }
@@ -40,6 +41,16 @@ class GoshDao extends BaseContract implements IGoshDao {
     async getWallets(): Promise<string[]> {
         const result = await this.account.runLocal('getWallets', {})
         return result.decoded?.output.value0
+    }
+
+    async getProfiles(): Promise<{ profile: string; wallet: string }[]> {
+        const result = await this.account.runLocal('getWalletsFull', {})
+        const profiles = []
+        for (const key in result.decoded?.output.value0) {
+            const profile = `0:${key.slice(2)}`
+            profiles.push({ profile, wallet: result.decoded?.output.value0[key] })
+        }
+        return profiles
     }
 
     async getName(): Promise<string> {
@@ -68,10 +79,11 @@ class GoshDao extends BaseContract implements IGoshDao {
     }
 
     async getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet> {
-        const profile = await this.getOwner()
-        const address = await this.getWalletAddr(profile, 0)
+        const profile = new GoshProfile(this.account.client, await this.getOwner(), keys)
+        const address = await this.getWalletAddr(profile.address, 0)
         const wallet = new GoshWallet(this.account.client, address, this.version, {
             keys,
+            profile,
         })
         return wallet
     }

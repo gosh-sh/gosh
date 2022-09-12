@@ -4,13 +4,13 @@ type TDaoDetails = {
     address: string
     name: string
     version: string
-    members: string[]
+    members: { profile: string; wallet: string }[]
     supply: number
     owner: string
 }
 
 type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
-    members?: string[]
+    members?: { profile: string; wallet: string }[]
     supply?: number
     owner?: string
     isLoadDetailsFired?: boolean
@@ -23,13 +23,13 @@ type TDaoCreateProgress = {
 }
 
 type TDaoMemberDetails = {
+    name: string
+    profile: string
     wallet: string
-    pubkey: string
     smvBalance: number
 }
 
-type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
-    pubkey?: string
+type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
     smvBalance?: number
     isLoadDetailsFired?: boolean
 }

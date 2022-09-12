@@ -90,6 +90,10 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         return wallet
     }
 
+    async deleteDaoWallet(profileAddr: string): Promise<void> {
+        await this.run('deleteWalletDao', { pubaddr: profileAddr })
+    }
+
     async deployRepo(
         name: string,
         prev?: { addr: string; version: string },

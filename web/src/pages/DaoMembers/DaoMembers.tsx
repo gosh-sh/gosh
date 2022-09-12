@@ -5,21 +5,22 @@ import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import DaoMemberForm from './MemberForm'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 const DaoMembersPage = () => {
     const profile = useProfile()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
-    const daoMemberDeleteHook = useDaoMemberDelete()
+    const daomember = useDaoMemberDelete(dao.instance)
 
-    const onMemberDelete = async (pubkey?: string) => {
-        if (!pubkey) return
+    const onMemberDelete = async (profile?: string) => {
+        if (!profile) return
         if (window.confirm('Delete member?')) {
             try {
-                await daoMemberDeleteHook.deleteMember(pubkey)
+                await daomember.remove(profile)
             } catch (e: any) {
                 console.error(e.message)
-                toast.error(e.message)
+                toast.error(<ToastError error={e} />)
             }
         }
     }
@@ -30,7 +31,7 @@ const DaoMembersPage = () => {
                 <input
                     className="element !py-1.5"
                     type="search"
-                    placeholder="Search member by pubkey..."
+                    placeholder="Search member by profile..."
                     autoComplete="off"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -52,11 +53,11 @@ const DaoMembersPage = () => {
                             <DaoMemberListItem
                                 key={index}
                                 item={item}
-                                daoOwnerPubkey={dao.details.owner}
+                                daoOwner={dao.details.owner}
                                 isDaoOwner={profile?.address === dao.details.owner}
                                 isFetching={
-                                    item.pubkey
-                                        ? daoMemberDeleteHook.isFetching(item.pubkey)
+                                    item.profile
+                                        ? daomember.isFetching(item.profile)
                                         : false
                                 }
                                 onDelete={onMemberDelete}
@@ -68,7 +69,7 @@ const DaoMembersPage = () => {
 
             {profile?.address === dao.details.owner && (
                 <div className="mt-6">
-                    <DaoMemberForm />
+                    <DaoMemberForm dao={dao.instance} />
                 </div>
             )}
         </>

@@ -36,8 +36,14 @@ class BaseContract implements IContract {
     }
 
     async isDeployed(): Promise<boolean> {
-        const account = await this.account.getAccount()
-        return account.acc_type === AccountType.active
+        const response = await this.account.client.net.query_collection({
+            collection: 'accounts',
+            filter: { id: { eq: this.address } },
+            result: 'acc_type',
+        })
+
+        if (!response.result.length) return false
+        return response.result[0].acc_type === AccountType.active
     }
 
     async getMessages(

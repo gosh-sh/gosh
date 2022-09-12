@@ -74,6 +74,7 @@ interface IGoshProfile extends IContract {
     getCurrentGoshAddr(): Promise<string>
     getProfileDaoAddr(name: string): Promise<string>
     getProfileDao(name: string): Promise<IGoshProfileDao>
+    getName(): Promise<string>
 }
 
 interface IGoshProfileDao extends IContract {
@@ -86,6 +87,7 @@ interface IGoshDao extends IContract {
     getDetails(): Promise<TDaoDetails>
     getWalletAddr(profileAddr: string, index: number): Promise<string>
     getWallets(): Promise<string[]>
+    getProfiles(): Promise<{ profile: string; wallet: string }[]>
     getName(): Promise<string>
     getSmvRootTokenAddr(): Promise<string>
     getSmvProposalCode(): Promise<string>
@@ -104,6 +106,7 @@ interface IGoshWallet extends IContract {
     getGosh(version: string): Promise<IGosh>
     getAccess(): Promise<string | null>
     deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
+    deleteDaoWallet(profileAddr: string): Promise<void>
     deployRepo(name: string, prev?: { addr: string; version: string }): Promise<void>
 
     getSmvLocker(): Promise<IGoshSmvLocker>

@@ -1,4 +1,3 @@
-import { AccountType } from '@eversdk/appkit'
 import { KeyPair, TonClient } from '@eversdk/core'
 import { sleep } from '../../utils'
 import { BaseContract } from './base'
@@ -16,15 +15,12 @@ class Gosh extends BaseContract implements IGosh {
         // Get profile address and check it's status
         const profileAddr = await this.getProfileAddr(username)
         const profile = new GoshProfile(this.account.client, profileAddr)
-        const acc = await profile.account.getAccount()
-        if (acc.acc_type === AccountType.active) return profile
+        if (await profile.isDeployed()) return profile
 
-        // If profile is not active (deployed), deploy and wait for status `active`
+        // Deploy profile
         await this.run('deployProfile', { name: username.toLowerCase(), pubkey })
         while (true) {
-            const acc = await profile.account.getAccount()
-            console.debug('[Create profile]: Wait for account', acc)
-            if (acc.acc_type === AccountType.active) break
+            if (await profile.isDeployed()) break
             await sleep(5000)
         }
         return profile

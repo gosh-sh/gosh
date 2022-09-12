@@ -137,7 +137,10 @@ const SignupPage = () => {
                 )}
             </Formik>
 
-            <SignupProgress progress={user.signupProgress} className="mt-4" />
+            <SignupProgress
+                progress={user.signupProgress}
+                className="mt-4 mx-5 sm:mx-124px"
+            />
         </div>
     )
 }

@@ -24,8 +24,6 @@ class GoshProfile extends BaseContract implements IGoshProfile {
             name: name.toLowerCase(),
             previous: prevAddr || null,
         })
-        // TODO: Remove this log
-        console.debug('Deploy dao: wait for account', daoAddr)
         while (true) {
             if (await dao.isDeployed()) return dao
             await sleep(5000)
@@ -56,6 +54,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     async getProfileDao(name: string): Promise<IGoshProfileDao> {
         const address = await this.getProfileDaoAddr(name)
         return new GoshProfileDao(this.account.client, address)
+    }
+
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getName', {})
+        return result.decoded?.output.value0
     }
 }
 
