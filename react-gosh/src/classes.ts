@@ -1690,6 +1690,7 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
                 completed: isCompleted !== null,
                 accepted: !!isCompleted,
             },
+            total_votes : 99,
         }
     }
 
@@ -1806,6 +1807,8 @@ export class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
             tokens: await this.getVotes(),
             isBusy: await this.getIsBusy(),
             numClients: await this.getNumClients(),
+            goshBalance: await this.getNumClients(),
+            goshLockerBalance: parseInt(await this.account.getBalance())/1e9,
         }
     }
 

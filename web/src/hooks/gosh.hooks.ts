@@ -174,6 +174,8 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
         smvLocked: 0,
         smvBusy: false,
         numClients: 0,
+        goshBalance: 0,
+        goshLockerBalance: 0,
     })
 
     useEffect(() => {
@@ -181,16 +183,19 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
             if (!wallet || !wallet.isDaoParticipant) return
 
             const balance = await wallet.getSmvTokenBalance()
+            const goshBalance = parseInt(await wallet.account.getBalance())/1e9
             const lockerAddr = await wallet.getSmvLockerAddr()
             const locker = new GoshSmvLocker(goshClient, lockerAddr)
             const details = await locker.getDetails()
             setDetails((state) => ({
                 ...state,
                 balance,
-                smvBalance: details.tokens.total - details.tokens.locked,
+                smvBalance: details.tokens.total,
                 smvLocked: details.tokens.locked,
                 smvBusy: details.isBusy,
                 numClients: details.numClients,
+                goshBalance: goshBalance,
+                goshLockerBalance: details.goshLockerBalance,
             }))
         }
 

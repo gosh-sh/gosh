@@ -37,6 +37,9 @@ export type TSmvBalanceDetails = {
     smvLocked: number
     smvBusy: boolean
     numClients: number
+    goshBalance: number
+    goshLockerBalance: number
+
 }
 
 export type TGoshEventDetails = {
@@ -46,6 +49,7 @@ export type TGoshEventDetails = {
     time: { start: Date; finish: Date }
     votes: { yes: number; no: number }
     status: { completed: boolean; accepted: boolean }
+    total_votes : number
 }
 
 export type TGoshBranch = {

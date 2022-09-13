@@ -180,6 +180,7 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
             else
                 votesNo += amount;
             ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
+            tryEarlyComplete(totalSupply);
         }
     }
 }

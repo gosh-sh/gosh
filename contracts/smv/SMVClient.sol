@@ -95,7 +95,12 @@ function _performAction () internal
     if (!allowed) {
         optional (address) emptyAddress;
         optional (uint128) emptyValue; 
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, emptyAddress, emptyValue, false);
+        if (amount_locked() >0 ){
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, emptyAddress, emptyValue, false);
+        } else
+        {
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
+        }
     }
     else {
         tvm.accept();
@@ -127,32 +132,40 @@ function onProposalVoted (bool success) external override check_proposal
 {
     tvm.accept();
 
+
+    leftBro.reset();
+    rightBro.reset();
+    rightAmount.reset();
     if (success) {
-
-      leftBro.reset();
-      rightBro.reset();
-      rightAmount.reset();
       votes[currentChoice] += currentAmount;
-
-      if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
+    }
+    if (amount_locked() > 0 ) {
+        if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
             LockableBase(currentHead.get()).insertClient {value:extra, flag:1} (platform_id, address(this), amount_locked());
-      }
-      else
-      {
+         }
+        else
+        {
             inserted = true;
             //currentHead.set(address(this));
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
             ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, address(this), amount_locked(), false);
-      }
+        }
     }
-    else {
+    else
+    {
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue;
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
+    }
+    
+/*     else {
         inserted = true;
         optional (address) emptyAddress;
         optional (uint128) emptyValue; 
         uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
         ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue, false);
-    }
+ */    
 }
 
 function _getLockedAmount () public view returns(uint128)
