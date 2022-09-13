@@ -51,4 +51,7 @@ abstract contract Errors {
     uint constant ERR_PREV_NOT_EXIST = 240;
     uint constant ERR_WRONG_DAO = 241;
     uint constant ERR_TOMBSTONE = 241;
+    uint constant ERR_BAD_NUMBER_CUSTODIANS = 242;
+    uint constant ERR_NOTHING_TO_CONFIRM = 243;
+    uint constant ERR_ALREADY_CONFIRMED = 244;
 }

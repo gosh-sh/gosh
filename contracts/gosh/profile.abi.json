@@ -24,6 +24,30 @@
 			]
 		},
 		{
+			"name": "confirmTransaction",
+			"inputs": [
+				{"name":"id","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "clearExpired",
+			"inputs": [
+				{"name":"index","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewNeedCustodians",
+			"inputs": [
+				{"name":"need","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addPubkey",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
@@ -150,6 +174,14 @@
 			]
 		},
 		{
+			"name": "getMessages",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"}],"name":"value0","type":"map(uint64,tuple)"}
+			]
+		},
+		{
 			"name": "getName",
 			"inputs": [
 			],
@@ -162,7 +194,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"map(uint256,bool)"}
+				{"name":"value0","type":"map(uint256,uint8)"}
 			]
 		},
 		{
@@ -207,9 +239,10 @@
 		{"name":"_name","type":"string"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"name":"_owners","type":"map(uint256,bool)"},
-		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"voted","type":"uint256"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"}],"name":"_messages","type":"map(uint256,tuple)"},
-		{"name":"_custodians","type":"uint128"},
-		{"name":"_needcustodians","type":"uint128"}
+		{"name":"_owners","type":"map(uint256,uint8)"},
+		{"name":"_index","type":"map(uint8,uint256)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"}],"name":"_messages","type":"map(uint64,tuple)"},
+		{"name":"_custodians","type":"uint8"},
+		{"name":"_needcustodians","type":"uint8"}
 	]
 }
