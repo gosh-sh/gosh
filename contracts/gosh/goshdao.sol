@@ -205,21 +205,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Wallet part
-    function setTombstone(address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function setTombstone(address pub, uint128 index, string description) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         _tombstone = true;
         getMoney();
         uint256 zero;
-        this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero);
+        this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
     }
     
-    function askForTombstoneIn(uint256 key) public senderIs(address(this))  accept {
+    function askForTombstoneIn(uint256 key, string description) public senderIs(address(this))  accept {
         optional(uint256, address) res = _wallets.next(key);
         if (res.hasValue()) {
             address pub;
             (key, pub) = res.get();
-            GoshWallet(getAddrWalletIn(pub, 0)).setTombstoneWallet{value: 0.1 ton, flag: 1}();
-            this.askForTombstoneIn{value: 0.1 ton, flag: 1}(key);
+            GoshWallet(getAddrWalletIn(pub, 0)).setTombstoneWallet{value: 0.1 ton, flag: 1}(description);
+            this.askForTombstoneIn{value: 0.1 ton, flag: 1}(key, description);
         }
         getMoney();
     }

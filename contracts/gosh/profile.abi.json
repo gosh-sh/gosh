@@ -40,10 +40,43 @@
 			]
 		},
 		{
+			"name": "_addPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_deletePubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "turnOn",
 			"inputs": [
 				{"name":"wallet","type":"address"},
 				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_turnOn",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_turnOff",
+			"inputs": [
+				{"name":"wallet","type":"address"}
 			],
 			"outputs": [
 			]
@@ -68,6 +101,24 @@
 		},
 		{
 			"name": "destroyDao",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_deployDao",
+			"inputs": [
+				{"name":"goshroot","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"previous","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_destroyDao",
 			"inputs": [
 				{"name":"name","type":"string"}
 			],
@@ -156,6 +207,9 @@
 		{"name":"_name","type":"string"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"name":"_owners","type":"map(uint256,bool)"}
+		{"name":"_owners","type":"map(uint256,bool)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"voted","type":"uint256"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"}],"name":"_messages","type":"map(uint256,tuple)"},
+		{"name":"_custodians","type":"uint128"},
+		{"name":"_needcustodians","type":"uint128"}
 	]
 }

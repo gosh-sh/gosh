@@ -89,7 +89,8 @@ contract Repository is Modifiers{
         _ready = true;
     } 
     
-    function setTombstone(address pubaddr, uint128 index) public {
+    function setTombstone(address pubaddr, uint128 index, string description) public {
+        description;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _tombstone = true;
     }

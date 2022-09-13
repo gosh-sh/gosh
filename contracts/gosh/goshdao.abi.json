@@ -86,7 +86,8 @@
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
 			],
 			"outputs": [
 			]
@@ -94,7 +95,8 @@
 		{
 			"name": "askForTombstoneIn",
 			"inputs": [
-				{"name":"key","type":"uint256"}
+				{"name":"key","type":"uint256"},
+				{"name":"description","type":"string"}
 			],
 			"outputs": [
 			]

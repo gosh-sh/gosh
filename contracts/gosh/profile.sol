@@ -15,6 +15,16 @@ import "gosh.sol";
 import "goshdao.sol";
 import "profiledao.sol";
 
+struct MessageProfile {
+    uint128 index;
+    uint128 expiredAt;
+    uint256 voted;
+    optional(uint256) pubkey;
+    optional(address) walletgoshroot;
+    optional(string) name;
+    optional(address) previous;
+}
+
 contract Profile is Modifiers {
     string constant version = "1.0.0";
     TvmCell m_codeProfileDao;
@@ -66,6 +76,10 @@ contract Profile is Modifiers {
     address _goshroot;
     bool _flag = false;
     mapping(uint256 => bool) _owners;
+    mapping(uint256 => MessageProfile) _messages;
+    uint128 constant MAX_CUSTODIANS = 32;
+    uint128 _custodians = 1;
+    uint128 _needcustodians = 1;
 
     constructor( TvmCell codeProfileDao,
         uint256 pubkey
@@ -93,13 +107,37 @@ contract Profile is Modifiers {
         delete _owners[pubkey];
         getMoney();
     }
+    
+    function _addPubkey(
+        uint256 pubkey
+    ) public senderIs(address(this))  accept  {
+        _owners[pubkey] = true;
+        getMoney();
+    }
 
-    function turnOn(address wallet, uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
+    function _deletePubkey(
+        uint256 pubkey
+    ) public senderIs(address(this))  accept  {
+        delete _owners[pubkey];
+        getMoney();
+    }
+
+    function turnOn(address wallet, uint256 pubkey) public onlyOwnerPubkeyList accept saveMsg {
+        GoshWallet(wallet).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
+        getMoney();
+    }
+    
+    function _turnOn(address wallet, uint256 pubkey) public senderIs(address(this)) accept {
         GoshWallet(wallet).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
         getMoney();
     }
 
-    function turnOff(address wallet) public onlyOwnerPubkeyList  accept saveMsg {
+    function _turnOff(address wallet) public senderIs(address(this)) accept {
+        GoshWallet(wallet).turnOffPubkey{value: 0.1 ton, flag : 1}();
+        getMoney();
+    }
+    
+    function turnOff(address wallet) public onlyOwnerPubkeyList accept saveMsg {
         GoshWallet(wallet).turnOffPubkey{value: 0.1 ton, flag : 1}();
         getMoney();
     }
@@ -115,6 +153,26 @@ contract Profile is Modifiers {
     }
 
     function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        address daoprofile = address.makeAddrStd(0, tvm.hash(s0));
+        ProfileDao(daoprofile).destroy{value: 0.1 ton, flag : 1}();
+    }
+    
+    function _deployDao(address goshroot, string name, optional(address) previous) public view senderIs(address(this))  accept  {
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
+        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(goshroot, previous);
+    }
+
+    function _destroyDao(string name) public view senderIs(address(this)) accept  {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,

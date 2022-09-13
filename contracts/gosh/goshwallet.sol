@@ -194,20 +194,20 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         _deployWallet();
     }
 */
-    function setTombstoneWallet() public senderIs(_goshdao)  accept saveMsg {
+    function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
         _tombstone = true;
         if (_index >= _walletcounter - 1) { return; }
-        GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index);
+        GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
     
-    function askForTombstone(uint128 index) public senderIs(_getWalletAddr(index)) {
+    function askForTombstone(uint128 index, string description) public senderIs(_getWalletAddr(index)) {
         _tombstone = true;
         if (_index >= _walletcounter - 1) { return; }
-        GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index);
+        GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
     
-    function setTombstoneDao() public onlyOwnerPubkey(_access.get())  accept saveMsg {
-    	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index);
+    function setTombstoneDao(string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
     }
 
     function deployWalletDao(address pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
@@ -298,8 +298,9 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         });
     }
     
-    function setTombstone(string nameRepo) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-    	Repository(_buildRepositoryAddr(nameRepo)).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index);
+    function setTombstone(string nameRepo, string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+        description;
+    	Repository(_buildRepositoryAddr(nameRepo)).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
     }
 
 
