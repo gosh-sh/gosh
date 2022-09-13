@@ -183,7 +183,7 @@ contract Profile is Modifiers {
     function deletePubkey(
         uint256 pubkey
     ) public onlyOwnerPubkeyList  accept saveMsg {
-        require(_custodians > 1, ERR_BAD_NUMBER_CUSTODIANS);
+        require(_custodians > _needcustodians, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
         if (_needcustodians == 1) { 
             _deletePubkey(pubkey);
