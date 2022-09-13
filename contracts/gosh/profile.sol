@@ -340,6 +340,9 @@ contract Profile is Modifiers {
         return _name;
     }
     
+    function getCustodians() external view returns(uint128, uint128) {
+        return (_custodians, _needcustodians);
+    }    
     function getAccess() external view returns(mapping(uint256 => uint8)) {
         return _owners;
     }
