@@ -122,7 +122,7 @@ pub async fn get_set_commit_created_at_time(
 
         let commit_address =
             crate::blockchain::get_commit_address(context, repo_contract, commit_id).await?;
-        let expected_src = commit_address.to_string();
+        let expected_src = String::from(commit_address);
         for node in messages.edges {
             let raw_msg = node.message;
             if raw_msg.status != 5 || raw_msg.bounced || raw_msg.src != expected_src {
