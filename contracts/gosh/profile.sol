@@ -124,7 +124,6 @@ contract Profile is Modifiers {
         require(_isConfirmed(_messages[id].mask, _owners[msg.pubkey()]) == false, ERR_ALREADY_CONFIRMED);
         getMoney();
         if (_messages[id].expiredAt < now) { delete _messages[id]; return; }
-        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         _messages[id].mask = _incMaskValue(_messages[id].mask, _owners[msg.pubkey()]);
         _messages[id].signsReceived += 1;
         if (_messages[id].signsReceived != _needcustodians) { return; }
@@ -155,6 +154,7 @@ contract Profile is Modifiers {
     ) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians >= need, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             if (need == 1) { return; }
             _needcustodians = need; 
@@ -171,6 +171,7 @@ contract Profile is Modifiers {
     ) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians < MAX_CUSTODIANS, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _addPubkey(pubkey);
             return; 
@@ -185,6 +186,7 @@ contract Profile is Modifiers {
     ) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians > _needcustodians, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _deletePubkey(pubkey);
             return; 
@@ -220,6 +222,7 @@ contract Profile is Modifiers {
 
     function turnOn(address wallet, uint256 pubkey) public onlyOwnerPubkeyList accept saveMsg {
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _turnOn(wallet, pubkey);
             return; 
@@ -241,6 +244,7 @@ contract Profile is Modifiers {
     
     function turnOff(address wallet) public onlyOwnerPubkeyList accept saveMsg {
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _turnOff(wallet);
             return; 
@@ -252,6 +256,7 @@ contract Profile is Modifiers {
 
     function deployDao(address goshroot, string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _deployDao(goshroot, name, previous);
             return; 
@@ -263,6 +268,7 @@ contract Profile is Modifiers {
 
     function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _destroyDao(name);
             return; 
