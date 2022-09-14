@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+
+  - name: 'gosh-dashboards'
+    type: file
+    folder: 'Gosh'
+    folderUid: 'goshdashb'
+    options: {path: "/etc/grafana/provisioning/dashboards/gosh"}
+    editable: false
