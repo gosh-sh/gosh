@@ -289,7 +289,7 @@ const RepoPage = () => {
                                 <div key={index} className="py-3">
                                     <Link
                                         className="hover:underline text-sm"
-                                        to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
+                                        to={`/${daoName}/${repoName}/${type}/view/${branchName}/${path}`}
                                     >
                                         <FontAwesomeIcon
                                             className="mr-2"

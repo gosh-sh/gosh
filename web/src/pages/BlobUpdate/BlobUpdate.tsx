@@ -52,7 +52,7 @@ const BlobUpdatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
+    const urlBack = `/${daoName}/${repoName}/blobs/view/${branchName}${
         treePath && `/${treePath}`
     }`
 

@@ -36,7 +36,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/${selected.name}/${treePath}`,
+                                `/${daoName}/${repoName}/blobs/view/${selected.name}/${treePath}`,
                             )
                         }
                     }}

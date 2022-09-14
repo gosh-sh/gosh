@@ -158,7 +158,10 @@ const App = () => {
                                 path="blobs/update/:branchName/*"
                                 element={<BlobUpdatePage />}
                             />
-                            <Route path="blobs/:branchName/*" element={<BlobPage />} />
+                            <Route
+                                path="blobs/view/:branchName/*"
+                                element={<BlobPage />}
+                            />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route
                                 path="commits/:branchName/:commitName"
