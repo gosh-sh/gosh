@@ -299,7 +299,7 @@ pub async fn inner_push_diff(
     };
 
     let params = serde_json::to_value(args)?;
-    let result = call(&es_client, wallet, "deployDiff", Some(params)).await?;
+    let result = call(&es_client, &wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
 
     Ok(())
@@ -345,7 +345,7 @@ pub async fn push_new_branch_snapshot(
     let params = serde_json::to_value(args)?;
     let result = call(
         &context.es_client,
-        wallet,
+        &wallet,
         "deployNewSnapshot",
         Some(params),
     )
@@ -379,7 +379,7 @@ pub async fn push_initial_snapshot(
             attempt += 1;
             let result = call(
                 &es_client,
-                wallet.clone(),
+                &wallet,
                 "deployNewSnapshot",
                 Some(params.clone()),
             )

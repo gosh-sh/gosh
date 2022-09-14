@@ -51,7 +51,7 @@ impl<'a> CreateBranchOperation<'a> {
         });
         blockchain::call(
             &self.context.es_client,
-            wallet_contract,
+            &wallet_contract,
             "deployBranch",
             Some(params),
         )

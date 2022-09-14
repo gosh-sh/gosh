@@ -41,6 +41,8 @@ pub use user_wallet::user_wallet;
 use crate::abi as gosh_abi;
 use crate::config::Config;
 
+use self::contract::{Contract, ContractInfo, ContractRead};
+
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 const CACHE_PIN_STATIC: &str = "static";
@@ -395,10 +397,10 @@ async fn default_callback(pe: ProcessingEvent) {
     log::debug!("cb: {:#?}", pe);
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug", skip(context, contract))]
 async fn call(
     context: &TonClient,
-    contract: GoshContract,
+    contract: &impl ContractInfo,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> Result<CallResult> {
@@ -406,14 +408,16 @@ async fn call(
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),
     };
-    let signer = match contract.keys {
-        Some(key_pair) => Signer::Keys { keys: key_pair },
+    let signer = match contract.get_keys() {
+        Some(key_pair) => Signer::Keys {
+            keys: key_pair.to_owned(),
+        },
         None => Signer::None,
     };
 
     let message_encode_params = ParamsOfEncodeMessage {
-        abi: contract.abi,
-        address: Some(String::from(contract.address.clone())),
+        abi: contract.get_abi().to_owned(),
+        address: Some(String::from(contract.get_address().clone())),
         call_set,
         signer,
         deploy_set: None,
@@ -491,7 +495,7 @@ pub async fn set_head(
 ) -> Result<()> {
     let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
     let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
-    let result = call(context, contract, "setHEAD", Some(args)).await?;
+    let result = call(context, &contract, "setHEAD", Some(args)).await?;
 
     Ok(())
 }
