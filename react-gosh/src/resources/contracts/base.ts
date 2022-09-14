@@ -1,5 +1,6 @@
 import { Account, AccountRunOptions, AccountType } from '@eversdk/appkit'
 import {
+    DecodedMessageBody,
     KeyPair,
     MessageBodyType,
     ResultOfProcessMessage,
@@ -78,7 +79,7 @@ class BaseContract implements IContract {
                             }
                         }
                         pageInfo {
-                            endCursor
+                            startCursor
                             hasPreviousPage
                         }
                     }
@@ -95,14 +96,8 @@ class BaseContract implements IContract {
         if (decode) {
             await Promise.all(
                 page.map(async (item: any) => {
-                    try {
-                        item.decoded = await this.account.client.abi.decode_message_body({
-                            abi: this.account.abi,
-                            body: item.message.body,
-                            is_internal: item.message.msg_type === 0,
-                            allow_partial: true,
-                        })
-                    } catch {}
+                    const { body, msg_type } = item.message
+                    item.decoded = await this.decodeMessageBody(body, msg_type)
                 }),
             )
         }
@@ -112,7 +107,7 @@ class BaseContract implements IContract {
 
         await sleep(300)
         return await this.getMessages(
-            { ...variables, cursor: pageInfo.endCursor },
+            { ...variables, cursor: pageInfo.startCursor },
             decode,
             all,
             messages,
@@ -129,6 +124,22 @@ class BaseContract implements IContract {
         const result = await this.account.run(functionName, input, options)
         if (writeLog) console.debug('[Run result]', { functionName, result })
         return result
+    }
+
+    async decodeMessageBody(
+        body: string,
+        type: number,
+    ): Promise<DecodedMessageBody | null> {
+        try {
+            return await this.account.client.abi.decode_message_body({
+                abi: this.account.abi,
+                body,
+                is_internal: type === 0,
+                allow_partial: true,
+            })
+        } catch {
+            return null
+        }
     }
 }
 

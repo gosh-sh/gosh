@@ -1,11 +1,11 @@
 import { KeyPair } from '@eversdk/core'
 import { useEffect, useState } from 'react'
-import { useRecoilState, useResetRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
 import { retry } from '../helpers'
 import { GoshProfile, IGoshProfile } from '../resources'
-import { userAtom, userPersistAtom } from '../store'
+import { userAtom, userPersistAtom, userProfileSelector } from '../store'
 import { TUserSignupProgress, TUserPersist } from '../types'
 import { validatePhrase, validateUsername } from '../validators'
 import { useGosh } from './gosh.hooks'
@@ -110,24 +110,7 @@ function useUser() {
 }
 
 function useProfile() {
-    const { user } = useUser()
-    const [profile, setProfile] = useState<IGoshProfile>()
-
-    useEffect(() => {
-        const _getProfile = () => {
-            if (!user.profile) return
-
-            const instance = new GoshProfile(
-                AppConfig.goshclient,
-                user.profile,
-                user.keys,
-            )
-            setProfile(instance)
-        }
-
-        _getProfile()
-    }, [user.profile, user.keys])
-
+    const profile = useRecoilValue(userProfileSelector)
     return profile
 }
 

@@ -1,5 +1,5 @@
 import { Account, AccountRunOptions } from '@eversdk/appkit'
-import { KeyPair, ResultOfProcessMessage } from '@eversdk/core'
+import { DecodedMessageBody, KeyPair, ResultOfProcessMessage } from '@eversdk/core'
 import {
     ICreateCommitCallback,
     TDaoDetails,
@@ -34,6 +34,7 @@ interface IContract {
         options?: AccountRunOptions,
         writeLog?: boolean,
     ): Promise<ResultOfProcessMessage>
+    decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
 
 interface IGoshRoot extends IContract {

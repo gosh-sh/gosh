@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { retry } from '../helpers'
-import { userAtom, daoAtom, walletAtom } from '../store'
+import { userAtom, daoAtom, walletAtom, messageAtom } from '../store'
 import {
     GoshDao,
     GoshProfile,
     GoshWallet,
     IGosh,
     IGoshDao,
-    IGoshProfile,
     IGoshWallet,
 } from '../resources/contracts'
 import { sleep } from '../utils'
@@ -108,15 +107,16 @@ const daoMembersDeployHelper = {
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
+    const message = useRecoilValue(messageAtom)
     const [search, setSearch] = useState<string>('')
     const [daos, setDaos] = useState<{
         items: TDaoListItem[]
-        filtered: string[]
+        filtered: { search: string; items: string[] }
         page: number
         isFetching: boolean
     }>({
         items: [],
-        filtered: [],
+        filtered: { search: '', items: [] },
         page: 1,
         isFetching: true,
     })
@@ -182,11 +182,14 @@ function useDaoList(perPage: number) {
                     }
                 }),
             )
-            setDaos({
-                items: items.sort((a, b) => (a.name > b.name ? 1 : -1)),
-                filtered: items.map((item) => item.address),
-                page: 1,
-                isFetching: false,
+            setDaos((state) => {
+                const merged = [...state.items, ...items]
+                return {
+                    items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
+                    filtered: { search: '', items: merged.map((item) => item.address) },
+                    page: 1,
+                    isFetching: false,
+                }
             })
         }
 
@@ -199,23 +202,66 @@ function useDaoList(perPage: number) {
             return {
                 ...state,
                 page: search ? 1 : state.page,
-                filtered: state.items
-                    .filter((item) => {
-                        const pattern = new RegExp(search, 'i')
-                        return !search || item.name.search(pattern) >= 0
-                    })
-                    .map((item) => item.address),
+                filtered: {
+                    search,
+                    items: state.items
+                        .filter((item) => _searchItem(search, item.name))
+                        .map((item) => item.address),
+                },
             }
         })
     }, [search])
 
+    /** Process profile message from subscription */
+    useEffect(() => {
+        const _updateDaoList = async () => {
+            if (!profile || !message) return
+            if (message.key !== 'profile') return
+
+            // Decode profile message and check it's type (name)
+            const { body, msg_type } = message.message
+            const decoded = await profile.decodeMessageBody(body, msg_type)
+            if (!decoded || decoded.name !== 'deployedWallet') return
+
+            // Add new dao item to list
+            const { goshdao, ver } = decoded.value
+            const dao = new GoshDao(AppConfig.goshclient, goshdao, ver)
+            const item = {
+                address: dao.address,
+                name: await dao.getName(),
+                version: dao.version,
+            }
+            setDaos((state) => {
+                const merged = [...state.items, item]
+                const filtered = {
+                    ...state.filtered,
+                    items: !_searchItem(state.filtered.search, item.name)
+                        ? state.filtered.items
+                        : [...state.filtered.items, item.address],
+                }
+                return {
+                    ...state,
+                    items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
+                    filtered,
+                }
+            })
+        }
+
+        _updateDaoList()
+    }, [profile, message])
+
+    const _searchItem = (what: string, where: string): boolean => {
+        const pattern = new RegExp(`^${what}`, 'i')
+        return !what || where.search(pattern) >= 0
+    }
+
     return {
         isFetching: daos.isFetching,
-        isEmpty: !daos.isFetching && !daos.filtered.length,
+        isEmpty: !daos.isFetching && !daos.filtered.items.length,
         items: daos.items
-            .filter((item) => daos.filtered.indexOf(item.address) >= 0)
+            .filter((item) => daos.filtered.items.indexOf(item.address) >= 0)
             .slice(0, daos.page * perPage),
-        hasNext: daos.page * perPage < daos.filtered.length,
+        hasNext: daos.page * perPage < daos.filtered.items.length,
         search,
         setSearch,
         loadNext: onLoadNext,
