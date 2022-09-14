@@ -662,7 +662,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn ensure_run_static_correectly() {
+    async fn ensure_run_static_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo)
             .await
