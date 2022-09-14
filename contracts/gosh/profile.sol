@@ -196,7 +196,7 @@ contract Profile is Modifiers {
     
     function _addPubkey(
         uint256 pubkey
-    ) public senderIs(address(this))  accept  {
+    ) private  accept  {
         require(_custodians < MAX_CUSTODIANS, ERR_BAD_NUMBER_CUSTODIANS);      
         _owners[pubkey] = _custodians;
         _index[_custodians] = pubkey;
@@ -207,7 +207,7 @@ contract Profile is Modifiers {
 
     function _deletePubkey(
         uint256 pubkey
-    ) public senderIs(address(this))  accept  {
+    ) private  accept  {
         require(_custodians > 1, ERR_BAD_NUMBER_CUSTODIANS);
         _custodians -= 1;
         uint8 ind = _owners[pubkey];
@@ -229,12 +229,12 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(3, now + 600, mask, 1, pubkey, wallet, null, null, null);
     }
     
-    function _turnOn(address wallet, uint256 pubkey) public senderIs(address(this)) accept {
+    function _turnOn(address wallet, uint256 pubkey) private accept {
         GoshWallet(wallet).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
         getMoney();
     }
 
-    function _turnOff(address wallet) public senderIs(address(this)) accept {
+    function _turnOff(address wallet) private accept {
         GoshWallet(wallet).turnOffPubkey{value: 0.1 ton, flag : 1}();
         getMoney();
     }
@@ -272,7 +272,7 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(6, now + 600, mask, 1, null, null, name, null, null);
     }
     
-    function _deployDao(address goshroot, string name, optional(address) previous) public view senderIs(address(this))  accept  {
+    function _deployDao(address goshroot, string name, optional(address) previous) private view  accept  {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
@@ -282,7 +282,7 @@ contract Profile is Modifiers {
         ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(goshroot, previous);
     }
 
-    function _destroyDao(string name) public view senderIs(address(this)) accept  {
+    function _destroyDao(string name) private view accept  {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,

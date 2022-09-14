@@ -64,43 +64,10 @@
 			]
 		},
 		{
-			"name": "_addPubkey",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_deletePubkey",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "turnOn",
 			"inputs": [
 				{"name":"wallet","type":"address"},
 				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_turnOn",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_turnOff",
-			"inputs": [
-				{"name":"wallet","type":"address"}
 			],
 			"outputs": [
 			]
@@ -125,24 +92,6 @@
 		},
 		{
 			"name": "destroyDao",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_deployDao",
-			"inputs": [
-				{"name":"goshroot","type":"address"},
-				{"name":"name","type":"string"},
-				{"name":"previous","type":"optional(address)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_destroyDao",
 			"inputs": [
 				{"name":"name","type":"string"}
 			],
