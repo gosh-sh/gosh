@@ -16,7 +16,7 @@ impl GitHelper {
     ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let commit_id = format!("{}", commit_id);
         log::info!(
-            "Calculating commit address for repository <{}> and commit id <{}>",
+            "Calculating commit address for repository {} and commit id <{}>",
             self.repo_addr,
             commit_id
         );

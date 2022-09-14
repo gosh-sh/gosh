@@ -136,7 +136,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
     is_going_to_ipfs
 }
 
-#[instrument(level = "debug", skip(diff))]
+#[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,

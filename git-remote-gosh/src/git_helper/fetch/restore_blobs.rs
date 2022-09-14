@@ -5,6 +5,7 @@ use crate::ipfs::IpfsService;
 use git_hash::ObjectId;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
+use std::num::NonZeroUsize;
 
 use std::error::Error;
 use std::str::FromStr;
@@ -173,7 +174,7 @@ impl BlobsRebuildingPlan {
             let restored_snapshots =
                 BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
             log::debug!("restored_snapshots: {:#?}", restored_snapshots);
-            let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(2);
+            let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(NonZeroUsize::new(2).unwrap());
             log::debug!("pre last_restored_snapshots: {:#?}", last_restored_snapshots);
             if let Some((blob_id, blob)) = restored_snapshots.0 {
                 visited.insert(blob_id);
