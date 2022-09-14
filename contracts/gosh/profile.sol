@@ -26,6 +26,7 @@ struct MessageProfile {
     optional(string) name;
     optional(address) previous;
     optional(uint8) newneed;
+    optional(uint128) time;
 }
 
 contract Profile is Modifiers {
@@ -84,6 +85,7 @@ contract Profile is Modifiers {
     uint128 constant MAX_CUSTODIANS = 32;
     uint8 _custodians = 1;
     uint8 _needcustodians = 1;
+    uint128 _expTime = 600;
 
     constructor( TvmCell codeProfileDao,
         uint256 pubkey
@@ -133,7 +135,8 @@ contract Profile is Modifiers {
         if (_messages[id].index == 4) { _turnOff(_messages[id].walletgoshroot.get()); delete _messages[id]; return; }
         if (_messages[id].index == 5) { _deployDao(_messages[id].walletgoshroot.get(), _messages[id].name.get(), _messages[id].previous); delete _messages[id]; return; }
         if (_messages[id].index == 6) { _destroyDao(_messages[id].name.get()); delete _messages[id]; return; }
-        if (_messages[id].index == 7) { _needcustodians = _messages[id].newneed.get(); delete _messages; return; }        
+        if (_messages[id].index == 7) { _needcustodians = _messages[id].newneed.get(); delete _messages; return; }      
+        if (_messages[id].index == 8) { _expTime = _messages[id].time.get(); delete _messages[id]; return; }         
     }
     
     function clearExpired(uint64 index) public senderIs(address(this))  accept saveMsg {  
@@ -149,6 +152,21 @@ contract Profile is Modifiers {
         }
     }
     
+        function setNewExpiredTime(
+        uint128 time
+    ) public onlyOwnerPubkeyList  accept saveMsg {
+        getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
+        if (_needcustodians == 1) { 
+            _expTime = time;
+            return; 
+        }
+        uint32 mask;
+        mask = _incMaskValue(mask, _owners[msg.pubkey()]);
+        _messages[_generateId()] = MessageProfile(8, now + _expTime, mask, 1, null, null, null, null, null, time);
+    }
+
+    
     function setNewNeedCustodians(
         uint8 need
     ) public onlyOwnerPubkeyList  accept saveMsg {
@@ -163,7 +181,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(7, now + 600, mask, 1, null, null, null, null, need);
+        _messages[_generateId()] = MessageProfile(7, now + _expTime, mask, 1, null, null, null, null, need, null);
     }
 
     function addPubkey(
@@ -178,7 +196,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(1, now + 600, mask, 1, pubkey, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(1, now + _expTime, mask, 1, pubkey, null, null, null, null, null);
     }
 
     function deletePubkey(
@@ -193,7 +211,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(2, now + 600, mask, 1, pubkey, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(2, now + _expTime, mask, 1, pubkey, null, null, null, null, null);
     }
     
     function _addPubkey(
@@ -229,7 +247,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(3, now + 600, mask, 1, pubkey, wallet, null, null, null);
+        _messages[_generateId()] = MessageProfile(3, now + _expTime, mask, 1, pubkey, wallet, null, null, null, null);
     }
     
     function _turnOn(address wallet, uint256 pubkey) private accept {
@@ -251,7 +269,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(4, now + 600, mask, 1, null, wallet, null, null, null);
+        _messages[_generateId()] = MessageProfile(4, now + _expTime, mask, 1, null, wallet, null, null, null, null);
     }
 
     function deployDao(address goshroot, string name, optional(address) previous) public onlyOwnerPubkeyList  accept saveMsg {
@@ -263,7 +281,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(5, now + 600, mask, 1, null, goshroot, name, previous, null);
+        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, goshroot, name, previous, null, null);
     }
 
     function destroyDao(string name) public onlyOwnerPubkeyList  accept saveMsg {
@@ -275,7 +293,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(6, now + 600, mask, 1, null, null, name, null, null);
+        _messages[_generateId()] = MessageProfile(6, now + _expTime, mask, 1, null, null, name, null, null, null);
     }
     
     function _deployDao(address goshroot, string name, optional(address) previous) private view  accept  {
