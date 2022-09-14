@@ -14,6 +14,7 @@ export DAO_CREATOR_ADDR=`cat ../contracts/gosh/GoshDaoCreator.addr`
 
 export GOSH_ABI=../contracts/gosh/gosh.abi.json
 DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
+export REPO_ABI=../contracts/gosh/repository.abi.json
 
 # create DAO
 
