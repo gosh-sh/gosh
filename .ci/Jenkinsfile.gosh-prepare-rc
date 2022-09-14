@@ -46,9 +46,9 @@ pipeline {
                     script {
                         if (!params.ONLYWEB) {
                             dir('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64 DOCKER_BUILDER_ARGS='--driver-opt network=host'"
-                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
+                                sh "make bench prepare-builder DOCKER_BUILDER_ARGS='--driver-opt network=host'"
                                 sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
                                 sh 'cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64'
                                 sh 'cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64'
                             }
