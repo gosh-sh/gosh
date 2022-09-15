@@ -105,7 +105,7 @@ const EventPage = () => {
         return () => {
             clearInterval(interval)
         }
-    }, [eventAddr])
+    }, [eventAddr, wallet])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -218,13 +218,13 @@ const EventPage = () => {
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount: smvBalance.smvBalance,
+                                amount: smvBalance.smvBalance - event.details?.your_votes,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(smvBalance.smvBalance)
+                                    .max(smvBalance.smvBalance - event.details?.your_votes)
                                     .required('Field is required'),
                             })}
                             enableReinitialize

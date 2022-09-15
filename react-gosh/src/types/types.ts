@@ -50,6 +50,7 @@ export type TGoshEventDetails = {
     votes: { yes: number; no: number }
     status: { completed: boolean; accepted: boolean }
     total_votes : number
+    client_address: string
     your_votes : number
 }
 
@@ -270,7 +271,7 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>
     getSmvLockerAddr(): Promise<string>
     getSmvTokenBalance(): Promise<number>
-    getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>
+    getSmvClientAddr(lockerAddr: string, platform_id: string): Promise<string>
     lockVoting(amount: number): Promise<void>
     unlockVoting(amount: number): Promise<void>
     voteFor(

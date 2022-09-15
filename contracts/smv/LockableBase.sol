@@ -226,7 +226,7 @@ function _reserve(uint128 min, uint128 def) internal pure returns(uint128)
     LockableBase(newClient).onClientInserted {value:extra, flag:1} (platform_id, empty, address(this), msg.sender, rightAmount_);
 } */
 
-function amount_locked () virtual internal view returns(uint128);
+function amount_locked () virtual public view returns(uint128);
 function performAction (uint128 amountToLock, uint128 total_votes, TvmCell inputCell) virtual external;
 function onCodeUpgrade (uint256 _platform_id, 
                         uint128 amountToLock,

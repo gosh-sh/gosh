@@ -1087,10 +1087,10 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         return result.decoded?.output.tip3VotingLocker
     }
 
-    async getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string> {
-        const result = await this.account.runLocal('clientAddress', {
+    async getSmvClientAddr(lockerAddr: string, platform_id: string): Promise<string> {
+        const result = await this.account.runLocal('clientAddressForProposal', {
             _tip3VotingLocker: lockerAddr,
-            propId: proposalId,
+            _platform_id: platform_id,
         })
         return result.decoded?.output.value0
     }
@@ -1695,6 +1695,7 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
                 accepted: !!isCompleted,
             },
             total_votes : await this.getTotalSupply(),
+            client_address: await this.getClientAddress(walletAddress),
             your_votes : await this.getYourVotes(walletAddress),
         }
     }
@@ -1722,16 +1723,41 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         return result.decoded?.output.totalSupply
     }
 
+    async getClientAddress(walletAddress?: string): Promise<string> {
+        try {
+            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
+
+            const wallet = new GoshWallet(this.account.client, walletAddress!)
+            const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {})).decoded?.output.tip3VotingLocker
+            const platform_id = (await this.account.runLocal('platform_id', {})).decoded?.output.platform_id
+            const clientAddress = (await wallet.account.runLocal('clientAddressForProposal', {_tip3VotingLocker: lockerAddress, _platform_id: platform_id})).decoded?.output.value0
+           //const result = new GoshSmvClient(this.account.client, clientAddress)
+            /* return 7 */
+            //const result = await client.account.runLocal('amount_locked', {})
+            //return parseInt(result.decoded?.output.value0) 
+            return clientAddress
+        } catch (e: any) {
+            console.error(e.message)
+        }
+        return "error"
+    }
+
     async getYourVotes(walletAddress?: string): Promise<number> {
         try {
-        const wallet = new GoshWallet(this.account.client, walletAddress!)
-        const locker = (await wallet.account.runLocal('tip3VotingLocker', {})).decoded?.output.tip3VotingLocker
-        const propId = (await this.account.runLocal('propId', {})).decoded?.output.propId
-        const client = (await wallet.account.runLocal('clientAddress', {_tip3VotingLocker: locker, propId: propId})).decoded?.output.value0
-        const result = await client.account.runLocal('amount_locked', {})
-        return 7
-        } catch {}
-        return -1
+            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
+
+            const wallet = new GoshWallet(this.account.client, walletAddress!)
+            const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {})).decoded?.output.tip3VotingLocker
+            const platform_id = (await this.account.runLocal('platform_id', {})).decoded?.output.platform_id
+            const clientAddress = (await wallet.account.runLocal('clientAddressForProposal', {_tip3VotingLocker: lockerAddress, _platform_id: platform_id})).decoded?.output.value0
+            const client = new GoshSmvClient(this.account.client, clientAddress)
+            /* return 7 */
+            const result = await client.account.runLocal('amount_locked', {})
+            return parseInt(result.decoded?.output.value0) 
+        } catch (e: any) {
+            console.error(e.message)
+        }
+        return 0
     }
 
 

@@ -77,7 +77,7 @@ function initialize (bool success, uint32 finishTime) external override check_pr
     }
 }
 
-function amount_locked () internal view override  returns(uint128)
+function amount_locked () public view override  returns(uint128)
 {
     return (votes[false] + votes[true]);
 }
@@ -186,7 +186,6 @@ function continueUpdateHead (uint256 _platform_id) external override check_clien
 
 
 function isCompletedCallback (uint256 /* _platform_id */, 
-                              address /* _tokenLocker */, 
                               optional (bool) completed, 
                               TvmCell /* data */ ) external  override  check_proposal
 {   

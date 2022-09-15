@@ -259,7 +259,6 @@
 			"name": "isCompletedCallback",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"_tokenLocker","type":"address"},
 				{"name":"res","type":"optional(bool)"},
 				{"name":"propData","type":"cell"}
 			],
@@ -487,10 +486,10 @@
 			]
 		},
 		{
-			"name": "proposalAddress",
+			"name": "clientAddressForProposal",
 			"inputs": [
 				{"name":"_tip3VotingLocker","type":"address"},
-				{"name":"propId","type":"uint256"}
+				{"name":"_platform_id","type":"uint256"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -500,16 +499,6 @@
 			"name": "proposalAddressByAccount",
 			"inputs": [
 				{"name":"acc","type":"address"},
-				{"name":"propId","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "clientAddress",
-			"inputs": [
-				{"name":"_tip3VotingLocker","type":"address"},
 				{"name":"propId","type":"uint256"}
 			],
 			"outputs": [

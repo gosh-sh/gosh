@@ -35,7 +35,7 @@ echo "========== Send 50 tons for deploy GoshRoot"
 everdev contract run $WALLET_ABI submitTransaction --input "{\"dest\": \"$ROOT_ADDR\", \"value\": 50000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $WALLET_SIGNER --address $WALLET_ADDR > /dev/null || exit 1
 # GoshDaoCreator
 sleep 60
-echo "========== Send $CREATOR_BALANCE  tons to GoshDaoCreator"
+echo "========== Send $(($CREATOR_BALANCE / 1000000000))  tons to GoshDaoCreator"
 everdev contract run $WALLET_ABI submitTransaction --input "{\"dest\": \"$CREATOR_ADDR\", \"value\": $CREATOR_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $WALLET_SIGNER --address $WALLET_ADDR > /dev/null || exit 1
 
 

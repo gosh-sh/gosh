@@ -315,14 +315,14 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
 
 }
 
-function proposalAddress(
+function clientAddressForProposal(
   address _tip3VotingLocker,
-  uint256 propId
+  uint256 _platform_id
 ) public view returns(address) {
 
   TvmBuilder staticBuilder;
-  uint8 platformType = 1;
-  staticBuilder.store(platformType, _tip3VotingLocker, propId, platformCodeHash, platformCodeDepth);
+  uint8 platformType = 0;
+  staticBuilder.store(platformType, _tip3VotingLocker, _platform_id, platformCodeHash, platformCodeDepth);
 
   TvmCell dc = tvm.buildDataInit ( {contr: LockerPlatform,
                                                  varInit: {  /* tokenLocker: _tip3VotingLocker, */
@@ -331,30 +331,37 @@ function proposalAddress(
   return address.makeAddrStd(address(this).wid, addr_std);
 }
 
+function calcClientAddress(uint256 _platform_id/*  , address _tokenLocker */) internal view returns(uint256) {
+        TvmCell dataCell = tvm.buildDataInit({
+            contr: LockerPlatform,
+            varInit: {
+                /* tokenLocker: _tokenLocker, */
+                platform_id: _platform_id
+            }
+        });
+        uint256 dataHash = tvm.hash(dataCell);
+        uint16 dataDepth = dataCell.depth();
+
+        uint256 add_std_address = tvm.stateInitHash(
+            tvm.hash(m_SMVPlatformCode),
+            dataHash,
+            m_SMVPlatformCode.depth(),
+            dataDepth
+        );
+        return add_std_address;
+    }
+
 function proposalAddressByAccount(address acc, /* uint256 nonce, */ uint256 propId) public view returns(address)
 {
     TvmCell dc = tvm.buildDataInit ( {contr: SMVTokenLocker,
                                       varInit: { smvAccount : acc } } );
     uint256 addr_std_locker = tvm.stateInitHash (lockerCodeHash, tvm.hash(dc) , lockerCodeDepth, dc.depth());
     address locker_addr = address.makeAddrStd(address(this).wid, addr_std_locker);
-    return proposalAddress(locker_addr, propId);
-}
 
-
-function clientAddress(
-  address _tip3VotingLocker,
-  uint256 propId
-) public view returns(address) {
-
-  TvmBuilder staticBuilder;
-  uint8 platformType = 0;
-  staticBuilder.store(platformType, tip3VotingLocker, proposalAddress(_tip3VotingLocker, propId), platformCodeHash, platformCodeDepth);
-
-  TvmCell dc = tvm.buildDataInit ( {contr: LockerPlatform,
-                                                 varInit: {  /* tokenLocker: tip3VotingLocker, */
-                                                             platform_id: tvm.hash(staticBuilder.toCell()) } } );
-  uint256 addr_std = tvm.stateInitHash (platformCodeHash, tvm.hash(dc) , platformCodeDepth, dc.depth());
-  return address.makeAddrStd(address(this).wid, addr_std);
+    TvmBuilder staticBuilder;
+    uint8 platformType = 1;
+    staticBuilder.store(platformType, locker_addr, propId, platformCodeHash, platformCodeDepth);
+    return address.makeAddrStd(address(this).wid, calcClientAddress(tvm.hash(staticBuilder.toCell())));
 }
 
 

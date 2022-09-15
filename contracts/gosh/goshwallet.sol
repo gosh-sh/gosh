@@ -32,8 +32,8 @@ abstract contract Object {
 contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Modifiers
-    modifier check_client(uint256 _platform_id, address _tokenLocker) {
-        uint256 expected = calcClientAddress (_platform_id, _tokenLocker);
+    modifier check_client(uint256 _platform_id) {
+        uint256 expected = calcClientAddress (_platform_id);
         require ( msg.sender.value == expected, SMVErrors.error_not_my_client) ;
         _ ;
     }
@@ -551,32 +551,12 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function calcClientAddress(uint256 _platform_id, address _tokenLocker) internal view returns(uint256) {
-        TvmCell dataCell = tvm.buildDataInit({
-            contr: LockerPlatform,
-            varInit: {
-                /* tokenLocker: _tokenLocker, */
-                platform_id: _platform_id
-            }
-        });
-        uint256 dataHash = tvm.hash(dataCell);
-        uint16 dataDepth = dataCell.depth();
-
-        uint256 add_std_address = tvm.stateInitHash(
-            tvm.hash(m_SMVPlatformCode),
-            dataHash,
-            m_SMVPlatformCode.depth(),
-            dataDepth
-        );
-        return add_std_address;
-    }
 
     function isCompletedCallback(
         uint256 _platform_id,
-        address _tokenLocker,
         optional(bool) res,
         TvmCell propData
-    ) external override check_client(_platform_id, _tokenLocker) {
+    ) external override check_client(_platform_id) {
         tvm.accept();
         //for tests
         lastVoteResult = res;

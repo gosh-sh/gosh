@@ -4,6 +4,14 @@
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
+			"name": "amount_locked",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
 			"name": "onContinueAction",
 			"inputs": [
 				{"name":"t","type":"uint128"}

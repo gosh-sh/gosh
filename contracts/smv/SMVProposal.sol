@@ -32,7 +32,7 @@ uint128 public totalSupply;
 //uint128 total_votes;
 uint32 public realFinishTime;
 
-function amount_locked () internal override view returns(uint128)
+function amount_locked () public override view returns(uint128)
 {
     return amountLocked;
 }
@@ -158,7 +158,7 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
         /* bool  */allowed = !votingResult.hasValue();
         if (!allowed)
         {
-            IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, tokenLocker, votingResult, propData);
+            IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, votingResult, propData);
         }
         ISMVClient(msg.sender).initialize {value:0, flag: 64} (allowed, finishTime);
     }
@@ -187,7 +187,7 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
             tryEarlyComplete(totalSupply);
             if (votingResult.hasValue())
             {
-                IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, tokenLocker, votingResult, propData);
+                IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, votingResult, propData);
             }
             ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
         }
@@ -212,7 +212,7 @@ function isCompleted () override public
     require (msg.value > SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
 
     completeVoting(); 
-    IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
+    IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, votingResult, propData);
 }
 
 function _isCompleted () public view returns (optional (bool))

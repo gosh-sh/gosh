@@ -13,6 +13,14 @@
 			]
 		},
 		{
+			"name": "amount_locked",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
 			"name": "performAction",
 			"inputs": [
 				{"name":"amountToLock","type":"uint128"},
@@ -50,9 +58,8 @@
 			"name": "isCompletedCallback",
 			"inputs": [
 				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"address"},
 				{"name":"completed","type":"optional(bool)"},
-				{"name":"value3","type":"cell"}
+				{"name":"value2","type":"cell"}
 			],
 			"outputs": [
 			]
