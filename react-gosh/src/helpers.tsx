@@ -38,6 +38,28 @@ export const eventTypes: { [key: number]: string } = {
     3: 'Remove SMV branch protection',
 }
 
+export const retry = async (fn: Function, maxAttempts: number) => {
+    const delay = (fn: Function, ms: number) => {
+        return new Promise((resolve) => setTimeout(() => resolve(fn()), ms))
+    }
+
+    const execute = async (attempt: number) => {
+        try {
+            return await fn()
+        } catch (err) {
+            if (attempt <= maxAttempts) {
+                const nextAttempt = attempt + 1
+                const delayInMs = 2000
+                console.error(`Retrying after ${delayInMs} ms due to:`, err)
+                return delay(() => execute(nextAttempt), delayInMs)
+            } else {
+                throw err
+            }
+        }
+    }
+    return execute(1)
+}
+
 export const getPaginatedAccounts = async (params: {
     filters?: string[]
     result?: string[]

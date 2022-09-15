@@ -538,10 +538,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             })(),
         ])
 
-        // Set tree
-        await this.setTree(repo.meta.name, futureCommit.name, updatedTreeRootAddr)
-        !!callback && callback({ treeSet: true })
-
         const isBranchProtected = await repo.isBranchProtected(branch.name)
         if (!isBranchProtected) {
             await this.setCommit(

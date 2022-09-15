@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getPaginatedAccounts, goshClient, goshRoot } from '../helpers'
+import { getPaginatedAccounts, goshClient, goshRoot, retry } from '../helpers'
 import { userStateAtom, daoAtom } from '../store'
 import { GoshDao, GoshWallet } from '../classes'
 import { sleep } from '../utils'
@@ -211,7 +211,10 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         let dao: IGoshDao
         try {
-            dao = await goshRoot.deployDao(name.toLowerCase(), `0x${keys.public}`)
+            dao = await retry(
+                () => goshRoot.deployDao(name.toLowerCase(), `0x${keys.public}`),
+                3,
+            )
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -227,7 +230,7 @@ function useDaoCreate() {
                 let isDeployed: boolean
                 let wallet: IGoshWallet
                 try {
-                    wallet = await dao.deployWallet(pubkey, keys)
+                    wallet = await retry(() => dao.deployWallet(pubkey, keys), 3)
                     isDeployed = true
                 } catch (e) {
                     isDeployed = false
@@ -247,7 +250,7 @@ function useDaoCreate() {
                 try {
                     const smvTokenBalance = await wallet.getSmvTokenBalance()
                     if (!smvTokenBalance) {
-                        await dao.mint(100, wallet.address, keys)
+                        await retry(() => dao.mint(100, wallet.address, keys), 3)
                     }
                     isMinted = true
                 } catch (e) {
@@ -422,7 +425,7 @@ function useDaoMemberCreate() {
                 let isDeployed: boolean
                 let wallet: IGoshWallet
                 try {
-                    wallet = await dao.deployWallet(pubkey, keys)
+                    wallet = await retry(() => dao.deployWallet(pubkey, keys), 3)
                     isDeployed = true
                 } catch (e) {
                     isDeployed = false
@@ -442,7 +445,7 @@ function useDaoMemberCreate() {
                 try {
                     const smvTokenBalance = await wallet.getSmvTokenBalance()
                     if (!smvTokenBalance) {
-                        await dao.mint(100, wallet.address, keys)
+                        await retry(() => dao.mint(100, wallet.address, keys), 3)
                     }
                     isMinted = true
                 } catch (e) {
@@ -494,7 +497,7 @@ function useDaoMemberDelete() {
         await Promise.all(
             pubkeys.map(async (pubkey) => {
                 const walletAddr = await dao.getWalletAddr(pubkey, 0)
-                await dao.deleteWallet(pubkey, keys)
+                await retry(() => dao.deleteWallet(pubkey, keys), 3)
                 setFetching((state) => state.filter((_pubkey) => _pubkey !== pubkey))
                 setDaoDetails((state) => {
                     if (!state) return

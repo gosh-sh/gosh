@@ -6,10 +6,11 @@ import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
 import CopyClipboard from '../../components/CopyClipboard'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError, userStateAtom } from 'react-gosh'
+import { EGoshError, GoshError, retry, userStateAtom } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
+import ToastError from '../../components/Error/ToastError'
 
 type TMoveBalanceFormValues = {
     amount: number
@@ -41,11 +42,11 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.lockVoting(values.amount)
+            await retry(() => wallet.lockVoting(values.amount), 3)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -55,11 +56,11 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.unlockVoting(values.amount)
+            await retry(() => wallet.unlockVoting(values.amount), 3)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -68,11 +69,11 @@ const DaoWalletPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await wallet.updateHead()
+            await retry(() => wallet.updateHead(), 3)
             toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
