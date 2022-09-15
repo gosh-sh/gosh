@@ -9,6 +9,7 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"profiledao","type":"address"},
 				{"name":"name","type":"string"},
+				{"name":"pubmem","type":"address[]"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -112,9 +113,10 @@
 			]
 		},
 		{
-			"name": "deployWalletIn",
+			"name": "deployWallets",
 			"inputs": [
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubmem","type":"address[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

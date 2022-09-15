@@ -59,6 +59,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address pubaddr, 
         address profiledao,
         string name, 
+        address[] pubmem,
         TvmCell CommitCode,
         TvmCell RepositoryCode,
         TvmCell WalletCode,
@@ -111,7 +112,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { _previous = previous.get(); GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); }
-        this.deployWalletIn{value: 0.1 ton, flag: 1}(_pubaddr);
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, 0);
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
@@ -133,7 +134,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (res.hasValue()) {
             address pub;
             (key, pub) = res.get();
-            this.deployWalletIn{value: 0.1 ton, flag: 1}(pub);
+            deployWalletIn(pub);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
         else { _wallets = wallets; }
@@ -227,11 +228,19 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function deployWallet(address pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
-        this.deployWalletIn{value: 0.1 ton, flag: 1}(pubaddrdeploy);
+        deployWalletIn(pubaddrdeploy);
         getMoney();
     }
     
-    function deployWalletIn(address pubaddr) public senderIs(address(this)) {
+    function deployWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
+        tvm.accept();
+        if (index >= pubmem.length) { return; }
+        deployWalletIn(pubmem[index]);
+        index += 1;
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+    }
+    
+    function deployWalletIn(address pubaddr) private {
         tvm.accept();
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));

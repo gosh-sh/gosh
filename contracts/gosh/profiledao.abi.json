@@ -14,7 +14,8 @@
 			"name": "deployDao",
 			"inputs": [
 				{"name":"goshroot","type":"address"},
-				{"name":"previous","type":"optional(address)"}
+				{"name":"previous","type":"optional(address)"},
+				{"name":"pubmem","type":"address[]"}
 			],
 			"outputs": [
 			]

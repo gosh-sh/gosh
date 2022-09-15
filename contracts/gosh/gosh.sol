@@ -91,7 +91,7 @@ contract GoshRoot is Modifiers, Upgradable{
     }
 
     
-    function deployDao(string name, address pubaddr, optional(address) previous) public accept {
+    function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept {
         tvm.accept();
         require(_flag == false, ERR_GOSH_UPDATE);
         TvmCell s0 = tvm.buildStateInit({
@@ -106,6 +106,7 @@ contract GoshRoot is Modifiers, Upgradable{
             pubaddr,
             msg.sender,
             name,
+            pubmem,
             m_CommitCode,
             m_RepositoryCode,
             m_WalletCode,
