@@ -123,7 +123,7 @@ constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_wal
     ISMVAccount(smvAccount).onLockerDeployed {value: SMVConstants.EPSILON_FEE, flag: 1} ();
 }
 
-function returnAllButInitBalance() internal view
+function _returnAllButInitBalance() internal view
 {
     uint128 amount = 0;
     if (address(this).balance >= SMVConstants.EPSILON_FEE + SMVConstants.LOCKER_INIT_VALUE)
@@ -150,8 +150,10 @@ function unlockVoting (uint128 amount) external override check_account
     m_tokenBalance -= amount;
     //(amount, tip3VotingLocker, 0, address(this), true, empty)
     if (amount > 0)
-        ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
+        ITokenWallet(m_tokenWallet).transfer {value: 0, flag: 64}
                                              (amount, msg.sender, 0, msg.sender, true, empty);
+    else
+        _returnAllButInitBalance();
 }
 
 function onHeadUpdated (uint256 _platform_id,
@@ -162,7 +164,7 @@ function onHeadUpdated (uint256 _platform_id,
     tvm.accept();
 
     if (!lockerBusy) { //internal error
-        returnAllButInitBalance();
+        _returnAllButInitBalance();
         return;
     }
 
@@ -174,7 +176,7 @@ function onHeadUpdated (uint256 _platform_id,
     else
         votes_locked = 0;
 
-    returnAllButInitBalance();
+    _returnAllButInitBalance();
 }
 
 
@@ -186,7 +188,7 @@ function onClientCompleted (uint256 _platform_id, bool success,
     tvm.accept();
 
     if (!lockerBusy) { //internal error
-        returnAllButInitBalance();
+        _returnAllButInitBalance();
         return;
     }
 
@@ -200,13 +202,13 @@ function onClientCompleted (uint256 _platform_id, bool success,
     if (isDead) {
         m_num_clients --;
     }
-    returnAllButInitBalance();
+    _returnAllButInitBalance();
 }
 
 function onClientInserted (uint256 _platform_id) external override check_client(_platform_id)
 {
     tvm.accept();
-    returnAllButInitBalance();
+    _returnAllButInitBalance();
 }
 
 function onClientRemoved (uint256 _platform_id) external override check_client(_platform_id)
@@ -231,6 +233,12 @@ function updateHead() external override check_account
                                      3*SMVConstants.ACTION_FEE, flag: 1} ();
     }
 }
+
+function returnAllButInitBalance() external override check_account
+{
+    _returnAllButInitBalance();
+}
+
 onBounce(TvmSlice body) external  {
     uint32 functionId = body.decode(uint32);
     if (functionId == tvm.functionId(LockableBase.performAction)) 
@@ -239,7 +247,7 @@ onBounce(TvmSlice body) external  {
        if (platformConstructorFailed)
        {
             lockerBusy = false;
-            returnAllButInitBalance();
+            _returnAllButInitBalance();
        }
     }
     else
@@ -250,7 +258,7 @@ onBounce(TvmSlice body) external  {
        if (platformPerformActionFailed)
        {
             lockerBusy = false;
-            returnAllButInitBalance();
+            _returnAllButInitBalance();
        }
     }
 }

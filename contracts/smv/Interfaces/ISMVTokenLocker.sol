@@ -11,5 +11,6 @@ function startPlatform(TvmCell platformCode, TvmCell clientCode, uint128 amountT
 function onClientInserted (uint256 _platform_id) external;
 function onHeadUpdated(uint256 _platform_id, optional (address) newClientHead, optional (uint128) newHeadValue) external;
 function updateHead() external;
+function returnAllButInitBalance() external;
 
 }

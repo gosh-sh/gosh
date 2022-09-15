@@ -393,7 +393,12 @@ function updateHead() public check_owner
                                                          5*SMVConstants.ACTION_FEE, flag: 1} ();
 }
 
+function returnExtraLockerFunds() public check_owner
+{
+    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    tvm.accept();
+    _saveMsg();
 
-
-
+    ISMVTokenLocker(tip3VotingLocker).returnAllButInitBalance {value: SMVConstants.ACTION_FEE, flag: 1} ();
+}
 }

@@ -90,6 +90,13 @@
 			]
 		},
 		{
+			"name": "returnAllButInitBalance",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "onAcceptTokensMint",
 			"inputs": [
 				{"name":"value0","type":"address"},

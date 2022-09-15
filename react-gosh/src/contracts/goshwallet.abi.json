@@ -542,6 +542,13 @@
 			]
 		},
 		{
+			"name": "returnExtraLockerFunds",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "onAcceptTokensMint",
 			"inputs": [
 				{"name":"value0","type":"address"},

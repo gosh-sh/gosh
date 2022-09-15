@@ -1031,11 +1031,13 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             commit: commitName,
             numberChangedFiles: filesCount,
         })
+        const locker = new GoshSmvLocker(this.account.client, await this.getSmvLockerAddr())
         await this.run('startProposalForSetCommit', {
             repoName,
             branchName,
             commit: commitName,
             numberChangedFiles: filesCount,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -1057,9 +1059,11 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         branchName: string,
     ): Promise<void> {
         console.debug('Start delete branch proposal', { repoName, branchName })
+        const locker = new GoshSmvLocker(this.account.client, await this.getSmvLockerAddr())
         await this.run('startProposalForDeleteProtectedBranch', {
             repoName,
             branchName,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -1677,7 +1681,7 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         }
     }
 
-    async getDetails(): Promise<TGoshEventDetails> {
+    async getDetails(walletAddress?: string): Promise<TGoshEventDetails> {
         const isCompleted = await this.isCompleted()
 
         return {
@@ -1691,6 +1695,7 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
                 accepted: !!isCompleted,
             },
             total_votes : await this.getTotalSupply(),
+            your_votes : await this.getYourVotes(walletAddress),
         }
     }
 
@@ -1716,6 +1721,19 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         const result = await this.account.runLocal('totalSupply', {})
         return result.decoded?.output.totalSupply
     }
+
+    async getYourVotes(walletAddress?: string): Promise<number> {
+        try {
+        const wallet = new GoshWallet(this.account.client, walletAddress!)
+        const locker = (await wallet.account.runLocal('tip3VotingLocker', {})).decoded?.output.tip3VotingLocker
+        const propId = (await this.account.runLocal('propId', {})).decoded?.output.propId
+        const client = (await wallet.account.runLocal('clientAddress', {_tip3VotingLocker: locker, propId: propId})).decoded?.output.value0
+        const result = await client.account.runLocal('amount_locked', {})
+        return 7
+        } catch {}
+        return -1
+    }
+
 
     async getPlatformId(): Promise<number> {
         const result = await this.account.runLocal('platform_id', {})
@@ -1764,12 +1782,14 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         }
     }
 
-    async getTime(): Promise<{ start: Date; finish: Date }> {
+    async getTime(): Promise<{ start: Date; finish: Date; realFinish: Date; }> {
         const start = await this.account.runLocal('startTime', {})
         const finish = await this.account.runLocal('finishTime', {})
+        const realFinish = await this.account.runLocal('realFinishTime', {})
         return {
             start: new Date(+start.decoded?.output.startTime * 1000),
             finish: new Date(+finish.decoded?.output.finishTime * 1000),
+            realFinish: new Date(+realFinish.decoded?.output.realFinishTime * 1000),
         }
     }
 

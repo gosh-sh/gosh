@@ -90,7 +90,7 @@ const EventPage = () => {
             if (!eventAddr) return
 
             const event = new GoshSmvProposal(goshClient, eventAddr)
-            const details = await event.getDetails()
+            const details = await event.getDetails(wallet?.address)
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }
 
@@ -153,6 +153,8 @@ const EventPage = () => {
                             {event.details.time.start.toLocaleString()}
                             <span className="mx-1">-</span>
                             {event.details.time.finish.toLocaleString()}
+                              <span className="mx-1">-</span>
+                            {event.details.time.realFinish.toLocaleString()}
                         </div>
                         <div>
                             <span className="mr-3">
@@ -187,6 +189,13 @@ const EventPage = () => {
                                         {event.details.total_votes}
                                     </span>
                                     Total
+                                </span>
+                                <span className="mx-3">/</span>
+                                <span className="text-black-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {event.details.your_votes}
+                                    </span>
+                                    Yours
                                 </span>
                             </div>
                         </div>

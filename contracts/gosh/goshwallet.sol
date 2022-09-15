@@ -577,6 +577,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         optional(bool) res,
         TvmCell propData
     ) external override check_client(_platform_id, _tokenLocker) {
+        tvm.accept();
         //for tests
         lastVoteResult = res;
         ////////////////////

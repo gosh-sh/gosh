@@ -46,10 +46,11 @@ export type TGoshEventDetails = {
     address: string
     id: string
     params: any
-    time: { start: Date; finish: Date }
+    time: { start: Date; finish: Date, realFinish: Date }
     votes: { yes: number; no: number }
     status: { completed: boolean; accepted: boolean }
     total_votes : number
+    your_votes : number
 }
 
 export type TGoshBranch = {
@@ -404,7 +405,7 @@ export interface IGoshSmvProposal extends IContract {
     }
 
     load(): Promise<void>
-    getDetails(): Promise<TGoshEventDetails>
+    getDetails(walletAddress?: string): Promise<TGoshEventDetails>
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>

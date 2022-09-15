@@ -31,7 +31,7 @@ const EventsPage = () => {
     }
 
     /** Load event details and update corresponging list item */
-    const setEventDetails = async (address: string) => {
+    const setEventDetails = async (address: string, walletAddress?: string) => {
         console.debug('Set event for', address)
         setEvents((state) => ({
             ...state,
@@ -42,7 +42,7 @@ const EventsPage = () => {
         }))
 
         const event = new GoshSmvProposal(dao.instance.account.client, address)
-        const details = await event.getDetails()
+        const details = await event.getDetails(walletAddress)
 
         setEvents((state) => ({
             ...state,
@@ -138,7 +138,7 @@ const EventsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {events.items.slice(0, events.page * pageSize).map((event, index) => {
-                        if (!event.isBusy) setEventDetails(event.address)
+                        if (!event.isBusy) setEventDetails(event.address, wallet?.address)
                         return (
                             <EventListItem
                                 key={index}

@@ -21,7 +21,7 @@ address public tokenRoot;
 TvmCell propData;
 uint32 public startTime;
 uint32 public finishTime;
-optional (address) notificationAddress;
+address public ownerAddress;
 
 uint128 public votesYes;
 uint128 public votesNo;
@@ -30,6 +30,7 @@ uint128 public amountLocked;
 uint128 public totalSupply;
 //bool public proposalBusy;
 //uint128 total_votes;
+uint32 public realFinishTime;
 
 function amount_locked () internal override view returns(uint128)
 {
@@ -86,8 +87,8 @@ function onCodeUpgrade (uint256 _platform_id,
 
     propData = s1.loadRef();
     TvmSlice s12 = s1.loadRefAsSlice();
-    (startTime, finishTime, notificationAddress, tokenRoot) = s12.decode(uint32, uint32, address, address);
-
+    (startTime, finishTime, ownerAddress, tokenRoot) = s12.decode(uint32, uint32, address, address);
+    realFinishTime = finishTime;
     currentHead = s.decode(optional(address));
 
     uint128 extra = 0;
@@ -155,6 +156,10 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     else {
         tryEarlyComplete(totalSupply);
         /* bool  */allowed = !votingResult.hasValue();
+        if (!allowed)
+        {
+            IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, tokenLocker, votingResult, propData);
+        }
         ISMVClient(msg.sender).initialize {value:0, flag: 64} (allowed, finishTime);
     }
 }
@@ -169,7 +174,7 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
         //return {value:0, flag: 64} false; 
         ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
     else {    
-        tryEarlyComplete(totalSupply);
+//        tryEarlyComplete(totalSupply);
 
         if (votingResult.hasValue()) 
             ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
@@ -179,8 +184,12 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
                 votesYes += amount;
             else
                 votesNo += amount;
-            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
             tryEarlyComplete(totalSupply);
+            if (votingResult.hasValue())
+            {
+                IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, tokenLocker, votingResult, propData);
+            }
+            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
         }
     }
 }
@@ -202,8 +211,7 @@ function isCompleted () override public
 {
     require (msg.value > SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
 
-    completeVoting();
-
+    completeVoting(); 
     IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, tokenLocker, votingResult, propData);
 }
 
@@ -307,8 +315,14 @@ function tryEarlyComplete (uint128 t) internal override
 {
   uint128 y = votesYes;
   uint128 n = votesNo;
-  if (2 * y > t) { votingResult.set(true) ; } else
-    if (2 * n > t) { votingResult.set(false) ; }
+  if (2 * y > t) {
+    votingResult.set(true) ; 
+    realFinishTime = now;
+  } else
+    if (2 * n > t) {
+        votingResult.set(false) ;
+        realFinishTime = now;
+    }
 }
 
 function calcVotingResult (uint128 t) internal override

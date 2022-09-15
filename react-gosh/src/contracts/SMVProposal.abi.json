@@ -275,6 +275,14 @@
 			]
 		},
 		{
+			"name": "ownerAddress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"ownerAddress","type":"address"}
+			]
+		},
+		{
 			"name": "votesYes",
 			"inputs": [
 			],
@@ -313,6 +321,14 @@
 			"outputs": [
 				{"name":"totalSupply","type":"uint128"}
 			]
+		},
+		{
+			"name": "realFinishTime",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"realFinishTime","type":"uint32"}
+			]
 		}
 	],
 	"data": [
@@ -340,11 +356,12 @@
 		{"name":"propData","type":"cell"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},
-		{"name":"notificationAddress","type":"optional(address)"},
+		{"name":"ownerAddress","type":"address"},
 		{"name":"votesYes","type":"uint128"},
 		{"name":"votesNo","type":"uint128"},
 		{"name":"votingResult","type":"optional(bool)"},
 		{"name":"amountLocked","type":"uint128"},
-		{"name":"totalSupply","type":"uint128"}
+		{"name":"totalSupply","type":"uint128"},
+		{"name":"realFinishTime","type":"uint32"}
 	]
 }
