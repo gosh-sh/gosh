@@ -182,7 +182,7 @@ const EventPage = () => {
                                     Rejected
                                 </span>
                                 <span className="mx-3">/</span>
-                                <span className="text-rose-600 text-xs">
+                                <span className="text-black-600 text-xs">
                                     <span className="text-xl mr-2">
                                         {event.details.total_votes}
                                     </span>

@@ -1690,7 +1690,7 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
                 completed: isCompleted !== null,
                 accepted: !!isCompleted,
             },
-            total_votes : 99,
+            total_votes : await this.getTotalSupply(),
         }
     }
 
@@ -1710,6 +1710,11 @@ export class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     async getId(): Promise<string> {
         const result = await this.account.runLocal('propId', {})
         return result.decoded?.output.propId
+    }
+
+    async getTotalSupply(): Promise<number> {
+        const result = await this.account.runLocal('totalSupply', {})
+        return result.decoded?.output.totalSupply
     }
 
     async getPlatformId(): Promise<number> {

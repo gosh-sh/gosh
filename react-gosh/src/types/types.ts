@@ -408,6 +408,7 @@ export interface IGoshSmvProposal extends IContract {
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>
+    getTotalSupply(): Promise<number>
     getGoshSetCommitProposalParams(): Promise<any>
     getGoshAddProtectedBranchProposalParams(): Promise<any>
     getGoshDeleteProtectedBranchProposalParams(): Promise<any>

@@ -151,7 +151,7 @@ function unlockVoting (uint128 amount) external override check_account
     //(amount, tip3VotingLocker, 0, address(this), true, empty)
     if (amount > 0)
         ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
-                                             (amount, msg.sender, 0, address(this), true, empty);
+                                             (amount, msg.sender, 0, msg.sender, true, empty);
 }
 
 function onHeadUpdated (uint256 _platform_id,
