@@ -41,7 +41,7 @@ pub use user_wallet::user_wallet;
 use crate::abi as gosh_abi;
 use crate::config::Config;
 
-use self::contract::{Contract, ContractInfo, ContractRead};
+use self::contract::{ContractInfo, ContractRead, ContractStatic};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
@@ -455,7 +455,7 @@ pub async fn get_repo_address(
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
     let result: GetRepoAddrResult = contract
-        .run_local(context, "getAddrRepository", Some(args))
+        .read_state(context, "getAddrRepository", Some(args))
         .await?;
     Ok(BlockchainContractAddress::new(result.address))
 }
@@ -467,7 +467,7 @@ pub async fn branch_list(
 ) -> Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
-    let result: GetAllAddressResult = contract.run_local(context, "getAllAddress", None).await?;
+    let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
     Ok(result)
 }
 
@@ -521,11 +521,11 @@ pub async fn remote_rev_parse(
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
     context: &TonClient,
-    repo_contract: &mut GoshContract,
+    repo_contract: &mut impl ContractStatic,
     sha: &str,
 ) -> Result<BlockchainContractAddress> {
     let result: GetCommitAddrResult = repo_contract
-        .run_static(
+        .static_method(
             context,
             "getCommitAddr",
             gosh_abi::get_commit_addr_args(sha),

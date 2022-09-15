@@ -4,19 +4,16 @@ use std::cell::RefCell;
 use std::sync::Once;
 use tokio::runtime::Handle;
 use tokio::task;
-
-use crate::abi;
-use crate::blockchain;
-use crate::blockchain::contract::{Contract, ContractRead};
-use crate::blockchain::BlockchainContractAddress;
-use crate::blockchain::GoshContract;
-use crate::blockchain::TonClient;
-use crate::config::UserWalletConfig;
-use crate::git_helper::GitHelper;
 use ton_client::crypto::KeyPair;
 
-use super::contract::ContractInfo;
+use crate::abi;
+use crate::blockchain::call;
+use crate::config::UserWalletConfig;
+use crate::git_helper::GitHelper;
+
+use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
+use super::{BlockchainContractAddress, GoshContract, TonClient};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -183,7 +180,7 @@ where
         .read_state(client, "getWalletsCount", None)
         .await?;
     for _ in result.number_of_mirrors.into()..n {
-        blockchain::call(client, user_wallet_contract, "deployWallet", None).await;
+        call(client, user_wallet_contract, "deployWallet", None).await;
     }
     Ok(())
 }
