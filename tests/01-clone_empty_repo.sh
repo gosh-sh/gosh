@@ -14,6 +14,8 @@ REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REP
 
 wait_account_active $REPO_ADDR
 
+sleep 60
+
 # clone repo
 git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
 
