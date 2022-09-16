@@ -4,6 +4,7 @@ import Spinner from '../../components/Spinner'
 import DaoMemberCreateProgress from './MemberCreateProgress'
 import { useDaoMemberCreate } from 'react-gosh'
 import TextareaField from '../../components/FormikForms/TextareaField'
+import ToastError from '../../components/Error/ToastError'
 
 type TMemberFormValues = {
     members: string
@@ -21,7 +22,7 @@ const DaoMemberForm = () => {
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
