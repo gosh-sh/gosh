@@ -11,14 +11,15 @@ import { sleep } from './utils'
 export const dockerClient =
     process.env.REACT_APP_ISDOCKEREXT === 'true' ? createDockerDesktopClient() : null
 
+const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
 export const goshClient = new TonClient({
     network: {
-        endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+        endpoints,
         queries_protocol:
             process.env.REACT_APP_ISDOCKEREXT === 'true'
                 ? NetworkQueriesProtocol.HTTP
                 : NetworkQueriesProtocol.WS,
-        sending_endpoint_count: 3,
+        sending_endpoint_count: endpoints?.length,
     },
 })
 export const goshDaoCreator = new GoshDaoCreator(
