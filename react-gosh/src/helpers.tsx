@@ -18,6 +18,7 @@ export const goshClient = new TonClient({
             process.env.REACT_APP_ISDOCKEREXT === 'true'
                 ? NetworkQueriesProtocol.HTTP
                 : NetworkQueriesProtocol.WS,
+        sending_endpoint_count: 3,
     },
 })
 export const goshDaoCreator = new GoshDaoCreator(
