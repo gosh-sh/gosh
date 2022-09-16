@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import { useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
 import TextareaField from '../../components/FormikForms/TextareaField'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -23,7 +24,7 @@ const DaoCreatePage = () => {
             navigate('/account/orgs')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 

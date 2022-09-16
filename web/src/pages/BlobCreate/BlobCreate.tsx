@@ -25,8 +25,10 @@ import {
     userStateAtom,
     getCodeLanguageFromFilename,
     classNames,
+    retry,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -71,27 +73,32 @@ const BlobCreatePage = () => {
             )
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
-                repo,
-                branch,
-                userState.keys.public,
-                [
-                    {
-                        name,
-                        modified: values.content,
-                        original: '',
-                    },
-                ],
-                message,
-                values.tags,
-                undefined,
-                progressCallback,
+            const pubkey = userState.keys.public
+            await retry(
+                () =>
+                    wallet.createCommit(
+                        repo,
+                        branch,
+                        pubkey,
+                        [
+                            {
+                                name,
+                                modified: values.content,
+                                original: '',
+                            },
+                        ],
+                        message,
+                        values.tags,
+                        undefined,
+                        progressCallback,
+                    ),
+                3,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
