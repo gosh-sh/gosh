@@ -68,7 +68,7 @@ pub async fn push_commit(
 
     let wallet = user_wallet(context).await?;
     let params = serde_json::to_value(args)?;
-    let result = call(&context.es_client, wallet, "deployCommit", Some(params)).await?;
+    let result = call(&context.es_client, &wallet, "deployCommit", Some(params)).await?;
     log::debug!("deployCommit result: {:?}", result);
     Ok(())
 }
@@ -87,7 +87,7 @@ pub async fn notify_commit(
         "commit": commit_id.to_string(),
         "numberChangedFiles": number_of_files_changed
     });
-    let result = call(&context.es_client, wallet, "setCommit", Some(params)).await?;
+    let result = call(&context.es_client, &wallet, "setCommit", Some(params)).await?;
     log::debug!("setCommit result: {:?}", result);
     Ok(())
 }
