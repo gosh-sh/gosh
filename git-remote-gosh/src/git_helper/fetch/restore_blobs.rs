@@ -232,22 +232,6 @@ impl BlobsRebuildingPlan {
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
-        macro_rules! guard {
-            ($id:ident) => {
-                if visited.contains(&$id) {
-                    continue;
-                }
-                if $id.is_null() {
-                    continue;
-                }
-                if git_helper.is_commit_in_local_cache(&$id) {
-                    visited.insert($id.clone());
-                    continue;
-                }
-                visited.insert($id.clone());
-            };
-        }
-
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
             restore_a_set_of_blobs_from_a_known_snapshot(
                 git_helper,
