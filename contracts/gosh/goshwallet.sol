@@ -210,7 +210,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
     	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
     }
 
-    function deployWalletDao(address pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deployWalletDao(address[] pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
     }

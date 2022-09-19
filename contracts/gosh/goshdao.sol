@@ -225,10 +225,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
         
-    function deployWallet(address pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
+    function deployWallet(address[] pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
-        deployWalletIn(pubaddrdeploy);
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
         getMoney();
     }
     

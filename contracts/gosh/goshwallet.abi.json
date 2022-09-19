@@ -98,7 +98,7 @@
 		{
 			"name": "deployWalletDao",
 			"inputs": [
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubaddr","type":"address[]"}
 			],
 			"outputs": [
 			]
