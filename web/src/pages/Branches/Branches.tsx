@@ -129,6 +129,7 @@ export const BranchesPage = () => {
             )
             await updateBranches()
             helpers.resetForm()
+            helpers.setFieldValue('from', values.from)
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)

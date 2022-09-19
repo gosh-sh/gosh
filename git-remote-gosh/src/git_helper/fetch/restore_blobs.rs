@@ -23,6 +23,7 @@ pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
+#[instrument(level = "debug", skip(ipfs_client))]
 async fn load_data_from_ipfs(
     ipfs_client: &IpfsService,
     ipfs_address: &str,
@@ -125,6 +126,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
         repo_contract,
     );
+    let mut walked_through_ipfs = false;
     while !blobs.is_empty() {
         log::info!("Still expecting to restore blobs: {:?}", blobs);
         // take next a chunk of messages and reverse it on a snapshot
@@ -135,7 +137,12 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
 
         let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
+            walked_through_ipfs = true;
             load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
+        } else if walked_through_ipfs {
+            walked_through_ipfs = false;
+            let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
+            snapshot.next_content
         } else {
             message
                 .diff
