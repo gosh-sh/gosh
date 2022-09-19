@@ -1,4 +1,6 @@
 use super::GitHelper;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
 use crate::git_helper::GoshContract;
@@ -283,20 +285,45 @@ impl BlobsRebuildingPlan {
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
+        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>> = FuturesUnordered::new();
+
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            restore_a_set_of_blobs_from_a_known_snapshot(
-                git_helper.es_client.clone(),
-                git_helper.config.ipfs_http_endpoint().to_string(),
-                git_helper.local_repository().clone(),
-                git_helper.repo_contract.clone(),
-                snapshot_address,
-                blobs.clone(),
-                Arc::clone(&visited),
-            )
-            .await?;
+            let es_client = git_helper.es_client.clone(); 
+            let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
+            let repo = git_helper.local_repository().clone();
+            let repo_contract = git_helper.repo_contract.clone();
+            let snapshot_address_clone = snapshot_address.clone();
+            let blobs_to_restore = blobs.clone();
+            let visited_ref = Arc::clone(&visited);
+            fetched_blobs.push(tokio::spawn(async move {
+                let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                    es_client,
+                    ipfs_http_endpoint,
+                    repo,
+                    repo_contract,
+                    &snapshot_address_clone,
+                    blobs_to_restore,
+                    visited_ref,
+                )
+                .await;
+                result.map_err(|e| e.to_string())
+            }));
             blobs.clear();
         }
         self.snapshot_address_to_blob_sha.clear();
+
+        while let Some(finished_task) = fetched_blobs.next().await {
+            match finished_task {
+                Err(e) => {
+                    panic!("diffs joih-handler: {}", e);
+                }
+                Ok(Err(e)) => {
+                    panic!("diffs inner: {}", e);
+                }
+                Ok(Ok(_)) => {}
+            }
+        }
+
         Ok(())
     }
 }
