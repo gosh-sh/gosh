@@ -345,10 +345,10 @@ impl BlobsRebuildingPlan {
         while let Some(finished_task) = fetched_blobs.next().await {
             match finished_task {
                 Err(e) => {
-                    panic!("diffs joih-handler: {}", e);
+                    panic!("restore_a_set_of_blobs_from_a_known_snapshot joih-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("diffs inner: {}", e);
+                    panic!("restore_a_set_of_blobs_from_a_known_snapshot inner: {}", e);
                 }
                 Ok(Ok(_)) => {}
             }
