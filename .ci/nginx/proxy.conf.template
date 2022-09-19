@@ -1,5 +1,10 @@
 
 server {
+    listen 80 default_server;
+    return 404;
+}
+
+server {
 
     listen 80;
     server_name GOSH_WEB_VERSION.gosh.sh;

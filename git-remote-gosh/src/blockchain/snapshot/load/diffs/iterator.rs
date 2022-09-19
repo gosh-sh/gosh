@@ -19,7 +19,7 @@ pub struct DiffMessage {
 #[derive(Debug)]
 enum NextChunk {
     MessagesPage(BlockchainContractAddress, Option<String>, bool),
-    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64)
+    JumpToAnotherBranchSnapshot(BlockchainContractAddress, u64),
 }
 
 #[derive(Debug)]
@@ -58,7 +58,7 @@ struct Node {
 #[serde(rename_all = "camelCase")]
 struct PageInfo {
     has_previous_page: bool,
-    start_cursor: String
+    start_cursor: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -70,7 +70,7 @@ struct Messages {
 
 #[derive(Deserialize, Debug)]
 struct TrxCompute {
-    exit_code: u32
+    exit_code: u32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,9 +78,8 @@ struct TrxInfo {
     status: u32,
     in_msg: String,
     out_msgs: Vec<String>,
-    compute: TrxCompute
+    compute: TrxCompute,
 }
-
 
 impl DiffMessagesIterator {
     #[instrument(level = "debug", skip(snapshot_address))]
@@ -92,7 +91,11 @@ impl DiffMessagesIterator {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
             buffer_cursor: 0,
-            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None, false))
+            next: Some(NextChunk::MessagesPage(
+                snapshot_address.into(),
+                None,
+                false,
+            )),
         }
     }
 
@@ -117,11 +120,10 @@ impl DiffMessagesIterator {
         let address = current_snapshot_address;
         Ok(match next_page_info {
             Some(next_page_info) => Some(NextChunk::MessagesPage(
-                    address.clone(),
-                    Some(next_page_info),
-                    skip_series,
-                )
-            ),
+                address.clone(),
+                Some(next_page_info),
+                skip_series,
+            )),
             None => {
                 // find last commit
                 let Snapshot {
@@ -212,10 +214,10 @@ impl DiffMessagesIterator {
                     &address,
                     &mut self.repo_contract,
                     next_page_info,
-                    skip_series
+                    skip_series,
                 )
                 .await?
-            },
+            }
             Some(NextChunk::MessagesPage(address, cursor, skip)) => {
                 let (buffer, page) =
                     load_messages_to(client, &address, cursor, None, *skip).await?;
@@ -226,10 +228,10 @@ impl DiffMessagesIterator {
                     &address,
                     &mut self.repo_contract,
                     page.cursor,
-                    page.skip_series
+                    page.skip_series,
                 )
                 .await?
-            },
+            }
         };
         Ok(())
     }
@@ -321,9 +323,14 @@ pub async fn load_messages_to(
     }
 
     let ids: Vec<String> = passed_msgs.iter().map(|x| x.id.clone()).collect();
-    let passed_trx: HashMap<String, Vec<String>> = load_transactions(&context.clone(), &ids).await?;
+    let passed_trx: HashMap<String, Vec<String>> =
+        load_transactions(&context.clone(), &ids).await?;
     let filter: Vec<&String> = passed_trx.keys().collect();
-    let msgs: Vec<&Message> = passed_msgs.iter().filter(|m| filter.contains(&&m.id)).map(|m| m).collect();
+    let msgs: Vec<&Message> = passed_msgs
+        .iter()
+        .filter(|m| filter.contains(&&m.id))
+        .map(|m| m)
+        .collect();
 
     for raw_msg in msgs {
         log::debug!("Decoding message {:?}", raw_msg.id);
@@ -340,26 +347,28 @@ pub async fn load_messages_to(
 
         log::debug!("Decoded message `{}`", decoded.name);
         if decoded.name == "applyDiff" {
-            if skip { continue };
+            if skip {
+                continue;
+            };
 
             let out_msg_ids = passed_trx.get(&raw_msg.id).unwrap();
             let caused_out_msg = &out_msg_ids[0];
             let is_approved = match check_approve_result(context, caused_out_msg).await? {
                 Some(approve) => approve,
-                None => false
+                None => false,
             };
 
-            if !is_approved { continue };
+            if !is_approved {
+                continue;
+            };
 
             let value = decoded.value.unwrap();
             let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
-            messages.push(
-                DiffMessage {
-                    diff,
-                    created_at: raw_msg.created_at,
-                    created_lt: raw_msg.created_lt,
-                },
-            );
+            messages.push(DiffMessage {
+                diff,
+                created_at: raw_msg.created_at,
+                created_lt: raw_msg.created_lt,
+            });
         } else if decoded.name == "cancelDiff" {
             skip = true;
         } else if decoded.name == "approve" {
@@ -375,14 +384,15 @@ pub async fn load_messages_to(
     let page = PageIterator {
         cursor: subsequent_page_info,
         stop_on: oldest_timestamp,
-        skip_series: skip
+        skip_series: skip,
     };
     Ok((messages, page))
 }
 
-pub async fn load_transactions(context: &TonClient, msg_ids: &Vec<String>)
-    -> Result<HashMap<String, Vec<String>>, Box<dyn Error>>
-{
+pub async fn load_transactions(
+    context: &TonClient,
+    msg_ids: &Vec<String>,
+) -> Result<HashMap<String, Vec<String>>, Box<dyn Error>> {
     let query = r#"query($msg_ids: [String!]) {
         transactions(filter: {
           in_msg: { in: $msg_ids }
@@ -405,7 +415,8 @@ pub async fn load_transactions(context: &TonClient, msg_ids: &Vec<String>)
     .await
     .map(|r| r.result)?;
 
-    let transactions: Vec<TrxInfo> = serde_json::from_value(result["data"]["transactions"].clone())?;
+    let transactions: Vec<TrxInfo> =
+        serde_json::from_value(result["data"]["transactions"].clone())?;
     let passed_trx = transactions
         .iter()
         .filter(|x| x.status == 3 && x.compute.exit_code == 0)
@@ -415,7 +426,10 @@ pub async fn load_transactions(context: &TonClient, msg_ids: &Vec<String>)
     Ok(passed_trx)
 }
 
-pub async fn check_approve_result(context: &TonClient, msg_id: &str) -> Result<Option<bool>, Box<dyn Error>> {
+pub async fn check_approve_result(
+    context: &TonClient,
+    msg_id: &str,
+) -> Result<Option<bool>, Box<dyn Error>> {
     let query = r#"query($msg_id: String!) {
         messages(filter: {
           id: { eq: $msg_id }
@@ -451,14 +465,16 @@ pub async fn check_approve_result(context: &TonClient, msg_id: &str) -> Result<O
     )
     .await?;
 
-    if decoded.name != "approveDiff" { return Ok(None) }
+    if decoded.name != "approveDiff" {
+        return Ok(None);
+    }
 
     let result = match decoded.value {
         Some(value) => {
             let approve_result = serde_json::from_value::<bool>(value["res"].clone())?;
             Some(approve_result)
-        },
-        _ => None
+        }
+        _ => None,
     };
     Ok(result)
 }

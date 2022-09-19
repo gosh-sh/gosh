@@ -151,7 +151,9 @@ pub async fn get_set_commit_created_at_time(
                 }
             }
         }
-        if created_at > 0 || cursor == None { break; }
+        if created_at > 0 || cursor == None {
+            break;
+        }
     }
     log::debug!("set_commit' created_at: {created_at}");
     Ok(created_at)
