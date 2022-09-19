@@ -1,15 +1,19 @@
 use super::GitHelper;
 use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
+use crate::git_helper::GoshContract;
 use crate::ipfs::IpfsService;
 use git_hash::ObjectId;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroUsize;
-
+use crate::git_helper::TonClient;
 use std::error::Error;
 use std::str::FromStr;
 use std::vec::Vec;
+use git_odb::Write;
+use std::sync::Mutex;
+use std::sync::Arc;
 
 pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
@@ -26,14 +30,49 @@ async fn load_data_from_ipfs(
     Ok(data)
 }
 
+async fn write_git_data<'a>(
+        repo: &mut git_repository::Repository,
+        obj: git_object::Data<'a>,
+    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+        log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
+        let store = &mut repo.objects;
+        // It should refresh once even if the refresh mode is never, just to initialize the index
+        //store.refresh_never();
+        let object_id = store.write_buf(obj.kind, obj.data)?;
+        log::info!("Writing git data - success");
+        Ok(object_id)
+    }
+
+async fn write_git_object(
+        repo: &mut git_repository::Repository,
+        obj: impl git_object::WriteTo,
+    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+        log::info!("Writing git object");
+        let store = &mut repo.objects;
+        // It should refresh once even if the refresh mode is never, just to initialize the index
+        //store.refresh_never();
+        let object_id = store.write(obj).map_err(|e| {
+            log::error!("Write git object failed  with: {}", e);
+            e
+        })?;
+        log::info!("Writing git object - success, {}", object_id);
+        Ok(object_id)
+    }
+
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
-    git_helper: &mut GitHelper,
+    es_client: TonClient,
+    ipfs_endpoint: String,
+    mut repo: git_repository::Repository,
+    mut repo_contract: GoshContract,
     snapshot_address: &blockchain::BlockchainContractAddress,
-    blobs: &mut HashSet<git_hash::ObjectId>,
-    visited: &mut HashSet<git_hash::ObjectId>,
+    mut blobs: HashSet<git_hash::ObjectId>,
+    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
-    blobs.retain(|e| !visited.contains(e));
+    {
+        let visited = visited.lock().unwrap(); 
+        blobs.retain(|e| !visited.contains(e));
+    }
     log::info!("remaining: {:?}", blobs);
     if blobs.is_empty() {
         return Ok(());
@@ -45,17 +84,23 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // between code readability and resistance for
     // future changes that might break logic unnoticed
     let current_snapshot_state =
-        BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
+        BlobsRebuildingPlan::restore_snapshot_blob(&es_client, &ipfs_endpoint, &mut repo, snapshot_address).await?;
     log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
-        visited.insert(blob_id);
+        {
+            let mut visited = visited.lock().unwrap();
+            visited.insert(blob_id);
+        }
         last_restored_snapshots.put(blob_id, blob);
         blobs.remove(&blob_id);
     }
     if let Some((blob_id, blob)) = current_snapshot_state.1 {
-        visited.insert(blob_id);
+        {
+            let mut visited = visited.lock().unwrap();
+            visited.insert(blob_id);
+        }
         last_restored_snapshots.put(blob_id, blob);
         blobs.remove(&blob_id);
     }
@@ -74,19 +119,19 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // This should download next messages seemless
     let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
         snapshot_address,
-        &mut git_helper.repo_contract,
+        &mut repo_contract,
     );
     while !blobs.is_empty() {
         log::info!("Still expecting to restore blobs: {:?}", blobs);
         // take next a chunk of messages and reverse it on a snapshot
         // remove matching blob ids
         //
-        let message = messages.next(&git_helper.es_client)
+        let message = messages.next(&es_client)
             .await?
             .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
 
         let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
-            load_data_from_ipfs(&git_helper.ipfs_client, ipfs).await?
+            load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
         } else {
             message
                 .diff
@@ -107,22 +152,25 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 })?
         };
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
-        let blob_id = git_helper.write_git_data(blob).await?;
+        let blob_id = write_git_data(&mut repo, blob).await?;
         log::info!("Restored blob {}", blob_id);
         last_restored_snapshots.put(blob_id, blob_data);
-        visited.insert(blob_id);
+        {
+            let mut visited = visited.lock().unwrap();
+            visited.insert(blob_id);
+        }
         blobs.remove(&blob_id);
     }
     Ok(())
 }
 
 async fn convert_snapshot_into_blob(
-    helper: &mut GitHelper,
+    ipfs_client: &IpfsService,
     content: &[u8],
     ipfs: &Option<String>,
 ) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>> {
     let ipfs_data = if let Some(ipfs_address) = ipfs {
-        load_data_from_ipfs(&helper.ipfs_client, ipfs_address).await?
+        load_data_from_ipfs(ipfs_client, ipfs_address).await?
     } else {
         vec![]
     };
@@ -174,30 +222,33 @@ impl BlobsRebuildingPlan {
     }
 
     async fn restore_snapshot_blob(
-        git_helper: &mut GitHelper,
+        es_client: &TonClient,
+        ipfs_endpoint: &str,
+        repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
     ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
-        let snapshot = blockchain::Snapshot::load(&git_helper.es_client, snapshot_address).await?;
+        let ipfs_client = IpfsService::new(ipfs_endpoint);
+        let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
         let snapshot_next = if snapshot_next_commit_sha.is_ok() {
             let (blob, blob_data) =
-                convert_snapshot_into_blob(git_helper, &snapshot.next_content, &snapshot.next_ipfs)
+                convert_snapshot_into_blob(&ipfs_client, &snapshot.next_content, &snapshot.next_ipfs)
                     .await?;
-            let blob_oid = git_helper.write_git_object(blob).await?;
+            let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
         } else {
             None
         };
         let snapshot_current = if snapshot_current_commit_sha.is_ok() {
             let (blob, blob_data) = convert_snapshot_into_blob(
-                git_helper,
+                &ipfs_client,
                 &snapshot.current_content,
                 &snapshot.current_ipfs,
             )
             .await?;
-            let blob_oid = git_helper.write_git_object(blob).await?;
+            let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
         } else {
             None
@@ -231,16 +282,21 @@ impl BlobsRebuildingPlan {
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
-        let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
+        let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
             restore_a_set_of_blobs_from_a_known_snapshot(
-                git_helper,
+                git_helper.es_client.clone(),
+                git_helper.config.ipfs_http_endpoint().to_string(),
+                git_helper.local_repository().clone(),
+                git_helper.repo_contract.clone(),
                 snapshot_address,
-                blobs,
-                &mut visited,
+                blobs.clone(),
+                Arc::clone(&visited),
             )
             .await?;
+            blobs.clear();
         }
+        self.snapshot_address_to_blob_sha.clear();
         Ok(())
     }
 }
