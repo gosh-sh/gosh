@@ -17,6 +17,8 @@ use git_odb::Write;
 use std::sync::Mutex;
 use std::sync::Arc;
 
+const FETCH_MAX_TRIES:i32 = 3;
+
 pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
@@ -62,13 +64,13 @@ async fn write_git_object(
     }
 
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
-    es_client: TonClient,
-    ipfs_endpoint: String,
-    mut repo: git_repository::Repository,
-    mut repo_contract: GoshContract,
+    es_client: &TonClient,
+    ipfs_endpoint: &str,
+    repo: &mut git_repository::Repository,
+    repo_contract: &mut GoshContract,
     snapshot_address: &blockchain::BlockchainContractAddress,
-    mut blobs: HashSet<git_hash::ObjectId>,
-    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
@@ -86,7 +88,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // between code readability and resistance for
     // future changes that might break logic unnoticed
     let current_snapshot_state =
-        BlobsRebuildingPlan::restore_snapshot_blob(&es_client, &ipfs_endpoint, &mut repo, snapshot_address).await?;
+        BlobsRebuildingPlan::restore_snapshot_blob(es_client, ipfs_endpoint, repo, snapshot_address).await?;
     log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
@@ -121,7 +123,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // This should download next messages seemless
     let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
         snapshot_address,
-        &mut repo_contract,
+        repo_contract,
     );
     while !blobs.is_empty() {
         log::info!("Still expecting to restore blobs: {:?}", blobs);
@@ -154,7 +156,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 })?
         };
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
-        let blob_id = write_git_data(&mut repo, blob).await?;
+        let blob_id = write_git_data(repo, blob).await?;
         log::info!("Restored blob {}", blob_id);
         last_restored_snapshots.put(blob_id, blob_data);
         {
@@ -290,22 +292,31 @@ impl BlobsRebuildingPlan {
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
             let es_client = git_helper.es_client.clone(); 
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
-            let repo = git_helper.local_repository().clone();
-            let repo_contract = git_helper.repo_contract.clone();
+            let mut repo = git_helper.local_repository().clone();
+            let mut repo_contract = git_helper.repo_contract.clone();
             let snapshot_address_clone = snapshot_address.clone();
-            let blobs_to_restore = blobs.clone();
+            let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
             fetched_blobs.push(tokio::spawn(async move {
-                let result = restore_a_set_of_blobs_from_a_known_snapshot(
-                    es_client,
-                    ipfs_http_endpoint,
-                    repo,
-                    repo_contract,
-                    &snapshot_address_clone,
-                    blobs_to_restore,
-                    visited_ref,
-                )
-                .await;
+                let mut attempt = 0;
+                let result = loop {
+                    let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                        &es_client,
+                        &ipfs_http_endpoint,
+                        &mut repo,
+                        &mut repo_contract,
+                        &snapshot_address_clone,
+                        &mut blobs_to_restore,
+                        &visited_ref,
+                    )
+                    .await;
+                    if result.is_ok() || attempt > FETCH_MAX_TRIES {
+                        break result;
+                    } else {
+                        log::debug!("restore_a_set_of_blobs_from_a_known_snapshot error {:?}", result.unwrap_err());
+                        std::thread::sleep(std::time::Duration::from_secs(5));
+                    }
+                };
                 result.map_err(|e| e.to_string())
             }));
             blobs.clear();
