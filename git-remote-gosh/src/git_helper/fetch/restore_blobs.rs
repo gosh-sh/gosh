@@ -1,23 +1,23 @@
 use super::GitHelper;
-use futures::stream::FuturesUnordered;
-use futures::StreamExt;
 use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
 use crate::git_helper::GoshContract;
+use crate::git_helper::TonClient;
 use crate::ipfs::IpfsService;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
 use git_hash::ObjectId;
+use git_odb::Write;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
-use std::num::NonZeroUsize;
-use crate::git_helper::TonClient;
 use std::error::Error;
+use std::num::NonZeroUsize;
 use std::str::FromStr;
-use std::vec::Vec;
-use git_odb::Write;
-use std::sync::Mutex;
 use std::sync::Arc;
+use std::sync::Mutex;
+use std::vec::Vec;
 
-const FETCH_MAX_TRIES:i32 = 3;
+const FETCH_MAX_TRIES: i32 = 3;
 
 pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
@@ -36,33 +36,33 @@ async fn load_data_from_ipfs(
 }
 
 async fn write_git_data<'a>(
-        repo: &mut git_repository::Repository,
-        obj: git_object::Data<'a>,
-    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
-        log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
-        let store = &mut repo.objects;
-        // It should refresh once even if the refresh mode is never, just to initialize the index
-        //store.refresh_never();
-        let object_id = store.write_buf(obj.kind, obj.data)?;
-        log::info!("Writing git data - success");
-        Ok(object_id)
-    }
+    repo: &mut git_repository::Repository,
+    obj: git_object::Data<'a>,
+) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+    log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
+    let store = &mut repo.objects;
+    // It should refresh once even if the refresh mode is never, just to initialize the index
+    //store.refresh_never();
+    let object_id = store.write_buf(obj.kind, obj.data)?;
+    log::info!("Writing git data - success");
+    Ok(object_id)
+}
 
 async fn write_git_object(
-        repo: &mut git_repository::Repository,
-        obj: impl git_object::WriteTo,
-    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
-        log::info!("Writing git object");
-        let store = &mut repo.objects;
-        // It should refresh once even if the refresh mode is never, just to initialize the index
-        //store.refresh_never();
-        let object_id = store.write(obj).map_err(|e| {
-            log::error!("Write git object failed  with: {}", e);
-            e
-        })?;
-        log::info!("Writing git object - success, {}", object_id);
-        Ok(object_id)
-    }
+    repo: &mut git_repository::Repository,
+    obj: impl git_object::WriteTo,
+) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+    log::info!("Writing git object");
+    let store = &mut repo.objects;
+    // It should refresh once even if the refresh mode is never, just to initialize the index
+    //store.refresh_never();
+    let object_id = store.write(obj).map_err(|e| {
+        log::error!("Write git object failed  with: {}", e);
+        e
+    })?;
+    log::info!("Writing git object - success, {}", object_id);
+    Ok(object_id)
+}
 
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
     es_client: &TonClient,
@@ -75,7 +75,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
-        let visited = visited.lock().unwrap(); 
+        let visited = visited.lock().unwrap();
         blobs.retain(|e| !visited.contains(e));
     }
     log::info!("remaining: {:?}", blobs);
@@ -88,8 +88,13 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // However this case seems to be an appropriate balance
     // between code readability and resistance for
     // future changes that might break logic unnoticed
-    let current_snapshot_state =
-        BlobsRebuildingPlan::restore_snapshot_blob(es_client, ipfs_endpoint, repo, snapshot_address).await?;
+    let current_snapshot_state = BlobsRebuildingPlan::restore_snapshot_blob(
+        es_client,
+        ipfs_endpoint,
+        repo,
+        snapshot_address,
+    )
+    .await?;
     log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
@@ -122,10 +127,8 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
     // TODO: convert to async iterator
     // This should download next messages seemless
-    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
-        snapshot_address,
-        repo_contract,
-    );
+    let mut messages =
+        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
     let mut walked_through_ipfs = false;
     while !blobs.is_empty() {
         log::info!("Still expecting to restore blobs: {:?}", blobs);
@@ -244,9 +247,12 @@ impl BlobsRebuildingPlan {
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
         let snapshot_next = if snapshot_next_commit_sha.is_ok() {
-            let (blob, blob_data) =
-                convert_snapshot_into_blob(&ipfs_client, &snapshot.next_content, &snapshot.next_ipfs)
-                    .await?;
+            let (blob, blob_data) = convert_snapshot_into_blob(
+                &ipfs_client,
+                &snapshot.next_content,
+                &snapshot.next_ipfs,
+            )
+            .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
         } else {
@@ -293,11 +299,14 @@ impl BlobsRebuildingPlan {
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
-        let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
-        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>> = FuturesUnordered::new();
+        let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> =
+            Arc::new(Mutex::new(HashSet::new()));
+        let mut fetched_blobs: FuturesUnordered<
+            tokio::task::JoinHandle<std::result::Result<(), std::string::String>>,
+        > = FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.es_client.clone(); 
+            let es_client = git_helper.es_client.clone();
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
             let mut repo_contract = git_helper.repo_contract.clone();
@@ -320,7 +329,10 @@ impl BlobsRebuildingPlan {
                     if result.is_ok() || attempt > FETCH_MAX_TRIES {
                         break result;
                     } else {
-                        log::debug!("restore_a_set_of_blobs_from_a_known_snapshot error {:?}", result.unwrap_err());
+                        log::debug!(
+                            "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
+                            result.unwrap_err()
+                        );
                         std::thread::sleep(std::time::Duration::from_secs(5));
                     }
                 };
