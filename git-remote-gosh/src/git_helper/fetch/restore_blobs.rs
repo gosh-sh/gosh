@@ -15,6 +15,7 @@ pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
+#[instrument(level = "debug", skip(ipfs_client))]
 async fn load_data_from_ipfs(
     ipfs_client: &IpfsService,
     ipfs_address: &str,
@@ -173,9 +174,7 @@ impl BlobsRebuildingPlan {
             // future changes that might break logic unnoticed
             let restored_snapshots =
                 BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
-            log::debug!("restored_snapshots: {:#?}", restored_snapshots);
             let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(NonZeroUsize::new(2).unwrap());
-            log::debug!("pre last_restored_snapshots: {:#?}", last_restored_snapshots);
             if let Some((blob_id, blob)) = restored_snapshots.0 {
                 visited.insert(blob_id);
                 last_restored_snapshots.put(blob_id, blob);
@@ -186,7 +185,6 @@ impl BlobsRebuildingPlan {
                 last_restored_snapshots.put(blob_id, blob);
                 blobs.remove(&blob_id);
             }
-            log::debug!("post last_restored_snapshots: {:#?}", last_restored_snapshots);
 
             log::info!(
                 "Expecting to restore blobs: {:?} from {}",
@@ -200,6 +198,7 @@ impl BlobsRebuildingPlan {
                 snapshot_address,
                 &mut git_helper.repo_contract,
             );
+            let mut walked_through_ipfs = false;
             while !blobs.is_empty() {
                 log::info!("Still expecting to restore blobs: {:?}", blobs);
                 // take next a chunk of messages and reverse it on a snapshot
@@ -208,9 +207,13 @@ impl BlobsRebuildingPlan {
                 let message = messages.next(&git_helper.es_client)
                     .await?
                     .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-
                 let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
+                    walked_through_ipfs = true;
                     load_data_from_ipfs(&git_helper.ipfs_client, ipfs).await?
+                } else if walked_through_ipfs {
+                    walked_through_ipfs = false;
+                    let snapshot = blockchain::Snapshot::load(&git_helper.es_client, snapshot_address).await?;
+                    snapshot.next_content
                 } else {
                     message.diff.with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
                         Some(patch) => {
