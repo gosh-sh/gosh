@@ -26,6 +26,96 @@ async fn load_data_from_ipfs(
     Ok(data)
 }
 
+async fn restore_a_set_of_blobs_from_a_known_snapshot(
+    git_helper: &mut GitHelper,
+    snapshot_address: &blockchain::BlockchainContractAddress,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: &mut HashSet<git_hash::ObjectId>,
+) -> Result<(), Box<dyn Error>> {
+    log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
+    blobs.retain(|e| !visited.contains(e));
+    log::info!("remaining: {:?}", blobs);
+    if blobs.is_empty() {
+        return Ok(());
+    }
+
+    // In general it is not nice to return tuples since
+    // it misses context.
+    // However this case seems to be an appropriate balance
+    // between code readability and resistance for
+    // future changes that might break logic unnoticed
+    let current_snapshot_state =
+        BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
+    log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
+    let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
+        LruCache::new(NonZeroUsize::new(2).unwrap());
+    if let Some((blob_id, blob)) = current_snapshot_state.0 {
+        visited.insert(blob_id);
+        last_restored_snapshots.put(blob_id, blob);
+        blobs.remove(&blob_id);
+    }
+    if let Some((blob_id, blob)) = current_snapshot_state.1 {
+        visited.insert(blob_id);
+        last_restored_snapshots.put(blob_id, blob);
+        blobs.remove(&blob_id);
+    }
+    log::debug!(
+        "post last_restored_snapshots: {:#?}",
+        last_restored_snapshots
+    );
+
+    log::info!(
+        "Expecting to restore blobs: {:?} from {}",
+        blobs,
+        snapshot_address
+    );
+
+    // TODO: convert to async iterator
+    // This should download next messages seemless
+    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+        snapshot_address,
+        &mut git_helper.repo_contract,
+    );
+    while !blobs.is_empty() {
+        log::info!("Still expecting to restore blobs: {:?}", blobs);
+        // take next a chunk of messages and reverse it on a snapshot
+        // remove matching blob ids
+        //
+        let message = messages.next(&git_helper.es_client)
+            .await?
+            .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
+
+        let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
+            load_data_from_ipfs(&git_helper.ipfs_client, ipfs).await?
+        } else {
+            message
+                .diff
+                .with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
+                    Some(patch) => {
+                        let patched_blob_sha =
+                            &message.diff.modified_blob_sha1.as_ref().expect(
+                                "Option on this should be reverted. It must always be there",
+                            );
+                        let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+                        let patched_blob = last_restored_snapshots.get(&patched_blob_sha).expect(
+                            "It is a sequence of changes. Sha must be correct. Fail otherwise",
+                        );
+                        let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
+                        Ok(blob_data)
+                    }
+                    None => panic!("Broken diff detected: no ipfs neither patch exists"),
+                })?
+        };
+        let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
+        let blob_id = git_helper.write_git_data(blob).await?;
+        log::info!("Restored blob {}", blob_id);
+        last_restored_snapshots.put(blob_id, blob_data);
+        visited.insert(blob_id);
+        blobs.remove(&blob_id);
+    }
+    Ok(())
+}
+
 async fn convert_snapshot_into_blob(
     helper: &mut GitHelper,
     content: &[u8],
@@ -159,87 +249,17 @@ impl BlobsRebuildingPlan {
         }
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
-            blobs.retain(|e| !visited.contains(e));
-            log::info!("remaining: {:?}", blobs);
-            if blobs.is_empty() {
-                continue;
-            }
-
-            // In general it is not nice to return tuples since
-            // it misses context.
-            // However this case seems to be an appropriate balance
-            // between code readability and resistance for
-            // future changes that might break logic unnoticed
-            let restored_snapshots =
-                BlobsRebuildingPlan::restore_snapshot_blob(git_helper, snapshot_address).await?;
-            log::debug!("restored_snapshots: {:#?}", restored_snapshots);
-            let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> = LruCache::new(NonZeroUsize::new(2).unwrap());
-            log::debug!("pre last_restored_snapshots: {:#?}", last_restored_snapshots);
-            if let Some((blob_id, blob)) = restored_snapshots.0 {
-                visited.insert(blob_id);
-                last_restored_snapshots.put(blob_id, blob);
-                blobs.remove(&blob_id);
-            }
-            if let Some((blob_id, blob)) = restored_snapshots.1 {
-                visited.insert(blob_id);
-                last_restored_snapshots.put(blob_id, blob);
-                blobs.remove(&blob_id);
-            }
-            log::debug!("post last_restored_snapshots: {:#?}", last_restored_snapshots);
-
-            log::info!(
-                "Expecting to restore blobs: {:?} from {}",
-                blobs,
-                snapshot_address
-            );
-
-            // TODO: convert to async iterator
-            // This should download next messages seemless
-            let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+            restore_a_set_of_blobs_from_a_known_snapshot(
+                git_helper,
                 snapshot_address,
-                &mut git_helper.repo_contract,
-            );
-            while !blobs.is_empty() {
-                log::info!("Still expecting to restore blobs: {:?}", blobs);
-                // take next a chunk of messages and reverse it on a snapshot
-                // remove matching blob ids
-                //
-                let message = messages.next(&git_helper.es_client)
-                    .await?
-                    .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-
-                let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
-                    load_data_from_ipfs(&git_helper.ipfs_client, ipfs).await?
-                } else {
-                    message.diff.with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
-                        Some(patch) => {
-                            let patched_blob_sha = &message.diff.modified_blob_sha1.as_ref().expect("Option on this should be reverted. It must always be there");
-                            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                            let patched_blob = last_restored_snapshots.get(&patched_blob_sha)
-                                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
-                            let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
-                            Ok(blob_data)
-                        },
-                        None => panic!("Broken diff detected: no ipfs neither patch exists")
-                    })?
-                };
-
-                let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
-                let blob_id = git_helper.write_git_data(blob).await?;
-                log::info!("Restored blob {}", blob_id);
-                last_restored_snapshots.put(blob_id, blob_data);
-                visited.insert(blob_id);
-                blobs.remove(&blob_id);
-            }
+                blobs,
+                &mut visited,
+            )
+            .await?;
         }
         Ok(())
     }
 }
 
 #[cfg(test)]
-mod tests {
-
-    #[test]
-    fn testing_what_is_inside_the_snapshot_content() {}
-}
+mod tests {}
