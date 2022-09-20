@@ -38,10 +38,10 @@ impl PushBlobStatistics {
         }
     }
 
-    pub fn add(&mut self, another: &Self) {
+    /* pub fn add(&mut self, another: &Self) {
         self.new_snapshots += another.new_snapshots;
         self.diffs += another.diffs;
-    }
+    } */
 }
 
 impl GitHelper {
@@ -278,7 +278,12 @@ impl GitHelper {
                 .await?
                 .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
-            commit.sha
+
+            if commit.sha != ZERO_SHA.to_owned() {
+                commit.sha
+            } else {
+                String::new()
+            }
         };
 
         let latest_commit_id = self
