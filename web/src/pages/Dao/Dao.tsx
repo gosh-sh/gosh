@@ -29,7 +29,7 @@ const DaoPage = () => {
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
                     {wallet?.isDaoParticipant ? (
                         <Link
-                            to={`/${daoName}/settings/wallet`}
+                            to={`/o/${daoName}/settings/wallet`}
                             className="hover:underline"
                         >
                             Setup git remote

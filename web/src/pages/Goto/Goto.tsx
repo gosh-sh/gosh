@@ -20,7 +20,7 @@ const GotoPage = () => {
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center mb-3">
                 <Link
-                    to={`/${daoName}/${repoName}/tree/${branchName}`}
+                    to={`/o/${daoName}/r/${repoName}/tree/${branchName}`}
                     className="text-extblue font-medium hover:underline"
                 >
                     {repoName}
@@ -53,7 +53,7 @@ const GotoPage = () => {
                         >
                             <Link
                                 className="text-sm font-medium hover:underline"
-                                to={`/${daoName}/${repoName}/blobs/${branchName}/${path}`}
+                                to={`/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${path}`}
                             >
                                 <FontAwesomeIcon
                                     className="mr-2"

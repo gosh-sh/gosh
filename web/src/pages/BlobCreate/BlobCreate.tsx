@@ -52,7 +52,7 @@ const BlobCreatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/tree/${branchName}${
+    const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
         pathName && `/${pathName}`
     }`
 
