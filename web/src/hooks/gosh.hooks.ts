@@ -30,6 +30,7 @@ import {
     IGosh,
     useGoshVersions,
     TWalletDetails,
+    retry,
 } from 'react-gosh'
 
 /** Create GoshRepository object */
@@ -101,7 +102,7 @@ export const useGoshRepoTree = (
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, commitAddr: string) => {
             setTree(undefined)
-            const tree = await getRepoTree(repo, commitAddr, filterPath)
+            const tree = await retry(() => getRepoTree(repo, commitAddr, filterPath), 2)
             setTree(tree)
         }
 

@@ -153,7 +153,7 @@ pub async fn push_tree(
 
         blockchain::call(
             &context.es_client,
-            user_wallet_contract,
+            &user_wallet_contract,
             "deployTree",
             Some(params),
         )

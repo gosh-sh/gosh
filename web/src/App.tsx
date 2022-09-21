@@ -178,7 +178,7 @@ const App = () => {
             </main>
             <footer className="footer">
                 <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end text-xs text-gray-050a15 px-3 py-2">
-                    {process.env.REACT_APP_GOSH_NETWORK}
+                    {process.env.REACT_APP_GOSH_NETWORK?.split(',')[0]}
                     <CopyClipboard
                         label={
                             <span data-tip={process.env.REACT_APP_GOSH_ROOTADDR}>

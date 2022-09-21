@@ -24,7 +24,6 @@ import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import { Link } from 'react-router-dom'
 
 type TCommitBlobsType = {
     className?: string
@@ -238,14 +237,7 @@ const PREvent = (props: TCommitBlobsType) => {
         <div className={className}>
             {status.completed && status.accepted && (
                 <div className="bg-green-700 text-white mt-6 px-4 py-3 rounded">
-                    Commit proposal
-                    <Link
-                        className="mx-1 underline"
-                        to={`/${daoName}/${repoName}/commits/${branchName}/${commitName}`}
-                    >
-                        {shortString(commitName)}
-                    </Link>
-                    was accepted by SMV
+                    PR proposal was accepted by SMV
                 </div>
             )}
 

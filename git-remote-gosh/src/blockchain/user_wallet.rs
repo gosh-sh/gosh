@@ -4,17 +4,16 @@ use std::cell::RefCell;
 use std::sync::Once;
 use tokio::runtime::Handle;
 use tokio::task;
-
-use crate::abi;
-use crate::blockchain;
-use crate::blockchain::BlockchainContractAddress;
-use crate::blockchain::GoshContract;
-use crate::blockchain::TonClient;
-use crate::config::UserWalletConfig;
-use crate::git_helper::GitHelper;
 use ton_client::crypto::KeyPair;
 
+use crate::abi;
+use crate::blockchain::call;
+use crate::config::UserWalletConfig;
+use crate::git_helper::GitHelper;
+
+use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
+use super::{BlockchainContractAddress, GoshContract, TonClient};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -146,7 +145,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
         task::block_in_place(move || {
             Handle::current().block_on(init_user_wallet_mirrors(
                 &es_client,
-                zero_wallet,
+                &zero_wallet,
                 max_number_of_user_wallets,
             ));
         });
@@ -168,17 +167,20 @@ fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
         .find_network_user_wallet(&context.remote.network)
 }
 
-async fn init_user_wallet_mirrors(
+async fn init_user_wallet_mirrors<C>(
     client: &TonClient,
-    user_wallet_contract: GoshContract,
+    user_wallet_contract: &C,
     max_number_of_mirrors: u64,
-) -> Result<()> {
-    let n = user_wallet_config_max_number_of_mirrors(client, &user_wallet_contract).await?;
+) -> Result<()>
+where
+    C: ContractRead + ContractInfo,
+{
+    let n = user_wallet_config_max_number_of_mirrors(client, user_wallet_contract).await?;
     let result: GetWalletMirrorsCountResult = user_wallet_contract
-        .run_local(client, "getWalletsCount", None)
+        .read_state(client, "getWalletsCount", None)
         .await?;
     for _ in result.number_of_mirrors.into()..n {
-        blockchain::call(client, user_wallet_contract.clone(), "deployWallet", None).await;
+        call(client, user_wallet_contract, "deployWallet", None).await;
     }
     Ok(())
 }
@@ -192,10 +194,10 @@ async fn init_user_wallet_mirrors(
 )]
 async fn user_wallet_config_max_number_of_mirrors(
     client: &TonClient,
-    user_wallet_contract: &GoshContract,
+    user_wallet_contract: &impl ContractRead,
 ) -> Result<u64> {
     let result: GetConfigResult = user_wallet_contract
-        .run_local(client, "getConfig", None)
+        .read_state(client, "getConfig", None)
         .await?;
     Ok(result.max_number_of_mirror_wallets.into())
 }
