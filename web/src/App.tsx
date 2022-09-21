@@ -63,14 +63,16 @@ const App = () => {
     const onMouseMove = () => timerRestart()
 
     useEffect(() => {
+        const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
         AppConfig.setup({
             goshclient: {
                 network: {
-                    endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+                    endpoints,
                     queries_protocol:
                         process.env.REACT_APP_ISDOCKEREXT === 'true'
                             ? NetworkQueriesProtocol.HTTP
                             : NetworkQueriesProtocol.WS,
+                    sending_endpoint_count: endpoints?.length,
                 },
             },
             goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',

@@ -76,7 +76,7 @@ const BlobCreatePage = () => {
             const pubkey = userState.keys.public
             await retry(
                 () =>
-                    wallet.createCommit(
+                    wallet.instance.createCommit(
                         repo,
                         branch,
                         pubkey,

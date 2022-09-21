@@ -21,7 +21,7 @@ const RepoCreatePage = () => {
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            await retry(() => wallet.deployRepo(values.name.toLowerCase()), 3)
+            await retry(() => wallet.instance.deployRepo(values.name.toLowerCase()), 3)
             navigate(`/${daoName}/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)

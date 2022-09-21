@@ -46,7 +46,7 @@ type TCommitFormValues = {
 }
 
 const PullCreatePage = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { daoName, repoName } = useParams()
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
@@ -81,12 +81,16 @@ const PullCreatePage = () => {
         branch: TGoshBranch,
         item: TGoshTreeItem,
     ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
-        const commit = new GoshCommit(wallet.account.client, branch.commitAddr)
+        const commit = new GoshCommit(
+            wallet.account.client,
+            branch.commitAddr,
+            wallet.version,
+        )
         const commitName = await commit.getName()
 
         const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
         const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
-        const snap = new GoshSnapshot(wallet.account.client, snapAddr)
+        const snap = new GoshSnapshot(wallet.account.client, snapAddr, wallet.version)
         const data = await snap.getSnapshot(commitName, item)
         return data
     }
@@ -209,7 +213,7 @@ const PullCreatePage = () => {
             if (!fromBranch?.commitAddr || !toBranch?.commitAddr) {
                 throw new GoshError(EGoshError.NO_BRANCH)
             }
-            await retry(() => buildDiff(wallet, { fromBranch, toBranch }), 3)
+            await retry(() => buildDiff(wallet.instance, { fromBranch, toBranch }), 3)
         } catch (e: any) {
             setCompare([])
             console.error(e.message)
@@ -254,7 +258,7 @@ const PullCreatePage = () => {
             const pubkey = userState.keys.public
             await retry(
                 () =>
-                    wallet.createCommit(
+                    wallet.instance.createCommit(
                         repo,
                         toBranch,
                         pubkey,
@@ -269,7 +273,7 @@ const PullCreatePage = () => {
 
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) {
-                await retry(() => wallet.deleteBranch(repo, fromBranch.name), 3)
+                await retry(() => wallet.instance.deleteBranch(repo, fromBranch.name), 3)
             }
             await updateBranches()
             navigate(

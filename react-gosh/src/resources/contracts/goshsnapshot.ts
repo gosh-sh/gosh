@@ -3,6 +3,7 @@ import { loadFromIPFS, zstd } from '../../helpers'
 import { EGoshBlobFlag, TGoshTreeItem } from '../../types'
 import { BaseContract } from './base'
 import { IGoshSnapshot } from './interfaces'
+import isUtf8 from 'isutf8'
 
 class GoshSnapshot extends BaseContract implements IGoshSnapshot {
     static key: string = 'snapshot'
@@ -58,9 +59,12 @@ class GoshSnapshot extends BaseContract implements IGoshSnapshot {
             content = await zstd.decompress(this.account.client, content, false)
             content = Buffer.from(content, 'base64')
         }
-        if ((flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
-            content = content.toString()
-        }
+        // if ((flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
+        //     content = content.toString()
+        // }
+
+        // Try to check if valid utf8
+        if (Buffer.isBuffer(content) && isUtf8(content)) content = content.toString()
 
         return { content, patched: patchedRaw, isIpfs: !!ipfs }
     }

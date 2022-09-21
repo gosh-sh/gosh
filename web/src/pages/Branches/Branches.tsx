@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { retry, TGoshBranch, useGoshVersions } from 'react-gosh'
+import { retry, TGoshBranch } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
@@ -31,7 +31,6 @@ export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const { versions } = useGoshVersions()
     const smvBalance = useSmvBalance(wallet)
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, updateBranches } = useGoshRepoBranches(repo)
@@ -59,7 +58,7 @@ export const BranchesPage = () => {
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
             await retry(
-                () => wallet.startProposalForAddProtectedBranch(repoName, name),
+                () => wallet.instance.startProposalForAddProtectedBranch(repoName, name),
                 3,
             )
             navigate(`/${daoName}/events`, { replace: true })
@@ -91,7 +90,8 @@ export const BranchesPage = () => {
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
             await retry(
-                () => wallet.startProposalForDeleteProtectedBranch(repoName, name),
+                () =>
+                    wallet.instance.startProposalForDeleteProtectedBranch(repoName, name),
                 3,
             )
             navigate(`/${daoName}/events`, { replace: true })
@@ -115,12 +115,16 @@ export const BranchesPage = () => {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
+            const commit = new GoshCommit(
+                wallet.instance.account.client,
+                values.from.commitAddr,
+                wallet.instance.version,
+            )
             const fromBranchName = values.from.name
             const commitHash = await commit.getName()
             await retry(
                 () =>
-                    wallet.deployBranch(
+                    wallet.instance.deployBranch(
                         repo,
                         values.newName.toLowerCase(),
                         fromBranchName,
@@ -151,7 +155,7 @@ export const BranchesPage = () => {
                 if (!repoName) throw new GoshError(EGoshError.NO_REPO)
                 if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await retry(() => wallet.deleteBranch(repo, name), 3)
+                await retry(() => wallet.instance.deleteBranch(repo, name), 3)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
