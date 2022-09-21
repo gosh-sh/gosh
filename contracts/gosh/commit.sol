@@ -146,6 +146,7 @@ contract Commit is Modifiers {
         tvm.accept();
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
+        Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit, _nameBranch);
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
     

@@ -113,6 +113,15 @@
 			]
 		},
 		{
+			"name": "commitCanceled",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "SendDiff",
 			"inputs": [
 				{"name":"branch","type":"string"},
