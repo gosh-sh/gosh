@@ -8,7 +8,6 @@ import {
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
-    goshWalletAtom,
 } from '../store/gosh.state'
 import {
     GoshWallet,
@@ -17,10 +16,9 @@ import {
     GoshCommit,
     GoshSnapshot,
     getRepoTree,
-    goshClient,
-    goshRoot,
+    AppConfig,
     ZERO_COMMIT,
-    userStateAtom,
+    userAtom,
     IGoshDao,
     IGoshRepository,
     IGoshRoot,
@@ -28,74 +26,33 @@ import {
     TCreateCommitCallbackParams,
     TGoshBranch,
     TSmvBalanceDetails,
+    useGosh,
+    IGosh,
+    useGoshVersions,
+    TWalletDetails,
+    retry,
 } from 'react-gosh'
-
-export const useGoshWallet = (dao?: IGoshDao) => {
-    const userState = useRecoilValue(userStateAtom)
-    const [details, setDetails] = useRecoilState(goshWalletAtom)
-    const [wallet, setWallet] = useState<IGoshWallet>()
-
-    useEffect(() => {
-        const getWallet = async (
-            _dao: IGoshDao,
-            _keys: KeyPair,
-            state: { address?: string; daoAddress?: string },
-        ) => {
-            const { address, daoAddress } = state
-
-            let _wallet
-            if (!address || daoAddress !== _dao.address) {
-                console.debug('Get wallet hook (blockchain)')
-                const _address = await _dao.getWalletAddr(`0x${_keys.public}`, 0)
-                _wallet = new GoshWallet(_dao.account.client, _address, _keys)
-            } else {
-                console.debug('Get wallet hook (from state)')
-                _wallet = new GoshWallet(_dao.account.client, address, _keys)
-
-                /**
-                 * Get DAO participants list and check if wallet is a member only
-                 * in case of reading wallet from state, because hook works twice
-                 * in case of reading from blockchain (blockchain then state).
-                 *
-                 * TODO: Create subscription for DAO messages (add member message)
-                 * and apply it in this hook
-                 */
-                const _daoParticipants = await _dao.getWallets()
-                _wallet.isDaoParticipant = _daoParticipants.indexOf(_wallet.address) >= 0
-            }
-
-            setWallet(_wallet)
-            setDetails({
-                address: _wallet.address,
-                keys: _keys,
-                daoAddress: _dao.address,
-            })
-        }
-
-        if (dao && userState.keys) {
-            getWallet(dao, userState.keys, {
-                address: details?.address,
-                daoAddress: details?.daoAddress,
-            })
-        }
-    }, [dao, details?.address, details?.daoAddress, userState.keys, setDetails])
-
-    return wallet
-}
 
 /** Create GoshRepository object */
 export const useGoshRepo = (daoName?: string, name?: string) => {
+    const gosh = useGosh()
     const [goshRepo, setGoshRepo] = useState<IGoshRepository>()
 
     useEffect(() => {
-        const createRepo = async (root: IGoshRoot, daoName: string, name: string) => {
-            const repoAddr = await root.getRepoAddr(name, daoName)
-            const repository = new GoshRepository(root.account.client, repoAddr)
+        const _getRepo = async () => {
+            if (!gosh || !name || !daoName) return
+
+            const repoAddr = await gosh.getRepoAddr(name, daoName)
+            const repository = new GoshRepository(
+                AppConfig.goshclient,
+                repoAddr,
+                gosh.version,
+            )
             setGoshRepo(repository)
         }
 
-        if (goshRoot && daoName && name) createRepo(goshRoot, daoName, name)
-    }, [daoName, name])
+        _getRepo()
+    }, [gosh, daoName, name])
 
     return goshRepo
 }
@@ -145,7 +102,7 @@ export const useGoshRepoTree = (
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, commitAddr: string) => {
             setTree(undefined)
-            const tree = await getRepoTree(repo, commitAddr, filterPath)
+            const tree = await retry(() => getRepoTree(repo, commitAddr, filterPath), 2)
             setTree(tree)
         }
 
@@ -167,7 +124,11 @@ export const useCommitProgress = () => {
     return { progress, progressCallback }
 }
 
-export const useSmvBalance = (wallet?: IGoshWallet) => {
+export const useSmvBalance = (wallet?: {
+    instance: IGoshWallet
+    details: TWalletDetails
+}) => {
+    const { versions } = useGoshVersions()
     const [details, setDetails] = useState<TSmvBalanceDetails>({
         balance: 0,
         smvBalance: 0,
@@ -180,12 +141,16 @@ export const useSmvBalance = (wallet?: IGoshWallet) => {
 
     useEffect(() => {
         const getDetails = async () => {
-            if (!wallet || !wallet.isDaoParticipant) return
+            if (!wallet || !wallet.details.isDaoMember) return
 
-            const balance = await wallet.getSmvTokenBalance()
-            const goshBalance = parseInt(await wallet.account.getBalance())/1e9
-            const lockerAddr = await wallet.getSmvLockerAddr()
-            const locker = new GoshSmvLocker(goshClient, lockerAddr)
+            const balance = await wallet.instance.getSmvTokenBalance()
+            const goshBalance = parseInt(await wallet.instance.account.getBalance())/1e9
+            const lockerAddr = await wallet.instance.getSmvLockerAddr()
+            const locker = new GoshSmvLocker(
+                AppConfig.goshclient,
+                lockerAddr,
+                versions.latest,
+            )
             const details = await locker.getDetails()
             setDetails((state) => ({
                 ...state,
@@ -223,6 +188,7 @@ export const useGoshBlob = (
     fromState: boolean = false,
 ) => {
     const [blob, setBlob] = useRecoilState(goshBlobAtom)
+    const { versions } = useGoshVersions()
     const [isEffectNeeded] = useState<boolean>(!fromState || (fromState && !blob.address))
     const { branch } = useGoshRepoBranches(repo, branchName)
     const tree = useGoshRepoTree(repo, branch, path, !isEffectNeeded)
@@ -237,7 +203,11 @@ export const useGoshBlob = (
                 return
             }
 
-            const commit = new GoshCommit(goshClient, branch.commitAddr)
+            const commit = new GoshCommit(
+                AppConfig.goshclient,
+                branch.commitAddr,
+                versions.latest,
+            )
             const commitName = await commit.getName()
             if (commitName === ZERO_COMMIT) {
                 setBlob({ isFetching: false })
@@ -262,7 +232,11 @@ export const useGoshBlob = (
             if (!blob.address || !blob.commit || !treeItem) return
 
             console.debug('Tree item', treeItem)
-            const snap = new GoshSnapshot(goshClient, blob.address)
+            const snap = new GoshSnapshot(
+                AppConfig.goshclient,
+                blob.address,
+                versions.latest,
+            )
             const data = await snap.getSnapshot(blob.commit, treeItem)
             setBlob((state) => ({
                 ...state,

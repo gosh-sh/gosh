@@ -1,18 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { faArrowRight, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useMonaco } from '@monaco-editor/react'
 import { Field, Form, Formik } from 'formik'
-import {
-    Navigate,
-    useNavigate,
-    useOutletContext,
-    useParams,
-    useSearchParams,
-} from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import FormCommitBlock from '../BlobCreate/FormCommitBlock'
@@ -28,7 +21,7 @@ import {
     IGoshWallet,
     TGoshBranch,
     TGoshTreeItem,
-    userStateAtom,
+    userAtom,
     getCodeLanguageFromFilename,
     getRepoTree,
     splitByChunk,
@@ -37,10 +30,13 @@ import {
     GoshCommit,
     GoshSnapshot,
     sleep,
+    retry,
+    useGoshVersions,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
+import ToastError from '../../components/Error/ToastError'
 
 type TCommitFormValues = {
     title: string
@@ -50,36 +46,156 @@ type TCommitFormValues = {
 }
 
 const PullCreatePage = () => {
-    const [searchParams] = useSearchParams()
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { daoName, repoName } = useParams()
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const smvBalance = useSmvBalance(wallet)
     const { branches, updateBranches } = useGoshRepoBranches(repo)
+    const { versions } = useGoshVersions()
     const [compare, setCompare] = useState<
-        {
-            to?: { item: TGoshTreeItem; blob: any }
-            from: { item: TGoshTreeItem; blob: any }
-            showDiff?: boolean
-        }[]
-    >()
+        | {
+              to?: { item: TGoshTreeItem; blob: any }
+              from: { item: TGoshTreeItem; blob: any }
+              showDiff?: boolean
+          }[]
+        | undefined
+    >([])
+    const [compareBranches, setCompareBranches] = useState<{
+        fromBranch?: TGoshBranch
+        toBranch?: TGoshBranch
+    }>({
+        fromBranch: branches.find((branch) => branch.name === 'main'),
+        toBranch: branches.find((branch) => branch.name === 'main'),
+    })
     const [blobProgress, setBlobProgress] = useState<{
         count: number
         total: number
     }>({ count: 0, total: 0 })
-
-    const compareParam = searchParams.get('compare') || 'main...main'
-    const branchFrom = useRecoilValue(
-        goshCurrBranchSelector(compareParam.split('...')[0]),
-    )
-    const branchTo = useRecoilValue(goshCurrBranchSelector(compareParam.split('...')[1]))
-    const [localBranches, setlocalBranches] = useState<{
-        from?: TGoshBranch
-        to?: TGoshBranch
-    }>({ from: branchFrom, to: branchTo })
     const { progress, progressCallback } = useCommitProgress()
+
+    const getBlob = async (
+        wallet: IGoshWallet,
+        repo: IGoshRepository,
+        branch: TGoshBranch,
+        item: TGoshTreeItem,
+    ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
+        const commit = new GoshCommit(
+            wallet.account.client,
+            branch.commitAddr,
+            wallet.version,
+        )
+        const commitName = await commit.getName()
+
+        const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
+        const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
+        const snap = new GoshSnapshot(wallet.account.client, snapAddr, wallet.version)
+        const data = await snap.getSnapshot(commitName, item)
+        return data
+    }
+
+    const buildDiff = async (
+        wallet: IGoshWallet,
+        branches: { fromBranch: TGoshBranch; toBranch: TGoshBranch },
+    ) => {
+        const { fromBranch, toBranch } = branches
+        if (fromBranch.commitAddr === toBranch.commitAddr) {
+            setCompare([])
+            return
+        }
+
+        const fromTree = await getRepoTree(repo, fromBranch.commitAddr)
+        const fromTreeItems = [...fromTree.items].filter(
+            (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
+        )
+        console.debug('[Pull create] - From tree blobs:', fromTreeItems)
+        const toTree = await getRepoTree(repo, toBranch.commitAddr)
+        const toTreeItems = [...toTree.items].filter(
+            (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
+        )
+        console.debug('[Pull create] - To tree blobs:', toTreeItems)
+        // Find items that exist in both trees and were changed
+        const intersected = toTreeItems.filter((item) => {
+            return fromTreeItems.find(
+                (fItem) =>
+                    fItem.path === item.path &&
+                    fItem.name === item.name &&
+                    fItem.sha1 !== item.sha1,
+            )
+        })
+        console.debug('[Pull crreate] - Intersected:', intersected)
+        // Find items that where added by `fromBranch`
+        const added = fromTreeItems.filter((item) => {
+            return !toTreeItems.find(
+                (tItem) => tItem.path === item.path && tItem.name === item.name,
+            )
+        })
+        console.debug('[Pull crreate] - Added:', added)
+        setBlobProgress({
+            count: 0,
+            total: intersected.length + added.length,
+        })
+
+        // Merge intersected and added and generate compare list
+        const compare: {
+            to?: { item: TGoshTreeItem; blob: any }
+            from: { item: TGoshTreeItem; blob: any }
+            showDiff?: boolean
+        }[] = []
+
+        for (const chunk of splitByChunk(intersected, 5)) {
+            await Promise.all(
+                chunk.map(async (item) => {
+                    const fromItem = fromTreeItems.find(
+                        (fItem) => fItem.path === item.path && fItem.name === item.name,
+                    )
+                    const toItem = toTreeItems.find(
+                        (tItem) => tItem.path === item.path && tItem.name === item.name,
+                    )
+                    if (fromItem && toItem) {
+                        const fromBlob = await getBlob(wallet, repo, fromBranch, fromItem)
+                        const toBlob = await getBlob(wallet, repo, toBranch, toItem)
+                        compare.push({
+                            to: { item: toItem, blob: toBlob },
+                            from: { item: fromItem, blob: fromBlob },
+                            showDiff:
+                                compare.length < 10 ||
+                                Buffer.isBuffer(toBlob) ||
+                                Buffer.isBuffer(fromBlob),
+                        })
+                    }
+                    setBlobProgress((currVal) => ({
+                        ...currVal,
+                        count: currVal?.count + 1,
+                    }))
+                }),
+            )
+            await sleep(300)
+        }
+
+        for (const chunk of splitByChunk(added, 10)) {
+            await Promise.all(
+                chunk.map(async (item) => {
+                    const fromBlob = await getBlob(wallet, repo, fromBranch, item)
+                    compare.push({
+                        to: undefined,
+                        from: { item, blob: fromBlob },
+                        showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
+                    })
+                    setBlobProgress((currVal) => ({
+                        ...currVal,
+                        count: currVal?.count + 1,
+                    }))
+                }),
+            )
+            await sleep(300)
+        }
+
+        console.debug('[Pull create] - Compare list:', compare)
+        setCompare(compare)
+        setBlobProgress({ count: 0, total: 0 })
+    }
 
     const setShowDiff = (i: number) =>
         setCompare((currVal) =>
@@ -89,151 +205,32 @@ const PullCreatePage = () => {
             }),
         )
 
-    useEffect(() => {
-        const getBlob = async (
-            wallet: IGoshWallet,
-            repo: IGoshRepository,
-            branch: TGoshBranch,
-            item: TGoshTreeItem,
-        ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
-            const commit = new GoshCommit(wallet.account.client, branch.commitAddr)
-            const commitName = await commit.getName()
-
-            const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
-            const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
-            const snap = new GoshSnapshot(wallet.account.client, snapAddr)
-            const data = await snap.getSnapshot(commitName, item)
-            return data
-        }
-
-        const onCompare = async (wallet: IGoshWallet, repo: IGoshRepository) => {
-            try {
-                const [branchFromName, branchToName] = compareParam.split('...')
-                const branchFrom = await repo.getBranch(branchFromName)
-                const branchTo = await repo.getBranch(branchToName)
-                if (!branchFrom?.commitAddr || !branchTo?.commitAddr)
-                    throw new GoshError(EGoshError.NO_BRANCH)
-                if (branchFrom.commitAddr === branchTo.commitAddr) {
-                    setCompare([])
-                    return
-                }
-                setCompare(undefined)
-                const fromTree = await getRepoTree(repo, branchFrom.commitAddr)
-                const fromTreeItems = [...fromTree.items].filter(
-                    (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
-                )
-                console.debug('[Pull create] - From tree blobs:', fromTreeItems)
-                const toTree = await getRepoTree(repo, branchTo.commitAddr)
-                const toTreeItems = [...toTree.items].filter(
-                    (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
-                )
-                console.debug('[Pull create] - To tree blobs:', toTreeItems)
-                // Find items that exist in both trees and were changed
-                const intersected = toTreeItems.filter((item) => {
-                    return fromTreeItems.find(
-                        (fItem) =>
-                            fItem.path === item.path &&
-                            fItem.name === item.name &&
-                            fItem.sha1 !== item.sha1,
-                    )
-                })
-                console.debug('[Pull crreate] - Intersected:', intersected)
-                // Find items that where added by `fromBranch`
-                const added = fromTreeItems.filter((item) => {
-                    return !toTreeItems.find(
-                        (tItem) => tItem.path === item.path && tItem.name === item.name,
-                    )
-                })
-                console.debug('[Pull crreate] - Added:', added)
-                setBlobProgress({
-                    count: 0,
-                    total: intersected.length + added.length,
-                })
-
-                // Merge intersected and added and generate compare list
-                const compare: {
-                    to?: { item: TGoshTreeItem; blob: any }
-                    from: { item: TGoshTreeItem; blob: any }
-                    showDiff?: boolean
-                }[] = []
-
-                for (const chunk of splitByChunk(intersected, 5)) {
-                    await Promise.all(
-                        chunk.map(async (item) => {
-                            const from = fromTreeItems.find(
-                                (fItem) =>
-                                    fItem.path === item.path && fItem.name === item.name,
-                            )
-                            const to = toTreeItems.find(
-                                (tItem) =>
-                                    tItem.path === item.path && tItem.name === item.name,
-                            )
-                            if (from && to) {
-                                const fromBlob = await getBlob(
-                                    wallet,
-                                    repo,
-                                    branchFrom,
-                                    from,
-                                )
-                                const toBlob = await getBlob(wallet, repo, branchTo, to)
-                                compare.push({
-                                    to: { item: to, blob: toBlob },
-                                    from: { item: from, blob: fromBlob },
-                                    showDiff:
-                                        compare.length < 10 ||
-                                        Buffer.isBuffer(toBlob) ||
-                                        Buffer.isBuffer(fromBlob),
-                                })
-                            }
-                            setBlobProgress((currVal) => ({
-                                ...currVal,
-                                count: currVal?.count + 1,
-                            }))
-                        }),
-                    )
-                    await sleep(300)
-                }
-
-                for (const chunk of splitByChunk(added, 10)) {
-                    await Promise.all(
-                        chunk.map(async (item) => {
-                            const fromBlob = await getBlob(wallet, repo, branchFrom, item)
-                            compare.push({
-                                to: undefined,
-                                from: { item, blob: fromBlob },
-                                showDiff:
-                                    compare.length < 10 || Buffer.isBuffer(fromBlob),
-                            })
-                            setBlobProgress((currVal) => ({
-                                ...currVal,
-                                count: currVal?.count + 1,
-                            }))
-                        }),
-                    )
-                    await sleep(300)
-                }
-
-                console.debug('[Pull create] - Compare list:', compare)
-                setCompare(compare)
-                setBlobProgress({ count: 0, total: 0 })
-            } catch (e: any) {
-                console.error(e.message)
-                toast.error(e.message)
+    const onBuildDiff = async () => {
+        setCompare(undefined)
+        const { fromBranch, toBranch } = compareBranches
+        try {
+            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!fromBranch?.commitAddr || !toBranch?.commitAddr) {
+                throw new GoshError(EGoshError.NO_BRANCH)
             }
+            await retry(() => buildDiff(wallet.instance, { fromBranch, toBranch }), 3)
+        } catch (e: any) {
+            setCompare([])
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
-
-        setCompare([])
-        if (repo && wallet && compareParam !== 'main...main') onCompare(wallet, repo)
-    }, [compareParam, repo, wallet])
+    }
 
     const onCommitMerge = async (values: TCommitFormValues) => {
+        const { fromBranch, toBranch } = compareBranches
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH)
-            if (branchFrom.name === branchTo.name || !compare?.length)
+            if (!fromBranch || !toBranch) throw new GoshError(EGoshError.NO_BRANCH)
+            if (fromBranch.name === toBranch.name || !compare?.length) {
                 throw new GoshError(EGoshError.PR_NO_MERGE)
+            }
 
             // Prepare blobs
             const blobs = compare
@@ -251,36 +248,43 @@ const PullCreatePage = () => {
                 })
             console.debug('Blobs', blobs)
 
-            if (branchTo.isProtected) {
+            if (toBranch.isProtected) {
                 if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
                 if (smvBalance.smvBalance < 20)
                     throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
             }
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
-                repo,
-                branchTo,
-                userState.keys.public,
-                blobs,
-                message,
-                values.tags,
-                branchFrom,
-                progressCallback,
+            const pubkey = userState.keys.public
+            await retry(
+                () =>
+                    wallet.instance.createCommit(
+                        repo,
+                        toBranch,
+                        pubkey,
+                        blobs,
+                        message,
+                        values.tags,
+                        fromBranch,
+                        progressCallback,
+                    ),
+                3,
             )
 
             // Delete branch after merge (if selected), update branches, redirect
-            if (values.deleteBranch) await wallet.deleteBranch(repo, branchFrom.name)
+            if (values.deleteBranch) {
+                await retry(() => wallet.instance.deleteBranch(repo, fromBranch.name), 3)
+            }
             await updateBranches()
             navigate(
-                branchTo.isProtected
+                toBranch.isProtected
                     ? `/${daoName}/events`
-                    : `/${daoName}/${repoName}/tree/${branchTo.name}`,
+                    : `/${daoName}/${repoName}/tree/${toBranch.name}`,
                 { replace: true },
             )
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -289,38 +293,34 @@ const PullCreatePage = () => {
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">
                 <BranchSelect
-                    branch={localBranches?.from}
+                    branch={compareBranches?.fromBranch}
                     branches={branches}
-                    onChange={(selected) =>
+                    onChange={(selected) => {
                         !!selected &&
-                        setlocalBranches((currVal) => ({
-                            ...currVal,
-                            from: selected,
-                        }))
-                    }
+                            setCompareBranches((currVal) => ({
+                                ...currVal,
+                                fromBranch: selected,
+                            }))
+                    }}
                 />
                 <span>
                     <FontAwesomeIcon icon={faChevronRight} size="sm" />
                 </span>
                 <BranchSelect
-                    branch={localBranches?.to}
+                    branch={compareBranches?.toBranch}
                     branches={branches}
-                    onChange={(selected) =>
+                    onChange={(selected) => {
                         !!selected &&
-                        setlocalBranches((currVal) => ({
-                            ...currVal,
-                            to: selected,
-                        }))
-                    }
+                            setCompareBranches((currVal) => ({
+                                ...currVal,
+                                toBranch: selected,
+                            }))
+                    }}
                 />
                 <button
                     className="btn btn--body px-3 !py-1.5 !text-sm"
                     disabled={compare === undefined}
-                    onClick={() =>
-                        navigate(
-                            `/${daoName}/${repoName}/pull?compare=${localBranches?.from?.name}...${localBranches?.to?.name}`,
-                        )
-                    }
+                    onClick={onBuildDiff}
                 >
                     Compare
                 </button>
@@ -344,9 +344,13 @@ const PullCreatePage = () => {
                     <>
                         <div className="text-lg">
                             Merge branch
-                            <span className="font-semibold mx-2">{branchFrom?.name}</span>
+                            <span className="font-semibold mx-2">
+                                {compareBranches.fromBranch?.name}
+                            </span>
                             <FontAwesomeIcon icon={faArrowRight} size="sm" />
-                            <span className="font-semibold ml-2">{branchTo?.name}</span>
+                            <span className="font-semibold ml-2">
+                                {compareBranches.toBranch?.name}
+                            </span>
                         </div>
 
                         {compare.map(({ to, from, showDiff }, index) => {
@@ -386,7 +390,7 @@ const PullCreatePage = () => {
                         <div className="mt-5">
                             <Formik
                                 initialValues={{
-                                    title: `Merge branch '${branchFrom?.name}' into '${branchTo?.name}'`,
+                                    title: `Merge branch '${compareBranches.fromBranch?.name}' into '${compareBranches.toBranch?.name}'`,
                                     tags: '',
                                 }}
                                 onSubmit={onCommitMerge}
@@ -400,7 +404,8 @@ const PullCreatePage = () => {
                                             isDisabled={!monaco || isSubmitting}
                                             isSubmitting={isSubmitting}
                                             extraButtons={
-                                                !branchFrom?.isProtected && (
+                                                !compareBranches.fromBranch
+                                                    ?.isProtected && (
                                                     <Field
                                                         name="deleteBranch"
                                                         component={SwitchField}

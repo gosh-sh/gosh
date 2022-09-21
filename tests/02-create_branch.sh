@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e 
 set -o pipefail
+. ./util.sh
 
 REPO_NAME=repo2
 
-[ -d $REPO_NAME ] && rm -rf $REPO_NAME 
+[ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 
 # create repo
@@ -13,7 +14,8 @@ WALLET_ABI=../contracts/gosh/goshwallet.abi.json
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-sleep 10
+wait_account_active $REPO_ADDR
+sleep 60
 
 # clone repo
 git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
@@ -39,7 +41,8 @@ git add .
 git commit -m "foo-$CHANGE"
 git push --set-upstream origin $BRANCH_NAME
 
-sleep 50
+wait_set_commit $REPO_ADDR $BRANCH_NAME
+sleep 120
 
 cd ..
 git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone"

@@ -9,16 +9,22 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "./modifiers/modifiers.sol";
-import "repository.sol";
+import "goshwallet.sol";
 import "goshdao.sol";
-import "tree.sol";
+import "Upgradable.sol";
+import "repository.sol";
+import "commit.sol";
+import "profile.sol";
+import "root.sol";
 import "content-signature.sol";
+import "./libraries/GoshLib.sol";
 
-/* Root contract of gosh */
-contract Gosh is Modifiers, Upgradable {
-    string constant version = "0.10.0";
-
-    address _creator;
+/* Root contract of Gosh */
+contract GoshRoot is Modifiers, Upgradable{
+    string constant version = "0.11.0";
+    
+    address _root;
+    bool _flag = true;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
     TvmCell m_WalletCode;
@@ -28,6 +34,8 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_codeTree;
     TvmCell m_codeDiff;
     TvmCell m_contentSignature;
+    TvmCell m_codeProfile;
+    TvmCell m_codeProfileDao;
 
     //SMV
     TvmCell m_TokenLockerCode;
@@ -40,65 +48,65 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_TokenWalletCode;
 
     address public _lastGoshDao;
-
-    constructor(address creator) public onlyOwner {
+    
+    constructor() public {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
-        _creator = creator;
+        _root = msg.sender;
     }
-
-    function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
+    
+    function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view accept {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        Root(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
+    }
+    
+    function checkUpdateRepo3(string name, string namedao, AddrVersion prev, address answer) public view senderIs(_root) accept {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address repo = _buildRepositoryAddr(name, addr);
+        Repository(repo).checkUpdateRepo4{value : 0.15 ton, flag: 1}(prev, answer);
+    }   
+    
+    function _buildRepositoryAddr(string name, address dao) private view returns (address) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
-            m_RepositoryCode, address(this), goshdao, version
+            m_RepositoryCode, address(this), dao, version
         );
-        return tvm.buildStateInit({
+        return address(tvm.hash(tvm.buildStateInit({
             code: deployCode,
             contr: Repository,
+            varInit: { _name: name }
+        })));
+    }
+    
+    function deployProfile(string name, uint256 pubkey) public view accept {
+        tvm.accept();
+        TvmCell s1 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
             varInit: {_name: name}
         });
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(m_codeProfileDao, pubkey);
     }
 
-    function _composeWalletStateInit(uint256 pubkey, uint256 rootpubkey, address dao, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
-        TvmCell _contractflex = tvm.buildStateInit({
-            code: deployCode,
-            pubkey: pubkey,
-            contr: GoshWallet,
-            varInit: {_rootRepoPubkey: rootpubkey, _rootgosh : address(this), _goshdao: dao, _index: index}
-        });
-        return _contractflex;
-    }
-
-    function checkAccess(uint256 pubkey, uint256 rootpubkey, address sender, address dao, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, rootpubkey, dao, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
-    }
-
-    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
-        TvmBuilder b;
-        b.store(address(this));
-        b.store(name);
-        b.store(version);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        TvmCell deployCode = tvm.setCodeSalt(m_codeDao, b.toCell());
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshDao,
-            varInit: {}
-        });
-    }
-
-    function deployDao(string name, uint256 root_pubkey) public minValue(91 ton) {
+    
+    function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept {
         tvm.accept();
+        require(_flag == false, ERR_GOSH_UPDATE);
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = _composeDaoStateInit(name);
-        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO - 5 ton, wid: 0, flag: 1}(
-            address(this),
-            _creator,
-            root_pubkey,
+        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
+            pubaddr,
+            msg.sender,
             name,
+            pubmem,
             m_CommitCode,
             m_RepositoryCode,
             m_WalletCode,
@@ -112,8 +120,74 @@ contract Gosh is Modifiers, Upgradable {
             m_SMVClientCode,
             m_SMVProposalCode,
             m_TokenRootCode,
-            m_TokenWalletCode
+            m_TokenWalletCode,
+            previous
         );
+    }
+
+    function sendMoney(address pubaddr, address goshdao, uint128 value, uint128 index) public view {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, goshdao, index);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function sendMoneyProfile(string name, uint128 value) public view {
+        tvm.accept();
+        TvmCell s1 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
+            varInit: {_name : name}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function sendMoneyDao(string name, uint128 value) public view {
+        TvmCell s1 = _composeDaoStateInit(name);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        addr.transfer(value);
+    }
+    
+    function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            m_RepositoryCode, address(this), goshdao, version
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: {_name: name}
+        });
+    }
+
+    function _composeWalletStateInit(address pubaddr, address dao, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell _contractflex = tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshWallet,
+            varInit: {_goshroot : address(this), _goshdao: dao, _index: index}
+        });
+        return _contractflex;
+    }
+
+    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
+        TvmBuilder b;
+        b.store(name);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        TvmCell deployCode = tvm.setCodeSalt(m_codeDao, b.toCell());
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshDao,
+            varInit: { _goshroot : address(this) }
+        });
     }
 
     function _composeCommitStateInit(string _commit, address repo) internal view returns(TvmCell) {
@@ -121,9 +195,18 @@ contract Gosh is Modifiers, Upgradable {
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
         return stateInit;
     }
-
+    
+    // Upgradable
+    function onCodeUpgrade() internal override {
+        tvm.resetStorage();
+    }
+    
     //Setters
-
+    
+    function setFlag(bool flag) public onlyOwner accept {
+        _flag = flag;
+    }
+    
     //SMV
 
     /* TvmCell m_TokenLockerCode;
@@ -131,80 +214,100 @@ contract Gosh is Modifiers, Upgradable {
     TvmCell m_SMVClientCode;
     TvmCell m_SMVProposalCode; */
 
-    function setTokenRoot(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenRoot(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenRootCode = code;
     }
 
-    function setTokenWallet(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenWallet(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenWalletCode = code;
     }
 
-    function setTokenLocker(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTokenLocker(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_TokenLockerCode = code;
     }
 
-    function setSMVPlatform(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVPlatform(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVPlatformCode = code;
     }
 
-    function setSMVClient(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVClient(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVClientCode = code;
     }
 
-    function setSMVProposal(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSMVProposal(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_SMVProposalCode = code;
     }
 
     //////////////////////////////////////////////////////////////////////
 
-    function setDiff(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setProfile(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        TvmBuilder b;
+        b.store(_root);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        m_codeProfile = tvm.setCodeSalt(code, b.toCell());
+    }
+    
+    function setProfileDao(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        TvmBuilder b;
+        b.store(_root);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        m_codeProfileDao = tvm.setCodeSalt(code, b.toCell());
+    }
+    
+    function setDiff(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeDiff = code;
     }
 
-    function setRepository(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setRepository(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_RepositoryCode = code;
     }
 
-    function setCommit(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setCommit(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_CommitCode = code;
     }
 
-    function setSnapshot(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setSnapshot(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeSnapshot = code;
     }
 
-    function setcontentSignature(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setcontentSignature(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_contentSignature = code;
     }
 
-    function setWallet(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setWallet(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_WalletCode = code;
     }
 
-    function setDao(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setDao(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeDao = code;
     }
 
-    function setTree(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTree(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeTree = code;
     }
 
-    function setTag(TvmCell code) public  onlyOwner {
-        tvm.accept();
+    function setTag(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
         m_codeTag = code;
     }
 
@@ -229,15 +332,29 @@ contract Gosh is Modifiers, Upgradable {
         TvmCell s1 = _composeDaoStateInit(name);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+    
+    function getAddrWallet(address pubaddr, address dao, uint128 index) external view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, dao, index);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
     function getRepoDaoCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildRepositoryCode(
             m_RepositoryCode, address(this), dao, version
         );
     }
+    
+    function getProfileAddr(string name) external view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: m_codeProfile,
+            contr: Profile,
+            varInit: {_name : name}
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
-    function getDaoWalletCode(uint256 pubkey) external view returns(TvmCell) {
-        return GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
+        return GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
     }
 
     function getSMVProposalCode() external view returns(TvmCell) {
@@ -274,10 +391,5 @@ contract Gosh is Modifiers, Upgradable {
 
     function getVersion() external pure returns(string) {
         return version;
-    }
-
-    // Upgradable
-    function onCodeUpgrade() internal override {
-        tvm.resetStorage();
     }
 }

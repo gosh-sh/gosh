@@ -6,10 +6,11 @@ import { EGoshError, GoshError } from 'react-gosh'
 import { IGoshWallet, TSmvBalanceDetails } from 'react-gosh'
 import { classNames } from 'react-gosh'
 import Spinner from '../Spinner'
+import { TDaoLayoutOutletContext } from '../../pages/DaoLayout'
 
 type TSmvBalanceProps = {
     details: TSmvBalanceDetails
-    wallet?: IGoshWallet
+    wallet?: TDaoLayoutOutletContext['wallet']
     className?: string
 }
 
@@ -21,7 +22,7 @@ const SmvBalance = (props: TSmvBalanceProps) => {
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             setRelease(true)
-            await wallet.updateHead()
+            await wallet.instance.updateHead()
             toast.success('Token release was sent, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -31,7 +32,7 @@ const SmvBalance = (props: TSmvBalanceProps) => {
         }
     }
 
-    if (!wallet || !wallet.isDaoParticipant) return null
+    if (!wallet || !wallet.details.isDaoMember) return null
     return (<>
         <div
              /* style={{display: 'block'}}

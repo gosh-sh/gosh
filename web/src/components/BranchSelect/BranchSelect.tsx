@@ -40,7 +40,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
             }
             value={branch}
             disabled={disabled}
-            onChange={(value) => onChange(value)}
+            onChange={(value: any) => onChange(value)}
         >
             <Listbox.Button
                 as="div"

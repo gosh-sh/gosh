@@ -6,7 +6,9 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"creator","type":"address"},
+				{"name":"rootpubaddr","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameDao","type":"string"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -29,12 +31,83 @@
 			]
 		},
 		{
+			"name": "turnOnPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkey",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkeyIn",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployContent",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"commit","type":"string"},
 				{"name":"label","type":"string"},
 				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstoneWallet",
+			"inputs": [
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForTombstone",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstoneDao",
+			"inputs": [
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -64,7 +137,17 @@
 		{
 			"name": "deployRepository",
 			"inputs": [
-				{"name":"nameRepo","type":"string"}
+				{"name":"nameRepo","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstone",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"description","type":"string"}
 			],
 			"outputs": [
 			]
@@ -112,7 +195,8 @@
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"tree","type":"address"}
+				{"name":"tree","type":"address"},
+				{"name":"upgrade","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -201,16 +285,6 @@
 				{"name":"shaTree","type":"string"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"datatree","type":"map(uint256,tuple)"},
 				{"name":"ipfs","type":"optional(string)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commitName","type":"string"},
-				{"name":"tree","type":"address"}
 			],
 			"outputs": [
 			]
@@ -328,19 +402,19 @@
 			]
 		},
 		{
-			"name": "getRootPubkey",
+			"name": "getRootAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
-			"name": "getWalletPubkey",
+			"name": "getWalletAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -382,6 +456,14 @@
 			]
 		},
 		{
+			"name": "getWalletOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getWalletsCount",
 			"inputs": [
 			],
@@ -414,6 +496,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(uint256)"}
 			]
 		},
 		{
@@ -652,10 +742,9 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_rootRepoPubkey","type":"uint256"},
-		{"key":2,"name":"_rootgosh","type":"address"},
-		{"key":3,"name":"_goshdao","type":"address"},
-		{"key":4,"name":"_index","type":"uint128"}
+		{"key":1,"name":"_goshroot","type":"address"},
+		{"key":2,"name":"_goshdao","type":"address"},
+		{"key":3,"name":"_index","type":"uint128"}
 	],
 	"events": [
 	],
@@ -683,13 +772,15 @@
 		{"name":"m_SMVProposalCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_lockerCode","type":"cell"},
+		{"name":"_access","type":"optional(uint256)"},
 		{"name":"m_messages","type":"map(uint256,uint32)"},
 		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
-		{"name":"_creator","type":"address"},
-		{"name":"_rootRepoPubkey","type":"uint256"},
-		{"name":"_rootgosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
+		{"name":"_rootpubaddr","type":"address"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_index","type":"uint128"},
+		{"name":"_nameDao","type":"string"},
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
@@ -704,6 +795,7 @@
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_limit_messages","type":"uint128"},
 		{"name":"_limit_time","type":"uint128"},
-		{"name":"_walletcounter","type":"uint128"}
+		{"name":"_walletcounter","type":"uint128"},
+		{"name":"_tombstone","type":"bool"}
 	]
 }

@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { TGoshBranch } from 'react-gosh'
+import { retry, TGoshBranch } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
@@ -20,6 +20,7 @@ import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { GoshCommit } from 'react-gosh'
+import ToastError from '../../components/Error/ToastError'
 
 type TCreateBranchFormValues = {
     newName: string
@@ -56,11 +57,14 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForAddProtectedBranch(repoName, name)
+            await retry(
+                () => wallet.instance.startProposalForAddProtectedBranch(repoName, name),
+                3,
+            )
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
@@ -85,11 +89,15 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForDeleteProtectedBranch(repoName, name)
+            await retry(
+                () =>
+                    wallet.instance.startProposalForDeleteProtectedBranch(repoName, name),
+                3,
+            )
             navigate(`/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
@@ -107,18 +115,29 @@ export const BranchesPage = () => {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
-            await wallet.deployBranch(
-                repo,
-                values.newName.toLowerCase(),
-                values.from.name,
-                await commit.getName(),
+            const commit = new GoshCommit(
+                wallet.instance.account.client,
+                values.from.commitAddr,
+                wallet.instance.version,
+            )
+            const fromBranchName = values.from.name
+            const commitHash = await commit.getName()
+            await retry(
+                () =>
+                    wallet.instance.deployBranch(
+                        repo,
+                        values.newName.toLowerCase(),
+                        fromBranchName,
+                        commitHash,
+                    ),
+                3,
             )
             await updateBranches()
             helpers.resetForm()
+            helpers.setFieldValue('from', values.from)
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -136,7 +155,7 @@ export const BranchesPage = () => {
                 if (!repoName) throw new GoshError(EGoshError.NO_REPO)
                 if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await wallet.deleteBranch(repo, name)
+                await retry(() => wallet.instance.deleteBranch(repo, name), 3)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
@@ -144,7 +163,7 @@ export const BranchesPage = () => {
                     [name]: { ...state[name], busy: false, delete: false },
                 }))
                 console.error(e)
-                toast.error(e.message)
+                toast.error(<ToastError error={e} />)
             }
         }
     }
@@ -165,7 +184,7 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex flex-wrap justify-between gap-4">
-                {wallet?.isDaoParticipant && (
+                {wallet?.details.isDaoMember && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -260,7 +279,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {wallet?.isDaoParticipant && (
+                            {wallet?.details.isDaoMember && (
                                 <>
                                     <button
                                         type="button"

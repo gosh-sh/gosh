@@ -1,10 +1,21 @@
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
+#[allow(dead_code)]
 pub struct BlockchainContractAddress(String);
 
 impl BlockchainContractAddress {
-    pub fn new(address: impl Into<String>) -> Self {
+    pub fn new<T>(address: T) -> Self
+    where
+        T: Into<String>,
+    {
         Self(address.into())
+    }
+
+    pub fn todo_investigate_unexpected_convertion<T>(address: T) -> Self
+    where
+        T: Into<String>,
+    {
+        Self::new(address)
     }
 }
 
@@ -14,9 +25,15 @@ impl std::fmt::Display for BlockchainContractAddress {
     }
 }
 
+impl std::convert::Into<BlockchainContractAddress> for &BlockchainContractAddress {
+    fn into(self) -> BlockchainContractAddress {
+        self.clone()
+    }
+}
+
 impl std::convert::From<BlockchainContractAddress> for String {
     fn from(address: BlockchainContractAddress) -> String {
-        address.0 
+        address.0
     }
 }
 
@@ -25,8 +42,8 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn ensure_formatting(){
-        let address = BlockchainContractAddress::new("0:0000000000123");   
+    pub fn ensure_formatting() {
+        let address = BlockchainContractAddress::new("0:0000000000123");
         assert_eq!("<0:0000000000123>", format!("{}", address));
     }
 

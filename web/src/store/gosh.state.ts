@@ -1,10 +1,5 @@
 import { atom, selectorFamily } from 'recoil'
-import { TGoshBranch, TGoshTree, TGoshTreeItem, TGoshWalletDetails } from 'react-gosh'
-
-export const goshWalletAtom = atom<TGoshWalletDetails | undefined>({
-    key: 'GoshWalletAtom',
-    default: undefined,
-})
+import { TGoshBranch, TGoshTree, TGoshTreeItem } from 'react-gosh'
 
 export const goshBranchesAtom = atom<TGoshBranch[]>({
     key: 'GoshBranchesAtom',

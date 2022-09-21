@@ -1,12 +1,11 @@
 import { Image, Container } from './interfaces'
 import {
-    dockerClient,
-    goshClient,
-    goshRoot,
+    AppConfig,
     GoshContentSignature,
     GoshDao,
     GoshWallet,
-    TUserState,
+    IGosh,
+    TUser,
 } from 'react-gosh'
 
 const logger = console
@@ -14,9 +13,6 @@ const logger = console
 const ENDPOINTS = process.env.REACT_APP_GOSH_NETWORK || ''
 const GOSH_NETWORK = ENDPOINTS.replace(/^https?:\/\//, '')
 const GOSH_ROOT_CONTRACT_ADDRESS = process.env.REACT_APP_GOSH_ADDR || ''
-
-console.debug('Endpoints', ENDPOINTS)
-console.debug('Gosh root', GOSH_ROOT_CONTRACT_ADDRESS)
 
 const IMAGE_LABELS = {
     GOSH_ADDRESS: 'gosh.address',
@@ -45,9 +41,9 @@ export class DockerClient {
     /**
      * Get containers list
      **/
-    static async getContainers(userState: TUserState): Promise<Container[]> {
+    static async getContainers(userState: TUser): Promise<Container[]> {
         const containers =
-            (await dockerClient?.docker.listContainers()) as IDockerContainer[]
+            (await AppConfig.dockerclient?.docker.listContainers()) as IDockerContainer[]
         return await Promise.all(
             containers.map(async (container) => {
                 const image = await DockerClient._findImage(container!.ImageID)
@@ -66,6 +62,7 @@ export class DockerClient {
                 const [hasGoshCommitHash, goshCommitHash] =
                     DockerClient.readImageMetadata(image, IMAGE_LABELS.GOSH_COMMIT, '-')
 
+                // TODO: Get GOSH version?
                 const validated =
                     hasGoshAddress && hasGoshCommitHash
                         ? await DockerClient.getImageStatus(
@@ -73,6 +70,7 @@ export class DockerClient {
                               userState,
                               goshAddress,
                               goshCommitHash,
+                              '0.11.0',
                           )
                         : UNSIGNED_STATUS
                 return {
@@ -91,8 +89,9 @@ export class DockerClient {
     /**
      * Get containers list
      **/
-    static async getImages(userState: TUserState): Promise<Image[]> {
-        const images = (await dockerClient?.docker.listImages()) as IDockerImage[]
+    static async getImages(userState: TUser): Promise<Image[]> {
+        const images =
+            (await AppConfig.dockerclient?.docker.listImages()) as IDockerImage[]
         return await Promise.all(
             images.map(async (image) => {
                 const [hasGoshAddress, goshAddress] = DockerClient.readImageMetadata(
@@ -103,6 +102,7 @@ export class DockerClient {
                 const [hasGoshCommitHash, goshCommitHash] =
                     DockerClient.readImageMetadata(image, IMAGE_LABELS.GOSH_COMMIT, '-')
 
+                // TODO: Get GOSH version?
                 const validated =
                     hasGoshAddress && hasGoshCommitHash
                         ? await DockerClient.getImageStatus(
@@ -110,6 +110,7 @@ export class DockerClient {
                               userState,
                               goshAddress,
                               goshCommitHash,
+                              '0.11.0',
                           )
                         : UNSIGNED_STATUS
                 return {
@@ -124,24 +125,29 @@ export class DockerClient {
     }
 
     static async _findImage(imageId: string): Promise<IDockerImage | undefined> {
-        const images = (await dockerClient?.docker.listImages()) as Array<IDockerImage>
+        const images =
+            (await AppConfig.dockerclient?.docker.listImages()) as Array<IDockerImage>
         return images.find((image) => image.Id === imageId)
     }
 
     static async _getWallet(
-        userState: TUserState,
+        userState: TUser,
         goshRootContract: string,
         goshDao: string,
+        version: string,
     ): Promise<GoshWallet | undefined> {
         if (goshRootContract !== GOSH_ROOT_CONTRACT_ADDRESS) {
             return
         }
 
-        const daoAddress = await goshRoot.getDaoAddr(goshDao)
-        const dao = new GoshDao(goshClient, daoAddress)
+        const gosh = await AppConfig.goshroot.getGosh(version)
+        const daoAddress = await gosh.getDaoAddr(goshDao)
+        const dao = new GoshDao(AppConfig.goshclient, daoAddress, version)
         const walletAddr = await dao.getWalletAddr(`0x${userState.keys?.public}`, 0)
 
-        const wallet = new GoshWallet(goshClient, walletAddr, userState?.keys)
+        const wallet = new GoshWallet(AppConfig.goshclient, walletAddr, version, {
+            keys: userState?.keys,
+        })
         return wallet
     }
 
@@ -159,15 +165,17 @@ export class DockerClient {
      **/
     static async getImageStatus(
         image: IDockerImage,
-        userState: TUserState,
+        userState: TUser,
         goshAddress: string,
         goshCommitHash: string,
+        version: string,
     ): Promise<any> {
         logger.log(
             `Calling getImageStatus: userState - ${userState}  id: ${image.Id}...\n`,
         )
         try {
-            if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
+            if (!AppConfig.dockerclient?.extension.vm)
+                throw new Error('Extension vm undefined')
 
             const [isImageHashCalculated, imageHash] =
                 await DockerClient.calculateImageSha(image.Id, '')
@@ -181,7 +189,12 @@ export class DockerClient {
                 DockerClient._getRepositoryTuple(goshAddress)
             const goshRepositoryName = `${goshDao}/${goshRepoName}`
 
-            const wallet = await DockerClient._getWallet(userState, goshRoot, goshDao)
+            const wallet = await DockerClient._getWallet(
+                userState,
+                goshRoot,
+                goshDao,
+                version,
+            )
             if (!wallet) {
                 return 'warning'
             }
@@ -191,7 +204,11 @@ export class DockerClient {
                 goshCommitHash,
                 '',
             )
-            const contentObj = new GoshContentSignature(goshClient, contentAddr)
+            const contentObj = new GoshContentSignature(
+                AppConfig.goshclient,
+                contentAddr,
+                version,
+            )
             const content = await contentObj.getContent()
             const validImageHashes = content.split(',')
 
@@ -210,7 +227,8 @@ export class DockerClient {
         imageId: string,
         appendValidationLog: any,
         closeValidationLog: any,
-        userState: TUserState,
+        userState: TUser,
+        version: string,
     ): Promise<boolean> {
         const image: IDockerImage | undefined = await DockerClient._findImage(imageId)
         if (typeof image === 'undefined') {
@@ -255,7 +273,12 @@ export class DockerClient {
 
         const goshRepositoryName = `${goshDao}/${goshRepoName}`
 
-        const wallet = await DockerClient._getWallet(userState, goshRootContract, goshDao)
+        const wallet = await DockerClient._getWallet(
+            userState,
+            goshRootContract,
+            goshDao,
+            version,
+        )
         if (!wallet) {
             appendValidationLog('Error: unable to get gosh wallet.')
             closeValidationLog()
@@ -263,7 +286,8 @@ export class DockerClient {
         }
 
         try {
-            if (!dockerClient?.extension.vm) throw new Error('Extension vm undefined')
+            if (!AppConfig.dockerclient?.extension.vm)
+                throw new Error('Extension vm undefined')
             appendValidationLog('Build image from Gosh')
 
             const goshAddressWithNetwork = goshAddress.replace(
@@ -271,7 +295,7 @@ export class DockerClient {
                 `gosh::${GOSH_NETWORK}://`,
             )
 
-            const result = await dockerClient.extension.vm.cli.exec(
+            const result = await AppConfig.dockerclient.extension.vm.cli.exec(
                 COMMAND.VALIDATE_IMAGE_SHA,
                 [goshAddressWithNetwork, `${goshDao}__${goshRepoName}`, goshCommitHash],
             )
@@ -300,7 +324,11 @@ export class DockerClient {
                 '',
             )
 
-            const contentObj = new GoshContentSignature(goshClient, contentAddr)
+            const contentObj = new GoshContentSignature(
+                AppConfig.goshclient,
+                contentAddr,
+                version,
+            )
             const content = await contentObj.getContent()
             const validImageHashes = content.split(',')
 
@@ -327,10 +355,10 @@ export class DockerClient {
     ): Promise<[boolean, string]> {
         logger.log(`calculateImageSha ${imageId}`)
         try {
-            if (!dockerClient?.extension.vm) {
+            if (!AppConfig.dockerclient?.extension.vm) {
                 throw new Error('Extension vm undefined')
             }
-            const result = await dockerClient.extension.vm.cli.exec(
+            const result = await AppConfig.dockerclient.extension.vm.cli.exec(
                 COMMAND.CALCULATE_IMAGE_SHA,
                 [imageId],
             )
@@ -352,7 +380,8 @@ export class DockerClient {
         imageDockerfile: string,
         imageTag: string,
         appendLog: any,
-        userState: TUserState,
+        userState: TUser,
+        version: string,
     ): Promise<boolean> {
         console.log('buildImage', goshAddress, goshCommitHash, imageDockerfile)
         const [goshRootContract, goshDao, goshRepoName] =
@@ -360,26 +389,34 @@ export class DockerClient {
 
         const goshRepositoryName = `${goshDao}/${goshRepoName}`
 
-        const wallet = await DockerClient._getWallet(userState, goshRootContract, goshDao)
+        const wallet = await DockerClient._getWallet(
+            userState,
+            goshRootContract,
+            goshDao,
+            version,
+        )
         if (!wallet) {
             appendLog('Error: unable to get gosh wallet.')
             return false
         }
         try {
-            if (!dockerClient?.extension.vm) {
+            if (!AppConfig.dockerclient?.extension.vm) {
                 throw new Error('Extension vm undefined')
             }
             appendLog('Building...')
-            const result = await dockerClient.extension.vm.cli.exec(COMMAND.BUILD_IMAGE, [
-                goshAddress,
-                `${goshDao}__${goshRepoName}`,
-                goshCommitHash,
-                imageDockerfile,
-                imageTag,
-                IMAGE_LABELS.GOSH_ADDRESS,
-                IMAGE_LABELS.GOSH_COMMIT,
-                IMAGE_LABELS.GOSH_IMAGE_DOCKERFILE,
-            ])
+            const result = await AppConfig.dockerclient.extension.vm.cli.exec(
+                COMMAND.BUILD_IMAGE,
+                [
+                    goshAddress,
+                    `${goshDao}__${goshRepoName}`,
+                    goshCommitHash,
+                    imageDockerfile,
+                    imageTag,
+                    IMAGE_LABELS.GOSH_ADDRESS,
+                    IMAGE_LABELS.GOSH_COMMIT,
+                    IMAGE_LABELS.GOSH_IMAGE_DOCKERFILE,
+                ],
+            )
 
             if ('code' in result && !!result.code) {
                 logger.log(`Failed to build an image. ${JSON.stringify(result)}`)

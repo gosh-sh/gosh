@@ -21,14 +21,16 @@ import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
-    userStateAtom,
+    userAtom,
     getCodeLanguageFromFilename,
     splitByPath,
     classNames,
+    retry,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -45,20 +47,20 @@ const BlobUpdatePage = () => {
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
     const { blob, treeItem } = useGoshBlob(repo, branchName, treePath, true)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
+    const urlBack = `/${daoName}/${repoName}/blobs/view/${branchName}${
         treePath && `/${treePath}`
     }`
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
@@ -66,35 +68,40 @@ const BlobUpdatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
+            if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
             if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
-                repo,
-                branch,
-                userState.keys.public,
-                [
-                    {
-                        name: `${path ? `${path}/` : ''}${values.name}`,
-                        modified: values.content,
-                        original: blob?.content ?? '',
-                        isIpfs: blob?.isIpfs,
-                        treeItem,
-                    },
-                ],
-                message,
-                values.tags,
-                undefined,
-                progressCallback,
+            const pubkey = userState.keys.public
+            await retry(
+                () =>
+                    wallet.instance.createCommit(
+                        repo,
+                        branch,
+                        pubkey,
+                        [
+                            {
+                                name: `${path ? `${path}/` : ''}${values.name}`,
+                                modified: values.content,
+                                original: blob?.content ?? '',
+                                isIpfs: blob?.isIpfs,
+                                treeItem,
+                            },
+                        ],
+                        message,
+                        values.tags,
+                        undefined,
+                        progressCallback,
+                    ),
+                3,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -112,7 +119,7 @@ const BlobUpdatePage = () => {
         }
     }, [monaco, treePath])
 
-    if (!wallet?.isDaoParticipant) return <Navigate to={urlBack} />
+    if (!wallet?.details.isDaoMember) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <div className="px-4 sm:px-7">

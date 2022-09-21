@@ -36,7 +36,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/${selected.name}/${treePath}`,
+                                `/${daoName}/${repoName}/blobs/view/${selected.name}/${treePath}`,
                             )
                         }
                     }}
@@ -83,7 +83,7 @@ const BlobPage = () => {
                                         size: 'sm',
                                     }}
                                 />
-                                {!branch?.isProtected && wallet?.isDaoParticipant && (
+                                {!branch?.isProtected && wallet?.details.isDaoMember && (
                                     <Link
                                         to={`/${daoName}/${repoName}/blobs/update/${branchName}/${treePath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"

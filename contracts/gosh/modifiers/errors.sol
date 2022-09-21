@@ -7,7 +7,7 @@
 pragma ton-solidity >=0.61.2;
 
 abstract contract Errors {
-    string constant versionErrors = "0.10.0";
+    string constant versionErrors = "0.11.0";
     
     uint constant ERR_NO_SALT = 200;
     uint constant ERR_SENDER_NOT_DAO = 202;
@@ -42,4 +42,16 @@ abstract contract Errors {
     uint constant ERR_WRONG_DATA = 231;
     uint constant ERR_NOT_EMPTY_DATA = 232;
     uint constant ERR_SNAPSHOT_NOT_READY = 233;
+    uint constant ERR_EMPTY_BRANCH = 234;
+    uint constant ERR_GOSH_UPDATE = 235;
+    uint constant ERR_OLD_CONTRACT = 236;
+    uint constant ERR_GOSH_BAD_VERSION = 237;
+    uint constant ERR_BAD_COUNT_PARENTS = 238;
+    uint constant ERR_REPOSITORY_NOT_READY = 239;
+    uint constant ERR_PREV_NOT_EXIST = 240;
+    uint constant ERR_WRONG_DAO = 241;
+    uint constant ERR_TOMBSTONE = 241;
+    uint constant ERR_BAD_NUMBER_CUSTODIANS = 242;
+    uint constant ERR_NOTHING_TO_CONFIRM = 243;
+    uint constant ERR_ALREADY_CONFIRMED = 244;
 }

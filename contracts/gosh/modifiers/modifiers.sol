@@ -42,6 +42,12 @@ struct Diff {
 struct Item {
     string key;
     address value;
+    string version;
+}
+
+struct AddrVersion {
+    address addr;
+    string version;
 }
 
 struct GlobalConfig {
@@ -49,7 +55,7 @@ struct GlobalConfig {
 }
 
 abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.10.0";
+    string constant versionModifiers = "0.11.0";
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
@@ -57,13 +63,15 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
     uint128 constant FEE_DEPLOY_SNAPSHOT = 16 ton;
-    uint128 constant FEE_DEPLOY_COPY_SNAPSHOT = 2 ton;
     uint128 constant FEE_DEPLOY_BRANCH = 1.4 ton;
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
     uint128 constant FEE_DEPLOY_WALLET = 60 ton;
+    uint128 constant FEE_DEPLOY_PROFILE = 10000 ton;
+    uint128 constant FEE_DEPLOY_GOSH = 51 ton;
+    uint128 constant FEE_DEPLOY_DAO_PROFILE = 101 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
@@ -84,9 +92,20 @@ abstract contract Modifiers is Errors {
         require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);
         _;
     }
+    
+    modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
+        require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
+        require(msg.pubkey() == rootpubkey.get(), ERR_NOT_OWNER);
+        _;
+    }
 
     modifier onlyOwnerPubkey(uint256 rootpubkey) {
         require(msg.pubkey() == rootpubkey, ERR_NOT_OWNER);
+        _;
+    }
+    
+    modifier onlyOwnerAddress(address addr) {
+        require(msg.sender == addr, ERR_NOT_OWNER);
         _;
     }
 

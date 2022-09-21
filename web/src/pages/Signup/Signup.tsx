@@ -3,21 +3,27 @@ import { Form, Formik, Field } from 'formik'
 import * as Yup from 'yup'
 import TextareaField from '../../components/FormikForms/TextareaField'
 import SwitchField from '../../components/FormikForms/SwitchField'
-import { useResetRecoilState, useSetRecoilState } from 'recoil'
+import { useSetRecoilState } from 'recoil'
 import { useNavigate } from 'react-router-dom'
 import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { goshClient, userStatePersistAtom } from 'react-gosh'
+import { AppConfig, useUser } from 'react-gosh'
+import Spinner from '../../components/Spinner'
+import TextField from '../../components/FormikForms/TextField'
+import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
+import { SignupProgress } from './SignupProgress'
 
 type TFormValues = {
+    username: string
     phrase: string
     isConfirmed: boolean
 }
 
 const SignupPage = () => {
     const navigate = useNavigate()
-    const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
+    const user = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [phrase, setPhrase] = useState<string>('')
 
@@ -26,22 +32,36 @@ const SignupPage = () => {
         setPhrase(result.phrase)
     }
 
-    const onFormSubmit = (values: TFormValues) => {
-        userStatePersistReset()
-        setModal({
-            static: true,
-            isOpen: true,
-            element: (
-                <PinCodeModal
-                    phrase={values.phrase}
-                    onUnlock={() => navigate('/account/orgs', { replace: true })}
-                />
-            ),
-        })
+    const onFormSubmit = async (values: TFormValues) => {
+        try {
+            await user.signup({
+                ...values,
+                username: (values.username.startsWith('@')
+                    ? values.username
+                    : `@${values.username}`
+                ).trim(),
+            })
+
+            // Create PIN-code
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal
+                        phrase={values.phrase}
+                        onUnlock={() => navigate('/account/orgs', { replace: true })}
+                    />
+                ),
+            })
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+            return
+        }
     }
 
     useEffect(() => {
-        generatePhrase(goshClient)
+        generatePhrase(AppConfig.goshclient)
     }, [])
 
     return (
@@ -54,16 +74,31 @@ const SignupPage = () => {
             </div>
 
             <Formik
-                initialValues={{ phrase, isConfirmed: false }}
+                initialValues={{ username: '', phrase, isConfirmed: false }}
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
-                    phrase: Yup.string().required('`Phrase` is required'),
+                    username: Yup.string()
+                        .matches(/^@?[\w-]+$/, 'Username has invalid characters')
+                        .max(64, 'Max length is 64 characters')
+                        .required('Username is required'),
+                    phrase: Yup.string().required('Phrase is required'),
                     isConfirmed: Yup.boolean().oneOf([true], 'You should accept this'),
                 })}
                 enableReinitialize={true}
             >
-                {() => (
+                {({ isSubmitting }) => (
                     <Form className="px-5 sm:px-124px">
+                        <div className="mb-3">
+                            <Field
+                                name="username"
+                                component={TextField}
+                                inputProps={{
+                                    autoComplete: 'off',
+                                    placeholder: 'Username',
+                                }}
+                            />
+                        </div>
+
                         <div>
                             <Field
                                 name="phrase"
@@ -72,8 +107,7 @@ const SignupPage = () => {
                                 inputProps={{
                                     className: '!px-7 !py-6',
                                     autoComplete: 'off',
-                                    placeholder: 'GOSH root seed phrase',
-                                    readOnly: true,
+                                    placeholder: 'Seed phrase',
                                 }}
                             />
                         </div>
@@ -92,14 +126,21 @@ const SignupPage = () => {
                         <div className="mt-6">
                             <button
                                 type="submit"
+                                disabled={isSubmitting}
                                 className="btn btn--body w-full py-3 text-xl leading-normal"
                             >
+                                {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                                 Create account
                             </button>
                         </div>
                     </Form>
                 )}
             </Formik>
+
+            <SignupProgress
+                progress={user.signupProgress}
+                className="mt-4 mx-5 sm:mx-124px"
+            />
         </div>
     )
 }

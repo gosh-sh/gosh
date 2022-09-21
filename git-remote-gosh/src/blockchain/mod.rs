@@ -7,6 +7,7 @@ use serde_json;
 
 use std::{env, fmt, sync::Arc};
 
+mod contract;
 mod error;
 use error::RunLocalError;
 mod create_branch;
@@ -40,6 +41,8 @@ pub use user_wallet::user_wallet;
 use crate::abi as gosh_abi;
 use crate::config::Config;
 
+use self::contract::{ContractInfo, ContractRead, ContractStatic};
+
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
 const CACHE_PIN_STATIC: &str = "static";
@@ -72,20 +75,26 @@ impl fmt::Debug for GoshContract {
 }
 
 impl GoshContract {
-    pub fn new(address: &str, (pretty_name, abi): (&str, &str)) -> Self {
+    pub fn new<T>(address: T, (pretty_name, abi): (&str, &str)) -> Self
+    where
+        T: Into<BlockchainContractAddress>,
+    {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
-            address: BlockchainContractAddress::new(address),
+            address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: None,
             boc_ref: None,
         }
     }
 
-    pub fn new_with_keys(address: &str, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self {
+    pub fn new_with_keys<T>(address: T, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self
+    where
+        T: Into<BlockchainContractAddress>,
+    {
         GoshContract {
             pretty_name: pretty_name.to_owned(),
-            address: BlockchainContractAddress::new(address),
+            address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
             boc_ref: None,
@@ -152,13 +161,13 @@ struct CallResult {
 #[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
 struct GetCommitAddrResult {
     #[serde(rename = "value0")]
-    pub address: String,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -167,13 +176,13 @@ struct GetBoolResult {
     pub is_ok: bool,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BranchRef {
     #[serde(rename = "key")]
     pub branch_name: String,
 
     #[serde(rename = "value")]
-    pub commit_sha: String,
+    pub commit_address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug)]
@@ -182,7 +191,7 @@ pub struct GetAllAddressResult {
     pub branch_ref: Vec<BranchRef>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct GetAddrBranchResult {
     #[serde(rename = "value0")]
     pub branch: BranchRef,
@@ -203,7 +212,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
         .find_network_endpoints(network)
         .expect("Unknown network");
     let proto = env::var("GOSH_PROTO")
-        .unwrap_or(".git".to_string())
+        .unwrap_or_else(|_| ".git".to_string())
         .to_lowercase();
 
     let config = ClientConfig {
@@ -211,7 +220,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
             endpoints: if endpoints.is_empty() {
                 None
             } else {
-                Some(endpoints.to_owned())
+                Some(endpoints)
             },
             queries_protocol: if proto.starts_with("http") {
                 NetworkQueriesProtocol::HTTP
@@ -272,7 +281,7 @@ async fn run_local(
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
-            call_set: call_set,
+            call_set,
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
@@ -306,10 +315,10 @@ async fn run_static(
     args: Option<serde_json::Value>,
 ) -> Result<serde_json::Value> {
     let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
-        log::debug!("run_static: use cached boc ref");
+        log::trace!("run_static: use cached boc ref");
         (boc_ref, Some(BocCacheType::Unpinned))
     } else {
-        log::debug!("run_static: load account' boc");
+        log::trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
             "id": { "eq": contract.address }
         }));
@@ -357,7 +366,7 @@ async fn run_static(
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
-            call_set: call_set,
+            call_set,
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
@@ -388,10 +397,10 @@ async fn default_callback(pe: ProcessingEvent) {
     log::debug!("cb: {:#?}", pe);
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug", skip(context, contract))]
 async fn call(
     context: &TonClient,
-    contract: GoshContract,
+    contract: &impl ContractInfo,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> Result<CallResult> {
@@ -399,14 +408,16 @@ async fn call(
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),
     };
-    let signer = match contract.keys {
-        Some(key_pair) => Signer::Keys { keys: key_pair },
+    let signer = match contract.get_keys() {
+        Some(key_pair) => Signer::Keys {
+            keys: key_pair.to_owned(),
+        },
         None => Signer::None,
     };
 
     let message_encode_params = ParamsOfEncodeMessage {
-        abi: contract.abi,
-        address: Some(String::from(contract.address.clone())),
+        abi: contract.get_abi().to_owned(),
+        address: Some(String::from(contract.get_address().clone())),
         call_set,
         signer,
         deploy_set: None,
@@ -436,31 +447,34 @@ async fn call(
 #[instrument(level = "debug", skip(context))]
 pub async fn get_repo_address(
     context: &TonClient,
-    gosh_root_addr: &str,
+    gosh_root_addr: &BlockchainContractAddress,
     dao: &str,
     repo: &str,
-) -> Result<String> {
+) -> Result<BlockchainContractAddress> {
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
     let result: GetRepoAddrResult = contract
-        .run_local(context, "getAddrRepository", Some(args))
+        .read_state(context, "getAddrRepository", Some(args))
         .await?;
-    Ok(result.address)
+    Ok(BlockchainContractAddress::new(result.address))
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn branch_list(context: &TonClient, repo_addr: &str) -> Result<GetAllAddressResult> {
+pub async fn branch_list(
+    context: &TonClient,
+    repo_addr: &BlockchainContractAddress,
+) -> Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
-    let result: GetAllAddressResult = contract.run_local(context, "getAllAddress", None).await?;
+    let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
     Ok(result)
 }
 
 #[instrument(level = "debug", skip(context))]
 pub async fn is_branch_protected(
     context: &TonClient,
-    repo_addr: &str,
+    repo_addr: &BlockchainContractAddress,
     branch_name: &str,
 ) -> Result<bool> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
@@ -474,14 +488,14 @@ pub async fn is_branch_protected(
 
 pub async fn set_head(
     context: &TonClient,
-    wallet_addr: &str,
+    wallet_addr: &BlockchainContractAddress,
     repo_name: &str,
     new_head: &str,
     keys: KeyPair,
 ) -> Result<()> {
     let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
     let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
-    let result = call(context, contract, "setHEAD", Some(args)).await?;
+    let result = call(context, &contract, "setHEAD", Some(args)).await?;
 
     Ok(())
 }
@@ -489,72 +503,76 @@ pub async fn set_head(
 #[instrument(level = "debug", skip(context))]
 pub async fn remote_rev_parse(
     context: &TonClient,
-    repository_address: &str,
+    repository_address: &BlockchainContractAddress,
     rev: &str,
-) -> Result<Option<String>> {
+) -> Result<Option<BlockchainContractAddress>> {
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
     let args = serde_json::json!({ "name": rev });
     let result: GetAddrBranchResult = contract
         .run_local(context, "getAddrBranch", Some(args))
         .await?;
-    if result.branch.branch_name != "" {
-        return Ok(Some(result.branch.commit_sha));
+    if result.branch.branch_name.is_empty() {
+        Ok(None)
     } else {
-        return Ok(None);
+        Ok(Some(result.branch.commit_address))
     }
 }
 
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
     context: &TonClient,
-    repo_contract: &mut GoshContract,
+    repo_contract: &mut impl ContractStatic,
     sha: &str,
-) -> Result<String> {
+) -> Result<BlockchainContractAddress> {
     let result: GetCommitAddrResult = repo_contract
-        .run_static(
+        .static_method(
             context,
             "getCommitAddr",
             gosh_abi::get_commit_addr_args(sha),
         )
         .await?;
-    return Ok(result.address);
+    Ok(result.address)
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn get_commit_by_addr(context: &TonClient, address: &str) -> Result<Option<GoshCommit>> {
+pub async fn get_commit_by_addr(
+    context: &TonClient,
+    address: &BlockchainContractAddress,
+) -> Result<Option<GoshCommit>> {
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
 
-pub async fn get_head(context: &TonClient, address: &str) -> Result<String> {
+pub async fn get_head(context: &TonClient, address: &BlockchainContractAddress) -> Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
-    return Ok(result.head);
+    Ok(result.head)
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
 
     use super::*;
     use crate::config;
 
     pub struct TestEnv {
         config: Config,
-        client: TonClient,
-        gosh: String,
+        pub client: TonClient,
+        gosh: BlockchainContractAddress,
         dao: String,
         repo: String,
     }
 
     impl TestEnv {
-        fn new() -> Self {
+        pub fn new() -> Self {
             let cfg = config::Config::init().unwrap();
             let client = create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
                 config: cfg,
                 client,
-                gosh: "0:bb1ab825fe9fa51fb4eabb830347c7ee648951cb125182c793a0ca0f0b2cbe35"
-                    .to_string(),
+                gosh: BlockchainContractAddress::new(
+                    "0:bb1ab825fe9fa51fb4eabb830347c7ee648951cb125182c793a0ca0f0b2cbe35",
+                ),
                 dao: "dao-x".to_string(),
                 repo: "repo-01".to_string(),
             }
@@ -642,17 +660,20 @@ mod tests {
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
-        let expected = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
+        let expected = BlockchainContractAddress::new(
+            "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6",
+        );
         assert_eq!(expected, repo_addr.unwrap());
     }
 
     #[tokio::test]
-    async fn ensure_run_static_correectly() {
+    async fn ensure_run_static_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo)
             .await
             .unwrap();
         let address = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
+        let address = BlockchainContractAddress::new(address);
         let mut contract = GoshContract::new(address, gosh_abi::REPO);
         let list: GetAllAddressResult = contract
             .run_static(&te.client, "getAllAddress", None)

@@ -1,8 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
-use git_hash;
-use git_object;
-use git_odb;
+use crate::blockchain::BlockchainContractAddress;
 use git_odb::Find;
 use git_odb::Write;
 
@@ -15,17 +13,15 @@ impl GitHelper {
     pub async fn calculate_commit_address(
         &mut self,
         commit_id: &git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let commit_id = format!("{}", commit_id);
         log::info!(
-            "Calculating commit address for repository <{}> and commit id <{}>",
+            "Calculating commit address for repository {} and commit id <{}>",
             self.repo_addr,
             commit_id
         );
         let repo_contract = &mut self.repo_contract;
-        return Ok(
-            blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await?,
-        );
+        blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await
     }
 
     pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
@@ -45,7 +41,7 @@ impl GitHelper {
             e
         })?;
         log::info!("Writing git object - success, {}", object_id);
-        return Ok(object_id);
+        Ok(object_id)
     }
 
     async fn write_git_data<'a>(
@@ -58,7 +54,7 @@ impl GitHelper {
         //store.refresh_never();
         let object_id = store.write_buf(obj.kind, obj.data)?;
         log::info!("Writing git data - success");
-        return Ok(object_id);
+        Ok(object_id)
     }
 
     #[instrument(level = "debug")]
@@ -127,7 +123,7 @@ impl GitHelper {
 
                 log::info!("Tree obj parsed {}", id);
                 for entry in &tree_object.entries {
-                    let oid = entry.oid.clone();
+                    let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
                             log::trace!("Tree entry: tree {}->{}", id, oid);
@@ -151,7 +147,7 @@ impl GitHelper {
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &self.es_client,
                                 &mut self.repo_contract,
-                                &branch,
+                                branch,
                                 &file_path[1..],
                             )
                             .await?;
@@ -192,12 +188,12 @@ impl GitHelper {
                 log::info!("Received commit {}", id);
                 let to_load = TreeObjectsQueueItem {
                     path: "".to_owned(),
-                    oid: obj.tree.clone(),
+                    oid: obj.tree,
                 };
                 log::info!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 for parent_id in &obj.parents {
-                    commits_queue.push_back(parent_id.clone());
+                    commits_queue.push_back(*parent_id);
                 }
                 dangling_commits.push(obj);
                 continue;

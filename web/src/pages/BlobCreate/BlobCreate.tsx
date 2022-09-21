@@ -22,11 +22,13 @@ import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
-    userStateAtom,
+    userAtom,
     getCodeLanguageFromFilename,
     classNames,
+    retry,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -42,7 +44,7 @@ const BlobCreatePage = () => {
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { updateBranch } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
     const tree = useGoshRepoTree(repo, branch, pathName, true)
@@ -56,7 +58,7 @@ const BlobCreatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.NO_USER)
+            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
@@ -64,38 +66,43 @@ const BlobCreatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
+            if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`
             const exists = tree.tree?.items.find(
                 (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,
             )
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
-                repo,
-                branch,
-                userState.keys.public,
-                [
-                    {
-                        name,
-                        modified: values.content,
-                        original: '',
-                    },
-                ],
-                message,
-                values.tags,
-                undefined,
-                progressCallback,
+            const pubkey = userState.keys.public
+            await retry(
+                () =>
+                    wallet.instance.createCommit(
+                        repo,
+                        branch,
+                        pubkey,
+                        [
+                            {
+                                name,
+                                modified: values.content,
+                                original: '',
+                            },
+                        ],
+                        message,
+                        values.tags,
+                        undefined,
+                        progressCallback,
+                    ),
+                3,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!wallet?.isDaoParticipant) return <Navigate to={urlBack} />
+    if (!wallet?.details.isDaoMember) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <Formik

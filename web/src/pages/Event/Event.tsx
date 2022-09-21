@@ -3,7 +3,7 @@ import { Field, Form, Formik } from 'formik'
 import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from 'react-gosh'
+import { GoshSmvProposal, useGosh, useGoshVersions } from 'react-gosh'
 import { EEventType, TGoshEventDetails } from 'react-gosh'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -14,7 +14,7 @@ import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import PREvent from './PREvent'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { eventTypes, goshClient, goshRoot } from 'react-gosh'
+import { eventTypes, AppConfig } from 'react-gosh'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
@@ -27,6 +27,8 @@ type TFormValues = {
 const EventPage = () => {
     const { daoName, eventAddr } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { versions } = useGoshVersions()
+    const gosh = useGosh()
     const smvBalance = useSmvBalance(wallet)
     const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
@@ -43,7 +45,7 @@ const EventPage = () => {
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             setCheck(true)
-            await wallet.tryProposalResult(event.details.address)
+            await wallet.instance.tryProposalResult(event.details.address)
             toast.success('Re-check submitted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -56,7 +58,8 @@ const EventPage = () => {
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!dao) throw new GoshError(EGoshError.NO_DAO)
+            if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
+            if (!dao) throw new GoshError(EGoshError.DAO_UNDEFINED)
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (
@@ -71,7 +74,7 @@ const EventPage = () => {
 /*             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
             const smvClientCode = await dao.instance.getSmvClientCode()
  */            const choice = values.approve === 'true'
-            await wallet.voteFor(
+            await wallet.instance.voteFor(
                 /* smvPlatformCode,
                 smvClientCode, */
                 event.details.address,
@@ -89,8 +92,12 @@ const EventPage = () => {
         const getEvent = async () => {
             if (!eventAddr) return
 
-            const event = new GoshSmvProposal(goshClient, eventAddr)
-            const details = await event.getDetails(wallet?.address)
+            const event = new GoshSmvProposal(
+                AppConfig.goshclient,
+                eventAddr,
+                versions.latest,
+            )
+            const details = await event.getDetails(wallet?.instance.address)
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }
 
@@ -199,7 +206,7 @@ const EventPage = () => {
                                 </span>
                             </div>
                         </div>
-                        {wallet?.isDaoParticipant && !event.details.status.completed && (
+                        {wallet?.details.isDaoMember && !event.details.status.completed && (
                             <div>
                                 <button
                                     type="button"
@@ -214,7 +221,7 @@ const EventPage = () => {
                         )}
                     </div>
 
-                    {wallet?.isDaoParticipant && !event.details?.status.completed && (
+                    {wallet?.details.isDaoMember && !event.details?.status.completed && (
                         <Formik
                             initialValues={{
                                 approve: 'true',

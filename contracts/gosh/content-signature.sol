@@ -15,41 +15,38 @@ import "goshwallet.sol";
 // import "action.sol";
 
 contract ContentSignature is Modifiers {
-    string constant version = "0.10.0";
-    uint256 _pubkey;
-    address _rootGosh;
-    address _goshdao;
+    string constant version = "0.11.0";
+    address _pubaddr;
+    address static _goshroot;
+    address static _goshdao;
     TvmCell m_WalletCode;
     string _content;
     string static _label;
     string static _commit;
 //    address _action;
      
-    constructor(uint256 value0, uint256 value, address goshroot, address dao, TvmCell WalletCode, string content, uint128 index) public {
+    constructor(address pubaddr, TvmCell WalletCode, string content, uint128 index) public {
         tvm.accept();
         _content = content;
         m_WalletCode = WalletCode;
-        _goshdao = dao;
-        _rootGosh = goshroot;
-        _pubkey = value0;
+        _pubaddr = pubaddr;
 //        _action = action;
-        require(checkAccess(value, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
 //        if (_label != "") { Action(_action).activate{value : 0.1 ton}(_commit, _content); }
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
+            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
     
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
@@ -58,6 +55,9 @@ contract ContentSignature is Modifiers {
         return _content;
     }
     
+    function getOwner() external view returns(address) {
+        return _pubaddr;
+    }
 /*
     function getAction() external view returns(address) {
         return _action;

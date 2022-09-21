@@ -1,4 +1,3 @@
-use log;
 use log4rs::{
     append::console::{ConsoleAppender, Target},
     config::{Appender, Root},
@@ -75,8 +74,8 @@ impl GitHelperLogger {
                     .build(),
             ),
         );
-        return Ok(Config::builder()
+        Ok(Config::builder()
             .appender(stderr_appender)
-            .build(Root::builder().appender("stderr").build(log_level))?);
+            .build(Root::builder().appender("stderr").build(log_level))?)
     }
 }

@@ -2,16 +2,19 @@
 Copy contracts ABIs to project.
 """
 
-import shutil
+import sys
+import json
 from pathlib import Path
 
 
 SRC_CONTRACTS_PATH = Path('../contracts')
-DST_CONTRACTS_PATH = Path('./src/contracts')
+DST_CONTRACTS_PATH = Path('./src/resources/contracts/abi.json')
 CONTRACTS = [
+    'gosh/root',
     'gosh/gosh',
     'gosh/goshdao',
-    'gosh/daocreator',
+    'gosh/profile',
+    'gosh/profiledao',
     'gosh/goshwallet',
     'gosh/repository',
     'gosh/commit',
@@ -29,15 +32,25 @@ CONTRACTS = [
 
 def main():
     """Entry point main"""
-    for contract in CONTRACTS:
-        src_path = SRC_CONTRACTS_PATH / f'{contract}.abi.json'
-        dst_path = contract.replace('gosh/', '').replace('smv/', '')
-        dst_path = DST_CONTRACTS_PATH / f'{dst_path}.abi.json'
-        shutil.copy(src_path, dst_path)
 
-        print(f'============== {contract} ==============')
-        print(f'ABI copied to: {dst_path}')
-        print('=========================================')
+    [_, version] = sys.argv
+
+    abis = {}
+    if Path.exists(DST_CONTRACTS_PATH):
+        abis = json.load(open(DST_CONTRACTS_PATH))
+
+    if not abis.get(version):
+        abis[version] = {}
+
+    for contract in CONTRACTS:
+        src = SRC_CONTRACTS_PATH / f'{contract}.abi.json'
+        key = contract.replace('gosh/', '').replace('smv/', '').lower()
+        if key in ['root', 'profile', 'profiledao']:
+            abis[key] = json.load(open(src))
+        else:
+            abis[version][key] = json.load(open(src))
+
+    json.dump(abis, open(DST_CONTRACTS_PATH, 'w'))
 
 
 if __name__ == '__main__':

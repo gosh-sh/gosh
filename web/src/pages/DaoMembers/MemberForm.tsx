@@ -2,26 +2,32 @@ import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import DaoMemberCreateProgress from './MemberCreateProgress'
-import { useDaoMemberCreate } from 'react-gosh'
+import { IGoshDao, useDaoMemberCreate } from 'react-gosh'
 import TextareaField from '../../components/FormikForms/TextareaField'
+import ToastError from '../../components/Error/ToastError'
 
 type TMemberFormValues = {
     members: string
 }
 
-const DaoMemberForm = () => {
-    const { progress, createMember } = useDaoMemberCreate()
+type TDaoMemberFormProps = {
+    dao: IGoshDao
+}
+
+const DaoMemberForm = (props: TDaoMemberFormProps) => {
+    const { dao } = props
+    const daomember = useDaoMemberCreate(dao)
 
     const onCreateMember = async (
         values: TMemberFormValues,
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            await createMember(values.members.split('\n'))
+            await daomember.create(values.members.split('\n'))
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -36,12 +42,12 @@ const DaoMemberForm = () => {
                                 name="members"
                                 component={TextareaField}
                                 inputProps={{
-                                    placeholder: "Members' public keys",
+                                    placeholder: 'Username(s)',
                                     autoComplete: 'off',
                                     disabled: isSubmitting,
                                     rows: 5,
                                 }}
-                                help="Put each public key (0x...) from new line"
+                                help="Put each @username from new line"
                             />
                         </div>
 
@@ -57,7 +63,7 @@ const DaoMemberForm = () => {
                 )}
             </Formik>
 
-            <DaoMemberCreateProgress className="mt-4" progress={progress} />
+            <DaoMemberCreateProgress className="mt-4" progress={daomember.progress} />
         </>
     )
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import { goshClient } from 'react-gosh'
+import ReactTooltip from 'react-tooltip'
+import { AppConfig, useGoshVersions, useNotificationMessages } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -40,17 +41,21 @@ import { ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
+import CopyClipboard from './components/CopyClipboard'
+import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
+    useNotificationMessages()
+    const { versions, updateVersions } = useGoshVersions()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
     let timer: NodeJS.Timeout | null = null
 
     const timerRestart = () => {
         if (timer) clearInterval(timer)
         timer = setInterval(async () => {
-            await goshClient.net.suspend()
+            await AppConfig.goshclient.net.suspend()
             console.debug('Gosh client suspended')
-            await goshClient.net.resume()
+            await AppConfig.goshclient.net.resume()
             console.debug('Gosh client resumed')
         }, 1000 * 60 * 10)
     }
@@ -58,11 +63,28 @@ const App = () => {
     const onMouseMove = () => timerRestart()
 
     useEffect(() => {
-        if (!goshClient) return
-        goshClient.client.version().then(() => {
-            setIsInitialized(true)
+        const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
+        AppConfig.setup({
+            goshclient: {
+                network: {
+                    endpoints,
+                    queries_protocol:
+                        process.env.REACT_APP_ISDOCKEREXT === 'true'
+                            ? NetworkQueriesProtocol.HTTP
+                            : NetworkQueriesProtocol.WS,
+                    sending_endpoint_count: endpoints?.length,
+                },
+            },
+            goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
+            ipfs: process.env.REACT_APP_IPFS || '',
+            isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         })
+        updateVersions()
     }, [])
+
+    useEffect(() => {
+        if (!versions.isFetching) setIsInitialized(true)
+    }, [versions.isFetching])
 
     useEffect(() => {
         // Initialize gosh client suspend/resume timer
@@ -139,7 +161,10 @@ const App = () => {
                                 path="blobs/update/:branchName/*"
                                 element={<BlobUpdatePage />}
                             />
-                            <Route path="blobs/:branchName/*" element={<BlobPage />} />
+                            <Route
+                                path="blobs/view/:branchName/*"
+                                element={<BlobPage />}
+                            />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route
                                 path="commits/:branchName/:commitName"
@@ -154,16 +179,27 @@ const App = () => {
                 </Routes>
             </main>
             <footer className="footer">
-                <div className="text-right text-xs text-gray-050a15">
-                    {process.env.REACT_APP_GOSH_NETWORK}
-                    <span className="mx-2">
-                        {shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}
-                    </span>
-                    {shortString(process.env.REACT_APP_CREATOR_ADDR ?? '', 6, 4)}
+                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end text-xs text-gray-050a15 px-3 py-2">
+                    {process.env.REACT_APP_GOSH_NETWORK?.split(',')[0]}
+                    <CopyClipboard
+                        label={
+                            <span data-tip={process.env.REACT_APP_GOSH_ROOTADDR}>
+                                {shortString(
+                                    process.env.REACT_APP_GOSH_ROOTADDR ?? '',
+                                    6,
+                                    4,
+                                )}
+                            </span>
+                        }
+                        componentProps={{
+                            text: process.env.REACT_APP_GOSH_ROOTADDR ?? '',
+                        }}
+                    />
                 </div>
             </footer>
 
             <ToastContainer {...ToastOptionsShortcuts.Default} />
+            <ReactTooltip clickable />
             <BaseModal />
         </div>
     )

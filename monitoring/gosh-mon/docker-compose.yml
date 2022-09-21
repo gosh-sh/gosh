@@ -1,0 +1,155 @@
+version: '2.2'
+
+services:
+
+# app.gosh.sh
+  gosh-mon-app-sm-rd: &service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gosh-mon-app-sm-rd
+    init: true
+    restart: "unless-stopped"
+    environment: ["GM_MODE=app-small-read"]
+    expose: ["9600"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+    networks:
+      gosh-monitoring: { }
+    mem_limit: 512M
+    memswap_limit: 512M
+
+  gosh-mon-app-sm-wr:
+    <<: *service
+    container_name: gosh-mon-app-sm-wr
+    environment: ["GM_MODE=app-small-write"]
+
+  gosh-mon-app-la-rd:
+    <<: *service
+    container_name: gosh-mon-app-la-rd
+    environment: ["GM_MODE=app-large-read"]
+
+  gosh-mon-app-la-wr:
+    <<: *service
+    container_name: gosh-mon-app-la-wr
+    environment: ["GM_MODE=app-large-write"]
+
+# next:
+
+  gosh-mon-next-app-sm-rd:
+    <<: *service
+    container_name: gosh-mon-next-app-sm-rd
+    environment: [ "GM_MODE=app-small-read-next" ]
+
+  gosh-mon-next-app-sm-wr:
+    <<: *service
+    container_name: gosh-mon-next-app-sm-wr
+    environment: [ "GM_MODE=app-small-write-next" ]
+
+  gosh-mon-next-app-la-rd:
+    <<: *service
+    container_name: gosh-mon-next-app-la-rd
+    environment: [ "GM_MODE=app-large-read-next" ]
+
+  gosh-mon-next-app-la-wr:
+    <<: *service
+    container_name: gosh-mon-next-app-la-wr
+    environment: [ "GM_MODE=app-large-write-next" ]
+
+# git-remote-gosh
+  gosh-mon-rem-sm-rd:
+    <<: *service
+    container_name: gosh-mon-rem-sm-rd
+    environment: ["GM_MODE=rem-small-read"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rem-sm-rd-data:/home/node/app/data"
+
+  gosh-mon-rem-sm-wr:
+    <<: *service
+    container_name: gosh-mon-rem-sm-wr
+    environment: ["GM_MODE=rem-small-write"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rem-sm-wr-data:/home/node/app/data"
+
+  gosh-mon-rem-la-rd:
+    <<: *service
+    container_name: gosh-mon-rem-la-rd
+    environment: ["GM_MODE=rem-large-read"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rem-la-rd-data:/home/node/app/data"
+
+  gosh-mon-rem-la-wr:
+    <<: *service
+    container_name: gosh-mon-rem-la-wr
+    environment: ["GM_MODE=rem-large-write"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rem-la-wr-data:/home/node/app/data"
+
+# auxillary
+
+  gosh-mon-seed-read:
+    <<: *service
+    container_name: gosh-mon-seed-read
+    environment: ["GM_MODE=seed-read"]
+    
+  gosh-mon-root-check:
+    <<: *service
+    container_name: gosh-mon-root-check
+    environment: ["GM_MODE=root-check"]
+    
+
+# serve errors directory
+
+  gosh-mon-nginx:
+    build:
+      context: .
+      dockerfile: nginx-Dockerfile
+    container_name: gosh-mon-nginx
+    restart: "unless-stopped"
+    expose: ["80"]
+    volumes:
+      - ./errors:/usr/share/nginx/html
+    networks:
+      gosh-monitoring: {}
+
+#  gosh-mon-test:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: gosh-mon-test
+#    init: true
+#    restart: "no"
+#    environment:
+#      - GM_MODE=rem-small-read-next
+#      - ONESHOT_DEBUG=2
+#    volumes:
+#      - ./config:/home/node/app/config:ro
+#      - gm-test-data:/home/node/app/data
+#      - "./test-errors:/home/node/app/errors"
+#    networks:
+#      gosh-monitoring: {}
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+
+volumes:
+  gm-rem-sm-rd-data:
+  gm-rem-sm-wr-data:
+  gm-rem-la-rd-data:
+  gm-rem-la-wr-data:
+  gm-test-data:
+  gm-next-rem-sm-rd-data:
+  gm-next-rem-sm-wr-data:
+  gm-next-rem-la-rd-data:
+  gm-next-rem-la-wr-data:

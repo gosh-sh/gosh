@@ -1,30 +1,17 @@
-import { createDockerDesktopClient } from '@docker/extension-api-client'
-import { abiSerialized, NetworkQueriesProtocol, TonClient } from '@eversdk/core'
+import { abiSerialized, TonClient } from '@eversdk/core'
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
-import GoshSnapshotAbi from './contracts/snapshot.abi.json'
-import { GoshCommit, GoshDaoCreator, GoshRoot, GoshSnapshot, GoshTree } from './classes'
-import { IGoshRepository, TGoshCommit, TGoshTree, TGoshTreeItem } from './types'
+import ABI from './resources/contracts/abi.json'
+import {
+    GoshCommit,
+    GoshSnapshot,
+    GoshTree,
+    IGoshRepository,
+} from './resources/contracts'
+import { TGoshCommit, TGoshTree, TGoshTreeItem } from './types'
 import { sleep } from './utils'
-
-export const dockerClient =
-    process.env.REACT_APP_ISDOCKEREXT === 'true' ? createDockerDesktopClient() : null
-
-export const goshClient = new TonClient({
-    network: {
-        endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
-        queries_protocol:
-            process.env.REACT_APP_ISDOCKEREXT === 'true'
-                ? NetworkQueriesProtocol.HTTP
-                : NetworkQueriesProtocol.WS,
-    },
-})
-export const goshDaoCreator = new GoshDaoCreator(
-    goshClient,
-    process.env.REACT_APP_CREATOR_ADDR || '',
-)
-export const goshRoot = new GoshRoot(goshClient, process.env.REACT_APP_GOSH_ADDR || '')
+import { AppConfig } from './appconfig'
 
 export const ZERO_ADDR =
     '0:0000000000000000000000000000000000000000000000000000000000000000'
@@ -36,6 +23,28 @@ export const eventTypes: { [key: number]: string } = {
     1: 'Pull request',
     2: 'Add SMV branch protection',
     3: 'Remove SMV branch protection',
+}
+
+export const retry = async (fn: Function, maxAttempts: number) => {
+    const delay = (fn: Function, ms: number) => {
+        return new Promise((resolve) => setTimeout(() => resolve(fn()), ms))
+    }
+
+    const execute = async (attempt: number) => {
+        try {
+            return await fn()
+        } catch (err) {
+            if (attempt <= maxAttempts) {
+                const nextAttempt = attempt + 1
+                const delayInMs = 2000
+                console.error(`Retrying after ${delayInMs} ms due to:`, err)
+                return delay(() => execute(nextAttempt), delayInMs)
+            } else {
+                throw err
+            }
+        }
+    }
+    return execute(1)
 }
 
 export const getPaginatedAccounts = async (params: {
@@ -57,7 +66,10 @@ export const getPaginatedAccounts = async (params: {
             ${result.join(' ')}
         }
     }`
-    const response = await goshClient.net.query({ query, variables: { lastId, limit } })
+    const response = await AppConfig.goshclient.net.query({
+        query,
+        variables: { lastId, limit },
+    })
     const results = response.result.data.accounts
     return {
         results,
@@ -240,7 +252,7 @@ export const getRepoTree = async (
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i]
             const treeAddr = await repo.getTreeAddr(tree.sha1)
-            const treeBlob = new GoshTree(goshClient, treeAddr)
+            const treeBlob = new GoshTree(AppConfig.goshclient, treeAddr, repo.version)
 
             const treeItems = (await treeBlob.getTree()).tree
             const treePath = `${path ? `${path}/` : ''}${tree.name}`
@@ -254,14 +266,14 @@ export const getRepoTree = async (
 
     // Get latest branch commit
     if (!commitAddr) return { tree: { '': [] }, items: [] }
-    const commit = new GoshCommit(goshClient, commitAddr)
+    const commit = new GoshCommit(AppConfig.goshclient, commitAddr, repo.version)
     const commitName = await commit.getName()
 
     // Get root tree items and recursively get subtrees
     let items: TGoshTreeItem[] = []
     if (commitName !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree()
-        const rootTree = new GoshTree(goshClient, rootTreeAddr)
+        const rootTree = new GoshTree(AppConfig.goshclient, rootTreeAddr, repo.version)
         items = (await rootTree.getTree()).tree
     }
     if (filterPath !== '') await blobTreeWalker('', items)
@@ -396,8 +408,9 @@ export const getBlobAtCommit = async (
         })
         for (const item of messages.edges) {
             try {
+                // TODO: version
                 const decoded = await repo.account.client.abi.decode_message({
-                    abi: abiSerialized(GoshSnapshotAbi),
+                    abi: abiSerialized(ABI['0.11.0']['snapshot']),
                     message: item.node.boc,
                     allow_partial: true,
                 })
@@ -450,7 +463,7 @@ export const getBlobAtCommit = async (
     }
 
     /** Get snapshot content and messages and revert snapshot to commit */
-    const snap = new GoshSnapshot(repo.account.client, snapaddr)
+    const snap = new GoshSnapshot(repo.account.client, snapaddr, repo.version)
     const snapdata = await snap.getSnapshot(commit, treeitem)
     console.debug('Snap data', snapdata)
     if (Buffer.isBuffer(snapdata.content))
@@ -469,12 +482,20 @@ export const getBlobAtCommit = async (
 
         if (msgipfs) {
             const compressed = (await loadFromIPFS(msgipfs)).toString()
-            const decompressed = await zstd.decompress(goshClient, compressed, true)
+            const decompressed = await zstd.decompress(
+                AppConfig.goshclient,
+                compressed,
+                true,
+            )
             content = decompressed
             // if (message.ipfsdata) deployed = true
         } else if (msgdata) {
             const compressed = Buffer.from(msgdata, 'hex').toString('base64')
-            const decompressed = await zstd.decompress(goshClient, compressed, true)
+            const decompressed = await zstd.decompress(
+                AppConfig.goshclient,
+                compressed,
+                true,
+            )
             content = decompressed
             // deployed = true
         } else if (msgpatch && msgcommit !== commit) {
@@ -491,9 +512,17 @@ export const getBlobAtCommit = async (
         if (msgcommit === commit) break
         if (msgcommit && !msgipfs) {
             const msgcommitAddr = await repo.getCommitAddr(msgcommit)
-            const msgcommitObj = new GoshCommit(goshClient, msgcommitAddr)
+            const msgcommitObj = new GoshCommit(
+                AppConfig.goshclient,
+                msgcommitAddr,
+                repo.version,
+            )
             const msgcommitParents = await msgcommitObj.getParents()
-            const parent = new GoshCommit(goshClient, msgcommitParents[0])
+            const parent = new GoshCommit(
+                AppConfig.goshclient,
+                msgcommitParents[0],
+                repo.version,
+            )
             const parentName = await parent.getName()
             if (parentName === commit) break
         }
@@ -506,7 +535,7 @@ export const getCommit = async (
     repo: IGoshRepository,
     commitAddr: string,
 ): Promise<TGoshCommit> => {
-    const commit = new GoshCommit(repo.account.client, commitAddr)
+    const commit = new GoshCommit(repo.account.client, commitAddr, repo.version)
     const meta = await commit.getCommit()
     const commitData = {
         addr: commitAddr,

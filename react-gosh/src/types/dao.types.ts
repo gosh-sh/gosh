@@ -1,15 +1,18 @@
+import { KeyPair } from '@eversdk/core'
+
 type TDaoDetails = {
     address: string
     name: string
-    members: string[]
+    version: string
+    members: { profile: string; wallet: string }[]
     supply: number
-    ownerPubkey: string
+    owner: string
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'ownerPubkey'> & {
-    members?: string[]
+type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
+    members?: { profile: string; wallet: string }[]
     supply?: number
-    ownerPubkey?: string
+    owner?: string
     isLoadDetailsFired?: boolean
 }
 
@@ -20,13 +23,13 @@ type TDaoCreateProgress = {
 }
 
 type TDaoMemberDetails = {
+    name: string
+    profile: string
     wallet: string
-    pubkey: string
     smvBalance: number
 }
 
-type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
-    pubkey?: string
+type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
     smvBalance?: number
     isLoadDetailsFired?: boolean
 }
@@ -34,10 +37,19 @@ type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
 type TDaoMemberCreateProgress = {
     isFetching: boolean
     members: {
-        pubkey: string
+        member: string
         isDeployed?: boolean
         isMinted?: boolean
     }[]
+}
+
+type TWalletDetails = {
+    address: string
+    version: string
+    keys?: KeyPair
+    daoAddress: string
+    isDaoMember: boolean
+    isDaoOwner: boolean
 }
 
 export {
@@ -47,4 +59,5 @@ export {
     TDaoMemberDetails,
     TDaoMemberListItem,
     TDaoMemberCreateProgress,
+    TWalletDetails,
 }

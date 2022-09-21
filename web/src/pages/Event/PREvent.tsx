@@ -4,10 +4,11 @@ import {
     getBlobAtCommit,
     getCommitTime,
     getRepoTree,
-    goshClient,
-    goshRoot,
+    AppConfig,
     loadFromIPFS,
     zstd,
+    useGoshVersions,
+    useGosh,
 } from 'react-gosh'
 import {
     IGoshCommit,
@@ -23,7 +24,6 @@ import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import { Link } from 'react-router-dom'
 
 type TCommitBlobsType = {
     className?: string
@@ -36,6 +36,8 @@ type TCommitBlobsType = {
 
 const PREvent = (props: TCommitBlobsType) => {
     const { className, daoName, repoName, branchName, commitName, status } = props
+    const { versions } = useGoshVersions()
+    const gosh = useGosh()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
     const [details, setDetails] = useState<TGoshCommitDetails>()
@@ -59,7 +61,7 @@ const PREvent = (props: TCommitBlobsType) => {
             let index2 = 0
             while (true) {
                 const address = await commit.getDiffAddr(index1, index2)
-                const diff = new GoshDiff(goshClient, address)
+                const diff = new GoshDiff(AppConfig.goshclient, address, versions.latest)
                 const acc = await diff.account.getAccount()
                 if (acc.acc_type !== AccountType.active) break
 
@@ -97,7 +99,7 @@ const PREvent = (props: TCommitBlobsType) => {
                 if (ipfs) {
                     const compressed = (await loadFromIPFS(ipfs)).toString()
                     const decompressed = await zstd.decompress(
-                        goshClient,
+                        AppConfig.goshclient,
                         compressed,
                         true,
                     )
@@ -141,20 +143,32 @@ const PREvent = (props: TCommitBlobsType) => {
             _branchName: string,
             _commitName: string,
         ) => {
-            if (!daoName) return
+            if (!daoName || !gosh) return
 
             setIsFetched(false)
 
-            const repoAddr = await goshRoot.getRepoAddr(_repoName, daoName)
-            const repo = new GoshRepository(goshClient, repoAddr)
+            const repoAddr = await gosh.getRepoAddr(_repoName, daoName)
+            const repo = new GoshRepository(
+                AppConfig.goshclient,
+                repoAddr,
+                versions.latest,
+            )
 
             const commitAddr = await repo.getCommitAddr(_commitName)
-            const commit = new GoshCommit(repo.account.client, commitAddr)
+            const commit = new GoshCommit(
+                repo.account.client,
+                commitAddr,
+                versions.latest,
+            )
             const commitDetails = await commit.getDetails()
             setDetails(commitDetails)
 
             const parents = await commit.getParents()
-            const parent = new GoshCommit(repo.account.client, parents[0])
+            const parent = new GoshCommit(
+                repo.account.client,
+                parents[0],
+                versions.latest,
+            )
             const parentName = await parent.getName()
 
             const tree = await getRepoTree(repo, commitAddr)
@@ -223,14 +237,7 @@ const PREvent = (props: TCommitBlobsType) => {
         <div className={className}>
             {status.completed && status.accepted && (
                 <div className="bg-green-700 text-white mt-6 px-4 py-3 rounded">
-                    Commit proposal
-                    <Link
-                        className="mx-1 underline"
-                        to={`/${daoName}/${repoName}/commits/${branchName}/${commitName}`}
-                    >
-                        {shortString(commitName)}
-                    </Link>
-                    was accepted by SMV
+                    PR proposal was accepted by SMV
                 </div>
             )}
 

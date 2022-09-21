@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from 'react-gosh'
+import { EGoshError, GoshError, GoshSmvProposal, useGoshVersions } from 'react-gosh'
 import { sleep } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { getPaginatedAccounts, goshClient } from 'react-gosh'
+import { getPaginatedAccounts, AppConfig } from 'react-gosh'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -14,6 +14,7 @@ const EventsPage = () => {
 
     const { daoName } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { versions } = useGoshVersions()
     const smvBalance = useSmvBalance(wallet)
     const [events, setEvents] = useState<{
         items: any[]
@@ -41,7 +42,11 @@ const EventsPage = () => {
             }),
         }))
 
-        const event = new GoshSmvProposal(dao.instance.account.client, address)
+        const event = new GoshSmvProposal(
+            dao.instance.account.client,
+            address,
+            versions.latest,
+        )
         const details = await event.getDetails(walletAddress)
 
         setEvents((state) => ({
@@ -58,7 +63,7 @@ const EventsPage = () => {
         const getEventList = async () => {
             // Get events accounts by code
             const code = await dao.instance.getSmvProposalCode()
-            const codeHash = await goshClient.boc.get_boc_hash({ boc: code })
+            const codeHash = await AppConfig.goshclient.boc.get_boc_hash({ boc: code })
             const list: any[] = []
             let next: string | undefined
             while (true) {
@@ -69,7 +74,11 @@ const EventsPage = () => {
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const event = new GoshSmvProposal(dao.instance.account.client, id)
+                        const event = new GoshSmvProposal(
+                            dao.instance.account.client,
+                            id,
+                            versions.latest,
+                        )
                         return {
                             address: event.address,
                             params: await event.getParams(),
@@ -138,7 +147,7 @@ const EventsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {events.items.slice(0, events.page * pageSize).map((event, index) => {
-                        if (!event.isBusy) setEventDetails(event.address, wallet?.address)
+                        if (!event.isBusy) setEventDetails(event.address, wallet?.instance.address)
                         return (
                             <EventListItem
                                 key={index}

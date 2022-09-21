@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { useDaoList } from 'react-gosh'
+import { useDaoList, userAtom } from 'react-gosh'
 import DaoListItem from './DaoListItem'
+import { useRecoilValue } from 'recoil'
 
 const DaosPage = () => {
     const {
@@ -14,6 +15,7 @@ const DaosPage = () => {
         loadNext,
         loadItemDetails,
     } = useDaoList(5)
+    const { keys } = useRecoilValue(userAtom)
 
     return (
         <>

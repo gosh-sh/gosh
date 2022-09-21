@@ -8,8 +8,7 @@
 			"inputs": [
 				{"name":"goshdao","type":"address"},
 				{"name":"rootGosh","type":"address"},
-				{"name":"pubkey","type":"uint256"},
-				{"name":"pubkeysender","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"nameRepo","type":"string"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"commit","type":"string"},
@@ -20,7 +19,8 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"tree","type":"address"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"upgrade","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -80,6 +80,14 @@
 			]
 		},
 		{
+			"name": "treeAccept",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "_sendAllDiff",
 			"inputs": [
 				{"name":"branch","type":"string"},
@@ -114,7 +122,6 @@
 		{
 			"name": "_checkChain",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"}
@@ -192,7 +199,6 @@
 		{
 			"name": "CommitCheckCommit",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
 				{"name":"nameCommit","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
@@ -221,16 +227,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"tree","type":"address"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -295,7 +292,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"sha","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"content","type":"string"}
+				{"name":"content","type":"string"},
+				{"name":"initupgrade","type":"bool"}
 			]
 		},
 		{
@@ -314,6 +312,22 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getInitUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
 		}
 	],
 	"data": [
@@ -325,7 +339,7 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameCommit","type":"string"},
@@ -338,7 +352,7 @@
 		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"_parents","type":"address[]"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_tree","type":"address"},
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchCommit","type":"address"},
@@ -351,6 +365,8 @@
 		{"name":"_continueDiff","type":"bool"},
 		{"name":"_number","type":"uint128"},
 		{"name":"_approved","type":"uint128"},
-		{"name":"_flag","type":"bool"}
+		{"name":"_flag","type":"bool"},
+		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"_initupgrade","type":"bool"}
 	]
 }

@@ -1,27 +1,28 @@
-import { atom } from 'recoil'
-import { recoilPersist } from 'recoil-persist'
-import { TUserState, TUserStatePersist } from '../types'
+import { atom, selector, selectorFamily } from 'recoil'
+import { AppConfig } from '../appconfig'
+import { GoshProfile, IGoshProfile } from '../resources'
+import { TUser, TUserPersist } from '../types'
+import { persistAtom } from './base'
 
-const { persistAtom } = recoilPersist({ key: 'recoil' })
-
-const userStatePersistAtom = atom<TUserStatePersist>({
-    key: 'UserStatePersistAtom',
-    default: {
-        phrase: undefined,
-        nonce: undefined,
-        pin: undefined,
-    },
+const userPersistAtom = atom<TUserPersist>({
+    key: 'UserPersistAtom',
+    default: {},
     effects_UNSTABLE: [persistAtom],
 })
 
-const userStateAtom = atom<TUserState>({
-    key: 'UserStateAtom',
-    default: {
-        phrase: undefined,
-        nonce: undefined,
-        pin: undefined,
-        keys: undefined,
-    },
+const userAtom = atom<TUser>({
+    key: 'UserAtom',
+    default: {},
 })
 
-export { userStateAtom, userStatePersistAtom }
+const userProfileSelector = selector<IGoshProfile | undefined>({
+    key: 'UserProfileSelector',
+    get: ({ get }) => {
+        const user = get(userAtom)
+        if (!user.profile || !user.keys) return
+        return new GoshProfile(AppConfig.goshclient, user.profile, user.keys)
+    },
+    dangerouslyAllowMutability: true,
+})
+
+export { userAtom, userPersistAtom, userProfileSelector }

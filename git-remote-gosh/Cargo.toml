@@ -27,11 +27,11 @@ tracing = {version = "0.1", default-features = false}
 tracing-subscriber = {version = "0.3", default-features = false, features = ["env-filter", "fmt"]}
 
 [dependencies]
+async-trait = '^0'
 base64 = '^0'
 base64-serde = '^0'
 bytes = '^1'
 cached = {version = "^0.38.0", features = ["default"]}
-content_inspector = "^0.2.4"
 form-data = '^0'
 futures = '^0'
 git-diff = '^0'
@@ -47,7 +47,7 @@ indexmap = '^1'
 lazy_static = '^1'
 log = '^0'
 log4rs = '^1'
-lru = '^0'
+lru = '^0.8.0'
 openssl = {version = "^0", features = ["vendored"]}
 primitive-types = '^0'
 serde_json = '^1'

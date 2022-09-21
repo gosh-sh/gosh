@@ -3,6 +3,9 @@ pragma AbiHeader time;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
+import "../gosh/modifiers/modifiers.sol";
+
+
 import "Libraries/SMVErrors.sol";
 import "Libraries/SMVConstants.sol";
 
@@ -21,7 +24,7 @@ import "External/tip3/interfaces/IBounceTokensTransferCallback.sol";
 import "SMVTokenLocker.sol";
 import "TokenWalletOwner.sol";
 
-contract SMVAccount is ISMVAccount , TokenWalletOwner {
+contract SMVAccount is Modifiers, ISMVAccount , TokenWalletOwner {
 
 uint256 /* static */ nonce;
 
@@ -44,6 +47,7 @@ TvmCell m_SMVProposalCode;
 TvmCell m_SMVClientCode;
 TvmCell m_lockerCode;
 
+optional(uint256) _access;
 
 
 // mapping to store hashes of inbound messages;
@@ -139,7 +143,7 @@ function onTokenWalletDeployed(address wallet) external view check_token_root
   require (wallet == m_tokenWallet);
 }
 
-function proposalIsCompleted(address proposal) external check_owner {
+function proposalIsCompleted(address proposal) external onlyOwnerPubkey(_access.get()) {
     tvm.accept();
     _saveMsg();
 
@@ -192,7 +196,7 @@ function onTokenBalanceUpdateWhileLockVoting (uint128 balance) external check_wa
 uint128 lockingAmount;
  */
 
-function lockVoting (uint128 amount) external check_owner
+function lockVoting (uint128 amount) external onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -211,7 +215,7 @@ function lockVoting (uint128 amount) external check_owner
     }
 }
 
-function unlockVoting (uint128 amount) external  check_owner
+function unlockVoting (uint128 amount) external  onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -230,7 +234,7 @@ function unlockVoting (uint128 amount) external  check_owner
     _saveMsg();
 }
  */
-function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  check_owner
+function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -365,7 +369,7 @@ function proposalAddressByAccount(address acc, /* uint256 nonce, */ uint256 prop
 }
 
 
-function killAccount (address address_to, address /* tokens_to */) external check_owner
+function killAccount (address address_to, address /* tokens_to */) external onlyOwnerPubkey(_access.get())
 {
     require(!initialized);
     tvm.accept();
@@ -374,7 +378,7 @@ function killAccount (address address_to, address /* tokens_to */) external chec
     selfdestruct(address_to);
 }
 
-function withdrawTokens (address address_to, uint128 amount) public check_owner
+function withdrawTokens (address address_to, uint128 amount) public onlyOwnerPubkey(_access.get())
 {
      require(initialized, SMVErrors.error_not_initialized);
      require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
@@ -386,7 +390,7 @@ function withdrawTokens (address address_to, uint128 amount) public check_owner
                                           (amount, address_to, 0, address(this), true, empty) ;
 }
 
-function updateHead() public check_owner
+function updateHead() public onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+
@@ -400,7 +404,7 @@ function updateHead() public check_owner
                                                          5*SMVConstants.ACTION_FEE, flag: 1} ();
 }
 
-function returnExtraLockerFunds() public check_owner
+function returnExtraLockerFunds() public onlyOwnerPubkey(_access.get())
 {
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
     tvm.accept();
