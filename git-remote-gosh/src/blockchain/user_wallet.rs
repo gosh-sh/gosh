@@ -162,6 +162,7 @@ pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
 }
 
 fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
+    log::debug!("Searching for a wallet at {}", context.remote.network);
     context
         .config
         .find_network_user_wallet(&context.remote.network)
