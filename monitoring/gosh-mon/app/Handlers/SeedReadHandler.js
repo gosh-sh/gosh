@@ -10,12 +10,12 @@ class SeedReadHandler extends AppHandler_1.default {
     }
     async handle(debug) {
         return await this.doSteps(
-        /* 0 -  6*/ ...this.initialSteps(debug, AppHandler_1.default.userSteps), 
-        /* 7*/ () => this.click(`//a[@href='/account/settings']`), 
-        /* 8*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"), 
-        /* 9*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1), 
-        /*10*/ () => this.clickNow("svg.fa-copy", 1), 
-        /*11*/ () => { return this.checkSeed(); });
+        /* 0 -  7 */ ...this.initialSteps(debug, AppHandler_1.default.userSteps), 
+        /* 8*/ () => this.click(`//a[@href='/account/settings']`), 
+        /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"), 
+        /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1), 
+        /*11*/ () => this.clickNow("svg.fa-copy", 1), 
+        /*12*/ () => { return this.checkSeed(); });
     }
     async checkSeed() {
         const obtainedSeed = await this.copy();

@@ -103,7 +103,7 @@ class ScenarioHandler extends Handler_1.default {
             throw new Error('Found ' + elems.length + ' ' + elem + ' elements');
     }
     async count(elem) {
-        return (await this.page.$$(elem)).length;
+        return (await this.findMultipleNow(elem)).length;
     }
     async waitForGone(elem, timeout) {
         const timeoutArg = timeout ? { timeout: timeout } : {};
@@ -118,7 +118,9 @@ class ScenarioHandler extends Handler_1.default {
         }
         catch (e) {
             if (e.toString().includes('Node is detached from document'))
-                await (await this.find(elem)).click();
+                await (await this.find(elem, timeout)).click();
+            else
+                throw e;
         }
     }
     async clickNow(elem, index = 0) {
@@ -132,10 +134,16 @@ class ScenarioHandler extends Handler_1.default {
         await element.focus();
         await this.page.keyboard.type(text, { delay: 10 });
     }
-    async pasteInto(elem, text, timeout) {
-        const element = await this.find(elem, timeout);
-        await element.focus();
-        await this.paste(text, true, true);
+    async pasteInto(elem, text, timeout, optional) {
+        try {
+            const element = await this.find(elem, timeout);
+            await element.focus();
+            await this.paste(text, true, true);
+        }
+        catch (e) {
+            if (optional !== true)
+                throw e;
+        }
     }
     async erasePaste(elem, text, timeout) {
         const element = await this.find(elem, timeout);
@@ -216,6 +224,46 @@ class ScenarioHandler extends Handler_1.default {
             ["timestamp", (0, Utils_1.now)()],
             ["duration", (0, Utils_1.now)() - this.started]
         ]);
+    }
+    // protected conditional(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
+    //     const res = [];
+    //     for (let f of branch_true) {
+    //         res.push(async () => { if (condition()) return await f(); });
+    //     }
+    //     for (let f of branch_false) {
+    //         res.push(async () => { if (!condition()) return await f(); });
+    //     }
+    //     return res;
+    // }
+    cond_ifelse(condition, branch_true, branch_false) {
+        const res = [];
+        const nop = async () => { };
+        res.push(async () => { this.say(`condition result ${condition()}`); return null; });
+        for (let i = 0; i < Math.max(branch_true.length, branch_false.length); i++) {
+            const f_true = i < branch_true.length ? branch_true[i] : nop;
+            const f_false = i < branch_false.length ? branch_false[i] : nop;
+            res.push(async () => { if (condition())
+                return f_true();
+            else
+                return f_false(); });
+        }
+        return res;
+    }
+    cond_if(condition, branch_true) {
+        return this.cond_ifelse(condition, branch_true, []);
+    }
+    cond_ifnot(condition, branch_false) {
+        return this.cond_ifelse(condition, [], branch_false);
+    }
+    for_each(arr, loop_factory) {
+        const res = [];
+        for (const s of arr) {
+            res.push(async () => { this.say(`for_each iterating ${s}`); return null; });
+            for (const f of loop_factory(s)) {
+                res.push(f);
+            }
+        }
+        return res;
     }
     async finally() {
         if (this.browser) {

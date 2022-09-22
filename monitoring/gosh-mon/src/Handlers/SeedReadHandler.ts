@@ -9,12 +9,12 @@ export default class SeedReadHandler extends AppHandler {
 
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
-            /* 0 -  6*/ ...this.initialSteps(debug, AppHandler.userSteps),
-            /* 7*/ () => this.click(`//a[@href='/account/settings']`),
-            /* 8*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"),
-            /* 9*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
-            /*10*/ () => this.clickNow("svg.fa-copy", 1),
-            /*11*/ () => { return this.checkSeed(); }
+            /* 0 -  7 */ ...this.initialSteps(debug, AppHandler.userSteps),
+            /* 8*/ () => this.click(`//a[@href='/account/settings']`),
+            /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"),
+            /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
+            /*11*/ () => this.clickNow("svg.fa-copy", 1),
+            /*12*/ () => { return this.checkSeed(); }
         );
     }
 

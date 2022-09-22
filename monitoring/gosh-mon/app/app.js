@@ -33,6 +33,8 @@ const yaml = __importStar(require("js-yaml"));
 let conf = {};
 try {
     conf = yaml.load(fs_1.default.readFileSync('./config/config.yml', 'utf8'));
+    const cred = yaml.load(fs_1.default.readFileSync('./config/credentials.yml', 'utf8'));
+    Object.assign(conf.global, cred);
     console.log('Loaded configuration');
 }
 catch (e) {
