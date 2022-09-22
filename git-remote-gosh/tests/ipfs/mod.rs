@@ -1,4 +1,4 @@
-use git_remote_gosh::ipfs::IpfsService;
+use git_remote_gosh::ipfs::{IpfsLoad, IpfsSave, IpfsService};
 use std::env;
 use tokio::fs::{remove_file, OpenOptions};
 

@@ -31,16 +31,15 @@ pub trait IpfsInfo {
 
 #[async_trait]
 pub trait IpfsSave {
-    async fn save_blob(&self, blob: &[u8]) -> std::result::Result<String, Box<dyn Error>>;
-    async fn save_file(
-        &self,
-        path: impl AsRef<Path>,
-    ) -> std::result::Result<String, Box<dyn Error>>;
+    async fn save_blob(&self, blob: &[u8]) -> Result<String>;
+    async fn save_file<A>(&self, path: A) -> Result<String>
+    where
+        A: AsRef<Path> + std::marker::Send + std::marker::Sync;
 }
 
 #[async_trait]
 pub trait IpfsLoad {
-    async fn load(&self, cid: &str) -> std::result::Result<Vec<u8>, Box<dyn Error>>;
+    async fn load(&self, cid: &str) -> Result<Vec<u8>>;
 }
 
 impl IpfsService {
@@ -109,21 +108,6 @@ impl IpfsService {
         IpfsService::save_body(cli, url, blob.to_owned()).await
     }
 
-    #[instrument(level = "debug", skip(blob))]
-    pub async fn save_blob(&self, blob: &[u8]) -> Result<String> {
-        log::debug!("Uploading blob to IPFS");
-
-        let url = format!(
-            "{}/api/v0/add?pin=true&quiet=true",
-            self.ipfs_endpoint_address,
-        );
-
-        Retry::spawn(self.retry_strategy(), || {
-            IpfsService::save_blob_retriable(&self.http_client, &url, blob)
-        })
-        .await
-    }
-
     async fn save_file_retriable(
         cli: &HttpClient,
         url: &str,
@@ -135,27 +119,6 @@ impl IpfsService {
         let file = File::open(path).await?;
         let body = reqwest::Body::from(file);
         IpfsService::save_body(cli, url, body).await
-    }
-
-    #[instrument(level = "debug")]
-    pub async fn save_file<T>(&self, path: T) -> Result<String>
-    where
-        T: AsRef<Path> + std::fmt::Debug,
-    {
-        log::debug!(
-            "Uploading file to IPFS: {}",
-            path.as_ref().to_string_lossy()
-        );
-
-        let url = format!(
-            "{}/api/v0/add?pin=true&quiet=true",
-            self.ipfs_endpoint_address
-        );
-
-        Retry::spawn(self.retry_strategy(), || {
-            IpfsService::save_file_retriable(&self.http_client, &url, &path)
-        })
-        .await
     }
 
     async fn load_retriable(cli: &HttpClient, url: &str) -> Result<Vec<u8>> {
@@ -203,6 +166,42 @@ impl IpfsService {
 //         .await
 //     }
 // }
+#[async_trait]
+impl IpfsSave for IpfsService {
+    async fn save_blob(&self, blob: &[u8]) -> Result<String> {
+        log::debug!("Uploading blob to IPFS");
+
+        let url = format!(
+            "{}/api/v0/add?pin=true&quiet=true",
+            self.ipfs_endpoint_address,
+        );
+
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_blob_retriable(&self.http_client, &url, blob)
+        })
+        .await
+    }
+
+    async fn save_file<A>(&self, path: A) -> Result<String>
+    where
+        A: AsRef<Path> + std::marker::Send + std::marker::Sync,
+    {
+        log::debug!(
+            "Uploading file to IPFS: {}",
+            path.as_ref().to_string_lossy()
+        );
+
+        let url = format!(
+            "{}/api/v0/add?pin=true&quiet=true",
+            self.ipfs_endpoint_address
+        );
+
+        Retry::spawn(self.retry_strategy(), || {
+            IpfsService::save_file_retriable(&self.http_client, &url, &path)
+        })
+        .await
+    }
+}
 
 #[async_trait]
 impl IpfsLoad for IpfsService {
