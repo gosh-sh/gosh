@@ -1,5 +1,6 @@
 import ScenarioHandler from "./ScenarioHandler";
 import crypto from "crypto";
+import fetch from "node-fetch";
 
 export default abstract class GoshHandler extends ScenarioHandler {
 
@@ -11,7 +12,19 @@ export default abstract class GoshHandler extends ScenarioHandler {
     protected branch: string = '';
     protected filename: string = '';
 
+    protected username: string = '';
+
     protected large: boolean = false;
+
+    protected appurl: string = 'https://app.gosh.sh/';
+
+    protected root = '';
+
+    protected ipfs_address = '';
+    protected prim_network = '';
+    protected conf_endpoint = '';
+
+    protected use_envs = '';
 
     setSeed(seed: string) {
         this.seed = seed;
@@ -38,8 +51,34 @@ export default abstract class GoshHandler extends ScenarioHandler {
         this.large = large;
     }
 
+    protected async requestEnvs() {
+        // require | priority | fallback | disabled
+        const eset = this.use_envs;
+        if (eset !== 'disabled') {
+            try {
+                const res = await fetch(this.appurl + 'envs.json');
+                const jr = await res.json();
+                const p = (eset === 'require') || (eset === 'priority');
+                this.ipfs_address = !p ? (this.ipfs_address ?? jr.ipfs) : (jr.ipfs ?? this.ipfs_address);
+                this.root = !p ? (this.root ?? jr.gosh) : (jr.gosh ?? this.root);
+                this.conf_endpoint = !p ? (this.conf_endpoint ?? jr.network) : (jr.network ?? this.conf_endpoint);
+                this.say(`resolved ipfs ${this.ipfs_address}, root ${this.root}, endpoint ${this.conf_endpoint}`);
+            } catch (e) {
+                if (eset === 'require')
+                    throw e;
+            }
+        }
+    }
+
     applyExtraConfiguration(c: any) {
         super.applyExtraConfiguration(c);
+        if (c['username']) this.username = c['username'];
+        if (c['appurl']) this.appurl = c['appurl'];
+        this.root = c['root'];
+        this.ipfs_address = c['ipfs_address'] ?? '';
+        this.prim_network = c['prim_network'] ?? '';
+        this.conf_endpoint = c['conf_endpoint'] ?? '';
+        this.use_envs = c['use_envs'] ?? '';
     }
 
     protected goshDescribe(): string {

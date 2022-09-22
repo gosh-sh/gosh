@@ -11,6 +11,7 @@ const RemoteWriteHandler_1 = __importDefault(require("./Handlers/RemoteWriteHand
 const AppRotateHandler_1 = __importDefault(require("./Handlers/AppRotateHandler"));
 const SeedReadHandler_1 = __importDefault(require("./Handlers/SeedReadHandler"));
 const RootCheckHandler_1 = __importDefault(require("./Handlers/RootCheckHandler"));
+const AppSetupHandler_1 = __importDefault(require("./Handlers/AppSetupHandler"));
 function selectHandler(type) {
     console.log('selectHandler, type:', type);
     switch (type) {
@@ -23,6 +24,7 @@ function selectHandler(type) {
         case 'app-rotate': return new AppRotateHandler_1.default();
         case 'seed-read': return new SeedReadHandler_1.default();
         case 'root-check': return new RootCheckHandler_1.default();
+        case 'app-setup': return new AppSetupHandler_1.default();
     }
     throw new TypeError('Invalid type');
 }

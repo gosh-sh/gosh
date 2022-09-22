@@ -2,11 +2,12 @@ import Application from "./Application";
 import selectHandler from "./selectHandler";
 import fs from "fs";
 import * as yaml from "js-yaml";
-import RemoteHandler from "./Handlers/RemoteHandler";
 
 let conf: any = {};
 try {
     conf = yaml.load(fs.readFileSync('./config/config.yml', 'utf8'));
+    const cred = yaml.load(fs.readFileSync('./config/credentials.yml', 'utf8'));
+    Object.assign(conf.global, cred);
     console.log('Loaded configuration');
 } catch (e) {
     console.error("Failed to load configuration", e);

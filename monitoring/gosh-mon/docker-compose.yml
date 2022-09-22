@@ -94,18 +94,53 @@ services:
       - "./errors:/home/node/app/errors"
       - "gm-rem-la-wr-data:/home/node/app/data"
 
+  gosh-mon-next-rem-sm-rd:
+    <<: *service
+    container_name: gosh-mon-next-rem-sm-rd
+    environment: ["GM_MODE=rem-small-read-next"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rem-sm-rd-data:/home/node/app/data"
+
+  gosh-mon-next-rem-sm-wr:
+    <<: *service
+    container_name: gosh-mon-next-rem-sm-wr
+    environment: ["GM_MODE=rem-small-write-next"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rem-sm-wr-data:/home/node/app/data"
+
+  gosh-mon-next-rem-la-rd:
+    <<: *service
+    container_name: gosh-mon-next-rem-la-rd
+    environment: ["GM_MODE=rem-large-read-next"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rem-la-rd-data:/home/node/app/data"
+
+  gosh-mon-next-rem-la-wr:
+    <<: *service
+    container_name: gosh-mon-next-rem-la-wr
+    environment: ["GM_MODE=rem-large-write-next"]
+    volumes:
+      - "./config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rem-la-wr-data:/home/node/app/data"
+
 # auxillary
 
   gosh-mon-seed-read:
     <<: *service
     container_name: gosh-mon-seed-read
     environment: ["GM_MODE=seed-read"]
-    
+
   gosh-mon-root-check:
     <<: *service
     container_name: gosh-mon-root-check
     environment: ["GM_MODE=root-check"]
-    
 
 # serve errors directory
 
@@ -130,7 +165,7 @@ services:
 #    restart: "no"
 #    environment:
 #      - GM_MODE=rem-small-read-next
-#      - ONESHOT_DEBUG=2
+#      - ONESHOT_DEBUG=3
 #    volumes:
 #      - ./config:/home/node/app/config:ro
 #      - gm-test-data:/home/node/app/data
