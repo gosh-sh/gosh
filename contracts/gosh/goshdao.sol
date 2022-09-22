@@ -258,15 +258,28 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deleteWallet(address pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        tvm.accept();
+    function deleteWalletIn(address pubaddrdeploy) private {
         (int8 _, uint256 keyaddr) = pubaddrdeploy.unpack();
         _;
-        require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST);
+        require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST); 
         GoshWallet(_wallets[keyaddr]).destroy{value : 0.2 ton}();
         delete _wallets[keyaddr];
         getMoney();
+    }
+    
+    function deleteWallet(address[] pubmem, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        tvm.accept();       
+        this.deleteWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+        getMoney();
+    }
+    
+    function deleteWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
+        tvm.accept();
+        if (index >= pubmem.length) { return; }
+        deleteWalletIn(pubmem[index]);
+        index += 1;
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {

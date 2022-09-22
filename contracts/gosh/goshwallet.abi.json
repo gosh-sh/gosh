@@ -106,7 +106,7 @@
 		{
 			"name": "deleteWalletDao",
 			"inputs": [
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubaddr","type":"address[]"}
 			],
 			"outputs": [
 			]

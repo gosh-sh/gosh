@@ -124,8 +124,17 @@
 		{
 			"name": "deleteWallet",
 			"inputs": [
-				{"name":"pubaddrdeploy","type":"address"},
+				{"name":"pubmem","type":"address[]"},
 				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallets",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [

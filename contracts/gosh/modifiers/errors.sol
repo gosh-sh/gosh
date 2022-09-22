@@ -54,4 +54,5 @@ abstract contract Errors {
     uint constant ERR_BAD_NUMBER_CUSTODIANS = 242;
     uint constant ERR_NOTHING_TO_CONFIRM = 243;
     uint constant ERR_ALREADY_CONFIRMED = 244;
+    uint constant ERR_WRONG_NUMBER_MEMBER = 245;
 }
