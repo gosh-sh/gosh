@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e 
 set -o pipefail
+. ./util.sh
 
 # create repo
 REPO_NAME=repo5
@@ -11,7 +12,8 @@ REPO_NAME=repo5
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 10
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-sleep 120
+wait_account_active $REPO_ADDR
+sleep 60
 
 # clone repo
 git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
@@ -36,6 +38,7 @@ git add .
 git commit -m "added eversdk.node-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -56,6 +59,7 @@ git add .
 git commit -m "added favicon.ico-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -76,6 +80,7 @@ git add .
 git commit -m "added gosh.tvc-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -96,6 +101,7 @@ git add .
 git commit -m "added grg.shar-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -116,6 +122,7 @@ git add .
 git commit -m "added LICENSE-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -136,6 +143,7 @@ git add .
 git commit -m "added mixed-512.file-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -156,6 +164,7 @@ git add .
 git commit -m "added mixed-1024.file-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..
@@ -176,6 +185,7 @@ git add .
 git commit -m "added mixed-1025.file-$CHANGE"
 git push -u origin $BRANCH_NAME
 
+wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
 cd ..

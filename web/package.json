@@ -4,18 +4,18 @@
     "private": true,
     "scripts": {
         "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
-        "start": "react-scripts start",
-        "start:ci": "dotenv -e .env.ci react-scripts start",
-        "start:dev": "dotenv -e .env.development react-scripts start",
-        "start:prod": "dotenv -e .env.production react-scripts start",
-        "build:ci": "dotenv -e .ci.development react-scripts build",
-        "build:dev": "dotenv -e .env.development react-scripts build",
-        "build:prod": "dotenv -e .env.production react-scripts build",
+        "start": "npm run start:dev",
+        "start:ci": "dotenv -e .env.ci node env.json.js && dotenv -e .env.ci react-scripts start",
+        "start:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development react-scripts start",
+        "start:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production react-scripts start",
+        "build:ci": "dotenv -e .ci.development node env.json.js && dotenv -e .ci.development react-scripts build",
+        "build:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development react-scripts build",
+        "build:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production react-scripts build",
         "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.development | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.development react-scripts build",
         "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run build && cd ../web && rm -rf ./node_modules/react-gosh || true && npm update react-gosh"
+        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run build && cd ../web && rm -rf ./node_modules/react-gosh || true && rm -rf ./node_modules/.cache || true && npm update react-gosh"
     },
     "eslintConfig": {
         "extends": [
@@ -67,6 +67,7 @@
         "react-query": "^3.34.19",
         "react-router-dom": "^6.2.1",
         "react-toastify": "^8.2.0",
+        "react-tooltip": "^4.2.21",
         "recoil": "^0.7.0",
         "recoil-persist": "^4.1.0",
         "rehype-raw": "^6.1.1",

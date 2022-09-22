@@ -46,9 +46,9 @@ pipeline {
                     script {
                         if (!params.ONLYWEB) {
                             dir('git-remote-gosh') {
-                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64 DOCKER_BUILDER_ARGS='--driver-opt network=host'"
-                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
+                                sh "make prepare-builder DOCKER_BUILDER_ARGS='--driver-opt network=host'"
                                 sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
                                 sh 'cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64'
                                 sh 'cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64'
                             }
@@ -68,7 +68,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: deploy smart-contracts') {
+        stage('Deploy: deploy smart-contracts') {
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -80,7 +80,6 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/GoshDaoCreator.addr'
             }
         }
-
         stage('Tests: functional') {
             steps {
                 script {
@@ -96,7 +95,6 @@ pipeline {
                 }
             }
         }
-
         stage('Web: deploy') {
             steps {
                 script {
@@ -104,7 +102,7 @@ pipeline {
                     env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_CREATOR_ADDR = sh script: "cat contracts/gosh/GoshDaoCreator.addr | tr -d '\n'", returnStdout: true 
                     sh """
-                        touch ${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh:8000
+                        touch ${DOCKER_WEB_CONTAINER_NAME}.gosh.sh
                         sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' web/.env.ci
                         sed -i '/REACT_APP_CREATOR_ADDR/s/\$/${REACT_APP_CREATOR_ADDR}/' web/.env.ci
                         mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
@@ -118,7 +116,7 @@ pipeline {
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
-                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh*"
+                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.gosh.sh*"
                 }
             }
         }
@@ -127,10 +125,35 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 http://${DOCKER_WEB_CONTAINER_NAME}.test.app.gosh.sh:8000 > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
+                }
+            }
+        }
+        stage('Web: run tests') {
+            steps {
+                script {
+                    dir('monitoring/gosh-mon') {     
+                        sh """
+                            docker build -t gosh-mon .
+                            docker run --rm \
+                                -e GM_MODE=seed-read \
+                                -e RUN_NOW=1 \
+                                -e CONFIG_SEED=\'palm rebel eye blade write excess avoid define card mimic gas call\' \
+                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh \
+                                -v \$(pwd)/config:/home/node/app/config:ro \
+                                -v \$(pwd)/test-errors:/home/node/app/errors \
+                                gosh-mon
+                        """
+                    }   
+                }
+            }
+            post {
+                failure {
+                    archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.log"
+                    archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
         }

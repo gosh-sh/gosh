@@ -25,10 +25,12 @@ import {
     getCodeLanguageFromFilename,
     splitByPath,
     classNames,
+    retry,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -52,7 +54,7 @@ const BlobUpdatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
+    const urlBack = `/${daoName}/${repoName}/blobs/view/${branchName}${
         treePath && `/${treePath}`
     }`
 
@@ -72,29 +74,34 @@ const BlobUpdatePage = () => {
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await wallet.createCommit(
-                repo,
-                branch,
-                userState.keys.public,
-                [
-                    {
-                        name: `${path ? `${path}/` : ''}${values.name}`,
-                        modified: values.content,
-                        original: blob?.content ?? '',
-                        isIpfs: blob?.isIpfs,
-                        treeItem,
-                    },
-                ],
-                message,
-                values.tags,
-                undefined,
-                progressCallback,
+            const pubkey = userState.keys.public
+            await retry(
+                () =>
+                    wallet.createCommit(
+                        repo,
+                        branch,
+                        pubkey,
+                        [
+                            {
+                                name: `${path ? `${path}/` : ''}${values.name}`,
+                                modified: values.content,
+                                original: blob?.content ?? '',
+                                isIpfs: blob?.isIpfs,
+                                treeItem,
+                            },
+                        ],
+                        message,
+                        values.tags,
+                        undefined,
+                        progressCallback,
+                    ),
+                3,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 

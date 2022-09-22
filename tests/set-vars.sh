@@ -14,6 +14,8 @@ export DAO_CREATOR_ADDR=`cat ../contracts/gosh/GoshDaoCreator.addr`
 
 export GOSH_ABI=../contracts/gosh/gosh.abi.json
 DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
+export REPO_ABI=../contracts/gosh/repository.abi.json
+DAO1_ABI=../contracts/gosh/goshdao.abi.json
 
 # create DAO
 
@@ -34,7 +36,6 @@ DAO1_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrDao "{\"name\":\"$DAO1_NAME\
 # user keys
 export WALLET_KEYS=$DAO1_KEYS
 WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
-DAO1_ABI=../contracts/gosh/goshdao.abi.json
 
 # deploy Wallet
 tonos-cli call --abi $DAO1_ABI --sign $DAO1_KEYS $DAO1_ADDR deployWallet "{\"pubkey\":\"$WALLET_PUBKEY\"}" || exit 1

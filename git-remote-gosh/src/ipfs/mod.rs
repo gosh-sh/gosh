@@ -89,7 +89,7 @@ impl IpfsService {
         IpfsService::save_body(cli, url, blob.to_owned()).await
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(blob))]
     pub async fn save_blob(&self, blob: &[u8]) -> Result<String> {
         log::debug!("Uploading blob to IPFS");
 
@@ -140,9 +140,7 @@ impl IpfsService {
 
     async fn load_retriable(cli: &Client, url: &str) -> Result<Vec<u8>> {
         log::info!("loading from: {}", url);
-        let response = cli.get(url).send().await;
-        log::info!("response obj: {:?}", response);
-        let response = response?;
+        let response = cli.get(url).send().await?;
         log::info!("Got response: {:?}", response);
         let response_body = response.bytes().await?;
         Ok(Vec::from(&response_body[..]))

@@ -176,7 +176,7 @@ const RepoPage = () => {
                             const path = [item.path, item.name]
                                 .filter((part) => part !== '')
                                 .join('/')
-                            const type = item.type === 'tree' ? 'tree' : 'blobs'
+                            const type = item.type === 'tree' ? 'tree' : 'blobs/view'
 
                             return (
                                 <div key={index} className="py-3">

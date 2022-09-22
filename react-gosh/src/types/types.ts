@@ -106,7 +106,6 @@ export type TCreateCommitCallbackParams = {
     diffsPrepare?: boolean
     treePrepare?: boolean
     treeDeploy?: boolean
-    treeSet?: boolean
     commitDeploy?: boolean
     tagsDeploy?: boolean
     completed?: boolean

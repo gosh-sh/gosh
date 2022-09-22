@@ -74,6 +74,7 @@ import { EGoshError, GoshError } from './errors'
 import { Buffer } from 'buffer'
 import { sleep } from './utils'
 import { TDaoDetails } from './types/dao.types'
+import isUtf8 from 'isutf8'
 
 export class BaseContract implements IContract {
     abi: any
@@ -537,10 +538,6 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 !!callback && callback({ tagsDeploy: true })
             })(),
         ])
-
-        // Set tree
-        await this.setTree(repo.meta.name, futureCommit.name, updatedTreeRootAddr)
-        !!callback && callback({ treeSet: true })
 
         const isBranchProtected = await repo.isBranchProtected(branch.name)
         if (!isBranchProtected) {
@@ -1542,9 +1539,12 @@ export class GoshSnapshot extends BaseContract implements IGoshSnapshot {
             content = await zstd.decompress(this.account.client, content, false)
             content = Buffer.from(content, 'base64')
         }
-        if ((flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
-            content = content.toString()
-        }
+        // if ((flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
+        //     content = content.toString()
+        // }
+
+        // Try to check if valid utf8
+        if (Buffer.isBuffer(content) && isUtf8(content)) content = content.toString()
 
         return { content, patched: patchedRaw, isIpfs: !!ipfs }
     }

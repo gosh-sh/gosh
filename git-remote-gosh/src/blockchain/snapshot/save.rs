@@ -127,17 +127,16 @@ pub async fn diff_address(
     Ok(result.address)
 }
 
-pub fn is_going_to_ipfs(diff: &Vec<u8>, new_content: &Vec<u8>) -> bool {
+pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
     let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
         || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
-        is_going_to_ipfs =
-            content_inspector::ContentType::BINARY == content_inspector::inspect(new_content);
+        is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
     }
     is_going_to_ipfs
 }
 
-#[instrument(level = "debug", skip(diff))]
+#[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
     context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
@@ -299,7 +298,7 @@ pub async fn inner_push_diff(
     };
 
     let params = serde_json::to_value(args)?;
-    let result = call(&es_client, wallet, "deployDiff", Some(params)).await?;
+    let result = call(&es_client, &wallet, "deployDiff", Some(params)).await?;
     log::debug!("deployDiff result: {:?}", result);
 
     Ok(())
@@ -345,7 +344,7 @@ pub async fn push_new_branch_snapshot(
     let params = serde_json::to_value(args)?;
     let result = call(
         &context.es_client,
-        wallet,
+        &wallet,
         "deployNewSnapshot",
         Some(params),
     )
@@ -379,7 +378,7 @@ pub async fn push_initial_snapshot(
             attempt += 1;
             let result = call(
                 &es_client,
-                wallet.clone(),
+                &wallet,
                 "deployNewSnapshot",
                 Some(params.clone()),
             )
