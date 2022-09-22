@@ -160,8 +160,7 @@ impl IpfsService {
 
     async fn load_retriable(cli: &HttpClient, url: &str) -> Result<Vec<u8>> {
         log::info!("loading from: {}", url);
-        let response = cli.get(url).send().await;
-        let response = response?;
+        let response = cli.get(url).send().await?;
         log::info!("Got response: {:?}", response);
         let response_body = response.bytes().await?;
         Ok(Vec::from(&response_body[..]))
