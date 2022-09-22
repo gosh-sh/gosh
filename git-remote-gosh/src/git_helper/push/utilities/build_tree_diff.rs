@@ -1,3 +1,4 @@
+use crate::blockchain::ZERO_SHA;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use git_diff;
 use git_hash::{self, ObjectId};
@@ -68,7 +69,13 @@ pub fn build_tree_diff_from_commits(
     next_commit_id: ObjectId,
 ) -> Result<TreeDiff> {
     let original_tree_root_id = match original_commit_id {
-        Some(commit_id) => Some(repository.find_object(commit_id)?.into_commit().tree()?.id),
+        Some(commit_id) => {
+            if commit_id == ObjectId::from_str(ZERO_SHA).unwrap() {
+                None
+            } else {
+                Some(repository.find_object(commit_id)?.into_commit().tree()?.id)
+            }
+        },
         None => None,
     };
     let next_tree_root_id = repository
