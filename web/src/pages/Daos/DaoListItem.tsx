@@ -13,7 +13,10 @@ const DaoListItem = (props: TDaoListItemProps) => {
 
     return (
         <div className="py-3">
-            <Link to={`/${item.name}`} className="text-xl font-semibold hover:underline">
+            <Link
+                to={`/o/${item.name}`}
+                className="text-xl font-semibold hover:underline"
+            >
                 {item.name}
             </Link>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-gray-606060 text-sm mt-1">

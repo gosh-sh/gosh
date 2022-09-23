@@ -61,7 +61,7 @@ export const BranchesPage = () => {
                 () => wallet.startProposalForAddProtectedBranch(repoName, name),
                 3,
             )
-            navigate(`/${daoName}/events`, { replace: true })
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
@@ -93,7 +93,7 @@ export const BranchesPage = () => {
                 () => wallet.startProposalForDeleteProtectedBranch(repoName, name),
                 3,
             )
-            navigate(`/${daoName}/events`, { replace: true })
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
@@ -267,7 +267,7 @@ export const BranchesPage = () => {
                     >
                         <div className="grow">
                             <Link
-                                to={`/${daoName}/${repoName}/tree/${branch.name}`}
+                                to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
                                 className="hover:underline"
                             >
                                 {branch.name}

@@ -128,7 +128,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async count(elem: string) {
-        return (await this.page.$$(elem)).length;
+        return (await this.findMultipleNow(elem)).length;
     }
 
     protected async waitForGone(elem: string, timeout?: number) {
@@ -146,7 +146,9 @@ export default abstract class ScenarioHandler extends Handler {
         }
         catch (e: any) {
             if (e.toString().includes('Node is detached from document'))
-                await (await this.find(elem))!.click();
+                await (await this.find(elem, timeout))!.click();
+            else
+                throw e;
         }
     }
 
@@ -164,10 +166,15 @@ export default abstract class ScenarioHandler extends Handler {
         await this.page.keyboard.type(text, {delay: 10});
     }
 
-    protected async pasteInto(elem: string, text: string, timeout?: number): Promise<void> {
-        const element = await this.find(elem, timeout);
-        await element!.focus();
-        await this.paste(text, true, true);
+    protected async pasteInto(elem: string, text: string, timeout?: number, optional?: boolean): Promise<void> {
+        try {
+            const element = await this.find(elem, timeout);
+            await element!.focus();
+            await this.paste(text, true, true);
+        } catch (e) {
+            if (optional !== true)
+                throw e;
+        }
     }
 
     protected async erasePaste(elem: string, text: string, timeout?: number): Promise<void> {
@@ -212,7 +219,7 @@ export default abstract class ScenarioHandler extends Handler {
         }
     }
 
-    protected async doSteps(...steps: StepFunction[]): Promise<MetricsMap> {
+    protected async doSteps(...steps: Array<StepFunction>): Promise<MetricsMap> {
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
         try {
@@ -253,6 +260,48 @@ export default abstract class ScenarioHandler extends Handler {
             ["timestamp", now()],
             ["duration",  now() - this.started]
         ]);
+    }
+
+    // protected conditional(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
+    //     const res = [];
+    //     for (let f of branch_true) {
+    //         res.push(async () => { if (condition()) return await f(); });
+    //     }
+    //     for (let f of branch_false) {
+    //         res.push(async () => { if (!condition()) return await f(); });
+    //     }
+    //     return res;
+    // }
+
+    protected cond_ifelse(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
+        const res = [];
+        const nop = async() => {};
+        res.push(async () => { this.say(`condition result ${condition()}`); return null; });
+        for (let i=0; i<Math.max(branch_true.length, branch_false.length); i++) {
+            const f_true = i < branch_true.length ? branch_true[i] : nop;
+            const f_false = i < branch_false.length ? branch_false[i] : nop;
+            res.push(async() => { if (condition()) return f_true(); else return f_false(); })
+        }
+        return res;
+    }
+
+    protected cond_if(condition: () => boolean, branch_true: StepFunction[]): StepFunction[] {
+        return this.cond_ifelse(condition, branch_true, []);
+    }
+
+    protected cond_ifnot(condition: () => boolean, branch_false: StepFunction[]): StepFunction[] {
+        return this.cond_ifelse(condition, [], branch_false);
+    }
+
+    protected for_each(arr: string[], loop_factory: (s: string) => StepFunction[]): StepFunction[] {
+        const res = [];
+        for (const s of arr) {
+            res.push(async () => { this.say(`for_each iterating ${s}`); return null; });
+            for (const f of loop_factory(s)) {
+                res.push(f);
+            }
+        }
+        return res;
     }
 
     protected async finally(): Promise<void> {
