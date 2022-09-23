@@ -90,7 +90,7 @@ const CommitPage = () => {
                             <p className="text-sm">
                                 To see the commit diff follow this
                                 <Link
-                                    to={`/${daoName}/${repoName}/commits/${commit.branch}/${commit.name}`}
+                                    to={`/o/${daoName}/r/${repoName}/commits/${commit.branch}/${commit.name}`}
                                     className="ml-1 underline"
                                 >
                                     link

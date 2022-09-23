@@ -22,7 +22,7 @@ const HomePage = () => {
                 <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
                     {userStatePersist.phrase ? (
                         <Link
-                            to="/account/orgs"
+                            to="/a/orgs"
                             className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
                         >
                             Organizations
@@ -30,13 +30,13 @@ const HomePage = () => {
                     ) : (
                         <>
                             <Link
-                                to="/account/signin"
+                                to="/a/signin"
                                 className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
                             >
                                 Sign in
                             </Link>
                             <Link
-                                to="/account/signup"
+                                to="/a/signup"
                                 className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
                             >
                                 Create account

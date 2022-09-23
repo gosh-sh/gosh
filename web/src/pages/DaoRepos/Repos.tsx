@@ -131,7 +131,7 @@ const DaoRepositoriesPage = () => {
                 {wallet?.isDaoParticipant && (
                     <Link
                         className="btn btn--body px-4 py-1.5 !font-normal text-center w-full sm:w-auto"
-                        to={`/${daoName}/repos/create`}
+                        to={`/o/${daoName}/repos/create`}
                     >
                         New repository
                     </Link>

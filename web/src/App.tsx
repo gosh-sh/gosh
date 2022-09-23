@@ -99,9 +99,9 @@ const App = () => {
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
-                    <Route path="/account/signin" element={<SigninPage />} />
-                    <Route path="/account/signup" element={<SignupPage />} />
-                    <Route path="/account" element={<ProtectedLayout />}>
+                    <Route path="/a/signin" element={<SigninPage />} />
+                    <Route path="/a/signup" element={<SignupPage />} />
+                    <Route path="/a" element={<ProtectedLayout />}>
                         <Route path="orgs/create" element={<DaoCreatePage />} />
                         <Route element={<AccountLayout />}>
                             <Route index element={null} />
@@ -111,7 +111,7 @@ const App = () => {
                         </Route>
                     </Route>
                     <Route
-                        path="/:daoName"
+                        path="/o/:daoName"
                         element={<ProtectedLayout redirect={false} />}
                     >
                         <Route element={<DaoLayout />}>
@@ -129,27 +129,28 @@ const App = () => {
                                 <Route path="members" element={<DaoMembersPage />} />
                             </Route>
                         </Route>
-                        <Route path=":repoName" element={<RepoLayout />}>
+                        <Route path="r/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName/*" element={<RepoPage />} />
                             <Route path="branches" element={<BranchesPage />} />
-                            <Route
-                                path="blobs/create/:branchName/*"
-                                element={<BlobCreatePage />}
-                            />
-                            <Route
-                                path="blobs/update/:branchName/*"
-                                element={<BlobUpdatePage />}
-                            />
-                            <Route
-                                path="blobs/view/:branchName/*"
-                                element={<BlobPage />}
-                            />
-                            <Route path="commits/:branchName" element={<CommitsPage />} />
-                            <Route
-                                path="commits/:branchName/:commitName"
-                                element={<CommitPage />}
-                            />
+                            <Route path="blobs">
+                                <Route
+                                    path="create/:branchName/*"
+                                    element={<BlobCreatePage />}
+                                />
+                                <Route
+                                    path="update/:branchName/*"
+                                    element={<BlobUpdatePage />}
+                                />
+                                <Route path="view/:branchName/*" element={<BlobPage />} />
+                            </Route>
+                            <Route path="commits">
+                                <Route path=":branchName" element={<CommitsPage />} />
+                                <Route
+                                    path=":branchName/:commitName"
+                                    element={<CommitPage />}
+                                />
+                            </Route>
                             <Route path="pull" element={<PullCreatePage />} />
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />

@@ -29,13 +29,13 @@ const RepoLayout = () => {
 
     const tabs = [
         {
-            to: `/${daoName}/${repoName}/tree/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}/tree/${branchName}`,
             title: 'Code',
             icon: faCode,
             public: true,
         },
         {
-            to: `/${daoName}/${repoName}/pull`,
+            to: `/o/${daoName}/r/${repoName}/pull`,
             title: 'Pull request',
             icon: faCodePullRequest,
             public: false,
@@ -44,7 +44,7 @@ const RepoLayout = () => {
 
     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
         tabs.push({
-            to: `/${daoName}/${repoName}/build/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}/build/${branchName}`,
             title: 'Build image',
             icon: faCube,
             public: false,
@@ -66,14 +66,14 @@ const RepoLayout = () => {
         <div className="container container--full my-10">
             <h1 className="flex items-center mb-6 px-5 sm:px-0">
                 <Link
-                    to={`/${daoName}`}
+                    to={`/o/${daoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {daoName}
                 </Link>
                 <span className="mx-2">/</span>
                 <Link
-                    to={`/${daoName}/${repoName}`}
+                    to={`/o/${daoName}/r/${repoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {repoName}

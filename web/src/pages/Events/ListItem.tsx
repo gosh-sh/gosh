@@ -20,7 +20,7 @@ const EventListItem = (props: TEventListItemProps) => {
             <div>
                 <div className="mb-2">
                     <Link
-                        to={`/${daoName}/events/${event.address}`}
+                        to={`/o/${daoName}/events/${event.address}`}
                         className="text-lg font-semibold hover:underline"
                     >
                         {eventTypes[event.params.proposalKind]}

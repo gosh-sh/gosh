@@ -114,13 +114,13 @@ const Header = () => {
                                 location.pathname !== '/' && (
                                     <>
                                         <Link
-                                            to={`/account/signup`}
+                                            to={`/a/signup`}
                                             className="btn btn--header icon-arrow"
                                         >
                                             Sign up
                                         </Link>
                                         <Link
-                                            to={`/account/signin`}
+                                            to={`/a/signin`}
                                             className="btn btn--header icon-arrow"
                                         >
                                             Sign in
@@ -133,7 +133,7 @@ const Header = () => {
                                         Don't have an account?
                                     </div> */}
                                     <Link
-                                        to={`/account/signup`}
+                                        to={`/a/signup`}
                                         className="btn btn--header icon-arrow"
                                     >
                                         Sign up
@@ -146,7 +146,7 @@ const Header = () => {
                                         Already have an account?
                                     </div> */}
                                     <Link
-                                        to={`/account/signin`}
+                                        to={`/a/signin`}
                                         className="btn btn--header icon-arrow"
                                     >
                                         Sign in
