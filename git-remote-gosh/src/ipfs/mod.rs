@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use reqwest::multipart;
 use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
-use std::{error::Error, path::Path, time::Duration};
+use std::{error::Error, marker::Send, marker::Sync, path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::{strategy::ExponentialBackoff, Retry};
 
@@ -32,9 +32,7 @@ pub trait IpfsInfo {
 #[async_trait]
 pub trait IpfsSave {
     async fn save_blob(&self, blob: &[u8]) -> Result<String>;
-    async fn save_file<A>(&self, path: A) -> Result<String>
-    where
-        A: AsRef<Path> + std::marker::Send + std::marker::Sync;
+    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> Result<String>;
 }
 
 #[async_trait]
@@ -130,42 +128,6 @@ impl IpfsService {
     }
 }
 
-/// TODO: make it work
-// #[async_trait]
-// impl IpfsSave for IpfsService {
-//     async fn save_blob<C, U, B>(cli: &C, url: U, body: B) -> Result<String>
-//     where
-//         C: Into<HttpClient> + std::marker::Send,
-//         U: reqwest::IntoUrl + std::marker::Send,
-//         B: Into<reqwest::Body> + std::marker::Send,
-//     {
-//         let part = multipart::Part::stream(body);
-//         let form = multipart::Form::new().part("file", part);
-//         let response = cli.post(url).multipart(form).send().await?;
-//         let response_body = response.json::<SaveRes>().await?;
-//         Ok(response_body.hash)
-//     }
-
-//     async fn save_file<T>(&self, path: T) -> Result<String>
-//     where
-//         T: AsRef<Path> + std::fmt::Debug + std::marker::Sync,
-//     {
-//         log::debug!(
-//             "Uploading file to IPFS: {}",
-//             path.as_ref().to_string_lossy()
-//         );
-
-//         let url = format!(
-//             "{}/api/v0/add?pin=true&quiet=true",
-//             self.ipfs_endpoint_address
-//         );
-
-//         Retry::spawn(self.retry_strategy(), || {
-//             IpfsService::save_file_retriable(&self.http_client, &url, &path)
-//         })
-//         .await
-//     }
-// }
 #[async_trait]
 impl IpfsSave for IpfsService {
     async fn save_blob(&self, blob: &[u8]) -> Result<String> {
@@ -182,10 +144,7 @@ impl IpfsSave for IpfsService {
         .await
     }
 
-    async fn save_file<A>(&self, path: A) -> Result<String>
-    where
-        A: AsRef<Path> + std::marker::Send + std::marker::Sync,
-    {
+    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> Result<String> {
         log::debug!(
             "Uploading file to IPFS: {}",
             path.as_ref().to_string_lossy()
