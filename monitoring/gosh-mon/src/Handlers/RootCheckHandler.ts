@@ -3,11 +3,8 @@ import {MetricsMap} from "../PrometheusFormatter";
 
 export default class RootCheckHandler extends AppHandler {
 
-    protected root = '';
-
     applyExtraConfiguration(c: any) {
         super.applyExtraConfiguration(c);
-        this.root = c['root'];
     }
 
     describe(): string {
@@ -17,12 +14,13 @@ export default class RootCheckHandler extends AppHandler {
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
             /* 0 -  1*/ ...this.initialSteps(debug, AppHandler.indexSteps),
-            /* 2*/ () => { return this.checkRoot(); }
+            /* 2*/ () => this.requestEnvs(),
+            /* 3*/ () => { return this.checkRoot(); }
         );
     }
 
     protected async checkRoot(): Promise<number> {
-        const page_root = await this.read('footer > div > span');
+        const page_root = await this.read('footer > div.flex-wrap > div.items-center > div > span');
         const shrt_root = this.root.slice(0, 6) + '...' + this.root.slice(-4);
         if (page_root !== shrt_root)
             throw new Error(`Root mismatch on page: got ${page_root}, expected ${shrt_root}`);
