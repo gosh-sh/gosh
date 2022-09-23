@@ -46,6 +46,9 @@ install: copy_abi clear_screen
 test: copy_abi clear_screen
 	cargo test
 
+.PHONY: integration_test
+integration_test: copy_abi clear_screen
+	cargo test --test integration_test
 
 .PHONY: qemu
 qemu: ## may need to setup qemu
