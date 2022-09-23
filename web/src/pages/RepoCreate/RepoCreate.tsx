@@ -22,14 +22,14 @@ const RepoCreatePage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
             await retry(() => wallet.deployRepo(values.name.toLowerCase()), 3)
-            navigate(`/${daoName}/${values.name}`, { replace: true })
+            navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!wallet) return <Navigate to={`/${daoName}`} />
+    if (!wallet) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
