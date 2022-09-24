@@ -19,7 +19,6 @@ type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
 type TDaoCreateProgress = {
     isFetching: boolean
     isDaoDeployed?: boolean
-    members: TDaoMemberCreateProgress['members']
 }
 
 type TDaoMemberDetails = {

@@ -3,7 +3,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { retry } from '../helpers'
 import { userAtom, daoAtom, walletAtom, messageAtom } from '../store'
 import {
-    GoshDao,
+    GoshDaoFactory,
     GoshProfile,
     GoshWallet,
     IGosh,
@@ -25,10 +25,7 @@ import { validateDaoName, validateUsername } from '../validators'
 import { GoshProfileDao } from '../resources/contracts/goshprofiledao'
 
 const daoMembersDeployHelper = {
-    async validateOne(
-        gosh: IGosh,
-        member: string,
-    ): Promise<{ username: string; profile: string }> {
+    async validateOne(gosh: IGosh, member: string): Promise<string> {
         member = member.trim()
         const { valid, reason } = validateUsername(member)
         if (!valid) throw new GoshError(`${member}: ${reason}`)
@@ -38,12 +35,9 @@ const daoMembersDeployHelper = {
             throw new GoshError(`${member}: Profile does not exist`)
         }
 
-        return { username: member, profile: profile.address }
+        return profile.address
     },
-    async validate(
-        gosh: IGosh,
-        members: string[],
-    ): Promise<{ username: string; profile: string }[]> {
+    async validate(gosh: IGosh, members: string[]): Promise<string[]> {
         return Promise.all(
             members
                 .filter((member) => !!member)
@@ -140,7 +134,11 @@ function useDaoList(perPage: number) {
             }),
         }))
 
-        const dao = new GoshDao(AppConfig.goshclient, item.address, item.version)
+        const dao = GoshDaoFactory.create(
+            AppConfig.goshclient,
+            item.address,
+            item.version,
+        )
         const details = await dao.getDetails()
 
         setDaos((state) => ({
@@ -170,7 +168,7 @@ function useDaoList(perPage: number) {
             // Get DAO details (prepare DAO list items)
             const items = await Promise.all(
                 Array.from(daos).map(async (item) => {
-                    const dao = new GoshDao(
+                    const dao = GoshDaoFactory.create(
                         AppConfig.goshclient,
                         item.address,
                         item.version,
@@ -225,7 +223,7 @@ function useDaoList(perPage: number) {
 
             // Add new dao item to list
             const { goshdao, ver } = decoded.value
-            const dao = new GoshDao(AppConfig.goshclient, goshdao, ver)
+            const dao = GoshDaoFactory.create(AppConfig.goshclient, goshdao, ver)
             const item = {
                 address: dao.address,
                 name: await dao.getName(),
@@ -300,7 +298,7 @@ function useDao(name?: string) {
                     return
                 }
 
-                const dao = new GoshDao(
+                const dao = GoshDaoFactory.create(
                     AppConfig.goshclient,
                     found.message.src,
                     found.decoded.value.ver,
@@ -311,7 +309,7 @@ function useDao(name?: string) {
             } else {
                 console.debug('Get dao hook (from state)')
                 const { address, version } = details
-                const dao = new GoshDao(AppConfig.goshclient, address, version)
+                const dao = GoshDaoFactory.create(AppConfig.goshclient, address, version)
                 setDao(dao)
             }
         }
@@ -338,7 +336,6 @@ function useDaoCreate() {
     const profile = useProfile()
     const [progress, setProgress] = useState<TDaoCreateProgress>({
         isFetching: false,
-        members: [],
     })
 
     const create = async (name: string, members: string[]) => {
@@ -348,18 +345,20 @@ function useDaoCreate() {
             throw new GoshError(EGoshError.PROFILE_NO_SIGNER)
         }
 
-        // Validate dao name and members
+        // Validate dao name
         const { valid, reason } = validateDaoName(name)
         if (!valid) throw new GoshError(EGoshError.DAO_NAME_INVALID, reason)
-        const profiles = await daoMembersDeployHelper.validate(gosh, members)
+
+        // Validate members (include owner profile address into result)
+        const profiles = [
+            profile.address,
+            ...(await daoMembersDeployHelper.validate(gosh, members)),
+        ]
 
         // Set inital progress
         setProgress((state) => ({
             ...state,
             isFetching: true,
-            members: members.map((member) => ({
-                member,
-            })),
         }))
 
         // Deploy dao
@@ -372,7 +371,15 @@ function useDaoCreate() {
             if (await profileDao.isDeployed()) {
                 throw new GoshError(EGoshError.DAO_EXISTS)
             }
-            dao = await retry(() => profile.deployDao(gosh, name), 3)
+            dao = await retry(
+                () =>
+                    profile.deployDao(
+                        gosh,
+                        name,
+                        profiles.map((addr) => addr),
+                    ),
+                3,
+            )
 
             // Get owner wallet and wait for deploy
             daoOwnerWallet = await dao.getOwnerWallet(profile.account.signer.keys)
@@ -389,27 +396,8 @@ function useDaoCreate() {
             setProgress((state) => ({
                 ...state,
                 isDaoDeployed,
-                members: isDaoDeployed
-                    ? state.members
-                    : state.members.map((item) => {
-                          return { ...item, isDeployed: false, isMinted: false }
-                      }),
             }))
         }
-
-        // Deploy members' wallets
-        await daoMembersDeployHelper.deploy(daoOwnerWallet, profiles, setProgressCallback)
-        setProgress((state) => ({ ...state, isFetching: false }))
-    }
-
-    const setProgressCallback = (member: string, params: object): void => {
-        setProgress((state) => ({
-            ...state,
-            members: state.members.map((item) => {
-                if (item.member === member) return { ...item, ...params }
-                return item
-            }),
-        }))
     }
 
     return { progress, create }
@@ -551,37 +539,37 @@ function useDaoMemberCreate(dao: IGoshDao) {
         if (!keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
         if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
 
-        // Validate public keys
-        const profiles = await daoMembersDeployHelper.validate(gosh, members)
+        // // Validate public keys
+        // const profiles = await daoMembersDeployHelper.validate(gosh, members)
 
-        // Set initial state
-        setProgress((state) => ({
-            ...state,
-            isFetching: true,
-            members: members.map((member) => ({
-                member,
-            })),
-        }))
+        // // Set initial state
+        // setProgress((state) => ({
+        //     ...state,
+        //     isFetching: true,
+        //     members: members.map((member) => ({
+        //         member,
+        //     })),
+        // }))
 
-        // Deploy members
-        const ownerWallet = await dao.getOwnerWallet(keys)
-        const deployed = await daoMembersDeployHelper.deploy(
-            ownerWallet,
-            profiles,
-            setProgressCallback,
-        )
+        // // Deploy members
+        // const ownerWallet = await dao.getOwnerWallet(keys)
+        // const deployed = await daoMembersDeployHelper.deploy(
+        //     ownerWallet,
+        //     profiles,
+        //     setProgressCallback,
+        // )
 
-        // Update dao details state
-        setDaoDetails((state) => {
-            if (!state) return
-            return {
-                ...state,
-                members: [...state.members, ...deployed],
-                supply: state.supply + 100 * deployed.length,
-            }
-        })
+        // // Update dao details state
+        // setDaoDetails((state) => {
+        //     if (!state) return
+        //     return {
+        //         ...state,
+        //         members: [...state.members, ...deployed],
+        //         supply: state.supply + 100 * deployed.length,
+        //     }
+        // })
 
-        setProgress((state) => ({ ...state, isFetching: false }))
+        // setProgress((state) => ({ ...state, isFetching: false }))
     }
 
     const setProgressCallback = (member: string, params: object): void => {

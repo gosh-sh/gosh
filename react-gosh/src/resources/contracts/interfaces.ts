@@ -69,7 +69,12 @@ interface IGoshProfile extends IContract {
     address: string
 
     setGoshAddr(addr: string): Promise<void>
-    deployDao(gosh: IGosh, name: string, prevAddr?: string): Promise<IGoshDao>
+    deployDao(
+        gosh: IGosh,
+        name: string,
+        profileAddr: string[],
+        prevAddr?: string,
+    ): Promise<IGoshDao>
     turnOn(walletAddr: string, pubkey: string): Promise<void>
     isPubkeyCorrect(pubkey: string): Promise<boolean>
     getCurrentGoshAddr(): Promise<string>

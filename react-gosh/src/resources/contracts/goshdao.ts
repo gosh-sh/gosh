@@ -1,4 +1,5 @@
 import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
+import { GoshError } from '../../errors'
 import { TDaoDetails } from '../../types'
 import { BaseContract } from './base'
 import { GoshProfile } from './goshprofile'
@@ -6,11 +7,22 @@ import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { GoshWallet } from './goshwallet'
 import { IGoshDao, IGoshWallet } from './interfaces'
 
-class GoshDao extends BaseContract implements IGoshDao {
+class GoshDaoFactory {
     static key: string = 'goshdao'
 
+    static create(client: TonClient, address: string, version: string): IGoshDao {
+        switch (version) {
+            case '0.11.0':
+                return new GoshDao(client, address, version)
+            default:
+                throw new GoshError('GoshDao version is not implemented', { version })
+        }
+    }
+}
+
+class GoshDao extends BaseContract implements IGoshDao {
     constructor(client: TonClient, address: string, version: string) {
-        super(client, GoshDao.key, address, { version })
+        super(client, GoshDaoFactory.key, address, { version })
     }
 
     async getDetails(): Promise<TDaoDetails> {
@@ -113,4 +125,4 @@ class GoshDao extends BaseContract implements IGoshDao {
     }
 }
 
-export { GoshDao }
+export { GoshDaoFactory }
