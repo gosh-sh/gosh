@@ -553,7 +553,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         address commit,
         uint128 numberChangedFiles
     ) internal view  {
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:0.31 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, _index);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, _index);
     }
 
     //SMV part
