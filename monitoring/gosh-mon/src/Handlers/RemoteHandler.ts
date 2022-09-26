@@ -2,7 +2,7 @@ import GoshHandler from "./GoshHandler";
 import * as fs from "fs";
 import * as util from "util";
 import * as child_process from "child_process";
-import {StepFunction} from "./ScenarioHandler";
+import {StepEntry} from "./ScenarioHandler";
 import {nls, now} from "../Utils";
 const exec = util.promisify(child_process.exec);
 import fetch, {Headers} from 'node-fetch';
@@ -25,17 +25,12 @@ export default abstract class RemoteHandler extends GoshHandler {
     protected pubkey = '';
     protected secret = '';
 
-    applyExtraConfiguration(c: any) {
-        super.applyExtraConfiguration(c);
-        this.gosh_branch = c['gosh_branch'] ?? '';
-        this.gosh_repo_url = c['gosh_repo_url'] ?? '';
-        this.gosh_bin_path = c['gosh_bin_path'] ?? '';
-        this.release_asset = c['release_asset'] ?? '';
-        this.github_user = c['github_user'] ?? '';
-        this.github_token = c['github_token'] ?? '';
-        this.address = c['address'] ?? '';
-        this.pubkey = c['pubkey'] ?? '';
-        this.secret = c['secret'] ?? '';
+    applyConfiguration(c: any): RemoteHandler {
+        super.applyConfiguration(c);
+        this.useFields(c,
+            ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'],
+            ['gosh_bin_path', 'release_asset', 'github_user', 'github_token', 'address'])
+        return this;
     }
 
     protected async copyFile(src: string, dst: string) {
@@ -139,25 +134,25 @@ export default abstract class RemoteHandler extends GoshHandler {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    protected initialSteps(debug: boolean): StepFunction[] {
+    protected initialSteps(debug: boolean): StepEntry[] {
         return this.gosh_branch.startsWith('release:') ?
             this.initialStepsFromRelease(debug) :
             this.initialStepsFromRepository(debug);
     }
 
-    private initialStepsFromRelease(debug: boolean): StepFunction[] {
+    private initialStepsFromRelease(debug: boolean): StepEntry[] {
         let data: any = null;
         let updated = '';
         let download = '';
         return [
-            /* 0*/ () => this.ensureDir('../.gosh'),
-            /* 1*/ () => this.requestEnvs(),
-            /* 2*/ () => this.copyTemplFile('config/template/config.json', '../.gosh/config.json', {
+            'ensure .gosh dir', /* 0*/ () => this.ensureDir('../.gosh'),
+            'request envs',     /* 1*/ () => this.requestEnvs(),
+            'config template',  /* 2*/ () => this.copyTemplFile('config/template/config.json', '../.gosh/config.json', {
                 'pubkey': this.pubkey, 'secret': this.secret, 'ipfs_address': this.ipfs_address,
                 'prim_network': this.prim_network, 'conf_endpoint': this.conf_endpoint.replaceAll(',', '", "')
             }),
-            () => this.nodeWait(this.getRandomInt(1000, 5000)),
-            /* 3*/ async() => {
+            'random wait',             () => this.nodeWait(this.getRandomInt(1000, 5000)),
+            'query release',    /* 3*/ async() => {
                 // https://github.com/<organization>/<repository>.git
                 const split = this.gosh_repo_url.split('/');
                 const orgrepo = split[3] + '/' + split[4].replace('.git', '');
@@ -210,7 +205,7 @@ export default abstract class RemoteHandler extends GoshHandler {
                     }
                 }
             },
-            /* 4*/ async() => {
+            'find release', /* 4*/ async() => {
                 if (!data) return;
                 let found = false;
                 for (let a of data['assets']) {
@@ -225,7 +220,7 @@ export default abstract class RemoteHandler extends GoshHandler {
                     throw Error(this.release_asset + ' not found')
                 }
             },
-            /* 5*/ async() => {
+            'download release', /* 5*/ async() => {
                 if (!data) return;
                 const last_updated = fs.existsSync('data/last-updated') ? fs.readFileSync('data/last-updated', 'utf-8') : '';
                 this.say(`${nls()} last updated: ${last_updated}, updated: ${updated}`);
@@ -236,36 +231,36 @@ export default abstract class RemoteHandler extends GoshHandler {
                     fs.writeFileSync('data/last-updated', updated, 'utf-8');
                 }
             },
-            /* 6*/ async() => { fs.chmodSync('./data/last-git-remote-gosh', 0o755); },
-            /* 7*/ () => this.nop(),
-            /* 8*/ () => this.deleteDir(this.repoDir()),
-            /* 9*/ () => this.execute(['ln', '-s', '-f', 'last-git-remote-gosh', 'data/git-remote-gosh']),
-            /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
-            `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
+            'chmod binary',    /* 6*/ async() => { fs.chmodSync('./data/last-git-remote-gosh', 0o755); },
+            'nop',             /* 7*/ () => this.nop(),
+            'delete repo dir', /* 8*/ () => this.deleteDir(this.repoDir()),
+            'link remote',     /* 9*/ () => this.execute(['ln', '-s', '-f', 'last-git-remote-gosh', 'data/git-remote-gosh']),
+            'clone branch',    /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
+                                            `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
         ];
     }
 
-    private initialStepsFromRepository(debug: boolean): StepFunction[] {
+    private initialStepsFromRepository(debug: boolean): StepEntry[] {
         return [
-            /* 0*/ () => this.ensureDir('../.gosh'),
-            /* 1*/ () => this.copyTemplFile('config/template/credentials.json', '../.gosh/credentials.json', {
+            'ensure gosh dir',  /* 0*/ () => this.ensureDir('../.gosh'),
+            'template creds',   /* 1*/ () => this.copyTemplFile('config/template/credentials.json', '../.gosh/credentials.json', {
                 'address': this.address, 'pubkey': this.pubkey, 'secret': this.secret
             }),
-            /* 2*/ () => (fs.existsSync('data/gosh') &&
+            'optdel gosh dir',  /* 2*/ () => (fs.existsSync('data/gosh') &&
                 (this.get_git_url('data/gosh') !== this.gosh_repo_url)) ?
                 this.deleteDir('data/gosh') : this.nop(),  // delete dir if repo url does not match (changed)
-            /* 3*/ () => (fs.existsSync('data/gosh')) ?
+            'optcheckout gosh', /* 3*/ () => (fs.existsSync('data/gosh')) ?
                 this.execute(['git', 'checkout', this.gosh_branch], 'data/gosh') : this.nop(),
-            /* 4*/ () => (fs.existsSync('data/gosh')) ?
+            'update gosh repo', /* 4*/ () => (fs.existsSync('data/gosh')) ?
                 this.execute(['git', 'pull'], 'data/gosh') :
                 this.execute(['git', 'clone', '-b', this.gosh_branch, this.gosh_repo_url, 'data/gosh']),
-            /* 5*/ () => this.execute(['npm', 'install'], 'data/gosh/git-remote-gosh'),
-            /* 6*/ () => this.ensureDir('data/temp'),
-            /* 7*/ () => this.deleteDir(this.repoDir()),
-            /* 8*/ () => this.requestEnvs(),
-            /* 9*/ () => this.execute(['ln', '-s', '-f', 'gosh/' + this.gosh_bin_path, 'data/git-remote-gosh']),
-            /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
-                `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
+            'npm install',      /* 5*/ () => this.execute(['npm', 'install'], 'data/gosh/git-remote-gosh'),
+            'ensure temp dir',  /* 6*/ () => this.ensureDir('data/temp'),
+            'delete repo dir',  /* 7*/ () => this.deleteDir(this.repoDir()),
+            'request envs',     /* 8*/ () => this.requestEnvs(),
+            'link remote',      /* 9*/ () => this.execute(['ln', '-s', '-f', 'gosh/' + this.gosh_bin_path, 'data/git-remote-gosh']),
+            'clone branch',     /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
+                                             `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
         ];
     }
 

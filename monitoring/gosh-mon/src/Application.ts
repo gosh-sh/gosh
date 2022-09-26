@@ -6,7 +6,7 @@ import PrometheusFormatter, {MetricsMap} from "./PrometheusFormatter";
 export default class Application {
 
     app: Express;
-    handlerFactory: (() => Handler);
+    handlerFactory: ((silent?: boolean) => Handler);
     promformatter: PrometheusFormatter;
 
     interval: number = 50;
@@ -28,14 +28,12 @@ export default class Application {
 
     constructor() {
         this.app = express();
-        this.handlerFactory = () => new DummyHandler();
+        this.handlerFactory = (silent?: boolean) => new DummyHandler();
         this.promformatter = new PrometheusFormatter();
     }
 
     async inquiry(debug: boolean): Promise<string> {
-        const handler = this.handlerFactory();
-        handler.setApplication(this);
-        handler.setDebug(this.debug || debug);
+        const handler = this.handlerFactory().setApplication(this).setDebug(this.debug || debug);
         const result = debug ? await handler.handle(true) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result')!;

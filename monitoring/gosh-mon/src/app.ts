@@ -2,6 +2,8 @@ import Application from "./Application";
 import selectHandler from "./selectHandler";
 import fs from "fs";
 import * as yaml from "js-yaml";
+import ScriptHandler from "./Handlers/ScriptHandler";
+import {clone} from "./Utils";
 
 let conf: any = {};
 try {
@@ -14,21 +16,17 @@ try {
     process.exit(1);
 }
 
-const env_mode = process.env['GM_MODE'];
-const arg_mode = process.argv[2];
-const mode = env_mode ?? arg_mode;
+ScriptHandler.Config = clone(conf);
 
-const mode_config = conf['modes'][mode];
+const mode = process.env['GM_MODE'] ?? process.argv[2];
+
 if (!mode) {
     console.error('Specify correct application mode via parameter or E2E_MODE env');
     console.error('Available: ' + Object.keys(conf['modes']).join(', '));
     process.exit(1);
 }
 
-const c = conf['global'];
-for (let k in mode_config) {
-    c[k] = mode_config[k];
-}
+const c = Object.assign({}, conf['global'], conf['modes'][mode]);
 
 for (let k in process.env) {
     if (k.startsWith('CONFIG_')) {
@@ -37,14 +35,7 @@ for (let k in process.env) {
 }
 
 const app: Application = new Application();
-app.handlerFactory = () => {
-    const handler = selectHandler(c['handler']);
-    handler.setSeed(c['seed']);
-    handler.setTargetParts(c['organization'], c['repository'], c['branch'], c['filename'], c['large']);
-    handler.setTimeout(c['timeout']);
-    handler.applyExtraConfiguration(c);
-    return handler;
-};
+app.handlerFactory = (silent?: boolean) => selectHandler(c.handler, silent).applyConfiguration(c);
 app.setInterval(c['interval'] - c['subinterval']);
 app.promformatter.prefix = c['prefix'];
 app.promformatter.tagpfx = `mode="${mode}"`;
@@ -53,11 +44,12 @@ console.log('Configured mode: ' + mode.replaceAll('-', ' '));
 
 if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
     let level = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0');
+    app.interval = 3600;
     app.steps = true;
     if (level >= 2)
         app.setDebug(true);
     console.log("Executing immediate inquiry");
-    console.log("Handler: " + app.handlerFactory().describe());
+    console.log("Handler: " + app.handlerFactory(true).describe());
     app.inquiry(level >= 2)
         .then(res => {
             console.log("Result:\n" + res);

@@ -36,15 +36,7 @@ class RemoteWriteHandler extends RemoteHandler_1.default {
     async handle(debug) {
         let contents = '';
         return await this.doSteps(
-        /* 0 - 10*/ ...this.initialSteps(debug), 
-        /*11*/ () => this.copyFile('config/gitconfig', '../.gitconfig'), 
-        /*12*/ async () => { fs.writeFileSync(`${this.repoDir()}/${this.filename}`, this.prepareFileContents(), 'utf8'); }, 
-        /*13*/ () => this.execute(['git', 'stage', this.filename], this.repoDir()), 
-        /*14*/ () => this.execute(['git', 'commit', '-m', `Update ${this.filename} (${(0, Utils_1.nls)()})`], this.repoDir()), 
-        /*15*/ () => this.execute(['git', 'push', '-v'], this.repoDir()), 
-        /*16*/ async () => { contents = fs.readFileSync(`${this.repoDir()}/${this.filename}`, 'utf8'); }, 
-        /*17*/ () => this.deleteDir(this.repoDir()), 
-        /*18*/ () => this.processFileContents(contents));
+        /* 0 - 10*/ ...this.initialSteps(debug), 'copy gitconfig', /*11*/ () => this.copyFile('config/gitconfig', '../.gitconfig'), 'write contents', /*12*/ async () => { fs.writeFileSync(`${this.repoDir()}/${this.filename}`, this.prepareFileContents(), 'utf8'); }, 'git stage', /*13*/ () => this.execute(['git', 'stage', this.filename], this.repoDir()), 'git commit', /*14*/ () => this.execute(['git', 'commit', '-m', `Update ${this.filename} (${(0, Utils_1.nls)()})`], this.repoDir()), 'git push', /*15*/ () => this.execute(['git', 'push', '-v'], this.repoDir()), 'read contents', /*16*/ async () => { contents = fs.readFileSync(`${this.repoDir()}/${this.filename}`, 'utf8'); }, 'delete repo dir', /*17*/ () => this.deleteDir(this.repoDir()), 'check contents', /*18*/ () => this.processFileContents(contents));
     }
 }
 exports.default = RemoteWriteHandler;

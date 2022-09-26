@@ -5,17 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const AppHandler_1 = __importDefault(require("./AppHandler"));
 class RootCheckHandler extends AppHandler_1.default {
-    applyExtraConfiguration(c) {
-        super.applyExtraConfiguration(c);
-    }
     describe() {
         return `Root check handler`;
     }
     async handle(debug) {
         return await this.doSteps(
-        /* 0 -  1*/ ...this.initialSteps(debug, AppHandler_1.default.indexSteps), 
-        /* 2*/ () => this.requestEnvs(), 
-        /* 3*/ () => { return this.checkRoot(); });
+        /* 0 -  1*/ ...this.initialSteps(debug, AppHandler_1.default.indexSteps), 'request envs', /* 2*/ () => this.requestEnvs(), 'check root', /* 3*/ () => { return this.checkRoot(); });
     }
     async checkRoot() {
         const page_root = await this.read('footer > div.flex-wrap > div.items-center > div > span');

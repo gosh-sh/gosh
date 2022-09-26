@@ -10,8 +10,8 @@ export default class AppReadHandler extends AppHandler {
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
             /* 0 - 12*/ ...this.initialSteps(debug),
-            /*13*/ () => this.click("svg.fa-copy"),
-            /*14*/ () => { return this.processFileContents(); }
+            'click copy icon', /*13*/ () => this.click("svg.fa-copy"),
+            'check contents',  /*14*/ () => { return this.processFileContents(); }
         );
     }
 

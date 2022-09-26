@@ -14,7 +14,7 @@ class Application {
         this.debug = false;
         this.steps = false;
         this.app = (0, express_1.default)();
-        this.handlerFactory = () => new DummyHandler_1.default();
+        this.handlerFactory = (silent) => new DummyHandler_1.default();
         this.promformatter = new PrometheusFormatter_1.default();
     }
     setInterval(interval) {
@@ -24,9 +24,7 @@ class Application {
         this.debug = debug;
     }
     async inquiry(debug) {
-        const handler = this.handlerFactory();
-        handler.setApplication(this);
-        handler.setDebug(this.debug || debug);
+        const handler = this.handlerFactory().setApplication(this).setDebug(this.debug || debug);
         const result = debug ? await handler.handle(true) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result');
