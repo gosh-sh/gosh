@@ -75,27 +75,23 @@ const BlobUpdatePage = () => {
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             const pubkey = userState.keys.public
-            await retry(
-                () =>
-                    wallet.createCommit(
-                        repo,
-                        branch,
-                        pubkey,
-                        [
-                            {
-                                name: `${path ? `${path}/` : ''}${values.name}`,
-                                modified: values.content,
-                                original: blob?.content ?? '',
-                                isIpfs: blob?.isIpfs,
-                                treeItem,
-                            },
-                        ],
-                        message,
-                        values.tags,
-                        undefined,
-                        progressCallback,
-                    ),
-                3,
+            await wallet.createCommit(
+                repo,
+                branch,
+                pubkey,
+                [
+                    {
+                        name: `${path ? `${path}/` : ''}${values.name}`,
+                        modified: values.content,
+                        original: blob?.content ?? '',
+                        isIpfs: blob?.isIpfs,
+                        treeItem,
+                    },
+                ],
+                message,
+                values.tags,
+                undefined,
+                progressCallback,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
