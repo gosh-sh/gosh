@@ -1,7 +1,7 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { sleep } from '../../utils'
 import { BaseContract } from './base'
-import { GoshDaoFactory } from './goshdao'
+import { GoshDao } from './goshdao'
 import { GoshProfileDao } from './goshprofiledao'
 import { IGosh, IGoshDao, IGoshProfile, IGoshProfileDao } from './interfaces'
 
@@ -23,7 +23,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         prevAddr?: string,
     ): Promise<IGoshDao> {
         const daoAddr = await gosh.getDaoAddr(name)
-        const dao = GoshDaoFactory.create(this.account.client, daoAddr, gosh.version)
+        const dao = new GoshDao(this.account.client, daoAddr)
         await this.run('deployDao', {
             goshroot: gosh.address,
             name: name.toLowerCase(),

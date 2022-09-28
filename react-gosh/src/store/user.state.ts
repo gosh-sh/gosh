@@ -1,4 +1,4 @@
-import { atom, selector, selectorFamily } from 'recoil'
+import { atom, selector } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { GoshProfile, IGoshProfile } from '../resources'
 import { TUser, TUserPersist } from '../types'

@@ -1,4 +1,4 @@
-import { Account, AccountRunOptions } from '@eversdk/appkit'
+import { Account, AccountRunLocalOptions, AccountRunOptions } from '@eversdk/appkit'
 import { DecodedMessageBody, KeyPair, ResultOfProcessMessage } from '@eversdk/core'
 import {
     ICreateCommitCallback,
@@ -34,6 +34,12 @@ interface IContract {
         options?: AccountRunOptions,
         writeLog?: boolean,
     ): Promise<ResultOfProcessMessage>
+    runLocal(
+        functionName: string,
+        input: object,
+        options?: AccountRunLocalOptions,
+        writeLog?: boolean,
+    ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
 

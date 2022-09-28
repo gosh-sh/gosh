@@ -7,16 +7,15 @@ import {
 import {
     DecodedMessageBody,
     KeyPair,
-    MessageBodyType,
     ResultOfProcessMessage,
     signerKeys,
     signerNone,
     TonClient,
 } from '@eversdk/core'
 import { IContract } from './interfaces'
-import ABI from './abi.json'
-import { sleep } from '../../utils'
-import { GoshError } from '../../errors'
+import ABI from '../resources/contracts/abi.json'
+import { GoshError } from '../errors'
+import { sleep } from '../utils'
 
 class BaseContract implements IContract {
     address: string

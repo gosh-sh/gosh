@@ -16,3 +16,19 @@ export const shortString = (
 export const sleep = (ms: number = 0) => {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
+
+export const whileFinite = async (
+    fn: any,
+    msDelay: number = 5000,
+    msTimeout: number = 120000,
+): Promise<boolean> => {
+    while (msTimeout > 0) {
+        try {
+            if (await fn()) return true
+        } catch {}
+        await sleep(msDelay)
+        msTimeout -= msDelay
+        console.debug(`[WhileFinite] msTimeout`, msTimeout)
+    }
+    return false
+}

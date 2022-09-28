@@ -7,6 +7,9 @@ class AppConfig {
     static goshclient: TonClient
     static ipfs: string
     static dockerclient?: any
+    static versions = {
+        '0.11.0': '0:.....................................................',
+    }
 
     static setup(params: {
         goshclient: ClientConfig

@@ -17,4 +17,12 @@ type TUserSignupProgress = {
     isProfileDeployed?: boolean
 }
 
-export { TUserPersist, TUser, TUserSignupProgress }
+type TProfileDetails = {
+    name: string
+    custodians: {
+        list: { index: number; pubkey: string }[]
+        needed: number
+    }
+}
+
+export { TUserPersist, TUser, TUserSignupProgress, TProfileDetails }

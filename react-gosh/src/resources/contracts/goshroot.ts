@@ -12,7 +12,7 @@ class GoshRoot extends BaseContract implements IGoshRoot {
 
     async getGosh(version: string): Promise<IGosh> {
         const address = await this.getGoshAddr(version)
-        return new Gosh(this.account.client, address, version)
+        return new Gosh(this.account.client, address)
     }
 
     async getGoshAddr(version: string): Promise<string> {

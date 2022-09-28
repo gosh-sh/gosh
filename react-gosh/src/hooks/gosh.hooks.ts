@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
-import { Gosh, IGosh } from '../resources'
+import { GoshAdapterFactory } from '../gosh'
+import { IGoshAdapter } from '../gosh/interfaces'
 import { goshVersionsAtom } from '../store/gosh.state'
 
 function useGoshVersions() {
@@ -12,7 +13,9 @@ function useGoshVersions() {
         const loaded = result.map((item: any) => item.Key)
         const cached = versions.all.map((item) => item.version)
 
-        const diff = loaded.filter((v: string) => !cached.includes(v))
+        /** Do not filter existing versions due to too much redeploys in development */
+        // const diff = loaded.filter((v: string) => !cached.includes(v))
+        const diff = loaded
         const added = await Promise.all(
             diff.map(async (version: string) => {
                 const address = await AppConfig.goshroot.getGoshAddr(version)
@@ -37,19 +40,18 @@ function useGoshVersions() {
 }
 
 function useGosh(version?: string) {
-    const versions = useRecoilValue(goshVersionsAtom)
-    const [gosh, setGosh] = useState<IGosh>()
+    const [gosh, setGosh] = useState<IGoshAdapter>()
 
     useEffect(() => {
         const _getGosh = async () => {
-            const _version = version || versions.latest
-            const _found = versions.all.find((item) => item.version == _version)
-            if (!_found) return
-            setGosh(new Gosh(AppConfig.goshclient, _found.address, _found.version))
+            const versions = Object.keys(AppConfig.versions)
+            const latest = versions[versions.length - 1]
+            const _version = version || latest
+            setGosh(GoshAdapterFactory.create(_version))
         }
 
         _getGosh()
-    }, [version, versions.latest, versions.all.length])
+    }, [version])
 
     return gosh
 }

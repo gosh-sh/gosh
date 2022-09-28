@@ -32,7 +32,7 @@ function useUser() {
         await _validateCredentials(params)
 
         const { username, phrase } = params
-        const profile = await gosh.getProfile(username)
+        const profile = await gosh.getProfile(username, {})
         if (!(await profile.isDeployed())) {
             throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
         }
@@ -40,7 +40,7 @@ function useUser() {
         const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
             phrase,
         })
-        if (!(await profile.isPubkeyCorrect(`0x${derived.public}`))) {
+        if (!(await profile.isOwner(`0x${derived.public}`))) {
             throw new GoshError(EGoshError.PROFILE_PUBKEY_INVALID)
         }
 
@@ -53,7 +53,7 @@ function useUser() {
         await _validateCredentials(params)
 
         const { username, phrase } = params
-        const profile = await gosh.getProfile(username)
+        const profile = await gosh.getProfile(username, {})
         if (await profile.isDeployed()) throw new GoshError(EGoshError.PROFILE_EXISTS)
 
         setSignupProgress((state) => ({ ...state, isFetching: true }))
@@ -63,7 +63,7 @@ function useUser() {
 
         let isProfileDeployed = false
         try {
-            await retry(() => gosh.deployProfile(username, `0x${derived.public}`), 3)
+            await retry(() => gosh.deployProfile(username, derived.public), 3)
             isProfileDeployed = true
         } catch (e) {
             isProfileDeployed = false

@@ -62,7 +62,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
     async getDao(): Promise<IGoshDao> {
         // TODO: Implement dao cache by version
         const address = await this.getDaoAddr()
-        return new GoshDao(this.account.client, address, this.version)
+        return new GoshDao(this.account.client, address)
     }
 
     async getGosh(): Promise<IGosh> {

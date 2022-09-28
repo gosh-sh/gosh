@@ -1,8 +1,6 @@
-import { KeyPair, TonClient } from '@eversdk/core'
-import { sleep } from '../../utils'
-import { BaseContract } from './base'
-import { GoshProfile } from './goshprofile'
-import { IGosh, IGoshProfile } from './interfaces'
+import { TonClient } from '@eversdk/core'
+import { BaseContract } from '../base'
+import { IGosh } from '../interfaces'
 
 class Gosh extends BaseContract implements IGosh {
     static key: string = 'gosh'
@@ -12,21 +10,7 @@ class Gosh extends BaseContract implements IGosh {
         super(client, Gosh.key, address, { version: Gosh.version })
     }
 
-    async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
-        // Get profile address and check it's status
-        const profileAddr = await this.getProfileAddr(username)
-        const profile = new GoshProfile(this.account.client, profileAddr)
-        if (await profile.isDeployed()) return profile
-
-        // Deploy profile
-        await this.run('deployProfile', { name: username.toLowerCase(), pubkey })
-        while (true) {
-            if (await profile.isDeployed()) break
-            await sleep(5000)
-        }
-        return profile
-    }
-
+    /** Old interface methods */
     async getDaoAddr(name: string): Promise<string> {
         const result = await this.account.runLocal('getAddrDao', {
             name: name.toLowerCase(),
@@ -76,26 +60,11 @@ class Gosh extends BaseContract implements IGosh {
         return result.decoded?.output.value0
     }
 
-    async getTvmHash(data: string | Buffer): Promise<string> {
-        const state = Buffer.isBuffer(data)
-            ? data.toString('hex')
-            : Buffer.from(data).toString('hex')
-        const result = await this.account.runLocal('getHash', {
-            state,
-        })
-        return result.decoded?.output.value0
-    }
-
     async getProfileAddr(username: string): Promise<string> {
         const result = await this.account.runLocal('getProfileAddr', {
             name: username.toLowerCase(),
         })
         return result.decoded?.output.value0
-    }
-
-    async getProfile(username: string, keys?: KeyPair): Promise<IGoshProfile> {
-        const address = await this.getProfileAddr(username)
-        return new GoshProfile(this.account.client, address, keys)
     }
 }
 

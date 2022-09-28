@@ -10,6 +10,7 @@ export enum EGoshError {
     PROFILE_NO_SIGNER = 'Profile has no signer keys defined',
 
     USER_KEYS_UNDEFINED = 'User keys undefined',
+    USER_NAME_UNDEFINED = 'User name undefined',
     USER_NAME_INVALID = 'Incorrect username',
 
     WALLET_UNDEFINED = 'Wallet undefined',

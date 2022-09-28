@@ -1,11 +1,9 @@
 import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
-import { GoshError } from '../../errors'
 import { TDaoDetails } from '../../types'
-import { BaseContract } from './base'
+import { BaseContract } from '../base'
 import { GoshProfile } from './goshprofile'
-import { GoshSmvTokenRoot } from './goshsmvtokenroot'
-import { GoshWallet } from './goshwallet'
-import { IGoshDao, IGoshWallet } from './interfaces'
+import { IGoshDao } from '../interfaces'
+import { IGoshWallet, GoshSmvTokenRoot, GoshWallet } from '../../resources'
 
 class GoshDao extends BaseContract implements IGoshDao {
     static key: string = 'goshdao'
@@ -85,7 +83,7 @@ class GoshDao extends BaseContract implements IGoshDao {
         const address = await this.getWalletAddr(profile.address, 0)
         const wallet = new GoshWallet(this.account.client, address, this.version, {
             keys,
-            profile,
+            // profile,
         })
         return wallet
     }

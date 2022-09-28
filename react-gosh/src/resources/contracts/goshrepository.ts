@@ -37,7 +37,7 @@ class GoshRepository extends BaseContract implements IGoshRepository {
 
     async getGosh(version: string): Promise<IGosh> {
         const addr = await this.getGoshAddr()
-        return new Gosh(this.account.client, addr, version)
+        return new Gosh(this.account.client, addr)
     }
 
     async getName(): Promise<string> {
