@@ -41,6 +41,7 @@ import {
     splitByChunk,
     goshRoot,
     sha256,
+    retry,
 } from './helpers'
 import {
     IGoshTree,
@@ -376,6 +377,8 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 address: repo.address,
             })
 
+        const repoName = repo.meta.name
+
         // Generate current branch full tree and get it's items (TGoshTreeItem[]).
         // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
         // to full tree items list.
@@ -389,13 +392,17 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                     const { name, modified, original, treeItem, isIpfs = false } = blob
 
                     // Deploy empty snapshot
-                    const snap = await this.deployNewSnapshot(
-                        repo.address,
-                        branch.name,
-                        '',
-                        name,
-                        '',
-                        null,
+                    const snap = await retry(
+                        () =>
+                            this.deployNewSnapshot(
+                                repo.address,
+                                branch.name,
+                                '',
+                                name,
+                                '',
+                                null,
+                            ),
+                        3,
                     )
 
                     // Generate patch or upload to ipfs
@@ -420,7 +427,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                                 this.account.client,
                                 modified,
                             )
-                            ipfs = await saveToIPFS(compressed)
+                            ipfs = await retry(() => saveToIPFS(compressed), 3)
                             flags |= EGoshBlobFlag.IPFS
                         }
 
@@ -431,7 +438,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                         let content = modified
                         if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
                         content = await zstd.compress(this.account.client, content)
-                        ipfs = await saveToIPFS(content)
+                        ipfs = await retry(() => saveToIPFS(content), 3)
                     }
 
                     const hashes = {
@@ -504,11 +511,18 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
         // Deploy trees, commit, tags in parallel
         await Promise.all([
             (async () => {
+                const head = await repo.getHead()
+                await retry(() => this.setHead(repoName, head), 3)
+            })(),
+            (async () => {
                 for (const chunk of splitByChunk(updatedPaths)) {
                     await Promise.all(
                         chunk.map(async (path) => {
                             const subtree = updatedTree[path]
-                            const addr = await this.deployTree(repo, subtree)
+                            const addr = await retry(
+                                () => this.deployTree(repo, subtree),
+                                3,
+                            )
                             console.debug('Subtree addr', addr)
                         }),
                     )
@@ -532,7 +546,7 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 const tagsList = tags ? tags.split(' ') : []
                 await Promise.all(
                     tagsList.map(async (tag) => {
-                        await this.deployTag(repo, futureCommit.name, tag)
+                        await retry(() => this.deployTag(repo, futureCommit.name, tag), 3)
                     }),
                 )
                 !!callback && callback({ tagsDeploy: true })
@@ -541,11 +555,15 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
 
         const isBranchProtected = await repo.isBranchProtected(branch.name)
         if (!isBranchProtected) {
-            await this.setCommit(
-                repo.meta.name,
-                branch.name,
-                futureCommit.name,
-                processedBlobs.length,
+            await retry(
+                () =>
+                    this.setCommit(
+                        repoName,
+                        branch.name,
+                        futureCommit.name,
+                        processedBlobs.length,
+                    ),
+                3,
             )
 
             while (true) {
@@ -555,11 +573,15 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
                 await sleep(5000)
             }
         } else {
-            await this.startProposalForSetCommit(
-                repo.meta.name,
-                branch.name,
-                futureCommit.name,
-                processedBlobs.length,
+            await retry(
+                () =>
+                    this.startProposalForSetCommit(
+                        repoName,
+                        branch.name,
+                        futureCommit.name,
+                        processedBlobs.length,
+                    ),
+                3,
             )
         }
         !!callback && callback({ completed: true })
@@ -809,50 +831,37 @@ export class GoshWallet extends BaseContract implements IGoshWallet {
             await Promise.all(
                 chunk.map(async (diff, index) => {
                     diff.commit = commitName
-                    console.debug(
-                        'Deploy diff',
-                        {
-                            repoName,
-                            branchName: branch.name,
-                            commitName,
-                            diffs: [diff],
-                            index1: i * chunkSize + index,
-                            index2: 0,
-                            last: true,
-                        },
-                        await repo.getDiffAddr(commitName, index, 0),
+                    await retry(
+                        () =>
+                            this.run('deployDiff', {
+                                repoName,
+                                branchName: branch.name,
+                                commitName,
+                                diffs: [diff],
+                                index1: i * chunkSize + index,
+                                index2: 0,
+                                last: true,
+                            }),
+                        3,
                     )
-                    await this.run('deployDiff', {
-                        repoName,
-                        branchName: branch.name,
-                        commitName,
-                        diffs: [diff],
-                        index1: i * chunkSize + index,
-                        index2: 0,
-                        last: true,
-                    })
                 }),
             )
             await sleep(200)
         }
 
         // Deploy commit
-        console.debug('Deploy commit', {
-            repoName,
-            branchName: branch.name,
-            commitName,
-            fullCommit: commitContent,
-            parents: parentAddrs,
-            tree: treeAddr,
-        })
-        await this.run('deployCommit', {
-            repoName,
-            branchName: branch.name,
-            commitName,
-            fullCommit: commitContent,
-            parents: parentAddrs,
-            tree: treeAddr,
-        })
+        await retry(
+            () =>
+                this.run('deployCommit', {
+                    repoName,
+                    branchName: branch.name,
+                    commitName,
+                    fullCommit: commitContent,
+                    parents: parentAddrs,
+                    tree: treeAddr,
+                }),
+            3,
+        )
     }
 
     async deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string> {

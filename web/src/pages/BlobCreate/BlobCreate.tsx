@@ -74,25 +74,21 @@ const BlobCreatePage = () => {
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             const pubkey = userState.keys.public
-            await retry(
-                () =>
-                    wallet.createCommit(
-                        repo,
-                        branch,
-                        pubkey,
-                        [
-                            {
-                                name,
-                                modified: values.content,
-                                original: '',
-                            },
-                        ],
-                        message,
-                        values.tags,
-                        undefined,
-                        progressCallback,
-                    ),
-                3,
+            await wallet.createCommit(
+                repo,
+                branch,
+                pubkey,
+                [
+                    {
+                        name,
+                        modified: values.content,
+                        original: '',
+                    },
+                ],
+                message,
+                values.tags,
+                undefined,
+                progressCallback,
             )
             await updateBranch(branch.name)
             navigate(urlBack)
