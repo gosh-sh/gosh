@@ -206,7 +206,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -294,7 +295,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]

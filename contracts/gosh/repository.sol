@@ -165,17 +165,17 @@ contract Repository is Modifiers{
     }
 
     //Diff part
-    function SendDiff(string branch, address commit, uint128 number) public view senderIs(address(this)){
+    function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits) public view senderIs(address(this)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number, numberCommits);
     }
     
-    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number) public view accept {
+    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number, numberCommits);
     }
 
     //Selfdestruct
@@ -236,13 +236,13 @@ contract Repository is Modifiers{
         delete _protectedBranch[tvm.hash(branch)];
     }
     
-    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 index) public view {
+    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == false) {
-            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number); 
+            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits); 
             return;
         }
     }

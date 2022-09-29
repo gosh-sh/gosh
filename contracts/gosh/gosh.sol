@@ -352,6 +352,15 @@ contract GoshRoot is Modifiers, Upgradable{
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+    
+    function getProfileDaoAddr(string name) external view returns(address){
+        TvmCell s0 = tvm.buildStateInit({
+            code: m_codeProfileDao,
+            contr: ProfileDao,
+            varInit: {_name : name}
+        });
+        return address(tvm.hash(s0));
+    }
 
     function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
         return GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);

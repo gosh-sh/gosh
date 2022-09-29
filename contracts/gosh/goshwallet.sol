@@ -400,14 +400,15 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string commit,
-        uint128 numberChangedFiles
+        uint128 numberChangedFiles,
+        uint128 numberCommits
     ) public onlyOwnerPubkey(_access.get())  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
-        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles);
+        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits);
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         tvm.accept();
@@ -551,9 +552,10 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         address commit,
-        uint128 numberChangedFiles
+        uint128 numberChangedFiles,
+        uint128 numberCommits
     ) internal view  {
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, _index);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, _index);
     }
 
     //SMV part
@@ -569,7 +571,8 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string commit,
-        uint128 numberChangedFiles
+        uint128 numberChangedFiles,
+        uint128 numberCommits
     ) public onlyOwnerPubkey(_access.get())  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
@@ -577,7 +580,7 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles);
+        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION);
@@ -665,11 +668,11 @@ contract GoshWallet is Modifiers, SMVAccount, IVotingResultRecipient {
             uint256 kind = s.decode(uint256);
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
-                (string repoName, string branchName, string commit, uint128 numberChangedFiles) =
-                    s.decode(string, string, string, uint128);
+                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits) =
+                    s.decode(string, string, string, uint128, uint128);
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
-                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.71 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles);
+                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.71 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 (string repoName, string branchName) = s.decode(string, string);

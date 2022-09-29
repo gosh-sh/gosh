@@ -126,7 +126,8 @@
 			"inputs": [
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
-				{"name":"number","type":"uint128"}
+				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -138,7 +139,8 @@
 				{"name":"index","type":"uint128"},
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
-				{"name":"number","type":"uint128"}
+				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -200,6 +202,7 @@
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [

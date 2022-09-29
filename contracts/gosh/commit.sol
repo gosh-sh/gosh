@@ -159,7 +159,7 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function SendDiff(string branch, address branchcommit, uint128 number) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits) public senderIs(_rootRepo){
         tvm.accept();
         if (_initupgrade == true) { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); return; }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
@@ -170,7 +170,7 @@ contract Commit is Modifiers {
         _number = number;
         _approved = 0;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this));
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits);
         _continueChain = true;
         _continueDiff = true;
         getMoney();
@@ -222,13 +222,17 @@ contract Commit is Modifiers {
     function _checkChain(
         string branchName,
         address branchCommit,
-        address newC) public senderIs(address(this)) {
+        address newC,
+        uint128 numberCommits) public senderIs(address(this)) {
+        numberCommits -= 1;
         if (branchCommit  == address(this)) {
+                if (numberCommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit, newC);
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit , newC);
+            if (numberCommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit , newC, numberCommits);
         }
         getMoney();
     }     
@@ -311,11 +315,12 @@ contract Commit is Modifiers {
         string nameCommit,
         string branchName,
         address branchCommit ,  
-        address newC) public {
+        address newC,
+        uint128 numberCommits) public {
         require(_buildCommitAddr(nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (branchCommit  != address(this)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC, numberCommits);
         getMoney();
     }
     

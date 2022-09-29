@@ -286,6 +286,15 @@
 			]
 		},
 		{
+			"name": "getProfileDaoAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
