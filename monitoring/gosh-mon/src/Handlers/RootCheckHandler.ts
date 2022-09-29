@@ -3,10 +3,6 @@ import {MetricsMap} from "../PrometheusFormatter";
 
 export default class RootCheckHandler extends AppHandler {
 
-    applyExtraConfiguration(c: any) {
-        super.applyExtraConfiguration(c);
-    }
-
     describe(): string {
         return `Root check handler`;
     }
@@ -14,8 +10,8 @@ export default class RootCheckHandler extends AppHandler {
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
             /* 0 -  1*/ ...this.initialSteps(debug, AppHandler.indexSteps),
-            /* 2*/ () => this.requestEnvs(),
-            /* 3*/ () => { return this.checkRoot(); }
+            'request envs', /* 2*/ () => this.requestEnvs(),
+            'check root',   /* 3*/ () => { return this.checkRoot(); }
         );
     }
 

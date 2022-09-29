@@ -18,13 +18,10 @@ class ScenarioHandler extends Handler_1.default {
         this.log = [];
         this.pupextraflags = [];
     }
-    setTimeout(timeout) {
-        this.timeout = timeout;
-    }
-    applyExtraConfiguration(c) {
-        super.applyExtraConfiguration(c);
-        if (c['pupextraflags'])
-            this.pupextraflags = c['pupextraflags'];
+    applyConfiguration(c) {
+        super.applyConfiguration(c);
+        this.useFields(c, [], ['pupextraflags', 'timeout']);
+        return this;
     }
     async startBrowser(debug) {
         if (this.browser)
@@ -182,14 +179,20 @@ class ScenarioHandler extends Handler_1.default {
         }
     }
     async doSteps(...steps) {
+        let stepName = '';
         this.startedms = (0, Utils_1.nowms)();
         this.started = Math.trunc(this.startedms / 1000);
         try {
             for (let f of steps) {
-                // if (this.app.steps)
-                this.say(`Running step #${this.stepsDone}`);
-                const res = await f();
+                if (typeof f === 'string') {
+                    stepName = f;
+                    continue;
+                }
+                this.say(`${this.sub ? `<${this.sub}> ` : ''}Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
+                const res = await f(stepName);
                 if (res !== null)
+                    this.stepsDone++;
+                if (this.stepsDone === 100)
                     this.stepsDone++;
                 let isslow = false;
                 let slow = this.app.interval; // in msec, short timeout for web
@@ -197,11 +200,17 @@ class ScenarioHandler extends Handler_1.default {
                     slow = this.timeout; // in seconds, for remote
                 if ((0, Utils_1.now)() - this.started > slow) {
                     isslow = true;
-                    await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', false);
+                    try {
+                        await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', false);
+                    }
+                    catch (e) { }
                 }
                 if (res !== undefined && res !== null) {
                     if (isslow)
-                        await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', true);
+                        try {
+                            await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', true);
+                        }
+                        catch (e) { }
                     return new Map([
                         ["result", 100],
                         ["value", res],
@@ -210,11 +219,17 @@ class ScenarioHandler extends Handler_1.default {
                         ["duration", (0, Utils_1.now)() - this.started]
                     ]);
                 }
+                stepName = '';
             }
         }
         catch (e) {
             console.error(e);
-            await this.dumpToFile('errors/' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, e.toString());
+            try {
+                await this.dumpToFile('errors/' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, e.toString());
+            }
+            catch (er) {
+                console.error('Failed to write error file', er);
+            }
         }
         finally {
             await this.finally();
@@ -222,45 +237,55 @@ class ScenarioHandler extends Handler_1.default {
         return new Map([
             ["result", this.stepsDone],
             ["timestamp", (0, Utils_1.now)()],
+            ["started", this.started],
             ["duration", (0, Utils_1.now)() - this.started]
         ]);
     }
-    // protected conditional(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
-    //     const res = [];
-    //     for (let f of branch_true) {
-    //         res.push(async () => { if (condition()) return await f(); });
-    //     }
-    //     for (let f of branch_false) {
-    //         res.push(async () => { if (!condition()) return await f(); });
-    //     }
-    //     return res;
-    // }
-    cond_ifelse(condition, branch_true, branch_false) {
+    conditional(condition, branch_true, branch_false) {
         const res = [];
-        const nop = async () => { };
-        res.push(async () => { this.say(`condition result ${condition()}`); return null; });
-        for (let i = 0; i < Math.max(branch_true.length, branch_false.length); i++) {
-            const f_true = i < branch_true.length ? branch_true[i] : nop;
-            const f_false = i < branch_false.length ? branch_false[i] : nop;
-            res.push(async () => { if (condition())
-                return f_true();
-            else
-                return f_false(); });
+        res.push(async (name) => { this.say(`condition [${name}] result [${condition()}]`); return null; });
+        for (let f of branch_true) {
+            if (typeof f === 'string')
+                res.push(`true -> ${f}`);
+            else // @ts-ignore
+                res.push(async () => { if (condition())
+                    return await f(); });
+        }
+        for (let f of branch_false) {
+            if (typeof f === 'string')
+                res.push(`false -> ${f}`);
+            else // @ts-ignore
+                res.push(async () => { if (!condition())
+                    return await f(); });
         }
         return res;
     }
+    // Equalized branches are terrible with labelling
+    // protected cond_ifelse(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
+    //     const res = [];
+    //     const nop = async() => {};
+    //     res.push(async () => { this.say(`condition result ${condition()}`); return null; });
+    //     for (let i=0; i<Math.max(branch_true.length, branch_false.length); i++) {
+    //         const f_true = i < branch_true.length ? branch_true[i] : nop;
+    //         const f_false = i < branch_false.length ? branch_false[i] : nop;
+    //         res.push(async() => { if (condition()) return f_true(); else return f_false(); })
+    //     }
+    //     return res;
+    // }
     cond_if(condition, branch_true) {
-        return this.cond_ifelse(condition, branch_true, []);
+        return this.conditional(condition, branch_true, []);
     }
     cond_ifnot(condition, branch_false) {
-        return this.cond_ifelse(condition, [], branch_false);
+        return this.conditional(condition, [], branch_false);
     }
-    for_each(arr, loop_factory) {
+    for_each(arr, desc, loop_factory) {
         const res = [];
         for (const s of arr) {
-            res.push(async () => { this.say(`for_each iterating ${s}`); return null; });
             for (const f of loop_factory(s)) {
-                res.push(f);
+                if (typeof f === 'string')
+                    res.push(`loop ${desc}: ${s} -> ${f}`);
+                else
+                    res.push(f);
             }
         }
         return res;

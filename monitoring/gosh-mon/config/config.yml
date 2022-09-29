@@ -48,6 +48,13 @@ modes:
   root-check:
     handler: root-check
 
+  script: &script
+    handler: script
+
+  app-script:
+    <<: *script
+    scriptname: app
+
 # app.gosh.sh
   app-setup: &app-setup
     handler: app-setup
@@ -58,6 +65,7 @@ modes:
       - remote-small
       - remote-large
     cron: true
+    interval: 900
 
   app-small-read: &app-small-read
     branch:  app-small

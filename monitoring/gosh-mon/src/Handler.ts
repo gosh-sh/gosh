@@ -10,15 +10,38 @@ export default abstract class Handler {
     protected app!: Application;
     protected debug: boolean = false;
 
-    setApplication(app: Application) {
+    protected sub = '';
+
+    setApplication(app: Application): Handler {
         this.app = app;
+        return this;
     }
 
-    setDebug(debug: boolean) {
+    setDebug(debug: boolean): Handler {
         this.debug = debug;
+        return this;
     }
 
-    applyExtraConfiguration(c: any) {}
+    setSub(s: string): Handler {
+        this.sub = s;
+        return this;
+    }
+
+    applyConfiguration(c: any): Handler { return this; }
+
+    useFields(c: any, req: string[], opt: string[] = []) {
+        for (let k of req) {
+            if (c[k] === undefined) {
+                console.error(`Required config element ${k} not found`);
+                process.exit(1);
+            } // @ts-ignore
+            this[k] = c[k];
+        }
+        for (let k of opt) {
+            if (c[k] !== undefined) // @ts-ignore
+                this[k] = c[k];
+        }
+    }
 
     async cachingHandle(): Promise<MetricsMap> {
         const n = now();

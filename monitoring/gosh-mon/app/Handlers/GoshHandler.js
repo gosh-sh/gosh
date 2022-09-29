@@ -24,27 +24,6 @@ class GoshHandler extends ScenarioHandler_1.default {
         this.conf_endpoint = '';
         this.use_envs = '';
     }
-    setSeed(seed) {
-        this.seed = seed;
-    }
-    setTargetParts(organization, repository, branch, filename, large) {
-        this.target = `${organization}/${repository}/${branch}/${filename}`;
-        this.organization = organization;
-        this.repository = repository;
-        this.branch = branch;
-        this.filename = filename;
-        if (large !== undefined)
-            this.setLarge(large);
-    }
-    setTarget(target, large) {
-        this.target = target;
-        [this.organization, this.repository, this.branch, this.filename] = target.split('/');
-        if (large !== undefined)
-            this.setLarge(large);
-    }
-    setLarge(large = true) {
-        this.large = large;
-    }
     async requestEnvs() {
         // require | priority | fallback | disabled
         const eset = this.use_envs;
@@ -64,17 +43,11 @@ class GoshHandler extends ScenarioHandler_1.default {
             }
         }
     }
-    applyExtraConfiguration(c) {
-        super.applyExtraConfiguration(c);
-        if (c['username'])
-            this.username = c['username'];
-        if (c['appurl'])
-            this.appurl = c['appurl'];
-        this.root = c['root'];
-        this.ipfs_address = c['ipfs_address'] ?? '';
-        this.prim_network = c['prim_network'] ?? '';
-        this.conf_endpoint = c['conf_endpoint'] ?? '';
-        this.use_envs = c['use_envs'] ?? '';
+    applyConfiguration(c) {
+        super.applyConfiguration(c);
+        this.useFields(c, ['seed', 'organization', 'repository', 'branch', 'filename', 'large'], ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs']);
+        this.target = `${this.organization}/${this.repository}/${this.branch}/${this.filename}`;
+        return this;
     }
     goshDescribe() {
         return this.target + (this.large ? ', IPFS' : '');

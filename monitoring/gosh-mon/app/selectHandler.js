@@ -12,8 +12,10 @@ const AppRotateHandler_1 = __importDefault(require("./Handlers/AppRotateHandler"
 const SeedReadHandler_1 = __importDefault(require("./Handlers/SeedReadHandler"));
 const RootCheckHandler_1 = __importDefault(require("./Handlers/RootCheckHandler"));
 const AppSetupHandler_1 = __importDefault(require("./Handlers/AppSetupHandler"));
-function selectHandler(type) {
-    console.log('selectHandler, type:', type);
+const ScriptHandler_1 = __importDefault(require("./Handlers/ScriptHandler"));
+function selectHandler(type, silent) {
+    if (silent !== true)
+        console.log('selectHandler, type:', type);
     switch (type) {
         case 'app-read': return new AppReadHandler_1.default();
         case 'extui-read': return new ExtReadHandler_1.default();
@@ -25,6 +27,7 @@ function selectHandler(type) {
         case 'seed-read': return new SeedReadHandler_1.default();
         case 'root-check': return new RootCheckHandler_1.default();
         case 'app-setup': return new AppSetupHandler_1.default();
+        case 'script': return new ScriptHandler_1.default();
     }
     throw new TypeError('Invalid type');
 }

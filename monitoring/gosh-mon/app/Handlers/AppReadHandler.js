@@ -10,9 +10,7 @@ class AppReadHandler extends AppHandler_1.default {
     }
     async handle(debug) {
         return await this.doSteps(
-        /* 0 - 12*/ ...this.initialSteps(debug), 
-        /*13*/ () => this.click("svg.fa-copy"), 
-        /*14*/ () => { return this.processFileContents(); });
+        /* 0 - 12*/ ...this.initialSteps(debug), 'click copy icon', /*13*/ () => this.click("svg.fa-copy"), 'check contents', /*14*/ () => { return this.processFileContents(); });
     }
 }
 exports.default = AppReadHandler;

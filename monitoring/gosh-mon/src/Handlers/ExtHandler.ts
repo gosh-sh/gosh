@@ -1,9 +1,9 @@
 import GoshHandler from "./GoshHandler";
-import {StepFunction} from "./ScenarioHandler";
+import {StepEntry} from "./ScenarioHandler";
 
 export default abstract class ExtHandler extends GoshHandler {
 
-    protected initialSteps(debug: boolean, clickFile: boolean = true): StepFunction[] {
+    protected initialSteps(debug: boolean, clickFile: boolean = true): StepEntry[] {
         const base = 'https://extension-ui.gosh.sh/#';
         return [
             /* 0*/ () => this.startBrowser(debug),
