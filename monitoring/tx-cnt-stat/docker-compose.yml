@@ -2,20 +2,19 @@ version: '2.2'
 
 services:
 
-  trcnt-stat:
+  tx-cnt-stat:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: trcnt-stat
+    container_name: tx-cnt-stat
     restart: "unless-stopped"
-    expose:
-      - 9123
-    ports:
-      - "127.0.0.1:9123:9123"
+    expose: [9123]
+    ports: ["127.0.0.1:9123:9123"]
     volumes:
       - ./config:/home/node/app/config:ro
     networks:
-      gosh-monitoring: {}
+      gosh-monitoring:
+        aliases: ['trcnt-stat']
 
 networks:
   gosh-monitoring:
