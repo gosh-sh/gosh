@@ -54,7 +54,7 @@ class RemoteHandler extends GoshHandler_1.default {
         return this;
     }
     async copyFile(src, dst) {
-        this.say(`${(0, Utils_1.nls)()} [${this.stepsDone}] Copy file ${src} -> ${dst}`);
+        this.say(`[${this.stepsDone}] Copy file ${src} -> ${dst}`);
         await fs.copyFileSync(src, dst);
     }
     async copyTemplFile(src, dst, args) {
@@ -74,19 +74,19 @@ class RemoteHandler extends GoshHandler_1.default {
         }
     }
     async ensureDir(dir) {
-        this.say(`${(0, Utils_1.nls)()} [${this.stepsDone}] Ensure dir ${dir}`);
+        this.say(`[${this.stepsDone}] Ensure dir ${dir}`);
         if (!fs.existsSync(dir))
             await fs.mkdirSync(dir);
     }
     async deleteDir(dir) {
-        this.say(`${(0, Utils_1.nls)()} [${this.stepsDone}] Delete dir ${dir}`);
+        this.say(`[${this.stepsDone}] Delete dir ${dir}`);
         if (fs.existsSync(dir))
             await exec('rm -rf ' + dir);
     }
     async nop() { }
     async execute(cmdargs, cwd, loud = false) {
         const step = this.stepsDone;
-        this.say(`${(0, Utils_1.nls)()} [${step}] Execute [${cmdargs.join(', ')}] in ${cwd ?? '<current>'} dir`, loud);
+        this.say(`[${step}] Execute [${cmdargs.join(', ')}] in ${cwd ?? '<current>'} dir`, loud);
         const params = (cwd !== undefined) ? { cwd: cwd } : {};
         if (this.started != 0 && this.timeout != 0) {
             params.timeout = Math.max((this.started + this.timeout) - (0, Utils_1.now)(), 1) * 1000;
@@ -95,24 +95,24 @@ class RemoteHandler extends GoshHandler_1.default {
         const cmd = cmdargs[0], args = cmdargs.slice(1);
         const process = child_process.spawn(cmd, args, params);
         process.stdout.on('data', (data) => {
-            this.say(`${(0, Utils_1.nls)()} [${step}o] ${data}`, loud);
+            this.say(`[${step}o] ${data}`, loud);
         });
         process.stderr.on('data', (data) => {
-            this.say(`${(0, Utils_1.nls)()} [${step}e] ${data}`, loud);
+            this.say(`[${step}e] ${data}`, loud);
         });
         const prom = new Promise((resolve, reject) => {
             process.on('close', (code) => {
-                this.say(`${(0, Utils_1.nls)()} [${step}] Closed all stdio with code ${code}`, loud);
+                this.say(`[${step}] Closed all stdio with code ${code}`, loud);
             });
             process.on('exit', (code) => {
-                this.say(`${(0, Utils_1.nls)()} [${step}] Exited with code ${code}`, loud);
+                this.say(`[${step}] Exited with code ${code}`, loud);
                 if (code == 0)
                     resolve(true);
                 else
                     reject('failed with exit code ' + code);
             });
             process.on('error', (err) => {
-                this.say(`${(0, Utils_1.nls)()} [${step}] Error occured: ${err}`, loud);
+                this.say(`[${step}] Error occured: ${err}`, loud);
                 reject(err);
             });
         });
@@ -236,7 +236,7 @@ class RemoteHandler extends GoshHandler_1.default {
                 if (!data)
                     return;
                 const last_updated = fs.existsSync('data/last-updated') ? fs.readFileSync('data/last-updated', 'utf-8') : '';
-                this.say(`${(0, Utils_1.nls)()} last updated: ${last_updated}, updated: ${updated}`);
+                this.say(`last updated: ${last_updated}, updated: ${updated}`);
                 if (last_updated != updated) {
                     const response = await (0, node_fetch_1.default)(download);
                     if (!response.ok || !response.body)

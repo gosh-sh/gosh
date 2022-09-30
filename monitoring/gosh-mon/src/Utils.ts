@@ -12,6 +12,10 @@ export function nls(): string {
     return new Date().toLocaleString();
 }
 
+export function niso(): string {
+    return new Date().toISOString();
+}
+
 export function clone(obj: any): any {
     return deserialize(serialize(obj));
 }
