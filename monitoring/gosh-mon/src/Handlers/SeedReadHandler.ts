@@ -1,5 +1,6 @@
 import AppHandler from "./AppHandler";
 import {MetricsMap} from "../PrometheusFormatter";
+import {ac_hrefs, hrefs} from "../Utils";
 
 export default class SeedReadHandler extends AppHandler {
 
@@ -10,7 +11,7 @@ export default class SeedReadHandler extends AppHandler {
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
             /* 0 -  7 */ ...this.initialSteps(debug, AppHandler.userSteps),
-            'click settings',    /* 8*/ () => this.click(`//a[@href='/account/settings']`),
+            'click settings',    /* 8*/ () => this.click(`//a[${ac_hrefs('/a/settings')}]`),
             'wait show button',  /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"),
             'click show btn 2',  /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
             'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 1),
