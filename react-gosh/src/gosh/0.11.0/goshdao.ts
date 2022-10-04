@@ -1,7 +1,7 @@
 import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { TDaoDetails } from '../../types'
 import { BaseContract } from '../base'
-import { GoshProfile } from './goshprofile'
+import { GoshProfile } from '../goshprofile'
 import { IGoshDao } from '../interfaces'
 import { IGoshWallet, GoshSmvTokenRoot, GoshWallet } from '../../resources'
 
@@ -11,6 +11,11 @@ class GoshDao extends BaseContract implements IGoshDao {
 
     constructor(client: TonClient, address: string) {
         super(client, GoshDao.key, address, { version: GoshDao.version })
+    }
+
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getNameDao', {})
+        return result.decoded?.output.value0
     }
 
     async getDetails(): Promise<TDaoDetails> {
@@ -30,6 +35,7 @@ class GoshDao extends BaseContract implements IGoshDao {
         }
     }
 
+    /** Old interface methods */
     async getWalletAddr(profileAddr: string, index: number): Promise<string> {
         const result = await this.account.runLocal('getAddrWallet', {
             pubaddr: profileAddr,
@@ -51,11 +57,6 @@ class GoshDao extends BaseContract implements IGoshDao {
             profiles.push({ profile, wallet: result.decoded?.output.value0[key] })
         }
         return profiles
-    }
-
-    async getName(): Promise<string> {
-        const result = await this.account.runLocal('getNameDao', {})
-        return result.decoded?.output.value0
     }
 
     async getSmvRootTokenAddr(): Promise<string> {

@@ -9,7 +9,7 @@ class GoshAdapterFactory {
         const versions = AppConfig.versions
         switch (version) {
             case '0.11.0':
-                return new GoshAdapter_0_11_0(goshroot, versions[version])
+                return GoshAdapter_0_11_0.getInstance(goshroot, versions[version])
             default:
                 throw new GoshError('GoshAdapter is not implemented', { version })
         }

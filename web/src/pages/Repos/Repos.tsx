@@ -23,14 +23,11 @@ const RepositoriesPage = () => {
             if (!userState.keys || !gosh) return []
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await gosh.getDaoWalletCode(`0x${userState.keys.public}`)
-            const walletCodeHash = await gosh.account.client.boc.get_boc_hash({
-                boc: walletCode,
-            })
-            const walletAddrs = await gosh.account.client.net.query_collection({
+            const walletCodeHash = await gosh.getWalletCodeHash()
+            const walletAddrs = await gosh.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code_hash: { eq: walletCodeHash.hash },
+                    code_hash: { eq: walletCodeHash },
                 },
                 result: 'id',
             })
@@ -49,25 +46,20 @@ const RepositoriesPage = () => {
                 ),
             )
             const daos = Array.from(daoAddrs).map((addr) => {
-                return new GoshDao(AppConfig.goshclient, addr, versions.latest)
+                return new GoshDao(AppConfig.goshclient, addr)
             })
 
             // Get repos for each DAO
             const repos = await Promise.all(
                 daos.map(async (dao) => {
-                    const repoCode = await gosh.getDaoRepoCode(dao.address)
-                    const repoCodeHash =
-                        await AppConfig.goshroot.account.client.boc.get_boc_hash({
-                            boc: repoCode,
-                        })
-                    const repoAddrs =
-                        await AppConfig.goshroot.account.client.net.query_collection({
-                            collection: 'accounts',
-                            filter: {
-                                code_hash: { eq: repoCodeHash.hash },
-                            },
-                            result: 'id',
-                        })
+                    const repoCodeHash = await gosh.getRepoCodeHash(dao.address)
+                    const repoAddrs = await gosh.client.net.query_collection({
+                        collection: 'accounts',
+                        filter: {
+                            code_hash: { eq: repoCodeHash },
+                        },
+                        result: 'id',
+                    })
 
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {

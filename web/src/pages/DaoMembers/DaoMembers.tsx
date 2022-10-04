@@ -1,5 +1,5 @@
 import Spinner from '../../components/Spinner'
-import { useDaoMemberList, useDaoMemberDelete, useProfile } from 'react-gosh'
+import { useDaoMemberList, useDaoMemberDelete } from 'react-gosh'
 import DaoMemberListItem from './MemberListItem'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -8,16 +8,14 @@ import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 
 const DaoMembersPage = () => {
-    const profile = useProfile()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
     const daomember = useDaoMemberDelete(dao.instance)
 
     const onMemberDelete = async (profile?: string) => {
-        if (!profile) return
         if (window.confirm('Delete member?')) {
             try {
-                await daomember.remove(profile)
+                // await daomember.remove(profile)
             } catch (e: any) {
                 console.error(e.message)
                 toast.error(<ToastError error={e} />)
@@ -46,7 +44,7 @@ const DaoMembersPage = () => {
                     </div>
                 )}
 
-                <div className="divide-y divide-gray-c4c4c4">
+                {/* <div className="divide-y divide-gray-c4c4c4">
                     {items.map((item, index) => {
                         loadItemDetails(item)
                         return (
@@ -64,14 +62,14 @@ const DaoMembersPage = () => {
                             />
                         )
                     })}
-                </div>
+                </div> */}
             </div>
 
-            {profile?.address === dao.details.owner && (
+            {/* {profile?.address === dao.details.owner && (
                 <div className="mt-6">
                     <DaoMemberForm dao={dao.instance} />
                 </div>
-            )}
+            )} */}
         </>
     )
 }

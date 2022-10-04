@@ -1,9 +1,5 @@
 import { AppConfig } from './appconfig'
-
-type TValidationResult = {
-    valid: boolean
-    reason?: string
-}
+import { TValidationResult } from './types'
 
 const validateUsername = (username: string): TValidationResult => {
     if (!username.startsWith('@')) {
@@ -30,17 +26,4 @@ const validatePhrase = async (phrase: string): Promise<TValidationResult> => {
     return { valid: true }
 }
 
-const validateDaoName = (name: string): TValidationResult => {
-    const matches = name.match(/^[\w-]+$/g)
-    if (!matches || matches[0] !== name) {
-        return { valid: false, reason: 'Name has incorrect symbols' }
-    }
-
-    if (name.length > 64) {
-        return { valid: false, reason: 'Name is too long (>64)' }
-    }
-
-    return { valid: true }
-}
-
-export { validateUsername, validatePhrase, validateDaoName }
+export { validateUsername, validatePhrase }

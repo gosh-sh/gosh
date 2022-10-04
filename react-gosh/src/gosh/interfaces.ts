@@ -1,25 +1,41 @@
 import { Account, AccountRunLocalOptions, AccountRunOptions } from '@eversdk/appkit'
-import { DecodedMessageBody, KeyPair, ResultOfProcessMessage } from '@eversdk/core'
-import { IGoshRoot, IGoshWallet } from '../resources'
-import { TDaoDetails, TProfileDetails } from '../types'
+import {
+    DecodedMessageBody,
+    KeyPair,
+    ResultOfProcessMessage,
+    TonClient,
+} from '@eversdk/core'
+import { IGoshWallet } from '../resources'
+import { TDaoDetails, TGoshBranch, TProfileDetails, TValidationResult } from '../types'
 
 interface IGoshAdapter {
+    client: TonClient
     goshroot: IGoshRoot
+    gosh: IGosh
 
-    getProfile(username: string, options: { keys?: KeyPair }): Promise<IGoshProfile>
+    auth(username: string, keys: KeyPair[]): Promise<void>
+    authReset(): Promise<void>
+
+    getProfile(username: string): Promise<IGoshProfile>
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 
-    getProfileDao(username: string, name: string): Promise<IGoshProfileDao>
+    getDao(options: { name?: string; address?: string }): Promise<IGoshDao>
 
-    getDao(name: string): Promise<IGoshDao>
-    deployDao(
-        name: string,
-        profiles: string[],
-        creator: { username: string; keys: KeyPair },
-        prev?: string,
-    ): Promise<IGoshDao>
+    getRepo(options: {
+        name?: string
+        daoName?: string
+        address?: string
+    }): Promise<IGoshRepository>
+    getRepoCodeHash(dao: string): Promise<string>
+
+    getWalletCodeHash(): Promise<string>
 
     getTvmHash(data: string | Buffer): Promise<string>
+
+    isValidDaoName(name: string): TValidationResult
+
+    // TODO: May be remove from this interface
+    getSmvPlatformCode(): Promise<string>
 }
 
 interface IContract {
@@ -54,21 +70,11 @@ interface IContract {
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
 
-interface IGosh extends IContract {
+interface IGoshRoot extends IContract {
     address: string
 
-    // getDaoAddr(name: string): Promise<string>
-    // getDaoWalletCode(profileAddr: string): Promise<string>
-    // getRepoAddr(name: string, daoName: string): Promise<string>
-    // getDaoRepoCode(daoAddr: string): Promise<string>
-    // getSmvPlatformCode(): Promise<string>
-    // getContentAddr(
-    //     daoName: string,
-    //     repoName: string,
-    //     commitHash: string,
-    //     label: string,
-    // ): Promise<string>
-    // getProfileAddr(username: string): Promise<string>
+    getGoshAddr(version: string): Promise<string>
+    getVersions(): Promise<any>
 }
 
 interface IGoshProfile extends IContract {
@@ -76,26 +82,36 @@ interface IGoshProfile extends IContract {
 
     getName(): Promise<string>
     getDetails(): Promise<TProfileDetails>
-    isOwner(pubkey: string): Promise<boolean>
+    getProfileDao(name: string): Promise<IGoshProfileDao>
+    getDaos(): Promise<IGoshDao[]>
+    isOwnerPubkey(pubkey: string): Promise<boolean>
 
-    /** Old interface methods */
-    setGoshAddr(addr: string): Promise<void>
-    turnOn(walletAddr: string, pubkey: string): Promise<void>
-    getCurrentGoshAddr(): Promise<string>
+    deployDao(
+        gosh: IGoshAdapter,
+        name: string,
+        members: string[],
+        prev?: string,
+    ): Promise<IGoshDao>
 }
 
 interface IGoshProfileDao extends IContract {
     address: string
 }
 
+interface IGosh extends IContract {
+    address: string
+}
+
 interface IGoshDao extends IContract {
     address: string
 
+    getName(): Promise<string>
     getDetails(): Promise<TDaoDetails>
+
+    /** Old interface methods */
     getWalletAddr(profileAddr: string, index: number): Promise<string>
     getWallets(): Promise<string[]>
     getProfiles(): Promise<{ profile: string; wallet: string }[]>
-    getName(): Promise<string>
     getSmvRootTokenAddr(): Promise<string>
     getSmvProposalCode(): Promise<string>
     getSmvClientCode(): Promise<string>
@@ -105,4 +121,43 @@ interface IGoshDao extends IContract {
     mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
-export { IGoshAdapter, IContract, IGosh, IGoshProfile, IGoshProfileDao, IGoshDao }
+interface IGoshRepository extends IContract {
+    address: string
+    meta?: {
+        name: string
+        branchCount: number
+        tags: {
+            content: string
+            commit: string
+        }[]
+    }
+
+    /** Old interface methods */
+    load(): Promise<void>
+    getGosh(version: string): Promise<any>
+    getName(): Promise<string>
+    getBranches(): Promise<TGoshBranch[]>
+    getBranch(name: string): Promise<TGoshBranch>
+    getHead(): Promise<string>
+    getCommitAddr(commitSha: string): Promise<string>
+    getBlobAddr(blobName: string): Promise<string>
+    getTagCode(): Promise<string>
+    getTags(): Promise<{ content: string; commit: string }[]>
+    getGoshAddr(): Promise<string>
+    getSnapshotCode(branch: string): Promise<string>
+    getSnapshotAddr(branch: string, filename: string): Promise<string>
+    getTreeAddr(treeName: string): Promise<string>
+    getDiffAddr(commitName: string, index1: number, index2: number): Promise<string>
+    isBranchProtected(branch: string): Promise<boolean>
+}
+
+export {
+    IGoshAdapter,
+    IContract,
+    IGoshRoot,
+    IGoshProfile,
+    IGoshProfileDao,
+    IGosh,
+    IGoshDao,
+    IGoshRepository,
+}

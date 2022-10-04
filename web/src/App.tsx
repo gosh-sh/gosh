@@ -76,6 +76,7 @@ const App = () => {
                 },
             },
             goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
+            goshver: JSON.parse(process.env.REACT_APP_GOSH || '{}'),
             ipfs: process.env.REACT_APP_IPFS || '',
             isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         })

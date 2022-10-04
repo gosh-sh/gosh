@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshAdapter } from '../gosh/interfaces'
+import { userAtom } from '../store'
 import { goshVersionsAtom } from '../store/gosh.state'
 
 function useGoshVersions() {
@@ -40,6 +41,7 @@ function useGoshVersions() {
 }
 
 function useGosh(version?: string) {
+    const { username, keys } = useRecoilValue(userAtom)
     const [gosh, setGosh] = useState<IGoshAdapter>()
 
     useEffect(() => {
@@ -52,6 +54,18 @@ function useGosh(version?: string) {
 
         _getGosh()
     }, [version])
+
+    // useEffect(() => {
+    //     const _setAuth = async () => {
+    //         if (!gosh) return
+
+    //         console.debug('Gosh set auth', username, keys)
+    //         if (!username || !keys) await gosh.authReset()
+    //         if (username && keys) await gosh.auth(username, [keys])
+    //     }
+
+    //     _setAuth()
+    // }, [gosh, username, keys])
 
     return gosh
 }

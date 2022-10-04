@@ -1,29 +1,31 @@
 import { TonClient, ClientConfig } from '@eversdk/core'
 import { createDockerDesktopClient } from '@docker/extension-api-client'
-import { GoshRoot, IGoshRoot } from './resources/contracts'
+import { IGoshRoot } from './gosh/interfaces'
+import { GoshRoot } from './gosh/goshroot'
 
 class AppConfig {
     static goshroot: IGoshRoot
     static goshclient: TonClient
+    static versions: { [ver: string]: string }
     static ipfs: string
     static dockerclient?: any
-    static versions = {
-        '0.11.0': '0:.....................................................',
-    }
 
     static setup(params: {
         goshclient: ClientConfig
         goshroot: string
+        goshver: { [ver: string]: string }
         ipfs: string
         isDockerExt: boolean
     }) {
-        const { goshclient, goshroot, ipfs, isDockerExt } = params
+        const { goshclient, goshroot, goshver, ipfs, isDockerExt } = params
         if (!goshroot) throw Error('Gosh root address is undefined')
+        if (!Object.keys(goshver).length) throw Error('Gosh versions undefined')
         if (!ipfs) throw Error('IPFS url is undefined')
 
         AppConfig.dockerclient = isDockerExt ? createDockerDesktopClient() : null
         AppConfig.goshclient = new TonClient(goshclient)
         AppConfig.goshroot = new GoshRoot(AppConfig.goshclient, goshroot)
+        AppConfig.versions = goshver
         AppConfig.ipfs = ipfs
     }
 }

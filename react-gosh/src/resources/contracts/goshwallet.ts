@@ -30,6 +30,7 @@ import {
 } from '../../types'
 import { sleep } from '../../utils'
 import { BaseContract } from './base'
+import { Gosh } from './gosh'
 import { GoshCommit } from './goshcommit'
 import { GoshDao } from './goshdao'
 import { GoshRepository } from './goshrepository'
@@ -67,7 +68,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
 
     async getGosh(): Promise<IGosh> {
         // TODO: Implement gosh cache by version
-        return AppConfig.goshroot.getGosh(this.version)
+        return new Gosh(this.account.client, AppConfig.versions['0.11.0'])
     }
 
     async getAccess(): Promise<string | null> {

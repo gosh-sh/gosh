@@ -42,12 +42,7 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
         const _getRepo = async () => {
             if (!gosh || !name || !daoName) return
 
-            const repoAddr = await gosh.getRepoAddr(name, daoName)
-            const repository = new GoshRepository(
-                AppConfig.goshclient,
-                repoAddr,
-                gosh.version,
-            )
+            const repository = await gosh.getRepo({ name, daoName })
             setGoshRepo(repository)
         }
 

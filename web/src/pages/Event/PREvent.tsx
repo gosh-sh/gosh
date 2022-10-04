@@ -147,13 +147,7 @@ const PREvent = (props: TCommitBlobsType) => {
 
             setIsFetched(false)
 
-            const repoAddr = await gosh.getRepoAddr(_repoName, daoName)
-            const repo = new GoshRepository(
-                AppConfig.goshclient,
-                repoAddr,
-                versions.latest,
-            )
-
+            const repo = await gosh.getRepo({ name: _repoName, daoName })
             const commitAddr = await repo.getCommitAddr(_commitName)
             const commit = new GoshCommit(
                 repo.account.client,

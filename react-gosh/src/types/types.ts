@@ -106,3 +106,8 @@ export enum EEventType {
     BRANCH_LOCK = 2,
     BRANCH_UNLOCK = 3,
 }
+
+export type TValidationResult = {
+    valid: boolean
+    reason?: string
+}

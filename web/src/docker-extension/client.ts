@@ -1,6 +1,7 @@
 import { Image, Container } from './interfaces'
 import {
     AppConfig,
+    GoshAdapterFactory,
     GoshContentSignature,
     GoshDao,
     GoshWallet,
@@ -140,9 +141,8 @@ export class DockerClient {
             return
         }
 
-        const gosh = await AppConfig.goshroot.getGosh(version)
-        const daoAddress = await gosh.getDaoAddr(goshDao)
-        const dao = new GoshDao(AppConfig.goshclient, daoAddress)
+        const gosh = GoshAdapterFactory.create(version)
+        const dao = await gosh.getDao({ name: goshDao })
         const walletAddr = await dao.getWalletAddr(`0x${userState.keys?.public}`, 0)
 
         const wallet = new GoshWallet(AppConfig.goshclient, walletAddr, version, {

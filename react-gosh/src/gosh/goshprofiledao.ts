@@ -1,6 +1,6 @@
 import { TonClient } from '@eversdk/core'
-import { BaseContract } from '../base'
-import { IGoshProfileDao } from '../interfaces'
+import { BaseContract } from './base'
+import { IGoshProfileDao } from './interfaces'
 
 class GoshProfileDao extends BaseContract implements IGoshProfileDao {
     static key: string = 'profiledao'

@@ -1,4 +1,5 @@
 import { KeyPair } from '@eversdk/core'
+import { IGoshDao } from '../gosh/interfaces'
 
 type TDaoDetails = {
     address: string
@@ -10,6 +11,7 @@ type TDaoDetails = {
 }
 
 type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
+    instance: IGoshDao
     members?: { profile: string; wallet: string }[]
     supply?: number
     owner?: string

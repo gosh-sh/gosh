@@ -68,15 +68,12 @@ const DaoRepositoriesPage = () => {
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const repoCode = await gosh.getDaoRepoCode(dao.instance.address)
-            const repoCodeHash = await AppConfig.goshclient.boc.get_boc_hash({
-                boc: repoCode,
-            })
+            const repoCodeHash = await gosh.getRepoCodeHash(dao.instance.address)
             const list: any[] = []
             let next: string | undefined
             while (true) {
                 const accounts = await getPaginatedAccounts({
-                    filters: [`code_hash: {eq:"${repoCodeHash.hash}"}`],
+                    filters: [`code_hash: {eq:"${repoCodeHash}"}`],
                     limit: 50,
                     lastId: next,
                 })

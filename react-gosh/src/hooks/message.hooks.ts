@@ -18,7 +18,7 @@ function useNotificationMessages() {
         }
 
         _updateSubscription()
-    }, [profile?.address])
+    }, [])
 
     const _subscribe = async (key: string, filter: object) => {
         const result = await AppConfig.goshclient.net.subscribe_collection(

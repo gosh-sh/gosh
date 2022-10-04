@@ -1,6 +1,7 @@
 import { atom, selector } from 'recoil'
 import { AppConfig } from '../appconfig'
-import { GoshProfile, IGoshProfile } from '../resources'
+import { GoshProfile } from '../gosh/goshprofile'
+import { IGoshProfile } from '../gosh/interfaces'
 import { TUser, TUserPersist } from '../types'
 import { persistAtom } from './base'
 
