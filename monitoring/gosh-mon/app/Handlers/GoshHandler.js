@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const ScenarioHandler_1 = __importDefault(require("./ScenarioHandler"));
 const crypto_1 = __importDefault(require("crypto"));
+const node_fetch_1 = __importDefault(require("node-fetch"));
 class GoshHandler extends ScenarioHandler_1.default {
     constructor() {
         super(...arguments);
@@ -14,31 +15,39 @@ class GoshHandler extends ScenarioHandler_1.default {
         this.repository = '';
         this.branch = '';
         this.filename = '';
+        this.username = '';
         this.large = false;
+        this.appurl = 'https://app.gosh.sh/';
+        this.root = '';
+        this.ipfs_address = '';
+        this.prim_network = '';
+        this.conf_endpoint = '';
+        this.use_envs = '';
     }
-    setSeed(seed) {
-        this.seed = seed;
+    async requestEnvs() {
+        // require | priority | fallback | disabled
+        const eset = this.use_envs;
+        if (eset !== 'disabled') {
+            try {
+                const res = await (0, node_fetch_1.default)(this.appurl + 'envs.json');
+                const jr = await res.json();
+                const p = (eset === 'require') || (eset === 'priority');
+                this.ipfs_address = !p ? (this.ipfs_address ?? jr.ipfs) : (jr.ipfs ?? this.ipfs_address);
+                this.root = !p ? (this.root ?? jr.gosh) : (jr.gosh ?? this.root);
+                this.conf_endpoint = !p ? (this.conf_endpoint ?? jr.network) : (jr.network ?? this.conf_endpoint);
+                this.say(`resolved ipfs ${this.ipfs_address}, root ${this.root}, endpoint ${this.conf_endpoint}`);
+            }
+            catch (e) {
+                if (eset === 'require')
+                    throw e;
+            }
+        }
     }
-    setTargetParts(organization, repository, branch, filename, large) {
-        this.target = `${organization}/${repository}/${branch}/${filename}`;
-        this.organization = organization;
-        this.repository = repository;
-        this.branch = branch;
-        this.filename = filename;
-        if (large !== undefined)
-            this.setLarge(large);
-    }
-    setTarget(target, large) {
-        this.target = target;
-        [this.organization, this.repository, this.branch, this.filename] = target.split('/');
-        if (large !== undefined)
-            this.setLarge(large);
-    }
-    setLarge(large = true) {
-        this.large = large;
-    }
-    applyExtraConfiguration(c) {
-        super.applyExtraConfiguration(c);
+    applyConfiguration(c) {
+        super.applyConfiguration(c);
+        this.useFields(c, ['seed', 'organization', 'repository', 'branch', 'filename', 'large'], ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs']);
+        this.target = `${this.organization}/${this.repository}/${this.branch}/${this.filename}`;
+        return this;
     }
     goshDescribe() {
         return this.target + (this.large ? ', IPFS' : '');

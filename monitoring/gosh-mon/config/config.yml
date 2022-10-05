@@ -1,17 +1,16 @@
 global:
-  seed:          ###SECRET###
+  root:          NOT_SET
   organization:  monitoring
-  repository:    monitoring
-  branch:        INVALID
+  repository:    monitoring3
+  branch:        NOT_SET
   filename:      last
-  handler:       INVALID
+  handler:       NOT_SET
   large:         false
   prefix:        gosh_mon_
   timeout:       20000
-  root:          0:457cd81c98f745217825d8c955973a5b0149babc27228b6e90658ffe7e84b01e
   interval:      45
   subinterval:   0
-  origin:        INVALID
+  origin:        NOT_SET
   cron:          false
   appurl:        https://app.gosh.sh/
   pupextraflags: []
@@ -19,12 +18,26 @@ global:
   gosh_branch:   "release:latest"
   gosh_bin_path: last-git-remote-gosh
   release_asset: git-remote-gosh-amd64
+  username:      monitester
+
+  ipfs_address:  https://ipfs.network.gosh.sh
+  prim_network:  gosh.sh
+  conf_endpoint: network.gosh.sh
+
+  # require | priority | fallback | disabled
+  use_envs: require
 
 
 includes:
 
   next: &next
+    # for app.gosh.sh
     appurl: https://next-app.monitoring.gosh.sh/
+    prim_network: vps23.ton.dev
+    conf_endpoint: https://vps23.ton.dev
+    # for remote
+    gosh_branch: "release:latest-prerelease"
+    use_envs: require
 
 
 modes:
@@ -35,30 +48,52 @@ modes:
   root-check:
     handler: root-check
 
+  script: &script
+    handler: script
+
+  app-script:
+    <<: *script
+    scriptname: app
+
 # app.gosh.sh
+  app-setup: &app-setup
+    handler: app-setup
+    branch: root
+    branches:
+      - app-small
+      - app-large
+      - remote-small
+      - remote-large
+    cron: true
+    interval: 900
+
   app-small-read: &app-small-read
-    branch:  ticker-app-small
+    branch:  app-small
     handler: app-read
     large:   false
 
   app-small-write: &app-small-write
-    branch:  ticker-app-small
+    branch:  app-small
     handler: app-write
     large:   false
     interval: 200
 
   app-large-read: &app-large-read
-    branch:  ticker-app-large
+    branch:  app-large
     handler: app-read
     large:   true
     timeout: 15000
 
   app-large-write: &app-large-write
-    branch:  ticker-app-large
+    branch:  app-large
     handler: app-write
     large:   true
     timeout: 15000
     interval: 450
+
+  app-setup-next:
+    <<: *app-setup
+    <<: *next
 
   app-small-read-next:
     <<: *app-small-read
@@ -78,27 +113,43 @@ modes:
 
 # git-remote-gosh
   rem-small-read: &rem-small-read
-    branch:  ticker-remote-small
+    branch:  remote-small
     handler: remote-read
     large:   false
     timeout: 50
 
   rem-small-write: &rem-small-write
-    branch:  ticker-remote-small
+    branch:  remote-small
     handler: remote-write
     large:   false
     interval: 150
     timeout: 270
 
   rem-large-read: &rem-large-read
-    branch:  ticker-remote-large
+    branch:  remote-large
     handler: remote-read
     large:   true
     timeout: 50
 
   rem-large-write: &rem-large-write
-    branch:  ticker-remote-large
+    branch:  remote-large
     handler: remote-write
     large:   true
     interval: 450
     timeout: 270
+
+  rem-small-read-next:
+    <<: *rem-small-read
+    <<: *next
+
+  rem-small-write-next:
+    <<: *rem-small-write
+    <<: *next
+
+  rem-large-read-next:
+    <<: *rem-large-read
+    <<: *next
+
+  rem-large-write-next:
+    <<: *rem-large-write
+    <<: *next

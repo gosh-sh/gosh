@@ -75,7 +75,9 @@ const BuildPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/build/${selected.name}`)
+                                navigate(
+                                    `/o/${daoName}/r/${repoName}/build/${selected.name}`,
+                                )
                             }
                         }}
                     />

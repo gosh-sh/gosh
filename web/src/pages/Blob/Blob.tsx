@@ -36,7 +36,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/view/${selected.name}/${treePath}`,
+                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treePath}`,
                             )
                         }
                     }}
@@ -51,7 +51,7 @@ const BlobPage = () => {
                 </div>
                 <div className="grow text-right">
                     <Link
-                        to={`/${daoName}/${repoName}/find/${branchName}`}
+                        to={`/o/${daoName}/r/${repoName}/find/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
@@ -85,7 +85,7 @@ const BlobPage = () => {
                                 />
                                 {!branch?.isProtected && wallet?.details.isDaoMember && (
                                     <Link
-                                        to={`/${daoName}/${repoName}/blobs/update/${branchName}/${treePath}`}
+                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treePath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />

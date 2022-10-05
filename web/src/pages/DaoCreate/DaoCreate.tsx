@@ -21,7 +21,7 @@ const DaoCreatePage = () => {
     const onDaoCreate = async (values: TFormValues) => {
         try {
             await daocreate.create(values.name, values.members.split('\n'))
-            navigate('/account/orgs')
+            navigate('/a/orgs')
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

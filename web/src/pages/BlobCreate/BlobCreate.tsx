@@ -52,7 +52,7 @@ const BlobCreatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/tree/${branchName}${
+    const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
         pathName && `/${pathName}`
     }`
 
@@ -74,25 +74,21 @@ const BlobCreatePage = () => {
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             const pubkey = userState.keys.public
-            await retry(
-                () =>
-                    wallet.instance.createCommit(
-                        repo,
-                        branch,
-                        pubkey,
-                        [
-                            {
-                                name,
-                                modified: values.content,
-                                original: '',
-                            },
-                        ],
-                        message,
-                        values.tags,
-                        undefined,
-                        progressCallback,
-                    ),
-                3,
+            await wallet.instance.createCommit(
+                repo,
+                branch,
+                pubkey,
+                [
+                    {
+                        name,
+                        modified: values.content,
+                        original: '',
+                    },
+                ],
+                message,
+                values.tags,
+                undefined,
+                progressCallback,
             )
             await updateBranch(branch.name)
             navigate(urlBack)

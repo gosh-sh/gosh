@@ -49,7 +49,7 @@ const SignupPage = () => {
                 element: (
                     <PinCodeModal
                         phrase={values.phrase}
-                        onUnlock={() => navigate('/account/orgs', { replace: true })}
+                        onUnlock={() => navigate('/a/orgs', { replace: true })}
                     />
                 ),
             })

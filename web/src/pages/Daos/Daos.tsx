@@ -31,7 +31,7 @@ const DaosPage = () => {
                     />
                 </div>
                 <Link
-                    to="/account/orgs/create"
+                    to="/a/orgs/create"
                     className="btn btn--body py-1.5 px-3 !font-normal text-center w-full sm:w-auto"
                 >
                     New organization

@@ -3,6 +3,7 @@ use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
 use crate::git_helper::GoshContract;
 use crate::git_helper::TonClient;
+use crate::ipfs::IpfsLoad;
 use crate::ipfs::IpfsService;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -25,7 +26,7 @@ pub struct BlobsRebuildingPlan {
 
 #[instrument(level = "debug", skip(ipfs_client))]
 async fn load_data_from_ipfs(
-    ipfs_client: &IpfsService,
+    ipfs_client: &impl IpfsLoad,
     ipfs_address: &str,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let ipfs_data = ipfs_client.load(ipfs_address).await?;
@@ -179,7 +180,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 }
 
 async fn convert_snapshot_into_blob(
-    ipfs_client: &IpfsService,
+    ipfs_client: &impl IpfsLoad,
     content: &[u8],
     ipfs: &Option<String>,
 ) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>> {
@@ -345,7 +346,10 @@ impl BlobsRebuildingPlan {
         while let Some(finished_task) = fetched_blobs.next().await {
             match finished_task {
                 Err(e) => {
-                    panic!("restore_a_set_of_blobs_from_a_known_snapshot joih-handler: {}", e);
+                    panic!(
+                        "restore_a_set_of_blobs_from_a_known_snapshot joih-handler: {}",
+                        e
+                    );
                 }
                 Ok(Err(e)) => {
                     panic!("restore_a_set_of_blobs_from_a_known_snapshot inner: {}", e);

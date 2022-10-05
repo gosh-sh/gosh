@@ -153,13 +153,15 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`)
+                                navigate(
+                                    `/o/${daoName}/r/${repoName}/tree/${selected.name}`,
+                                )
                             }
                         }}
                     />
 
                     <Link
-                        to={`/${daoName}/${repoName}/branches`}
+                        to={`/o/${daoName}/r/${repoName}/branches`}
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="font-semibold">
@@ -170,7 +172,7 @@ const RepoPage = () => {
                     </Link>
 
                     <Link
-                        to={`/${daoName}/${repoName}/commits/${branch?.name}`}
+                        to={`/o/${daoName}/r/${repoName}/commits/${branch?.name}`}
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} />
@@ -180,7 +182,7 @@ const RepoPage = () => {
 
                 <div className="flex grow gap-3 justify-end">
                     <Link
-                        to={`/${daoName}/${repoName}/find/${branch?.name}`}
+                        to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
@@ -188,9 +190,9 @@ const RepoPage = () => {
                     </Link>
                     {!branch?.isProtected && wallet?.details.isDaoMember && (
                         <Link
-                            to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
-                                treePath && `/${treePath}`
-                            }`}
+                            to={`/o/${daoName}/r/${repoName}/blobs/create/${
+                                branch?.name
+                            }${treePath && `/${treePath}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
@@ -270,7 +272,7 @@ const RepoPage = () => {
                 {!!subtree && treePath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
-                        to={`/${daoName}/${repoName}/tree/${branchName}${
+                        to={`/o/${daoName}/r/${repoName}/tree/${branchName}${
                             dirUp && `/${dirUp}`
                         }`}
                     >
@@ -289,7 +291,7 @@ const RepoPage = () => {
                                 <div key={index} className="py-3">
                                     <Link
                                         className="hover:underline text-sm"
-                                        to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
+                                        to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
                                     >
                                         <FontAwesomeIcon
                                             className="mr-2"

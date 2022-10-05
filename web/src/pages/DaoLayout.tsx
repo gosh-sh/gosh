@@ -35,10 +35,10 @@ const DaoLayout = () => {
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
-        { to: `/${daoName}`, title: 'Overview', public: true },
-        { to: `/${daoName}/repos`, title: 'Repositories', public: true },
-        { to: `/${daoName}/events`, title: 'Events', public: true },
-        { to: `/${daoName}/settings`, title: 'Settings', public: false },
+        { to: `/o/${daoName}`, title: 'Overview', public: true },
+        { to: `/o/${daoName}/repos`, title: 'Repositories', public: true },
+        { to: `/o/${daoName}/events`, title: 'Events', public: true },
+        { to: `/o/${daoName}/settings`, title: 'Settings', public: false },
     ]
 
     useEffect(() => {
@@ -51,7 +51,7 @@ const DaoLayout = () => {
     return (
         <div className="container container--full my-10">
             <h1 className="mb-6 px-5 sm:px-0">
-                <Link to={`/${daoName}`} className="font-semibold text-2xl">
+                <Link to={`/o/${daoName}`} className="font-semibold text-2xl">
                     {daoName}
                 </Link>
             </h1>

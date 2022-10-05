@@ -278,8 +278,8 @@ const PullCreatePage = () => {
             await updateBranches()
             navigate(
                 toBranch.isProtected
-                    ? `/${daoName}/events`
-                    : `/${daoName}/${repoName}/tree/${toBranch.name}`,
+                    ? `/o/${daoName}/events`
+                    : `/o/${daoName}/r/${repoName}/tree/${toBranch.name}`,
                 { replace: true },
             )
         } catch (e: any) {
@@ -288,7 +288,7 @@ const PullCreatePage = () => {
         }
     }
 
-    if (!wallet) return <Navigate to={`/${daoName}/${repoName}`} />
+    if (!wallet) return <Navigate to={`/o/${daoName}/r/${repoName}`} />
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">

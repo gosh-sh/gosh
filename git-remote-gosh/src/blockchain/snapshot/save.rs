@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
 use crate::blockchain::{tvm_hash, BlockchainContractAddress, GoshContract, TonClient};
+use crate::ipfs::IpfsSave;
 use crate::{
     blockchain::{call, snapshot, user_wallet},
     git_helper::GitHelper,

@@ -10,14 +10,16 @@ export default class AppWriteHandler extends AppHandler {
 
     async handle(debug: boolean): Promise<MetricsMap> {
         return await this.doSteps(
-            /* 0 - 11*/ ...this.initialSteps(debug),
-            /*12*/ () => this.click("svg.fa-pencil"),
-            /*13*/ () => this.erasePaste("div.view-lines", this.prepareFileContents()),
-            /*14*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${nls()})`),
-            /*15*/ () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
-            () => this.pageDown(debug, 2),
-            /*16*/ () => this.click("svg.fa-copy", 180000),
-            /*17*/ () => { return this.processFileContents(); }
+            /* 0 - 12*/ ...this.initialSteps(debug),
+            'click edit icon',     /*13*/ () => this.click("svg.fa-pencil"),
+            'input file contents', /*14*/ () => this.erasePaste("div.view-lines", this.prepareFileContents()),
+            'input commit title',  /*15*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${nls()})`),
+            'click commit button', /*16*/ () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
+            'scroll down',                () => this.pageDown(true, 2),
+            'wait for no spinner', /*17*/ () => this.waitForGone('svg.fa-spin', 180000),
+            'wait for edit icon',  /*18*/ () => this.waitFor("svg.fa-pencil"),
+            'click copy icon',     /*19*/ () => this.click("svg.fa-copy"),
+            'check file contents', /*20*/ () => { return this.processFileContents(); }
         );
     }
 

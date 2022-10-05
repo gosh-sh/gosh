@@ -11,7 +11,8 @@ import {setTimeout} from 'timers/promises';
 const puppeteer = require('puppeteer');
 
 export type StepResult   = number | null | void;
-export type StepFunction = (() => Promise<StepResult>);
+export type StepFunction = ((name: string) => Promise<StepResult>);
+export type StepEntry    = StepFunction | string;
 
 export default abstract class ScenarioHandler extends Handler {
 
@@ -29,14 +30,10 @@ export default abstract class ScenarioHandler extends Handler {
 
     protected pupextraflags: string[] = [];
 
-    setTimeout(timeout: number) {
-        this.timeout = timeout;
-    }
-
-    applyExtraConfiguration(c: any) {
-        super.applyExtraConfiguration(c);
-        if (c['pupextraflags'])
-            this.pupextraflags = c['pupextraflags'];
+    applyConfiguration(c: any): ScenarioHandler {
+        super.applyConfiguration(c);
+        this.useFields(c, [], ['pupextraflags', 'timeout']);
+        return this;
     }
 
     protected async startBrowser(debug: boolean): Promise<void> {
@@ -128,7 +125,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async count(elem: string) {
-        return (await this.page.$$(elem)).length;
+        return (await this.findMultipleNow(elem)).length;
     }
 
     protected async waitForGone(elem: string, timeout?: number) {
@@ -146,7 +143,9 @@ export default abstract class ScenarioHandler extends Handler {
         }
         catch (e: any) {
             if (e.toString().includes('Node is detached from document'))
-                await (await this.find(elem))!.click();
+                await (await this.find(elem, timeout))!.click();
+            else
+                throw e;
         }
     }
 
@@ -164,10 +163,15 @@ export default abstract class ScenarioHandler extends Handler {
         await this.page.keyboard.type(text, {delay: 10});
     }
 
-    protected async pasteInto(elem: string, text: string, timeout?: number): Promise<void> {
-        const element = await this.find(elem, timeout);
-        await element!.focus();
-        await this.paste(text, true, true);
+    protected async pasteInto(elem: string, text: string, timeout?: number, optional?: boolean): Promise<void> {
+        try {
+            const element = await this.find(elem, timeout);
+            await element!.focus();
+            await this.paste(text, true, true);
+        } catch (e) {
+            if (optional !== true)
+                throw e;
+        }
     }
 
     protected async erasePaste(elem: string, text: string, timeout?: number): Promise<void> {
@@ -212,15 +216,21 @@ export default abstract class ScenarioHandler extends Handler {
         }
     }
 
-    protected async doSteps(...steps: StepFunction[]): Promise<MetricsMap> {
+    protected async doSteps(...steps: StepEntry[]): Promise<MetricsMap> {
+        let stepName = '';
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
         try {
             for (let f of steps) {
-                // if (this.app.steps)
-                this.say(`Running step #${this.stepsDone}`);
-                const res: StepResult = await f();
+                if (typeof f === 'string') {
+                    stepName = f;
+                    continue;
+                }
+                this.say(`${this.sub ? `<${this.sub}> ` : ''}Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
+                const res: StepResult = await f(stepName);
                 if (res !== null)
+                    this.stepsDone++;
+                if (this.stepsDone === 100)
                     this.stepsDone++;
                 let isslow = false;
                 let slow = this.app.interval; // in msec, short timeout for web
@@ -228,11 +238,15 @@ export default abstract class ScenarioHandler extends Handler {
                     slow = this.timeout; // in seconds, for remote
                 if (now() - this.started > slow) {
                     isslow = true;
-                    await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', false);
+                    try {
+                        await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', false);
+                    } catch (e) {}
                 }
                 if (res !== undefined && res !== null) {
                     if (isslow)
+                    try {
                         await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', true);
+                    } catch (e) {}
                     return new Map<string, number>([
                         ["result",    100],
                         ["value",     res],
@@ -241,18 +255,76 @@ export default abstract class ScenarioHandler extends Handler {
                         ["duration",  now() - this.started]
                     ]);
                 }
+                stepName = '';
             }
         } catch (e: any) {
             console.error(e);
-            await this.dumpToFile('errors/' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, e.toString());
+            try {
+                await this.dumpToFile('errors/' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, e.toString());
+            } catch (er: any) {
+                console.error('Failed to write error file', er);
+            }
         } finally {
             await this.finally();
         }
         return new Map<string, number>([
             ["result",    this.stepsDone],
             ["timestamp", now()],
+            ["started",   this.started],
             ["duration",  now() - this.started]
         ]);
+    }
+
+    protected conditional(condition: () => boolean, branch_true: StepEntry[], branch_false: StepEntry[]): StepEntry[] {
+        const res = [];
+        res.push(async (name: string) => { this.say(`condition [${name}] result [${condition()}]`); return null; });
+        for (let f of branch_true) {
+            if (typeof f === 'string')
+                res.push(`true -> ${f}`);
+            else // @ts-ignore
+                res.push(async () => { if (condition()) return await f(); });
+        }
+        for (let f of branch_false) {
+            if (typeof f === 'string')
+                res.push(`false -> ${f}`);
+            else // @ts-ignore
+                res.push(async () => { if (!condition()) return await f(); });
+        }
+        return res;
+    }
+
+    // Equalized branches are terrible with labelling
+    // protected cond_ifelse(condition: () => boolean, branch_true: StepFunction[], branch_false: StepFunction[]): StepFunction[] {
+    //     const res = [];
+    //     const nop = async() => {};
+    //     res.push(async () => { this.say(`condition result ${condition()}`); return null; });
+    //     for (let i=0; i<Math.max(branch_true.length, branch_false.length); i++) {
+    //         const f_true = i < branch_true.length ? branch_true[i] : nop;
+    //         const f_false = i < branch_false.length ? branch_false[i] : nop;
+    //         res.push(async() => { if (condition()) return f_true(); else return f_false(); })
+    //     }
+    //     return res;
+    // }
+
+    protected cond_if(condition: () => boolean, branch_true: StepEntry[]): StepEntry[] {
+        return this.conditional(condition, branch_true, []);
+    }
+
+    protected cond_ifnot(condition: () => boolean, branch_false: StepEntry[]): StepEntry[] {
+        return this.conditional(condition, [], branch_false);
+    }
+
+    protected for_each(arr: string[], desc: string, loop_factory: (s: string) => StepEntry[]): StepEntry[] {
+        const res = [];
+        for (const s of arr) {
+            for (const f of loop_factory(s)) {
+                if (typeof f === 'string')
+                    res.push(`loop ${desc}: ${s} -> ${f}`);
+                else
+                    res.push(f);
+            }
+        }
+        return res;
     }
 
     protected async finally(): Promise<void> {

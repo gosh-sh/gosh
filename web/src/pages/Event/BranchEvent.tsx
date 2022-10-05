@@ -25,7 +25,7 @@ const BranchEvent = (props: TBranchEventProps) => {
                         Check repository
                         <Link
                             className="mx-1 underline"
-                            to={`/${daoName}/${params.repoName}/branches`}
+                            to={`/o/${daoName}/r/${params.repoName}/branches`}
                         >
                             branches
                         </Link>
