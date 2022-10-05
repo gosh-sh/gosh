@@ -5,6 +5,7 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
         }
     }
+    options { timestamps () }
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
