@@ -2,8 +2,9 @@ import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { TDaoDetails } from '../../types'
 import { BaseContract } from '../base'
 import { GoshProfile } from '../goshprofile'
-import { IGoshDao } from '../interfaces'
-import { IGoshWallet, GoshSmvTokenRoot, GoshWallet } from '../../resources'
+import { IGoshDao, IGoshWallet } from '../interfaces'
+import { GoshSmvTokenRoot } from './goshsmvtokenroot'
+import { GoshWallet } from './goshwallet'
 
 class GoshDao extends BaseContract implements IGoshDao {
     static key: string = 'goshdao'
@@ -20,11 +21,7 @@ class GoshDao extends BaseContract implements IGoshDao {
 
     async getDetails(): Promise<TDaoDetails> {
         const smvTokenRootAddr = await this.getSmvRootTokenAddr()
-        const smvTokenRoot = new GoshSmvTokenRoot(
-            this.account.client,
-            smvTokenRootAddr,
-            this.version,
-        )
+        const smvTokenRoot = new GoshSmvTokenRoot(this.account.client, smvTokenRootAddr)
         return {
             address: this.address,
             name: await this.getName(),
@@ -35,15 +32,15 @@ class GoshDao extends BaseContract implements IGoshDao {
         }
     }
 
-    /** Old interface methods */
-    async getWalletAddr(profileAddr: string, index: number): Promise<string> {
+    async getWalletAddr(profile: string, index: number): Promise<string> {
         const result = await this.account.runLocal('getAddrWallet', {
-            pubaddr: profileAddr,
+            pubaddr: profile,
             index,
         })
         return result.decoded?.output.value0
     }
 
+    /** Old interface methods */
     async getWallets(): Promise<string[]> {
         const result = await this.account.runLocal('getWallets', {})
         return result.decoded?.output.value0
@@ -82,7 +79,7 @@ class GoshDao extends BaseContract implements IGoshDao {
     async getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet> {
         const profile = new GoshProfile(this.account.client, await this.getOwner(), keys)
         const address = await this.getWalletAddr(profile.address, 0)
-        const wallet = new GoshWallet(this.account.client, address, this.version, {
+        const wallet = new GoshWallet(this.account.client, address, {
             keys,
             // profile,
         })

@@ -3,26 +3,24 @@ import { Buffer } from 'buffer'
 import { EGoshError, GoshError } from '../../errors'
 import { TValidationResult } from '../../types'
 import { whileFinite } from '../../utils'
-import { GoshAdapterFactory } from '../factories'
 import {
     IGoshAdapter,
     IGoshRoot,
     IGoshProfile,
-    IGoshProfileDao,
     IGosh,
     IGoshDao,
     IGoshRepository,
+    IGoshWallet,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
 import { GoshProfile } from '../goshprofile'
-import { GoshProfileDao } from '../goshprofiledao'
 import { GoshRepository } from './goshrepository'
+import { GoshWallet } from './goshwallet'
 
 class GoshAdapter_0_11_0 implements IGoshAdapter {
     private static instance: GoshAdapter_0_11_0
-    private profile?: IGoshProfile
-    private keys: KeyPair[] = []
+    private auth?: { profile: IGoshProfile; wallet: IGoshWallet; dao: IGoshDao }
 
     static version: string = '0.11.0'
 
@@ -43,16 +41,22 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return GoshAdapter_0_11_0.instance
     }
 
-    async auth(username: string, keys: KeyPair[]): Promise<void> {
-        if (this.profile) return
+    async setAuth(username: string, keys: KeyPair, dao: IGoshDao): Promise<void> {
+        const profile = await this.getProfile(username)
 
-        this.profile = await this.getProfile(username)
-        this.keys = keys
+        const waddress = await dao.getWalletAddr(profile.address, 0)
+        const wallet = new GoshWallet(this.client, waddress, { keys })
+
+        const accessed = await profile.getOwners()
+        if (accessed.indexOf(`0x${keys.public}`) < 0) {
+            await profile.turnOn(waddress, keys.public, keys)
+        }
+
+        this.auth = { profile, wallet, dao }
     }
 
-    async authReset(): Promise<void> {
-        this.profile = undefined
-        this.keys = []
+    async resetAuth(): Promise<void> {
+        this.auth = undefined
     }
 
     async getProfile(username: string): Promise<IGoshProfile> {
@@ -86,7 +90,35 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return new GoshDao(this.client, result.value0)
     }
 
-    async getRepo(options: {
+    async getDaoWalletCodeHash(): Promise<string> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const code = await this.gosh.runLocal('getDaoWalletCode', {
+            pubaddr: this.auth.profile.address,
+        })
+        const hash = await this.client.boc.get_boc_hash({
+            boc: code.value0,
+        })
+        return hash.hash
+    }
+
+    async isAuthDaoOwner(): Promise<boolean> {
+        if (!this.auth) return false
+
+        const owner = await this.auth.dao.runLocal('getOwner', {})
+        return owner.value0 === this.auth.profile.address
+    }
+
+    async isAuthDaoMember(): Promise<boolean> {
+        if (!this.auth) return false
+
+        const isMember = await this.auth.dao.runLocal('isMember', {
+            pubaddr: this.auth.profile.address,
+        })
+        return isMember.value0
+    }
+
+    async getRepository(options: {
         name?: string
         daoName?: string
         address?: string
@@ -102,7 +134,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return new GoshRepository(this.client, result.value0)
     }
 
-    async getRepoCodeHash(dao: string): Promise<string> {
+    async getRepositoryCodeHash(dao: string): Promise<string> {
         const code = await this.gosh.runLocal('getRepoDaoCode', {
             dao,
         })
@@ -112,16 +144,25 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return hash.hash
     }
 
-    async getWalletCodeHash(): Promise<string> {
-        if (!this.profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async deployRepository(
+        name: string,
+        prev?: { addr: string; version: string } | undefined,
+    ): Promise<IGoshRepository> {
+        if (!this.auth) throw new GoshError(EGoshError.DAO_UNDEFINED)
 
-        const code = await this.gosh.runLocal('getDaoWalletCode', {
-            pubaddr: this.profile.address,
+        // Check if repo is already deployed
+        const daoName = await this.auth.dao.getName()
+        const repo = await this.getRepository({ name, daoName })
+        if (await repo.isDeployed()) return repo
+
+        // Deploy repo
+        await this.auth.wallet.run('deployRepository', {
+            nameRepo: name.toLowerCase(),
+            previous: prev || null,
         })
-        const hash = await this.client.boc.get_boc_hash({
-            boc: code.value0,
-        })
-        return hash.hash
+        const wait = await whileFinite(() => repo.isDeployed())
+        if (!wait) throw new GoshError('Deploy repository timeout reached')
+        return repo
     }
 
     async getTvmHash(data: string | Buffer): Promise<string> {

@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
 import {
-    IGoshDao,
     IGoshWallet,
     userPersistAtom,
     classNames,
@@ -11,9 +10,12 @@ import {
     TDaoDetails,
     useWallet,
     TWalletDetails,
+    useGosh,
 } from 'react-gosh'
+import { IGoshAdapter, IGoshDao } from 'react-gosh/dist/gosh/interfaces'
 
 export type TDaoLayoutOutletContext = {
+    gosh: IGoshAdapter
     dao: {
         instance: IGoshDao
         details: TDaoDetails
@@ -27,6 +29,7 @@ export type TDaoLayoutOutletContext = {
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName } = useParams()
+    const gosh = useGosh()
     const dao = useDao(daoName)
     const wallet = useWallet(dao.instance)
     const [isReady, setIsReady] = useState<boolean>(false)
@@ -42,8 +45,8 @@ const DaoLayout = () => {
         const walletAwaited =
             !userStatePersist.phrase ||
             (userStatePersist.phrase && wallet.instance && wallet.details)
-        if (dao.instance && walletAwaited) setIsReady(true)
-    }, [dao.instance, userStatePersist.phrase, wallet])
+        if (gosh && dao.instance && walletAwaited) setIsReady(true)
+    }, [gosh, dao.instance, userStatePersist.phrase, wallet])
 
     return (
         <div className="container container--full my-10">
@@ -94,7 +97,7 @@ const DaoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ dao, wallet }} />
+                    <Outlet context={{ gosh, dao, wallet }} />
                 </>
             )}
         </div>

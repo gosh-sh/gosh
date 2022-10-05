@@ -1,8 +1,8 @@
 import { atom } from 'recoil'
 
-const messageAtom = atom<{ key: string; message: any }>({
+const messageAtom = atom<{ key: string; message: any }[]>({
     key: 'MessageAtom',
-    default: undefined,
+    default: [],
 })
 
 export { messageAtom }

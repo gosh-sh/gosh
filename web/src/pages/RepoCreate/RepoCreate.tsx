@@ -4,7 +4,7 @@ import TextField from '../../components/FormikForms/TextField'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError, retry } from 'react-gosh'
+import { retry } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 
@@ -15,13 +15,11 @@ type TFormValues = {
 const RepoCreatePage = () => {
     const { daoName } = useParams()
     const navigate = useNavigate()
-    const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { gosh, wallet } = useOutletContext<TDaoLayoutOutletContext>()
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-
-            await retry(() => wallet.instance.deployRepo(values.name.toLowerCase()), 3)
+            await retry(() => gosh.deployRepository(values.name.toLowerCase()), 3)
             navigate(`/${daoName}/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
@@ -69,7 +67,7 @@ const RepoCreatePage = () => {
 
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !wallet}
+                                disabled={isSubmitting}
                                 className="btn btn--body px-3 py-3 w-full mt-6"
                             >
                                 {isSubmitting && <Spinner className="mr-2" size={'lg'} />}

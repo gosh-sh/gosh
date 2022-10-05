@@ -1,4 +1,4 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { BaseContract } from './base'
 import { IGoshAdapter, IGoshDao, IGoshProfile, IGoshProfileDao } from './interfaces'
 import { TProfileDetails } from '../types'
@@ -40,7 +40,6 @@ class GoshProfile extends BaseContract implements IGoshProfile {
 
     async getDaos(): Promise<IGoshDao[]> {
         const messages = await this.getMessages({ msgType: ['IntIn'] }, true, true)
-        console.debug(messages)
         return await Promise.all(
             messages
                 .filter(({ decoded }) => decoded && decoded.name === 'deployedWallet')
@@ -50,6 +49,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
                     return await adapter.getDao({ address: goshdao })
                 }),
         )
+    }
+
+    async getOwners(): Promise<string[]> {
+        const owners = await this.runLocal('getAccess', {})
+        return Object.keys(owners.value0)
     }
 
     async isOwnerPubkey(pubkey: string): Promise<boolean> {
@@ -80,6 +84,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         const wait = await whileFinite(() => dao.isDeployed())
         if (!wait) throw new GoshError('Deploy DAO timeout reached')
         return dao
+    }
+
+    async turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void> {
+        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
+        await this.run('turnOn', { wallet, pubkey }, { signer: signerKeys(keys) })
     }
 }
 

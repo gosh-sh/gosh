@@ -42,7 +42,7 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
         const _getRepo = async () => {
             if (!gosh || !name || !daoName) return
 
-            const repository = await gosh.getRepo({ name, daoName })
+            const repository = await gosh.getRepository({ name, daoName })
             setGoshRepo(repository)
         }
 

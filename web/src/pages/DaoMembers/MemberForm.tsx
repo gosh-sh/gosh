@@ -2,9 +2,10 @@ import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import DaoMemberCreateProgress from './MemberCreateProgress'
-import { IGoshDao, useDaoMemberCreate } from 'react-gosh'
+import { useDaoMemberCreate } from 'react-gosh'
 import TextareaField from '../../components/FormikForms/TextareaField'
 import ToastError from '../../components/Error/ToastError'
+import { IGoshDao } from 'react-gosh/dist/gosh/interfaces'
 
 type TMemberFormValues = {
     members: string

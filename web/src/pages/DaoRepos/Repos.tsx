@@ -68,7 +68,7 @@ const DaoRepositoriesPage = () => {
             setRepos({ items: [], isFetching: true, filtered: [], page: 1 })
 
             // Get GoshRepo code and all repos accounts
-            const repoCodeHash = await gosh.getRepoCodeHash(dao.instance.address)
+            const repoCodeHash = await gosh.getRepositoryCodeHash(dao.instance.address)
             const list: any[] = []
             let next: string | undefined
             while (true) {

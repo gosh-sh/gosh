@@ -18,21 +18,22 @@ function useNotificationMessages() {
         }
 
         _updateSubscription()
-    }, [])
+    }, [profile])
 
     const _subscribe = async (key: string, filter: object) => {
         const result = await AppConfig.goshclient.net.subscribe_collection(
             {
                 collection: 'messages',
                 filter,
-                result: 'id msg_type body',
+                result: 'id msg_type body created_at',
             },
             (params, responseType) => {
                 if (responseType === ResponseType.Custom) {
-                    setMessage({ key, message: params.result })
+                    setMessage((state) => [...state, { key, message: params.result }])
                 } else console.warn(key, params, responseType)
             },
         )
+        console.debug('Subscribe', key)
         setSubscriptions((state: any) => ({ ...state, [key]: result.handle }))
     }
 
