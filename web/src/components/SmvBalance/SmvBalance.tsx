@@ -33,9 +33,10 @@ const SmvBalance = (props: TSmvBalanceProps) => {
     }
 
     if (!wallet || !wallet.details.isDaoMember) return null
-    return (
+    return (<>
         <div
-            className={classNames(
+             /* style={{display: 'block'}}
+              */className={classNames(
                 className,
                 'relative flex px-4 py-3 rounded gap-x-6',
                 'flex-col items-start',
@@ -54,6 +55,21 @@ const SmvBalance = (props: TSmvBalanceProps) => {
                 <span className="font-semibold mr-2">Wallet balance:</span>
                 {details.balance}
             </div>
+            <div>
+                <span className="font-semibold mr-2">num clients:</span>
+                {details.numClients}
+            </div>
+        </div>
+        <div>
+            <div>
+                <span className="font-semibold mr-2">goshBalance:</span>
+                {details.goshBalance}
+            </div>
+            <div>
+                <span className="font-semibold mr-2">goshLockerBalance:</span>
+                {details.goshLockerBalance}
+            </div>
+
             <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
                 <FontAwesomeIcon
                     icon={faCircle}
@@ -75,7 +91,7 @@ const SmvBalance = (props: TSmvBalanceProps) => {
                 </button>
             </div>
         </div>
-    )
+        </>)
 }
 
 export default SmvBalance

@@ -15,32 +15,27 @@ import "External/tip3/interfaces/ITokenWallet.sol";
 import "External/tip3/interfaces/IAcceptTokensTransferCallback.sol";
 
 import "SMVClient.sol";
+import "TokenWalletOwner.sol";
 
-contract SMVTokenLocker is ISMVTokenLocker , IAcceptTokensTransferCallback {
-
+contract SMVTokenLocker is ISMVTokenLocker , TokenWalletOwner {
 
 address public static smvAccount;
-address public static tokenRoot;
-/* uint256 public static nonce; */
 
 bool public lockerBusy;
-bool public platformIsInitializedFailed;
+bool public platformPerformActionFailed;
 bool public platformConstructorFailed;
+
+
 optional (address) public clientHead;
-uint128 public total_votes;
-uint128 public votes_locked;
-optional (address) public  tip3Wallet;
-uint256 public platformCodeHash;
-uint16 public platformCodeDepth;
+/* uint128 public m_tokenBalance;
+ */uint128 public votes_locked;
+
+uint256 platformCodeHash;
+uint16 platformCodeDepth;
+uint32 public m_num_clients;
 
 modifier check_account {
-    // revert();
     require ( msg.sender == smvAccount, SMVErrors.error_not_my_account) ;
-    _ ;
-}
-
-modifier check_wallet {
-    require ( msg.sender == tip3Wallet, SMVErrors.error_not_my_wallet) ;
     _ ;
 }
 
@@ -49,11 +44,11 @@ modifier check_head {
     _ ;
 }
 
-function calcClientAddress (uint256 platform_id) internal view returns(uint256)
+function calcClientAddress (uint256 platform_id) public view returns(uint256)
 {
   TvmCell dataCell = tvm.buildDataInit ( {contr:LockerPlatform,
                                           varInit:{
-                                             tokenLocker: address(this),
+                                             /* tokenLocker: address(this), */
                                              platform_id: platform_id } } );
   uint256 dataHash = tvm.hash (dataCell);
   uint16 dataDepth = dataCell.depth();
@@ -68,30 +63,27 @@ modifier check_client (uint256 platform_id) {
   _ ;
 }
 
-uint128 actionValue;
-uint128 actionLockAmount;
-TvmCell actionInputCell;
-
 function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell, uint128 deployFee) external override check_account
 {
     require(!lockerBusy, SMVErrors.error_locker_busy);
     require(address(this).balance >= SMVConstants.LOCKER_MIN_BALANCE +
-                                     msg.value, SMVErrors.error_balance_too_low);
-    require(msg.value > deployFee+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    require(amountToLock <= total_votes, SMVErrors.error_not_enough_votes);
+                                     msg.value, SMVErrors.error_balance_too_low+1000);
+    require(msg.value > deployFee+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+1001);
+    require(amountToLock <= m_tokenBalance, SMVErrors.error_not_enough_votes);
 
     TvmSlice s = staticCell.toSlice();
-    (uint8 _, address locker) = s.decode(uint8, address);
-    _;
+    ( , address locker) = s.decode(uint8, address);
+
     require(locker == address(this), SMVErrors.error_not_my_locker);
     tvm.accept();
 
     lockerBusy = true;
-    platformIsInitializedFailed  = false;
+    platformPerformActionFailed  = false;
     platformConstructorFailed = false;
 
+
     TvmCell _dataInitCell = tvm.buildDataInit ( {contr: LockerPlatform,
-                                                 varInit: {  tokenLocker: address(this),
+                                                 varInit: {  /* tokenLocker: address(this), */
                                                              platform_id: tvm.hash(staticCell) } } );
     TvmCell _stateInit = tvm.buildStateInit(platformCode, _dataInitCell);
 
@@ -101,76 +93,38 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
 
     TvmCell _inputCell = builder.toCell();
 
-    actionValue = msg.value - deployFee - SMVConstants.ACTION_FEE;
-    actionLockAmount = amountToLock;
-    actionInputCell = _inputCell;
-
+    uint128 actionValue = (msg.value - deployFee - SMVConstants.ACTION_FEE)/2;
     address platform = address.makeAddrStd(address(this).wid, tvm.hash(_stateInit));
 
-    LockableBase(platform).isInitialized{value: SMVConstants.ACTION_FEE, flag:1, callback: SMVTokenLocker.onInitialized}();
+    LockableBase(platform).performAction{value: actionValue, flag:1}(amountToLock, m_tokenBalance, _inputCell);
 
     new LockerPlatform {/* bounce: false, */
-                        value: deployFee,
-                        stateInit: _stateInit } (clientCode, amountToLock, staticCell, _inputCell);
-
-
-    /* if (msg.value > deployFee + 2*SMVConstants.ACTION_FEE) {
-        LockableBase(platform).performAction {value: msg.value - deployFee - SMVConstants.ACTION_FEE, flag: 1} (amountToLock, inputCell);
-    } */
-
-    /* returnAllButInitBalance(); */
+                        value: deployFee + actionValue,
+                        stateInit: _stateInit } (clientCode, amountToLock, m_tokenBalance, staticCell, _inputCell);
+    m_num_clients ++;
 }
 
-function onInitialized(uint256 _platform_id) external override check_client(_platform_id)
+constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_walletCode, address _m_tokenRoot) public check_account
 {
-    LockableBase(msg.sender).performAction {value: actionValue, flag: 1} (actionLockAmount, total_votes, actionInputCell);
-}
-
-
-constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth) public check_account
-{
-    require(address(this).balance >= /* SMVConstants.TIP3_WALLET_DEPLOY_VALUE +
-                                     SMVConstants.TIP3_WALLET_INIT_VALUE + */
-                                     SMVConstants.LOCKER_INIT_VALUE, SMVErrors.error_balance_too_low);
+    require(address(this).balance >= SMVConstants.LOCKER_INIT_VALUE, SMVErrors.error_balance_too_low);
     tvm.accept();
 
     lockerBusy = false;
+    m_tokenWalletCode = _m_walletCode;
+    m_tokenRoot = _m_tokenRoot;
     clientHead.reset();
-    total_votes = 0;
+    m_tokenBalance = 0;
     votes_locked = 0;
+    m_num_clients = 0;
     platformCodeHash = _platformCodeHash;
     platformCodeDepth = _platformCodeDepth;
-    tip3Wallet.reset();
-
-    /* tip3Wallet = ITokenRoot(tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
-                                                    flag: 1}
-                                                   (address(this), SMVConstants.TIP3_WALLET_INIT_VALUE).await; */
+    m_tokenWallet = address.makeAddrStd(0,tvm.hash(_buildWalletInitData()));
 
     ISMVAccount(smvAccount).onLockerDeployed {value: SMVConstants.EPSILON_FEE, flag: 1} ();
 }
 
-function onAcceptTokensTransfer (address root,
-                                 uint128 amount,
-                                 address /* sender */,
-                                 address /* sender_wallet */,
-                                 address gasTo,
-                                 TvmCell /* payload */) external override /* check_wallet */
+function _returnAllButInitBalance() internal view
 {
-    require(tokenRoot == root, SMVErrors.error_not_my_token_root);
-    require(!tip3Wallet.hasValue() || (tip3Wallet.get() == msg.sender), SMVErrors.error_not_my_wallet);
-    tvm.accept();
-
-    if (!tip3Wallet.hasValue()) {
-        tip3Wallet.set(msg.sender);
-    }
-
-    total_votes += amount;
-    gasTo.transfer(0, true, 64);
-}
-
-function returnAllButInitBalance() internal view
-{
-    //tvm.rawReserve(SMVConstants.LOCKER_INIT_VALUE, 2 );
     uint128 amount = 0;
     if (address(this).balance >= SMVConstants.EPSILON_FEE + SMVConstants.LOCKER_INIT_VALUE)
     {
@@ -182,120 +136,130 @@ function returnAllButInitBalance() internal view
     }
 }
 
-
 function unlockVoting (uint128 amount) external override check_account
 {
     require(address(this).balance >= SMVConstants.LOCKER_MIN_BALANCE +
                                      3*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
     require(!lockerBusy, SMVErrors.error_locker_busy);
-    require(amount + votes_locked <= total_votes, SMVErrors.error_not_enough_votes);
-    require(tip3Wallet.hasValue());
+    require(amount + votes_locked <= m_tokenBalance, SMVErrors.error_not_enough_votes);
     tvm.accept();
 
     TvmCell empty;
-    if (amount == 0) { amount = total_votes - votes_locked; }
+    if (amount == 0) { amount = m_tokenBalance - votes_locked; }
 
-    total_votes -= amount;
+    m_tokenBalance -= amount;
     //(amount, tip3VotingLocker, 0, address(this), true, empty)
     if (amount > 0)
-        ITokenWallet(tip3Wallet.get()).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
-                                                (amount, msg.sender, 0, address(this), true, empty);
+        ITokenWallet(m_tokenWallet).transfer {value: 0, flag: 64}
+                                             (amount, msg.sender, 0, msg.sender, true, empty);
+    else
+        _returnAllButInitBalance();
 }
 
-function onHeadUpdated (uint256 _platform_id, optional (address) newClientHead) external
+function onHeadUpdated (uint256 _platform_id,
+                        optional (address) newClientHead,
+                        optional (uint128) newHeadValue) external
                         override check_client(_platform_id)
 {
     tvm.accept();
 
     if (!lockerBusy) { //internal error
-        returnAllButInitBalance();
+        _returnAllButInitBalance();
         return;
     }
 
     clientHead = newClientHead;
+    lockerBusy = false;
 
-    if (clientHead.hasValue()) 
-    {
-        address head = clientHead.get();
-        LockableBase(head).getLockedAmount {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVTokenLocker.onLockAmountUpdate}();
-    }
+    if (clientHead.hasValue())
+        votes_locked = newHeadValue.get();
     else
-    {
-        lockerBusy = false;
         votes_locked = 0;
-        returnAllButInitBalance();
-    }
+
+    _returnAllButInitBalance();
 }
 
 
-function onClientCompleted (uint256 _platform_id, bool success, optional (address) newClientHead) external
-                           override check_client(_platform_id)
+function onClientCompleted (uint256 _platform_id, bool success,
+                            optional (address) newClientHead,
+                            optional (uint128) newHeadValue,
+                            bool isDead ) external override check_client(_platform_id)
 {
     tvm.accept();
 
     if (!lockerBusy) { //internal error
-        returnAllButInitBalance();
+        _returnAllButInitBalance();
         return;
     }
+
+    lockerBusy = false;
 
     if (success && (newClientHead.hasValue()))
     {
         clientHead.set(newClientHead.get());
-        address head = clientHead.get();
-        LockableBase(head).getLockedAmount {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVTokenLocker.onLockAmountUpdate}();
+        votes_locked = newHeadValue.get();
     }
-    else
-    {
-        lockerBusy = false;
-        returnAllButInitBalance();
+    if (isDead) {
+        m_num_clients --;
     }
+    _returnAllButInitBalance();
 }
 
-function onLockAmountUpdate(uint128 amount) external  check_head
+function onClientInserted (uint256 _platform_id) external override check_client(_platform_id)
 {
     tvm.accept();
-
-    votes_locked = amount;
-    lockerBusy = false;
-    returnAllButInitBalance();
+    _returnAllButInitBalance();
 }
+
+function onClientRemoved (uint256 _platform_id) external override check_client(_platform_id)
+{
+    tvm.accept();
+    m_num_clients --;
+}
+
+
 
 function updateHead() external override check_account
 {
-    require(msg.value > 5*SMVConstants.VOTING_COMPLETION_FEE +                              
+    require(msg.value > 5*SMVConstants.VOTING_COMPLETION_FEE +
                         4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    require(!lockerBusy, SMVErrors.error_locker_busy);                                    
+    require(!lockerBusy, SMVErrors.error_locker_busy);
 
     if (clientHead.hasValue())
-    {   
-        lockerBusy = true; 
-        LockableBase(clientHead.get()).updateHead {value: 
-                                     5*SMVConstants.VOTING_COMPLETION_FEE +                              
+    {
+        lockerBusy = true;
+        LockableBase(clientHead.get()).updateHead {value:
+                                     5*SMVConstants.VOTING_COMPLETION_FEE +
                                      3*SMVConstants.ACTION_FEE, flag: 1} ();
     }
 }
 
+function returnAllButInitBalance() external override check_account
+{
+    _returnAllButInitBalance();
+}
+
 onBounce(TvmSlice body) external  {
     uint32 functionId = body.decode(uint32);
-    if (functionId == tvm.functionId(LockableBase.isInitialized)) 
+    if (functionId == tvm.functionId(LockableBase.performAction)) 
     {
-       platformIsInitializedFailed = true;
+       platformPerformActionFailed = true;
        if (platformConstructorFailed)
        {
             lockerBusy = false;
-            returnAllButInitBalance();
+            _returnAllButInitBalance();
        }
     }
     else
-    if (functionId == tvm.functionId(LockableBase))
+    if (functionId == tvm.functionId(LockerPlatform))
     {
+       m_num_clients --;
        platformConstructorFailed = true;
-       if (platformIsInitializedFailed)
+       if (platformPerformActionFailed)
        {
             lockerBusy = false;
-            returnAllButInitBalance();
+            _returnAllButInitBalance();
        }
     }
 }
-
 }

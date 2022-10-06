@@ -262,9 +262,9 @@ interface IGoshWallet extends IContract {
     lockVoting(amount: number): Promise<void>
     unlockVoting(amount: number): Promise<void>
     voteFor(
-        platformCode: string,
+/*         platformCode: string,
         clientCode: string,
-        proposalAddr: string,
+ */        proposalAddr: string,
         choice: boolean,
         amount: number,
     ): Promise<void>
@@ -371,10 +371,14 @@ interface IGoshSmvProposal extends IContract {
     }
 
     load(): Promise<void>
-    getDetails(): Promise<TGoshEventDetails>
+    getDetails(walletAddress?: string): Promise<TGoshEventDetails>
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>
+    getTotalSupply(): Promise<number>
+    getClientAddress(walletAddress?: string): Promise<string>
+    getYourVotes(walletAddress?: string): Promise<number>
+    getPlatformId(): Promise<number>
     getGoshSetCommitProposalParams(): Promise<any>
     getGoshAddProtectedBranchProposalParams(): Promise<any>
     getGoshDeleteProtectedBranchProposalParams(): Promise<any>

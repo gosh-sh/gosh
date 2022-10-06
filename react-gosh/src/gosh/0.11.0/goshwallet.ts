@@ -2,6 +2,8 @@ import { AccountType } from '@eversdk/appkit'
 import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import { EGoshError, GoshError } from '../../errors'
+import { GoshSmvProposal } from './goshsmvproposal'
+
 import {
     calculateSubtrees,
     getBlobDiffPatch,
@@ -732,11 +734,17 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         filesCount: number,
         commitsCount: number,
     ): Promise<void> {
+        const locker = new GoshSmvLocker(
+            this.account.client,
+            await this.getSmvLockerAddr(),
+            this.version,
+        )
         await this.run('startProposalForSetCommit', {
             repoName,
             branchName,
             commit: commitName,
             numberChangedFiles: filesCount,
+            num_clients: await locker.getNumClients(),
             numberCommits: commitsCount,
         })
     }
@@ -745,9 +753,15 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         repoName: string,
         branchName: string,
     ): Promise<void> {
+        const locker = new GoshSmvLocker(
+            this.account.client,
+            await this.getSmvLockerAddr(),
+            this.version,
+        )
         await this.run('startProposalForAddProtectedBranch', {
             repoName,
             branchName,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -755,9 +769,15 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         repoName: string,
         branchName: string,
     ): Promise<void> {
+        const locker = new GoshSmvLocker(
+            this.account.client,
+            await this.getSmvLockerAddr(),
+            this.version,
+        )
         await this.run('startProposalForDeleteProtectedBranch', {
             repoName,
             branchName,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -781,17 +801,25 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         return result.decoded?.output.tip3VotingLocker
     }
 
-    async getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string> {
+    /*     async getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string> {
         const result = await this.account.runLocal('clientAddress', {
             _tip3VotingLocker: lockerAddr,
             propId: proposalId,
         })
         return result.decoded?.output.value0
     }
+ */
+    async getSmvClientAddr(lockerAddr: string, platform_id: string): Promise<string> {
+        const result = await this.account.runLocal('clientAddressForProposal', {
+            _tip3VotingLocker: lockerAddr,
+            _platform_id: platform_id,
+        })
+        return result.decoded?.output.value0
+    }
 
     async getSmvTokenBalance(): Promise<number> {
-        const result = await this.account.runLocal('_tokenBalance', {})
-        return +result.decoded?.output._tokenBalance
+        const result = await this.account.runLocal('m_tokenBalance', {})
+        return +result.decoded?.output.m_tokenBalance
     }
 
     async lockVoting(amount: number): Promise<void> {
@@ -807,18 +835,30 @@ class GoshWallet extends BaseContract implements IGoshWallet {
     }
 
     async voteFor(
-        platformCode: string,
+        /*         platformCode: string,
         clientCode: string,
-        proposalAddr: string,
+*/ proposalAddr: string,
         choice: boolean,
         amount: number,
     ): Promise<void> {
+        const proposal = new GoshSmvProposal(
+            this.account.client,
+            proposalAddr,
+            this.version,
+        )
+        const locker = new GoshSmvLocker(
+            this.account.client,
+            await this.getSmvLockerAddr(),
+            this.version,
+        )
         await this.run('voteFor', {
-            platformCode,
+            /*             platformCode,
             clientCode,
             proposal: proposalAddr,
+*/ platform_id: await proposal.getPlatformId(),
             choice,
             amount,
+            num_clients: await locker.getNumClients(),
         })
     }
 

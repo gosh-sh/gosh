@@ -9,7 +9,8 @@ uint128 constant ACCOUNT_INIT_VALUE = 30 ton;
 uint128 constant ACCOUNT_MIN_BALANCE = 2 ton;
 uint128 constant ACTION_FEE = 0.5 ton;
 uint128 constant EPSILON_FEE = 0.1 ton;
-uint128 constant VOTING_FEE = 10 ton;
+uint128 constant VOTING_FEE = 10 ton; /* make dymamic voting fee */
+uint128 constant CLIENT_LIST_FEE = 1 ton;
 
 uint128 constant LOCKER_INIT_VALUE = 10 ton;
 uint128 constant LOCKER_MIN_BALANCE = 2 ton;

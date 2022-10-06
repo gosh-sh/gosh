@@ -72,13 +72,12 @@ const EventPage = () => {
                 })
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-
-            const smvPlatformCode = await gosh.getSmvPlatformCode()
+            /*             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
             const smvClientCode = await dao.instance.getSmvClientCode()
-            const choice = values.approve === 'true'
+ */ const choice = values.approve === 'true'
             await wallet.instance.voteFor(
-                smvPlatformCode,
-                smvClientCode,
+                /* smvPlatformCode,
+                smvClientCode, */
                 event.details.address,
                 choice,
                 values.amount,
@@ -95,7 +94,7 @@ const EventPage = () => {
             if (!eventAddr) return
 
             const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
-            const details = await event.getDetails()
+            const details = await event.getDetails(wallet?.instance.address)
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }
 
@@ -110,7 +109,7 @@ const EventPage = () => {
         return () => {
             clearInterval(interval)
         }
-    }, [eventAddr])
+    }, [eventAddr, wallet])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -158,6 +157,8 @@ const EventPage = () => {
                             {event.details.time.start.toLocaleString()}
                             <span className="mx-1">-</span>
                             {event.details.time.finish.toLocaleString()}
+                            <span className="mx-1">-</span>
+                            {event.details.time.realFinish.toLocaleString()}
                         </div>
                         <div>
                             <span className="mr-3">
@@ -186,6 +187,20 @@ const EventPage = () => {
                                     </span>
                                     Rejected
                                 </span>
+                                <span className="mx-3">/</span>
+                                <span className="text-black-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {event.details.total_votes}
+                                    </span>
+                                    Total
+                                </span>
+                                <span className="mx-3">/</span>
+                                <span className="text-black-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {event.details.your_votes}
+                                    </span>
+                                    Yours
+                                </span>
                             </div>
                         </div>
                         {wallet?.details.isDaoMember && !event.details.status.completed && (
@@ -207,13 +222,15 @@ const EventPage = () => {
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount: smvBalance.smvBalance,
+                                amount: smvBalance.smvBalance - event.details?.your_votes,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(smvBalance.smvBalance)
+                                    .max(
+                                        smvBalance.smvBalance - event.details?.your_votes,
+                                    )
                                     .required('Field is required'),
                             })}
                             enableReinitialize
