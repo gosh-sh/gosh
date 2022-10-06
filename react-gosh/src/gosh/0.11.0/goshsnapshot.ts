@@ -42,7 +42,7 @@ class GoshSnapshot extends BaseContract implements IGoshSnapshot {
         let patchedRaw = ''
         if (patched) {
             patchedRaw = Buffer.from(patched, 'hex').toString('base64')
-            patchedRaw = await zstd.decompress(this.account.client, patchedRaw, true)
+            patchedRaw = await zstd.decompress(patchedRaw, true)
         }
 
         // Prepare content for whole app usage
@@ -57,7 +57,7 @@ class GoshSnapshot extends BaseContract implements IGoshSnapshot {
         // Apply flags
         const { flags } = treeItem
         if ((flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
-            content = await zstd.decompress(this.account.client, content, false)
+            content = await zstd.decompress(content, false)
             content = Buffer.from(content, 'base64')
         }
         // if ((flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {

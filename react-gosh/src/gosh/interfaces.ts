@@ -34,16 +34,14 @@ interface IGoshAdapter {
     isAuthDaoOwner(): Promise<boolean>
     isAuthDaoMember(): Promise<boolean>
 
-    getRepository(options: {
-        name?: string
-        daoName?: string
-        address?: string
-    }): Promise<IGoshRepository>
+    getRepository(options: { name?: string; address?: string }): Promise<IGoshRepository>
     getRepositoryCodeHash(dao: string): Promise<string>
     deployRepository(
         name: string,
         prev?: { addr: string; version: string },
     ): Promise<IGoshRepository>
+
+    getBlob(repository: string, branch: string, path: string): Promise<string | Buffer>
 
     getTvmHash(data: string | Buffer): Promise<string>
 

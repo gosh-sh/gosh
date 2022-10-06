@@ -480,25 +480,16 @@ export const getBlobAtCommit = async (
 
         if (msgipfs) {
             const compressed = (await loadFromIPFS(msgipfs)).toString()
-            const decompressed = await zstd.decompress(
-                AppConfig.goshclient,
-                compressed,
-                true,
-            )
+            const decompressed = await zstd.decompress(compressed, true)
             content = decompressed
             // if (message.ipfsdata) deployed = true
         } else if (msgdata) {
             const compressed = Buffer.from(msgdata, 'hex').toString('base64')
-            const decompressed = await zstd.decompress(
-                AppConfig.goshclient,
-                compressed,
-                true,
-            )
+            const decompressed = await zstd.decompress(compressed, true)
             content = decompressed
             // deployed = true
         } else if (msgpatch && msgcommit !== commit) {
             const patch = await zstd.decompress(
-                repo.account.client,
                 Buffer.from(msgpatch, 'hex').toString('base64'),
                 true,
             )
@@ -607,21 +598,19 @@ export const chacha20 = {
 }
 
 export const zstd = {
-    async compress(client: TonClient, data: string | Buffer): Promise<string> {
+    async compress(data: string | Buffer): Promise<string> {
         const uncompressed = Buffer.isBuffer(data)
             ? data.toString('base64')
             : Buffer.from(data).toString('base64')
-        const result = await client.utils.compress_zstd({
+        const result = await AppConfig.goshclient.utils.compress_zstd({
             uncompressed,
         })
         return result.compressed
     },
-    async decompress(
-        client: TonClient,
-        data: string,
-        uft8: boolean = true,
-    ): Promise<string> {
-        const result = await client.utils.decompress_zstd({ compressed: data })
+    async decompress(data: string, uft8: boolean = true): Promise<string> {
+        const result = await AppConfig.goshclient.utils.decompress_zstd({
+            compressed: data,
+        })
         if (uft8) return Buffer.from(result.decompressed, 'base64').toString()
         return result.decompressed
     },

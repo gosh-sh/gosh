@@ -1,5 +1,6 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
 import { TValidationResult } from '../../types'
 import { whileFinite } from '../../utils'
@@ -17,6 +18,8 @@ import { GoshDao } from './goshdao'
 import { GoshProfile } from '../goshprofile'
 import { GoshRepository } from './goshrepository'
 import { GoshWallet } from './goshwallet'
+import { GoshSnapshot } from './goshsnapshot'
+import { loadFromIPFS, zstd } from '../../helpers'
 
 class GoshAdapter_0_11_0 implements IGoshAdapter {
     private static instance: GoshAdapter_0_11_0
@@ -120,16 +123,17 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
 
     async getRepository(options: {
         name?: string
-        daoName?: string
         address?: string
     }): Promise<IGoshRepository> {
-        const { name, daoName, address } = options
+        const { name, address } = options
         if (address) return new GoshRepository(this.client, address)
 
-        if (!name || !daoName) throw new GoshError('Repo name or DAO name undefined')
+        if (!name) throw new GoshError('Repo name undefined')
+        const [dao, repo] = name.split('/')
+
         const result = await this.gosh.runLocal('getAddrRepository', {
-            name: name.toLowerCase(),
-            dao: daoName.toLowerCase(),
+            name: repo.toLowerCase(),
+            dao: dao.toLowerCase(),
         })
         return new GoshRepository(this.client, result.value0)
     }
@@ -152,7 +156,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
 
         // Check if repo is already deployed
         const daoName = await this.auth.dao.getName()
-        const repo = await this.getRepository({ name, daoName })
+        const repo = await this.getRepository({ name: `${daoName}/${name}` })
         if (await repo.isDeployed()) return repo
 
         // Deploy repo
@@ -163,6 +167,34 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         const wait = await whileFinite(() => repo.isDeployed())
         if (!wait) throw new GoshError('Deploy repository timeout reached')
         return repo
+    }
+
+    async getBlob(
+        repository: string,
+        branch: string,
+        path: string,
+    ): Promise<string | Buffer> {
+        const repo = await this.getRepository({ name: repository })
+        const address = await repo.runLocal('getSnapshotAddr', {
+            branch,
+            name: path,
+        })
+        const snapshot = new GoshSnapshot(this.client, address.value0)
+        const data = await snapshot.runLocal('getSnapshot', {})
+        const { value0, value1, value2, value3, value4, value5 } = data
+
+        const patched = value0 === value3 ? value1 : value4
+        const ipfs = value0 === value3 ? value2 : value5
+        if (!patched && !ipfs) return ''
+
+        const compressed = ipfs
+            ? (await loadFromIPFS(ipfs)).toString()
+            : Buffer.from(patched, 'hex').toString('base64')
+        const decompressed = await zstd.decompress(compressed, false)
+        const buffer = Buffer.from(decompressed, 'base64')
+
+        if (isUtf8(buffer)) return buffer.toString()
+        return buffer
     }
 
     async getTvmHash(data: string | Buffer): Promise<string> {

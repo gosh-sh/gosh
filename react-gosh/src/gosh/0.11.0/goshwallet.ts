@@ -162,17 +162,14 @@ class GoshWallet extends BaseContract implements IGoshWallet {
                         !isIpfs
                     ) {
                         patch = getBlobDiffPatch(name, modified, original || '')
-                        patch = await zstd.compress(this.account.client, patch)
+                        patch = await zstd.compress(patch)
                         patch = Buffer.from(patch, 'base64').toString('hex')
                         if (
                             Buffer.from(patch, 'hex').byteLength >
                                 MAX_ONCHAIN_DIFF_SIZE ||
                             Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
                         ) {
-                            const compressed = await zstd.compress(
-                                this.account.client,
-                                modified,
-                            )
+                            const compressed = await zstd.compress(modified)
                             ipfs = await retry(() => saveToIPFS(compressed), 3)
                             flags |= EGoshBlobFlag.IPFS
                         }
@@ -181,7 +178,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
                         flags |= EGoshBlobFlag.IPFS | EGoshBlobFlag.COMPRESSED
                         let content = modified
                         if (Buffer.isBuffer(content)) flags |= EGoshBlobFlag.BINARY
-                        content = await zstd.compress(this.account.client, content)
+                        content = await zstd.compress(content)
                         ipfs = await retry(() => saveToIPFS(content), 3)
                     }
                     const hashes = {
@@ -408,7 +405,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
 
                     let ipfs = null
                     let snapdata = ''
-                    const compressed = await zstd.compress(this.account.client, content)
+                    const compressed = await zstd.compress(content)
                     if (
                         isIpfs ||
                         Buffer.isBuffer(content) ||

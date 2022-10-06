@@ -92,15 +92,10 @@ const PREvent = (props: TCommitBlobsType) => {
             for (const { ipfs, patch } of diffs) {
                 if (ipfs) {
                     const compressed = (await loadFromIPFS(ipfs)).toString()
-                    const decompressed = await zstd.decompress(
-                        AppConfig.goshclient,
-                        compressed,
-                        true,
-                    )
+                    const decompressed = await zstd.decompress(compressed, true)
                     curr = decompressed
                 } else if (patch && !Buffer.isBuffer(curr)) {
                     const decompressed = await zstd.decompress(
-                        repo.account.client,
                         Buffer.from(patch, 'hex').toString('base64'),
                         true,
                     )
@@ -141,7 +136,7 @@ const PREvent = (props: TCommitBlobsType) => {
 
             setIsFetched(false)
 
-            const repo = await gosh.getRepository({ name: _repoName, daoName })
+            const repo = await gosh.getRepository({ name: `${daoName}/${_repoName}` })
             const commitAddr = await repo.getCommitAddr(_commitName)
             const commit = new GoshCommit(repo.account.client, commitAddr)
             const commitDetails = await commit.getDetails()
