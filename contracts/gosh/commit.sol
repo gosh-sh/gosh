@@ -199,8 +199,9 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2) public senderIs(getDiffAddress(_nameCommit, index1, index2)){
+    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2, string branch) public senderIs(getDiffAddress(_nameCommit, index1, index2)){
         value0;
+        branch;
         getMoney();
     }
     
