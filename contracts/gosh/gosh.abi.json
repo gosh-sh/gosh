@@ -377,14 +377,6 @@
 			]
 		},
 		{
-			"name": "upgrade",
-			"inputs": [
-				{"name":"state","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "_lastGoshDao",
 			"inputs": [
 			],

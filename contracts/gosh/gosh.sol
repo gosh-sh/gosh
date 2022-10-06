@@ -4,14 +4,13 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity =0.64.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
-import "Upgradable.sol";
 import "repository.sol";
 import "commit.sol";
 import "profile.sol";
@@ -20,7 +19,7 @@ import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 
 /* Root contract of Gosh */
-contract GoshRoot is Modifiers, Upgradable{
+contract GoshRoot is Modifiers {
     string constant version = "0.11.0";
     
     address _root;
@@ -194,11 +193,6 @@ contract GoshRoot is Modifiers, Upgradable{
         TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
         return stateInit;
-    }
-    
-    // Upgradable
-    function onCodeUpgrade() internal override {
-        tvm.resetStorage();
     }
     
     //Setters

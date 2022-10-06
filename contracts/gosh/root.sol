@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity =0.64.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
@@ -62,6 +62,15 @@ contract Root is Modifiers {
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshRoot(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
+    }
+    
+    function updateCode(TvmCell newcode, TvmCell cell) public view onlyOwner accept {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
     }
 
     //Getters
