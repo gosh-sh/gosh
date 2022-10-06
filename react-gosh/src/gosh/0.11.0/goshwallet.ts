@@ -737,7 +737,6 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         const locker = new GoshSmvLocker(
             this.account.client,
             await this.getSmvLockerAddr(),
-            this.version,
         )
         await this.run('startProposalForSetCommit', {
             repoName,
@@ -756,7 +755,6 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         const locker = new GoshSmvLocker(
             this.account.client,
             await this.getSmvLockerAddr(),
-            this.version,
         )
         await this.run('startProposalForAddProtectedBranch', {
             repoName,
@@ -772,7 +770,6 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         const locker = new GoshSmvLocker(
             this.account.client,
             await this.getSmvLockerAddr(),
-            this.version,
         )
         await this.run('startProposalForDeleteProtectedBranch', {
             repoName,
@@ -841,15 +838,10 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         choice: boolean,
         amount: number,
     ): Promise<void> {
-        const proposal = new GoshSmvProposal(
-            this.account.client,
-            proposalAddr,
-            this.version,
-        )
+        const proposal = new GoshSmvProposal(this.account.client, proposalAddr)
         const locker = new GoshSmvLocker(
             this.account.client,
             await this.getSmvLockerAddr(),
-            this.version,
         )
         await this.run('voteFor', {
             /*             platformCode,

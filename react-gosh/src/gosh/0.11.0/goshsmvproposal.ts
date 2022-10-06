@@ -1,7 +1,7 @@
 import { TonClient } from '@eversdk/core'
 import { TGoshEventDetails } from '../../types'
-import { BaseContract } from './base'
-import { IGoshSmvProposal } from './interfaces'
+import { BaseContract } from '../base'
+import { IGoshSmvProposal } from '../interfaces'
 import { GoshError, EGoshError } from '../../errors'
 import { GoshWallet } from './goshwallet'
 import { GoshSmvClient } from './goshsmvclient'
@@ -100,11 +100,7 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         try {
             if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
 
-            const wallet = new GoshWallet(
-                this.account.client,
-                walletAddress!,
-                this.version,
-            )
+            const wallet = new GoshWallet(this.account.client, walletAddress!)
             const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {}))
                 .decoded?.output.tip3VotingLocker
             const platform_id = (await this.account.runLocal('platform_id', {})).decoded
@@ -130,11 +126,7 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         try {
             if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
 
-            const wallet = new GoshWallet(
-                this.account.client,
-                walletAddress!,
-                this.version,
-            )
+            const wallet = new GoshWallet(this.account.client, walletAddress!)
             const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {}))
                 .decoded?.output.tip3VotingLocker
             const platform_id = (await this.account.runLocal('platform_id', {})).decoded
@@ -145,11 +137,7 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
                     _platform_id: platform_id,
                 })
             ).decoded?.output.value0
-            const client = new GoshSmvClient(
-                this.account.client,
-                clientAddress,
-                this.version,
-            )
+            const client = new GoshSmvClient(this.account.client, clientAddress)
             /* return 7 */
             const result = await client.account.runLocal('amount_locked', {})
             return parseInt(result.decoded?.output.value0)
