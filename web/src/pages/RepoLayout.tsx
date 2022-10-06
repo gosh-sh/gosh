@@ -5,8 +5,6 @@ import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
 import { useGoshRepo, useGoshRepoBranches } from '../hooks/gosh.hooks'
 import {
-    IGoshRepository,
-    IGoshWallet,
     classNames,
     userPersistAtom,
     useDao,
@@ -14,6 +12,7 @@ import {
     TWalletDetails,
 } from 'react-gosh'
 import { useRecoilValue } from 'recoil'
+import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
 
 export type TRepoLayoutOutletContext = {
     repo: IGoshRepository

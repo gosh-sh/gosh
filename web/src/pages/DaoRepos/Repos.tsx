@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { GoshRepository, useGosh, useGoshVersions } from 'react-gosh'
+import { useGosh, useGoshVersions, sleep } from 'react-gosh'
 import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Spinner from '../../components/Spinner'
 import { getPaginatedAccounts, AppConfig } from 'react-gosh'
-import { sleep } from 'react-gosh'
+import { GoshRepository } from 'react-gosh/dist/gosh/0.11.0/goshrepository'
 
 const DaoRepositoriesPage = () => {
     const pageSize = 10
@@ -48,7 +48,7 @@ const DaoRepositoriesPage = () => {
             }),
         }))
 
-        const repo = new GoshRepository(AppConfig.goshclient, address, versions.latest)
+        const repo = new GoshRepository(AppConfig.goshclient, address)
         const details = await repo.getDetails()
 
         setRepos((state) => ({
@@ -82,7 +82,6 @@ const DaoRepositoriesPage = () => {
                         const repo = new GoshRepository(
                             AppConfig.goshroot.account.client,
                             id,
-                            versions.latest,
                         )
                         return { address: repo.address, name: await repo.getName() }
                     }),

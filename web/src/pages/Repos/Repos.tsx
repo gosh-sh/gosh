@@ -2,20 +2,16 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { AppConfig, useGosh, useGoshVersions } from 'react-gosh'
-import {
-    GoshDao,
-    GoshRepository,
-    GoshWallet,
-    userAtom,
-    TGoshRepoDetails,
-} from 'react-gosh'
+import { AppConfig, useGosh } from 'react-gosh'
+import { userAtom, TGoshRepoDetails } from 'react-gosh'
 import RepoListItem from '../DaoRepos/RepoListItem'
+import { GoshDao } from 'react-gosh/dist/gosh/0.11.0/goshdao'
+import { GoshRepository } from 'react-gosh/dist/gosh/0.11.0/goshrepository'
+import { GoshWallet } from 'react-gosh/dist/gosh/0.11.0/goshwallet'
 
 const RepositoriesPage = () => {
     const userState = useRecoilValue(userAtom)
     const gosh = useGosh()
-    const { versions } = useGoshVersions()
     const [search, setSearch] = useState<string>()
     const repoListQuery = useQuery(
         ['userRepositoryList'],
@@ -39,7 +35,6 @@ const RepositoriesPage = () => {
                         const wallet = new GoshWallet(
                             AppConfig.goshroot.account.client,
                             item.id,
-                            versions.latest,
                         )
                         return await wallet.getDaoAddr()
                     }),
@@ -63,11 +58,7 @@ const RepositoriesPage = () => {
 
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {
-                            const repo = new GoshRepository(
-                                AppConfig.goshclient,
-                                item.id,
-                                versions.latest,
-                            )
+                            const repo = new GoshRepository(AppConfig.goshclient, item.id)
                             return await repo.getDetails()
                         }),
                     )

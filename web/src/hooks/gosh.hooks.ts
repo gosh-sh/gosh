@@ -1,4 +1,3 @@
-import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
@@ -10,28 +9,21 @@ import {
     goshRepoTreeSelector,
 } from '../store/gosh.state'
 import {
-    GoshWallet,
-    GoshRepository,
-    GoshSmvLocker,
-    GoshCommit,
-    GoshSnapshot,
     getRepoTree,
     AppConfig,
     ZERO_COMMIT,
-    userAtom,
-    IGoshDao,
-    IGoshRepository,
-    IGoshRoot,
-    IGoshWallet,
     TCreateCommitCallbackParams,
     TGoshBranch,
     TSmvBalanceDetails,
     useGosh,
-    IGosh,
     useGoshVersions,
     TWalletDetails,
     retry,
 } from 'react-gosh'
+import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { GoshSmvLocker } from 'react-gosh/dist/gosh/0.11.0/goshsmvlocker'
+import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
+import { GoshSnapshot } from 'react-gosh/dist/gosh/0.11.0/goshsnapshot'
 
 /** Create GoshRepository object */
 export const useGoshRepo = (daoName?: string, name?: string) => {
@@ -137,11 +129,7 @@ export const useSmvBalance = (wallet?: {
 
             const balance = await wallet.instance.getSmvTokenBalance()
             const lockerAddr = await wallet.instance.getSmvLockerAddr()
-            const locker = new GoshSmvLocker(
-                AppConfig.goshclient,
-                lockerAddr,
-                versions.latest,
-            )
+            const locker = new GoshSmvLocker(AppConfig.goshclient, lockerAddr)
             const details = await locker.getDetails()
             setDetails((state) => ({
                 ...state,
@@ -191,11 +179,7 @@ export const useGoshBlob = (
                 return
             }
 
-            const commit = new GoshCommit(
-                AppConfig.goshclient,
-                branch.commitAddr,
-                versions.latest,
-            )
+            const commit = new GoshCommit(AppConfig.goshclient, branch.commitAddr)
             const commitName = await commit.getName()
             if (commitName === ZERO_COMMIT) {
                 setBlob({ isFetching: false })
@@ -220,11 +204,7 @@ export const useGoshBlob = (
             if (!blob.address || !blob.commit || !treeItem) return
 
             console.debug('Tree item', treeItem)
-            const snap = new GoshSnapshot(
-                AppConfig.goshclient,
-                blob.address,
-                versions.latest,
-            )
+            const snap = new GoshSnapshot(AppConfig.goshclient, blob.address)
             const data = await snap.getSnapshot(blob.commit, treeItem)
             setBlob((state) => ({
                 ...state,

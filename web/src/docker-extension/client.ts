@@ -1,13 +1,7 @@
 import { Image, Container } from './interfaces'
-import {
-    AppConfig,
-    GoshAdapterFactory,
-    GoshContentSignature,
-    GoshDao,
-    GoshWallet,
-    IGosh,
-    TUser,
-} from 'react-gosh'
+import { AppConfig, GoshAdapterFactory, TUser } from 'react-gosh'
+import { GoshWallet } from 'react-gosh/dist/gosh/0.11.0/goshwallet'
+import { GoshContentSignature } from 'react-gosh/dist/gosh/0.11.0/goshcontentsignature'
 
 const logger = console
 
@@ -145,7 +139,7 @@ export class DockerClient {
         const dao = await gosh.getDao({ name: goshDao })
         const walletAddr = await dao.getWalletAddr(`0x${userState.keys?.public}`, 0)
 
-        const wallet = new GoshWallet(AppConfig.goshclient, walletAddr, version, {
+        const wallet = new GoshWallet(AppConfig.goshclient, walletAddr, {
             keys: userState?.keys,
         })
         return wallet
@@ -204,11 +198,7 @@ export class DockerClient {
                 goshCommitHash,
                 '',
             )
-            const contentObj = new GoshContentSignature(
-                AppConfig.goshclient,
-                contentAddr,
-                version,
-            )
+            const contentObj = new GoshContentSignature(AppConfig.goshclient, contentAddr)
             const content = await contentObj.getContent()
             const validImageHashes = content.split(',')
 
@@ -324,11 +314,7 @@ export class DockerClient {
                 '',
             )
 
-            const contentObj = new GoshContentSignature(
-                AppConfig.goshclient,
-                contentAddr,
-                version,
-            )
+            const contentObj = new GoshContentSignature(AppConfig.goshclient, contentAddr)
             const content = await contentObj.getContent()
             const validImageHashes = content.split(',')
 

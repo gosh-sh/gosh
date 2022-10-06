@@ -3,7 +3,7 @@ import { Field, Form, Formik } from 'formik'
 import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal, useGosh, useGoshVersions } from 'react-gosh'
+import { useGosh, useGoshVersions } from 'react-gosh'
 import { EEventType, TGoshEventDetails } from 'react-gosh'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -18,6 +18,7 @@ import { eventTypes, AppConfig } from 'react-gosh'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
+import { GoshSmvProposal } from 'react-gosh/dist/gosh/0.11.0/goshsmvproposal'
 
 type TFormValues = {
     approve: string
@@ -93,11 +94,7 @@ const EventPage = () => {
         const getEvent = async () => {
             if (!eventAddr) return
 
-            const event = new GoshSmvProposal(
-                AppConfig.goshclient,
-                eventAddr,
-                versions.latest,
-            )
+            const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
             const details = await event.getDetails()
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }

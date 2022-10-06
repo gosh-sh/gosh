@@ -7,23 +7,18 @@ import {
     AppConfig,
     loadFromIPFS,
     zstd,
-    useGoshVersions,
     useGosh,
 } from 'react-gosh'
-import {
-    IGoshCommit,
-    IGoshRepository,
-    TGoshCommitDetails,
-    TGoshDiff,
-    TGoshTreeItem,
-} from 'react-gosh'
+import { TGoshCommitDetails, TGoshDiff, TGoshTreeItem } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { GoshCommit, GoshDiff, GoshRepository } from 'react-gosh'
+import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
+import { GoshDiff } from 'react-gosh/dist/gosh/0.11.0/goshdiff'
 import { AccountType } from '@eversdk/appkit'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
+import { IGoshCommit, IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
 
 type TCommitBlobsType = {
     className?: string
@@ -36,7 +31,6 @@ type TCommitBlobsType = {
 
 const PREvent = (props: TCommitBlobsType) => {
     const { className, daoName, repoName, branchName, commitName, status } = props
-    const { versions } = useGoshVersions()
     const gosh = useGosh()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
@@ -61,7 +55,7 @@ const PREvent = (props: TCommitBlobsType) => {
             let index2 = 0
             while (true) {
                 const address = await commit.getDiffAddr(index1, index2)
-                const diff = new GoshDiff(AppConfig.goshclient, address, versions.latest)
+                const diff = new GoshDiff(AppConfig.goshclient, address)
                 const acc = await diff.account.getAccount()
                 if (acc.acc_type !== AccountType.active) break
 
@@ -149,20 +143,12 @@ const PREvent = (props: TCommitBlobsType) => {
 
             const repo = await gosh.getRepository({ name: _repoName, daoName })
             const commitAddr = await repo.getCommitAddr(_commitName)
-            const commit = new GoshCommit(
-                repo.account.client,
-                commitAddr,
-                versions.latest,
-            )
+            const commit = new GoshCommit(repo.account.client, commitAddr)
             const commitDetails = await commit.getDetails()
             setDetails(commitDetails)
 
             const parents = await commit.getParents()
-            const parent = new GoshCommit(
-                repo.account.client,
-                parents[0],
-                versions.latest,
-            )
+            const parent = new GoshCommit(repo.account.client, parents[0])
             const parentName = await parent.getName()
 
             const tree = await getRepoTree(repo, commitAddr)
@@ -225,7 +211,7 @@ const PREvent = (props: TCommitBlobsType) => {
         }
 
         getCommitBlobs(repoName, branchName, commitName)
-    }, [daoName, repoName, branchName, commitName])
+    }, [gosh, daoName, repoName, branchName, commitName])
 
     return (
         <div className={className}>

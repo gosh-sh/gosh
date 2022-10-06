@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { IGoshRepository, TGoshCommit } from 'react-gosh'
+import { TGoshCommit } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { getCommit, getCommitTime } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -8,6 +8,7 @@ import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
+import { IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
 
 const CommitPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()

@@ -1,11 +1,10 @@
-import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 
 const DaoPage = () => {
-    const { daoName } = useParams()
     const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
 
     return (

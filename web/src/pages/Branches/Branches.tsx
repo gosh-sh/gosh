@@ -19,7 +19,7 @@ import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
-import { GoshCommit } from 'react-gosh'
+import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
 import ToastError from '../../components/Error/ToastError'
 
 type TCreateBranchFormValues = {
@@ -118,7 +118,6 @@ export const BranchesPage = () => {
             const commit = new GoshCommit(
                 wallet.instance.account.client,
                 values.from.commitAddr,
-                wallet.instance.version,
             )
             const fromBranchName = values.from.name
             const commitHash = await commit.getName()

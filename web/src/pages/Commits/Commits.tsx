@@ -7,9 +7,10 @@ import Spinner from '../../components/Spinner'
 import { getCommit, getCommitTime, ZERO_COMMIT } from 'react-gosh'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
-import { IGoshRepository, TGoshCommit } from 'react-gosh'
+import { TGoshCommit } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
 
 const CommitsPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()

@@ -17,8 +17,6 @@ import {
     useSmvBalance,
 } from '../../hooks/gosh.hooks'
 import {
-    IGoshRepository,
-    IGoshWallet,
     TGoshBranch,
     TGoshTreeItem,
     userAtom,
@@ -27,16 +25,16 @@ import {
     splitByChunk,
     EGoshError,
     GoshError,
-    GoshCommit,
-    GoshSnapshot,
     sleep,
     retry,
-    useGoshVersions,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
 import ToastError from '../../components/Error/ToastError'
+import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
+import { GoshSnapshot } from 'react-gosh/dist/gosh/0.11.0/goshsnapshot'
+import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
 
 type TCommitFormValues = {
     title: string
@@ -53,7 +51,6 @@ const PullCreatePage = () => {
     const monaco = useMonaco()
     const smvBalance = useSmvBalance(wallet)
     const { branches, updateBranches } = useGoshRepoBranches(repo)
-    const { versions } = useGoshVersions()
     const [compare, setCompare] = useState<
         | {
               to?: { item: TGoshTreeItem; blob: any }
@@ -81,16 +78,12 @@ const PullCreatePage = () => {
         branch: TGoshBranch,
         item: TGoshTreeItem,
     ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
-        const commit = new GoshCommit(
-            wallet.account.client,
-            branch.commitAddr,
-            wallet.version,
-        )
+        const commit = new GoshCommit(wallet.account.client, branch.commitAddr)
         const commitName = await commit.getName()
 
         const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
         const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
-        const snap = new GoshSnapshot(wallet.account.client, snapAddr, wallet.version)
+        const snap = new GoshSnapshot(wallet.account.client, snapAddr)
         const data = await snap.getSnapshot(commitName, item)
         return data
     }

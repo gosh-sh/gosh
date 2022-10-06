@@ -25,7 +25,6 @@ import {
     userAtom,
     getCodeLanguageFromFilename,
     classNames,
-    retry,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'

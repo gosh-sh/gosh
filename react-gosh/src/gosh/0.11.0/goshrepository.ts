@@ -3,8 +3,8 @@ import { getPaginatedAccounts } from '../../helpers'
 import { TGoshBranch, TGoshRepoDetails } from '../../types'
 import { BaseContract } from '../base'
 import { Gosh } from './gosh'
-import { GoshTag } from '../../resources'
-import { IGosh, IGoshRepository } from '../interfaces'
+import { IGoshRepository } from '../interfaces'
+import { GoshTag } from './goshtag'
 
 class GoshRepository extends BaseContract implements IGoshRepository {
     static key: string = 'repository'
@@ -116,7 +116,7 @@ class GoshRepository extends BaseContract implements IGoshRepository {
         // TODO: version
         return await Promise.all(
             accounts.map(async (address) => {
-                const tag = new GoshTag(this.account.client, address, '')
+                const tag = new GoshTag(this.account.client, address)
                 return await tag.getDetails()
             }),
         )

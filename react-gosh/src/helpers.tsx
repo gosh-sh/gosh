@@ -3,15 +3,13 @@ import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import ABI from './resources/contracts/abi.json'
-import {
-    GoshCommit,
-    GoshSnapshot,
-    GoshTree,
-    IGoshRepository,
-} from './resources/contracts'
 import { TGoshCommit, TGoshTree, TGoshTreeItem } from './types'
 import { sleep } from './utils'
 import { AppConfig } from './appconfig'
+import { IGoshRepository } from './gosh/interfaces'
+import { GoshTree } from './gosh/0.11.0/goshtree'
+import { GoshCommit } from './gosh/0.11.0/goshcommit'
+import { GoshSnapshot } from './gosh/0.11.0/goshsnapshot'
 
 export const ZERO_ADDR =
     '0:0000000000000000000000000000000000000000000000000000000000000000'
@@ -252,7 +250,7 @@ export const getRepoTree = async (
         for (let i = 0; i < trees.length; i++) {
             const tree = trees[i]
             const treeAddr = await repo.getTreeAddr(tree.sha1)
-            const treeBlob = new GoshTree(AppConfig.goshclient, treeAddr, repo.version)
+            const treeBlob = new GoshTree(AppConfig.goshclient, treeAddr)
 
             const treeItems = (await treeBlob.getTree()).tree
             const treePath = `${path ? `${path}/` : ''}${tree.name}`
@@ -266,14 +264,14 @@ export const getRepoTree = async (
 
     // Get latest branch commit
     if (!commitAddr) return { tree: { '': [] }, items: [] }
-    const commit = new GoshCommit(AppConfig.goshclient, commitAddr, repo.version)
+    const commit = new GoshCommit(AppConfig.goshclient, commitAddr)
     const commitName = await commit.getName()
 
     // Get root tree items and recursively get subtrees
     let items: TGoshTreeItem[] = []
     if (commitName !== ZERO_COMMIT) {
         const rootTreeAddr = await commit.getTree()
-        const rootTree = new GoshTree(AppConfig.goshclient, rootTreeAddr, repo.version)
+        const rootTree = new GoshTree(AppConfig.goshclient, rootTreeAddr)
         items = (await rootTree.getTree()).tree
     }
     if (filterPath !== '') await blobTreeWalker('', items)
@@ -463,7 +461,7 @@ export const getBlobAtCommit = async (
     }
 
     /** Get snapshot content and messages and revert snapshot to commit */
-    const snap = new GoshSnapshot(repo.account.client, snapaddr, repo.version)
+    const snap = new GoshSnapshot(repo.account.client, snapaddr)
     const snapdata = await snap.getSnapshot(commit, treeitem)
     console.debug('Snap data', snapdata)
     if (Buffer.isBuffer(snapdata.content))
@@ -512,17 +510,9 @@ export const getBlobAtCommit = async (
         if (msgcommit === commit) break
         if (msgcommit && !msgipfs) {
             const msgcommitAddr = await repo.getCommitAddr(msgcommit)
-            const msgcommitObj = new GoshCommit(
-                AppConfig.goshclient,
-                msgcommitAddr,
-                repo.version,
-            )
+            const msgcommitObj = new GoshCommit(AppConfig.goshclient, msgcommitAddr)
             const msgcommitParents = await msgcommitObj.getParents()
-            const parent = new GoshCommit(
-                AppConfig.goshclient,
-                msgcommitParents[0],
-                repo.version,
-            )
+            const parent = new GoshCommit(AppConfig.goshclient, msgcommitParents[0])
             const parentName = await parent.getName()
             if (parentName === commit) break
         }
@@ -535,7 +525,7 @@ export const getCommit = async (
     repo: IGoshRepository,
     commitAddr: string,
 ): Promise<TGoshCommit> => {
-    const commit = new GoshCommit(repo.account.client, commitAddr, repo.version)
+    const commit = new GoshCommit(repo.account.client, commitAddr)
     const meta = await commit.getCommit()
     const commitData = {
         addr: commitAddr,
