@@ -4,9 +4,12 @@ import {
     BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent, puppeteerErrors
 } from "puppeteer";
 import {MetricsMap} from "../PrometheusFormatter";
-import {nls, now, nowms} from "../Utils";
+import {niso, nls, now, nowms} from "../Utils";
 import {writeFileSync} from "fs";
 import {setTimeout} from 'timers/promises';
+import fs from "fs";
+import glob from "glob-promise";
+import path from "path";
 
 const puppeteer = require('puppeteer');
 
@@ -30,9 +33,12 @@ export default abstract class ScenarioHandler extends Handler {
 
     protected pupextraflags: string[] = [];
 
+    protected log_ws_req: number = 0;
+    protected log_ws_res: number = 0;
+
     applyConfiguration(c: any): ScenarioHandler {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout']);
+        this.useFields(c, [], ['pupextraflags', 'timeout', 'log_ws_req', 'log_ws_res']);
         return this;
     }
 
@@ -64,15 +70,52 @@ export default abstract class ScenarioHandler extends Handler {
         this.page = await this.browser.newPage();
         await this.page.goto(url, {waitUntil: waitUntil});
         this.page.setDefaultTimeout(this.timeout);
-        this.log = [nls() + ' Begin'];
+        this.log = [niso() + ' Begin'];
         this.page
             .on('console', message =>
-                this.log.push(`${nls()} ${message.type().substr(0, 3).toUpperCase()} ${message.text()}`))
-            .on('pageerror', ({ message }) => this.log.push(nls() + ' ' + message))
+                this.say(`> ${message.type().substr(0, 3).toUpperCase()} ${message.text()}`))
+            .on('pageerror', ({ message }) => this.say(`Page error: ${message})`))
             .on('response', response =>
-                this.log.push(`${nls()} ${response.status()} ${response.url()}`))
+                this.say(`Response: ${response.status()} for ${response.url()}`))
             .on('requestfailed', request =>
-                this.log.push(`${nls()} ${request.failure().errorText} ${request.url()}`))
+                this.say(`Request failed: ${request.failure().errorText} for ${request.method()} ${request.url()}`))
+            .on('request', request =>
+                this.say(`Request: ${request.method()} ${request.url()}`));
+        await this.registerWebSocketHook();
+    }
+
+    protected async registerWebSocketHook() {
+        for (let t of this.browser.targets()) {
+            if (t.type() == "other" && t.url().startsWith('blob:https://')) {
+                const client = await t.createCDPSession();
+
+                await client.send('Network.enable');
+
+                client.on('Network.webSocketCreated', (param) => {
+                    this.say(`Web socket created: ${param.url}`);
+                });
+
+                const log_con = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0') >= 4;
+
+                const wsprocess = (param: any, type: string, lim: number) => {
+                    try {
+                        const d = JSON.parse(param.response.payloadData);
+                        let pl = d.payload ? ': ' + JSON.stringify(d.payload) : '';
+                        if (pl.length > lim+3) pl = pl.substring(0, lim) + '...';
+                        this.say(`          WS ${d.type} ${type} ${d.id??''}${pl}`, false, !log_con);
+                    }
+                    catch (e) {}
+                };
+
+                if (this.log_ws_req > 0)
+                    client.on('Network.webSocketFrameSent', (param) => wsprocess(param, 'request', this.log_ws_req));
+
+                if (this.log_ws_res > 0)
+                    client.on('Network.webSocketFrameReceived', (param) => wsprocess(param, 'response', this.log_ws_res));
+            }
+        }
+
+        return null;
     }
 
     protected async closePage(): Promise<void> {
@@ -206,17 +249,37 @@ export default abstract class ScenarioHandler extends Handler {
         return null; // Do not count waiting as step
     }
 
+    protected async mkdirs(...dirs: string[]) {
+        for (let dir of dirs)
+            if (!fs.existsSync(dir))
+                await fs.mkdirSync(dir);
+    }
+
+    protected async removeFiles(fileglob: string) {
+        const files = await glob(fileglob);
+        for (let f of files)
+            if (fs.existsSync(f))
+                fs.unlinkSync(f);
+    }
+
+    protected async moveAway(fileglob: string, dest: string) {
+        const files = await glob(fileglob);
+        for (let f of files)
+            fs.renameSync(f, dest + path.basename(f));
+    }
+
     protected async dumpToFile(fname: string, add: string, final: boolean = true) {
-        if (this.page && final)
-            await this.page.screenshot({ path: fname + '.png' });
         if (this.log.length > 1) {
             if (final)
-                this.log.push(nls() + ' End');
+                this.log.push(niso() + ' End');
             writeFileSync(fname + '.log', this.log.join('\n') + '\n' + add + '\n', 'utf8');
         }
+        if (this.page && final)
+            await this.page.screenshot({ path: fname + '.png' });
     }
 
     protected async doSteps(...steps: StepEntry[]): Promise<MetricsMap> {
+        const mode = (process.env.GM_MODE ?? 'error');
         let stepName = '';
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
@@ -226,26 +289,34 @@ export default abstract class ScenarioHandler extends Handler {
                     stepName = f;
                     continue;
                 }
-                this.say(`${this.sub ? `<${this.sub}> ` : ''}Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
+                this.say(`${this.sub ? `<${this.sub}> ` : ''}********* Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
                 const res: StepResult = await f(stepName);
                 if (res !== null)
                     this.stepsDone++;
                 if (this.stepsDone === 100)
                     this.stepsDone++;
+                const step = this.stepsDone;
                 let isslow = false;
                 let slow = this.app.interval; // in msec, short timeout for web
                 if (this.timeout < 1000 && this.timeout > slow)
                     slow = this.timeout; // in seconds, for remote
                 if (now() - this.started > slow) {
+                    if (!isslow) {
+                        try {
+                            await this.mkdirs('errors/slow', `errors/slow/${mode}`, `errors/slow/${mode}/old`);
+                            await this.removeFiles(`errors/slow/${mode}/old/*`);
+                            await this.moveAway(`errors/slow/${mode}/*.*`, `errors/slow/${mode}/old/`);
+                        } catch (e) {}
+                    }
                     isslow = true;
                     try {
-                        await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', false);
+                        await this.dumpToFile(`errors/slow/${mode}/${step}`, '', false);
                     } catch (e) {}
                 }
                 if (res !== undefined && res !== null) {
                     if (isslow)
                     try {
-                        await this.dumpToFile('errors/slow-' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, '', true);
+                        await this.dumpToFile(`errors/slow/${mode}/${step}`, '', true);
                     } catch (e) {}
                     return new Map<string, number>([
                         ["result",    100],
@@ -260,7 +331,11 @@ export default abstract class ScenarioHandler extends Handler {
         } catch (e: any) {
             console.error(e);
             try {
-                await this.dumpToFile('errors/' + (process.env.GM_MODE ?? 'error') + '-' + this.stepsDone, e.toString());
+                await this.mkdirs(`errors/${mode}`, `errors/${mode}/old`);
+                await this.moveAway(`errors/${mode}/*.*`, `errors/${mode}/old/`);
+                await this.dumpToFile(`errors/${mode}/${this.stepsDone}`, e.toString());
+                await this.removeFiles(`errors/${mode}/step * is *`);
+                writeFileSync(`errors/${mode}/step ${this.stepsDone} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
             } catch (er: any) {
                 console.error('Failed to write error file', er);
             }
@@ -336,10 +411,10 @@ export default abstract class ScenarioHandler extends Handler {
         this.log = [];
     }
 
-    protected say(msg: string, loud: boolean = false) {
-        this.log.push(msg);
-        if (loud || this.debug || process.env.RUN_NOW)
-            console.log(msg);
+    protected say(msg: string, loud: boolean = false, logonly: boolean = false) {
+        this.log.push(niso() + ' ' + msg);
+        if ((loud || this.debug || process.env.RUN_NOW) && !logonly)
+            console.log(niso() + ' ' + msg);
     }
 
 }

@@ -1,6 +1,6 @@
 import AppHandler from "./AppHandler";
 import {MetricsMap} from "../PrometheusFormatter";
-import {nls} from "../Utils";
+import {niso, nls} from "../Utils";
 
 export default class AppWriteHandler extends AppHandler {
 
@@ -13,7 +13,7 @@ export default class AppWriteHandler extends AppHandler {
             /* 0 - 12*/ ...this.initialSteps(debug),
             'click edit icon',     /*13*/ () => this.click("svg.fa-pencil"),
             'input file contents', /*14*/ () => this.erasePaste("div.view-lines", this.prepareFileContents()),
-            'input commit title',  /*15*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${nls()})`),
+            'input commit title',  /*15*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${niso()})`),
             'click commit button', /*16*/ () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
             'scroll down',                () => this.pageDown(true, 2),
             'wait for no spinner', /*17*/ () => this.waitForGone('svg.fa-spin', 180000),

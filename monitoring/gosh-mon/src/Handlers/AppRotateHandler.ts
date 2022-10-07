@@ -1,6 +1,6 @@
 import AppHandler from "./AppHandler";
 import {MetricsMap} from "../PrometheusFormatter";
-import {nls} from "../Utils";
+import {niso, nls} from "../Utils";
 import fs from "fs";
 
 export default class AppRotateHandler extends AppHandler {
@@ -47,7 +47,7 @@ export default class AppRotateHandler extends AppHandler {
             'click file',              /*22*/ () => this.click(`//a[@href='/${this.organization}/${this.repository}/blobs/${this.branch}/${this.filename}']`),
             'click edit icon',         /*23*/ () => this.click("svg.fa-pencil"),
             'input file contents',     /*24*/ () => this.erasePaste("div.view-lines", this.prepareFileContents()),
-            'input commit title',      /*25*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${nls()})`),
+            'input commit title',      /*25*/ () => this.pasteInto("//input[@name='title' and @placeholder='Commit title']", `Update ${this.filename} (${niso()})`),
             'click commit button',     /*26*/ () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
             'scroll down',                    () => this.pageDown(debug, 2),
             // /*27*/ () => this.click("svg.fa-copy", 180000),
