@@ -11,6 +11,7 @@ const fs_2 = __importDefault(require("fs"));
 const glob_promise_1 = __importDefault(require("glob-promise"));
 const path_1 = __importDefault(require("path"));
 const perf_hooks_1 = require("perf_hooks");
+
 const puppeteer = require('puppeteer');
 class ScenarioHandler extends Handler_1.default {
     constructor() {

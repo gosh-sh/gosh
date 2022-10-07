@@ -27,6 +27,9 @@ global:
 
   # require | priority | fallback | disabled
   use_envs: require
+  
+  log_ws_req: 600
+  log_ws_res: 300
 
   log_ws_req: 600
   log_ws_res: 300
