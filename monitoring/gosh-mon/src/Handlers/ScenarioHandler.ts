@@ -4,12 +4,13 @@ import {
     BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent, puppeteerErrors
 } from "puppeteer";
 import {MetricsMap} from "../PrometheusFormatter";
-import {niso, nls, now, nowms} from "../Utils";
+import {ifdef, iftrue, limstr, niso, nls, now, nowms} from "../Utils";
 import {writeFileSync} from "fs";
 import {setTimeout} from 'timers/promises';
 import fs from "fs";
 import glob from "glob-promise";
 import path from "path";
+import {performance} from "perf_hooks";
 
 const puppeteer = require('puppeteer');
 
@@ -18,6 +19,8 @@ export type StepFunction = ((name: string) => Promise<StepResult>);
 export type StepEntry    = StepFunction | string;
 
 export default abstract class ScenarioHandler extends Handler {
+
+    private readonly textlim = 50;
 
     protected browser!: Browser;
     protected context!: BrowserContext;
@@ -28,8 +31,10 @@ export default abstract class ScenarioHandler extends Handler {
     protected stepsDone: number = 0;
 
     protected timeout: number = 10000;
+    protected longtimeout: number = 60000;
 
     protected log: string[] = [];
+    protected plog?: string[];
 
     protected pupextraflags: string[] = [];
 
@@ -38,7 +43,7 @@ export default abstract class ScenarioHandler extends Handler {
 
     applyConfiguration(c: any): ScenarioHandler {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout', 'log_ws_req', 'log_ws_res']);
+        this.useFields(c, [], ['pupextraflags', 'timeout', 'log_ws_req', 'log_ws_res', 'longtimeout']);
         return this;
     }
 
@@ -76,7 +81,7 @@ export default abstract class ScenarioHandler extends Handler {
                 this.say(`> ${message.type().substr(0, 3).toUpperCase()} ${message.text()}`))
             .on('pageerror', ({ message }) => this.say(`Page error: ${message})`))
             .on('response', response =>
-                this.say(`Response: ${response.status()} for ${response.url()}`))
+                this.say(`Response: ${response.status()} for ${response.url()} (${response.headers()['content-length']} b)`))
             .on('requestfailed', request =>
                 this.say(`Request failed: ${request.failure().errorText} for ${request.method()} ${request.url()}`))
             .on('request', request =>
@@ -149,6 +154,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async find(elem: string, timeout?: number) {
+        // this.say(`    find ${elem}${ifdef(' with timeout ', timeout)}`);
         const timeoutArg = timeout ? {timeout: timeout} : {};
         return elem.startsWith('/') ?
             await this.page.waitForXPath(elem, timeoutArg) :
@@ -156,31 +162,37 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async findMultipleNow(elem: string) {
+        // this.say(`    find ${elem} immediately`);
         return elem.startsWith('/') ?
             await this.page.$x(elem) :
             await this.page.$$(elem);
     }
 
     protected async onlyOne(elem: string) {
+        this.say(`--- make sure ${elem} is only one`);
         const elems = await this.page.$$(elem);
         if (elems.length != 1)
             throw new Error('Found ' + elems.length + ' ' + elem + ' elements');
     }
 
     protected async count(elem: string) {
+        this.say(`--- count amount of ${elem}`);
         return (await this.findMultipleNow(elem)).length;
     }
 
     protected async waitForGone(elem: string, timeout?: number) {
+        this.say(`--- wait for ${elem} gone${ifdef(' with timeout ', timeout)}`);
         const timeoutArg = timeout ? {timeout: timeout} : {};
         await this.page.waitForFunction((elem: string) => !document.querySelector(elem), timeoutArg, elem);
     }
 
     protected async waitFor(elem: string, timeout?: number): Promise<void> {
+        this.say(`--- wait for ${elem} to appear${ifdef(' with timeout ', timeout)}`);
         await (await this.find(elem, timeout));
     }
 
     protected async click(elem: string, timeout?: number): Promise<void> {
+        this.say(`--- click ${elem}${ifdef(' with timeout ', timeout)}`);
         try {
             await (await this.find(elem, timeout))!.click();
         }
@@ -193,20 +205,25 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async clickNow(elem: string, index: number = 0): Promise<void> {
+        this.say(`--- click ${elem} (index ${index}) immediately`);
         await (await this.findMultipleNow(elem))[index].click();
     }
 
     protected async focus(elem: string, timeout?: number): Promise<void> {
+        this.say(`--- focus on ${elem}${ifdef(' with timeout ', timeout)}`);
         await (await this.find(elem, timeout))!.focus();
     }
 
-    protected async type(elem: string, text: string, timeout?: number): Promise<void> {
+    protected async type(elem: string, text: string, timeout?: number, delay: number = 10): Promise<void> {
+        this.say(`--- type ${limstr(text, this.textlim)} into ${elem}${ifdef(' with timeout ', timeout)}`);
         const element = await this.find(elem, timeout);
         await element!.focus();
-        await this.page.keyboard.type(text, {delay: 10});
+        await this.page.keyboard.type(text, {delay: delay});
     }
 
-    protected async pasteInto(elem: string, text: string, timeout?: number, optional?: boolean): Promise<void> {
+    protected async pasteInto(elem: string, text: string, timeout?: number, optional?: boolean, secure?: boolean): Promise<void> {
+        const saystr = secure === true ? '<SECRET>' : limstr(text, this.textlim);
+        this.say(`--- paste ${saystr} into ${elem}${ifdef(' with timeout ', timeout)}${iftrue(' optionally', optional)}`);
         try {
             const element = await this.find(elem, timeout);
             await element!.focus();
@@ -218,6 +235,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async erasePaste(elem: string, text: string, timeout?: number): Promise<void> {
+        this.say(`--- paste ${limstr(text, this.textlim)} into ${elem} with erase${ifdef(' and timeout ', timeout)}`);
         const element = await this.find(elem, timeout);
         await element!.click();
         // await element!.focus();
@@ -228,6 +246,7 @@ export default abstract class ScenarioHandler extends Handler {
 
     protected async pageDown(doIt: boolean, times: number): Promise<null> {
         if (doIt) {
+            this.say(`--- scroll page down ${times} times`);
             for (let i=0; i<times; i++)
                 await this.page.keyboard.press("PageDown");
         }
@@ -235,6 +254,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async read(elem: string, timeout?: number) {
+        this.say(`--- read contents of ${elem}${ifdef(' with timeout ', timeout)}`);
         const element = await this.find(elem, timeout);
         return element!.evaluate(el => el.textContent);
     }
@@ -279,7 +299,9 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async doSteps(...steps: StepEntry[]): Promise<MetricsMap> {
+        this.say(`::: short timeout ${this.timeout}, long timeout ${this.longtimeout}`);
         const mode = (process.env.GM_MODE ?? 'error');
+        const afterstep = this.sub !== '' ? `-${this.sub}` : '';
         let stepName = '';
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
@@ -290,7 +312,10 @@ export default abstract class ScenarioHandler extends Handler {
                     continue;
                 }
                 this.say(`${this.sub ? `<${this.sub}> ` : ''}********* Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
+                const sta = performance.now();
                 const res: StepResult = await f(stepName);
+                const end = performance.now();
+                this.say(`${this.sub ? `<${this.sub}> ` : ''}  * * * * Step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''} done in ${end - sta} ms`);
                 if (res !== null)
                     this.stepsDone++;
                 if (this.stepsDone === 100)
@@ -310,13 +335,13 @@ export default abstract class ScenarioHandler extends Handler {
                     }
                     isslow = true;
                     try {
-                        await this.dumpToFile(`errors/slow/${mode}/${step}`, '', false);
+                        await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', false);
                     } catch (e) {}
                 }
                 if (res !== undefined && res !== null) {
                     if (isslow)
                     try {
-                        await this.dumpToFile(`errors/slow/${mode}/${step}`, '', true);
+                        await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', true);
                     } catch (e) {}
                     return new Map<string, number>([
                         ["result",    100],
@@ -333,9 +358,9 @@ export default abstract class ScenarioHandler extends Handler {
             try {
                 await this.mkdirs(`errors/${mode}`, `errors/${mode}/old`);
                 await this.moveAway(`errors/${mode}/*.*`, `errors/${mode}/old/`);
-                await this.dumpToFile(`errors/${mode}/${this.stepsDone}`, e.toString());
+                await this.dumpToFile(`errors/${mode}/${this.stepsDone}${afterstep}`, e.toString());
                 await this.removeFiles(`errors/${mode}/step * is *`);
-                writeFileSync(`errors/${mode}/step ${this.stepsDone} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
+                writeFileSync(`errors/${mode}/step ${this.stepsDone}${afterstep} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
             } catch (er: any) {
                 console.error('Failed to write error file', er);
             }
@@ -411,8 +436,15 @@ export default abstract class ScenarioHandler extends Handler {
         this.log = [];
     }
 
+    setParentLog(plog: string[]): ScenarioHandler {
+        this.plog = plog;
+        return this;
+    }
+
     protected say(msg: string, loud: boolean = false, logonly: boolean = false) {
         this.log.push(niso() + ' ' + msg);
+        if (this.plog)
+            this.plog.push(niso() + ' ' + msg);
         if ((loud || this.debug || process.env.RUN_NOW) && !logonly)
             console.log(niso() + ' ' + msg);
     }
