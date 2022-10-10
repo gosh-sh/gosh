@@ -228,8 +228,8 @@ pipeline {
                 script {
                     if (!params.ONLYWEB) {
                         sh """
-                            cp /var/jenkins_home/workspace/git-remote-gosh/git-remote-gosh-amd64 git-remote-gosh
-                            cp /var/jenkins_home/workspace/git-remote-gosh/snap/snapcraft.yaml ./
+                            cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 git-remote-gosh
+                            cp /var/jenkins_home/workspace/gosh-prepare-rc/snap/snapcraft.yaml ./
                             sed -i '/VERSION_PLACEHOLDER/s/\${VERSION}/' snapcraft.yaml
                             chmod +x git-remote-gosh
                             tar -cvf git-remote-gosh git-remote-gosh.tar
