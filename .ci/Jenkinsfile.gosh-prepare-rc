@@ -233,7 +233,7 @@ pipeline {
                             cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/snap/snapcraft.yaml ./
                             sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snapcraft.yaml
                             chmod +x git-remote-gosh
-                            tar -cvf git-remote-gosh git-remote-gosh.tar
+                            tar -cvf git-remote-gosh.tar git-remote-gosh
                             snapcraft --use-lxd
                         """
                         }
