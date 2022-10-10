@@ -240,8 +240,8 @@ pipeline {
                             tar -cvf git-remote-gosh.tar git-remote-gosh
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
-                            ls -la 
                             snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
+                            snapcraft upload git-remote-gosh_${VERSION}_amd64.snap
                         """
                         }
                     }
@@ -316,11 +316,11 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-    post {
-        always {
-            cleanWs()
+            post {
+                always {
+                    cleanWs()
+                }
+            }
         }
     }
 }
