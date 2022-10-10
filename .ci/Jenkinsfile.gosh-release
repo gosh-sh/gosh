@@ -5,9 +5,6 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
         }
     }
-    options {
-        skipDefaultCheckout(true)
-    }
     parameters {
         gitParameter name: 'TAG', type: 'PT_TAG', quickFilterEnabled: true
         booleanParam name: 'LATEST', defaultValue: false, description: 'If true will create latest tags for git helper and extension docker images.'
