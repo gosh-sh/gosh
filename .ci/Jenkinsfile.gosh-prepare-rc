@@ -233,7 +233,7 @@ pipeline {
                             sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snap/snapcraft.yaml
                             chmod +x git-remote-gosh
                             tar -cvf git-remote-gosh.tar git-remote-gosh
-                            snapcraft --use-lxd
+                            cd snap && snapcraft --use-lxd
                         """
                         }
                     }
