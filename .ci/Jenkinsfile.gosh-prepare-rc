@@ -16,14 +16,23 @@ pipeline {
     }
 
     stages {
+        agent { label 'jenkins-main' }
         stage("test snap"){
-            agent { label 'jenkins-main' }
+            
             steps {
                 script {
                     sh 'ls'
                 }
             }
         }
+    }
+    stages {
+        agent {
+        docker {
+            image 'jenkins-docker-agent:1'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+        }
+    }
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
