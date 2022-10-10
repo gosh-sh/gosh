@@ -121,7 +121,7 @@ pipeline {
                 }
             }
         }
-        stage('Web: wait to be available') {
+        /*stage('Web: wait to be available') {
             steps {
                 script {
                     timeout(15) {
@@ -132,7 +132,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Web: run tests') {
             steps {
                 script {
