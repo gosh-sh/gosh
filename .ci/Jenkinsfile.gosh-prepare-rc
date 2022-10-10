@@ -13,23 +13,6 @@ pipeline {
     }
 
     stages {
-        stage("test snap"){
-            agent {
-                node {
-                    label 'jenkins-main'
-                }
-            }
-            steps {
-                git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
-                checkout scm
-                script {
-                    dir('/tmp/snap') {
-                        sh 'snapcraft --use-lxd'
-                    }
-                }
-            }
-
-        }
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
@@ -37,6 +20,16 @@ pipeline {
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
+                }
+            }
+        }
+        stage("test snap"){
+            agent { label 'jenkins-main' }
+            steps {
+                script {
+                    dir('/tmp/snap') {
+                        sh 'snapcraft --use-lxd'
+                    }
                 }
             }
         }
