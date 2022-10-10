@@ -30,7 +30,7 @@ pipeline {
             agent { label 'jenkins-main' }
             steps {
                 script {
-                    sh 'snapcraft --use-lxd'
+                    sh 'ls'
                 }
             }
         }
