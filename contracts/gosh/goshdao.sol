@@ -301,6 +301,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         GoshWallet(msg.sender).setConfig{value : 0.2 ton}(_limit_wallets, _limit_time, _limit_messages);
     }
     
+    function _composeRepoStateInit(string name) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            m_RepositoryCode, _goshroot, address(this), version
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: {_name: name}
+        });
+    }
+    
     //Setters
     function setConfig(uint128 limit_wallets /*, uint128 limit_time, uint128 limit_messages */) public onlyOwnerPubkey(_rootpubkey) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -339,6 +350,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     function getClientCode() external view returns(TvmCell) {
         return m_SMVClientCode;
+    }
+    
+    function getAddrRepository(string name) external view returns(address) {
+        TvmCell s1 = _composeRepoStateInit(name);
+        return address.makeAddrStd(0, tvm.hash(s1));
     }
     
     function getWallets() external view returns(address[]) {
