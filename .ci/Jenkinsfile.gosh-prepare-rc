@@ -16,24 +16,21 @@ pipeline {
     }
 
     stages {
-        agent { label 'jenkins-main' }
         stage("test snap"){
-            
+            agent { label 'jenkins-main' }
             steps {
                 script {
                     sh 'ls'
                 }
             }
         }
-    }
-    stages {
-        agent {
-        docker {
-            image 'jenkins-docker-agent:1'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-        }
-    }
         stage('Clone repository') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
@@ -44,6 +41,12 @@ pipeline {
             }
         }
         stage('Compile: SMV') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/smv') {
@@ -53,6 +56,12 @@ pipeline {
             }
         }
         stage('Compile: GOSH') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -62,6 +71,12 @@ pipeline {
             }
         }
         stage('Build: Git Helper') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
@@ -79,6 +94,12 @@ pipeline {
             }
         }
         stage('Build: Docker Extension') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -90,6 +111,12 @@ pipeline {
             }
         }
         stage('Deploy: deploy smart-contracts') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -102,6 +129,12 @@ pipeline {
             }
         }
         stage('Web: deploy') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
@@ -127,6 +160,12 @@ pipeline {
             }
         }
         /*stage('Web: wait to be available') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     timeout(15) {
@@ -139,6 +178,12 @@ pipeline {
             }
         }*/
         stage('Tests: functional') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -154,6 +199,12 @@ pipeline {
             }
         }
         stage('Tests: Web') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('monitoring/gosh-mon') {     
@@ -180,6 +231,12 @@ pipeline {
             }
         }
         stage('Prerelease: Git Helper - bin') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -199,6 +256,12 @@ pipeline {
             }
         }
         stage('Prerelease: push rc Git Helper Docker image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
@@ -215,6 +278,12 @@ pipeline {
             }
         }
         stage('Prerelease: push rc Docker Extension image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
