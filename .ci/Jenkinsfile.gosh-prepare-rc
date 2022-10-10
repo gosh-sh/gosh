@@ -151,7 +151,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Web: wait to be available') {
+        stage('Web: wait to be available') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -168,7 +168,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Tests: functional') {
             agent {
                 docker {
