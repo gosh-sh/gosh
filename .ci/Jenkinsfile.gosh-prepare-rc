@@ -229,6 +229,7 @@ pipeline {
                 }
             }
             steps {
+                checkout scm
                 script {
                     if (!params.ONLYWEB) {
                         dir('git-remote-gosh') {
