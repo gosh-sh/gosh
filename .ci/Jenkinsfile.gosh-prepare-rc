@@ -30,9 +30,7 @@ pipeline {
             agent { label 'jenkins-main' }
             steps {
                 script {
-                    dir('/tmp/snap') {
-                        sh 'snapcraft --use-lxd'
-                    }
+                    sh 'snapcraft --use-lxd'
                 }
             }
         }
