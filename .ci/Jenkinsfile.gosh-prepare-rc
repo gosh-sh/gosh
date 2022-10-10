@@ -1,12 +1,12 @@
 pipeline {
-    agent {
+    /*agent {
         docker {
             image 'jenkins-docker-agent:1'
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
         }
-    }
+    }*/
+    agent none
     options {
-        skipDefaultCheckout(true)
         timestamps ()
     }
     parameters {
@@ -16,6 +16,14 @@ pipeline {
     }
 
     stages {
+        stage("test snap"){
+            agent { label 'jenkins-main' }
+            steps {
+                script {
+                    sh 'ls'
+                }
+            }
+        }
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
@@ -23,14 +31,6 @@ pipeline {
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
-                }
-            }
-        }
-        stage("test snap"){
-            agent { label 'jenkins-main' }
-            steps {
-                script {
-                    sh 'ls'
                 }
             }
         }
