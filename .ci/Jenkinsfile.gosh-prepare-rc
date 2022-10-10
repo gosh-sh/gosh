@@ -20,6 +20,8 @@ pipeline {
                 }
             }
             steps {
+                git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
+                checkout scm
                 script {
                     dir('/tmp/snap') {
                         sh 'snapcraft --use-lxd'
