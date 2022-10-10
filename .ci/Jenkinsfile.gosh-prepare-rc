@@ -1,10 +1,4 @@
 pipeline {
-    /*agent {
-        docker {
-            image 'jenkins-docker-agent:1'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-        }
-    }*/
     agent none
     options {
         timestamps ()
@@ -85,7 +79,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Build: Docker Extension') {
+        stage('Build: Docker Extension') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -221,7 +215,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
         stage("Prerelease: Git Helper Snap"){
             agent {
                 node {
@@ -241,7 +235,6 @@ pipeline {
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
                             snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
-                            snapcraft release git-remote-gosh \$(snapcraft status git-remote-gosh | grep candidate | awk '{print \$NF}') stable
                         """
                         }
                     }
