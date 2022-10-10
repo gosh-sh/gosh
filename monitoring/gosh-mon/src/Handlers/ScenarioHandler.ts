@@ -4,7 +4,7 @@ import {
     BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent, puppeteerErrors
 } from "puppeteer";
 import {MetricsMap} from "../PrometheusFormatter";
-import {ifdef, iftrue, limstr, niso, nls, now, nowms} from "../Utils";
+import {ifdef, iftrue, limstr, niso, now, nowms} from "../Utils";
 import {writeFileSync} from "fs";
 import {setTimeout} from 'timers/promises';
 import fs from "fs";
@@ -30,8 +30,8 @@ export default abstract class ScenarioHandler extends Handler {
     protected startedms: number = 0;
     protected stepsDone: number = 0;
 
-    protected timeout: number = 10000;
-    protected longtimeout: number = 60000;
+    protected timeout_ms: number = 10000;
+    protected longtimeout_ms: number = 60000;
 
     protected log: string[] = [];
     protected plog?: string[];
@@ -43,7 +43,7 @@ export default abstract class ScenarioHandler extends Handler {
 
     applyConfiguration(c: any): ScenarioHandler {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout', 'log_ws_req', 'log_ws_res', 'longtimeout']);
+        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms']);
         return this;
     }
 
@@ -74,7 +74,7 @@ export default abstract class ScenarioHandler extends Handler {
     protected async openPage(url: string, waitUntil: PuppeteerLifeCycleEvent = 'networkidle2'): Promise<void> {
         this.page = await this.browser.newPage();
         await this.page.goto(url, {waitUntil: waitUntil});
-        this.page.setDefaultTimeout(this.timeout);
+        this.page.setDefaultTimeout(this.timeout_ms);
         this.log = [niso() + ' Begin'];
         this.page
             .on('console', message =>
@@ -299,12 +299,18 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async doSteps(...steps: StepEntry[]): Promise<MetricsMap> {
-        this.say(`::: short timeout ${this.timeout}, long timeout ${this.longtimeout}`);
+        this.say(`::: short timeout ${this.timeout_ms}, long timeout ${this.longtimeout_ms}`);
         const mode = (process.env.GM_MODE ?? 'error');
         const afterstep = this.sub !== '' ? `-${this.sub}` : '';
         let stepName = '';
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
+        let perf: Map<string, number> = new Map();
+        const addperf = (map: Map<string, number>): Map<string, number> => {
+            for (let [k, v] of perf.entries())
+                map.set(k, v);
+            return map;
+        };
         try {
             for (let f of steps) {
                 if (typeof f === 'string') {
@@ -315,6 +321,7 @@ export default abstract class ScenarioHandler extends Handler {
                 const sta = performance.now();
                 const res: StepResult = await f(stepName);
                 const end = performance.now();
+                perf.set(`perf{step="${this.stepsDone}",descr="${stepName.replaceAll('"', '\'')}"}`, end - sta);
                 this.say(`${this.sub ? `<${this.sub}> ` : ''}  * * * * Step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''} done in ${end - sta} ms`);
                 if (res !== null)
                     this.stepsDone++;
@@ -323,8 +330,8 @@ export default abstract class ScenarioHandler extends Handler {
                 const step = this.stepsDone;
                 let isslow = false;
                 let slow = this.app.interval; // in msec, short timeout for web
-                if (this.timeout < 1000 && this.timeout > slow)
-                    slow = this.timeout; // in seconds, for remote
+                if (this.timeout_ms < 1000 && this.timeout_ms > slow)
+                    slow = this.timeout_ms; // in seconds, for remote
                 if (now() - this.started > slow) {
                     if (!isslow) {
                         try {
@@ -343,13 +350,14 @@ export default abstract class ScenarioHandler extends Handler {
                     try {
                         await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', true);
                     } catch (e) {}
-                    return new Map<string, number>([
+                    return addperf(new Map<string, number>([
                         ["result",    100],
                         ["value",     res],
                         ["timestamp", now()],
                         ["started",   this.started],
-                        ["duration",  now() - this.started]
-                    ]);
+                        ["duration",  now() - this.started],
+                        [`details{step="100",descr="OK"}`, 100]
+                    ]));
                 }
                 stepName = '';
             }
@@ -367,12 +375,13 @@ export default abstract class ScenarioHandler extends Handler {
         } finally {
             await this.finally();
         }
-        return new Map<string, number>([
+        return addperf(new Map<string, number>([
             ["result",    this.stepsDone],
             ["timestamp", now()],
             ["started",   this.started],
-            ["duration",  now() - this.started]
-        ]);
+            ["duration",  now() - this.started],
+            [`details{step="${this.stepsDone}",descr="${stepName.replaceAll('"', '\'')}"}`, this.stepsDone]
+        ]));
     }
 
     protected conditional(condition: () => boolean, branch_true: StepEntry[], branch_false: StepEntry[]): StepEntry[] {

@@ -11,7 +11,6 @@ const fs_2 = __importDefault(require("fs"));
 const glob_promise_1 = __importDefault(require("glob-promise"));
 const path_1 = __importDefault(require("path"));
 const perf_hooks_1 = require("perf_hooks");
-
 const puppeteer = require('puppeteer');
 class ScenarioHandler extends Handler_1.default {
     constructor() {
@@ -20,8 +19,8 @@ class ScenarioHandler extends Handler_1.default {
         this.started = 0;
         this.startedms = 0;
         this.stepsDone = 0;
-        this.timeout = 10000;
-        this.longtimeout = 60000;
+        this.timeout_ms = 10000;
+        this.longtimeout_ms = 60000;
         this.log = [];
         this.pupextraflags = [];
         this.log_ws_req = 0;
@@ -29,7 +28,7 @@ class ScenarioHandler extends Handler_1.default {
     }
     applyConfiguration(c) {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout', 'log_ws_req', 'log_ws_res', 'longtimeout']);
+        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms']);
         return this;
     }
     async startBrowser(debug) {
@@ -58,7 +57,7 @@ class ScenarioHandler extends Handler_1.default {
     async openPage(url, waitUntil = 'networkidle2') {
         this.page = await this.browser.newPage();
         await this.page.goto(url, { waitUntil: waitUntil });
-        this.page.setDefaultTimeout(this.timeout);
+        this.page.setDefaultTimeout(this.timeout_ms);
         this.log = [(0, Utils_1.niso)() + ' Begin'];
         this.page
             .on('console', message => this.say(`> ${message.type().substr(0, 3).toUpperCase()} ${message.text()}`))
@@ -248,12 +247,18 @@ class ScenarioHandler extends Handler_1.default {
             await this.page.screenshot({ path: fname + '.png' });
     }
     async doSteps(...steps) {
-        this.say(`::: short timeout ${this.timeout}, long timeout ${this.longtimeout}`);
+        this.say(`::: short timeout ${this.timeout_ms}, long timeout ${this.longtimeout_ms}`);
         const mode = (process.env.GM_MODE ?? 'error');
         const afterstep = this.sub !== '' ? `-${this.sub}` : '';
         let stepName = '';
         this.startedms = (0, Utils_1.nowms)();
         this.started = Math.trunc(this.startedms / 1000);
+        let perf = new Map();
+        const addperf = (map) => {
+            for (let [k, v] of perf.entries())
+                map.set(k, v);
+            return map;
+        };
         try {
             for (let f of steps) {
                 if (typeof f === 'string') {
@@ -264,6 +269,7 @@ class ScenarioHandler extends Handler_1.default {
                 const sta = perf_hooks_1.performance.now();
                 const res = await f(stepName);
                 const end = perf_hooks_1.performance.now();
+                perf.set(`perf{step="${this.stepsDone}",descr="${stepName.replaceAll('"', '\'')}"}`, end - sta);
                 this.say(`${this.sub ? `<${this.sub}> ` : ''}  * * * * Step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''} done in ${end - sta} ms`);
                 if (res !== null)
                     this.stepsDone++;
@@ -272,8 +278,8 @@ class ScenarioHandler extends Handler_1.default {
                 const step = this.stepsDone;
                 let isslow = false;
                 let slow = this.app.interval; // in msec, short timeout for web
-                if (this.timeout < 1000 && this.timeout > slow)
-                    slow = this.timeout; // in seconds, for remote
+                if (this.timeout_ms < 1000 && this.timeout_ms > slow)
+                    slow = this.timeout_ms; // in seconds, for remote
                 if ((0, Utils_1.now)() - this.started > slow) {
                     if (!isslow) {
                         try {
@@ -295,13 +301,14 @@ class ScenarioHandler extends Handler_1.default {
                             await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', true);
                         }
                         catch (e) { }
-                    return new Map([
+                    return addperf(new Map([
                         ["result", 100],
                         ["value", res],
                         ["timestamp", (0, Utils_1.now)()],
                         ["started", this.started],
-                        ["duration", (0, Utils_1.now)() - this.started]
-                    ]);
+                        ["duration", (0, Utils_1.now)() - this.started],
+                        [`details{step="100",descr="OK"}`, 100]
+                    ]));
                 }
                 stepName = '';
             }
@@ -322,12 +329,13 @@ class ScenarioHandler extends Handler_1.default {
         finally {
             await this.finally();
         }
-        return new Map([
+        return addperf(new Map([
             ["result", this.stepsDone],
             ["timestamp", (0, Utils_1.now)()],
             ["started", this.started],
-            ["duration", (0, Utils_1.now)() - this.started]
-        ]);
+            ["duration", (0, Utils_1.now)() - this.started],
+            [`details{step="${this.stepsDone}",descr="${stepName.replaceAll('"', '\'')}"}`, this.stepsDone]
+        ]));
     }
     conditional(condition, branch_true, branch_false) {
         const res = [];
