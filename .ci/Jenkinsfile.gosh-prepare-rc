@@ -236,6 +236,7 @@ pipeline {
                             tar -cvf git-remote-gosh git-remote-gosh.tar
                             snapcraft --use-lxd
                         """
+                        }
                     }
                 }
             }
