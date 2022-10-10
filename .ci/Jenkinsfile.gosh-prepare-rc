@@ -138,6 +138,7 @@ pipeline {
                 script {
                     dir('monitoring/gosh-mon') {     
                         sh """
+                            cp config/credentials.yml.template config/credentials.yml
                             docker build -t gosh-mon .
                             docker run --rm \
                                 -e GM_MODE=app-script \
