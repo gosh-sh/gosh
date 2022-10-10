@@ -224,7 +224,7 @@ pipeline {
             }
             steps {
                 script {
-                    if (!params.ONLYWEB) {
+                    if (!params.ONLYWEB && !params.DRYRUN) {
                         dir('git-remote-gosh') {
                         sh """
                             cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 snap/git-remote-gosh
