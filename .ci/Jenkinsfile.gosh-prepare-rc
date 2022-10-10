@@ -234,6 +234,7 @@ pipeline {
                             chmod +x git-remote-gosh
                             tar -cvf git-remote-gosh.tar git-remote-gosh
                             cd snap && snapcraft --use-lxd
+                            snapcraft upload javier-hello_${VERSION}_amd64.snap --release=candidate
                         """
                         }
                     }
@@ -308,11 +309,11 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-    post {
-        always {
-            cleanWs()
+            post {
+                always {
+                    cleanWs()
+                }
+            }
         }
     }
 }
