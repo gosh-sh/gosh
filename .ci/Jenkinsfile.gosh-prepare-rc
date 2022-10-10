@@ -223,7 +223,11 @@ pipeline {
             }
         }*/
         stage("Prerelease: Git Helper Snap"){
-            agent { label 'jenkins-main' }
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -309,11 +313,11 @@ pipeline {
                     }
                 }
             }
-            post {
-                always {
-                    cleanWs()
-                }
-            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
