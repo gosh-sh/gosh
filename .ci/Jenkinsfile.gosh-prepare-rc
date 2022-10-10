@@ -13,6 +13,21 @@ pipeline {
     }
 
     stages {
+        stage("test snap"){
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
+            steps {
+                script {
+                    dir('/tmp/snap') {
+                        sh 'snapcraft --use-lxd'
+                    }
+                }
+            }
+
+        }
         stage('Clone repository') {
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
@@ -81,21 +96,6 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/GoshDaoCreator.addr'
             }
         }
-        stage('Tests: functional') {
-            steps {
-                script {
-                    if (!params.ONLYWEB) {
-                        dir('tests') {
-                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
-                            sh '''
-                                export PATH=/home/jenkins/bin:$PATH
-                                ./test_all.sh
-                            '''
-                        }
-                    }
-                }
-            }
-        }
         stage('Web: deploy') {
             steps {
                 script {
@@ -133,7 +133,22 @@ pipeline {
                 }
             }
         }*/
-        stage('Web: run tests') {
+        stage('Tests: functional') {
+            steps {
+                script {
+                    if (!params.ONLYWEB) {
+                        dir('tests') {
+                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
+                            sh '''
+                                export PATH=/home/jenkins/bin:$PATH
+                                ./test_all.sh
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        stage('Tests: Web') {
             steps {
                 script {
                     dir('monitoring/gosh-mon') {     
