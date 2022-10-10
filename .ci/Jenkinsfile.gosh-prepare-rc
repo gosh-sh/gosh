@@ -233,11 +233,11 @@ pipeline {
                     if (!params.ONLYWEB) {
                         dir('git-remote-gosh') {
                         sh """
-                            cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 ./git-remote-gosh
+                            cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 snap/git-remote-gosh
                             sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snap/snapcraft.yaml
-                            chmod +x git-remote-gosh
-                            tar -cvf git-remote-gosh.tar git-remote-gosh
+                            chmod +x snap/git-remote-gosh
                             cd snap
+                            tar -cvf git-remote-gosh.tar git-remote-gosh
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
                             ls -la 
