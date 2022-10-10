@@ -16,14 +16,6 @@ pipeline {
     }
 
     stages {
-        stage("test snap"){
-            agent { label 'jenkins-main' }
-            steps {
-                script {
-                    sh 'ls'
-                }
-            }
-        }
         stage('Clone repository') {
             agent {
                 docker {
@@ -93,7 +85,7 @@ pipeline {
                 }
             }
         }
-        stage('Build: Docker Extension') {
+        /*stage('Build: Docker Extension') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -227,6 +219,23 @@ pipeline {
                 failure {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.log"
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
+                }
+            }
+        }*/
+        stage("Prerelease: Git Helper Snap"){
+            agent { label 'jenkins-main' }
+            steps {
+                script {
+                    if (!params.ONLYWEB) {
+                        sh """
+                            cp /var/jenkins_home/workspace/git-remote-gosh/git-remote-gosh-amd64 git-remote-gosh
+                            cp /var/jenkins_home/workspace/git-remote-gosh/snap/snapcraft.yaml ./
+                            sed -i '/VERSION_PLACEHOLDER/s/\${VERSION}/' snapcraft.yaml
+                            chmod +x git-remote-gosh
+                            tar -cvf git-remote-gosh git-remote-gosh.tar
+                            snapcraft --use-lxd
+                        """
+                    }
                 }
             }
         }
