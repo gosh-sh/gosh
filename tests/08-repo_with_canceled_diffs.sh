@@ -28,7 +28,7 @@ REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REP
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 60
+sleep 30
 
 # 2
 echo "***** cloning repo *****"
@@ -59,7 +59,7 @@ git push -u origin $BRANCH_NAME
 
 echo "***** awaiting set commit into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 120
+sleep 30
 
 cd ..
 
@@ -80,7 +80,7 @@ git push -u origin $BRANCH_NAME
 
 echo "***** awaiting set commit into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 120
+sleep 30
 
 # 8
 cd ../$REPO_NAME"-clone2"
@@ -99,7 +99,7 @@ git commit -m "added-$FILE2-now-$CHANGE"
 echo "***** push $FILE2 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-sleep 120
+sleep 30
 
 cd ..
 
