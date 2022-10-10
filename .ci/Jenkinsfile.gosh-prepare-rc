@@ -241,7 +241,7 @@ pipeline {
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
                             snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
-                            snapcraft release git-remote-gosh ${VERSION} stable
+                            snapcraft release git-remote-gosh $(snapcraft status git-remote-gosh | grep candidate | awk '{print $NF}') stable
                         """
                         }
                     }

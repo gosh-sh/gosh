@@ -11,7 +11,31 @@ pipeline {
     }
 
     stages {
+        stage("Release: Git Helper Snap"){
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
+            steps {
+                script {
+                    if (!params.ONLYWEB) {
+                        dir('git-remote-gosh') {
+                        sh """
+                            snapcraft release git-remote-gosh ${TAG} stable
+                        """
+                        }
+                    }
+                }
+            }
+        }
         stage('Publish: update release') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+                }
+            }
             steps {
                 script {
                     env.VERSION = TAG.trim()
@@ -25,6 +49,12 @@ pipeline {
             }
         }
         stage('Publish: push Git Helper Docker image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('git-remote-gosh') {
@@ -46,6 +76,12 @@ pipeline {
             }
         }
         stage('Publish: push Docker Extension image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('docker-extension') {
@@ -65,11 +101,11 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-    post {
-        always {
-            cleanWs()
+            post {
+                always {
+                    cleanWs()
+                }
+            }
         }
     }
 }
