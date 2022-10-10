@@ -12,11 +12,12 @@ REPO_NAME=repo3
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
+echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 60
 
-# clone repo
-git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
+echo "***** cloning repo *****"
+git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
 
 cd $REPO_NAME
 
@@ -39,15 +40,19 @@ echo "Hello c! its $CHANGE now" > dir/c.txt
 # create commit and push
 git add .
 git commit -m "test-push-$CHANGE"
+
+echo "***** awaiting push into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
+echo "***** awaiting set commit into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 120
 
+echo "***** cloning repo *****"
 cd ..
-git clone gosh::vps23.ton.dev://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone"
 
-# check
+echo "***** comparing repositories *****"
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
     DIFF_STATUS=0
