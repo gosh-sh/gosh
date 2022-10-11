@@ -25,7 +25,7 @@ struct GetDiffAddrResult {
 #[derive(Deserialize, Debug)]
 struct GetDiffResultResult {
     #[serde(rename = "value0")]
-    pub content: Option<Vec<u8>>,
+    pub content: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
