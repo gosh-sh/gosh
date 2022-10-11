@@ -192,9 +192,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         this.profile = await this.gosh.getProfile({ username })
         this.wallet = await this._getWallet(0, keys)
 
-        const accessed = await this.profile.getOwners()
-        const isMember = await this._isAuthMember()
-        if (isMember && accessed.indexOf(`0x${keys.public}`) < 0) {
+        const { value0: pubkey } = await this.wallet.runLocal('getAccess', {})
+        console.debug('DaoAdapterAuth', pubkey)
+        if (!pubkey) {
             await this.profile.turnOn(this.wallet.address, keys.public, keys)
         }
     }
