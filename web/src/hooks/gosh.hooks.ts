@@ -1,52 +1,24 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
-    goshBlobAtom,
     goshBranchesAtom,
     goshCurrBranchSelector,
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
 } from '../store/gosh.state'
+import { AppConfig, TSmvBalanceDetails, TWalletDetails, retry } from 'react-gosh'
 import {
-    getRepoTree,
-    AppConfig,
-    ZERO_COMMIT,
-    TCreateCommitCallbackParams,
-    TGoshBranch,
-    TSmvBalanceDetails,
-    useGosh,
-    useGoshVersions,
-    TWalletDetails,
-    retry,
-} from 'react-gosh'
-import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+    IGoshDaoAdapter,
+    IGoshRepositoryAdapter,
+    IGoshWallet,
+} from 'react-gosh/dist/gosh/interfaces'
 import { GoshSmvLocker } from 'react-gosh/dist/gosh/0.11.0/goshsmvlocker'
-import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
-import { GoshSnapshot } from 'react-gosh/dist/gosh/0.11.0/goshsnapshot'
-
-/** Create GoshRepository object */
-export const useGoshRepo = (daoName?: string, name?: string) => {
-    const gosh = useGosh()
-    const [goshRepo, setGoshRepo] = useState<IGoshRepository>()
-
-    useEffect(() => {
-        const _getRepo = async () => {
-            if (!gosh || !name || !daoName) return
-
-            const repository = await gosh.getRepository({ name: `${daoName}/${name}` })
-            setGoshRepo(repository)
-        }
-
-        _getRepo()
-    }, [gosh, daoName, name])
-
-    return goshRepo
-}
+import { TBranch, TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
 
 /** Reload GoshRepo branch/branches and update app state */
 export const useGoshRepoBranches = (
-    goshRepo?: IGoshRepository,
+    goshRepo?: IGoshRepositoryAdapter,
     branchName: string = 'main',
 ) => {
     const [branches, setBranches] = useRecoilState(goshBranchesAtom)
@@ -59,6 +31,7 @@ export const useGoshRepoBranches = (
 
     const updateBranch = useCallback(
         async (branchName: string) => {
+            console.debug('Update branch', branchName)
             const branch = await goshRepo?.getBranch(branchName)
             if (branch) {
                 setBranches((currVal) =>
@@ -74,8 +47,8 @@ export const useGoshRepoBranches = (
 
 /** Get GoshRepo tree and selectors */
 export const useGoshRepoTree = (
-    repo?: IGoshRepository,
-    branch?: TGoshBranch,
+    repo?: IGoshRepositoryAdapter,
+    branch?: TBranch,
     filterPath?: string,
     isDisabled?: boolean,
 ) => {
@@ -87,35 +60,42 @@ export const useGoshRepoTree = (
     const getTreeItem = (path?: string) => goshRepoBlobSelector(path)
 
     useEffect(() => {
-        const getTree = async (repo: IGoshRepository, commitAddr: string) => {
+        const getTree = async (repo: IGoshRepositoryAdapter, commit: string) => {
             setTree(undefined)
-            const tree = await retry(() => getRepoTree(repo, commitAddr, filterPath), 2)
+            const tree = await retry(() => repo.getTree(commit, filterPath), 2)
             setTree(tree)
         }
 
-        if (repo && branch?.commitAddr && isEffectNeeded) {
-            getTree(repo, branch.commitAddr)
+        if (repo && branch?.commit.name && isEffectNeeded) {
+            getTree(repo, branch.commit.name)
         }
-    }, [repo, branch?.commitAddr, filterPath, isEffectNeeded, setTree])
+    }, [repo, branch?.commit.name, filterPath, isEffectNeeded, setTree])
 
     return { tree, getSubtree, getTreeItems, getTreeItem }
 }
 
 export const useCommitProgress = () => {
-    const [progress, setProgress] = useState<TCreateCommitCallbackParams>({})
+    const [progress, setProgress] = useState<TPushCallbackParams>({})
 
-    const progressCallback = (params: TCreateCommitCallbackParams) => {
-        setProgress((currVal) => ({ ...currVal, ...params }))
+    const progressCallback = (params: TPushCallbackParams) => {
+        setProgress((currVal) => {
+            const { treesDeploy, snapsDeploy, diffsDeploy, tagsDeploy } = params
+
+            return {
+                ...currVal,
+                ...params,
+                treesDeploy: { ...currVal.treesDeploy, ...treesDeploy },
+                snapsDeploy: { ...currVal.snapsDeploy, ...snapsDeploy },
+                diffsDeploy: { ...currVal.diffsDeploy, ...diffsDeploy },
+                tagsDeploy: { ...currVal.tagsDeploy, ...tagsDeploy },
+            }
+        })
     }
 
     return { progress, progressCallback }
 }
 
-export const useSmvBalance = (wallet?: {
-    instance: IGoshWallet
-    details: TWalletDetails
-}) => {
-    const { versions } = useGoshVersions()
+export const useSmvBalance = (dao: IGoshDaoAdapter, isAuthenticated: boolean) => {
     const [details, setDetails] = useState<TSmvBalanceDetails>({
         balance: 0,
         smvBalance: 0,
@@ -125,10 +105,11 @@ export const useSmvBalance = (wallet?: {
 
     useEffect(() => {
         const getDetails = async () => {
-            if (!wallet || !wallet.details.isDaoMember) return
+            if (!isAuthenticated) return
 
-            const balance = await wallet.instance.getSmvTokenBalance()
-            const lockerAddr = await wallet.instance.getSmvLockerAddr()
+            const wallet = await dao._getWallet(0)
+            const balance = await wallet.getSmvTokenBalance()
+            const lockerAddr = await wallet.getSmvLockerAddr()
             const locker = new GoshSmvLocker(AppConfig.goshclient, lockerAddr)
             const details = await locker.getDetails()
             setDetails((state) => ({
@@ -152,70 +133,7 @@ export const useSmvBalance = (wallet?: {
         return () => {
             clearInterval(interval)
         }
-    }, [wallet])
+    }, [dao, isAuthenticated])
 
     return details
-}
-
-export const useGoshBlob = (
-    repo?: IGoshRepository,
-    branchName?: string,
-    path?: string,
-    fromState: boolean = false,
-) => {
-    const [blob, setBlob] = useRecoilState(goshBlobAtom)
-    const { versions } = useGoshVersions()
-    const [isEffectNeeded] = useState<boolean>(!fromState || (fromState && !blob.address))
-    const { branch } = useGoshRepoBranches(repo, branchName)
-    const tree = useGoshRepoTree(repo, branch, path, !isEffectNeeded)
-    const treeItem = useRecoilValue(tree.getTreeItem(path))
-
-    useEffect(() => {
-        const _getBlobDetails = async () => {
-            setBlob({ isFetching: true })
-
-            if (!repo || !branch?.name || !branch.commitAddr || !path) {
-                setBlob({ isFetching: false })
-                return
-            }
-
-            const commit = new GoshCommit(AppConfig.goshclient, branch.commitAddr)
-            const commitName = await commit.getName()
-            if (commitName === ZERO_COMMIT) {
-                setBlob({ isFetching: false })
-                return
-            }
-
-            const address = await repo.getSnapshotAddr(branch.name, path)
-            console.debug('Snapshot address', address)
-            setBlob((state) => ({
-                ...state,
-                path,
-                address,
-                commit: commitName,
-            }))
-        }
-
-        if (isEffectNeeded) _getBlobDetails()
-    }, [repo, branch?.name, branch?.commitAddr, path, isEffectNeeded, setBlob])
-
-    useEffect(() => {
-        const _getBlobContent = async () => {
-            if (!blob.address || !blob.commit || !treeItem) return
-
-            console.debug('Tree item', treeItem)
-            const snap = new GoshSnapshot(AppConfig.goshclient, blob.address)
-            const data = await snap.getSnapshot(blob.commit, treeItem)
-            setBlob((state) => ({
-                ...state,
-                content: data.content,
-                isIpfs: data.isIpfs,
-                isFetching: false,
-            }))
-        }
-
-        if (isEffectNeeded && blob.isFetching) _getBlobContent()
-    }, [blob.address, blob.commit, blob.isFetching, treeItem, isEffectNeeded, setBlob])
-
-    return { blob, treeItem }
 }

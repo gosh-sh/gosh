@@ -1,7 +1,7 @@
 import { atom, selectorFamily } from 'recoil'
-import { TGoshBranch, TGoshTree, TGoshTreeItem } from 'react-gosh'
+import { TBranch, TTree, TTreeItem } from 'react-gosh/dist/types/repo.types'
 
-export const goshBranchesAtom = atom<TGoshBranch[]>({
+export const goshBranchesAtom = atom<TBranch[]>({
     key: 'GoshBranchesAtom',
     default: [],
 })
@@ -16,9 +16,7 @@ export const goshCurrBranchSelector = selectorFamily({
         },
 })
 
-export const goshRepoTreeAtom = atom<
-    { tree: TGoshTree; items: TGoshTreeItem[] } | undefined
->({
+export const goshRepoTreeAtom = atom<{ tree: TTree; items: TTreeItem[] } | undefined>({
     key: 'GoshRepoTreeAtom',
     default: undefined,
 })
@@ -67,16 +65,4 @@ export const goshRepoBlobSelector = selectorFamily({
             })
             return filtered[0]
         },
-})
-
-export const goshBlobAtom = atom<{
-    address?: string
-    commit?: string
-    path?: string
-    content?: string | Buffer
-    isIpfs?: boolean
-    isFetching: boolean
-}>({
-    key: 'GoshBlobAtom',
-    default: { isFetching: true },
 })

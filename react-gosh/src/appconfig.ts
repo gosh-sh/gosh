@@ -7,7 +7,7 @@ class AppConfig {
     static goshroot: IGoshRoot
     static goshclient: TonClient
     static versions: { [ver: string]: string }
-    static ipfs: string
+    static goshipfs: string
     static dockerclient?: any
 
     static setup(params: {
@@ -26,7 +26,7 @@ class AppConfig {
         AppConfig.goshclient = new TonClient(goshclient)
         AppConfig.goshroot = new GoshRoot(AppConfig.goshclient, goshroot)
         AppConfig.versions = goshver
-        AppConfig.ipfs = ipfs
+        AppConfig.goshipfs = ipfs
     }
 }
 

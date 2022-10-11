@@ -5,50 +5,113 @@ import {
     ResultOfProcessMessage,
     TonClient,
 } from '@eversdk/core'
+import { TDao, TGoshEventDetails, TProfileDetails, TValidationResult } from '../types'
 import {
-    ICreateCommitCallback,
-    TDaoDetails,
-    TGoshBranch,
-    TGoshCommitContent,
-    TGoshCommitDetails,
-    TGoshDiff,
-    TGoshEventDetails,
-    TGoshTreeItem,
-    TProfileDetails,
-    TValidationResult,
-} from '../types'
+    IPushCallback,
+    TBranch,
+    TCommit,
+    TRepository,
+    TTag,
+    TTree,
+    TTreeItem,
+} from '../types/repo.types'
 
 interface IGoshAdapter {
     client: TonClient
     goshroot: IGoshRoot
     gosh: IGosh
 
-    setAuth(username: string, keys: KeyPair, dao: IGoshDao): Promise<void>
+    setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
 
-    getProfile(username: string): Promise<IGoshProfile>
+    getProfile(options: { username?: string; address?: string }): Promise<IGoshProfile>
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 
-    getDao(options: { name?: string; address?: string }): Promise<IGoshDao>
-    getDaoWalletCodeHash(): Promise<string>
-    isAuthDaoOwner(): Promise<boolean>
-    isAuthDaoMember(): Promise<boolean>
+    getDao(options: { name?: string; address?: string }): Promise<IGoshDaoAdapter>
 
-    getRepository(options: { name?: string; address?: string }): Promise<IGoshRepository>
+    getRepository(name: string): Promise<IGoshRepositoryAdapter>
     getRepositoryCodeHash(dao: string): Promise<string>
-    deployRepository(
-        name: string,
-        prev?: { addr: string; version: string },
-    ): Promise<IGoshRepository>
-
-    getBlob(repository: string, branch: string, path: string): Promise<string | Buffer>
 
     getTvmHash(data: string | Buffer): Promise<string>
 
     isValidDaoName(name: string): TValidationResult
+}
 
-    // TODO: May be remove from this interface
+interface IGoshDaoAdapter {
+    isDeployed(): Promise<boolean>
+
+    setAuth(username: string, keys: KeyPair): Promise<void>
+
+    getAddress(): string
+    getName(): Promise<string>
+    getVersion(): string
+    getDetails(): Promise<TDao>
+    getRepository(options: {
+        name?: string
+        address?: string
+    }): Promise<IGoshRepositoryAdapter>
+    getMemberWallet(options: {
+        profile?: string
+        address?: string
+        index?: number
+    }): Promise<IGoshWallet>
+
     getSmvPlatformCode(): Promise<string>
+    getSmvProposalCodeHash(): Promise<string>
+    getSmvClientCode(): Promise<string>
+
+    deployRepository(
+        name: string,
+        prev?: { addr: string; version: string } | undefined,
+    ): Promise<IGoshRepositoryAdapter>
+
+    createMember(username: string[]): Promise<void>
+    deleteMember(username: string[]): Promise<void>
+
+    // TODO: Remove from interface and make private after useWallet hook removal
+    _isAuthMember(): Promise<boolean>
+    _getOwner(): Promise<string>
+    _getWallet(index: number, keys?: KeyPair): Promise<IGoshWallet>
+}
+
+interface IGoshRepositoryAdapter {
+    auth?: any
+
+    isDeployed(): Promise<boolean>
+
+    getName(): Promise<string>
+    getHead(): Promise<string>
+    getDetails(): Promise<TRepository>
+    getTree(commit: string, search?: string): Promise<{ tree: TTree; items: TTreeItem[] }>
+    getBlob(options: { fullpath?: string; address?: string }): Promise<string | Buffer>
+    getCommit(options: { name?: string; address?: string }): Promise<TCommit>
+    getCommitBlob(
+        treepath: string,
+        commit: string,
+    ): Promise<{ previous: string | Buffer; current: string | Buffer }>
+    getCommitBlobs(name: string): Promise<string[]>
+    getBranch(name: string): Promise<TBranch>
+    getBranches(): Promise<TBranch[]>
+    getTags(): Promise<TTag[]>
+
+    deployBranch(name: string, from: string): Promise<void>
+    deleteBranch(name: string): Promise<void>
+    lockBranch(name: string): Promise<void>
+    unlockBranch(name: string): Promise<void>
+
+    setHead(branch: string): Promise<void>
+    push(
+        branch: string,
+        blobs: {
+            treePath: string
+            original: string | Buffer
+            modified: string | Buffer
+        }[],
+        message: string,
+        tags?: string,
+        branchParent?: string,
+        callback?: IPushCallback,
+    ): Promise<void>
 }
 
 interface IContract {
@@ -67,7 +130,7 @@ interface IContract {
         decode?: boolean,
         all?: boolean,
         messages?: any[],
-    ): Promise<any[]>
+    ): Promise<{ cursor?: string; messages: any[] }>
     run(
         functionName: string,
         input: object,
@@ -96,7 +159,7 @@ interface IGoshProfile extends IContract {
     getName(): Promise<string>
     getDetails(): Promise<TProfileDetails>
     getProfileDao(name: string): Promise<IGoshProfileDao>
-    getDaos(): Promise<IGoshDao[]>
+    getDaos(): Promise<IGoshDaoAdapter[]>
     getOwners(): Promise<string[]>
     isOwnerPubkey(pubkey: string): Promise<boolean>
 
@@ -105,7 +168,7 @@ interface IGoshProfile extends IContract {
         name: string,
         members: string[],
         prev?: string,
-    ): Promise<IGoshDao>
+    ): Promise<IGoshDaoAdapter>
 
     turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void>
 }
@@ -121,50 +184,15 @@ interface IGosh extends IContract {
 interface IGoshDao extends IContract {
     address: string
 
-    getName(): Promise<string>
-    getDetails(): Promise<TDaoDetails>
-    getWalletAddr(profile: string, index: number): Promise<string>
-
     /** Old interface methods */
     getWallets(): Promise<string[]>
-    getProfiles(): Promise<{ profile: string; wallet: string }[]>
-    getSmvRootTokenAddr(): Promise<string>
-    getSmvProposalCode(): Promise<string>
-    getSmvClientCode(): Promise<string>
-    getOwner(): Promise<string>
-    getOwnerWallet(keys?: KeyPair): Promise<IGoshWallet>
-    isMember(profileAddr: string): Promise<boolean>
-    mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
+    // mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 interface IGoshRepository extends IContract {
     address: string
-    meta?: {
-        name: string
-        branchCount: number
-        tags: {
-            content: string
-            commit: string
-        }[]
-    }
 
-    /** Old interface methods */
-    load(): Promise<void>
-    getGosh(version: string): Promise<any>
     getName(): Promise<string>
-    getBranches(): Promise<TGoshBranch[]>
-    getBranch(name: string): Promise<TGoshBranch>
-    getHead(): Promise<string>
-    getCommitAddr(commitSha: string): Promise<string>
-    getBlobAddr(blobName: string): Promise<string>
-    getTagCode(): Promise<string>
-    getTags(): Promise<{ content: string; commit: string }[]>
-    getGoshAddr(): Promise<string>
-    getSnapshotCode(branch: string): Promise<string>
-    getSnapshotAddr(branch: string, filename: string): Promise<string>
-    getTreeAddr(treeName: string): Promise<string>
-    getDiffAddr(commitName: string, index1: number, index2: number): Promise<string>
-    isBranchProtected(branch: string): Promise<boolean>
 }
 
 interface IGoshWallet extends IContract {
@@ -172,90 +200,9 @@ interface IGoshWallet extends IContract {
     profile?: IGoshProfile
 
     /** Old interface */
-    getDao(): Promise<IGoshDao>
-    getGosh(version: string): Promise<IGoshAdapter>
     getAccess(): Promise<string | null>
-    deployDaoWallet(profileAddr: string): Promise<IGoshWallet>
-    deleteDaoWallet(profileAddr: string): Promise<void>
 
     getSmvLocker(): Promise<IGoshSmvLocker>
-    createCommit(
-        repo: IGoshRepository,
-        branch: TGoshBranch,
-        pubkey: string,
-        blobs: {
-            name: string
-            modified: string | Buffer
-            original?: string | Buffer
-            isIpfs?: boolean
-            treeItem?: TGoshTreeItem
-        }[],
-        message: string,
-        tags?: string,
-        parent2?: TGoshBranch,
-        callback?: ICreateCommitCallback,
-    ): Promise<void>
-
-    getDaoAddr(): Promise<string>
-    getRootAddr(): Promise<string>
-    getPubkey(): Promise<string>
-
-    deployBranch(
-        repo: IGoshRepository,
-        newName: string,
-        fromName: string,
-        fromCommit: string,
-    ): Promise<void>
-    deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>
-    deployCommit(
-        repo: IGoshRepository,
-        branch: TGoshBranch,
-        commitName: string,
-        commitContent: string,
-        parentAddrs: string[],
-        treeAddr: string,
-        upgrade: boolean,
-        diffs: TGoshDiff[],
-    ): Promise<void>
-    deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string>
-    deployTag(repo: IGoshRepository, commitName: string, content: string): Promise<void>
-    deployNewSnapshot(
-        repoAddr: string,
-        branchName: string,
-        commitName: string,
-        filename: string,
-        data: string,
-        ipfs: string | null,
-    ): Promise<string>
-    deleteSnapshot(addr: string): Promise<void>
-    getSnapshotCode(branch: string, repoAddr: string): Promise<string>
-    getSnapshotAddr(
-        repoAddr: string,
-        branchName: string,
-        filename: string,
-    ): Promise<string>
-    setCommit(
-        repoName: string,
-        branchName: string,
-        commitName: string,
-        filesCount: number,
-        commitsCount: number,
-    ): Promise<void>
-    startProposalForSetCommit(
-        repoName: string,
-        branchName: string,
-        commitName: string,
-        filesCount: number,
-        commitsCount: number,
-    ): Promise<void>
-    startProposalForAddProtectedBranch(
-        repoName: string,
-        branchName: string,
-    ): Promise<void>
-    startProposalForDeleteProtectedBranch(
-        repoName: string,
-        branchName: string,
-    ): Promise<void>
     getSmvLockerAddr(): Promise<string>
     getSmvTokenBalance(): Promise<number>
     getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>
@@ -270,13 +217,6 @@ interface IGoshWallet extends IContract {
     ): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
-    getDiffAddr(
-        repoName: string,
-        commitName: string,
-        index1: number,
-        index2: number,
-    ): Promise<string>
-    setHead(repoName: string, branch: string): Promise<void>
     deployContent(
         repoName: string,
         commitName: string,
@@ -287,64 +227,25 @@ interface IGoshWallet extends IContract {
 }
 
 interface IGoshCommit extends IContract {
-    /** Old interface */
     address: string
-    meta?: {
-        repoAddr: string
-        branchName: string
-        sha: string
-        content: TGoshCommitContent
-        parents: string[]
-    }
-
-    load(): Promise<void>
-    getDetails(): Promise<TGoshCommitDetails>
-    getCommit(): Promise<any>
-    getName(): Promise<string>
-    getParents(): Promise<string[]>
-    getBlobs(): Promise<string[]>
-    getTree(): Promise<string>
-    getDiffAddr(index1: number, index2: number): Promise<string>
 }
 
 interface IGoshDiff extends IContract {
     address: string
-
-    /** Old interface */
-    getNextAddr(): Promise<string>
-    getDiffs(): Promise<TGoshDiff[]>
 }
 
 interface IGoshSnapshot extends IContract {
     address: string
 
-    /** Old interface */
     getName(): Promise<string>
-    getSnapshot(
-        commitName: string,
-        treeItem: TGoshTreeItem,
-    ): Promise<{ content: string | Buffer; patched: string; isIpfs: boolean }>
-    getRepoAddr(): Promise<string>
 }
 
 interface IGoshTree extends IContract {
     address: string
-
-    /** Old interface */
-    getTree(): Promise<{ tree: TGoshTreeItem[]; ipfs: string }>
-    getSha(): Promise<any>
 }
 
 interface IGoshTag extends IContract {
     address: string
-    meta?: {
-        content: string
-    }
-
-    /** Old interface */
-    load(): Promise<void>
-    getCommit(): Promise<string>
-    getContent(): Promise<string>
 }
 
 interface IGoshContentSignature extends IContract {
@@ -412,6 +313,8 @@ interface IGoshSmvTokenRoot extends IContract {
 
 export {
     IGoshAdapter,
+    IGoshDaoAdapter,
+    IGoshRepositoryAdapter,
     IContract,
     IGoshRoot,
     IGoshProfile,

@@ -17,24 +17,21 @@ import {
     useSmvBalance,
 } from '../../hooks/gosh.hooks'
 import {
-    TGoshBranch,
-    TGoshTreeItem,
     userAtom,
     getCodeLanguageFromFilename,
-    getRepoTree,
     splitByChunk,
     EGoshError,
     GoshError,
     sleep,
     retry,
+    getTreeItemFullPath,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
 import ToastError from '../../components/Error/ToastError'
-import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
-import { GoshSnapshot } from 'react-gosh/dist/gosh/0.11.0/goshsnapshot'
-import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshRepositoryAdapter, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { TBranch, TTreeItem } from 'react-gosh/dist/types/repo.types'
 
 type TCommitFormValues = {
     title: string
@@ -47,21 +44,21 @@ const PullCreatePage = () => {
     const userState = useRecoilValue(userAtom)
     const { daoName, repoName } = useParams()
     const navigate = useNavigate()
-    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const smvBalance = useSmvBalance(wallet)
+    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
     const { branches, updateBranches } = useGoshRepoBranches(repo)
     const [compare, setCompare] = useState<
         | {
-              to?: { item: TGoshTreeItem; blob: any }
-              from: { item: TGoshTreeItem; blob: any }
+              to?: { treePath: string; content: any }
+              from: { treePath: string; content: any }
               showDiff?: boolean
           }[]
         | undefined
     >([])
     const [compareBranches, setCompareBranches] = useState<{
-        fromBranch?: TGoshBranch
-        toBranch?: TGoshBranch
+        fromBranch?: TBranch
+        toBranch?: TBranch
     }>({
         fromBranch: branches.find((branch) => branch.name === 'main'),
         toBranch: branches.find((branch) => branch.name === 'main'),
@@ -73,37 +70,27 @@ const PullCreatePage = () => {
     const { progress, progressCallback } = useCommitProgress()
 
     const getBlob = async (
-        wallet: IGoshWallet,
-        repo: IGoshRepository,
-        branch: TGoshBranch,
-        item: TGoshTreeItem,
-    ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
-        const commit = new GoshCommit(wallet.account.client, branch.commitAddr)
-        const commitName = await commit.getName()
-
-        const filename = `${item.path ? `${item.path}/` : ''}${item.name}`
-        const snapAddr = await repo.getSnapshotAddr(branch.name, filename)
-        const snap = new GoshSnapshot(wallet.account.client, snapAddr)
-        const data = await snap.getSnapshot(commitName, item)
-        return data
+        repo: IGoshRepositoryAdapter,
+        branch: TBranch,
+        item: TTreeItem,
+    ): Promise<string | Buffer> => {
+        const treepath = getTreeItemFullPath(item)
+        return await repo.getBlob({ fullpath: `${branch.name}/${treepath}` })
     }
 
-    const buildDiff = async (
-        wallet: IGoshWallet,
-        branches: { fromBranch: TGoshBranch; toBranch: TGoshBranch },
-    ) => {
+    const buildDiff = async (branches: { fromBranch: TBranch; toBranch: TBranch }) => {
         const { fromBranch, toBranch } = branches
-        if (fromBranch.commitAddr === toBranch.commitAddr) {
+        if (fromBranch.commit.address === toBranch.commit.address) {
             setCompare([])
             return
         }
 
-        const fromTree = await getRepoTree(repo, fromBranch.commitAddr)
+        const fromTree = await repo.getTree(fromBranch.commit.name)
         const fromTreeItems = [...fromTree.items].filter(
             (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
         )
         console.debug('[Pull create] - From tree blobs:', fromTreeItems)
-        const toTree = await getRepoTree(repo, toBranch.commitAddr)
+        const toTree = await repo.getTree(toBranch.commit.name)
         const toTreeItems = [...toTree.items].filter(
             (item) => ['blob', 'blobExecutable', 'link'].indexOf(item.type) >= 0,
         )
@@ -132,8 +119,8 @@ const PullCreatePage = () => {
 
         // Merge intersected and added and generate compare list
         const compare: {
-            to?: { item: TGoshTreeItem; blob: any }
-            from: { item: TGoshTreeItem; blob: any }
+            to?: { treePath: string; content: any }
+            from: { treePath: string; content: any }
             showDiff?: boolean
         }[] = []
 
@@ -147,11 +134,17 @@ const PullCreatePage = () => {
                         (tItem) => tItem.path === item.path && tItem.name === item.name,
                     )
                     if (fromItem && toItem) {
-                        const fromBlob = await getBlob(wallet, repo, fromBranch, fromItem)
-                        const toBlob = await getBlob(wallet, repo, toBranch, toItem)
+                        const fromBlob = await getBlob(repo, fromBranch, fromItem)
+                        const toBlob = await getBlob(repo, toBranch, toItem)
                         compare.push({
-                            to: { item: toItem, blob: toBlob },
-                            from: { item: fromItem, blob: fromBlob },
+                            to: {
+                                treePath: getTreeItemFullPath(toItem),
+                                content: toBlob,
+                            },
+                            from: {
+                                treePath: getTreeItemFullPath(fromItem),
+                                content: fromBlob,
+                            },
                             showDiff:
                                 compare.length < 10 ||
                                 Buffer.isBuffer(toBlob) ||
@@ -170,10 +163,10 @@ const PullCreatePage = () => {
         for (const chunk of splitByChunk(added, 10)) {
             await Promise.all(
                 chunk.map(async (item) => {
-                    const fromBlob = await getBlob(wallet, repo, fromBranch, item)
+                    const fromBlob = await getBlob(repo, fromBranch, item)
                     compare.push({
                         to: undefined,
-                        from: { item, blob: fromBlob },
+                        from: { treePath: getTreeItemFullPath(item), content: fromBlob },
                         showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
                     })
                     setBlobProgress((currVal) => ({
@@ -202,11 +195,10 @@ const PullCreatePage = () => {
         setCompare(undefined)
         const { fromBranch, toBranch } = compareBranches
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (!fromBranch?.commitAddr || !toBranch?.commitAddr) {
+            if (!fromBranch?.commit.address || !toBranch?.commit.address) {
                 throw new GoshError(EGoshError.NO_BRANCH)
             }
-            await retry(() => buildDiff(wallet.instance, { fromBranch, toBranch }), 3)
+            await retry(() => buildDiff({ fromBranch, toBranch }), 3)
         } catch (e: any) {
             setCompare([])
             console.error(e.message)
@@ -218,7 +210,6 @@ const PullCreatePage = () => {
         const { fromBranch, toBranch } = compareBranches
         try {
             if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!repoName) throw new GoshError(EGoshError.NO_REPO)
             if (!fromBranch || !toBranch) throw new GoshError(EGoshError.NO_BRANCH)
             if (fromBranch.name === toBranch.name || !compare?.length) {
@@ -227,16 +218,12 @@ const PullCreatePage = () => {
 
             // Prepare blobs
             const blobs = compare
-                .filter(({ from }) => !!from.item)
+                .filter(({ from }) => !!from.treePath)
                 .map(({ from, to }) => {
                     return {
-                        name: `${from.item.path ? `${from.item.path}/` : ''}${
-                            from.item.name
-                        }`,
-                        modified: from.blob.content ?? '',
-                        original: to?.blob.content,
-                        isIpfs: from.blob.isIpfs || to?.blob.isIpfs,
-                        treeItem: from.item,
+                        treePath: from.treePath,
+                        modified: from.content ?? '',
+                        original: to?.content,
                     }
                 })
             console.debug('Blobs', blobs)
@@ -249,24 +236,18 @@ const PullCreatePage = () => {
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             const pubkey = userState.keys.public
-            await retry(
-                () =>
-                    wallet.instance.createCommit(
-                        repo,
-                        toBranch,
-                        pubkey,
-                        blobs,
-                        message,
-                        values.tags,
-                        fromBranch,
-                        progressCallback,
-                    ),
-                3,
+            await repo.push(
+                toBranch.name,
+                blobs,
+                message,
+                values.tags,
+                fromBranch.name,
+                progressCallback,
             )
 
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) {
-                await retry(() => wallet.instance.deleteBranch(repo, fromBranch.name), 3)
+                await retry(() => repo.deleteBranch(fromBranch.name), 3)
             }
             await updateBranches()
             navigate(
@@ -281,7 +262,9 @@ const PullCreatePage = () => {
         }
     }
 
-    if (!wallet) return <Navigate to={`/o/${daoName}/r/${repoName}`} />
+    if (!dao.details.isAuthenticated) {
+        return <Navigate to={`/o/${daoName}/r/${repoName}`} />
+    }
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">
@@ -347,25 +330,22 @@ const PullCreatePage = () => {
                         </div>
 
                         {compare.map(({ to, from, showDiff }, index) => {
-                            const item = to?.item || from?.item
-                            const fileName = `${item.path ? `${item.path}/` : ''}${
-                                item.name
-                            }`
-                            if (!fileName) return null
+                            const treePath = to?.treePath || from.treePath
+                            if (!treePath) return null
 
-                            const language = getCodeLanguageFromFilename(monaco, fileName)
+                            const language = getCodeLanguageFromFilename(monaco, treePath)
                             return (
                                 <div
                                     key={index}
                                     className="my-5 border rounded overflow-hidden"
                                 >
                                     <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                        {fileName}
+                                        {treePath}
                                     </div>
                                     {showDiff ? (
                                         <BlobDiffPreview
-                                            original={to?.blob.content}
-                                            modified={from?.blob.content}
+                                            original={to?.content}
+                                            modified={from?.content}
                                             modifiedLanguage={language}
                                         />
                                     ) : (

@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react'
 import Spinner from '../../components/Spinner'
-import {
-    getBlobAtCommit,
-    getCommitTime,
-    getRepoTree,
-    AppConfig,
-    loadFromIPFS,
-    zstd,
-    useGosh,
-} from 'react-gosh'
-import { TGoshCommitDetails, TGoshDiff, TGoshTreeItem } from 'react-gosh'
+import { getCommitTime, AppConfig, zstd, TGoshDiff } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
 import { GoshDiff } from 'react-gosh/dist/gosh/0.11.0/goshdiff'
@@ -19,6 +10,9 @@ import * as Diff from 'diff'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { IGoshCommit, IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
+import { TCommit, TTreeItem } from 'react-gosh/dist/types/repo.types'
+import { useOutletContext } from 'react-router-dom'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
 
 type TCommitBlobsType = {
     className?: string
@@ -31,10 +25,10 @@ type TCommitBlobsType = {
 
 const PREvent = (props: TCommitBlobsType) => {
     const { className, daoName, repoName, branchName, commitName, status } = props
-    const gosh = useGosh()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
-    const [details, setDetails] = useState<TGoshCommitDetails>()
+    const [details, setDetails] = useState<TCommit>()
 
     const renderCommitter = (committer: string) => {
         const [pubkey] = committer.split(' ')
@@ -49,164 +43,166 @@ const PREvent = (props: TCommitBlobsType) => {
     }
 
     /** Get all diffs for commit */
-    const getCommitDiffs = async (commit: IGoshCommit, fileCount: number) => {
-        const diffs: TGoshDiff[] = []
-        for (let index1 = 0; index1 < fileCount; index1++) {
-            let index2 = 0
-            while (true) {
-                const address = await commit.getDiffAddr(index1, index2)
-                const diff = new GoshDiff(AppConfig.goshclient, address)
-                const acc = await diff.account.getAccount()
-                if (acc.acc_type !== AccountType.active) break
+    // const getCommitDiffs = async (commit: IGoshCommit, fileCount: number) => {
+    //     const diffs: TGoshDiff[] = []
+    //     for (let index1 = 0; index1 < fileCount; index1++) {
+    //         let index2 = 0
+    //         while (true) {
+    //             const address = await commit.getDiffAddr(index1, index2)
+    //             const diff = new GoshDiff(AppConfig.goshclient, address)
+    //             const acc = await diff.account.getAccount()
+    //             if (acc.acc_type !== AccountType.active) break
 
-                diffs.push(...(await diff.getDiffs()))
-                index2++
-            }
-        }
+    //             diffs.push(...(await diff.getDiffs()))
+    //             index2++
+    //         }
+    //     }
 
-        return diffs
-    }
+    //     return diffs
+    // }
 
     /** Build diff (prev content <-> curr content) for blob */
-    const getDiff = async (
-        repo: IGoshRepository,
-        snapaddr: string,
-        commit: string,
-        treeitem: TGoshTreeItem,
-        diffs: TGoshDiff[],
-    ) => {
-        if (!diffs.length) {
-            const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
+    // const getDiff = async (
+    //     repo: IGoshRepository,
+    //     snapaddr: string,
+    //     commit: string,
+    //     treeitem: TTreeItem,
+    //     diffs: TGoshDiff[],
+    // ) => {
+    //     if (!diffs.length) {
+    //         const diff = await
 
-            let prev
-            if (curr.prevcommit) {
-                prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
-            }
+    //         const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
 
-            return { curr: curr.content, prev: prev?.content || '' }
-        } else {
-            const prev = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
-            console.debug('Prev snap state', prev)
+    //         let prev
+    //         if (curr.prevcommit) {
+    //             prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
+    //         }
 
-            let curr = prev.content
-            for (const { ipfs, patch } of diffs) {
-                if (ipfs) {
-                    const compressed = (await loadFromIPFS(ipfs)).toString()
-                    const decompressed = await zstd.decompress(compressed, true)
-                    curr = decompressed
-                } else if (patch && !Buffer.isBuffer(curr)) {
-                    const decompressed = await zstd.decompress(
-                        Buffer.from(patch, 'hex').toString('base64'),
-                        true,
-                    )
-                    curr = Diff.applyPatch(curr, decompressed)
-                }
-            }
-            console.debug('Curr snap state', curr)
-            return { curr, prev: prev.content }
-        }
-    }
+    //         return { curr: curr.content, prev: prev?.content || '' }
+    //     } else {
+    //         const prev = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
+    //         console.debug('Prev snap state', prev)
+
+    //         let curr = prev.content
+    //         for (const { ipfs, patch } of diffs) {
+    //             if (ipfs) {
+    //                 const compressed = (await loadFromIPFS(ipfs)).toString()
+    //                 const decompressed = await zstd.decompress(compressed, true)
+    //                 curr = decompressed
+    //             } else if (patch && !Buffer.isBuffer(curr)) {
+    //                 const decompressed = await zstd.decompress(
+    //                     Buffer.from(patch, 'hex').toString('base64'),
+    //                     true,
+    //                 )
+    //                 curr = Diff.applyPatch(curr, decompressed)
+    //             }
+    //         }
+    //         console.debug('Curr snap state', curr)
+    //         return { curr, prev: prev.content }
+    //     }
+    // }
 
     /** Load diff for blob */
-    const onLoadDiff = async (index: number) => {
-        setBlobs((curr) =>
-            curr.map((item, i) => {
-                if (i === index) return { ...item, isFetching: true }
-                else return item
-            }),
-        )
-        const { repo, snap, commit, treeitem, diffs } = blobs[index]
-        const { curr, prev } = await getDiff(repo, snap, commit, treeitem, diffs)
-        setBlobs((state) =>
-            state.map((item, i) => {
-                if (i === index)
-                    return { ...item, curr, prev, isFetching: false, showDiff: true }
-                else return item
-            }),
-        )
-    }
+    // const onLoadDiff = async (index: number) => {
+    //     setBlobs((curr) =>
+    //         curr.map((item, i) => {
+    //             if (i === index) return { ...item, isFetching: true }
+    //             else return item
+    //         }),
+    //     )
+    //     const { repo, snap, commit, treeitem, diffs } = blobs[index]
+    //     const { curr, prev } = await getDiff(repo, snap, commit, treeitem, diffs)
+    //     setBlobs((state) =>
+    //         state.map((item, i) => {
+    //             if (i === index)
+    //                 return { ...item, curr, prev, isFetching: false, showDiff: true }
+    //             else return item
+    //         }),
+    //     )
+    // }
 
-    useEffect(() => {
-        const getCommitBlobs = async (
-            _repoName: string,
-            _branchName: string,
-            _commitName: string,
-        ) => {
-            if (!daoName || !gosh) return
+    // useEffect(() => {
+    //     const getCommitBlobs = async (
+    //         _repoName: string,
+    //         _branchName: string,
+    //         _commitName: string,
+    //     ) => {
+    //         if (!daoName || !gosh) return
 
-            setIsFetched(false)
+    //         setIsFetched(false)
 
-            const repo = await gosh.getRepository({ name: `${daoName}/${_repoName}` })
-            const commitAddr = await repo.getCommitAddr(_commitName)
-            const commit = new GoshCommit(repo.account.client, commitAddr)
-            const commitDetails = await commit.getDetails()
-            setDetails(commitDetails)
+    //         const repo = await gosh.getRepository({ name: `${daoName}/${_repoName}` })
+    //         const commitAddr = await repo.getCommitAddr(_commitName)
+    //         const commit = new GoshCommit(repo.account.client, commitAddr)
+    //         const commitDetails = await commit.getDetails()
+    //         setDetails(commitDetails)
 
-            const parents = await commit.getParents()
-            const parent = new GoshCommit(repo.account.client, parents[0])
-            const parentName = await parent.getName()
+    //         const parents = await commit.getParents()
+    //         const parent = new GoshCommit(repo.account.client, parents[0])
+    //         const parentName = await parent.getName()
 
-            const tree = await getRepoTree(repo, commitAddr)
-            const treeParent = await getRepoTree(repo, parents[0])
-            console.debug('Tree', tree)
-            console.debug('Tree parent', treeParent)
+    //         const tree = await getRepoTree(repo, commitAddr)
+    //         const treeParent = await getRepoTree(repo, parents[0])
+    //         console.debug('Tree', tree)
+    //         console.debug('Tree parent', treeParent)
 
-            // Compare trees to determine new/changed blobs
-            const updatedItems: TGoshTreeItem[] = []
-            for (const item of tree.items.filter(
-                (i) => ['blob', 'blobExecutable', 'link'].indexOf(i.type) >= 0,
-            )) {
-                const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
-                const found = treeParent.items.findIndex((pitem) => {
-                    let pfullpath = `${pitem.path ? `${pitem.path}/` : ''}`
-                    pfullpath = `${pfullpath}${pitem.name}`
-                    return pitem.sha1 === item.sha1 && pfullpath === fullpath
-                })
-                if (found < 0) updatedItems.push(item)
-            }
-            console.debug('Updated items', updatedItems)
+    //         // Compare trees to determine new/changed blobs
+    //         const updatedItems: TGoshTreeItem[] = []
+    //         for (const item of tree.items.filter(
+    //             (i) => ['blob', 'blobExecutable', 'link'].indexOf(i.type) >= 0,
+    //         )) {
+    //             const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
+    //             const found = treeParent.items.findIndex((pitem) => {
+    //                 let pfullpath = `${pitem.path ? `${pitem.path}/` : ''}`
+    //                 pfullpath = `${pfullpath}${pitem.name}`
+    //                 return pitem.sha1 === item.sha1 && pfullpath === fullpath
+    //             })
+    //             if (found < 0) updatedItems.push(item)
+    //         }
+    //         console.debug('Updated items', updatedItems)
 
-            // Get all diffs for commit
-            const commitDiffs: TGoshDiff[] = []
-            try {
-                const _diffs = await getCommitDiffs(commit, updatedItems.length)
-                commitDiffs.push(..._diffs)
-            } catch {}
-            console.debug('Commit diffs', commitDiffs)
+    //         // Get all diffs for commit
+    //         const commitDiffs: TGoshDiff[] = []
+    //         try {
+    //             const _diffs = await getCommitDiffs(commit, updatedItems.length)
+    //             commitDiffs.push(..._diffs)
+    //         } catch {}
+    //         console.debug('Commit diffs', commitDiffs)
 
-            // Iterate updated items and get snapshots states
-            const updatedBlobs: any[] = await Promise.all(
-                updatedItems.map(async (item, index) => {
-                    const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
-                    const snapaddr = await repo.getSnapshotAddr(_branchName, fullpath)
-                    const diffs = commitDiffs.filter((diff) => diff.sha1 === item.sha1)
-                    const diffCommit = diffs.length ? parentName : _commitName
-                    const diff =
-                        index < 5
-                            ? await getDiff(repo, snapaddr, diffCommit, item, diffs)
-                            : { curr: '', prev: '' }
+    //         // Iterate updated items and get snapshots states
+    //         const updatedBlobs: any[] = await Promise.all(
+    //             updatedItems.map(async (item, index) => {
+    //                 const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
+    //                 const snapaddr = await repo.getSnapshotAddr(_branchName, fullpath)
+    //                 const diffs = commitDiffs.filter((diff) => diff.sha1 === item.sha1)
+    //                 const diffCommit = diffs.length ? parentName : _commitName
+    //                 const diff =
+    //                     index < 5
+    //                         ? await getDiff(repo, snapaddr, diffCommit, item, diffs)
+    //                         : { curr: '', prev: '' }
 
-                    return {
-                        repo,
-                        snap: snapaddr,
-                        commit: _commitName,
-                        treeitem: item,
-                        fullpath,
-                        diffs,
-                        ...diff,
-                        isFetching: false,
-                        showDiff: index < 5,
-                    }
-                }),
-            )
-            console.debug('Updated blobs', updatedBlobs)
+    //                 return {
+    //                     repo,
+    //                     snap: snapaddr,
+    //                     commit: _commitName,
+    //                     treeitem: item,
+    //                     fullpath,
+    //                     diffs,
+    //                     ...diff,
+    //                     isFetching: false,
+    //                     showDiff: index < 5,
+    //                 }
+    //             }),
+    //         )
+    //         console.debug('Updated blobs', updatedBlobs)
 
-            setBlobs(updatedBlobs)
-            setIsFetched(true)
-        }
+    //         setBlobs(updatedBlobs)
+    //         setIsFetched(true)
+    //     }
 
-        getCommitBlobs(repoName, branchName, commitName)
-    }, [gosh, daoName, repoName, branchName, commitName])
+    //     getCommitBlobs(repoName, branchName, commitName)
+    // }, [gosh, daoName, repoName, branchName, commitName])
 
     return (
         <div className={className}>
@@ -217,21 +213,19 @@ const PREvent = (props: TCommitBlobsType) => {
             )}
 
             <h4 className="mt-10 mb-3 text-lg font-semibold">PR details</h4>
-            <div>{details?.content.title}</div>
-            <pre className="mb-2 text-gray-050a15/65 text-sm">
-                {details?.content.message}
-            </pre>
+            <div>{details?.title}</div>
+            <pre className="mb-2 text-gray-050a15/65 text-sm">{details?.message}</pre>
             <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
                 <div>
                     {repoName}:{branchName}
                 </div>
                 <div className="flex items-center">
                     <span className="mr-2 text-gray-050a15/65">Commit by</span>
-                    {renderCommitter(details?.content.committer || '')}
+                    {renderCommitter(details?.committer || '')}
                 </div>
                 <div>
                     <span className="mr-2 text-gray-050a15/65">at</span>
-                    {getCommitTime(details?.content.committer || '').toLocaleString()}
+                    {getCommitTime(details?.committer || '').toLocaleString()}
                 </div>
                 <div className="grow flex items-center justify-start sm:justify-end">
                     <span className="mr-2 text-gray-050a15/65">commit</span>
@@ -264,7 +258,7 @@ const PREvent = (props: TCommitBlobsType) => {
                             <button
                                 className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
                                 disabled={false}
-                                onClick={() => onLoadDiff(index)}
+                                // onClick={() => onLoadDiff(index)}
                             >
                                 {blob.isFetching && (
                                     <Spinner className="mr-2" size="sm" />

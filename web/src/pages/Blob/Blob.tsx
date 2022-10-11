@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from 'react-gosh'
+import { getCodeLanguageFromFilename, useBlob } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -13,7 +13,7 @@ import {
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { useGoshBlob, useGoshRepoBranches } from '../../hooks/gosh.hooks'
+import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 
@@ -22,10 +22,10 @@ const BlobPage = () => {
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const { branches, branch } = useGoshRepoBranches(repo, branchName)
-    const { blob } = useGoshBlob(repo, branchName, treePath)
+    const blob = useBlob(repo, branch, treePath)
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -83,7 +83,7 @@ const BlobPage = () => {
                                         size: 'sm',
                                     }}
                                 />
-                                {!branch?.isProtected && wallet?.details.isDaoMember && (
+                                {!branch?.isProtected && dao.details.isAuthMember && (
                                     <Link
                                         to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treePath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"

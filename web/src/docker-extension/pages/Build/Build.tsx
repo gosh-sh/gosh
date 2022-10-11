@@ -7,7 +7,7 @@ import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userAtom, getCommit } from 'react-gosh'
+import { userAtom } from 'react-gosh'
 import TextField from '../../../components/FormikForms/TextField'
 
 type TBuildFormValues = {
@@ -43,7 +43,7 @@ const BuildPage = () => {
         setOutput('')
         console.log('onBuild', values)
         if (!!branch) {
-            const commit = await getCommit(repo, branch.commitAddr)
+            const commit = await repo.getCommit({ address: branch.commit.address })
             console.log('commit', commit)
 
             // TODO: Get GOSH version?

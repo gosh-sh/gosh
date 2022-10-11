@@ -13,8 +13,8 @@ const EventsPage = () => {
     const pageSize = 10
 
     const { daoName } = useParams()
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
-    const smvBalance = useSmvBalance(wallet)
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
     const [events, setEvents] = useState<{
         items: any[]
         isFetching: boolean
@@ -41,7 +41,7 @@ const EventsPage = () => {
             }),
         }))
 
-        const event = new GoshSmvProposal(dao.instance.account.client, address)
+        const event = new GoshSmvProposal(AppConfig.goshclient, address)
         const details = await event.getDetails()
 
         setEvents((state) => ({
@@ -57,19 +57,18 @@ const EventsPage = () => {
     useEffect(() => {
         const getEventList = async () => {
             // Get events accounts by code
-            const code = await dao.instance.getSmvProposalCode()
-            const codeHash = await AppConfig.goshclient.boc.get_boc_hash({ boc: code })
+            const codeHash = await dao.adapter.getSmvProposalCodeHash()
             const list: any[] = []
             let next: string | undefined
             while (true) {
                 const accounts = await getPaginatedAccounts({
-                    filters: [`code_hash: {eq:"${codeHash.hash}"}`],
+                    filters: [`code_hash: {eq:"${codeHash}"}`],
                     limit: 50,
                     lastId: next,
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const event = new GoshSmvProposal(dao.instance.account.client, id)
+                        const event = new GoshSmvProposal(AppConfig.goshclient, id)
                         return {
                             address: event.address,
                             params: await event.getParams(),
@@ -113,11 +112,7 @@ const EventsPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div>
-                <SmvBalance
-                    details={smvBalance}
-                    wallet={wallet}
-                    className="mb-5 bg-gray-100"
-                />
+                <SmvBalance details={smvBalance} dao={dao} className="mb-5 bg-gray-100" />
 
                 <div className="mb-4">
                     Don't see your event? Please wait, events are reloaded automatically

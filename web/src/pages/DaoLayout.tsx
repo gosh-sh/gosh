@@ -2,35 +2,19 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import {
-    userPersistAtom,
-    classNames,
-    useDao,
-    TDaoDetails,
-    useWallet,
-    TWalletDetails,
-    useGosh,
-} from 'react-gosh'
-import { IGoshAdapter, IGoshDao, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { userPersistAtom, classNames, useDao, TDao } from 'react-gosh'
+import { IGoshDaoAdapter, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
 
 export type TDaoLayoutOutletContext = {
-    gosh: IGoshAdapter
     dao: {
-        instance: IGoshDao
-        details: TDaoDetails
-    }
-    wallet?: {
-        instance: IGoshWallet
-        details: TWalletDetails
+        adapter: IGoshDaoAdapter
+        details: TDao
     }
 }
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName } = useParams()
-    const gosh = useGosh()
-    const dao = useDao(daoName)
-    const wallet = useWallet(dao.instance)
+    const dao = useDao(daoName!)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
@@ -41,11 +25,8 @@ const DaoLayout = () => {
     ]
 
     useEffect(() => {
-        const walletAwaited =
-            !userStatePersist.phrase ||
-            (userStatePersist.phrase && wallet.instance && wallet.details)
-        if (gosh && dao.instance && walletAwaited) setIsReady(true)
-    }, [gosh, dao.instance, userStatePersist.phrase, wallet])
+        if (!dao.isFetching) setIsReady(true)
+    }, [dao.isFetching])
 
     return (
         <div className="container container--full my-10">
@@ -72,11 +53,13 @@ const DaoLayout = () => {
                 </div>
             )}
 
-            {isReady && (
+            {isReady && !dao.errors.length && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
                         {tabs
-                            .filter((item) => (!wallet ? item.public : item))
+                            .filter((item) =>
+                                !dao.details?.isAuthMember ? item.public : item,
+                            )
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -96,7 +79,7 @@ const DaoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ gosh, dao, wallet }} />
+                    <Outlet context={{ dao }} />
                 </>
             )}
         </div>

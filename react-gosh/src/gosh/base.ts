@@ -64,9 +64,10 @@ class BaseContract implements IContract {
         decode?: boolean,
         all?: boolean,
         messages?: any[],
-    ): Promise<any[]> {
+    ): Promise<{ cursor?: string; messages: any[] }> {
         const { msgType, node = [], cursor, limit = 50 } = variables
 
+        const result = ['id', 'msg_type', 'created_lt', 'body', ...node]
         messages = messages ?? []
         all = all ?? false
         decode = decode ?? false
@@ -81,9 +82,7 @@ class BaseContract implements IContract {
                 account(address: $address) {
                     messages(msg_type: $msgType, last: $limit, before: $cursor) {
                         edges {
-                            node {
-                                ${['id', 'msg_type', 'body', ...node].join(' ')}
-                            }
+                            node {${result.join(' ')}}
                         }
                         pageInfo {
                             startCursor
@@ -99,7 +98,13 @@ class BaseContract implements IContract {
         })
         const { edges, pageInfo } = response.result.data.blockchain.account.messages
 
-        const page = edges.map((edge: any) => ({ message: edge.node, decoded: null }))
+        const page = edges
+            .map((edge: any) => ({ message: edge.node, decoded: null }))
+            .sort((a: any, b: any) => {
+                const a_lt = parseInt(a.created_lt, 16)
+                const b_lt = parseInt(b.created_lt, 16)
+                return a_lt < b_lt ? 1 : -1
+            })
         if (decode) {
             await Promise.all(
                 page.map(async (item: any) => {
@@ -110,7 +115,9 @@ class BaseContract implements IContract {
         }
         messages.push(...page)
 
-        if (!all || !pageInfo.hasPreviousPage) return messages
+        if (!all || !pageInfo.hasPreviousPage) {
+            return { cursor: pageInfo.startCursor, messages }
+        }
 
         await sleep(300)
         return await this.getMessages(
@@ -139,9 +146,8 @@ class BaseContract implements IContract {
         options?: AccountRunLocalOptions,
         writeLog: boolean = true,
     ): Promise<any> {
-        if (writeLog) console.debug('[RunLocal]', { functionName, input, options })
         const result = await this.account.runLocal(functionName, input, options)
-        if (writeLog) console.debug('[RunLocal result]', { functionName, result })
+        if (writeLog) console.debug('[RunLocal]', { functionName, input, result })
         return result.decoded?.output
     }
 

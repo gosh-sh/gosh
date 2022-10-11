@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { retry, TGoshBranch } from 'react-gosh'
+import { retry } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
@@ -19,24 +19,24 @@ import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
-import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
 import ToastError from '../../components/Error/ToastError'
+import { TBranch } from 'react-gosh/dist/types/repo.types'
 
 type TCreateBranchFormValues = {
     newName: string
-    from?: TGoshBranch
+    from?: TBranch
 }
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const smvBalance = useSmvBalance(wallet)
+    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, updateBranches } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
     const [search, setSearch] = useState<string>('')
-    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
+    const [filtered, setFiltered] = useState<TBranch[]>(branches)
     const [branchesBusy, setBranchesBusy] = useState<{
         [key: string]: { busy: boolean; lock: boolean; delete: boolean }
     }>({})
@@ -49,18 +49,14 @@ export const BranchesPage = () => {
                 [name]: { ...state[name], busy: true, lock: true },
             }))
 
-            if (await repo.isBranchProtected(name))
-                throw new Error('Branch is already protected')
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            // if (await repo.isBranchProtected(name))
+            //     throw new Error('Branch is already protected')
+            if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await retry(
-                () => wallet.instance.startProposalForAddProtectedBranch(repoName, name),
-                3,
-            )
+            await retry(async () => await repo.lockBranch(name), 3)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -81,19 +77,14 @@ export const BranchesPage = () => {
                 [name]: { ...state[name], busy: true, lock: true },
             }))
 
-            const isProtected = await repo.isBranchProtected(name)
-            if (!isProtected) throw new Error('Branch is not protected')
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            // const isProtected = await repo.isBranchProtected(name)
+            // if (!isProtected) throw new Error('Branch is not protected')
+            if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await retry(
-                () =>
-                    wallet.instance.startProposalForDeleteProtectedBranch(repoName, name),
-                3,
-            )
+            await retry(async () => await repo.unlockBranch(name), 3)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -112,25 +103,11 @@ export const BranchesPage = () => {
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-
-            const commit = new GoshCommit(
-                wallet.instance.account.client,
-                values.from.commitAddr,
-            )
-            const fromBranchName = values.from.name
-            const commitHash = await commit.getName()
-            await retry(
-                () =>
-                    wallet.instance.deployBranch(
-                        repo,
-                        values.newName.toLowerCase(),
-                        fromBranchName,
-                        commitHash,
-                    ),
-                3,
-            )
+            await retry(async () => {
+                if (!repo) throw new GoshError(EGoshError.NO_REPO)
+                if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
+                await repo.deployBranch(values.newName.toLowerCase(), values.from.name)
+            }, 3)
             await updateBranches()
             helpers.resetForm()
             helpers.setFieldValue('from', values.from)
@@ -149,12 +126,8 @@ export const BranchesPage = () => {
                     [name]: { ...state[name], busy: true, delete: true },
                 }))
 
-                if (await repo.isBranchProtected(name))
-                    throw new Error('Branch is protected')
-                if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-                if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-
-                await retry(() => wallet.instance.deleteBranch(repo, name), 3)
+                if (!repo) throw new GoshError(EGoshError.NO_REPO)
+                await retry(async () => await repo.deleteBranch(name), 3)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({

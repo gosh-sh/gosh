@@ -4,13 +4,13 @@ import { useRecoilValue } from 'recoil'
 import BranchSelect from '../../components/BranchSelect'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { getCommit, getCommitTime, ZERO_COMMIT } from 'react-gosh'
+import { getCommitTime, ZERO_COMMIT } from 'react-gosh'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
-import { TGoshCommit } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TCommit } from 'react-gosh/dist/types/repo.types'
 
 const CommitsPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
@@ -19,7 +19,7 @@ const CommitsPage = () => {
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
     const navigate = useNavigate()
     const [commits, setCommits] = useState<{
-        list: TGoshCommit[]
+        list: TCommit[]
         isFetching: boolean
         next?: string
     }>({
@@ -39,15 +39,15 @@ const CommitsPage = () => {
         )
     }
 
-    const getCommits = async (repo: IGoshRepository, next?: string) => {
+    const getCommits = async (repo: IGoshRepositoryAdapter, next?: string) => {
         setCommits((curr) => ({ ...curr, isFetching: true }))
 
-        const list: TGoshCommit[] = []
+        const list: TCommit[] = []
         let count = 0
         while (count < 5) {
             if (!next) break
 
-            const commitData = await getCommit(repo, next)
+            const commitData = await repo.getCommit({ address: next })
             if (commitData.name !== ZERO_COMMIT) list.push(commitData)
 
             next = commitData.parents[0] || ''
@@ -63,11 +63,11 @@ const CommitsPage = () => {
     useEffect(() => {
         const initCommits = async () => {
             setCommits({ list: [], isFetching: true })
-            getCommits(repo, branch?.commitAddr)
+            getCommits(repo, branch?.commit.address)
         }
 
-        if (repo && branch?.commitAddr) initCommits()
-    }, [repo, branch?.commitAddr])
+        if (repo && branch?.commit.address) initCommits()
+    }, [repo, branch?.commit.address])
 
     useEffect(() => {
         updateBranch(branchName)
@@ -109,19 +109,19 @@ const CommitsPage = () => {
                                 className="hover:underline"
                                 to={`/o/${daoName}/r/${repoName}/commits/${branchName}/${commit.name}`}
                             >
-                                {commit.content.title}
+                                {commit.title}
                             </Link>
                             <div className="mt-2 flex flex-wrap gap-x-4 text-gray-050a15/75 text-xs">
                                 <div className="flex items-center">
                                     <span className="mr-2 text-gray-050a15/65">
                                         Commit by
                                     </span>
-                                    {renderCommitter(commit.content.committer || '')}
+                                    {renderCommitter(commit.committer || '')}
                                 </div>
                                 <div>
                                     <span className="mr-2 text-gray-050a15/65">at</span>
                                     {getCommitTime(
-                                        commit.content.committer || '',
+                                        commit.committer || '',
                                     ).toLocaleString()}
                                 </div>
                             </div>

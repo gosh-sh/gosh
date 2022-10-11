@@ -1,6 +1,12 @@
 import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { BaseContract } from './base'
-import { IGoshAdapter, IGoshDao, IGoshProfile, IGoshProfileDao } from './interfaces'
+import {
+    IGoshAdapter,
+    IGoshDao,
+    IGoshDaoAdapter,
+    IGoshProfile,
+    IGoshProfileDao,
+} from './interfaces'
 import { TProfileDetails } from '../types'
 import { GoshProfileDao } from './goshprofiledao'
 import { EGoshError, GoshError } from '../errors'
@@ -38,8 +44,8 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         return new GoshProfileDao(this.account.client, address.value0)
     }
 
-    async getDaos(): Promise<IGoshDao[]> {
-        const messages = await this.getMessages({ msgType: ['IntIn'] }, true, true)
+    async getDaos(): Promise<IGoshDaoAdapter[]> {
+        const { messages } = await this.getMessages({ msgType: ['IntIn'] }, true, true)
         return await Promise.all(
             messages
                 .filter(({ decoded }) => decoded && decoded.name === 'deployedWallet')
@@ -67,7 +73,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         name: string,
         members: string[],
         prev?: string | undefined,
-    ): Promise<IGoshDao> {
+    ): Promise<IGoshDaoAdapter> {
         const { valid, reason } = gosh.isValidDaoName(name)
         if (!valid) throw new GoshError(EGoshError.DAO_NAME_INVALID, reason)
 

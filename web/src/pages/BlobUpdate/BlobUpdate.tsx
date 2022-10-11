@@ -11,20 +11,15 @@ import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import { useMonaco } from '@monaco-editor/react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { useRecoilValue } from 'recoil'
-import {
-    useGoshBlob,
-    useCommitProgress,
-    useGoshRepoBranches,
-} from '../../hooks/gosh.hooks'
+import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
-    userAtom,
     getCodeLanguageFromFilename,
     splitByPath,
     classNames,
+    useBlob,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
@@ -46,10 +41,9 @@ const BlobUpdatePage = () => {
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const userState = useRecoilValue(userAtom)
     const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
-    const { blob, treeItem } = useGoshBlob(repo, branchName, treePath, true)
+    const blob = useBlob(repo, branch, treePath)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
@@ -59,32 +53,23 @@ const BlobUpdatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
+            if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
             if (branch.isProtected)
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
-            if (values.content === blob?.content)
-                throw new GoshError(EGoshError.FILE_UNMODIFIED)
+            // if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            const pubkey = userState.keys.public
-            await wallet.instance.createCommit(
-                repo,
-                branch,
-                pubkey,
+            await repo.push(
+                branch.name,
                 [
                     {
-                        name: `${path ? `${path}/` : ''}${values.name}`,
-                        modified: values.content,
+                        treePath: `${path ? `${path}/` : ''}${values.name}`,
                         original: blob?.content ?? '',
-                        isIpfs: blob?.isIpfs,
-                        treeItem,
+                        modified: values.content,
                     },
                 ],
                 message,

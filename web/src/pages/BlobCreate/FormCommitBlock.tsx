@@ -4,8 +4,8 @@ import TextareaField from '../../components/FormikForms/TextareaField'
 import { useNavigate } from 'react-router-dom'
 import { classNames } from 'react-gosh'
 import Spinner from '../../components/Spinner'
-import { TCreateCommitCallbackParams } from 'react-gosh'
 import CommitProgress from './CommitProgress'
+import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
 
 type TFormCommitBlockProps = {
     urlBack?: string
@@ -14,7 +14,7 @@ type TFormCommitBlockProps = {
     isSubmitting?: boolean
     extraFields?: any
     extraButtons?: any
-    progress?: TCreateCommitCallbackParams
+    progress?: TPushCallbackParams
 }
 
 const FormCommitBlock = (props: TFormCommitBlockProps) => {

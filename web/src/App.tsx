@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import ReactTooltip from 'react-tooltip'
-import { AppConfig, useGoshVersions, useNotificationMessages } from 'react-gosh'
+import { AppConfig, useNotificationMessages } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -46,7 +46,6 @@ import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
     useNotificationMessages()
-    const { versions, updateVersions } = useGoshVersions()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
     let timer: NodeJS.Timeout | null = null
 
@@ -80,12 +79,8 @@ const App = () => {
             ipfs: process.env.REACT_APP_IPFS || '',
             isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         })
-        updateVersions()
+        setIsInitialized(true)
     }, [])
-
-    useEffect(() => {
-        if (!versions.isFetching) setIsInitialized(true)
-    }, [versions.isFetching])
 
     useEffect(() => {
         // Initialize gosh client suspend/resume timer

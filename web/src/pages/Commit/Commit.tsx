@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { TGoshCommit } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { getCommit, getCommitTime } from 'react-gosh'
+import { getCommitTime } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
-import { IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TCommit } from 'react-gosh/dist/types/repo.types'
 
 const CommitPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName, commitName } = useParams()
     const { branch } = useGoshRepoBranches(repo, branchName)
-    const [commit, setCommit] = useState<TGoshCommit>()
+    const [commit, setCommit] = useState<TCommit>()
 
     const renderCommitter = (committer: string) => {
         const [pubkey] = committer.split(' ')
@@ -29,10 +29,9 @@ const CommitPage = () => {
     }
 
     useEffect(() => {
-        const _getCommit = async (repo: IGoshRepository, name: string) => {
+        const _getCommit = async (repo: IGoshRepositoryAdapter, name: string) => {
             // Get commit data
-            const address = await repo.getCommitAddr(name)
-            const commitData = await getCommit(repo, address)
+            const commitData = await repo.getCommit({ name })
             setCommit(commitData)
         }
 
@@ -50,11 +49,11 @@ const CommitPage = () => {
             {commit && (
                 <>
                     <div>
-                        <div className="font-medium py-2">{commit.content.title}</div>
+                        <div className="font-medium py-2">{commit.title}</div>
 
-                        {commit.content.message && (
+                        {commit.message && (
                             <pre className="mb-3 text-gray-050a15/65 text-sm">
-                                {commit.content.message}
+                                {commit.message}
                             </pre>
                         )}
 
@@ -63,13 +62,11 @@ const CommitPage = () => {
                                 <span className="mr-2 text-gray-050a15/65">
                                     Commit by
                                 </span>
-                                {renderCommitter(commit.content.committer || '')}
+                                {renderCommitter(commit.committer || '')}
                             </div>
                             <div>
                                 <span className="mr-2 text-gray-050a15/65">at</span>
-                                {getCommitTime(
-                                    commit.content.committer || '',
-                                ).toLocaleString()}
+                                {getCommitTime(commit.committer || '').toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
                                 <span className="mr-2 text-gray-050a15/65">commit</span>
@@ -101,12 +98,7 @@ const CommitPage = () => {
                     )}
 
                     {branch && commit.branch === branch.name && (
-                        <CommitBlobs
-                            repo={repo}
-                            branch={branch.name}
-                            commit={commit.name}
-                            className="mt-4"
-                        />
+                        <CommitBlobs repo={repo} commit={commit.name} className="mt-4" />
                     )}
                 </>
             )}

@@ -9,13 +9,16 @@ import ToastError from '../../components/Error/ToastError'
 
 const DaoMembersPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(0)
-    const daomember = useDaoMemberDelete(dao.instance)
+    const { items, isFetching, search, setSearch, loadItemDetails } = useDaoMemberList(
+        dao.adapter,
+        0,
+    )
+    const deleteDaoMember = useDaoMemberDelete(dao.adapter)
 
-    const onMemberDelete = async (profile?: string) => {
+    const onMemberDelete = async (username: string) => {
         if (window.confirm('Delete member?')) {
             try {
-                // await daomember.remove(profile)
+                await deleteDaoMember.remove([username])
             } catch (e: any) {
                 console.error(e.message)
                 toast.error(<ToastError error={e} />)
@@ -44,7 +47,7 @@ const DaoMembersPage = () => {
                     </div>
                 )}
 
-                {/* <div className="divide-y divide-gray-c4c4c4">
+                <div className="divide-y divide-gray-c4c4c4">
                     {items.map((item, index) => {
                         loadItemDetails(item)
                         return (
@@ -52,24 +55,18 @@ const DaoMembersPage = () => {
                                 key={index}
                                 item={item}
                                 daoOwner={dao.details.owner}
-                                isDaoOwner={profile?.address === dao.details.owner}
-                                isFetching={
-                                    item.profile
-                                        ? daomember.isFetching(item.profile)
-                                        : false
-                                }
+                                isDaoOwner={dao.details.isAuthOwner}
+                                isFetching={deleteDaoMember.isFetching(item.name)}
                                 onDelete={onMemberDelete}
                             />
                         )
                     })}
-                </div> */}
+                </div>
             </div>
 
-            {/* {profile?.address === dao.details.owner && (
-                <div className="mt-6">
-                    <DaoMemberForm dao={dao.instance} />
-                </div>
-            )} */}
+            <div className="mt-6">
+                <DaoMemberForm dao={dao.adapter} />
+            </div>
         </>
     )
 }

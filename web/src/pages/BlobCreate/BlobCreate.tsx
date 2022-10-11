@@ -11,18 +11,11 @@ import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
 import BlobEditor from '../../components/Blob/Editor'
 import BlobPreview from '../../components/Blob/Preview'
 import FormCommitBlock from './FormCommitBlock'
-import { useRecoilValue } from 'recoil'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
-import {
-    useCommitProgress,
-    useGoshRepoBranches,
-    useGoshRepoTree,
-} from '../../hooks/gosh.hooks'
+import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
-    userAtom,
     getCodeLanguageFromFilename,
     classNames,
 } from 'react-gosh'
@@ -43,10 +36,7 @@ const BlobCreatePage = () => {
     const navigate = useNavigate()
     const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const userState = useRecoilValue(userAtom)
-    const { updateBranch } = useGoshRepoBranches(repo)
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const tree = useGoshRepoTree(repo, branch, pathName, true)
+    const { branch, updateBranch } = useGoshRepoBranches(repo)
     const [activeTab, setActiveTab] = useState<number>(0)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
@@ -57,38 +47,25 @@ const BlobCreatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw new GoshError(EGoshError.USER_KEYS_UNDEFINED)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
+            if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
-            if (branch.isProtected)
+            if (branch.isProtected) {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
-            const name = `${pathName ? `${pathName}/` : ''}${values.name}`
-            const exists = tree.tree?.items.find(
-                (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,
-            )
-            if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
+            }
+
+            const treePath = `${pathName ? `${pathName}/` : ''}${values.name}`
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            const pubkey = userState.keys.public
-            await wallet.instance.createCommit(
-                repo,
-                branch,
-                pubkey,
-                [
-                    {
-                        name,
-                        modified: values.content,
-                        original: '',
-                    },
-                ],
+            await repo.push(
+                branch.name,
+                [{ treePath, original: '', modified: values.content }],
                 message,
                 values.tags,
                 undefined,
                 progressCallback,
             )
+
             await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {

@@ -3,7 +3,6 @@ import { Field, Form, Formik } from 'formik'
 import { useOutletContext, useParams } from 'react-router-dom'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { useGosh, useGoshVersions } from 'react-gosh'
 import { EEventType, TGoshEventDetails } from 'react-gosh'
 import * as Yup from 'yup'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -14,7 +13,7 @@ import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import PREvent from './PREvent'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { eventTypes, AppConfig } from 'react-gosh'
+import { EventTypes, AppConfig } from 'react-gosh'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
@@ -27,10 +26,8 @@ type TFormValues = {
 
 const EventPage = () => {
     const { daoName, eventAddr } = useParams()
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
-    const { versions } = useGoshVersions()
-    const gosh = useGosh()
-    const smvBalance = useSmvBalance(wallet)
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
     const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
         details?: TGoshEventDetails
@@ -42,11 +39,10 @@ const EventPage = () => {
     /** Send check trigger to event */
     const onProposalCheck = async () => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             setCheck(true)
-            await wallet.instance.tryProposalResult(event.details.address)
+            // await wallet.instance.tryProposalResult(event.details.address)
             toast.success('Re-check submitted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -59,9 +55,7 @@ const EventPage = () => {
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
             if (!dao) throw new GoshError(EGoshError.DAO_UNDEFINED)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
             if (
                 event.details.time.start &&
@@ -73,16 +67,16 @@ const EventPage = () => {
             }
             if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            const smvPlatformCode = await gosh.getSmvPlatformCode()
-            const smvClientCode = await dao.instance.getSmvClientCode()
+            const smvPlatformCode = await dao.adapter.getSmvPlatformCode()
+            const smvClientCode = await dao.adapter.getSmvClientCode()
             const choice = values.approve === 'true'
-            await wallet.instance.voteFor(
-                smvPlatformCode,
-                smvClientCode,
-                event.details.address,
-                choice,
-                values.amount,
-            )
+            // await wallet.instance.voteFor(
+            //     smvPlatformCode,
+            //     smvClientCode,
+            //     event.details.address,
+            //     choice,
+            //     values.amount,
+            // )
             toast.success('Vote accepted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -114,11 +108,7 @@ const EventPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <SmvBalance
-                details={smvBalance}
-                wallet={wallet}
-                className="mb-5 bg-gray-100"
-            />
+            <SmvBalance details={smvBalance} dao={dao} className="mb-5 bg-gray-100" />
 
             <div className="mb-4">Event details are reloaded automatically</div>
 
@@ -134,7 +124,7 @@ const EventPage = () => {
                     <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-2">
                         <div>
                             <h3 className="basis-full text-xl font-semibold mb-2">
-                                {eventTypes[event.details.params.proposalKind]}
+                                {EventTypes[event.details.params.proposalKind]}
                             </h3>
                             <CopyClipboard
                                 className="text-gray-606060 text-sm"
@@ -188,7 +178,7 @@ const EventPage = () => {
                                 </span>
                             </div>
                         </div>
-                        {wallet?.details.isDaoMember && !event.details.status.completed && (
+                        {dao.details.isAuthMember && !event.details.status.completed && (
                             <div>
                                 <button
                                     type="button"
@@ -203,7 +193,7 @@ const EventPage = () => {
                         )}
                     </div>
 
-                    {wallet?.details.isDaoMember && !event.details?.status.completed && (
+                    {dao.details.isAuthMember && !event.details?.status.completed && (
                         <Formik
                             initialValues={{
                                 approve: 'true',

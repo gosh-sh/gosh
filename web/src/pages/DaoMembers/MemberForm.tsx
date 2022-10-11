@@ -1,30 +1,29 @@
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
-import DaoMemberCreateProgress from './MemberCreateProgress'
 import { useDaoMemberCreate } from 'react-gosh'
 import TextareaField from '../../components/FormikForms/TextareaField'
 import ToastError from '../../components/Error/ToastError'
-import { IGoshDao } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TMemberFormValues = {
     members: string
 }
 
 type TDaoMemberFormProps = {
-    dao: IGoshDao
+    dao: IGoshDaoAdapter
 }
 
 const DaoMemberForm = (props: TDaoMemberFormProps) => {
     const { dao } = props
-    const daomember = useDaoMemberCreate(dao)
+    const createDaoMember = useDaoMemberCreate(dao)
 
     const onCreateMember = async (
         values: TMemberFormValues,
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            await daomember.create(values.members.split('\n'))
+            await createDaoMember(values.members.split('\n'))
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
@@ -63,8 +62,6 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                     </Form>
                 )}
             </Formik>
-
-            <DaoMemberCreateProgress className="mt-4" progress={daomember.progress} />
         </>
     )
 }

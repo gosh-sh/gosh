@@ -1,20 +1,29 @@
 import { KeyPair } from '@eversdk/core'
-import { IGoshDao } from '../gosh/interfaces'
+import { IGoshDaoAdapter } from '../gosh/interfaces'
 
-type TDaoDetails = {
+type TDao = {
     address: string
     name: string
     version: string
     members: { profile: string; wallet: string }[]
     supply: number
     owner: string
+    isAuthOwner: boolean
+    isAuthMember: boolean
+    isAuthenticated: boolean
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'owner'> & {
-    instance: IGoshDao
+type TDaoListItem = Omit<
+    TDao,
+    'members' | 'supply' | 'owner' | 'isAuthOwner' | 'isAuthMember' | 'isAuthenticated'
+> & {
+    adapter: IGoshDaoAdapter
     members?: { profile: string; wallet: string }[]
     supply?: number
     owner?: string
+    isAuthOwner?: boolean
+    isAuthMember?: boolean
+    isAuthenticated?: boolean
     isLoadDetailsFired?: boolean
 }
 
@@ -35,15 +44,6 @@ type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
     isLoadDetailsFired?: boolean
 }
 
-type TDaoMemberCreateProgress = {
-    isFetching: boolean
-    members: {
-        member: string
-        isDeployed?: boolean
-        isMinted?: boolean
-    }[]
-}
-
 type TWalletDetails = {
     address: string
     version: string
@@ -54,11 +54,10 @@ type TWalletDetails = {
 }
 
 export {
-    TDaoDetails,
+    TDao,
     TDaoListItem,
     TDaoCreateProgress,
     TDaoMemberDetails,
     TDaoMemberListItem,
-    TDaoMemberCreateProgress,
     TWalletDetails,
 }

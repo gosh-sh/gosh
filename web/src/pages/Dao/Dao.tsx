@@ -5,7 +5,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 
 const DaoPage = () => {
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
 
     return (
         <div className="flex flex-wrap-reverse gap-x-4 gap-y-6">
@@ -18,15 +18,15 @@ const DaoPage = () => {
                 <div>
                     <p className="text-sm text-gray-606060 mb-1">DAO address</p>
                     <CopyClipboard
-                        label={shortString(dao.instance.address)}
+                        label={shortString(dao.adapter.getAddress())}
                         componentProps={{
-                            text: dao.instance.address,
+                            text: dao.adapter.getAddress(),
                         }}
                     />
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    {wallet?.details.isDaoMember ? (
+                    {dao.details.isAuthMember ? (
                         <Link to={`/a/settings`} className="hover:underline">
                             Setup git remote
                         </Link>

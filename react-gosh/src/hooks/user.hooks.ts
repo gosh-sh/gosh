@@ -3,18 +3,17 @@ import { useState } from 'react'
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
+import { GoshAdapterFactory } from '../gosh'
 import { retry } from '../helpers'
 import { userAtom, userPersistAtom, userProfileSelector } from '../store'
 import { TUserSignupProgress, TUserPersist } from '../types'
 import { validatePhrase, validateUsername } from '../validators'
-import { useGosh } from './gosh.hooks'
 
 function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
     const [user, setUser] = useRecoilState(userAtom)
     const resetUserPersist = useResetRecoilState(userPersistAtom)
     const resetUser = useResetRecoilState(userAtom)
-    const gosh = useGosh()
     const [signupProgress, setSignupProgress] = useState<TUserSignupProgress>({
         isFetching: false,
     })
@@ -28,11 +27,11 @@ function useUser() {
     }
 
     const signin = async (params: { username: string; phrase: string }) => {
-        if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
         await _validateCredentials(params)
 
         const { username, phrase } = params
-        const profile = await gosh.getProfile(username)
+        const gosh = GoshAdapterFactory.createLatest()
+        const profile = await gosh.getProfile({ username })
         if (!(await profile.isDeployed())) {
             throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
         }
@@ -49,11 +48,11 @@ function useUser() {
     }
 
     const signup = async (params: { username: string; phrase: string }) => {
-        if (!gosh) throw new GoshError(EGoshError.GOSH_UNDEFINED)
         await _validateCredentials(params)
 
         const { username, phrase } = params
-        const profile = await gosh.getProfile(username)
+        const gosh = GoshAdapterFactory.createLatest()
+        const profile = await gosh.getProfile({ username })
         if (await profile.isDeployed()) throw new GoshError(EGoshError.PROFILE_EXISTS)
 
         setSignupProgress((state) => ({ ...state, isFetching: true }))

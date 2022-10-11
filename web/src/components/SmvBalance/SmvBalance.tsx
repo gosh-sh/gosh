@@ -2,27 +2,30 @@ import { faCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { EGoshError, GoshError } from 'react-gosh'
+import { EGoshError, GoshError, TDao } from 'react-gosh'
 import { TSmvBalanceDetails } from 'react-gosh'
 import { classNames } from 'react-gosh'
 import Spinner from '../Spinner'
-import { TDaoLayoutOutletContext } from '../../pages/DaoLayout'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TSmvBalanceProps = {
     details: TSmvBalanceDetails
-    wallet?: TDaoLayoutOutletContext['wallet']
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
     className?: string
 }
 
 const SmvBalance = (props: TSmvBalanceProps) => {
-    const { details, wallet, className } = props
+    const { details, dao, className } = props
     const [release, setRelease] = useState<boolean>(false)
 
     const onTokensRelease = async () => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            if (!dao.details.isAuthenticated) throw new GoshError(EGoshError.NO_WALLET)
             setRelease(true)
-            await wallet.instance.updateHead()
+            // await wallet.instance.updateHead()
             toast.success('Token release was sent, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -32,7 +35,7 @@ const SmvBalance = (props: TSmvBalanceProps) => {
         }
     }
 
-    if (!wallet || !wallet.details.isDaoMember) return null
+    if (!dao.details.isAuthMember) return null
     return (
         <div
             className={classNames(

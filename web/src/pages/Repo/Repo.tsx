@@ -26,7 +26,7 @@ const RepoPage = () => {
     const treePath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const tree = useGoshRepoTree(repo, branch, treePath)
     const subtree = useRecoilValue(tree.getSubtree(treePath))
@@ -34,8 +34,8 @@ const RepoPage = () => {
     const [dirUp] = splitByPath(treePath)
 
     useEffect(() => {
-        if (branch?.name) updateBranch(branch.name)
-    }, [branch?.name, updateBranch])
+        updateBranch(branchName)
+    }, [branchName, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -81,7 +81,7 @@ const RepoPage = () => {
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!branch?.isProtected && wallet?.details.isDaoMember && (
+                    {!branch?.isProtected && dao.details.isAuthMember && (
                         <Link
                             to={`/o/${daoName}/r/${repoName}/blobs/create/${
                                 branch?.name

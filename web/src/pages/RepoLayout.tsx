@@ -3,19 +3,20 @@ import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
-import { useGoshRepo, useGoshRepoBranches } from '../hooks/gosh.hooks'
+import { useGoshRepoBranches } from '../hooks/gosh.hooks'
+import { classNames, useRepo, TWalletDetails, TDao } from 'react-gosh'
 import {
-    classNames,
-    userPersistAtom,
-    useDao,
-    useWallet,
-    TWalletDetails,
-} from 'react-gosh'
-import { useRecoilValue } from 'recoil'
-import { IGoshRepository, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+    IGoshDaoAdapter,
+    IGoshRepositoryAdapter,
+    IGoshWallet,
+} from 'react-gosh/dist/gosh/interfaces'
 
 export type TRepoLayoutOutletContext = {
-    repo: IGoshRepository
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repo: IGoshRepositoryAdapter
     wallet?: {
         instance: IGoshWallet
         details: TWalletDetails
@@ -23,13 +24,10 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
-    const userStatePersist = useRecoilValue(userPersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const repo = useGoshRepo(daoName, repoName)
-    const dao = useDao(daoName)
-    const wallet = useWallet(dao.instance)
-    const { updateBranches } = useGoshRepoBranches(repo)
-    const [isFetched, setIsFetched] = useState<boolean>(false)
+    const { dao, adapter, isFetching } = useRepo(daoName!, repoName!)
+    const { updateBranches } = useGoshRepoBranches(adapter)
+    const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
         {
@@ -56,16 +54,16 @@ const RepoLayout = () => {
     }
 
     useEffect(() => {
-        const init = async () => {
+        const _setup = async () => {
+            if (isFetching) return
+
             await updateBranches()
-            setIsFetched(true)
+            console.debug('UPDATE BRANCHES')
+            setIsReady(true)
         }
 
-        const walletAwaited =
-            !userStatePersist.phrase ||
-            (userStatePersist.phrase && wallet.instance && wallet.details)
-        if (repo && walletAwaited) init()
-    }, [repo, wallet, userStatePersist.phrase, updateBranches])
+        _setup()
+    }, [isFetching])
 
     return (
         <div className="container container--full my-10">
@@ -85,18 +83,20 @@ const RepoLayout = () => {
                 </Link>
             </h1>
 
-            {!isFetched && (
+            {!isReady && (
                 <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading repository...
                 </div>
             )}
 
-            {isFetched && (
+            {isReady && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
                         {tabs
-                            .filter((item) => (!wallet ? item.public : item))
+                            .filter((item) =>
+                                !dao.details?.isAuthMember ? item.public : item,
+                            )
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -121,7 +121,7 @@ const RepoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ repo, wallet }} />
+                    <Outlet context={{ dao, repo: adapter }} />
                 </>
             )}
         </div>

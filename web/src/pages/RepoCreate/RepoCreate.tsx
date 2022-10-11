@@ -15,11 +15,11 @@ type TFormValues = {
 const RepoCreatePage = () => {
     const { daoName } = useParams()
     const navigate = useNavigate()
-    const { gosh, wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await retry(() => gosh.deployRepository(values.name.toLowerCase()), 3)
+            await retry(() => dao.adapter.deployRepository(values.name), 3)
             navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
@@ -27,7 +27,7 @@ const RepoCreatePage = () => {
         }
     }
 
-    if (!wallet) return <Navigate to={`/o/${daoName}`} />
+    if (!dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">

@@ -1,40 +1,18 @@
 import { useEffect, useState } from 'react'
 import Spinner from '../../components/Spinner'
-import { getBlobAtCommit, getRepoTree, useGoshVersions } from 'react-gosh'
-import { TGoshTreeItem } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { GoshCommit } from 'react-gosh/dist/gosh/0.11.0/goshcommit'
-import { IGoshRepository } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TCommitBlobsType = {
     className?: string
-    repo: IGoshRepository
-    branch: string
+    repo: IGoshRepositoryAdapter
     commit: string
 }
 
 const CommitBlobs = (props: TCommitBlobsType) => {
-    const { className, repo, branch, commit } = props
-    const { versions } = useGoshVersions()
+    const { className, repo, commit } = props
     const [isFetched, setIsFetched] = useState<boolean>(false)
     const [blobs, setBlobs] = useState<any[]>([])
-
-    const getDiff = async (
-        repo: IGoshRepository,
-        snapaddr: string,
-        commit: string,
-        treeitem: TGoshTreeItem,
-    ) => {
-        const curr = await getBlobAtCommit(repo, snapaddr, commit, treeitem)
-
-        let prev
-        // Old check if (!curr.deployed)
-        if (curr.prevcommit) {
-            prev = await getBlobAtCommit(repo, snapaddr, curr.prevcommit, treeitem)
-        }
-
-        return { curr: curr.content, prev: prev?.content || '' }
-    }
 
     const onLoadDiff = async (index: number) => {
         setBlobs((curr) =>
@@ -43,78 +21,48 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 else return item
             }),
         )
-        const { snap, commit, treeitem } = blobs[index]
-        const { curr, prev } = await getDiff(repo, snap, commit, treeitem)
+        const { commit, treepath } = blobs[index]
+        const { previous, current } = await repo.getCommitBlob(treepath, commit)
         setBlobs((state) =>
             state.map((item, i) => {
-                if (i === index)
-                    return { ...item, curr, prev, isFetching: false, showDiff: true }
-                else return item
+                if (i === index) {
+                    return {
+                        ...item,
+                        current,
+                        previous,
+                        isFetching: false,
+                        showDiff: true,
+                    }
+                } else return item
             }),
         )
     }
 
     useEffect(() => {
-        const getCommitBlobs = async (
-            repo: IGoshRepository,
-            branch: string,
-            commitName: string,
-        ) => {
+        const getCommitBlobs = async () => {
             setIsFetched(false)
-
-            const commitAddr = await repo.getCommitAddr(commitName)
-            const commit = new GoshCommit(repo.account.client, commitAddr)
-            const parents = await commit.getParents()
-
-            const tree = await getRepoTree(repo, commitAddr)
-            const treeParent = await getRepoTree(repo, parents[0])
-            console.debug('Tree', tree)
-            console.debug('Tree parent', treeParent)
-
-            // Compare trees to determine new/changed blobs
-            const updatedItems: TGoshTreeItem[] = []
-            for (const item of tree.items.filter(
-                (i) => ['blob', 'blobExecutable', 'link'].indexOf(i.type) >= 0,
-            )) {
-                const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
-                const found = treeParent.items.findIndex((pitem) => {
-                    let pfullpath = `${pitem.path ? `${pitem.path}/` : ''}`
-                    pfullpath = `${pfullpath}${pitem.name}`
-                    return pitem.sha1 === item.sha1 && pfullpath === fullpath
-                })
-                if (found < 0) updatedItems.push(item)
-            }
-            console.debug('Updated items', updatedItems)
-
-            // Iterate updated items and get snapshots states
-            const updatedBlobs: any[] = await Promise.all(
-                updatedItems.map(async (item, index) => {
-                    const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
-                    const snapaddr = await repo.getSnapshotAddr(branch, fullpath)
+            const blobs = await repo.getCommitBlobs(commit)
+            const state = await Promise.all(
+                blobs.sort().map(async (treepath, i) => {
                     const diff =
-                        index < 5
-                            ? await getDiff(repo, snapaddr, commitName, item)
-                            : { curr: '', prev: '' }
-
+                        i < 5
+                            ? await repo.getCommitBlob(treepath, commit)
+                            : { previous: '', current: '' }
                     return {
-                        snap: snapaddr,
-                        commit: commitName,
-                        treeitem: item,
-                        fullpath,
+                        treepath,
+                        commit,
                         ...diff,
+                        showDiff: i < 5,
                         isFetching: false,
-                        showDiff: index < 5,
                     }
                 }),
             )
-            console.debug('Updated blobs', updatedBlobs)
-
-            setBlobs(updatedBlobs)
+            setBlobs(state)
             setIsFetched(true)
         }
 
-        getCommitBlobs(repo, branch, commit)
-    }, [repo, branch, commit])
+        getCommitBlobs()
+    }, [repo, commit])
 
     return (
         <div className={className}>
@@ -129,14 +77,17 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 blobs.map((blob, index) => (
                     <div key={index} className="my-5 border rounded overflow-hidden">
                         <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                            {blob.fullpath}
+                            {blob.treepath}
                         </div>
                         {blob.showDiff ? (
-                            <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                            <BlobDiffPreview
+                                modified={blob.current}
+                                original={blob.previous}
+                            />
                         ) : (
                             <button
                                 className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
-                                disabled={false}
+                                disabled={blob.isFetching}
                                 onClick={() => onLoadDiff(index)}
                             >
                                 {blob.isFetching && (

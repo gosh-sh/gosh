@@ -4,14 +4,14 @@ import { TDaoLayoutOutletContext } from './DaoLayout'
 
 const DaoSettingsLayout = () => {
     const { daoName } = useParams()
-    const daoContext = useOutletContext<TDaoLayoutOutletContext>()
+    const context = useOutletContext<TDaoLayoutOutletContext>()
 
     const tabs = [
         { to: `/o/${daoName}/settings/wallet`, title: 'Wallet' },
         { to: `/o/${daoName}/settings/members`, title: 'Members' },
     ]
 
-    if (!daoContext.wallet) return <Navigate to={`/o/${daoName}`} />
+    if (!context.dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block px-7 py-8">
@@ -35,7 +35,7 @@ const DaoSettingsLayout = () => {
                         ))}
                     </div>
                     <div className="basis-full md:basis-4/5 overflow-hidden">
-                        <Outlet context={daoContext} />
+                        <Outlet context={context} />
                     </div>
                 </div>
             </div>

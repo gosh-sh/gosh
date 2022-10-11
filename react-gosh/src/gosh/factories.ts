@@ -14,6 +14,11 @@ class GoshAdapterFactory {
                 throw new GoshError('GoshAdapter is not implemented', { version })
         }
     }
+
+    static createLatest(): IGoshAdapter {
+        const version = Object.keys(AppConfig.versions).reverse()[0]
+        return GoshAdapterFactory.create(version)
+    }
 }
 
 export { GoshAdapterFactory }
