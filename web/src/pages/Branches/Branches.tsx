@@ -29,7 +29,7 @@ type TCreateBranchFormValues = {
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { dao, repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
     const { details: smvDetails } = useSmvBalance(
         dao.adapter,
@@ -159,7 +159,7 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex flex-wrap justify-between gap-4">
-                {wallet?.details.isDaoMember && (
+                {dao.details.isAuthMember && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -254,7 +254,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {wallet?.details.isDaoMember && (
+                            {dao.details.isAuthMember && (
                                 <>
                                     <button
                                         type="button"

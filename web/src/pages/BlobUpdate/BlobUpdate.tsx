@@ -39,7 +39,7 @@ const BlobUpdatePage = () => {
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
@@ -99,7 +99,7 @@ const BlobUpdatePage = () => {
         }
     }, [monaco, treePath])
 
-    if (!wallet?.details.isDaoMember) return <Navigate to={urlBack} />
+    if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
     return (
         <div className="bordered-block py-8">
             <div className="px-4 sm:px-7">
