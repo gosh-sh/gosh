@@ -14,27 +14,31 @@ pub const CONFIG_LOCATION: &str = "$HOME/.gosh/config.json";
 lazy_static! {
     pub static ref NETWORK_ENDPOINTS: HashMap<String, Vec<String>> = HashMap::from([
         (
-            "network.gosh.sh".to_string(),
-            vec!["https://network.gosh.sh".to_string()]
-        ),
-        (
-            "net.ton.dev".to_string(),
+            "network.gosh.sh".to_owned(),
             vec![
-                "https://eri01.net.everos.dev".to_string(),
-                "https://rbx01.net.everos.dev".to_string(),
-                "https://gra01.net.everos.dev".to_string(),
+                "https://bhs01.network.gosh.sh".to_owned(),
+                "https://eri01.network.gosh.sh".to_owned(),
+                "https://gra01.network.gosh.sh".to_owned(),
             ]
         ),
         (
-            "vps23.ton.dev".to_string(),
-            vec!["vps23.ton.dev".to_string()]
+            "net.ton.dev".to_owned(),
+            vec![
+                "https://eri01.net.everos.dev".to_owned(),
+                "https://rbx01.net.everos.dev".to_owned(),
+                "https://gra01.net.everos.dev".to_owned(),
+            ]
         ),
         (
-            "localhost".to_string(),
+            "vps23.ton.dev".to_owned(),
+            vec!["vps23.ton.dev".to_owned()]
+        ),
+        (
+            "localhost".to_owned(),
             vec![
-                "http://127.0.0.1/".to_string(),
-                "http://localhost/".to_string(),
-                "http://0.0.0.0/".to_string(),
+                "http://127.0.0.1/".to_owned(),
+                "http://localhost/".to_owned(),
+                "http://0.0.0.0/".to_owned(),
             ]
         )
     ]);
