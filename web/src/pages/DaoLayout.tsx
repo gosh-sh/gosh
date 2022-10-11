@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { userPersistAtom, classNames, useDao, TDao } from 'react-gosh'
-import { IGoshDaoAdapter, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { classNames, useDao, TDao } from 'react-gosh'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 export type TDaoLayoutOutletContext = {
     dao: {

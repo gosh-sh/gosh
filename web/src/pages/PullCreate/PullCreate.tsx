@@ -30,7 +30,7 @@ import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
 import ToastError from '../../components/Error/ToastError'
-import { IGoshRepositoryAdapter, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TBranch, TTreeItem } from 'react-gosh/dist/types/repo.types'
 
 type TCommitFormValues = {
@@ -238,7 +238,6 @@ const PullCreatePage = () => {
             }
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            const pubkey = userState.keys.public
             await repo.push(
                 toBranch.name,
                 blobs,

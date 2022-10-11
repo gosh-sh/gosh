@@ -63,7 +63,7 @@ const RepoLayout = () => {
         }
 
         _setup()
-    }, [isFetching])
+    }, [isFetching, updateBranches])
 
     return (
         <div className="container container--full my-10">

@@ -7,13 +7,12 @@ import {
     goshRepoTreeAtom,
     goshRepoTreeSelector,
 } from '../store/gosh.state'
-import { AppConfig, TSmvBalanceDetails, TWalletDetails, retry, useUser } from 'react-gosh'
+import { TSmvBalanceDetails, retry, useUser } from 'react-gosh'
 import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
     IGoshWallet,
 } from 'react-gosh/dist/gosh/interfaces'
-import { GoshSmvLocker } from 'react-gosh/dist/gosh/0.11.0/goshsmvlocker'
 import { TBranch, TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
 
 /** Reload GoshRepo branch/branches and update app state */

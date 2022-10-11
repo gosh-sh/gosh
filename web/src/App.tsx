@@ -47,19 +47,6 @@ import { NetworkQueriesProtocol } from '@eversdk/core'
 const App = () => {
     useNotificationMessages()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
-    let timer: NodeJS.Timeout | null = null
-
-    const timerRestart = () => {
-        if (timer) clearInterval(timer)
-        timer = setInterval(async () => {
-            await AppConfig.goshclient.net.suspend()
-            console.debug('Gosh client suspended')
-            await AppConfig.goshclient.net.resume()
-            console.debug('Gosh client resumed')
-        }, 1000 * 60 * 10)
-    }
-
-    const onMouseMove = () => timerRestart()
 
     useEffect(() => {
         const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
@@ -83,19 +70,30 @@ const App = () => {
     }, [])
 
     useEffect(() => {
+        const _restartTimer = () => {
+            if (timer) clearInterval(timer)
+            timer = setInterval(async () => {
+                await AppConfig.goshclient.net.suspend()
+                console.debug('Gosh client suspended')
+                await AppConfig.goshclient.net.resume()
+                console.debug('Gosh client resumed')
+            }, 1000 * 60 * 10)
+        }
+
         // Initialize gosh client suspend/resume timer
-        timerRestart()
+        let timer: NodeJS.Timeout | null = null
+        _restartTimer()
 
         // Listen for mouse events
-        window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('mousemove', _restartTimer)
 
         return () => {
             if (timer) {
                 clearTimeout(timer)
-                window.removeEventListener('mousemove', onMouseMove)
+                window.removeEventListener('mousemove', _restartTimer)
             }
         }
-    }, [onMouseMove, timer, timerRestart])
+    }, [])
 
     if (!isInitialized)
         return (
