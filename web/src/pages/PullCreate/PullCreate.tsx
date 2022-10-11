@@ -46,7 +46,10 @@ const PullCreatePage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
+    const { details: smvDetails } = useSmvBalance(
+        dao.adapter,
+        dao.details.isAuthenticated,
+    )
     const { branches, updateBranches } = useGoshRepoBranches(repo)
     const [compare, setCompare] = useState<
         | {
@@ -229,8 +232,8 @@ const PullCreatePage = () => {
             console.debug('Blobs', blobs)
 
             if (toBranch.isProtected) {
-                if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-                if (smvBalance.smvBalance < 20)
+                if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+                if (smvDetails.smvBalance < 20)
                     throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
             }
 

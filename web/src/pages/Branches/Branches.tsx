@@ -31,7 +31,10 @@ export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
     const { dao, repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
+    const { details: smvDetails } = useSmvBalance(
+        dao.adapter,
+        dao.details.isAuthenticated,
+    )
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, updateBranches } = useGoshRepoBranches(repo)
     const branch = useRecoilValue(goshCurrBranchSelector(branchName))
@@ -52,8 +55,8 @@ export const BranchesPage = () => {
             // if (await repo.isBranchProtected(name))
             //     throw new Error('Branch is already protected')
             if (!repo) throw new GoshError(EGoshError.NO_REPO)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvBalance.smvBalance < 20)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
             await retry(async () => await repo.lockBranch(name), 3)
@@ -80,8 +83,8 @@ export const BranchesPage = () => {
             // const isProtected = await repo.isBranchProtected(name)
             // if (!isProtected) throw new Error('Branch is not protected')
             if (!repo) throw new GoshError(EGoshError.NO_REPO)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvBalance.smvBalance < 20)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
             await retry(async () => await repo.unlockBranch(name), 3)
@@ -262,7 +265,7 @@ export const BranchesPage = () => {
                                                 : onBranchLock(branch.name)
                                         }}
                                         disabled={
-                                            smvBalance.smvBusy ||
+                                            smvDetails.smvBusy ||
                                             branchesBusy[branch.name]?.busy
                                         }
                                     >
