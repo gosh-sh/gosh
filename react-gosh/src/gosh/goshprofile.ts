@@ -51,7 +51,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
                 .map(async ({ decoded }) => {
                     const { goshdao, ver } = decoded.value
                     const adapter = GoshAdapterFactory.create(ver)
-                    return await adapter.getDao({ address: goshdao })
+                    return await adapter.getDao({ address: goshdao, useAuth: false })
                 }),
         )
     }
