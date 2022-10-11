@@ -115,8 +115,12 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return profile
     }
 
-    async getDao(options: { name?: string; address?: string }): Promise<IGoshDaoAdapter> {
-        const { name, address } = options
+    async getDao(options: {
+        name?: string
+        address?: string
+        useAuth?: boolean
+    }): Promise<IGoshDaoAdapter> {
+        const { name, address, useAuth = true } = options
 
         let adapter: IGoshDaoAdapter
         if (address) adapter = new GoshDaoAdapter(this, address)
@@ -128,7 +132,9 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
             adapter = new GoshDaoAdapter(this, value0)
         }
 
-        if (this.auth) await adapter.setAuth(this.auth.username, this.auth.keys)
+        if (useAuth && this.auth) {
+            await adapter.setAuth(this.auth.username, this.auth.keys)
+        }
         return adapter
     }
 

@@ -7,7 +7,6 @@ import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { getAllAccounts } from '../helpers'
 import { daoAtom } from '../store'
 import { TBranch, TRepositoryListItem } from '../types/repo.types'
-import { useUser } from './user.hooks'
 
 function useRepoList(dao: string, perPage: number) {
     const [search, setSearch] = useState<string>('')
@@ -59,8 +58,9 @@ function useRepoList(dao: string, perPage: number) {
             const items: TRepositoryListItem[] = []
             for (const version of Object.keys(AppConfig.versions).reverse()) {
                 const gosh = GoshAdapterFactory.create(version)
-                const daoAdapter = await gosh.getDao({ name: dao })
+                const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
                 if (!(await daoAdapter.isDeployed())) continue
+
                 const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
                 const accounts = await getAllAccounts({
                     filters: [`code_hash: {eq:"${codeHash}"}`],
@@ -129,7 +129,6 @@ function useRepoList(dao: string, perPage: number) {
 }
 
 function useRepo(dao: string, repo: string) {
-    const { user } = useUser()
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [daoAdapter, setDaoAdapter] = useState<IGoshDaoAdapter>()
     const [repoAdapter, setRepoAdapter] = useState<IGoshRepositoryAdapter>()
@@ -139,10 +138,6 @@ function useRepo(dao: string, repo: string) {
         const _getRepo = async () => {
             for (const version of Object.keys(AppConfig.versions).reverse()) {
                 const gosh = GoshAdapterFactory.create(version)
-                if (user.username && user.keys) {
-                    await gosh.setAuth(user.username, user.keys)
-                }
-
                 const daoInstance = await gosh.getDao({ name: dao })
                 if (!(await daoInstance.isDeployed())) continue
 
@@ -158,7 +153,7 @@ function useRepo(dao: string, repo: string) {
         }
 
         _getRepo()
-    }, [dao, repo, user.username, user.keys])
+    }, [dao, repo])
 
     return {
         isFetching,

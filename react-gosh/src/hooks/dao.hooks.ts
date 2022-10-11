@@ -5,7 +5,7 @@ import { userAtom, daoAtom, walletAtom } from '../store'
 import { TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
-import { useProfile, useUser } from './user.hooks'
+import { useProfile } from './user.hooks'
 import { IGoshDaoAdapter, IGoshWallet } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
 
@@ -121,7 +121,6 @@ function useDaoList(perPage: number) {
 
 function useDao(name: string) {
     const [details, setDetails] = useRecoilState(daoAtom)
-    const { user } = useUser()
     const [adapter, setAdapter] = useState<IGoshDaoAdapter>()
     const [isFetching, setIsFetching] = useState<boolean>(true)
     const [errors, setErrors] = useState<string[]>([])
@@ -144,25 +143,12 @@ function useDao(name: string) {
                 setAdapter(instance)
             } else {
                 setErrors((state) => [...state, 'DAO not found'])
-                setIsFetching(false)
-            }
-        }
-
-        _getDao()
-    }, [name])
-
-    useEffect(() => {
-        const _authenticate = async () => {
-            if (!adapter) return
-
-            if (user.username && user.keys) {
-                await adapter.setAuth(user.username, user.keys)
             }
             setIsFetching(false)
         }
 
-        _authenticate()
-    }, [adapter, user.username, user.keys])
+        _getDao()
+    }, [name])
 
     return {
         adapter,

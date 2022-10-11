@@ -1,5 +1,5 @@
 import { KeyPair } from '@eversdk/core'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
@@ -22,6 +22,17 @@ function useUser() {
         persist: TUserPersist,
         decrypted: { phrase: string; keys: KeyPair },
     ) => {
+        Object.keys(AppConfig.versions)
+            .map((version) => {
+                return GoshAdapterFactory.create(version)
+            })
+            .map((gosh) => {
+                const { username } = persist
+                const { keys } = decrypted
+                if (username && keys) gosh.setAuth(username, keys)
+                else gosh.resetAuth()
+            })
+
         setUserPersist(persist)
         setUser({ ...persist, ...decrypted })
     }

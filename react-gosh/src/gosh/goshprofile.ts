@@ -2,7 +2,6 @@ import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
 import { BaseContract } from './base'
 import {
     IGoshAdapter,
-    IGoshDao,
     IGoshDaoAdapter,
     IGoshProfile,
     IGoshProfileDao,

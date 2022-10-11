@@ -27,7 +27,11 @@ interface IGoshAdapter {
     getProfile(options: { username?: string; address?: string }): Promise<IGoshProfile>
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 
-    getDao(options: { name?: string; address?: string }): Promise<IGoshDaoAdapter>
+    getDao(options: {
+        name?: string
+        address?: string
+        useAuth?: boolean
+    }): Promise<IGoshDaoAdapter>
 
     getRepository(name: string): Promise<IGoshRepositoryAdapter>
     getRepositoryCodeHash(dao: string): Promise<string>
