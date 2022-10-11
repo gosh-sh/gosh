@@ -25,11 +25,15 @@ export default abstract class RemoteHandler extends GoshHandler {
     protected pubkey = '';
     protected secret = '';
 
+    protected pull_verbosity = 1;
+    protected push_verbosity = 1;
+
     applyConfiguration(c: any): RemoteHandler {
         super.applyConfiguration(c);
         this.useFields(c,
             ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'],
-            ['gosh_bin_path', 'release_asset', 'github_user', 'github_token', 'address'])
+            ['gosh_bin_path', 'release_asset', 'github_user', 'github_token', 'address',
+            'push_verbosity', 'pull_verbosity'])
         return this;
     }
 
@@ -73,30 +77,33 @@ export default abstract class RemoteHandler extends GoshHandler {
         const step = this.stepsDone;
         this.say(`[${step}] Execute [${cmdargs.join(', ')}] in ${cwd ?? '<current>'} dir`, loud);
         const params: any = (cwd !== undefined) ? {cwd: cwd} : {};
-        if (this.started != 0 && this.timeout != 0) {
-            params.timeout = Math.max((this.started + this.timeout) - now(), 1) * 1000;
+        if (this.started != 0 && this.timeout_ms != 0) {
+            params.timeout = Math.max((this.started + this.timeout_ms) - now(), 1) * 1000;
             params.killSignal = "SIGINT";
         }
+        params.env = Object.assign({}, {'RUST_BACKTRACE': 'full'}, process.env);
         const cmd = cmdargs[0], args = cmdargs.slice(1);
-        const process = child_process.spawn(cmd, args, params);
-        process.stdout.on('data', (data) => {
+        const proc = child_process.spawn(cmd, args, params);
+        const skiprx = /^\s*(\d+)?,?$/;
+        proc.stdout.on('data', (data) => {
             this.say(`[${step}o] ${data}`, loud);
         });
-        process.stderr.on('data', (data) => {
+        proc.stderr.on('data', (data) => {
+            if (data.toString().split('\n').every((s: string): boolean => skiprx.test(s))) return; // skip
             this.say(`[${step}e] ${data}`, loud);
         });
         const prom = new Promise( (resolve, reject) => {
-            process.on('close', (code) => {
+            proc.on('close', (code) => {
                 this.say(`[${step}] Closed all stdio with code ${code}`, loud);
             });
-            process.on('exit', (code) => {
+            proc.on('exit', (code) => {
                 this.say(`[${step}] Exited with code ${code}`, loud);
                 if (code == 0)
                     resolve(true);
                 else
                     reject('failed with exit code ' + code);
             });
-            process.on('error', (err) => {
+            proc.on('error', (err) => {
                 this.say(`[${step}] Error occured: ${err}`, loud);
                 reject(err);
             });
@@ -164,12 +171,14 @@ export default abstract class RemoteHandler extends GoshHandler {
                 const headers = new Headers();
                 if (this.github_user !== '' && this.github_token !== '')
                     headers.set('Authorization', 'Basic ' + Buffer.from(`${this.github_user}:${this.github_token}`).toString('base64'));
-                if (etag !== '' && fs.existsSync('./data/last-git-remote-gosh') && fs.existsSync('data/last-updated'))
+                if (etag !== '' && fs.existsSync('./data/last-git-remote-gosh') && fs.existsSync('data/last-updated') && fs.existsSync('data/last-tag'))
                     headers.set('If-None-Match', etag);
                 const response = await fetch(url, {headers: headers});
                 if (!response.ok) {
                     if (response.statusText === 'Not Modified') {
                         this.say("github conditional result: not modified", true);
+                        if (fs.existsSync('data/last-tag'))
+                            this.say('using cached release from tag ' + fs.readFileSync('data/last-tag', 'utf-8'));
                         data = null;
                     }
                     else if (response.statusText != 'rate limit exceeded')
@@ -185,13 +194,16 @@ export default abstract class RemoteHandler extends GoshHandler {
                     data = await response.json();
                     let sel = null;
                     if (release_name === 'latest-prerelease') {
-                        for (let r of data) {
-                            if (r.prerelease) {
-                                this.say('selected first prerelease ' + r.name);
-                                sel = r;
-                                break;
-                            }
-                        }
+                        // for (let r of data) {
+                        //     if (r.prerelease) {
+                        //         this.say('selected first prerelease ' + r.name);
+                        //         sel = r;
+                        //         break;
+                        //     }
+                        // }
+                        const r = data[0];
+                        this.say('selected first (pre)release ' + r.name);
+                        sel = r;
                         if (!sel)
                             throw new Error('Prerelease not found');
                         else
@@ -203,6 +215,8 @@ export default abstract class RemoteHandler extends GoshHandler {
                             break;
                         }
                     }
+                    fs.writeFileSync('data/last-tag', data['tag_name'], 'utf-8');
+                    this.say('getting release with tag: ' + data['tag_name']);
                 }
             },
             'find release', /* 4*/ async() => {
@@ -235,7 +249,7 @@ export default abstract class RemoteHandler extends GoshHandler {
             'nop',             /* 7*/ () => this.nop(),
             'delete repo dir', /* 8*/ () => this.deleteDir(this.repoDir()),
             'link remote',     /* 9*/ () => this.execute(['ln', '-s', '-f', 'last-git-remote-gosh', 'data/git-remote-gosh']),
-            'clone branch',    /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
+            'clone branch',    /*10*/ () => this.execute(['git', 'clone', '-' + 'v'.repeat(this.pull_verbosity), '--branch', this.branch, '--single-branch',
                                             `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
         ];
     }
@@ -259,7 +273,7 @@ export default abstract class RemoteHandler extends GoshHandler {
             'delete repo dir',  /* 7*/ () => this.deleteDir(this.repoDir()),
             'request envs',     /* 8*/ () => this.requestEnvs(),
             'link remote',      /* 9*/ () => this.execute(['ln', '-s', '-f', 'gosh/' + this.gosh_bin_path, 'data/git-remote-gosh']),
-            'clone branch',     /*10*/ () => this.execute(['git', 'clone', '-vvv', '--branch', this.branch, '--single-branch',
+            'clone branch',     /*10*/ () => this.execute(['git', 'clone', '-' + 'v'.repeat(this.pull_verbosity), '--branch', this.branch, '--single-branch',
                                              `gosh://my-wallet@${this.root}/${this.organization}/${this.repository}`, this.repoDir()]),
         ];
     }

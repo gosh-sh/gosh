@@ -95,7 +95,10 @@ export default class ScriptHandler extends AppHandler {
             const res = await sub.handle(debug);
             console.log(`> Done step ${mode} handler ${conf.handler} <`);
             for (let k of res.keys()) {
-                all.set(k + `{sub="${mode}"}"`, res.get(k)!);
+                const kk = k.includes('}') ?
+                    k.replace('}', `,sub="${mode}"}"`) :
+                    k + `{sub="${mode}"}"`;
+                all.set(kk, res.get(k)!);
             }
             if (!res.has('result') || !res.has('value') || res.get('result') !== 100) {
                 all.set("result", steps);
