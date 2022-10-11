@@ -4,7 +4,7 @@ import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from 'react-gosh'
+import { EGoshError, GoshError, retry } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -16,14 +16,17 @@ type TMoveBalanceFormValues = {
 
 const DaoWalletPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
+    const { wallet, details: smvDetails } = useSmvBalance(
+        dao.adapter,
+        dao.details.isAuthenticated,
+    )
 
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move balance to SMV balance] - Values:', values)
         try {
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            // await retry(() => wallet.instance.lockVoting(values.amount), 3)
+            await retry(() => wallet!.lockVoting(values.amount), 3)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -34,9 +37,9 @@ const DaoWalletPage = () => {
     const onMoveSmvBalanceToBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move SMV balance to balance] - Values:', values)
         try {
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            // await retry(() => wallet.instance.unlockVoting(values.amount), 3)
+            await retry(() => wallet!.unlockVoting(values.amount), 3)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -46,9 +49,9 @@ const DaoWalletPage = () => {
 
     const onReleaseSmvTokens = async () => {
         try {
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            // await retry(() => wallet.instance.updateHead(), 3)
+            await retry(() => wallet!.updateHead(), 3)
             toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
             console.error(e.message)
@@ -58,7 +61,12 @@ const DaoWalletPage = () => {
 
     return (
         <>
-            <SmvBalance details={smvBalance} dao={dao} className="mb-4 !px-0" />
+            <SmvBalance
+                details={smvDetails}
+                wallet={wallet!}
+                dao={dao}
+                className="mb-4 !px-0"
+            />
 
             <div className="divide-y divide-gray-200">
                 <div className="py-5">
@@ -68,12 +76,12 @@ const DaoWalletPage = () => {
                         to create new proposals and vote
                     </p>
                     <Formik
-                        initialValues={{ amount: smvBalance.balance }}
+                        initialValues={{ amount: smvDetails.balance }}
                         onSubmit={onMoveBalanceToSmvBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.balance)
+                                .max(smvDetails.balance)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -95,7 +103,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || smvDetails.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to SMV balance
@@ -111,13 +119,13 @@ const DaoWalletPage = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            amount: smvBalance.smvBalance,
+                            amount: smvDetails.smvBalance - smvDetails.smvLocked,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.smvBalance)
+                                .max(smvDetails.smvBalance - smvDetails.smvLocked)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -139,7 +147,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || smvDetails.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to wallet
@@ -164,7 +172,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || smvDetails.smvBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Release locked tokens

@@ -112,7 +112,12 @@ const EventsPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div>
-                <SmvBalance details={smvBalance} dao={dao} className="mb-5 bg-gray-100" />
+                <SmvBalance
+                    details={smvBalance.details}
+                    wallet={smvBalance.wallet!}
+                    dao={dao}
+                    className="mb-5 bg-gray-100"
+                />
 
                 <div className="mb-4">
                     Don't see your event? Please wait, events are reloaded automatically

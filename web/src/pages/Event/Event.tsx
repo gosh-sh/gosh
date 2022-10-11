@@ -27,7 +27,10 @@ type TFormValues = {
 const EventPage = () => {
     const { daoName, eventAddr } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
+    const { wallet, details: smvDetails } = useSmvBalance(
+        dao.adapter,
+        dao.details.isAuthenticated,
+    )
     const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
         details?: TGoshEventDetails
@@ -40,9 +43,9 @@ const EventPage = () => {
     const onProposalCheck = async () => {
         try {
             if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             setCheck(true)
-            // await wallet.instance.tryProposalResult(event.details.address)
+            await wallet!.tryProposalResult(event.details.address)
             toast.success('Re-check submitted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -65,18 +68,12 @@ const EventPage = () => {
                     start: event.details.time.start.getTime(),
                 })
             }
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            const smvPlatformCode = await dao.adapter.getSmvPlatformCode()
-            const smvClientCode = await dao.adapter.getSmvClientCode()
-            const choice = values.approve === 'true'
-            // await wallet.instance.voteFor(
-            //     smvPlatformCode,
-            //     smvClientCode,
-            //     event.details.address,
-            //     choice,
-            //     values.amount,
-            // )
+            /*             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
+            const smvClientCode = await dao.instance.getSmvClientCode()
+ */ const choice = values.approve === 'true'
+            await wallet!.voteFor(event.details.address, choice, values.amount)
             toast.success('Vote accepted, event details will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -89,7 +86,7 @@ const EventPage = () => {
             if (!eventAddr) return
 
             const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
-            const details = await event.getDetails()
+            const details = await event.getDetails(wallet?.address)
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }
 
@@ -104,11 +101,16 @@ const EventPage = () => {
         return () => {
             clearInterval(interval)
         }
-    }, [eventAddr])
+    }, [eventAddr, wallet])
 
     return (
         <div className="bordered-block px-7 py-8">
-            <SmvBalance details={smvBalance} dao={dao} className="mb-5 bg-gray-100" />
+            <SmvBalance
+                details={smvDetails}
+                wallet={wallet!}
+                dao={dao}
+                className="mb-5 bg-gray-100"
+            />
 
             <div className="mb-4">Event details are reloaded automatically</div>
 
@@ -148,6 +150,8 @@ const EventPage = () => {
                             {event.details.time.start.toLocaleString()}
                             <span className="mx-1">-</span>
                             {event.details.time.finish.toLocaleString()}
+                            <span className="mx-1">-</span>
+                            {event.details.time.realFinish.toLocaleString()}
                         </div>
                         <div>
                             <span className="mr-3">
@@ -176,6 +180,20 @@ const EventPage = () => {
                                     </span>
                                     Rejected
                                 </span>
+                                <span className="mx-3">/</span>
+                                <span className="text-black-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {event.details.total_votes}
+                                    </span>
+                                    Total
+                                </span>
+                                <span className="mx-3">/</span>
+                                <span className="text-black-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {event.details.your_votes}
+                                    </span>
+                                    Yours
+                                </span>
                             </div>
                         </div>
                         {dao.details.isAuthMember && !event.details.status.completed && (
@@ -184,7 +202,7 @@ const EventPage = () => {
                                     type="button"
                                     className="btn btn--body text-sm px-4 py-1.5"
                                     onClick={onProposalCheck}
-                                    disabled={check || smvBalance.smvBusy}
+                                    disabled={check || smvDetails.smvBusy}
                                 >
                                     {check && <Spinner className="mr-2" />}
                                     Re-check
@@ -197,13 +215,15 @@ const EventPage = () => {
                         <Formik
                             initialValues={{
                                 approve: 'true',
-                                amount: smvBalance.smvBalance,
+                                amount: smvDetails.smvBalance - event.details?.your_votes,
                             }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
                                 amount: Yup.number()
                                     .min(1, 'Should be a number >= 1')
-                                    .max(smvBalance.smvBalance)
+                                    .max(
+                                        smvDetails.smvBalance - event.details?.your_votes,
+                                    )
                                     .required('Field is required'),
                             })}
                             enableReinitialize
@@ -246,7 +266,7 @@ const EventPage = () => {
                                         <button
                                             className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
                                             type="submit"
-                                            disabled={isSubmitting || smvBalance.smvBusy}
+                                            disabled={isSubmitting || smvDetails.smvBusy}
                                         >
                                             {isSubmitting && <Spinner className="mr-2" />}
                                             Vote for proposal

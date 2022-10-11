@@ -755,18 +755,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async lockBranch(name: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
+        const locker = await this.auth.wallet.getSmvLocker()
         await this.auth.wallet.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
+            num_clients: await locker.getNumClients(),
         })
     }
 
     async unlockBranch(name: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
+        const locker = await this.auth.wallet.getSmvLocker()
         await this.auth.wallet.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
+            num_clients: await locker.getNumClients(),
         })
     }
 
@@ -1237,12 +1241,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
+        const locker = await this.auth.wallet.getSmvLocker()
         await this.auth.wallet.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
+            num_clients: await locker.getNumClients(),
         })
     }
 

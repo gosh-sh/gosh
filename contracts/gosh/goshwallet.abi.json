@@ -21,6 +21,7 @@
 				{"name":"limit_time","type":"uint128"},
 				{"name":"limit_messages","type":"uint128"},
 				{"name":"lockerCode","type":"cell"},
+				{"name":"tokenWalletCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
@@ -296,7 +297,8 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
 				{"name":"numberChangedFiles","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"}
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -305,7 +307,8 @@
 			"name": "startProposalForAddProtectedBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -314,7 +317,8 @@
 			"name": "startProposalForDeleteProtectedBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -331,7 +335,6 @@
 			"name": "isCompletedCallback",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"_tokenLocker","type":"address"},
 				{"name":"res","type":"optional(bool)"},
 				{"name":"propData","type":"cell"}
 			],
@@ -537,14 +540,6 @@
 			]
 		},
 		{
-			"name": "onTokenBalanceUpdateWhileLockVoting",
-			"inputs": [
-				{"name":"balance","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "lockVoting",
 			"inputs": [
 				{"name":"amount","type":"uint128"}
@@ -563,20 +558,30 @@
 		{
 			"name": "voteFor",
 			"inputs": [
-				{"name":"platformCode","type":"cell"},
-				{"name":"clientCode","type":"cell"},
-				{"name":"proposal","type":"address"},
+				{"name":"platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "proposalAddress",
+			"name": "getPlatfotmId",
+			"inputs": [
+				{"name":"propId","type":"uint256"},
+				{"name":"platformType","type":"uint8"},
+				{"name":"_tip3VotingLocker","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "clientAddressForProposal",
 			"inputs": [
 				{"name":"_tip3VotingLocker","type":"address"},
-				{"name":"propId","type":"uint256"}
+				{"name":"_platform_id","type":"uint256"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -593,20 +598,10 @@
 			]
 		},
 		{
-			"name": "clientAddress",
-			"inputs": [
-				{"name":"_tip3VotingLocker","type":"address"},
-				{"name":"propId","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "killAccount",
 			"inputs": [
 				{"name":"address_to","type":"address"},
-				{"name":"tokens_to","type":"address"}
+				{"name":"value1","type":"address"}
 			],
 			"outputs": [
 			]
@@ -628,14 +623,8 @@
 			]
 		},
 		{
-			"name": "onAcceptTokensTransfer",
+			"name": "returnExtraLockerFunds",
 			"inputs": [
-				{"name":"tokenRoot","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"sender","type":"address"},
-				{"name":"sender_wallet","type":"address"},
-				{"name":"gasTo","type":"address"},
-				{"name":"payload","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -643,10 +632,10 @@
 		{
 			"name": "onAcceptTokensMint",
 			"inputs": [
-				{"name":"tokenRoot","type":"address"},
+				{"name":"value0","type":"address"},
 				{"name":"amount","type":"uint128"},
-				{"name":"remainingGasTo","type":"address"},
-				{"name":"payload","type":"cell"}
+				{"name":"gasTo","type":"address"},
+				{"name":"value3","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -654,35 +643,71 @@
 		{
 			"name": "onBounceTokensTransfer",
 			"inputs": [
-				{"name":"root","type":"address"},
+				{"name":"value0","type":"address"},
 				{"name":"amount","type":"uint128"},
-				{"name":"wallet_to","type":"address"}
+				{"name":"value2","type":"address"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "tip3Root",
+			"name": "onAcceptTokensTransfer",
 			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"gasTo","type":"address"},
+				{"name":"value5","type":"cell"}
 			],
 			"outputs": [
-				{"name":"tip3Root","type":"address"}
 			]
 		},
 		{
-			"name": "tip3Wallet",
+			"name": "updateTokenBalance",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"tip3Wallet","type":"address"}
 			]
 		},
 		{
-			"name": "tip3VotingLocker",
+			"name": "onUpdateBalance",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "m_tokenRoot",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"tip3VotingLocker","type":"address"}
+				{"name":"m_tokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenWallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWallet","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "m_tokenWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWalletCode","type":"cell"}
 			]
 		},
 		{
@@ -702,11 +727,11 @@
 			]
 		},
 		{
-			"name": "_tokenBalance",
+			"name": "tip3VotingLocker",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"_tokenBalance","type":"uint128"}
+				{"name":"tip3VotingLocker","type":"address"}
 			]
 		},
 		{
@@ -728,10 +753,15 @@
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"tip3Root","type":"address"},
+		{"name":"m_tokenRoot","type":"address"},
+		{"name":"m_tokenWallet","type":"address"},
+		{"name":"m_tokenBalance","type":"uint128"},
+		{"name":"m_tokenWalletCode","type":"cell"},
 		{"name":"nonce","type":"uint256"},
-		{"name":"tip3Wallet","type":"address"},
+		{"name":"lockerTip3Wallet","type":"address"},
+		{"name":"initialized","type":"bool"},
 		{"name":"tip3VotingLocker","type":"address"},
+		{"name":"lastVoteResult","type":"optional(bool)"},
 		{"name":"clientCodeHash","type":"uint256"},
 		{"name":"clientCodeDepth","type":"uint16"},
 		{"name":"proposalCodeHash","type":"uint256"},
@@ -740,13 +770,13 @@
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"lockerCodeHash","type":"uint256"},
 		{"name":"lockerCodeDepth","type":"uint16"},
-		{"name":"lockerTip3Wallet","type":"address"},
-		{"name":"initialized","type":"bool"},
-		{"name":"_tokenBalance","type":"uint128"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_lockerCode","type":"cell"},
+		{"name":"_access","type":"optional(uint256)"},
 		{"name":"m_messages","type":"map(uint256,uint32)"},
 		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
-		{"name":"lastVoteResult","type":"optional(bool)"},
-		{"name":"lockingAmount","type":"uint128"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_pubaddr","type":"address"},
@@ -762,18 +792,12 @@
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
-		{"name":"m_SMVPlatformCode","type":"cell"},
-		{"name":"m_SMVClientCode","type":"cell"},
-		{"name":"m_SMVProposalCode","type":"cell"},
-		{"name":"m_lockerCode","type":"cell"},
-		{"name":"_tip3root","type":"address"},
 		{"name":"counter","type":"uint128"},
 		{"name":"_last_time","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_limit_messages","type":"uint128"},
 		{"name":"_limit_time","type":"uint128"},
 		{"name":"_walletcounter","type":"uint128"},
-		{"name":"_tombstone","type":"bool"},
-		{"name":"_access","type":"optional(uint256)"}
+		{"name":"_tombstone","type":"bool"}
 	]
 }

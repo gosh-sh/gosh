@@ -1,4 +1,5 @@
 import { KeyPair, TonClient } from '@eversdk/core'
+import { GoshSmvProposal } from './goshsmvproposal'
 import { BaseContract } from '../base'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { IGoshProfile, IGoshSmvLocker, IGoshWallet } from '../interfaces'
@@ -27,9 +28,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
 
     async getSmvLocker(): Promise<IGoshSmvLocker> {
         const addr = await this.getSmvLockerAddr()
-        const locker = new GoshSmvLocker(this.account.client, addr)
-        await locker.load()
-        return locker
+        return new GoshSmvLocker(this.account.client, addr)
     }
 
     async getSmvLockerAddr(): Promise<string> {
@@ -37,17 +36,17 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         return result.decoded?.output.tip3VotingLocker
     }
 
-    async getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string> {
-        const result = await this.account.runLocal('clientAddress', {
+    async getSmvClientAddr(lockerAddr: string, platform_id: string): Promise<string> {
+        const result = await this.account.runLocal('clientAddressForProposal', {
             _tip3VotingLocker: lockerAddr,
-            propId: proposalId,
+            _platform_id: platform_id,
         })
         return result.decoded?.output.value0
     }
 
     async getSmvTokenBalance(): Promise<number> {
-        const result = await this.account.runLocal('_tokenBalance', {})
-        return +result.decoded?.output._tokenBalance
+        const result = await this.account.runLocal('m_tokenBalance', {})
+        return +result.decoded?.output.m_tokenBalance
     }
 
     async lockVoting(amount: number): Promise<void> {
@@ -62,19 +61,17 @@ class GoshWallet extends BaseContract implements IGoshWallet {
         await this.run('tryProposalResult', { proposal: proposalAddr })
     }
 
-    async voteFor(
-        platformCode: string,
-        clientCode: string,
-        proposalAddr: string,
-        choice: boolean,
-        amount: number,
-    ): Promise<void> {
+    async voteFor(proposalAddr: string, choice: boolean, amount: number): Promise<void> {
+        const proposal = new GoshSmvProposal(this.account.client, proposalAddr)
+        const locker = new GoshSmvLocker(
+            this.account.client,
+            await this.getSmvLockerAddr(),
+        )
         await this.run('voteFor', {
-            platformCode,
-            clientCode,
-            proposal: proposalAddr,
+            platform_id: await proposal.getPlatformId(),
             choice,
             amount,
+            num_clients: await locker.getNumClients(),
         })
     }
 

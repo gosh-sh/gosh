@@ -204,13 +204,7 @@ interface IGoshWallet extends IContract {
     getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>
     lockVoting(amount: number): Promise<void>
     unlockVoting(amount: number): Promise<void>
-    voteFor(
-        platformCode: string,
-        clientCode: string,
-        proposalAddr: string,
-        choice: boolean,
-        amount: number,
-    ): Promise<void>
+    voteFor(proposalAddr: string, choice: boolean, amount: number): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
     deployContent(
@@ -268,10 +262,14 @@ interface IGoshSmvProposal extends IContract {
     }
 
     load(): Promise<void>
-    getDetails(): Promise<TGoshEventDetails>
+    getDetails(walletAddress?: string): Promise<TGoshEventDetails>
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>
+    getTotalSupply(): Promise<number>
+    getClientAddress(walletAddress?: string): Promise<string>
+    getYourVotes(walletAddress?: string): Promise<number>
+    getPlatformId(): Promise<number>
     getGoshSetCommitProposalParams(): Promise<any>
     getGoshAddProtectedBranchProposalParams(): Promise<any>
     getGoshDeleteProtectedBranchProposalParams(): Promise<any>
@@ -282,15 +280,11 @@ interface IGoshSmvProposal extends IContract {
 interface IGoshSmvLocker extends IContract {
     /** Old interface */
     address: string
-    meta?: {
-        votesTotal: number
-        votesLocked: number
-        isBusy: boolean
-    }
 
-    load(): Promise<void>
+    getDetails(): Promise<any>
     getVotes(): Promise<{ total: number; locked: number }>
     getIsBusy(): Promise<boolean>
+    getNumClients(): Promise<number>
 }
 
 interface IGoshSmvClient extends IContract {
