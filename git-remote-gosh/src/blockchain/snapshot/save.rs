@@ -25,7 +25,7 @@ struct GetDiffAddrResult {
 #[derive(Deserialize, Debug)]
 struct GetDiffResultResult {
     #[serde(rename = "value0")]
-    pub content: Option<String>,
+    pub hex_encoded_compressed_content: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -239,7 +239,7 @@ pub async fn inner_push_diff(
                 .await;
 
             if apply_patch_result.is_ok() {
-                if apply_patch_result.unwrap().content.is_none() {
+                if apply_patch_result.unwrap().hex_encoded_compressed_content.is_none() {
                     is_going_to_ipfs = true;
                 }
             } else {
