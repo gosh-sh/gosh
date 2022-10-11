@@ -183,10 +183,6 @@ interface IGosh extends IContract {
 
 interface IGoshDao extends IContract {
     address: string
-
-    /** Old interface methods */
-    getWallets(): Promise<string[]>
-    // mint(amount: number, recipient: string, daoOwnerKeys: KeyPair): Promise<void>
 }
 
 interface IGoshRepository extends IContract {
