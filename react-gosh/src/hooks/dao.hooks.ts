@@ -138,8 +138,11 @@ function useDao(name: string) {
                 }
             }
 
-            if (instance) setAdapter(instance)
-            else {
+            if (instance) {
+                const details = await instance.getDetails()
+                setDetails(details)
+                setAdapter(instance)
+            } else {
                 setErrors((state) => [...state, 'DAO not found'])
                 setIsFetching(false)
             }
@@ -149,19 +152,16 @@ function useDao(name: string) {
     }, [name])
 
     useEffect(() => {
-        const _getDaoDetails = async () => {
+        const _authenticate = async () => {
             if (!adapter) return
 
             if (user.username && user.keys) {
                 await adapter.setAuth(user.username, user.keys)
             }
-
-            const details = await adapter.getDetails()
-            setDetails(details)
             setIsFetching(false)
         }
 
-        _getDaoDetails()
+        _authenticate()
     }, [adapter, user.username, user.keys])
 
     return {
