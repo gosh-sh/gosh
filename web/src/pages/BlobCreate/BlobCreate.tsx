@@ -54,6 +54,7 @@ const BlobCreatePage = () => {
                     branch: branchName,
                 })
             }
+            if (!dao.details.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
 
             const treePath = `${pathName ? `${pathName}/` : ''}${values.name}`
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')

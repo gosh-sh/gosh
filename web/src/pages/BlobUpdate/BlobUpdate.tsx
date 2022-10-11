@@ -59,7 +59,7 @@ const BlobUpdatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            // if (!wallet.details.isDaoMember) throw new GoshError(EGoshError.NOT_MEMBER)
+            if (!dao.details.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
