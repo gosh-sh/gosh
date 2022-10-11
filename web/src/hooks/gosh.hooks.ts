@@ -7,7 +7,7 @@ import {
     goshRepoTreeAtom,
     goshRepoTreeSelector,
 } from '../store/gosh.state'
-import { AppConfig, TSmvBalanceDetails, TWalletDetails, retry } from 'react-gosh'
+import { AppConfig, TSmvBalanceDetails, TWalletDetails, retry, useUser } from 'react-gosh'
 import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
@@ -96,6 +96,7 @@ export const useCommitProgress = () => {
 }
 
 export const useSmvBalance = (dao: IGoshDaoAdapter, isAuthenticated: boolean) => {
+    const { user } = useUser()
     const [details, setDetails] = useState<TSmvBalanceDetails>({
         balance: 0,
         smvBalance: 0,
@@ -111,7 +112,7 @@ export const useSmvBalance = (dao: IGoshDaoAdapter, isAuthenticated: boolean) =>
         const getDetails = async () => {
             if (!isAuthenticated) return
 
-            const wallet = await dao._getWallet(0)
+            const wallet = await dao._getWallet(0, user.keys)
             const balance = await wallet.getSmvTokenBalance()
             const goshBalance = parseInt(await wallet.account.getBalance()) / 1e9
             const locker = await wallet.getSmvLocker()
@@ -141,7 +142,7 @@ export const useSmvBalance = (dao: IGoshDaoAdapter, isAuthenticated: boolean) =>
         return () => {
             clearInterval(interval)
         }
-    }, [dao, isAuthenticated])
+    }, [dao, isAuthenticated, user.keys])
 
     return { wallet, details }
 }
