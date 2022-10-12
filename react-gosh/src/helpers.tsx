@@ -4,6 +4,7 @@ import { Buffer } from 'buffer'
 import { sleep } from './utils'
 import { AppConfig } from './appconfig'
 import { TTreeItem } from './types/repo.types'
+import { GoshError } from './errors'
 
 export const retry = async (fn: Function, maxAttempts: number) => {
     const delay = (fn: Function, ms: number) => {
@@ -14,7 +15,9 @@ export const retry = async (fn: Function, maxAttempts: number) => {
         try {
             return await fn()
         } catch (err) {
-            if (attempt <= maxAttempts) {
+            const isGoshError = err instanceof GoshError
+
+            if (attempt <= maxAttempts && !isGoshError) {
                 const nextAttempt = attempt + 1
                 const delayInMs = 2000
                 console.error(`Retrying after ${delayInMs} ms due to:`, err)
