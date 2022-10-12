@@ -28,7 +28,7 @@ class Application {
         const result = debug ? await handler.handle(true) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result');
-        return this.promformatter.process(result, debug);
+        return this.promformatter.process(result, debug, this.debug || debug);
     }
     prepare() {
         this.app.use(function (req, res, next) {

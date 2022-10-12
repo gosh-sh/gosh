@@ -46,8 +46,8 @@ indexmap = '^1'
 lazy_static = '^1'
 log = '^0'
 log4rs = '^1'
-lru = '^0.8.0'
-openssl = { version = "^0", features = ["vendored"] }
+lru = '^0.8.1'
+openssl = {version = "^0", features = ["vendored"]}
 primitive-types = '^0'
 serde_json = '^1'
 sha256 = '1.0.3'
@@ -100,12 +100,12 @@ version = '1.20.1'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.37.0'
+tag = '1.37.2'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.37.0'
+tag = '1.37.2'
 
 [dependencies.zstd]
 default-features = false

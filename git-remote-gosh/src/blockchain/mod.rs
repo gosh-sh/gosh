@@ -217,6 +217,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
 
     let config = ClientConfig {
         network: ton_client::net::NetworkConfig {
+            sending_endpoint_count: endpoints.len() as u8,
             endpoints: if endpoints.is_empty() {
                 None
             } else {

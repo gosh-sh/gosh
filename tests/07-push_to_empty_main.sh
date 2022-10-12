@@ -14,15 +14,12 @@ REPO_NAME=repo7
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 
-# create repo
-WALLET_ABI=../contracts/gosh/goshwallet.abi.json
-
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 60
+sleep 30
 
 # clone repo
 echo "***** cloning repo *****"
@@ -35,6 +32,7 @@ cd $REPO_NAME
 git config user.email "foo@bar.com"
 git config user.name "My name"
 
+git branch -m main
 # create new file
 CHANGE=$(date +%s)
 echo "foo" > foo-$CHANGE.txt
@@ -43,12 +41,12 @@ echo "foo" > foo-$CHANGE.txt
 git add .
 git commit -m "foo-$CHANGE"
 
-echo "***** awaiting push in main *****"
+echo "***** awaiting push into main *****"
 git push --set-upstream origin main
 
 echo "***** awaiting set commit in main *****"
 wait_set_commit $REPO_ADDR main
-sleep 120
+sleep 30
 
 echo "***** cloning repo *****"
 cd ..
