@@ -57,7 +57,7 @@ contract GoshRoot is Modifiers {
     function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view accept {
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);
         Root(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
     }
     
@@ -69,14 +69,7 @@ contract GoshRoot is Modifiers {
     }   
     
     function _buildRepositoryAddr(string name, address dao) private view returns (address) {
-        TvmCell deployCode = GoshLib.buildRepositoryCode(
-            m_RepositoryCode, address(this), dao, version
-        );
-        return address(tvm.hash(tvm.buildStateInit({
-            code: deployCode,
-            contr: Repository,
-            varInit: { _name: name }
-        })));
+        return address(tvm.hash(_composeRepoStateInit(name, dao)));
     }
     
     function deployProfile(string name, uint256 pubkey) public view accept {
