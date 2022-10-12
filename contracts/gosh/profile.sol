@@ -275,7 +275,8 @@ contract Profile is Modifiers {
 
     function deployDao(address goshroot, string name, optional(address) previous, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
-        require(pubmem.length > 0, ERR_WRONG_NUMBER_MEMBER);
+        if (previous.hasValue()) { require(pubmem.length == 0, ERR_WRONG_NUMBER_MEMBER); } 
+        else { require(pubmem.length > 0, ERR_WRONG_NUMBER_MEMBER); }
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
             _deployDao(goshroot, name, previous, pubmem);
