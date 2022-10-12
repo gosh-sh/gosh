@@ -167,7 +167,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: functional') {
+        /*stage('Tests: functional') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -187,7 +187,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         /*stage('Tests: Web') {
             agent {
                 docker {
