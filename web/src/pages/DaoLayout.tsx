@@ -33,6 +33,9 @@ const DaoLayout = () => {
                 <Link to={`/o/${daoName}`} className="font-semibold text-2xl">
                     {daoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {dao.details?.version}
+                </span>
             </h1>
 
             {!dao.errors.length && !isReady && (

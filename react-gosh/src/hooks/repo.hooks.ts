@@ -73,6 +73,7 @@ function useRepoList(dao: string, perPage: number) {
                             adapter,
                             address,
                             name: await adapter.getName(),
+                            version,
                         }
                     }),
                 )

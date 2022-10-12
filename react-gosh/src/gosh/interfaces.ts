@@ -160,12 +160,14 @@ interface IGoshRoot extends IContract {
 interface IGoshProfile extends IContract {
     address: string
 
+    isOwnerPubkey(pubkey: string): Promise<boolean>
+
     getName(): Promise<string>
     getDetails(): Promise<TProfileDetails>
     getProfileDao(name: string): Promise<IGoshProfileDao>
     getDaos(): Promise<IGoshDaoAdapter[]>
     getOwners(): Promise<string[]>
-    isOwnerPubkey(pubkey: string): Promise<boolean>
+    getGoshAddress(): Promise<string>
 
     deployDao(
         gosh: IGoshAdapter,
@@ -174,6 +176,7 @@ interface IGoshProfile extends IContract {
         prev?: string,
     ): Promise<IGoshDaoAdapter>
 
+    setGoshAddress(address: string): Promise<void>
     turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void>
 }
 

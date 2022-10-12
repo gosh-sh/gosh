@@ -38,6 +38,9 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 >
                     {item.name}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {item.version}
+                </span>
             </div>
 
             <div className="text-sm text-gray-606060">Gosh repository</div>

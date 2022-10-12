@@ -3,6 +3,7 @@ import { IGoshRepositoryAdapter } from '../gosh/interfaces'
 type TRepository = {
     address: string
     name: string
+    version: string
     branches: TBranch[]
     head: string
     tags: TTag[]

@@ -132,7 +132,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
             adapter = new GoshDaoAdapter(this, value0)
         }
 
-        if (useAuth && this.auth) {
+        if (useAuth && this.auth && (await adapter.isDeployed())) {
             await adapter.setAuth(this.auth.username, this.auth.keys)
         }
         return adapter
@@ -421,6 +421,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             address: this.repo.address,
             name: await this.getName(),
+            version: this.repo.version,
             branches: await this.getBranches(),
             head: await this.getHead(),
             tags: await this.getTags(),

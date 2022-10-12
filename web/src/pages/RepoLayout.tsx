@@ -74,6 +74,9 @@ const RepoLayout = () => {
                 >
                     {daoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {dao.details?.version}
+                </span>
                 <span className="mx-2">/</span>
                 <Link
                     to={`/o/${daoName}/r/${repoName}`}

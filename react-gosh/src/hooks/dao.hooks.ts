@@ -130,6 +130,7 @@ function useDao(name: string) {
             let instance: IGoshDaoAdapter | undefined
             for (const version of Object.keys(AppConfig.versions).reverse()) {
                 const gosh = GoshAdapterFactory.create(version)
+                console.debug('Gosh', version)
                 const check = await gosh.getDao({ name })
                 if (await check.isDeployed()) {
                     instance = check
@@ -167,7 +168,7 @@ function useDaoCreate() {
     const create = async (name: string) => {
         if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        // Set inital progress
+        // Set initial progress
         setProgress((state) => ({
             ...state,
             isFetching: true,
@@ -177,7 +178,9 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         try {
             const gosh = GoshAdapterFactory.createLatest()
-            await retry(() => profile.deployDao(gosh, name, [profile.address]), 3)
+            await retry(async () => {
+                await profile.deployDao(gosh, name, [profile.address])
+            }, 3)
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -191,6 +194,41 @@ function useDaoCreate() {
     }
 
     return { progress, create }
+}
+
+function useDaoUpgrade(dao: IGoshDaoAdapter) {
+    const profile = useProfile()
+    const [versions, setVersions] = useState<string[]>()
+
+    useEffect(() => {
+        const _getAvailableVersions = () => {
+            const all = Object.keys(AppConfig.versions)
+            const currIndex = all.findIndex((v) => v === dao.getVersion())
+            setVersions(all.slice(currIndex + 1))
+        }
+
+        _getAvailableVersions()
+    }, [dao])
+
+    const upgrade = async (version: string) => {
+        if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
+            throw new GoshError(`Gosh version ${version} is not supported`)
+        }
+
+        const gosh = GoshAdapterFactory.create(version)
+
+        const profileGoshAddress = await profile.getGoshAddress()
+        if (profileGoshAddress !== gosh.gosh.address) {
+            await retry(async () => await profile.setGoshAddress(gosh.gosh.address), 3)
+        }
+
+        await retry(async () => {
+            await profile.deployDao(gosh, await dao.getName(), [], dao.getAddress())
+        }, 3)
+    }
+
+    return { versions, upgrade }
 }
 
 function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
@@ -378,6 +416,7 @@ export {
     useDaoList,
     useDao,
     useDaoCreate,
+    useDaoUpgrade,
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,

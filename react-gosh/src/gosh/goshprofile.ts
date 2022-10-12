@@ -19,6 +19,12 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         super(client, GoshProfile.key, address, { keys })
     }
 
+    async isOwnerPubkey(pubkey: string): Promise<boolean> {
+        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
+        const result = await this.runLocal('isPubkeyCorrect', { pubkey })
+        return result.value0
+    }
+
     async getName(): Promise<string> {
         const result = await this.runLocal('getName', {})
         return result.value0
@@ -44,16 +50,32 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async getDaos(): Promise<IGoshDaoAdapter[]> {
-        const { messages } = await this.getMessages({ msgType: ['IntIn'] }, true, true)
-        return await Promise.all(
+        const { messages } = await this.getMessages(
+            { msgType: ['IntIn'], node: ['created_at'] },
+            true,
+            true,
+        )
+        console.debug('Messages', messages)
+        const names: string[] = []
+        const adapters = await Promise.all(
             messages
                 .filter(({ decoded }) => decoded && decoded.name === 'deployedWallet')
                 .map(async ({ decoded }) => {
                     const { goshdao, ver } = decoded.value
                     const adapter = GoshAdapterFactory.create(ver)
-                    return await adapter.getDao({ address: goshdao, useAuth: false })
+                    const daoAdapter = await adapter.getDao({
+                        address: goshdao,
+                        useAuth: false,
+                    })
+
+                    const name = await daoAdapter.getName()
+                    if (names.indexOf(name) < 0) {
+                        names.push(name)
+                        return daoAdapter
+                    }
                 }),
         )
+        return adapters.filter((adapter) => !!adapter) as IGoshDaoAdapter[]
     }
 
     async getOwners(): Promise<string[]> {
@@ -61,10 +83,9 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         return Object.keys(owners.value0)
     }
 
-    async isOwnerPubkey(pubkey: string): Promise<boolean> {
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-        const result = await this.runLocal('isPubkeyCorrect', { pubkey })
-        return result.value0
+    async getGoshAddress(): Promise<string> {
+        const { value0 } = await this.runLocal('getCurrentGoshRoot', {})
+        return value0
     }
 
     async deployDao(
@@ -76,19 +97,46 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         const { valid, reason } = gosh.isValidDaoName(name)
         if (!valid) throw new GoshError(EGoshError.DAO_NAME_INVALID, reason)
 
-        const profileDao = await this.getProfileDao(name)
-        if (await profileDao.isDeployed()) throw new GoshError(EGoshError.DAO_EXISTS)
+        if (!prev) {
+            const profileDao = await this.getProfileDao(name)
+            if (await profileDao.isDeployed()) throw new GoshError(EGoshError.DAO_EXISTS)
+        }
 
-        const dao = await gosh.getDao({ name: name.toLowerCase() })
+        let isCompletelyDeployed = false
+        await this.account.subscribeMessages(
+            'body msg_type',
+            async ({ body, msg_type }) => {
+                const decoded = await this.decodeMessageBody(body, +msg_type)
+                if (decoded?.name === 'deployedWallet') {
+                    await this.account.free()
+                    isCompletelyDeployed = true
+                }
+            },
+        )
+
+        const dao = await gosh.getDao({ name: name.toLowerCase(), useAuth: false })
         await this.run('deployDao', {
             goshroot: gosh.gosh.address,
             name: name.toLowerCase(),
             pubmem: members,
             previous: prev || null,
         })
-        const wait = await whileFinite(() => dao.isDeployed())
-        if (!wait) throw new GoshError('Deploy DAO timeout reached')
+
+        if (!(await whileFinite(async () => await dao.isDeployed()))) {
+            await this.account.free()
+            throw new GoshError('Deploy DAO timeout reached')
+        }
+
+        if (!(await whileFinite(() => isCompletelyDeployed, 1000))) {
+            await this.account.free()
+            throw new GoshError('Deploy DAO timeout reached')
+        }
+
         return dao
+    }
+
+    async setGoshAddress(address: string): Promise<void> {
+        await this.run('setNewGoshRoot', { goshroot: address })
     }
 
     async turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void> {

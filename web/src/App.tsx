@@ -17,6 +17,7 @@ import SigninPage from './pages/Signin'
 import DaosPage from './pages/Daos'
 import DaoPage from './pages/Dao'
 import DaoCreatePage from './pages/DaoCreate'
+import DaoUpgradePage from './pages/DaoUpgrade'
 import DaoWalletPage from './pages/DaoWallet'
 import DaoMembersPage from './pages/DaoMembers'
 import DaoReposPage from './pages/DaoRepos'
@@ -141,6 +142,7 @@ const App = () => {
                                 />
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route path="members" element={<DaoMembersPage />} />
+                                <Route path="upgrade" element={<DaoUpgradePage />} />
                             </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>
