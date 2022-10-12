@@ -471,6 +471,16 @@ pub async fn branch_list(
     Ok(result)
 }
 
+#[cfg(test)]
+pub async fn is_branch_protected(
+    context: &TonClient,
+    repo_addr: &BlockchainContractAddress,
+    branch_name: &str,
+) -> Result<bool> {
+    Ok(true)
+}
+
+#[cfg(not(test))]
 #[instrument(level = "debug", skip(context))]
 pub async fn is_branch_protected(
     context: &TonClient,
@@ -500,6 +510,15 @@ pub async fn set_head(
     Ok(())
 }
 
+#[cfg(test)]
+pub async fn remote_rev_parse(
+    context: &TonClient,
+    repository_address: &BlockchainContractAddress,
+    rev: &str,
+) -> Result<Option<BlockchainContractAddress>> {
+    Ok(Some(BlockchainContractAddress::new("test")))
+}
+#[cfg(not(test))]
 #[instrument(level = "debug", skip(context))]
 pub async fn remote_rev_parse(
     context: &TonClient,
@@ -509,7 +528,7 @@ pub async fn remote_rev_parse(
     let contract = GoshContract::new(repository_address, gosh_abi::REPO);
     let args = serde_json::json!({ "name": rev });
     let result: GetAddrBranchResult = contract
-        .run_local(context, "getAddrBranch", Some(args))
+        .read_state(context, "getAddrBranch", Some(args))
         .await?;
     if result.branch.branch_name.is_empty() {
         Ok(None)

@@ -20,6 +20,9 @@ use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
 use crate::utilities::Remote;
 
+#[cfg(test)]
+mod test_utils;
+
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper {
@@ -213,4 +216,43 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+pub mod tests {
+    use git_repository::Repository;
+
+    use crate::{blockchain::create_client, config::tests::load_from, logger::GitHelperLogger};
+
+    use super::*;
+
+    pub fn setup_test_helper(value: serde_json::Value, url: &str, repo: Repository) -> GitHelper {
+        let config = load_from(&value.to_string());
+        let logger = GitHelperLogger::init().unwrap();
+
+        let remote = Remote::new(url, &config).unwrap();
+
+        let es_client = create_client(&config, &remote.network).unwrap();
+
+        let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+
+        let dao_addr = BlockchainContractAddress::new("123");
+        let repo_addr = BlockchainContractAddress::new("123");
+        let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
+        let ipfs_client = IpfsService::build(config.ipfs_http_endpoint()).unwrap();
+        // let local_git_dir = env::var("GIT_DIR").unwrap();
+
+        GitHelper {
+            config,
+            es_client,
+            ipfs_client,
+            remote,
+            dao_addr,
+            repo_addr,
+            logger,
+            gosh_root_contract,
+            repo_contract,
+            local_git_repository: repo,
+        }
+    }
 }

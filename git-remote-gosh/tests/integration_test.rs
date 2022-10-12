@@ -1,1 +1,2 @@
+mod git;
 mod ipfs;

@@ -470,14 +470,33 @@ mod tests {
         string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
     };
 
+    use crate::config::Config;
+    use crate::git_helper::test_utils::{self, setup_repo};
+    use crate::git_helper::tests::setup_test_helper;
+    use crate::logger::GitHelperLogger;
+
     use super::*;
 
-    // #[tokio::test]
-    // async fn ensure_push_ok() {
-    //     let local_ref = "refs/heads/demo";
-    //     let push_result = push_ref(local_ref, "refs/heads/demo").await.unwrap();
-    //     assert_eq!(format!("ok {}", local_ref), push_result);
-    // }
+    #[tokio::test]
+    #[should_panic]
+    async fn test_push_parotected_ref() {
+        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        let mut helper = setup_test_helper(
+            json!({
+                "ipfs": "foo.endpoint"
+            }),
+            "gosh://1/2/3",
+            repo,
+        );
+
+        let res = helper
+            .push("main:main")
+            .await
+            .map_err(|e| panic!("Error: {:?}", e))
+            .unwrap();
+        // expected panic: can't push to protected branch
+    }
 
     #[tokio::test]
     async fn test_push() -> Result<()> {
@@ -485,17 +504,24 @@ mod tests {
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
 
-        fs::remove_dir_all(&dir)?;
+        fs::remove_dir_all(&dir).unwrap_or(());
         fs::create_dir_all(&dir)?;
         fs::write(dir.join("readme.txt").to_owned(), "test")?;
         log::info!("Initializing git repo");
         println!("Testing push {:?}", dir);
 
+        let network = "vps23.ton.dev";
+        let root_contract = "0:54fdd2ac8027b16c83b2b8b0cc4360ff4135a936c355bdb5c4776bdd3190fefc";
+        let dao_name = "dadao";
+        let repo_name = "someflies";
+
+        let url = format!(
+            "gosh::{}://{}/{}/{}",
+            network, root_contract, dao_name, repo_name
+        );
+
         let repo = Repository::init(dir).expect("repository init successfuly");
-        repo.remote_set_url(
-            "origin",
-            "gosh::vps23.ton.dev://0:54fdd2ac8027b16c83b2b8b0cc4360ff4135a936c355bdb5c4776bdd3190fefc/dadao/somefiles",
-        )?;
+        repo.remote_set_url("origin", &url)?;
 
         let mut index = repo.index()?;
         index.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)?;
