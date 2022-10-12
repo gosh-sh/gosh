@@ -160,7 +160,7 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 200 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
