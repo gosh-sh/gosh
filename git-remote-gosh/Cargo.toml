@@ -15,7 +15,7 @@ keywords = [
 ]
 name = 'git-remote-gosh'
 resolver = '2'
-version = '0.1.0'
+version = '2.1.19'
 
 [profile.profiling]
 debug = 1
