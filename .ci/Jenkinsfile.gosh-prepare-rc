@@ -188,7 +188,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: Web') {
+        /*stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -219,7 +219,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
         stage("Prerelease: Git Helper Snap"){
             agent {
                 node {
