@@ -168,14 +168,14 @@ contract Repository is Modifiers{
     function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits) public view senderIs(address(this)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, _Branches[tvm.hash(branch)].version, number, numberCommits);
     }
     
     function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, _Branches[tvm.hash(branch)].version, number, numberCommits);
     }
 
     //Selfdestruct

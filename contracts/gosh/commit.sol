@@ -57,6 +57,7 @@ contract Commit is Modifiers {
     bool _flag = false;
     optional(Pause) _saved;     
     bool _initupgrade;
+    optional(string) _prevversion;
 
     constructor(address goshdao, 
         address rootGosh, 
@@ -159,9 +160,9 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits) public senderIs(_rootRepo){
         tvm.accept();
-        if (_initupgrade == true) { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); return; }
+        if (_initupgrade == true) { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); _prevversion = oldversion; return; }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
@@ -433,6 +434,10 @@ contract Commit is Modifiers {
 
     function getRepoAdress() external view returns(address) {
         return _rootRepo;
+    }
+    
+    function getPrevCommitVersion() external view returns(optional(string)) {
+        return _prevversion;
     }
     
     function getDiffAdress(uint128 index1, uint128 index2) external view returns(address) {
