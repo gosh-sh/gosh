@@ -93,12 +93,12 @@ contract Tree is Modifiers {
             TreeObject obj;
             (index, obj) = res.get();
             if (obj.mode == "040000") { _needAnswer += 1; 
-                if (path != "" ) { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + "/" + obj.name); }
+                if (path != "" ) { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name); }
                 else { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name); }
             }
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { 
                 _needAnswer += 1;
-                if (path != "" ) { Snapshot(getSnapshotAddr(_checkbranch, path + "/" + obj.name)).isReady{value: 0.2 ton, flag: 1}(); }
+                if (path != "" ) { Snapshot(getSnapshotAddr(_checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(); }
                 else { Snapshot(getSnapshotAddr(_checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(); }
             }
             this.checkTree{value: 0.2 ton, flag: 1}(index + 1, path);

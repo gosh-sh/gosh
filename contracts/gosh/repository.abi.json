@@ -104,7 +104,7 @@
 			]
 		},
 		{
-			"name": "correctCommit",
+			"name": "commitCanceled",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"branch","type":"string"}
@@ -113,7 +113,7 @@
 			]
 		},
 		{
-			"name": "commitCanceled",
+			"name": "correctCommit",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"branch","type":"string"}
