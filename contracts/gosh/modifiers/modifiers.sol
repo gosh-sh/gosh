@@ -40,9 +40,9 @@ struct Diff {
 }
 
 struct Item {
-    string key;
-    address value;
-    string version;
+    string branchname;
+    address commitaddr;
+    string commitversion;
 }
 
 struct AddrVersion {

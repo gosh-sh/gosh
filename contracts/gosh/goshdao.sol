@@ -235,7 +235,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
 
-    function requestMint (address recipient, address pubaddr, uint128 mint_amount, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index))
+    function requestMint (address recipient, address pubaddr, uint128 mint_amount, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index))
     {
         tvm.accept();
         TvmCell empty;

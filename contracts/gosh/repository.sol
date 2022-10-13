@@ -151,7 +151,7 @@ contract Repository is Modifiers{
     }
 
     function isCorrectCommit(string namecommit, string branch, address commit) public view {
-        if ((_Branches[tvm.hash(branch)].value == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].value)) { 
+        if ((_Branches[tvm.hash(branch)].commitaddr == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].commitaddr)) { 
             Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
         }
     }
@@ -168,14 +168,14 @@ contract Repository is Modifiers{
     function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits) public view senderIs(address(this)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, _Branches[tvm.hash(branch)].version, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits);
     }
     
     function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].value, _Branches[tvm.hash(branch)].version, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits);
     }
 
     //Selfdestruct
@@ -190,7 +190,7 @@ contract Repository is Modifiers{
         require(_tombstone == false, ERR_OLD_CONTRACT);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if (_Branches[tvm.hash(nameBranch)].value != oldcommit) {
+        if (_Branches[tvm.hash(nameBranch)].commitaddr != oldcommit) {
             Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}(number);
             return;
         }
