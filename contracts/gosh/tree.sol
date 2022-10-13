@@ -80,6 +80,7 @@ contract Tree is Modifiers {
         _check = true;
         _checkbranch = branch;
         _root = true;
+        _checkaddr = msg.sender;
         getMoney();
         this.checkTree{value: 0.2 ton, flag: 1}(0, "");
     }
@@ -126,6 +127,7 @@ contract Tree is Modifiers {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         _check = true;
         _checkbranch = branch;
+        _checkaddr = msg.sender;
         _root = false;
         getMoney();
         this.checkTree{value: 0.2 ton, flag: 1}(0, path);
