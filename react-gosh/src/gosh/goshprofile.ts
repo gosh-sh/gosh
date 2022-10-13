@@ -59,7 +59,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
             true,
             true,
         )
-        console.debug('Messages', messages)
+
         const names: string[] = []
         const adapters = await Promise.all(
             messages
