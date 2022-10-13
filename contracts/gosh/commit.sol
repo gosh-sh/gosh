@@ -162,7 +162,12 @@ contract Commit is Modifiers {
     
     function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits) public senderIs(_rootRepo){
         tvm.accept();
-        if (_initupgrade == true) { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); _prevversion = oldversion; return; }
+        if (_initupgrade == true) { 
+            require(_parents[0] == branchcommit, ERR_BAD_PARENT);
+            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); 
+            _prevversion = oldversion; 
+            return; 
+        }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
