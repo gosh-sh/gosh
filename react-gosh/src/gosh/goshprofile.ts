@@ -51,7 +51,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
 
     async getDaos(): Promise<IGoshDaoAdapter[]> {
         const { messages } = await this.getMessages(
-            { msgType: ['IntIn'], node: ['created_at'] },
+            {
+                msgType: ['IntIn'],
+                node: ['created_at'],
+                allow_latest_inconsistent_data: true,
+            },
             true,
             true,
         )

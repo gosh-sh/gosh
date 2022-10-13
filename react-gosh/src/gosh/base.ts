@@ -60,12 +60,19 @@ class BaseContract implements IContract {
             node?: string[]
             cursor?: string | undefined
             limit?: number | undefined
+            allow_latest_inconsistent_data?: boolean
         },
         decode?: boolean,
         all?: boolean,
         messages?: any[],
     ): Promise<{ cursor?: string; messages: any[] }> {
-        const { msgType, node = [], cursor, limit = 50 } = variables
+        const {
+            msgType,
+            node = [],
+            cursor,
+            limit = 50,
+            allow_latest_inconsistent_data = false,
+        } = variables
 
         const result = ['id', 'msg_type', 'created_lt', 'body', ...node]
         messages = messages ?? []
@@ -77,10 +84,16 @@ class BaseContract implements IContract {
             $msgType: [BlockchainMessageTypeFilterEnum!],
             $cursor: String,
             $limit: Int
+            $allow_latest_inconsistent_data: Boolean
         ) {
             blockchain {
                 account(address: $address) {
-                    messages(msg_type: $msgType, last: $limit, before: $cursor) {
+                    messages(
+                        msg_type: $msgType,
+                        last: $limit,
+                        before: $cursor,
+                        allow_latest_inconsistent_data: $allow_latest_inconsistent_data
+                    ) {
                         edges {
                             node {${result.join(' ')}}
                         }
@@ -94,7 +107,13 @@ class BaseContract implements IContract {
         }`
         const response = await this.account.client.net.query({
             query,
-            variables: { address: this.address, msgType, limit, cursor: cursor || null },
+            variables: {
+                address: this.address,
+                msgType,
+                limit,
+                cursor: cursor || null,
+                allow_latest_inconsistent_data,
+            },
         })
         const { edges, pageInfo } = response.result.data.blockchain.account.messages
 
