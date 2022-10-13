@@ -6,14 +6,9 @@
  */
 pragma ever-solidity =0.64.0;
 
-import "errors.sol";
+import "replayprotection.sol";
 
-//Structs
-struct MessageInfo {
-        uint256 messageHash;
-        uint32 expireAt;
-}
-    
+//Structs  
 struct TreeAnswer {
     address sender;
     bool isCommit;
@@ -59,8 +54,8 @@ struct GlobalConfig {
         address goshAddr;
 }
 
-abstract contract Modifiers is Errors {   
-    string constant versionModifiers = "0.11.0";
+abstract contract Modifiers is ReplayProtection {   
+    string constant versionModifiers = "1.0.0";
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
@@ -78,70 +73,6 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_GOSH = 51 ton;
     uint128 constant FEE_DEPLOY_DAO_PROFILE = 101 ton;
     
-    mapping(uint32 => mapping(uint256 => bool)) messages;
-    // Iteration count for cleaning mapping `messages`
-    uint8 constant MAX_CLEANUP_ITERATIONS = 20;
-    // Information about the last message
-    MessageInfo lastMessage;
-    // Dummy variable to demonstrate contract functionality.
-    uint __value;
-    
-    
-    modifier saveMsg() {
-        _saveMsg();
-        _;
-    }
-
-    function _saveMsg() inline internal {
-        gc();
-        messages[lastMessage.expireAt][lastMessage.messageHash] = true;
-    }
-    
-    // Colls a function body and then gc()
-    modifier clear {
-        _;
-        gc();
-    }
-    
-    function storeValue(uint newValue) public onlyOwner accept saveMsg {
-        __value = newValue;
-    }
-    
-    // Function with predefined name which is used to replace custom replay protection.
-    function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
-        body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
-        // check expireAt
-        uint32 expireAt = body.decode(uint32);
-        require(expireAt > now, 101);   // Check whether the message is not expired.
-        require(expireAt < now + 5 minutes, 102); // Check whether expireAt is not too huge.
-
-        // Check whether the message is not expired and then save (messageHash, expireAt) in the state variable
-        uint messageHash = tvm.hash(message);
-        optional(mapping(uint256 => bool)) m = messages.fetch(expireAt);
-        require(!m.hasValue() || !m.get()[expireAt], 103);
-        lastMessage = MessageInfo({messageHash: messageHash, expireAt: expireAt});
-
-        // After reading message headers this function must return the rest of the body slice.
-        return body;
-    }
-    
-    /// Delete expired messages from `messages`.
-    function gc() private {
-        uint counter = 0;
-        for ((uint32 expireAt, mapping(uint256 => bool) m) : messages) {
-            m; // suspend compilation warning
-            if (counter >= MAX_CLEANUP_ITERATIONS) {
-                break;
-            }
-            counter++;
-            if (expireAt <= now) {
-                delete messages[expireAt];
-            } else {
-                break;
-            }
-        }
-    }
-    
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
     uint32 constant SETCOMMIT_PROPOSAL_DURATION = 1 weeks;
@@ -155,12 +86,6 @@ abstract contract Modifiers is Errors {
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
     uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
-
-    
-    modifier onlyOwner {
-        require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);
-        _;
-    }
     
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
@@ -175,11 +100,6 @@ abstract contract Modifiers is Errors {
     
     modifier onlyOwnerAddress(address addr) {
         require(msg.sender == addr, ERR_NOT_OWNER);
-        _;
-    }
-
-    modifier accept() {
-        tvm.accept();
         _;
     }
     

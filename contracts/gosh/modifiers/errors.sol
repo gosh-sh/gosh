@@ -7,7 +7,7 @@
 pragma ever-solidity =0.64.0;
 
 abstract contract Errors {
-    string constant versionErrors = "0.11.0";
+    string constant versionErrors = "1.0.0";
     
     uint constant ERR_NO_SALT = 200;
     uint constant ERR_SENDER_NOT_DAO = 202;
