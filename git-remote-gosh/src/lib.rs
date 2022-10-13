@@ -38,6 +38,9 @@ use std::{env::args, error::Error};
 pub async fn run() -> Result<(), Box<dyn Error>> {
     let logger = logger::GitHelperLogger::init()?;
     let config = config::Config::init()?;
+    let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+    log::info!("git-remote-gosh v{version}");
+    eprintln!("git-remote-gosh v{version}");
     let url = args()
         .nth(2)
         .ok_or("Wrong args for git-remote call\nRequired: <name> <url>")?;

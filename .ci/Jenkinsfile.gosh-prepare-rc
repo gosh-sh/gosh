@@ -160,7 +160,7 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 100 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
@@ -204,8 +204,8 @@ pipeline {
                             docker run --rm \
                                 -e GM_MODE=app-script \
                                 -e RUN_NOW=1 \
-                                -e CONFIG_SEED=\'palm rebel eye blade write excess avoid define card mimic gas call\' \
-                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh \
+                                -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
+                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
                                 -v \$(pwd)/config:/home/node/app/config:ro \
                                 -v \$(pwd)/test-errors:/home/node/app/errors \
                                 gosh-mon

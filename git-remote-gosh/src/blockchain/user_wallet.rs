@@ -23,11 +23,11 @@ struct GetAddrWalletResult {
     pub address: BlockchainContractAddress,
 }
 
-#[derive(Deserialize, Debug)]
+/* #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
-}
+} */
 
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {
@@ -181,7 +181,7 @@ where
         .read_state(client, "getWalletsCount", None)
         .await?;
     for _ in result.number_of_mirrors.into()..n {
-        call(client, user_wallet_contract, "deployWallet", None).await;
+        call(client, user_wallet_contract, "deployWallet", None).await?;
     }
     Ok(())
 }
