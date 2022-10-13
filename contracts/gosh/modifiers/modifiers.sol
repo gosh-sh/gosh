@@ -9,6 +9,11 @@ pragma ever-solidity =0.64.0;
 import "errors.sol";
 
 //Structs
+struct MessageInfo {
+        uint256 messageHash;
+        uint32 expireAt;
+}
+    
 struct TreeAnswer {
     address sender;
     bool isCommit;

@@ -17,7 +17,7 @@ struct GoshV {
 }
 /* Root contract of goshroot */
 contract Root is Modifiers {
-    string constant _version = "0.11.0";
+    string constant _version = "1.0.0";
 
     mapping(uint256 => GoshV) _GoshCode;
 

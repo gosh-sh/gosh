@@ -69,7 +69,6 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"version","type":"string"},
 		{"name":"_nametag","type":"string"},
 		{"name":"_nameCommit","type":"string"},
 		{"name":"_content","type":"string"},

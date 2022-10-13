@@ -14,7 +14,7 @@ import "goshwallet.sol";
 
 /* Root contract of tag */
 contract Tag is Modifiers{
-    string version = "0.11.0";
+    string constant version = "0.11.0";
     
     string static _nametag;
     string _nameCommit;
@@ -77,7 +77,7 @@ contract Tag is Modifiers{
         return _content;
     }
 
-    function getVersion() external view returns(string) {
+    function getVersion() external pure returns(string) {
         return version;
     }
     

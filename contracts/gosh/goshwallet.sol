@@ -29,7 +29,7 @@ abstract contract Object {
     function destroy(address pubaddr, uint128 index) external {}
 }
 
-contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
+contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Modifiers
     modifier check_client(uint256 _platform_id) {
@@ -37,6 +37,25 @@ contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
         require ( msg.sender.value == expected, SMVErrors.error_not_my_client) ;
         _ ;
     }
+    
+    modifier saveMessage {
+        messages[lastMessage.expireAt][lastMessage.messageHash] = true;
+        _;
+    }
+    
+    // Colls a function body and then gc()
+    modifier clear {
+        _;
+       // gc();
+    }
+    
+    mapping(uint32 => mapping(uint256 => bool)) messages;
+    // Iteration count for cleaning mapping `messages`
+    uint8 constant MAX_CLEANUP_ITERATIONS = 20;
+    // Information about the last message
+    MessageInfo lastMessage;
+    // Dummy variable to demonstrate contract functionality.
+    uint __value;
 
     string constant version = "0.11.0";
 
