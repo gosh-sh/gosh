@@ -11,7 +11,7 @@ import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import { useMonaco } from '@monaco-editor/react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks'
+import { useCommitProgress } from '../../hooks/gosh.hooks'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
@@ -20,6 +20,7 @@ import {
     splitByPath,
     classNames,
     useBlob,
+    useRepoBranches,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
@@ -41,9 +42,9 @@ const BlobUpdatePage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branch, updateBranch } = useGoshRepoBranches(repo, branchName)
+    const { branch, updateBranch } = useRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
-    const blob = useBlob(repo, branch, treePath)
+    const blob = useBlob(daoName!, repoName!, branch, treePath)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 

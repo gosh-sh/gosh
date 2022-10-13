@@ -14,9 +14,8 @@ import {
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
 import { useRecoilValue } from 'recoil'
-import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks'
 import Spinner from '../../components/Spinner'
-import { splitByPath } from 'react-gosh'
+import { splitByPath, useRepoBranches, useRepoTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -27,8 +26,8 @@ const RepoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
-    const tree = useGoshRepoTree(repo, branch, treePath)
+    const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
+    const tree = useRepoTree(daoName!, repoName!, branch?.commit, treePath)
     const subtree = useRecoilValue(tree.getSubtree(treePath))
 
     const [dirUp] = splitByPath(treePath)

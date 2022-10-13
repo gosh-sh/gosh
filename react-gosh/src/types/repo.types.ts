@@ -41,6 +41,8 @@ type TCommit = {
     author: string
     committer: string
     parents: string[]
+    version: string
+    initupgrade: boolean
 }
 
 type TBranch = {

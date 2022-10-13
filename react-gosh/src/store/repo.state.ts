@@ -1,32 +1,32 @@
 import { atom, selectorFamily } from 'recoil'
-import { TBranch, TTree, TTreeItem } from 'react-gosh/dist/types/repo.types'
+import { TBranch, TTree, TTreeItem } from '../types/repo.types'
 
-export const goshBranchesAtom = atom<TBranch[]>({
+const branchesAtom = atom<TBranch[]>({
     key: 'GoshBranchesAtom',
     default: [],
 })
 
-export const goshCurrBranchSelector = selectorFamily({
+const branchSelector = selectorFamily({
     key: 'GoshCurrBranchSelector',
     get:
-        (branchName: string) =>
+        (name: string) =>
         ({ get }) => {
-            const branches = get(goshBranchesAtom)
-            return branches.find((branch) => branch.name === branchName)
+            const branches = get(branchesAtom)
+            return branches.find((branch) => branch.name === name)
         },
 })
 
-export const goshRepoTreeAtom = atom<{ tree: TTree; items: TTreeItem[] } | undefined>({
+const treeAtom = atom<{ tree: TTree; items: TTreeItem[] } | undefined>({
     key: 'GoshRepoTreeAtom',
     default: undefined,
 })
 
-export const goshRepoTreeSelector = selectorFamily({
+const treeSelector = selectorFamily({
     key: 'GoshRepoTreeSelector',
     get:
         (params: { type: 'tree' | 'items'; path?: string }) =>
         ({ get }) => {
-            const treeObject = get(goshRepoTreeAtom)
+            const treeObject = get(treeAtom)
             if (!treeObject) return undefined
 
             const { tree, items } = treeObject
@@ -50,19 +50,4 @@ export const goshRepoTreeSelector = selectorFamily({
         },
 })
 
-export const goshRepoBlobSelector = selectorFamily({
-    key: 'GoshRepoBlobSelector',
-    get:
-        (path: string | undefined) =>
-        ({ get }) => {
-            const treeObject = get(goshRepoTreeAtom)
-            if (!treeObject || !path) return undefined
-
-            const { items } = treeObject
-            const filtered = [...items].filter((item) => {
-                const fullpath = `${item.path ? `${item.path}/` : ''}${item.name}`
-                return fullpath === path
-            })
-            return filtered[0]
-        },
-})
+export { branchesAtom, branchSelector, treeAtom, treeSelector }

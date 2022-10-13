@@ -80,6 +80,17 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return GoshAdapter_0_11_0.instance
     }
 
+    isValidDaoName(name: string): TValidationResult {
+        const matches = name.match(/^[\w-]+$/g)
+        if (!matches || matches[0] !== name) {
+            return { valid: false, reason: 'Name has incorrect symbols' }
+        }
+        if (name.length > 64) {
+            return { valid: false, reason: 'Name is too long (>64)' }
+        }
+        return { valid: true }
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         this.auth = { username, keys }
     }
@@ -100,19 +111,6 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
             name: username.toLowerCase(),
         })
         return new GoshProfile(this.client, value0)
-    }
-
-    async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
-        // Get profile and check it's status
-        const profile = await this.getProfile({ username })
-        if (await profile.isDeployed()) return profile
-
-        // Deploy profile
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-        await this.gosh.run('deployProfile', { name: username.toLowerCase(), pubkey })
-        const wait = await whileFinite(async () => await profile.isDeployed())
-        if (!wait) throw new GoshError('Deploy profile timeout reached')
-        return profile
     }
 
     async getDao(options: {
@@ -138,13 +136,6 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return adapter
     }
 
-    async getRepository(name: string): Promise<IGoshRepositoryAdapter> {
-        const [dao, repo] = name.split('/')
-        const adapter = await this.getDao({ name: dao })
-        if (this.auth) await adapter.setAuth(this.auth.username, this.auth.keys)
-        return await adapter.getRepository({ name: repo })
-    }
-
     async getRepositoryCodeHash(dao: string): Promise<string> {
         const { value0 } = await this.gosh.runLocal('getRepoDaoCode', {
             dao,
@@ -153,6 +144,19 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
             boc: value0,
         })
         return hash
+    }
+
+    async getRepository(options: {
+        path?: string | undefined
+        address?: string | undefined
+    }): Promise<IGoshRepositoryAdapter> {
+        const { path, address } = options
+        if (address) return new GoshRepositoryAdapter(this, address)
+
+        if (!path) throw new GoshError('Repository path is undefined')
+        const [dao, name] = path.split('/')
+        const { value0 } = await this.gosh.runLocal('getAddrRepository', { dao, name })
+        return new GoshRepositoryAdapter(this, value0)
     }
 
     async getTvmHash(data: string | Buffer): Promise<string> {
@@ -165,15 +169,17 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return value0
     }
 
-    isValidDaoName(name: string): TValidationResult {
-        const matches = name.match(/^[\w-]+$/g)
-        if (!matches || matches[0] !== name) {
-            return { valid: false, reason: 'Name has incorrect symbols' }
-        }
-        if (name.length > 64) {
-            return { valid: false, reason: 'Name is too long (>64)' }
-        }
-        return { valid: true }
+    async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
+        // Get profile and check it's status
+        const profile = await this.getProfile({ username })
+        if (await profile.isDeployed()) return profile
+
+        // Deploy profile
+        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
+        await this.gosh.run('deployProfile', { name: username.toLowerCase(), pubkey })
+        const wait = await whileFinite(async () => await profile.isDeployed())
+        if (!wait) throw new GoshError('Deploy profile timeout reached')
+        return profile
     }
 }
 
@@ -407,9 +413,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await this.repo.isDeployed()
     }
 
+    getAddress(): string {
+        return this.repo.address
+    }
+
     async getName(): Promise<string> {
         const result = await this.repo.runLocal('getName', {})
         return result.value0
+    }
+
+    getVersion(): string {
+        return this.repo.version
     }
 
     async getHead(): Promise<string> {
@@ -500,7 +514,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: string }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
-        const { branch, sha, parents, content } = details
+        const { branch, sha, parents, content, initupgrade } = details
 
         // Parse content
         const splitted = (content as string).split('\n')
@@ -530,6 +544,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             author: parsed.author,
             committer: parsed.committer,
             parents,
+            version: '0.11.0',
+            initupgrade,
         }
     }
 

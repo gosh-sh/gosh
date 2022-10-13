@@ -1,25 +1,26 @@
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import Spinner from '../../components/Spinner'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
-import { useNavigate, useOutletContext } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
-import { useDaoUpgrade } from 'react-gosh'
 import ToastError from '../../components/Error/ToastError'
-import { TDaoLayoutOutletContext } from '../DaoLayout'
+import { useRepoUpgrade } from 'react-gosh'
 
 type TFormValues = {
     version: string
 }
 
-const DaoUpgradePage = () => {
-    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+const RepoUpgradePage = () => {
     const navigate = useNavigate()
-    const { versions, upgrade: upgradeDao } = useDaoUpgrade(dao.adapter)
+    const { daoName } = useParams()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { versions, upgrade: upgradeRepository } = useRepoUpgrade(dao.adapter, repo)
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
-            await upgradeDao(values.version)
-            navigate('/a/orgs')
+            await upgradeRepository(dao.details.name, values.version)
+            navigate(`/o/${daoName}`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -27,13 +28,14 @@ const DaoUpgradePage = () => {
     }
 
     return (
-        <div>
-            <h3 className="text-lg font-semibold">Upgrade DAO</h3>
-            <p className="mb-3">Upgrade DAO to newer version</p>
+        <div className="bordered-block px-7 py-8">
+            <h3 className="text-lg font-semibold">Upgrade repository</h3>
+            <p className="mb-3">Upgrade repository to newer version</p>
 
             {!versions?.length && (
                 <p className="text-rose-600">
-                    DAO can not be upgraded: there are no versions ahead
+                    Repository can not be upgraded: repository version equals to DAO
+                    version
                 </p>
             )}
 
@@ -79,4 +81,4 @@ const DaoUpgradePage = () => {
     )
 }
 
-export default DaoUpgradePage
+export default RepoUpgradePage

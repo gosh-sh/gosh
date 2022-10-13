@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
-import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-icons'
+import {
+    faCode,
+    faCodePullRequest,
+    faCube,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
-import { useGoshRepoBranches } from '../hooks/gosh.hooks'
-import { classNames, useRepo, TWalletDetails, TDao } from 'react-gosh'
+import { classNames, useRepo, TWalletDetails, TDao, useRepoBranches } from 'react-gosh'
 import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
@@ -26,7 +30,7 @@ export type TRepoLayoutOutletContext = {
 const RepoLayout = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const { dao, adapter, isFetching } = useRepo(daoName!, repoName!)
-    const { updateBranches } = useGoshRepoBranches(adapter)
+    const { updateBranches } = useRepoBranches(adapter)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
@@ -40,6 +44,12 @@ const RepoLayout = () => {
             to: `/o/${daoName}/r/${repoName}/pull`,
             title: 'Pull request',
             icon: faCodePullRequest,
+            public: false,
+        },
+        {
+            to: `/o/${daoName}/r/${repoName}/upgrade`,
+            title: 'Upgrade',
+            icon: faWrench,
             public: false,
         },
     ]
@@ -77,13 +87,18 @@ const RepoLayout = () => {
                 <span className="ml-2 align-super text-sm font-normal">
                     {dao.details?.version}
                 </span>
+
                 <span className="mx-2">/</span>
+
                 <Link
                     to={`/o/${daoName}/r/${repoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {repoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {adapter?.getVersion()}
+                </span>
             </h1>
 
             {!isReady && (

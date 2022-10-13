@@ -11,13 +11,14 @@ import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
 import BlobEditor from '../../components/Blob/Editor'
 import BlobPreview from '../../components/Blob/Preview'
 import FormCommitBlock from './FormCommitBlock'
-import { useCommitProgress, useGoshRepoBranches } from '../../hooks/gosh.hooks'
+import { useCommitProgress } from '../../hooks/gosh.hooks'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
     GoshError,
     getCodeLanguageFromFilename,
     classNames,
+    useRepoBranches,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
@@ -36,7 +37,7 @@ const BlobCreatePage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branch, updateBranch } = useGoshRepoBranches(repo)
+    const { branch, updateBranch } = useRepoBranches(repo)
     const [activeTab, setActiveTab] = useState<number>(0)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()

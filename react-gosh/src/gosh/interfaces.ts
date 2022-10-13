@@ -21,24 +21,30 @@ interface IGoshAdapter {
     goshroot: IGoshRoot
     gosh: IGosh
 
+    isValidDaoName(name: string): TValidationResult
+
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
 
     getProfile(options: { username?: string; address?: string }): Promise<IGoshProfile>
-    deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
-
     getDao(options: {
         name?: string
         address?: string
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter>
-
-    getRepository(name: string): Promise<IGoshRepositoryAdapter>
+    /**
+     * Does not support repository authentication.
+     * Good for use to get read-only repository.
+     * If repository authentication needed, use `getRepository` from DAO adapter
+     */
+    getRepository(options: {
+        path?: string
+        address?: string
+    }): Promise<IGoshRepositoryAdapter>
     getRepositoryCodeHash(dao: string): Promise<string>
-
     getTvmHash(data: string | Buffer): Promise<string>
 
-    isValidDaoName(name: string): TValidationResult
+    deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
 
 interface IGoshDaoAdapter {
@@ -83,8 +89,10 @@ interface IGoshRepositoryAdapter {
 
     isDeployed(): Promise<boolean>
 
+    getAddress(): string
     getName(): Promise<string>
     getHead(): Promise<string>
+    getVersion(): string
     getDetails(): Promise<TRepository>
     getTree(commit: string, search?: string): Promise<{ tree: TTree; items: TTreeItem[] }>
     getBlob(options: { fullpath?: string; address?: string }): Promise<string | Buffer>

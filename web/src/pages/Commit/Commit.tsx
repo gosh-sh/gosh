@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { getCommitTime } from 'react-gosh'
+import { getCommitTime, useRepoBranches } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TCommit } from 'react-gosh/dist/types/repo.types'
 
 const CommitPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName, commitName } = useParams()
-    const { branch } = useGoshRepoBranches(repo, branchName)
+    const { branch } = useRepoBranches(repo, branchName)
     const [commit, setCommit] = useState<TCommit>()
 
     const renderCommitter = (committer: string) => {

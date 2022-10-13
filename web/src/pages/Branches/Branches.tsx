@@ -11,12 +11,10 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { retry } from 'react-gosh'
+import { retry, useRepoBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
-import { useRecoilValue } from 'recoil'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
-import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
+import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
@@ -36,8 +34,7 @@ export const BranchesPage = () => {
         dao.details.isAuthenticated,
     )
     const [branchName, setBranchName] = useState<string>('main')
-    const { branches, updateBranches } = useGoshRepoBranches(repo)
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const { branches, branch, updateBranches } = useRepoBranches(repo, branchName)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
     const [branchesBusy, setBranchesBusy] = useState<{

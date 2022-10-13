@@ -11,11 +11,7 @@ import * as Yup from 'yup'
 import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import Spinner from '../../components/Spinner'
 import SwitchField from '../../components/FormikForms/SwitchField'
-import {
-    useCommitProgress,
-    useGoshRepoBranches,
-    useSmvBalance,
-} from '../../hooks/gosh.hooks'
+import { useCommitProgress, useSmvBalance } from '../../hooks/gosh.hooks'
 import {
     userAtom,
     getCodeLanguageFromFilename,
@@ -25,6 +21,7 @@ import {
     sleep,
     retry,
     getTreeItemFullPath,
+    useRepoBranches,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
@@ -50,7 +47,7 @@ const PullCreatePage = () => {
         dao.adapter,
         dao.details.isAuthenticated,
     )
-    const { branches, updateBranches } = useGoshRepoBranches(repo)
+    const { branches, updateBranches } = useRepoBranches(repo)
     const [compare, setCompare] = useState<
         | {
               to?: { treePath: string; content: any }

@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename, useBlob } from 'react-gosh'
+import { getCodeLanguageFromFilename, useBlob, useRepoBranches } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -13,7 +13,6 @@ import {
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 
@@ -24,8 +23,8 @@ const BlobPage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branches, branch } = useGoshRepoBranches(repo, branchName)
-    const blob = useBlob(repo, branch, treePath)
+    const { branches, branch } = useRepoBranches(repo, branchName)
+    const blob = useBlob(daoName!, repoName!, branch, treePath)
 
     return (
         <div className="bordered-block px-7 py-8">

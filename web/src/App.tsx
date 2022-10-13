@@ -24,6 +24,7 @@ import DaoReposPage from './pages/DaoRepos'
 import RepoCreatePage from './pages/RepoCreate'
 import ReposPage from './pages/Repos'
 import RepoPage from './pages/Repo'
+import RepoUpgradePage from './pages/RepoUpgrade'
 import BranchesPage from './pages/Branches'
 import BlobCreatePage from './pages/BlobCreate'
 import BlobUpdatePage from './pages/BlobUpdate'
@@ -170,6 +171,7 @@ const App = () => {
                             <Route path="pull" element={<PullCreatePage />} />
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
+                            <Route path="upgrade" element={<RepoUpgradePage />} />
                         </Route>
                     </Route>
                     <Route path="*" element={<p className="text-lg">No match (404)</p>} />
