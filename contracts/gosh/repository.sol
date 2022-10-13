@@ -156,11 +156,11 @@ contract Repository is Modifiers{
         }
     }
 
-    function correctCommit(string namecommit, string branch) public senderIs(getCommitAddr(namecommit)) view accept {
+    function commitCanceled(string namecommit, string branch) public senderIs(getCommitAddr(namecommit)) view accept {
         namecommit; branch;
     }
     
-    function commitCanceled(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {
+    function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {
         _Branches[tvm.hash(branch)] = Item(branch, getCommitAddr(namecommit), version);
     }
 
