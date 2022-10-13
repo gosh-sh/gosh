@@ -27,9 +27,9 @@ import "TokenWalletOwner.sol";
 
 contract SMVAccount is Modifiers, ISMVAccount , TokenWalletOwner {
 
-    address _pubaddr;
-    address static _goshdao; 
-    uint128 static _index;
+    address _pubaddr; //from goshwallet
+    address static _goshdao;  //from goshwallet
+    uint128 static _index; //from goshwallet
 
 
 uint256 /* static */ nonce;
@@ -149,7 +149,7 @@ function onTokenWalletDeployed(address wallet) external view check_token_root
 {
   require (wallet == m_tokenWallet);
   tvm.accept();
-  GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, _index);
+  GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, 100, _index);
 
 }
 

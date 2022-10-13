@@ -117,6 +117,7 @@
 			"inputs": [
 				{"name":"recipient","type":"address"},
 				{"name":"pubaddr","type":"address"},
+				{"name":"mint_amount","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
