@@ -38,25 +38,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _ ;
     }
     
-    modifier saveMessage {
-        messages[lastMessage.expireAt][lastMessage.messageHash] = true;
-        _;
-    }
-    
-    // Colls a function body and then gc()
-    modifier clear {
-        _;
-       // gc();
-    }
-    
-    mapping(uint32 => mapping(uint256 => bool)) messages;
-    // Iteration count for cleaning mapping `messages`
-    uint8 constant MAX_CLEANUP_ITERATIONS = 20;
-    // Information about the last message
-    MessageInfo lastMessage;
-    // Dummy variable to demonstrate contract functionality.
-    uint __value;
-
     string constant version = "0.11.0";
 
     address static _goshroot;
@@ -740,16 +721,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getWalletAddress() external view returns(address) {
         return _pubaddr;
-    }
-
-    function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
-        // load and drop message timestamp (uint64)
-        (, uint32 expireAt) = body.decode(uint64, uint32);
-        require(expireAt > now, 57);
-        uint256 msgHash = tvm.hash(message);
-        require(!m_messages.exists(msgHash), ERR_DOUBLE_MSG);
-        m_lastMsg = LastMsg(expireAt, msgHash);
-        return body;
     }
 
     function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {

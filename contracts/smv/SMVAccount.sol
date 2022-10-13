@@ -49,37 +49,62 @@ TvmCell m_lockerCode;
 
 optional(uint256) _access;
 
-
-// mapping to store hashes of inbound messages;
-mapping(uint256 => uint32) m_messages;
-LastMsg m_lastMsg;
-// Each transaction is limited by gas, so we must limit count of iteration in loop.
-uint8 constant MAX_CLEANUP_MSGS = 20;
-
+    mapping(uint32 => mapping(uint256 => bool)) messages;
+    // Iteration count for cleaning mapping `messages`
+    uint8 constant MAX_CLEANUP_ITERATIONS = 20;
+    // Information about the last message
+    MessageInfo lastMessage;
+    // Dummy variable to demonstrate contract functionality.
+    uint __value;
+    
+    
 modifier saveMsg() {
     _saveMsg();
     _;
 }
 
 function _saveMsg() inline internal {
-    m_messages[m_lastMsg.msgHash] = m_lastMsg.expireAt;
     gc();
+    messages[lastMessage.expireAt][lastMessage.messageHash] = true;
 }
+    
+    // Colls a function body and then gc()
+    modifier clear {
+        _;
+        gc();
+    }
+    
+    // Function with predefined name which is used to replace custom replay protection.
+    function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
+        body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
+        // check expireAt
+        uint32 expireAt = body.decode(uint32);
+        require(expireAt > now, 101);   // Check whether the message is not expired.
+        require(expireAt < now + 5 minutes, 102); // Check whether expireAt is not too huge.
 
-struct LastMsg {
-    uint32 expireAt;
-    uint256 msgHash;
-}
+        // Check whether the message is not expired and then save (messageHash, expireAt) in the state variable
+        uint messageHash = tvm.hash(message);
+        optional(mapping(uint256 => bool)) m = messages.fetch(expireAt);
+        require(!m.hasValue() || !m.get()[expireAt], 103);
+        lastMessage = MessageInfo({messageHash: messageHash, expireAt: expireAt});
 
-function gc() private {
+        // After reading message headers this function must return the rest of the body slice.
+        return body;
+    }
+    
+       /// Delete expired messages from `messages`.
+    function gc() private {
         uint counter = 0;
-        for ((uint256 msgHash, uint32 expireAt) : m_messages) {
-            if (counter >= MAX_CLEANUP_MSGS) {
+        for ((uint32 expireAt, mapping(uint256 => bool) m) : messages) {
+            m; // suspend compilation warning
+            if (counter >= MAX_CLEANUP_ITERATIONS) {
                 break;
             }
             counter++;
             if (expireAt <= now) {
-                delete m_messages[msgHash];
+                delete messages[expireAt];
+            } else {
+                break;
             }
         }
     }

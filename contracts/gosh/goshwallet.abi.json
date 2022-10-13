@@ -752,6 +752,7 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"m_tokenRoot","type":"address"},
 		{"name":"m_tokenWallet","type":"address"},
@@ -775,8 +776,6 @@
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
-		{"name":"m_messages","type":"map(uint256,uint32)"},
-		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
