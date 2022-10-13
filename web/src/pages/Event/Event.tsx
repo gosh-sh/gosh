@@ -86,7 +86,7 @@ const EventPage = () => {
             if (!eventAddr) return
 
             const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
-            const details = await event.getDetails(wallet?.address)
+            const details = await event.getDetails(1, wallet?.address)
             setEvent((state) => ({ ...state, details, isFetching: false }))
         }
 

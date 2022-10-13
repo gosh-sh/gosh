@@ -54,10 +54,10 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         }
     }
  */
-    async getDetails(walletAddress?: string): Promise<TGoshEventDetails> {
+    async getDetails(n: number, walletAddress?: string): Promise<TGoshEventDetails> {
         const isCompleted = await this.isCompleted()
-
-        return {
+/*         console.log(n)
+ */        return {
             address: this.address,
             id: await this.getId(),
             params: await this.getParams(),
@@ -98,7 +98,8 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
 
     async getClientAddress(walletAddress?: string): Promise<string> {
         try {
-            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
+/*             console.log(walletAddress)
+ */            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
 
             const wallet = new GoshWallet(this.account.client, walletAddress!)
             const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {}))
@@ -139,8 +140,9 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
             ).decoded?.output.value0
             const client = new GoshSmvClient(this.account.client, clientAddress)
             /* return 7 */
-            const result = await client.account.runLocal('amount_locked', {})
-            return parseInt(result.decoded?.output.value0)
+            const clientDeployed = await client.isDeployed()
+            const result = clientDeployed ? await client.account.runLocal('amount_locked', {}) : undefined
+            return parseInt(result?.decoded?.output.value0) || 0
         } catch (e: any) {
             console.error(e.message)
         }

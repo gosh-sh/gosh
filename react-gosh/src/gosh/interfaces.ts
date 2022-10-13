@@ -277,7 +277,7 @@ interface IGoshSmvProposal extends IContract {
     }
 
     load(): Promise<void>
-    getDetails(walletAddress?: string): Promise<TGoshEventDetails>
+    getDetails(n:number, walletAddress?: string): Promise<TGoshEventDetails>
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>

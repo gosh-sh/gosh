@@ -4,6 +4,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "../gosh/modifiers/modifiers.sol";
+import "../gosh/goshdao.sol";
 
 
 import "Libraries/SMVErrors.sol";
@@ -25,6 +26,11 @@ import "SMVTokenLocker.sol";
 import "TokenWalletOwner.sol";
 
 contract SMVAccount is Modifiers, ISMVAccount , TokenWalletOwner {
+
+    address _pubaddr;
+    address static _goshdao; 
+    uint128 static _index;
+
 
 uint256 /* static */ nonce;
 
@@ -95,7 +101,7 @@ modifier check_locker {
   _ ;
 }
 
-constructor(TvmCell lockerCode, TvmCell tokenWalletCode,
+constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
             uint256 _clientCodeHash, uint16 _clientCodeDepth,
             uint256 _proposalCodeHash, uint16 _proposalCodeDepth,
@@ -109,6 +115,7 @@ constructor(TvmCell lockerCode, TvmCell tokenWalletCode,
     tvm.accept();
 
     initialized = false;
+    _pubaddr = pubaddr; /* from goshWallet */
     m_tokenRoot = _tip3Root;
     m_tokenWalletCode = tokenWalletCode;
     ITokenRoot(m_tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
@@ -141,6 +148,9 @@ constructor(TvmCell lockerCode, TvmCell tokenWalletCode,
 function onTokenWalletDeployed(address wallet) external view check_token_root
 {
   require (wallet == m_tokenWallet);
+  tvm.accept();
+  GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, _index);
+
 }
 
 function proposalIsCompleted(address proposal) external onlyOwnerPubkey(_access.get()) {

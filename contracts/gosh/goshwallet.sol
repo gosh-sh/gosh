@@ -17,8 +17,8 @@ import "tag.sol";
 import "gosh.sol";
 import "tree.sol";
 import "goshwallet.sol";
-import "goshdao.sol";
-import "profile.sol";
+/* import "goshdao.sol";
+ */import "profile.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
@@ -42,10 +42,10 @@ contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
 
     address static _goshroot;
     address _rootpubaddr;
-    address _pubaddr;
+/*     address _pubaddr;
     address static _goshdao;
     uint128 static _index;
-    string _nameDao;
+ */    string _nameDao;
     bool _flag = false;
     TvmCell m_RepositoryCode;
     TvmCell m_CommitCode;
@@ -95,13 +95,13 @@ contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
         TvmCell clientCode,
         TvmCell proposalCode,
         address _tip3Root
-    ) public SMVAccount(lockerCode, tokenWalletCode, tvm.hash(platformCode), platformCode.depth(),
+    ) public SMVAccount(pubaddr, lockerCode, tokenWalletCode, tvm.hash(platformCode), platformCode.depth(),
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
                         proposalCode.depth(), _tip3Root
     ) {
         _rootpubaddr = rootpubaddr;
-        _pubaddr = pubaddr;
-        _nameDao = nameDao;
+/*         _pubaddr = pubaddr;
+ */        _nameDao = nameDao;
         m_WalletCode = WalletCode;
         if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
