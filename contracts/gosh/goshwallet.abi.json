@@ -679,6 +679,14 @@
 			]
 		},
 		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "m_tokenRoot",
 			"inputs": [
 			],
@@ -754,6 +762,9 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"m_tokenRoot","type":"address"},
 		{"name":"m_tokenWallet","type":"address"},
 		{"name":"m_tokenBalance","type":"uint128"},
@@ -776,9 +787,6 @@
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
-		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
-		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
-		{"name":"__value","type":"uint256"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_pubaddr","type":"address"},

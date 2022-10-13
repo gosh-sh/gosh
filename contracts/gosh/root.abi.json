@@ -81,6 +81,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [
@@ -91,6 +99,9 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"cell"}],"name":"_GoshCode","type":"map(uint256,tuple)"}
 	]
 }

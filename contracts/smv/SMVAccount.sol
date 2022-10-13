@@ -49,66 +49,6 @@ TvmCell m_lockerCode;
 
 optional(uint256) _access;
 
-    mapping(uint32 => mapping(uint256 => bool)) messages;
-    // Iteration count for cleaning mapping `messages`
-    uint8 constant MAX_CLEANUP_ITERATIONS = 20;
-    // Information about the last message
-    MessageInfo lastMessage;
-    // Dummy variable to demonstrate contract functionality.
-    uint __value;
-    
-    
-modifier saveMsg() {
-    _saveMsg();
-    _;
-}
-
-function _saveMsg() inline internal {
-    gc();
-    messages[lastMessage.expireAt][lastMessage.messageHash] = true;
-}
-    
-    // Colls a function body and then gc()
-    modifier clear {
-        _;
-        gc();
-    }
-    
-    // Function with predefined name which is used to replace custom replay protection.
-    function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
-        body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
-        // check expireAt
-        uint32 expireAt = body.decode(uint32);
-        require(expireAt > now, 101);   // Check whether the message is not expired.
-        require(expireAt < now + 5 minutes, 102); // Check whether expireAt is not too huge.
-
-        // Check whether the message is not expired and then save (messageHash, expireAt) in the state variable
-        uint messageHash = tvm.hash(message);
-        optional(mapping(uint256 => bool)) m = messages.fetch(expireAt);
-        require(!m.hasValue() || !m.get()[expireAt], 103);
-        lastMessage = MessageInfo({messageHash: messageHash, expireAt: expireAt});
-
-        // After reading message headers this function must return the rest of the body slice.
-        return body;
-    }
-    
-       /// Delete expired messages from `messages`.
-    function gc() private {
-        uint counter = 0;
-        for ((uint32 expireAt, mapping(uint256 => bool) m) : messages) {
-            m; // suspend compilation warning
-            if (counter >= MAX_CLEANUP_ITERATIONS) {
-                break;
-            }
-            counter++;
-            if (expireAt <= now) {
-                delete messages[expireAt];
-            } else {
-                break;
-            }
-        }
-    }
-
 modifier check_owner override {
   require ( msg.pubkey () != 0, SMVErrors.error_not_external_message );
   require ( tvm.pubkey () == msg.pubkey (), SMVErrors.error_not_my_pubkey );
