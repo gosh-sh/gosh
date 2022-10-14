@@ -265,7 +265,7 @@ where
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
-            let is_protected = blockchain::is_branch_protected(
+            let is_protected = Blockchain::is_branch_protected(
                 &self.es_client,
                 &self.repo_addr,
                 remote_branch_name,

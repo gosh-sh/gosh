@@ -474,31 +474,6 @@ pub async fn branch_list(
     Ok(result)
 }
 
-#[cfg(test)]
-pub async fn is_branch_protected(
-    context: &TonClient,
-    repo_addr: &BlockchainContractAddress,
-    branch_name: &str,
-) -> Result<bool> {
-    Ok(branch_name.contains("protected"))
-}
-
-#[cfg(not(test))]
-#[instrument(level = "debug", skip(context))]
-pub async fn is_branch_protected(
-    context: &TonClient,
-    repo_addr: &BlockchainContractAddress,
-    branch_name: &str,
-) -> Result<bool> {
-    let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
-
-    let params = serde_json::json!({ "branch": branch_name });
-    let result: GetBoolResult = contract
-        .run_local(context, "isBranchProtected", Some(params))
-        .await?;
-    Ok(result.is_ok)
-}
-
 pub async fn set_head(
     context: &TonClient,
     wallet_addr: &BlockchainContractAddress,
