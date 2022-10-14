@@ -26,7 +26,7 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper<Blockchain> {
+pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
     pub config: Config,
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
