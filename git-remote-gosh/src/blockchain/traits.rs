@@ -17,6 +17,7 @@ pub trait BlockchainService: Debug {
 
 #[async_trait]
 impl BlockchainService for Blockchain {
+    #[instrument(level = "debug", skip(context))]
     async fn is_branch_protected(
         context: &TonClient,
         repo_addr: &BlockchainContractAddress,
