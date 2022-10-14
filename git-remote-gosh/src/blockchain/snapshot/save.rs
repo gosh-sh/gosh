@@ -311,7 +311,7 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
     context: &mut GitHelper<impl BlockchainService>,
     commit_id: &git_hash::ObjectId,
