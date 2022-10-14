@@ -50,8 +50,8 @@ const PullCreatePage = () => {
     const { branches, updateBranches } = useRepoBranches(repo)
     const [compare, setCompare] = useState<
         | {
-              to?: { treePath: string; content: any }
-              from: { treePath: string; content: any }
+              to?: { treepath: string; content: any }
+              from: { treepath: string; content: any }
               showDiff?: boolean
           }[]
         | undefined
@@ -119,8 +119,8 @@ const PullCreatePage = () => {
 
         // Merge intersected and added and generate compare list
         const compare: {
-            to?: { treePath: string; content: any }
-            from: { treePath: string; content: any }
+            to?: { treepath: string; content: any }
+            from: { treepath: string; content: any }
             showDiff?: boolean
         }[] = []
 
@@ -138,11 +138,11 @@ const PullCreatePage = () => {
                         const toBlob = await getBlob(repo, toBranch, toItem)
                         compare.push({
                             to: {
-                                treePath: getTreeItemFullPath(toItem),
+                                treepath: getTreeItemFullPath(toItem),
                                 content: toBlob,
                             },
                             from: {
-                                treePath: getTreeItemFullPath(fromItem),
+                                treepath: getTreeItemFullPath(fromItem),
                                 content: fromBlob,
                             },
                             showDiff:
@@ -166,7 +166,7 @@ const PullCreatePage = () => {
                     const fromBlob = await getBlob(repo, fromBranch, item)
                     compare.push({
                         to: undefined,
-                        from: { treePath: getTreeItemFullPath(item), content: fromBlob },
+                        from: { treepath: getTreeItemFullPath(item), content: fromBlob },
                         showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob),
                     })
                     setBlobProgress((currVal) => ({
@@ -218,10 +218,10 @@ const PullCreatePage = () => {
 
             // Prepare blobs
             const blobs = compare
-                .filter(({ from }) => !!from.treePath)
+                .filter(({ from }) => !!from.treepath)
                 .map(({ from, to }) => {
                     return {
-                        treePath: from.treePath,
+                        treepath: from.treepath,
                         modified: from.content ?? '',
                         original: to?.content,
                     }
@@ -329,17 +329,17 @@ const PullCreatePage = () => {
                         </div>
 
                         {compare.map(({ to, from, showDiff }, index) => {
-                            const treePath = to?.treePath || from.treePath
-                            if (!treePath) return null
+                            const treepath = to?.treepath || from.treepath
+                            if (!treepath) return null
 
-                            const language = getCodeLanguageFromFilename(monaco, treePath)
+                            const language = getCodeLanguageFromFilename(monaco, treepath)
                             return (
                                 <div
                                     key={index}
                                     className="my-5 border rounded overflow-hidden"
                                 >
                                     <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                        {treePath}
+                                        {treepath}
                                     </div>
                                     {showDiff ? (
                                         <BlobDiffPreview

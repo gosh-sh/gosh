@@ -22,15 +22,15 @@ import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 
 const RepoPage = () => {
-    const treePath = useParams()['*'] || ''
+    const treepath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
-    const tree = useRepoTree(daoName!, repoName!, branch?.commit, treePath)
-    const subtree = useRecoilValue(tree.getSubtree(treePath))
+    const tree = useRepoTree(daoName!, repoName!, branch?.commit, treepath)
+    const subtree = useRecoilValue(tree.getSubtree(treepath))
 
-    const [dirUp] = splitByPath(treePath)
+    const [dirUp] = splitByPath(treepath)
 
     useEffect(() => {
         updateBranch(branchName)
@@ -84,7 +84,7 @@ const RepoPage = () => {
                         <Link
                             to={`/o/${daoName}/r/${repoName}/blobs/create/${
                                 branch?.name
-                            }${treePath && `/${treePath}`}`}
+                            }${treepath && `/${treepath}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
@@ -161,7 +161,7 @@ const RepoPage = () => {
                     </div>
                 )}
 
-                {!!subtree && treePath && (
+                {!!subtree && treepath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
                         to={`/o/${daoName}/r/${repoName}/tree/${branchName}${

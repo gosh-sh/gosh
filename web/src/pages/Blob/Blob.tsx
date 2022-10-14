@@ -17,14 +17,14 @@ import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 
 const BlobPage = () => {
-    const treePath = useParams()['*']
+    const treepath = useParams()['*']
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
     const { branches, branch } = useRepoBranches(repo, branchName)
-    const blob = useBlob(daoName!, repoName!, branch, treePath)
+    const blob = useBlob(daoName!, repoName!, branch, treepath)
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -35,7 +35,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treePath}`,
+                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treepath}`,
                             )
                         }
                     }}
@@ -45,7 +45,7 @@ const BlobPage = () => {
                         daoName={daoName}
                         repoName={repoName}
                         branchName={branchName}
-                        pathName={treePath}
+                        pathName={treepath}
                     />
                 </div>
                 <div className="grow text-right">
@@ -84,7 +84,7 @@ const BlobPage = () => {
                                 />
                                 {!branch?.isProtected && dao.details.isAuthMember && (
                                     <Link
-                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treePath}`}
+                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treepath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />
@@ -93,7 +93,7 @@ const BlobPage = () => {
                             </>
                         ) : (
                             <FileDownload
-                                name={treePath}
+                                name={treepath}
                                 content={blob.content}
                                 label={<FontAwesomeIcon icon={faFloppyDisk} />}
                             />

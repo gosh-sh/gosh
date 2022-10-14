@@ -67,11 +67,11 @@ const BlobCreatePage = () => {
                 await repo.pushUpgrade(upgradeData)
             }
 
-            const treePath = `${pathName ? `${pathName}/` : ''}${values.name}`
+            const treepath = `${pathName ? `${pathName}/` : ''}${values.name}`
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             await repo.push(
                 branch.name,
-                [{ treePath, original: '', modified: values.content }],
+                [{ treepath, original: '', modified: values.content }],
                 message,
                 values.tags,
                 undefined,

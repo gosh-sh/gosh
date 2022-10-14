@@ -1,8 +1,9 @@
 import { KeyPair } from '@eversdk/core'
+import { TAddress } from './types'
 
 type TUserPersist = {
     username?: string
-    profile?: string
+    profile?: TAddress
     phrase?: string
     nonce?: string
     pin?: string

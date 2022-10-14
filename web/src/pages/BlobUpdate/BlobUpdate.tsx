@@ -37,7 +37,7 @@ type TFormValues = {
 }
 
 const BlobUpdatePage = () => {
-    const treePath = useParams()['*']
+    const treepath = useParams()['*']
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
@@ -45,12 +45,12 @@ const BlobUpdatePage = () => {
     const monaco = useMonaco()
     const { branch, updateBranch } = useRepoBranches(repo, branchName)
     const [activeTab, setActiveTab] = useState<number>(0)
-    const blob = useBlob(daoName!, repoName!, branch, treePath)
+    const blob = useBlob(daoName!, repoName!, branch, treepath)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
     const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}${
-        treePath && `/${treePath}`
+        treepath && `/${treepath}`
     }`
 
     const onCommitChanges = async (values: TFormValues) => {
@@ -72,13 +72,13 @@ const BlobUpdatePage = () => {
                 await repo.pushUpgrade(upgradeData)
             }
 
-            const [path] = splitByPath(treePath || '')
+            const [path] = splitByPath(treepath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
             await repo.push(
                 branch.name,
                 [
                     {
-                        treePath: `${path ? `${path}/` : ''}${values.name}`,
+                        treepath: `${path ? `${path}/` : ''}${values.name}`,
                         original: blob?.content ?? '',
                         modified: values.content,
                     },
@@ -104,11 +104,11 @@ const BlobUpdatePage = () => {
     }, [blob.content, navigate, urlBack])
 
     useEffect(() => {
-        if (monaco && treePath) {
-            const language = getCodeLanguageFromFilename(monaco, treePath)
+        if (monaco && treepath) {
+            const language = getCodeLanguageFromFilename(monaco, treepath)
             setBlobCodeLanguage(language)
         }
-    }, [monaco, treePath])
+    }, [monaco, treepath])
 
     if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
     return (
@@ -147,7 +147,7 @@ const BlobUpdatePage = () => {
                                         daoName={daoName}
                                         repoName={repoName}
                                         branchName={branchName}
-                                        pathName={treePath}
+                                        pathName={treepath}
                                         pathOnly={true}
                                         isBlob={false}
                                     />

@@ -1,13 +1,14 @@
 import { KeyPair } from '@eversdk/core'
 import { IGoshDaoAdapter } from '../gosh/interfaces'
+import { TAddress } from './types'
 
 type TDao = {
-    address: string
+    address: TAddress
     name: string
     version: string
-    members: { profile: string; wallet: string }[]
+    members: { profile: TAddress; wallet: TAddress }[]
     supply: number
-    owner: string
+    owner: TAddress
     isAuthOwner: boolean
     isAuthMember: boolean
     isAuthenticated: boolean
@@ -18,9 +19,9 @@ type TDaoListItem = Omit<
     'members' | 'supply' | 'owner' | 'isAuthOwner' | 'isAuthMember' | 'isAuthenticated'
 > & {
     adapter: IGoshDaoAdapter
-    members?: { profile: string; wallet: string }[]
+    members?: { profile: TAddress; wallet: TAddress }[]
     supply?: number
-    owner?: string
+    owner?: TAddress
     isAuthOwner?: boolean
     isAuthMember?: boolean
     isAuthenticated?: boolean
@@ -34,8 +35,8 @@ type TDaoCreateProgress = {
 
 type TDaoMemberDetails = {
     name: string
-    profile: string
-    wallet: string
+    profile: TAddress
+    wallet: TAddress
     smvBalance: number
 }
 
@@ -45,7 +46,7 @@ type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
 }
 
 type TWalletDetails = {
-    address: string
+    address: TAddress
     version: string
     keys?: KeyPair
     daoAddress: string

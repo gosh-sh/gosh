@@ -1,3 +1,5 @@
+type TAddress = string
+
 export type TSmvBalanceDetails = {
     balance: number
     smvBalance: number
@@ -6,19 +8,18 @@ export type TSmvBalanceDetails = {
     numClients: number
     goshBalance: number
     goshLockerBalance: number
-
 }
 
 export type TGoshEventDetails = {
     address: string
     id: string
     params: any
-    time: { start: Date; finish: Date, realFinish: Date }
+    time: { start: Date; finish: Date; realFinish: Date }
     votes: { yes: number; no: number }
     status: { completed: boolean; accepted: boolean }
-    total_votes : number
+    total_votes: number
     client_address: string
-    your_votes : number
+    your_votes: number
 }
 
 export type TGoshDiff = {
@@ -46,3 +47,5 @@ export type TValidationResult = {
     valid: boolean
     reason?: string
 }
+
+export { TAddress }

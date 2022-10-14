@@ -1,7 +1,8 @@
 import { IGoshRepositoryAdapter } from '../gosh/interfaces'
+import { TAddress } from './types'
 
 type TRepository = {
-    address: string
+    address: TAddress
     name: string
     version: string
     branches: TBranch[]
@@ -32,7 +33,7 @@ type TTree = {
 }
 
 type TCommit = {
-    address: string
+    address: TAddress
     name: string
     branch: string
     content: string
@@ -41,7 +42,7 @@ type TCommit = {
     message: string
     author: string
     committer: string
-    parents: string[]
+    parents: TAddress[]
     version: string
     initupgrade: boolean
 }

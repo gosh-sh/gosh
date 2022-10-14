@@ -22,7 +22,7 @@ const BuildPage = () => {
     const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
     const [output, setOutput] = useState('')
 
-    // const [dirUp] = splitByPath(treePath)
+    // const [dirUp] = splitByPath(treepath)
 
     const isDisabled = false
     const rootContract = process.env.REACT_APP_GOSH_ADDR

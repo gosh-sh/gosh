@@ -5,7 +5,13 @@ import {
     ResultOfProcessMessage,
     TonClient,
 } from '@eversdk/core'
-import { TDao, TGoshEventDetails, TProfileDetails, TValidationResult } from '../types'
+import {
+    TAddress,
+    TDao,
+    TGoshEventDetails,
+    TProfileDetails,
+    TValidationResult,
+} from '../types'
 import {
     IPushCallback,
     TBranch,
@@ -27,10 +33,10 @@ interface IGoshAdapter {
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
 
-    getProfile(options: { username?: string; address?: string }): Promise<IGoshProfile>
+    getProfile(options: { username?: string; address?: TAddress }): Promise<IGoshProfile>
     getDao(options: {
         name?: string
-        address?: string
+        address?: TAddress
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter>
     /**
@@ -40,9 +46,9 @@ interface IGoshAdapter {
      */
     getRepository(options: {
         path?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshRepositoryAdapter>
-    getRepositoryCodeHash(dao: string): Promise<string>
+    getRepositoryCodeHash(dao: TAddress): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
@@ -53,17 +59,17 @@ interface IGoshDaoAdapter {
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 
-    getAddress(): string
+    getAddress(): TAddress
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
     getRepository(options: {
         name?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshRepositoryAdapter>
     getMemberWallet(options: {
         profile?: string
-        address?: string
+        address?: TAddress
         index?: number
     }): Promise<IGoshWallet>
 
@@ -73,7 +79,7 @@ interface IGoshDaoAdapter {
 
     deployRepository(
         name: string,
-        prev?: { addr: string; version: string } | undefined,
+        prev?: { addr: TAddress; version: string } | undefined,
     ): Promise<IGoshRepositoryAdapter>
 
     createMember(username: string[]): Promise<void>
@@ -90,14 +96,14 @@ interface IGoshRepositoryAdapter {
 
     isDeployed(): Promise<boolean>
 
-    getAddress(): string
+    getAddress(): TAddress
     getName(): Promise<string>
     getHead(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TRepository>
     getTree(commit: string, search?: string): Promise<{ tree: TTree; items: TTreeItem[] }>
-    getBlob(options: { fullpath?: string; address?: string }): Promise<string | Buffer>
-    getCommit(options: { name?: string; address?: string }): Promise<TCommit>
+    getBlob(options: { fullpath?: string; address?: TAddress }): Promise<string | Buffer>
+    getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     getCommitBlob(
         treepath: string,
         commit: string,
@@ -117,7 +123,7 @@ interface IGoshRepositoryAdapter {
     push(
         branch: string,
         blobs: {
-            treePath: string
+            treepath: string
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -130,7 +136,7 @@ interface IGoshRepositoryAdapter {
 }
 
 interface IContract {
-    address: string
+    address: TAddress
     account: Account
     version: string
 
@@ -162,14 +168,14 @@ interface IContract {
 }
 
 interface IGoshRoot extends IContract {
-    address: string
+    address: TAddress
 
     getGoshAddr(version: string): Promise<string>
     getVersions(): Promise<any>
 }
 
 interface IGoshProfile extends IContract {
-    address: string
+    address: TAddress
 
     isOwnerPubkey(pubkey: string): Promise<boolean>
 
@@ -178,39 +184,39 @@ interface IGoshProfile extends IContract {
     getProfileDao(name: string): Promise<IGoshProfileDao>
     getDaos(): Promise<IGoshDaoAdapter[]>
     getOwners(): Promise<string[]>
-    getGoshAddress(): Promise<string>
+    getGoshAddress(): Promise<TAddress>
 
     deployDao(
         gosh: IGoshAdapter,
         name: string,
-        members: string[],
+        members: TAddress[],
         prev?: string,
     ): Promise<IGoshDaoAdapter>
 
-    setGoshAddress(address: string): Promise<void>
-    turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void>
+    setGoshAddress(address: TAddress): Promise<void>
+    turnOn(wallet: TAddress, pubkey: string, keys: KeyPair): Promise<void>
 }
 
 interface IGoshProfileDao extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGosh extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshDao extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshRepository extends IContract {
-    address: string
+    address: TAddress
 
     getName(): Promise<string>
 }
 
 interface IGoshWallet extends IContract {
-    address: string
+    address: TAddress
     profile?: IGoshProfile
 
     /** Old interface */
@@ -235,29 +241,29 @@ interface IGoshWallet extends IContract {
 }
 
 interface IGoshCommit extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshDiff extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshSnapshot extends IContract {
-    address: string
+    address: TAddress
 
     getName(): Promise<string>
 }
 
 interface IGoshTree extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshTag extends IContract {
-    address: string
+    address: TAddress
 }
 
 interface IGoshContentSignature extends IContract {
-    address: string
+    address: TAddress
 
     /** Old interface */
     getContent(): Promise<string>
@@ -265,7 +271,7 @@ interface IGoshContentSignature extends IContract {
 
 interface IGoshSmvProposal extends IContract {
     /** Old interface */
-    address: string
+    address: TAddress
     meta?: {
         id: string
         votes: { yes: number; no: number }
@@ -297,7 +303,7 @@ interface IGoshSmvProposal extends IContract {
 
 interface IGoshSmvLocker extends IContract {
     /** Old interface */
-    address: string
+    address: TAddress
 
     getDetails(): Promise<any>
     getVotes(): Promise<{ total: number; locked: number }>
@@ -307,14 +313,14 @@ interface IGoshSmvLocker extends IContract {
 
 interface IGoshSmvClient extends IContract {
     /** Old interface */
-    address: string
+    address: TAddress
 
     getLockedAmount(): Promise<number>
 }
 
 interface IGoshSmvTokenRoot extends IContract {
     /** Old interface */
-    address: string
+    address: TAddress
 
     getTotalSupply(): Promise<number>
 }

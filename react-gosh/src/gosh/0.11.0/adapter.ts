@@ -2,7 +2,7 @@ import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
-import { EGoshBlobFlag, TDao, TValidationResult } from '../../types'
+import { EGoshBlobFlag, TAddress, TDao, TValidationResult } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
     IGoshAdapter,
@@ -102,7 +102,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
 
     async getProfile(options: {
         username?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshProfile> {
         const { username, address } = options
         if (address) return new GoshProfile(this.client, address)
@@ -116,7 +116,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
 
     async getDao(options: {
         name?: string
-        address?: string
+        address?: TAddress
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter> {
         const { name, address, useAuth = true } = options
@@ -137,19 +137,9 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return adapter
     }
 
-    async getRepositoryCodeHash(dao: string): Promise<string> {
-        const { value0 } = await this.gosh.runLocal('getRepoDaoCode', {
-            dao,
-        })
-        const { hash } = await this.client.boc.get_boc_hash({
-            boc: value0,
-        })
-        return hash
-    }
-
     async getRepository(options: {
         path?: string | undefined
-        address?: string | undefined
+        address?: TAddress | undefined
     }): Promise<IGoshRepositoryAdapter> {
         const { path, address } = options
         if (address) return new GoshRepositoryAdapter(this, address)
@@ -158,6 +148,16 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         const [dao, name] = path.split('/')
         const { value0 } = await this.gosh.runLocal('getAddrRepository', { dao, name })
         return new GoshRepositoryAdapter(this, value0)
+    }
+
+    async getRepositoryCodeHash(dao: TAddress): Promise<string> {
+        const { value0 } = await this.gosh.runLocal('getRepoDaoCode', {
+            dao,
+        })
+        const { hash } = await this.client.boc.get_boc_hash({
+            boc: value0,
+        })
+        return hash
     }
 
     async getTvmHash(data: string | Buffer): Promise<string> {
@@ -212,7 +212,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    getAddress(): string {
+    getAddress(): TAddress {
         return this.dao.address
     }
 
@@ -244,7 +244,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async getRepository(options: {
         name?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshRepositoryAdapter> {
         const { name, address } = options
         const auth = this.profile &&
@@ -264,7 +264,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async getMemberWallet(options: {
         profile?: string
-        address?: string
+        address?: TAddress
         index?: number
     }): Promise<IGoshWallet> {
         const { profile, address, index } = options
@@ -293,7 +293,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async deployRepository(
         name: string,
-        prev?: { addr: string; version: string } | undefined,
+        prev?: { addr: TAddress; version: string } | undefined,
     ): Promise<IGoshRepositoryAdapter> {
         if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
 
@@ -355,7 +355,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return value0
     }
 
-    private async _getWalletAddress(profile: string, index: number): Promise<string> {
+    private async _getWalletAddress(profile: TAddress, index: number): Promise<TAddress> {
         const { value0 } = await this.dao.runLocal('getAddrWallet', {
             pubaddr: profile,
             index,
@@ -375,7 +375,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return _rootTokenRoot
     }
 
-    private async _getProfiles(): Promise<{ profile: string; wallet: string }[]> {
+    private async _getProfiles(): Promise<{ profile: TAddress; wallet: TAddress }[]> {
         const { value0 } = await this.dao.runLocal('getWalletsFull', {})
         const profiles = []
         for (const key in value0) {
@@ -385,7 +385,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return profiles
     }
 
-    async _getOwner(): Promise<string> {
+    async _getOwner(): Promise<TAddress> {
         const { value0 } = await this.dao.runLocal('getOwner', {})
         return value0
     }
@@ -414,7 +414,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await this.repo.isDeployed()
     }
 
-    getAddress(): string {
+    getAddress(): TAddress {
         return this.repo.address
     }
 
@@ -492,7 +492,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getBlob(options: {
         fullpath?: string
-        address?: string
+        address?: TAddress
     }): Promise<string | Buffer> {
         const snapshot = await this._getSnapshot(options)
         const data = await snapshot.runLocal('getSnapshot', {})
@@ -512,7 +512,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return buffer
     }
 
-    async getCommit(options: { name?: string; address?: string }): Promise<TCommit> {
+    async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
         const { branch, sha, parents, content, initupgrade } = details
@@ -819,7 +819,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async push(
         branch: string,
         blobs: {
-            treePath: string
+            treepath: string
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -840,8 +840,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Generate blobs meta object
         const blobsMeta: {
-            snapshot: string
-            treePath: string
+            snapshot: TAddress
+            treepath: string
             treeItem?: TTreeItem
             compressed: string
             patch: string | null
@@ -849,8 +849,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             flags: number
             hashes: { sha1: string; sha256: string }
         }[] = await Promise.all(
-            blobs.map(async ({ treePath, original, modified }) => {
-                const treeItem = items.find((it) => getTreeItemFullPath(it) === treePath)
+            blobs.map(async ({ treepath, original, modified }) => {
+                const treeItem = items.find((it) => getTreeItemFullPath(it) === treepath)
                 if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
                 if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
                 if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
@@ -866,7 +866,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     flags |= EGoshBlobFlag.IPFS
                     if (Buffer.isBuffer(modified)) flags |= EGoshBlobFlag.BINARY
                 } else {
-                    patch = this._generateBlobDiffPatch(treePath, modified, original)
+                    patch = this._generateBlobDiffPatch(treepath, modified, original)
                     patch = await zstd.compress(patch)
                     patch = Buffer.from(patch, 'base64').toString('hex')
                 }
@@ -880,8 +880,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 }
 
                 return {
-                    snapshot: await this._getSnapshotAddress(branch, treePath),
-                    treePath,
+                    snapshot: await this._getSnapshotAddress(branch, treepath),
+                    treepath,
                     treeItem,
                     compressed,
                     patch,
@@ -895,11 +895,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Add/update tree items by incoming blobs
         const updatedTrees: string[] = []
         await Promise.all(
-            blobs.map(async ({ treePath }) => {
-                const blobmeta = blobsMeta.find((data) => data.treePath === treePath)
+            blobs.map(async ({ treepath }) => {
+                const blobmeta = blobsMeta.find((data) => data.treepath === treepath)
                 const { hashes, flags, treeItem } = blobmeta!
 
-                this._getTreeItemsFromPath(treePath, hashes, flags, treeItem).forEach(
+                this._getTreeItemsFromPath(treepath, hashes, flags, treeItem).forEach(
                     (item) => {
                         const pathindex = updatedTrees.findIndex((p) => p === item.path)
                         if (pathindex < 0) updatedTrees.push(item.path)
@@ -932,9 +932,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             // Deploy snapshots
             (async () => {
                 let counter = 0
-                for (const { treePath } of blobsMeta) {
+                for (const { treepath } of blobsMeta) {
                     await retry(async () => {
-                        await this._deploySnapshot(branch, '', treePath)
+                        await this._deploySnapshot(branch, '', treepath)
                     }, 3)
                     callback({ snapsDeploy: { count: ++counter } })
                 }
@@ -1066,7 +1066,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getSnapshot(options: {
         fullpath?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshSnapshot> {
         const { address, fullpath } = options
         if (address) return new GoshSnapshot(this.client, address)
@@ -1079,7 +1079,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getCommit(options: {
         name?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshCommit> {
         const { name, address } = options
 
@@ -1092,7 +1092,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getTree(options: {
         name?: string
-        address?: string
+        address?: TAddress
     }): Promise<IGoshTree> {
         const { address, name } = options
         if (address) return new GoshTree(this.client, address)
@@ -1104,7 +1104,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getTreeItems(options: {
         name?: string
-        address?: string
+        address?: TAddress
     }): Promise<TTreeItem[]> {
         const tree = await this._getTree(options)
         const { value0 } = await tree.runLocal('gettree', {})
@@ -1154,7 +1154,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return new GoshDiff(this.client, value0)
     }
 
-    private async _getTag(address: string): Promise<TTag> {
+    private async _getTag(address: TAddress): Promise<TTag> {
         const tag = new GoshTag(this.client, address)
         const commit = await tag.runLocal('getCommit', {})
         const content = await tag.runLocal('getContent', {})
@@ -1164,7 +1164,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
     }
 
-    private async _getSnapshotAddress(branch: string, treepath: string): Promise<string> {
+    private async _getSnapshotAddress(
+        branch: string,
+        treepath: string,
+    ): Promise<TAddress> {
         const { value0 } = await this.repo.runLocal('getSnapshotAddr', {
             branch,
             name: treepath,
@@ -1175,12 +1178,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _deploySnapshot(
         branch: string,
         commit: string,
-        treePath: string,
+        treepath: string,
         content?: string | Buffer,
     ): Promise<IGoshSnapshot> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const addr = await this._getSnapshotAddress(branch, treePath)
+        const addr = await this._getSnapshotAddress(branch, treepath)
         const snapshot = new GoshSnapshot(this.client, addr)
         if (await snapshot.isDeployed()) return snapshot
 
@@ -1204,7 +1207,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branch,
             commit,
             repo: this.repo.address,
-            name: treePath,
+            name: treepath,
             snapshotdata: data.snapshotData,
             snapshotipfs: data.snapshotIpfs,
         })
@@ -1244,8 +1247,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         blobmeta: {
-            snapshot: string
-            treePath: string
+            snapshot: TAddress
+            treepath: string
             treeItem?: TTreeItem
             compressed: string
             patch: string | null
@@ -1299,7 +1302,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         content: string,
-        parents: string[],
+        parents: TAddress[],
         treeHash: string,
         upgrade: boolean,
     ): Promise<void> {
@@ -1364,7 +1367,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<{
         commitHash: string
         commitContent: string
-        commitParentAddrs: string[]
+        commitParentAddrs: TAddress[]
     }> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1502,7 +1505,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private _generateBlobDiffPatch = (
-        treePath: string,
+        treepath: string,
         modified: string,
         original: string,
     ) => {
@@ -1524,7 +1527,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
 
         /** Gosh snapshot recommended patch representation */
-        const patch = Diff.createPatch(treePath, original, modified)
+        const patch = Diff.createPatch(treepath, original, modified)
         return patch.split('\n').slice(4).join('\n')
     }
 

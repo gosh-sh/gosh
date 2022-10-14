@@ -6,7 +6,7 @@ import {
     IGoshProfile,
     IGoshProfileDao,
 } from './interfaces'
-import { TProfileDetails } from '../types'
+import { TAddress, TProfileDetails } from '../types'
 import { GoshProfileDao } from './goshprofiledao'
 import { EGoshError, GoshError } from '../errors'
 import { whileFinite } from '../utils'
@@ -15,7 +15,7 @@ import { GoshAdapterFactory } from './factories'
 class GoshProfile extends BaseContract implements IGoshProfile {
     static key: string = 'profile'
 
-    constructor(client: TonClient, address: string, keys?: KeyPair) {
+    constructor(client: TonClient, address: TAddress, keys?: KeyPair) {
         super(client, GoshProfile.key, address, { keys })
     }
 
@@ -82,12 +82,12 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         return adapters.filter((adapter) => !!adapter) as IGoshDaoAdapter[]
     }
 
-    async getOwners(): Promise<string[]> {
+    async getOwners(): Promise<TAddress[]> {
         const owners = await this.runLocal('getAccess', {})
         return Object.keys(owners.value0)
     }
 
-    async getGoshAddress(): Promise<string> {
+    async getGoshAddress(): Promise<TAddress> {
         const { value0 } = await this.runLocal('getCurrentGoshRoot', {})
         return value0
     }
@@ -95,7 +95,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     async deployDao(
         gosh: IGoshAdapter,
         name: string,
-        members: string[],
+        members: TAddress[],
         prev?: string | undefined,
     ): Promise<IGoshDaoAdapter> {
         const { valid, reason } = gosh.isValidDaoName(name)
@@ -139,11 +139,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         return dao
     }
 
-    async setGoshAddress(address: string): Promise<void> {
+    async setGoshAddress(address: TAddress): Promise<void> {
         await this.run('setNewGoshRoot', { goshroot: address })
     }
 
-    async turnOn(wallet: string, pubkey: string, keys: KeyPair): Promise<void> {
+    async turnOn(wallet: TAddress, pubkey: string, keys: KeyPair): Promise<void> {
         if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
         await this.run('turnOn', { wallet, pubkey }, { signer: signerKeys(keys) })
     }
