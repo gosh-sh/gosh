@@ -127,6 +127,7 @@ pipeline {
             steps {
                 script {
                     env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
+                    env.DOCKER_IMAGE_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
                     env.REACT_APP_GOSH_ADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_CREATOR_ADDR = sh script: "cat contracts/gosh/GoshDaoCreator.addr | tr -d '\n'", returnStdout: true 
                     sh """
@@ -134,12 +135,12 @@ pipeline {
                         sed -i '/REACT_APP_GOSH_ADDR/s/\$/${REACT_APP_GOSH_ADDR}/' web/.env.ci
                         sed -i '/REACT_APP_CREATOR_ADDR/s/\$/${REACT_APP_CREATOR_ADDR}/' web/.env.ci
                         mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
-                        docker build -t ${DOCKER_WEB_CONTAINER_NAME}-img -f web/Dockerfile .
+                        docker build -t ${DOCKER_IMAGE_NAME} -f web/Dockerfile .
                     """
                     dir('web') {     
                         sh """      
                         if [ `docker ps | grep -o "gosh-web.*" | wc -l` -gt 1 ]; then docker ps | grep -o "gosh-web.*" | while read -r line ; do echo \$line ; done | sort | docker rm -f `head -n 1`; fi                                                    
-                        docker run -d --env ENV=ci --network test.app.gosh.sh --name ${DOCKER_WEB_CONTAINER_NAME} ${DOCKER_WEB_CONTAINER_NAME}-img
+                        docker run -d --env ENV=ci --network test.app.gosh.sh --name ${DOCKER_WEB_CONTAINER_NAME} ${DOCKER_IMAGE_NAME}
                         echo 'server_names_hash_bucket_size 1024;' > /opt/nginx/proxy.conf
                         echo 'server { listen 80 default_server; return 404;}' >> /opt/nginx/proxy.conf
                         docker ps | grep -o "gosh-web.*" | while read -r line ; do sed "s/GOSH_WEB_VERSION/\$line/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf; done
