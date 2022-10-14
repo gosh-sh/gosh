@@ -54,7 +54,7 @@ import {
 import { GoshTag } from './goshtag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
-import { MAX_ONCHAIN_FILE_SIZE, ZERO_COMMIT } from '../../constants'
+import { MAX_ONCHAIN_SIZE, ZERO_COMMIT } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { validateUsername } from '../../validators'
 
@@ -556,12 +556,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         const target = await this.getCommit({ name: commit })
-        let parent: string | undefined
 
         const fullpath = `${target.branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
 
         const applied = []
+        let blobParent: string | undefined
         let cursor: string | undefined
         while (true) {
             const page = await snapshot.getMessages({ msgType: ['IntIn'], cursor }, true)
@@ -573,7 +573,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 if (decoded.name !== 'approve') continue
                 approved.push(decoded.value.commit)
                 if (parentIsNextApproved) {
-                    parent = decoded.value.commit
+                    blobParent = decoded.value.commit
                     break
                 }
                 if (decoded.value.commit === target.name) parentIsNextApproved = true
@@ -595,11 +595,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Restore blob content to parent commit
-        let previous = !parent ? '' : await this.getBlob({ fullpath })
+        let previous = await this.getBlob({ fullpath })
         if (Buffer.isBuffer(previous)) return { previous, current: previous }
         for (const diff of applied) {
-            if (!parent) break
-            if (diff.patch && diff.commit === parent) break
+            if (diff.patch && diff.commit === blobParent) break
             previous = await this._applyBlobDiffPatch(previous, diff, true)
         }
 
@@ -861,14 +860,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 if (
                     Buffer.isBuffer(original) ||
                     Buffer.isBuffer(modified) ||
-                    Buffer.from(modified).byteLength > MAX_ONCHAIN_FILE_SIZE
+                    Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
                 ) {
                     flags |= EGoshBlobFlag.IPFS
                     if (Buffer.isBuffer(modified)) flags |= EGoshBlobFlag.BINARY
                 } else {
                     patch = this._generateBlobDiffPatch(treepath, modified, original)
-                    patch = await zstd.compress(patch)
-                    patch = Buffer.from(patch, 'base64').toString('hex')
+                    if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
+                        flags |= EGoshBlobFlag.IPFS
+                        patch = null
+                    } else {
+                        patch = await zstd.compress(patch)
+                        patch = Buffer.from(patch, 'base64').toString('hex')
+                    }
                 }
 
                 const isIpfs = (flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS
@@ -1195,7 +1199,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const compressed = await zstd.compress(content)
             if (
                 Buffer.isBuffer(content) ||
-                Buffer.from(content).byteLength > MAX_ONCHAIN_FILE_SIZE
+                Buffer.from(content).byteLength > MAX_ONCHAIN_SIZE
             ) {
                 data.snapshotIpfs = await goshipfs.write(compressed)
             } else {
