@@ -488,34 +488,6 @@ pub async fn set_head(
     Ok(())
 }
 
-#[cfg(test)]
-pub async fn remote_rev_parse(
-    context: &TonClient,
-    repository_address: &BlockchainContractAddress,
-    rev: &str,
-) -> Result<Option<BlockchainContractAddress>> {
-    Ok(Some(BlockchainContractAddress::new("test")))
-}
-
-#[cfg(not(test))]
-#[instrument(level = "debug", skip(context))]
-pub async fn remote_rev_parse(
-    context: &TonClient,
-    repository_address: &BlockchainContractAddress,
-    rev: &str,
-) -> Result<Option<BlockchainContractAddress>> {
-    let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let args = serde_json::json!({ "name": rev });
-    let result: GetAddrBranchResult = contract
-        .read_state(context, "getAddrBranch", Some(args))
-        .await?;
-    if result.branch.branch_name.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(result.branch.commit_address))
-    }
-}
-
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
     context: &TonClient,
@@ -532,15 +504,6 @@ pub async fn get_commit_address(
     Ok(result.address)
 }
 
-#[cfg(test)]
-pub async fn get_commit_by_addr(
-    context: &TonClient,
-    address: &BlockchainContractAddress,
-) -> Result<Option<GoshCommit>> {
-    todo!()
-}
-
-#[cfg(not(test))]
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_by_addr(
     context: &TonClient,

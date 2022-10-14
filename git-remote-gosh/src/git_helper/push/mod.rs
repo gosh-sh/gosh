@@ -255,7 +255,7 @@ where
             iter.next().unwrap()
         };
         let parsed_remote_ref =
-            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
+            Blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
                 .await?;
 
         let mut prev_commit_id: Option<ObjectId> = None;
