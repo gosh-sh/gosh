@@ -1,4 +1,5 @@
 use super::Result;
+use crate::blockchain::BlockchainService;
 use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
@@ -67,7 +68,10 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub async fn push_dangling(&mut self, context: &mut GitHelper) -> Result<()> {
+    pub async fn push_dangling(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService>,
+    ) -> Result<()> {
         for (
             diff_coordinates,
             ParallelDiff {
@@ -112,7 +116,10 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    pub async fn wait_all_diffs(&mut self, context: &mut GitHelper) -> Result<()> {
+    pub async fn wait_all_diffs(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService>,
+    ) -> Result<()> {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
@@ -159,7 +166,11 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub async fn push(&mut self, context: &mut GitHelper, diff: ParallelDiff) -> Result<()> {
+    pub async fn push(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService>,
+        diff: ParallelDiff,
+    ) -> Result<()> {
         match self.dangling_diffs.get(&diff.file_path) {
             None => {}
             Some((

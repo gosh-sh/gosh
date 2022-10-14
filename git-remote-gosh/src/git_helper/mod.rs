@@ -5,16 +5,17 @@ use std::error::Error;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::abi as gosh_abi;
-use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::{
     create_client,
     get_head,
     get_repo_address,
+    BlockchainService,
     GoshContract,
     // set_head,
     TonClient,
     Tree,
 };
+use crate::blockchain::{Blockchain, BlockchainContractAddress};
 use crate::config::Config;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
@@ -25,10 +26,11 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper {
+pub struct GitHelper<Blockchain> {
     pub config: Config,
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
+    pub blockchain: Blockchain,
     pub remote: Remote,
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
@@ -54,7 +56,10 @@ mod list;
 
 mod fmt;
 
-impl GitHelper {
+impl<Blockchain> GitHelper<Blockchain>
+where
+    Blockchain: BlockchainService,
+{
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         &mut self.local_git_repository
     }
@@ -76,7 +81,12 @@ impl GitHelper {
     }
 
     #[instrument(level = "debug")]
-    async fn build(config: Config, url: &str, logger: Logger) -> Result<Self, Box<dyn Error>> {
+    async fn build(
+        config: Config,
+        url: &str,
+        logger: Logger,
+        blockchain: Blockchain,
+    ) -> Result<Self, Box<dyn Error>> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
 
@@ -101,6 +111,7 @@ impl GitHelper {
             config,
             es_client,
             ipfs_client,
+            blockchain,
             remote,
             dao_addr: dao.address,
             repo_addr,
@@ -153,7 +164,8 @@ impl GitHelper {
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
 pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dyn Error>> {
-    let mut helper = GitHelper::build(config, url, logger).await?;
+    let blockchain = Blockchain {};
+    let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -222,11 +234,23 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
 pub mod tests {
     use git_repository::Repository;
 
-    use crate::{blockchain::create_client, config::tests::load_from, logger::GitHelperLogger};
+    use crate::{
+        blockchain::{create_client, BlockchainService},
+        config::tests::load_from,
+        logger::GitHelperLogger,
+    };
 
     use super::*;
 
-    pub fn setup_test_helper(value: serde_json::Value, url: &str, repo: Repository) -> GitHelper {
+    pub fn setup_test_helper<B>(
+        value: serde_json::Value,
+        url: &str,
+        repo: Repository,
+        blockchain: B,
+    ) -> GitHelper<B>
+    where
+        B: BlockchainService,
+    {
         let config = load_from(&value.to_string());
         let logger = GitHelperLogger::init().unwrap();
 
@@ -246,6 +270,7 @@ pub mod tests {
             config,
             es_client,
             ipfs_client,
+            blockchain,
             remote,
             dao_addr,
             repo_addr,

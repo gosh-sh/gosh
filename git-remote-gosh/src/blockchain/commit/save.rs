@@ -1,5 +1,8 @@
 use crate::{
-    blockchain::{call, get_commit_address, user_wallet, BlockchainContractAddress, ZERO_SHA},
+    blockchain::{
+        call, get_commit_address, user_wallet, BlockchainContractAddress, BlockchainService,
+        ZERO_SHA,
+    },
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -23,7 +26,7 @@ pub struct DeployCommitParams {
 
 #[instrument(level = "debug")]
 pub async fn push_commit(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &ObjectId,
     branch: &str,
 ) -> Result<(), Box<dyn Error>> {
@@ -75,7 +78,7 @@ pub async fn push_commit(
 
 #[instrument(level = "debug")]
 pub async fn notify_commit(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &ObjectId,
     branch: &str,
     number_of_files_changed: u32,

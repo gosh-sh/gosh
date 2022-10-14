@@ -12,6 +12,8 @@ mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
+mod traits;
+pub use traits::*;
 
 use ton_client::{
     abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
@@ -478,7 +480,7 @@ pub async fn is_branch_protected(
     repo_addr: &BlockchainContractAddress,
     branch_name: &str,
 ) -> Result<bool> {
-    Ok(true)
+    Ok(branch_name.contains("protected"))
 }
 
 #[cfg(not(test))]
@@ -519,6 +521,7 @@ pub async fn remote_rev_parse(
 ) -> Result<Option<BlockchainContractAddress>> {
     Ok(Some(BlockchainContractAddress::new("test")))
 }
+
 #[cfg(not(test))]
 #[instrument(level = "debug", skip(context))]
 pub async fn remote_rev_parse(
@@ -554,6 +557,15 @@ pub async fn get_commit_address(
     Ok(result.address)
 }
 
+#[cfg(test)]
+pub async fn get_commit_by_addr(
+    context: &TonClient,
+    address: &BlockchainContractAddress,
+) -> Result<Option<GoshCommit>> {
+    todo!()
+}
+
+#[cfg(not(test))]
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_by_addr(
     context: &TonClient,

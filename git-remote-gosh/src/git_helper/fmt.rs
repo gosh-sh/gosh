@@ -1,7 +1,8 @@
 use super::GitHelper;
+use crate::blockchain::BlockchainService;
 use std::fmt;
 
-impl fmt::Debug for GitHelper {
+impl<Blockchain> fmt::Debug for GitHelper<Blockchain> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("GitHelper")
             .field("repo_addr", &self.repo_addr)

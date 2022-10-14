@@ -24,8 +24,10 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
   "env-filter",
   "fmt",
 ] }
+mockall = '^0'
 
 [dependencies]
+mockall_double = '^0'
 async-trait = '^0'
 base64 = '^0'
 base64-serde = '^0'
