@@ -139,6 +139,14 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [
@@ -151,6 +159,9 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_shaTreeLocal","type":"uint256"},
 		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
 		{"name":"_shaTree","type":"string"},

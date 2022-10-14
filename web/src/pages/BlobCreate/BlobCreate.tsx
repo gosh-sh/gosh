@@ -19,6 +19,7 @@ import {
     getCodeLanguageFromFilename,
     classNames,
     useRepoBranches,
+    GoshAdapterFactory,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
@@ -56,6 +57,15 @@ const BlobCreatePage = () => {
                 })
             }
             if (!dao.details.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
+
+            if (repo.getVersion() !== branch.commit.version) {
+                const gosh = GoshAdapterFactory.create(branch.commit.version)
+                const repoOld = await gosh.getRepository({
+                    path: `${daoName}/${repoName}`,
+                })
+                const upgradeData = await repoOld.getUpgrade(branch.commit.name)
+                await repo.pushUpgrade(upgradeData)
+            }
 
             const treePath = `${pathName ? `${pathName}/` : ''}${values.name}`
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')

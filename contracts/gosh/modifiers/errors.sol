@@ -7,7 +7,7 @@
 pragma ever-solidity =0.64.0;
 
 abstract contract Errors {
-    string constant versionErrors = "0.11.0";
+    string constant versionErrors = "1.0.0";
     
     uint constant ERR_NO_SALT = 200;
     uint constant ERR_SENDER_NOT_DAO = 202;
@@ -55,4 +55,5 @@ abstract contract Errors {
     uint constant ERR_NOTHING_TO_CONFIRM = 243;
     uint constant ERR_ALREADY_CONFIRMED = 244;
     uint constant ERR_WRONG_NUMBER_MEMBER = 245;
+    uint constant ERR_BAD_PARENT = 246;
 }

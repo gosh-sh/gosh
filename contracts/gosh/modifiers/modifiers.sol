@@ -6,9 +6,9 @@
  */
 pragma ever-solidity =0.64.0;
 
-import "errors.sol";
+import "replayprotection.sol";
 
-//Structs
+//Structs  
 struct TreeAnswer {
     address sender;
     bool isCommit;
@@ -54,8 +54,8 @@ struct GlobalConfig {
         address goshAddr;
 }
 
-abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.11.0";
+abstract contract Modifiers is ReplayProtection {   
+    string constant versionModifiers = "1.0.0";
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
@@ -86,12 +86,6 @@ abstract contract Modifiers is Errors {
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
     uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
-
-    
-    modifier onlyOwner {
-        require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);
-        _;
-    }
     
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
@@ -106,11 +100,6 @@ abstract contract Modifiers is Errors {
     
     modifier onlyOwnerAddress(address addr) {
         require(msg.sender == addr, ERR_NOT_OWNER);
-        _;
-    }
-
-    modifier accept() {
-        tvm.accept();
         _;
     }
     

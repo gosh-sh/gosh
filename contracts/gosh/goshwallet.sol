@@ -29,7 +29,7 @@ abstract contract Object {
     function destroy(address pubaddr, uint128 index) external {}
 }
 
-contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
+contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Modifiers
     modifier check_client(uint256 _platform_id) {
@@ -37,7 +37,7 @@ contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
         require ( msg.sender.value == expected, SMVErrors.error_not_my_client) ;
         _ ;
     }
-
+    
     string constant version = "0.11.0";
 
     address static _goshroot;
@@ -721,16 +721,6 @@ contract GoshWallet is /* Modifiers, */ SMVAccount, IVotingResultRecipient {
 
     function getWalletAddress() external view returns(address) {
         return _pubaddr;
-    }
-
-    function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
-        // load and drop message timestamp (uint64)
-        (, uint32 expireAt) = body.decode(uint64, uint32);
-        require(expireAt > now, 57);
-        uint256 msgHash = tvm.hash(message);
-        require(!m_messages.exists(msgHash), ERR_DOUBLE_MSG);
-        m_lastMsg = LastMsg(expireAt, msgHash);
-        return body;
     }
 
     function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {

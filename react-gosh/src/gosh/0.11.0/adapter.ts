@@ -49,6 +49,7 @@ import {
     TTag,
     TTree,
     TTreeItem,
+    TUpgradeData,
 } from '../../types/repo.types'
 import { GoshTag } from './goshtag'
 import * as Diff from 'diff'
@@ -538,13 +539,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             address: commit.address,
             name: sha,
             branch,
+            content,
             tree: parsed.tree,
             title: parsed.title,
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
             parents,
-            version: '0.11.0',
+            version: commit.version,
             initupgrade,
         }
     }
@@ -598,14 +600,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         for (const diff of applied) {
             if (!parent) break
             if (diff.patch && diff.commit === parent) break
-            previous = await this._applyBlobDiff(previous, diff, true)
+            previous = await this._applyBlobDiffPatch(previous, diff, true)
         }
 
         // Apply target commit diff
         let current = previous
         const diffs = applied.filter((diff) => diff.commit === target.name)
         for (const diff of diffs) {
-            current = await this._applyBlobDiff(current, diff)
+            current = await this._applyBlobDiffPatch(current, diff)
         }
 
         return { previous, current }
@@ -634,10 +636,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getBranch(name: string): Promise<TBranch> {
-        const { key, value } = await this._getBranch(name)
+        const { key, value, version } = await this._getBranch(name)
         return {
             name: key,
-            commit: await this.getCommit({ address: value }),
+            commit: {
+                ...(await this.getCommit({ address: value })),
+                version,
+            },
             isProtected: await this._isBranchProtected(name),
         }
     }
@@ -646,9 +651,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { value0 } = await this.repo.runLocal('getAllAddress', {})
         return await Promise.all(
             value0.map(async (item: any) => {
+                const { key, value, version } = item
                 return {
-                    name: item.key,
-                    commit: await this.getCommit({ address: item.value }),
+                    name: key,
+                    commit: {
+                        ...(await this.getCommit({ address: value })),
+                        version,
+                    },
                     isProtected: await this._isBranchProtected(item.key),
                 }
             }),
@@ -680,6 +689,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
+    async getUpgrade(commit: string): Promise<TUpgradeData> {
+        const commitData = await this.getCommit({ name: commit })
+        const { tree, items } = await this.getTree(commit)
+        const blobs = await this._getTreeBlobs(items, commitData.branch)
+        return {
+            commit: {
+                ...commitData,
+                parents: [commitData.address],
+            },
+            tree,
+            blobs,
+        }
+    }
+
     async deployBranch(name: string, from: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -688,21 +711,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (fromBranch.name === name) return
 
         // Get `from` branch tree items and collect all blobs
-        const items = (await this.getTree(fromBranch.commit.name)).items.filter(
-            (item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0,
-        )
-        const blobs: { treepath: string; content: string | Buffer }[] = []
-        for (const chunk of splitByChunk(items, 20)) {
-            await Promise.all(
-                chunk.map(async (item) => {
-                    const treepath = getTreeItemFullPath(item)
-                    const fullpath = `${fromBranch.name}/${treepath}`
-                    const content = await this.getBlob({ fullpath })
-                    blobs.push({ treepath, content })
-                }),
-            )
-            await sleep(300)
-        }
+        const { items } = await this.getTree(fromBranch.commit.name)
+        const blobs = await this._getTreeBlobs(items, fromBranch.name)
 
         // Deploy snapshots (split by chunks)
         for (const chunk of splitByChunk(blobs, 20)) {
@@ -937,7 +947,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     callback({ treesDeploy: { count: ++counter } })
                 }
             })(),
-            // Deploy diffs and commit
+            // Deploy diffs
             (async () => {
                 let counter = 0
                 for (let i = 0; i < blobsMeta.length; i++) {
@@ -991,6 +1001,55 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }, 3)
         }
         callback({ completed: true })
+    }
+
+    async pushUpgrade(data: TUpgradeData): Promise<void> {
+        const { blobs, commit, tree } = data
+
+        // Deploy everything for commit with commit
+        await Promise.all([
+            // Deploy trees
+            (async () => {
+                let counter = 0
+                for (const path of Object.keys(tree)) {
+                    await retry(async () => await this._deployTree(tree[path]), 3)
+                    // callback({ treesDeploy: { count: ++counter } })
+                }
+            })(),
+            // Deploy commit
+            (async () => {
+                await retry(async () => {
+                    await this._deployCommit(
+                        commit.branch,
+                        commit.name,
+                        commit.content,
+                        commit.parents,
+                        commit.tree,
+                        true,
+                    )
+                }, 3)
+                // callback({ commitDeploy: true })
+            })(),
+        ])
+
+        // Deploy snapshots
+        let counter = 0
+        for (const { treepath, content } of blobs) {
+            await retry(async () => {
+                await this._deploySnapshot(commit.branch, commit.name, treepath, content)
+            }, 3)
+            // callback({ snapsDeploy: { count: ++counter } })
+        }
+
+        // Set commit
+        await retry(async () => {
+            await this._setCommit(commit.branch, commit.name, blobs.length)
+        }, 3)
+        const wait = await whileFinite(async () => {
+            const check = await this.getBranch(commit.branch)
+            return check.commit.address !== commit.address
+        })
+        if (!wait) throw new GoshError('Push upgrade timeout reached')
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
@@ -1058,6 +1117,28 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             path: '',
             name: item.name,
         }))
+    }
+
+    private async _getTreeBlobs(
+        items: TTreeItem[],
+        branch: string,
+    ): Promise<{ treepath: string; content: string | Buffer }[]> {
+        const filtered = items.filter(
+            (item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0,
+        )
+        const blobs: { treepath: string; content: string | Buffer }[] = []
+        for (const chunk of splitByChunk(filtered, 20)) {
+            await Promise.all(
+                chunk.map(async (item) => {
+                    const treepath = getTreeItemFullPath(item)
+                    const fullpath = `${branch}/${treepath}`
+                    const content = await this.getBlob({ fullpath })
+                    blobs.push({ treepath, content })
+                }),
+            )
+            await sleep(300)
+        }
+        return blobs
     }
 
     private async _getDiff(
@@ -1324,7 +1405,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
     }
 
-    private async _applyBlobDiff(
+    private async _applyBlobDiffPatch(
         content: string | Buffer,
         diff: any,
         reverse: boolean = false,

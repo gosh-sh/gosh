@@ -14,6 +14,7 @@ import {
     TTag,
     TTree,
     TTreeItem,
+    TUpgradeData,
 } from '../types/repo.types'
 
 interface IGoshAdapter {
@@ -105,6 +106,7 @@ interface IGoshRepositoryAdapter {
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>
+    getUpgrade(commit: string): Promise<TUpgradeData>
 
     deployBranch(name: string, from: string): Promise<void>
     deleteBranch(name: string): Promise<void>
@@ -124,6 +126,7 @@ interface IGoshRepositoryAdapter {
         branchParent?: string,
         callback?: IPushCallback,
     ): Promise<void>
+    pushUpgrade(data: TUpgradeData): Promise<void>
 }
 
 interface IContract {

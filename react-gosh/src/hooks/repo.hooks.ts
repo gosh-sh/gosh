@@ -186,7 +186,9 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
         const _getAvailableVersions = () => {
             const daoIndex = all.findIndex((v) => v === dao.getVersion())
             const repoIndex = all.findIndex((v) => v === repo.getVersion())
-            setVersions(all.slice(repoIndex + 1, daoIndex))
+            // TODO: Check DAO version
+            // setVersions(all.slice(repoIndex + 1, daoIndex))
+            setVersions(all.slice(repoIndex + 1))
         }
 
         _getAvailableVersions()

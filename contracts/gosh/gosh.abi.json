@@ -377,6 +377,14 @@
 			]
 		},
 		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "_lastGoshDao",
 			"inputs": [
 			],
@@ -393,6 +401,9 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_root","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},

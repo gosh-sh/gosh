@@ -55,41 +55,6 @@ TvmCell m_lockerCode;
 
 optional(uint256) _access;
 
-
-// mapping to store hashes of inbound messages;
-mapping(uint256 => uint32) m_messages;
-LastMsg m_lastMsg;
-// Each transaction is limited by gas, so we must limit count of iteration in loop.
-uint8 constant MAX_CLEANUP_MSGS = 20;
-
-modifier saveMsg() {
-    _saveMsg();
-    _;
-}
-
-function _saveMsg() inline internal {
-    m_messages[m_lastMsg.msgHash] = m_lastMsg.expireAt;
-    gc();
-}
-
-struct LastMsg {
-    uint32 expireAt;
-    uint256 msgHash;
-}
-
-function gc() private {
-        uint counter = 0;
-        for ((uint256 msgHash, uint32 expireAt) : m_messages) {
-            if (counter >= MAX_CLEANUP_MSGS) {
-                break;
-            }
-            counter++;
-            if (expireAt <= now) {
-                delete m_messages[msgHash];
-            }
-        }
-    }
-
 modifier check_owner override {
   require ( msg.pubkey () != 0, SMVErrors.error_not_external_message );
   require ( tvm.pubkey () == msg.pubkey (), SMVErrors.error_not_my_pubkey );

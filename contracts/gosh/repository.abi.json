@@ -104,7 +104,7 @@
 			]
 		},
 		{
-			"name": "correctCommit",
+			"name": "commitCanceled",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"branch","type":"string"}
@@ -113,7 +113,7 @@
 			]
 		},
 		{
-			"name": "commitCanceled",
+			"name": "correctCommit",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"branch","type":"string"}
@@ -361,6 +361,14 @@
 			"outputs": [
 				{"name":"value0","type":"bool"}
 			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [
@@ -372,6 +380,9 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_tombstone","type":"bool"},
 		{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"_previousversion","type":"optional(tuple)"},
 		{"name":"_pubaddr","type":"address"},

@@ -35,6 +35,7 @@ type TCommit = {
     address: string
     name: string
     branch: string
+    content: string
     tree: string
     title: string
     message: string
@@ -66,6 +67,15 @@ type TPushCallbackParams = {
     completed?: boolean
 }
 
+type TUpgradeData = {
+    commit: TCommit
+    tree: TTree
+    blobs: {
+        treepath: string
+        content: string | Buffer
+    }[]
+}
+
 interface IPushCallback {
     (params: TPushCallbackParams): void
 }
@@ -78,6 +88,7 @@ export {
     TCommit,
     TBranch,
     TTag,
+    TUpgradeData,
     IPushCallback,
     TPushCallbackParams,
 }
