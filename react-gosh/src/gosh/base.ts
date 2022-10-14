@@ -16,16 +16,17 @@ import { IContract } from './interfaces'
 import ABI from '../resources/contracts/abi.json'
 import { GoshError } from '../errors'
 import { sleep } from '../utils'
+import { TAddress } from '../types'
 
 class BaseContract implements IContract {
-    address: string
+    address: TAddress
     account: Account
     version: string
 
     constructor(
         client: TonClient,
         key: string,
-        address: string,
+        address: TAddress,
         options?: { version?: string; keys?: KeyPair },
     ) {
         const abi = options?.version ? (<any>ABI)[options.version][key] : (<any>ABI)[key]

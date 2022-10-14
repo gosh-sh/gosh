@@ -3,6 +3,7 @@ import { GoshSmvProposal } from './goshsmvproposal'
 import { BaseContract } from '../base'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { IGoshProfile, IGoshSmvLocker, IGoshWallet } from '../interfaces'
+import { TAddress } from '../../types'
 
 class GoshWallet extends BaseContract implements IGoshWallet {
     static key: string = 'goshwallet'
@@ -11,7 +12,7 @@ class GoshWallet extends BaseContract implements IGoshWallet {
 
     constructor(
         client: TonClient,
-        address: string,
+        address: TAddress,
         optional?: { keys?: KeyPair; profile?: IGoshProfile },
     ) {
         super(client, GoshWallet.key, address, {

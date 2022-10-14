@@ -1,5 +1,5 @@
 import { TonClient } from '@eversdk/core'
-import { TGoshEventDetails } from '../../types'
+import { TAddress, TGoshEventDetails } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshSmvProposal } from '../interfaces'
 import { GoshError, EGoshError } from '../../errors'
@@ -11,7 +11,7 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     static version = '0.11.0'
     meta?: IGoshSmvProposal['meta']
 
-    constructor(client: TonClient, address: string) {
+    constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvProposal.key, address, { version: GoshSmvProposal.version })
     }
 

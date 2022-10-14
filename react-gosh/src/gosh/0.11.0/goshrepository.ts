@@ -1,4 +1,5 @@
 import { TonClient } from '@eversdk/core'
+import { TAddress } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshRepository } from '../interfaces'
 
@@ -8,7 +9,7 @@ class GoshRepository extends BaseContract implements IGoshRepository {
 
     private name?: string
 
-    constructor(client: TonClient, address: string) {
+    constructor(client: TonClient, address: TAddress) {
         super(client, GoshRepository.key, address, { version: GoshRepository.version })
     }
 

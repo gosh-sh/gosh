@@ -68,13 +68,13 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
     goshroot: IGoshRoot
     gosh: IGosh
 
-    private constructor(goshroot: IGoshRoot, goshaddr: string) {
+    private constructor(goshroot: IGoshRoot, goshaddr: TAddress) {
         this.goshroot = goshroot
         this.client = goshroot.account.client
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: string): GoshAdapter_0_11_0 {
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_0_11_0 {
         if (!GoshAdapter_0_11_0.instance) {
             GoshAdapter_0_11_0.instance = new GoshAdapter_0_11_0(goshroot, goshaddr)
         }
@@ -191,7 +191,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     private profile?: IGoshProfile
     private wallet?: IGoshWallet
 
-    constructor(gosh: IGoshAdapter, address: string) {
+    constructor(gosh: IGoshAdapter, address: TAddress) {
         this.client = gosh.client
         this.gosh = gosh
         this.dao = new GoshDao(gosh.client, address)
@@ -400,7 +400,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     constructor(
         gosh: IGoshAdapter,
-        address: string,
+        address: TAddress,
         auth?: { username: string; wallet: IGoshWallet },
     ) {
         console.debug('Repo auth', auth)

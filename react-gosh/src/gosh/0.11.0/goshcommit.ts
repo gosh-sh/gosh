@@ -1,4 +1,5 @@
 import { TonClient } from '@eversdk/core'
+import { TAddress } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshCommit, IGoshTree } from '../interfaces'
 import { GoshTree } from './goshtree'
@@ -7,7 +8,7 @@ class GoshCommit extends BaseContract implements IGoshCommit {
     static key: string = 'commit'
     static version = '0.11.0'
 
-    constructor(client: TonClient, address: string) {
+    constructor(client: TonClient, address: TAddress) {
         super(client, GoshCommit.key, address, { version: GoshCommit.version })
     }
 
