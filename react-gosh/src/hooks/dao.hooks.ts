@@ -25,7 +25,7 @@ function useDaoList(perPage: number) {
     })
 
     /** Load next chunk of DAO list items */
-    const onLoadNext = () => {
+    const onLoadMore = () => {
         setDaos((state) => ({ ...state, page: state.page + 1 }))
     }
 
@@ -114,8 +114,8 @@ function useDaoList(perPage: number) {
         hasNext: daos.page * perPage < daos.filtered.items.length,
         search,
         setSearch,
-        loadNext: onLoadNext,
-        loadItemDetails: setItemDetails,
+        onLoadMore,
+        onLoadItemDetails: setItemDetails,
     }
 }
 
@@ -246,7 +246,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
     })
 
     /** Load next chunk of DAO member list items */
-    const onLoadNext = () => {
+    const onLoadMore = () => {
         setMembers((state) => ({ ...state, page: state.page + 1 }))
     }
 
@@ -344,8 +344,8 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         hasNext: perPage ? members.page * perPage < members.filtered.length : false,
         search,
         setSearch,
-        loadNext: onLoadNext,
-        loadItemDetails: setItemDetails,
+        onLoadMore,
+        onLoadItemDetails: setItemDetails,
     }
 }
 

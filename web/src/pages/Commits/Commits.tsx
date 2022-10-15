@@ -1,73 +1,33 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import BranchSelect from '../../components/BranchSelect'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { getCommitTime, useBranches, ZERO_COMMIT } from 'react-gosh'
+import { getCommitTime, useBranches, useCommitList } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { TCommit } from 'react-gosh/dist/types/repo.types'
 
 const CommitsPage = () => {
-    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { daoName, repoName, branchName = 'main' } = useParams()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const navigate = useNavigate()
-    const [commits, setCommits] = useState<{
-        list: TCommit[]
-        isFetching: boolean
-        next?: string
-    }>({
-        list: [],
-        isFetching: true,
-    })
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch } = useBranches(repo, branchName)
+    const { isFetching, isEmpty, items, hasMore, onLoadMore } = useCommitList(
+        daoName!,
+        repo,
+        branchName,
+    )
 
     const renderCommitter = (committer: string) => {
-        const [pubkey] = committer.split(' ')
+        const [username, email] = committer.split(' ')
         return (
             <CopyClipboard
-                label={shortString(pubkey)}
+                label={shortString(username)}
                 componentProps={{
-                    text: pubkey,
+                    text: email,
                 }}
             />
         )
     }
-
-    const getCommits = async (repo: IGoshRepositoryAdapter, next?: string) => {
-        setCommits((curr) => ({ ...curr, isFetching: true }))
-
-        const list: TCommit[] = []
-        let count = 0
-        while (count < 5) {
-            if (!next) break
-
-            const commitData = await repo.getCommit({ address: next })
-            if (commitData.name !== ZERO_COMMIT) list.push(commitData)
-
-            next = commitData.parents[0] || ''
-            count += 1
-        }
-        setCommits((curr) => ({
-            list: [...curr.list, ...list],
-            isFetching: false,
-            next,
-        }))
-    }
-
-    useEffect(() => {
-        const initCommits = async () => {
-            setCommits({ list: [], isFetching: true })
-            getCommits(repo, branch?.commit.address)
-        }
-
-        if (repo && branch?.commit.address) initCommits()
-    }, [repo, branch?.commit.address])
-
-    useEffect(() => {
-        updateBranch(branchName)
-    }, [branchName, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -82,20 +42,20 @@ const CommitsPage = () => {
             />
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
-                {commits.isFetching && !commits.list.length && (
+                {isFetching && isEmpty && (
                     <div className="text-sm text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading commits...
                     </div>
                 )}
 
-                {!commits.isFetching && !commits.list.length && (
+                {!isFetching && isEmpty && (
                     <div className="text-sm text-gray-606060 text-center">
                         There are no commits yet
                     </div>
                 )}
 
-                {commits.list.map((commit, index) => (
+                {items.map((commit, index) => (
                     <div
                         key={index}
                         className="flex flex-wrap py-3 justify-between items-center gap-y-3"
@@ -144,15 +104,15 @@ const CommitsPage = () => {
                 ))}
             </div>
 
-            {commits.next && (
+            {hasMore && (
                 <div className="text-center mt-3">
                     <button
                         className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                         type="button"
-                        disabled={commits.isFetching}
-                        onClick={() => getCommits(repo, commits.next)}
+                        disabled={isFetching}
+                        onClick={onLoadMore}
                     >
-                        {commits.isFetching && <Spinner className="mr-2" />}
+                        {isFetching && <Spinner className="mr-2" />}
                         Load more
                     </button>
                 </div>

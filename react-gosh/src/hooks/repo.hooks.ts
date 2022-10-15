@@ -7,7 +7,7 @@ import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { getAllAccounts, retry } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
-import { TDao } from '../types'
+import { TAddress, TDao } from '../types'
 import { TCommit, TPushCallbackParams, TRepositoryListItem } from '../types/repo.types'
 
 function useRepoList(dao: string, perPage: number) {
@@ -25,7 +25,7 @@ function useRepoList(dao: string, perPage: number) {
     })
 
     /** Load next chunk of DAO list items */
-    const onLoadNext = () => {
+    const onLoadMore = () => {
         setRepos((state) => ({ ...state, page: state.page + 1 }))
     }
 
@@ -135,8 +135,8 @@ function useRepoList(dao: string, perPage: number) {
         hasNext: repos.page * perPage < repos.filtered.items.length,
         search,
         setSearch,
-        loadNext: onLoadNext,
-        loadItemDetails: setItemDetails,
+        onLoadMore,
+        onLoadItemDetails: setItemDetails,
     }
 }
 
@@ -318,6 +318,201 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
     return blob
 }
 
+function useCommitList(
+    dao: string,
+    repo: IGoshRepositoryAdapter,
+    branch: string,
+    perPage: number = 20,
+) {
+    const { branch: branchData, updateBranch } = useBranches(repo, branch)
+    const [isBranchUpdated, setIsBranchUpdated] = useState<boolean>(false)
+    const [adapter, setAdapter] = useState<IGoshRepositoryAdapter>(repo)
+    const [commits, setCommits] = useState<{
+        list: TCommit[]
+        isFetching: boolean
+        prev?: { address: TAddress; version: string }
+    }>({
+        list: [],
+        isFetching: true,
+    })
+
+    const _getCommit = async (commit: { address: TAddress; version: string }) => {
+        const { address, version } = commit
+
+        let vAdapter = adapter
+        if (vAdapter.getVersion() !== version) {
+            const gosh = GoshAdapterFactory.create(version)
+            const name = await adapter.getName()
+            vAdapter = await gosh.getRepository({ path: `${dao}/${name}` })
+            console.debug('useCommitList set new adapter')
+            setAdapter(vAdapter)
+        }
+
+        return await vAdapter.getCommit({ address })
+    }
+
+    const _getCommitsPage = async (prev?: { address: TAddress; version: string }) => {
+        setCommits((curr) => ({ ...curr, isFetching: true }))
+
+        const list: TCommit[] = []
+        let count = 0
+        while (count < perPage) {
+            if (!prev) break
+
+            const commit = await _getCommit(prev)
+            if (commit.name !== ZERO_COMMIT) list.push(commit)
+
+            const parent = await _getCommit({
+                address: commit.parents[0],
+                version: commit.versionPrev,
+            })
+            prev =
+                parent.name !== ZERO_COMMIT
+                    ? { address: parent.address, version: parent.version }
+                    : undefined
+            count++
+        }
+        setCommits((curr) => ({
+            list: [...curr.list, ...list],
+            isFetching: false,
+            prev,
+        }))
+    }
+
+    const onLoadMore = async () => {
+        await _getCommitsPage(commits.prev)
+    }
+
+    useEffect(() => {
+        const _updateBranch = async () => {
+            setCommits({ list: [], isFetching: true })
+            setIsBranchUpdated(false)
+            await updateBranch(branch)
+            setIsBranchUpdated(true)
+        }
+
+        _updateBranch()
+    }, [branch])
+
+    useEffect(() => {
+        const _getCommits = async () => {
+            if (!isBranchUpdated) return
+            if (branchData) {
+                const { address, versionPrev } = branchData.commit
+                _getCommitsPage({ address, version: versionPrev })
+            }
+        }
+
+        _getCommits()
+    }, [isBranchUpdated])
+
+    return {
+        isFetching: commits.isFetching,
+        isEmpty: !commits.list.length,
+        items: commits.list,
+        hasMore: !!commits.prev,
+        onLoadMore,
+    }
+}
+
+function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+    const [adapter, setAdapter] = useState<IGoshRepositoryAdapter>()
+    const [details, setDetails] = useState<{ isFetching: boolean; commit?: TCommit }>({
+        isFetching: true,
+    })
+    const [blobs, setBlobs] = useState<{
+        isFetching: boolean
+        items: {
+            treepath: string
+            commit: string
+            current: string | Buffer
+            previous: string | Buffer
+            showDiff: boolean
+            isFetching: boolean
+        }[]
+    }>({ isFetching: true, items: [] })
+
+    const onLoadDiff = async (index: number) => {
+        if (!adapter) return
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index ? { ...item, isFetching: true } : item
+            }),
+        }))
+
+        const { commit, treepath } = blobs.items[index]
+        const diff = await adapter.getCommitBlob(treepath, commit)
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index
+                    ? { ...item, ...diff, isFetching: false, showDiff: true }
+                    : item
+            }),
+        }))
+    }
+
+    useEffect(() => {
+        const _getCommit = async () => {
+            setDetails((state) => ({ ...state, isFetching: true }))
+            for (const version of Object.keys(AppConfig.versions).reverse()) {
+                const gosh = GoshAdapterFactory.create(version)
+                const repository = await gosh.getRepository({ path: `${dao}/${repo}` })
+                try {
+                    const data = await repository.getCommit({ name: commit })
+                    setAdapter(repository)
+                    setDetails((state) => ({ ...state, commit: data, isFetching: false }))
+                    break
+                } catch (e: any) {
+                    console.info('Find commit', e.message)
+                }
+            }
+        }
+
+        _getCommit()
+    }, [dao, repo, commit])
+
+    useEffect(() => {
+        const _getBlobs = async () => {
+            if (!adapter) return
+
+            setBlobs({ isFetching: true, items: [] })
+            const blobs = await adapter.getCommitBlobs(commit)
+            const state = await Promise.all(
+                blobs.sort().map(async (treepath, i) => {
+                    const diff =
+                        i < showDiffNum
+                            ? await adapter.getCommitBlob(treepath, commit)
+                            : { previous: '', current: '' }
+                    return {
+                        treepath,
+                        commit,
+                        ...diff,
+                        showDiff: i < showDiffNum,
+                        isFetching: false,
+                    }
+                }),
+            )
+            setBlobs({ isFetching: false, items: state })
+        }
+
+        _getBlobs()
+    }, [adapter])
+
+    return {
+        isFetching: details.isFetching,
+        commit: details.commit,
+        blobs: {
+            isFetching: blobs.isFetching,
+            items: blobs.items,
+            onLoadDiff,
+        },
+    }
+}
+
 function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
     const { branch: branchData, updateBranch } = useBranches(repo, branch)
     const [progress, setProgress] = useState<TPushCallbackParams>({})
@@ -377,5 +572,7 @@ export {
     useBranches,
     useTree,
     useBlob,
+    useCommitList,
+    useCommit,
     usePush,
 }

@@ -395,6 +395,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
     private repo: IGoshRepository
+    private name?: string
 
     auth?: { username: string; wallet: IGoshWallet }
 
@@ -419,8 +420,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getName(): Promise<string> {
-        const result = await this.repo.runLocal('getName', {})
-        return result.value0
+        if (!this.name) {
+            const { value0 } = await this.repo.runLocal('getName', {})
+            this.name = value0
+        }
+        return this.name!
     }
 
     getVersion(): string {
@@ -515,6 +519,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
+        const { value0: versionPrev } = await commit.runLocal('getPrevCommitVersion', {})
         const { branch, sha, parents, content, initupgrade } = details
 
         // Parse content
@@ -547,6 +552,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             committer: parsed.committer,
             parents,
             version: commit.version,
+            versionPrev: versionPrev ?? commit.version,
             initupgrade,
         }
     }

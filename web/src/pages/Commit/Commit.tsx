@@ -1,51 +1,36 @@
-import { useEffect, useState } from 'react'
-import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { getCommitTime, useBranches } from 'react-gosh'
+import { Link, useParams } from 'react-router-dom'
+import { getCommitTime, useCommit } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
-import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { TCommit } from 'react-gosh/dist/types/repo.types'
 
 const CommitPage = () => {
-    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName, commitName } = useParams()
-    const { branch } = useBranches(repo, branchName)
-    const [commit, setCommit] = useState<TCommit>()
+    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 0)
 
     const renderCommitter = (committer: string) => {
-        const [pubkey] = committer.split(' ')
+        const [username, email] = committer.split(' ')
         return (
             <CopyClipboard
-                label={shortString(pubkey)}
+                label={username}
                 componentProps={{
-                    text: pubkey,
+                    text: email,
                 }}
             />
         )
     }
 
-    useEffect(() => {
-        const _getCommit = async (repo: IGoshRepositoryAdapter, name: string) => {
-            // Get commit data
-            const commitData = await repo.getCommit({ name })
-            setCommit(commitData)
-        }
-
-        if (commitName) _getCommit(repo, commitName)
-    }, [repo, commitName])
-
     return (
         <div className="bordered-block px-7 py-8">
-            {!commit && (
+            {isFetching && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading commit...
                 </div>
             )}
-            {commit && (
+
+            {!isFetching && commit && (
                 <>
                     <div>
                         <div className="font-medium py-2">{commit.title}</div>
@@ -61,25 +46,25 @@ const CommitPage = () => {
                                 <span className="mr-2 text-gray-050a15/65">
                                     Commit by
                                 </span>
-                                {renderCommitter(commit.committer || '')}
+                                {renderCommitter(commit.committer)}
                             </div>
                             <div>
                                 <span className="mr-2 text-gray-050a15/65">at</span>
-                                {getCommitTime(commit.committer || '').toLocaleString()}
+                                {getCommitTime(commit.committer).toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
                                 <span className="mr-2 text-gray-050a15/65">commit</span>
                                 <CopyClipboard
-                                    label={shortString(commit.name ?? '', 10, 10)}
+                                    label={shortString(commit.name, 10, 10)}
                                     componentProps={{
-                                        text: commit.name ?? '',
+                                        text: commit.name,
                                     }}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {branch && commit.branch !== branch.name && (
+                    {commit.branch !== branchName && (
                         <div className="mt-4">
                             <p className="text-sm">
                                 This commit was created in branch <b>{commit.branch}</b>
@@ -96,8 +81,8 @@ const CommitPage = () => {
                         </div>
                     )}
 
-                    {branch && commit.branch === branch.name && (
-                        <CommitBlobs repo={repo} commit={commit.name} className="mt-4" />
+                    {commit.branch === branchName && (
+                        <CommitBlobs blobs={blobs} className="mt-4" />
                     )}
                 </>
             )}

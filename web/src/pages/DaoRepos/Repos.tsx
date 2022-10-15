@@ -13,8 +13,8 @@ const DaoRepositoriesPage = () => {
         hasNext,
         search,
         setSearch,
-        loadNext,
-        loadItemDetails,
+        onLoadMore,
+        onLoadItemDetails,
     } = useRepoList(daoName!, 5)
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
 
@@ -59,7 +59,7 @@ const DaoRepositoriesPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {items.map((item, index) => {
-                        loadItemDetails(item)
+                        onLoadItemDetails(item)
                         return <RepoListItem key={index} daoName={daoName!} item={item} />
                     })}
                 </div>
@@ -70,7 +70,7 @@ const DaoRepositoriesPage = () => {
                             className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                             type="button"
                             disabled={isFetching}
-                            onClick={loadNext}
+                            onClick={onLoadMore}
                         >
                             {isFetching && <Spinner className="mr-2" />}
                             Load more

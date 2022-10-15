@@ -44,6 +44,7 @@ type TCommit = {
     committer: string
     parents: TAddress[]
     version: string
+    versionPrev: string
     initupgrade: boolean
 }
 
