@@ -15,7 +15,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { splitByPath, useRepoBranches, useRepoTree } from 'react-gosh'
+import { splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -26,8 +26,8 @@ const RepoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
-    const tree = useRepoTree(daoName!, repoName!, branch?.commit, treepath)
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const tree = useTree(daoName!, repoName!, branch?.commit, treepath)
     const subtree = useRecoilValue(tree.getSubtree(treepath))
 
     const [dirUp] = splitByPath(treepath)

@@ -11,7 +11,7 @@ import * as Yup from 'yup'
 import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import Spinner from '../../components/Spinner'
 import SwitchField from '../../components/FormikForms/SwitchField'
-import { useCommitProgress, useSmvBalance } from '../../hooks/gosh.hooks'
+import { useSmvBalance } from '../../hooks/gosh.hooks'
 import {
     userAtom,
     getCodeLanguageFromFilename,
@@ -21,7 +21,7 @@ import {
     sleep,
     retry,
     getTreeItemFullPath,
-    useRepoBranches,
+    useBranches,
 } from 'react-gosh'
 import BranchSelect from '../../components/BranchSelect'
 import { toast } from 'react-toastify'
@@ -47,7 +47,7 @@ const PullCreatePage = () => {
         dao.adapter,
         dao.details.isAuthenticated,
     )
-    const { branches, updateBranches } = useRepoBranches(repo)
+    const { branches, updateBranches } = useBranches(repo)
     const [compare, setCompare] = useState<
         | {
               to?: { treepath: string; content: any }
@@ -67,7 +67,7 @@ const PullCreatePage = () => {
         count: number
         total: number
     }>({ count: 0, total: 0 })
-    const { progress, progressCallback } = useCommitProgress()
+    // const { progress, progressCallback } = useCommitProgress()
 
     const getBlob = async (
         repo: IGoshRepositoryAdapter,
@@ -241,7 +241,7 @@ const PullCreatePage = () => {
                 message,
                 values.tags,
                 fromBranch.name,
-                progressCallback,
+                // progressCallback,
             )
 
             // Delete branch after merge (if selected), update branches, redirect
@@ -387,7 +387,7 @@ const PullCreatePage = () => {
                                                     />
                                                 )
                                             }
-                                            progress={progress}
+                                            // progress={progress}
                                         />
                                     </Form>
                                 )}

@@ -1,28 +1,6 @@
 import { useEffect, useState } from 'react'
 import { TSmvBalanceDetails, useUser } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
-
-export const useCommitProgress = () => {
-    const [progress, setProgress] = useState<TPushCallbackParams>({})
-
-    const progressCallback = (params: TPushCallbackParams) => {
-        setProgress((currVal) => {
-            const { treesDeploy, snapsDeploy, diffsDeploy, tagsDeploy } = params
-
-            return {
-                ...currVal,
-                ...params,
-                treesDeploy: { ...currVal.treesDeploy, ...treesDeploy },
-                snapsDeploy: { ...currVal.snapsDeploy, ...snapsDeploy },
-                diffsDeploy: { ...currVal.diffsDeploy, ...diffsDeploy },
-                tagsDeploy: { ...currVal.tagsDeploy, ...tagsDeploy },
-            }
-        })
-    }
-
-    return { progress, progressCallback }
-}
 
 export const useSmvBalance = (dao: IGoshDaoAdapter, isAuthenticated: boolean) => {
     const { user } = useUser()

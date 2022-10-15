@@ -4,7 +4,7 @@ import TextField from '../../components/FormikForms/TextField'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { retry } from 'react-gosh'
+import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 
@@ -16,10 +16,11 @@ const RepoCreatePage = () => {
     const { daoName } = useParams()
     const navigate = useNavigate()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const { create: createRepository } = useRepoCreate(dao.adapter)
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await retry(() => dao.adapter.deployRepository(values.name), 3)
+            await createRepository(values.name)
             navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)

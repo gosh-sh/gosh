@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { ZERO_COMMIT } from '../constants'
-import { GoshError } from '../errors'
+import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { getAllAccounts, retry } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
-import { TBranch, TCommit, TRepositoryListItem } from '../types/repo.types'
+import { TDao } from '../types'
+import { TCommit, TPushCallbackParams, TRepositoryListItem } from '../types/repo.types'
 
 function useRepoList(dao: string, perPage: number) {
     const [search, setSearch] = useState<string>('')
@@ -177,6 +178,14 @@ function useRepo(dao: string, repo: string) {
     }
 }
 
+function useRepoCreate(dao: IGoshDaoAdapter) {
+    const create = async (name: string) => {
+        await retry(() => dao.deployRepository(name), 3)
+    }
+
+    return { create }
+}
+
 function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
     const [versions, setVersions] = useState<string[]>()
 
@@ -212,7 +221,7 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
     return { versions, upgrade }
 }
 
-function useRepoBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
+function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
     const [branches, setBranches] = useRecoilState(branchesAtom)
     const branch = useRecoilValue(branchSelector(current))
 
@@ -241,7 +250,7 @@ function useRepoBranches(repo?: IGoshRepositoryAdapter, current: string = 'main'
     return { branches, branch, updateBranch, updateBranches }
 }
 
-function useRepoTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
+function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
     const [tree, setTree] = useRecoilState(treeAtom)
 
     const getSubtree = (path?: string) => treeSelector({ type: 'tree', path })
@@ -271,7 +280,8 @@ function useRepoTree(dao: string, repo: string, commit?: TCommit, filterPath?: s
     return { tree, getSubtree, getTreeItems }
 }
 
-function useBlob(dao: string, repo: string, branch?: TBranch, path?: string) {
+function useBlob(dao: string, repo: string, branch?: string, path?: string) {
+    const { branch: branchData } = useBranches(undefined, branch)
     const [blob, setBlob] = useState<{
         path?: string
         content?: string | Buffer
@@ -282,18 +292,18 @@ function useBlob(dao: string, repo: string, branch?: TBranch, path?: string) {
         const _getBlob = async () => {
             setBlob({ isFetching: true })
 
-            if (!branch || !path) {
+            if (!branchData || !path) {
                 setBlob({ isFetching: false })
                 return
             }
-            if (branch.commit.name === ZERO_COMMIT) {
+            if (branchData.commit.name === ZERO_COMMIT) {
                 setBlob({ isFetching: false })
                 return
             }
 
-            const gosh = GoshAdapterFactory.create(branch.commit.version)
+            const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            const blob = await adapter.getBlob({ fullpath: `${branch.name}/${path}` })
+            const blob = await adapter.getBlob({ fullpath: `${branchData.name}/${path}` })
             setBlob((state) => ({
                 ...state,
                 path,
@@ -303,9 +313,69 @@ function useBlob(dao: string, repo: string, branch?: TBranch, path?: string) {
         }
 
         _getBlob()
-    }, [repo, branch?.name, branch?.commit.name, branch?.commit.version, path])
+    }, [repo, branch, path])
 
     return blob
 }
 
-export { useRepoList, useRepo, useRepoUpgrade, useRepoBranches, useRepoTree, useBlob }
+function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
+    const { branch: branchData, updateBranch } = useBranches(repo, branch)
+    const [progress, setProgress] = useState<TPushCallbackParams>({})
+
+    const push = async (
+        title: string,
+        blobs: {
+            treepath: string
+            original: string | Buffer
+            modified: string | Buffer
+        }[],
+        message?: string,
+        tags?: string,
+    ) => {
+        if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
+        if (branchData.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
+        if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
+
+        if (repo.getVersion() !== branchData.commit.version) {
+            const gosh = GoshAdapterFactory.create(branchData.commit.version)
+            const name = await repo.getName()
+            const repoOld = await gosh.getRepository({
+                path: `${dao.name}/${name}`,
+            })
+            const upgradeData = await repoOld.getUpgrade(branchData.commit.name)
+            await repo.pushUpgrade(upgradeData)
+        }
+
+        message = [title, message].filter((v) => !!v).join('\n\n')
+        await repo.push(branchData.name, blobs, message, tags, undefined, pushCallback)
+        await updateBranch(branchData.name)
+    }
+
+    const pushCallback = (params: TPushCallbackParams) => {
+        setProgress((currVal) => {
+            const { treesDeploy, snapsDeploy, diffsDeploy, tagsDeploy } = params
+
+            return {
+                ...currVal,
+                ...params,
+                treesDeploy: { ...currVal.treesDeploy, ...treesDeploy },
+                snapsDeploy: { ...currVal.snapsDeploy, ...snapsDeploy },
+                diffsDeploy: { ...currVal.diffsDeploy, ...diffsDeploy },
+                tagsDeploy: { ...currVal.tagsDeploy, ...tagsDeploy },
+            }
+        })
+    }
+
+    return { push, progress }
+}
+
+export {
+    useRepoList,
+    useRepo,
+    useRepoCreate,
+    useRepoUpgrade,
+    useBranches,
+    useTree,
+    useBlob,
+    usePush,
+}

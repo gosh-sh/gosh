@@ -5,13 +5,13 @@ import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import Spinner from '../../components/Spinner'
-import { useRepoBranches, useRepoTree } from 'react-gosh'
+import { useBranches, useTree } from 'react-gosh'
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branch } = useRepoBranches(repo, branchName)
-    const { tree, getTreeItems } = useRepoTree(daoName!, repoName!, branch?.commit)
+    const { branch } = useBranches(repo, branchName)
+    const { tree, getTreeItems } = useTree(daoName!, repoName!, branch?.commit)
     const [search, setSearch] = useState<string>('')
     const treeItems = useRecoilValue(getTreeItems(search))
 

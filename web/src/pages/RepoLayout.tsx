@@ -8,7 +8,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
-import { classNames, useRepo, TWalletDetails, TDao, useRepoBranches } from 'react-gosh'
+import { classNames, useRepo, TWalletDetails, TDao, useBranches } from 'react-gosh'
 import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
@@ -30,7 +30,7 @@ export type TRepoLayoutOutletContext = {
 const RepoLayout = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const { dao, adapter, isFetching } = useRepo(daoName!, repoName!)
-    const { updateBranches } = useRepoBranches(adapter)
+    const { updateBranches } = useBranches(adapter)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [

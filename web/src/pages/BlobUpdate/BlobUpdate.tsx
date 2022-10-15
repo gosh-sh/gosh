@@ -11,7 +11,6 @@ import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import { useMonaco } from '@monaco-editor/react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
-import { useCommitProgress } from '../../hooks/gosh.hooks'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import {
     EGoshError,
@@ -20,8 +19,7 @@ import {
     splitByPath,
     classNames,
     useBlob,
-    useRepoBranches,
-    GoshAdapterFactory,
+    usePush,
 } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
@@ -38,16 +36,15 @@ type TFormValues = {
 
 const BlobUpdatePage = () => {
     const treepath = useParams()['*']
-
-    const { daoName, repoName, branchName = 'main' } = useParams()
-    const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branch, updateBranch } = useRepoBranches(repo, branchName)
+    const navigate = useNavigate()
+    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const blob = useBlob(daoName!, repoName!, branchName, treepath)
+    const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
+
     const [activeTab, setActiveTab] = useState<number>(0)
-    const blob = useBlob(daoName!, repoName!, branch, treepath)
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
-    const { progress, progressCallback } = useCommitProgress()
 
     const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}${
         treepath && `/${treepath}`
@@ -55,40 +52,21 @@ const BlobUpdatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!repo) throw new GoshError(EGoshError.NO_REPO)
-            if (!branch) throw new GoshError(EGoshError.NO_BRANCH)
-            if (branch.isProtected)
-                throw new GoshError(EGoshError.PR_BRANCH, {
-                    branch: branchName,
-                })
-            if (!dao.details.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
-
-            if (repo.getVersion() !== branch.commit.version) {
-                const gosh = GoshAdapterFactory.create(branch.commit.version)
-                const repoOld = await gosh.getRepository({
-                    path: `${daoName}/${repoName}`,
-                })
-                const upgradeData = await repoOld.getUpgrade(branch.commit.name)
-                await repo.pushUpgrade(upgradeData)
-            }
-
+            const { name, title, message, tags, content } = values
             const [path] = splitByPath(treepath || '')
-            const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
-            await repo.push(
-                branch.name,
+            const treepathNew = `${path ? `${path}/` : ''}${name}`
+            await push(
+                title,
                 [
                     {
-                        treepath: `${path ? `${path}/` : ''}${values.name}`,
+                        treepath: treepathNew,
                         original: blob?.content ?? '',
-                        modified: values.content,
+                        modified: content,
                     },
                 ],
                 message,
-                values.tags,
-                undefined,
-                progressCallback,
+                tags,
             )
-            await updateBranch(branch.name)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
@@ -243,7 +221,7 @@ const BlobUpdatePage = () => {
                                 urlBack={urlBack}
                                 isDisabled={!monaco || isSubmitting}
                                 isSubmitting={isSubmitting}
-                                progress={progress}
+                                progress={pushProgress}
                             />
                         </Form>
                     )}

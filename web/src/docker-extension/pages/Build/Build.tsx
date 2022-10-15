@@ -6,7 +6,7 @@ import * as Yup from 'yup'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userAtom, useRepoBranches } from 'react-gosh'
+import { userAtom, useBranches } from 'react-gosh'
 import TextField from '../../../components/FormikForms/TextField'
 
 type TBuildFormValues = {
@@ -19,7 +19,7 @@ const BuildPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const [output, setOutput] = useState('')
 
     // const [dirUp] = splitByPath(treepath)

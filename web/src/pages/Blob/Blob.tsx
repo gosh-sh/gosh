@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename, useBlob, useRepoBranches } from 'react-gosh'
+import { getCodeLanguageFromFilename, useBlob, useBranches } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -23,8 +23,8 @@ const BlobPage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branches, branch } = useRepoBranches(repo, branchName)
-    const blob = useBlob(daoName!, repoName!, branch, treepath)
+    const { branches, branch } = useBranches(repo, branchName)
+    const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
     return (
         <div className="bordered-block px-7 py-8">

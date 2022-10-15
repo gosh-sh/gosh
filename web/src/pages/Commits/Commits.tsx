@@ -3,7 +3,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { getCommitTime, useRepoBranches, ZERO_COMMIT } from 'react-gosh'
+import { getCommitTime, useBranches, ZERO_COMMIT } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
@@ -12,7 +12,7 @@ import { TCommit } from 'react-gosh/dist/types/repo.types'
 const CommitsPage = () => {
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { branches, branch, updateBranch } = useRepoBranches(repo, branchName)
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const navigate = useNavigate()
     const [commits, setCommits] = useState<{
         list: TCommit[]
