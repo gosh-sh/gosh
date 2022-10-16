@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { useOutletContext } from 'react-router-dom'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
 import { TDaoLayoutOutletContext } from '../DaoLayout'

@@ -1,36 +1,24 @@
 import { Field } from 'formik'
-import TextField from '../../components/FormikForms/TextField'
-import TextareaField from '../../components/FormikForms/TextareaField'
-import { useNavigate } from 'react-router-dom'
-import { classNames } from 'react-gosh'
-import Spinner from '../../components/Spinner'
-import CommitProgress from './CommitProgress'
 import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { useNavigate } from 'react-router-dom'
+import { TextareaField, TextField } from '../Formik'
+import Spinner from '../Spinner'
+import CommitProgress from './CommitProgress'
 
-type TFormCommitBlockProps = {
-    urlBack?: string
-    className?: string
+type TCommitFieldsProps = {
+    isSubmitting: boolean
     isDisabled?: boolean
-    isSubmitting?: boolean
-    extraFields?: any
+    urlBack?: string
     extraButtons?: any
     progress?: TPushCallbackParams
 }
 
-const FormCommitBlock = (props: TFormCommitBlockProps) => {
-    const {
-        urlBack,
-        className,
-        isDisabled,
-        isSubmitting,
-        extraFields,
-        extraButtons,
-        progress,
-    } = props
+const CommitFields = (props: TCommitFieldsProps) => {
+    const { isSubmitting, isDisabled, urlBack, extraButtons, progress } = props
     const navigate = useNavigate()
 
     return (
-        <div className={classNames('mt-5 border rounded px-4 py-3', className)}>
+        <>
             <h3 className="text-lg font-semibold mb-2">Commit data</h3>
             <div>
                 <Field
@@ -70,8 +58,6 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 />
             </div>
 
-            {extraFields}
-
             <div className="flex flex-wrap mt-4 items-center gap-3">
                 <button
                     className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
@@ -81,6 +67,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     {isSubmitting && <Spinner className="mr-2" />}
                     Commit changes
                 </button>
+
                 {urlBack && (
                     <button
                         className="px-4 py-2 border rounded font-medium text-center
@@ -91,6 +78,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                         Cancel
                     </button>
                 )}
+
                 {extraButtons}
             </div>
 
@@ -99,8 +87,8 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     <CommitProgress {...progress} />
                 </div>
             )}
-        </div>
+        </>
     )
 }
 
-export default FormCommitBlock
+export default CommitFields

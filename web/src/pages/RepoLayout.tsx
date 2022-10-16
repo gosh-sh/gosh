@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
     faCode,
     faCodePullRequest,
+    faCodeMerge,
     faCube,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons'
@@ -39,6 +40,12 @@ const RepoLayout = () => {
             title: 'Code',
             icon: faCode,
             public: true,
+        },
+        {
+            to: `/o/${daoName}/r/${repoName}/merge`,
+            title: 'Merge',
+            icon: faCodeMerge,
+            public: false,
         },
         {
             to: `/o/${daoName}/r/${repoName}/pull`,

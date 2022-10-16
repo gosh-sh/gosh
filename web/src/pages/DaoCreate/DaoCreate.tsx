@@ -1,12 +1,11 @@
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField, TextareaField } from '../../components/Formik'
 import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
 import { useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
-import TextareaField from '../../components/FormikForms/TextareaField'
 import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {

@@ -5,10 +5,15 @@ import { ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { getAllAccounts, retry } from '../helpers'
+import { getAllAccounts, getTreeItemFullPath, retry } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
-import { TAddress, TDao } from '../types'
-import { TCommit, TPushCallbackParams, TRepositoryListItem } from '../types/repo.types'
+import { TAddress, TDao, TSmvBalanceDetails } from '../types'
+import {
+    TBranch,
+    TCommit,
+    TPushCallbackParams,
+    TRepositoryListItem,
+} from '../types/repo.types'
 
 function useRepoList(dao: string, perPage: number) {
     const [search, setSearch] = useState<string>('')
@@ -24,8 +29,8 @@ function useRepoList(dao: string, perPage: number) {
         isFetching: true,
     })
 
-    /** Load next chunk of DAO list items */
-    const onLoadMore = () => {
+    /** Get next chunk of DAO list items */
+    const getMore = () => {
         setRepos((state) => ({ ...state, page: state.page + 1 }))
     }
 
@@ -135,8 +140,8 @@ function useRepoList(dao: string, perPage: number) {
         hasNext: repos.page * perPage < repos.filtered.items.length,
         search,
         setSearch,
-        onLoadMore,
-        onLoadItemDetails: setItemDetails,
+        getMore,
+        getItemDetails: setItemDetails,
     }
 }
 
@@ -379,7 +384,7 @@ function useCommitList(
         }))
     }
 
-    const onLoadMore = async () => {
+    const getMore = async () => {
         await _getCommitsPage(commits.prev)
     }
 
@@ -411,7 +416,7 @@ function useCommitList(
         isEmpty: !commits.list.length,
         items: commits.list,
         hasMore: !!commits.prev,
-        onLoadMore,
+        getMore,
     }
 }
 
@@ -513,7 +518,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
     }
 }
 
-function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
+function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
     const { branch: branchData, updateBranch } = useBranches(repo, branch)
     const [progress, setProgress] = useState<TPushCallbackParams>({})
 
@@ -524,11 +529,12 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
             original: string | Buffer
             modified: string | Buffer
         }[],
+        isPullRequest: boolean,
         message?: string,
         tags?: string,
+        parent?: string,
     ) => {
         if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
-        if (branchData.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
         if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
 
         if (repo.getVersion() !== branchData.commit.version) {
@@ -542,8 +548,16 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
         }
 
         message = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(branchData.name, blobs, message, tags, undefined, pushCallback)
-        await updateBranch(branchData.name)
+        await repo.push(
+            branchData.name,
+            blobs,
+            message,
+            isPullRequest,
+            tags,
+            parent,
+            pushCallback,
+        )
+        !isPullRequest && (await updateBranch(branchData.name))
     }
 
     const pushCallback = (params: TPushCallbackParams) => {
@@ -561,7 +575,207 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
         })
     }
 
+    return { branch: branchData, push, progress }
+}
+
+function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
+    const { branch: branchData, push: _push, progress } = _usePush(dao, repo, branch)
+
+    const push = async (
+        title: string,
+        blobs: {
+            treepath: string
+            original: string | Buffer
+            modified: string | Buffer
+        }[],
+        message?: string,
+        tags?: string,
+    ) => {
+        if (branchData!.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
+        await _push(title, blobs, false, message, tags)
+    }
+
     return { push, progress }
+}
+
+function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
+    const [srcBranch, setSrcBranch] = useState<TBranch>()
+    const [dstBranch, setDstBranch] = useState<TBranch>()
+    const [progress, setProgress] = useState<{
+        isFetching: boolean
+        items: {
+            treepath: string
+            original: string | Buffer
+            modified: string | Buffer
+            showDiff: boolean
+        }[]
+    }>({ isFetching: false, items: [] })
+
+    const getDiff = (i: number) =>
+        setProgress((state) => ({
+            ...state,
+            items: state.items.map((item, index) => {
+                if (i === index) return { ...item, showDiff: true }
+                return item
+            }),
+        }))
+
+    const build = async (src: string, dst: string) => {
+        setProgress({ isFetching: true, items: [] })
+
+        // Get branches details
+        const [srcBranch, dstBranch] = await Promise.all([
+            (async () => await repo.getBranch(src))(),
+            (async () => await repo.getBranch(dst))(),
+        ])
+        if (srcBranch.commit.name === dstBranch.commit.name) {
+            setProgress({ isFetching: false, items: [] })
+            return
+        }
+
+        // Get tree items for each branch
+        const [srcTreeItems, dstTreeItems] = await Promise.all([
+            (async () => (await repo.getTree(srcBranch.commit.name)).items)(),
+            (async () => (await repo.getTree(dstBranch.commit.name)).items)(),
+        ])
+
+        // Compare trees and get added/updated treepath
+        const treeDiff: { treepath: string; exists: boolean }[] = []
+        srcTreeItems
+            .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
+            .map(async (srcItem) => {
+                const treepath = getTreeItemFullPath(srcItem)
+                const dstItem = dstTreeItems
+                    .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
+                    .find((dstItem) => {
+                        const srcPath = getTreeItemFullPath(srcItem)
+                        const dstPath = getTreeItemFullPath(dstItem)
+                        return srcPath === dstPath
+                    })
+
+                if (dstItem && srcItem.sha1 === dstItem.sha1) return
+                treeDiff.push({ treepath, exists: !!dstItem })
+            })
+
+        // Read blobs content from built tree diff
+        const blobDiff = await Promise.all(
+            treeDiff.map(async ({ treepath, exists }, index) => {
+                const srcBlob = await repo.getBlob({
+                    fullpath: `${srcBranch.name}/${treepath}`,
+                })
+                const dstBlob = exists
+                    ? await repo.getBlob({
+                          fullpath: `${dstBranch.name}/${treepath}`,
+                      })
+                    : ''
+
+                return {
+                    treepath,
+                    original: dstBlob,
+                    modified: srcBlob,
+                    showDiff: index < showDiffNum,
+                }
+            }),
+        )
+
+        setSrcBranch(srcBranch)
+        setDstBranch(dstBranch)
+        setProgress({ isFetching: false, items: blobDiff })
+    }
+
+    return {
+        srcBranch,
+        dstBranch,
+        build,
+        progress: {
+            isFetching: progress.isFetching,
+            isEmpty: !progress.isFetching && !progress.items.length,
+            items: progress.items,
+            getDiff,
+        },
+    }
+}
+
+function useMergeRequest(
+    dao: TDao,
+    repo: IGoshRepositoryAdapter,
+    showDiffNum: number = 5,
+) {
+    const { updateBranches } = useBranches(repo)
+    const {
+        srcBranch,
+        dstBranch,
+        build,
+        progress: buildProgress,
+    } = _useMergeRequest(repo, showDiffNum)
+    const { push: _push, progress: pushProgress } = _usePush(dao, repo, dstBranch?.name)
+
+    const push = async (
+        title: string,
+        message?: string,
+        tags?: string,
+        deleteSrcBranch?: boolean,
+    ) => {
+        if (dstBranch!.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
+
+        await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
+        if (deleteSrcBranch) {
+            await retry(() => repo.deleteBranch(srcBranch!.name), 3)
+            await updateBranches()
+        }
+    }
+
+    return {
+        srcBranch,
+        dstBranch,
+        build,
+        buildProgress,
+        push,
+        pushProgress,
+    }
+}
+
+function usePullRequest(
+    dao: TDao,
+    repo: IGoshRepositoryAdapter,
+    showDiffNum: number = 5,
+) {
+    const { updateBranches } = useBranches(repo)
+    const {
+        srcBranch,
+        dstBranch,
+        build,
+        progress: buildProgress,
+    } = _useMergeRequest(repo, showDiffNum)
+    const { push: _push, progress } = _usePush(dao, repo, dstBranch?.name)
+
+    const push = async (
+        title: string,
+        smv: TSmvBalanceDetails,
+        message?: string,
+        tags?: string,
+        deleteSrcBranch?: boolean,
+    ) => {
+        if (smv.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        if (smv.smvBalance < 20) {
+            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+        }
+
+        await _push(title, buildProgress.items, true, message, tags, srcBranch!.name)
+        if (deleteSrcBranch) {
+            await retry(() => repo.deleteBranch(srcBranch!.name), 3)
+            await updateBranches()
+        }
+    }
+
+    return {
+        srcBranch,
+        dstBranch,
+        build,
+        buildProgress,
+        push,
+        pushProgress: progress,
+    }
 }
 
 export {
@@ -575,4 +789,6 @@ export {
     useCommitList,
     useCommit,
     usePush,
+    useMergeRequest,
+    usePullRequest,
 }

@@ -30,4 +30,4 @@ const TextareaField = (props: ITextAreaFieldProps) => {
     )
 }
 
-export default TextareaField
+export { TextareaField }

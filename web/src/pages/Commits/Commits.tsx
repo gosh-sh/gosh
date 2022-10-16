@@ -11,7 +11,7 @@ const CommitsPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch } = useBranches(repo, branchName)
-    const { isFetching, isEmpty, items, hasMore, onLoadMore } = useCommitList(
+    const { isFetching, isEmpty, items, hasMore, getMore } = useCommitList(
         daoName!,
         repo,
         branchName,
@@ -110,7 +110,7 @@ const CommitsPage = () => {
                         className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                         type="button"
                         disabled={isFetching}
-                        onClick={onLoadMore}
+                        onClick={getMore}
                     >
                         {isFetching && <Spinner className="mr-2" />}
                         Load more

@@ -21,7 +21,7 @@ const SwitchField = (props: IBaseFieldProps) => {
                 <div className={classNames('flex items-center', className)}>
                     <Switch
                         checked={form.values[field.name]}
-                        onChange={(value) => {
+                        onChange={(value: boolean) => {
                             form.setFieldTouched(field.name, true)
                             form.setFieldValue(field.name, value, true)
                         }}
@@ -52,4 +52,4 @@ const SwitchField = (props: IBaseFieldProps) => {
     )
 }
 
-export default SwitchField
+export { SwitchField }

@@ -2,24 +2,18 @@ import { Field } from 'formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { SwitchField } from '../../components/Formik'
-import { useSmvBalance } from '../../hooks/gosh.hooks'
-import { usePullRequest } from 'react-gosh'
+import { useMergeRequest } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { BranchCompareForm, BranchComparePreview } from '../../components/BranchCompare'
 import BranchCommitForm from '../../components/Commit/BranchCommitForm'
 
-const PullCreatePage = () => {
+const MergeCreatePage = () => {
     const navigate = useNavigate()
     const { daoName, repoName } = useParams()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { srcBranch, dstBranch, build, buildProgress, push, pushProgress } =
-        usePullRequest(dao.details, repo)
-
-    const { details: smvDetails } = useSmvBalance(
-        dao.adapter,
-        dao.details.isAuthenticated,
-    )
+        useMergeRequest(dao.details, repo)
 
     const { isFetching, isEmpty } = buildProgress
 
@@ -36,8 +30,10 @@ const PullCreatePage = () => {
     const onPush = async (values: any) => {
         try {
             const { title, message, tags, deleteBranch } = values
-            await push(title, smvDetails, message, tags, deleteBranch)
-            navigate(`/o/${daoName}/events`, { replace: true })
+            await push(title, message, tags, deleteBranch)
+            navigate(`/o/${daoName}/r/${repoName}/tree/${dstBranch?.name}`, {
+                replace: true,
+            })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -83,4 +79,4 @@ const PullCreatePage = () => {
     )
 }
 
-export default PullCreatePage
+export default MergeCreatePage

@@ -25,8 +25,8 @@ const EventsPage = () => {
         page: 1,
     })
 
-    /** Load next chunk of events list items */
-    const onLoadMore = () => {
+    /** Get next chunk of events list items */
+    const getMore = () => {
         setEvents((state) => ({ ...state, page: state.page + 1 }))
     }
 
@@ -155,7 +155,7 @@ const EventsPage = () => {
                             className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                             type="button"
                             disabled={events.isFetching}
-                            onClick={onLoadMore}
+                            onClick={getMore}
                         >
                             {events.isFetching && <Spinner className="mr-2" />}
                             Load more

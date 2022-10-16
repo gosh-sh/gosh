@@ -9,7 +9,7 @@ import ToastError from '../../components/Error/ToastError'
 
 const DaoMembersPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items, isFetching, search, setSearch, onLoadItemDetails } = useDaoMemberList(
+    const { items, isFetching, search, setSearch, getItemDetails } = useDaoMemberList(
         dao.adapter,
         0,
     )
@@ -49,7 +49,7 @@ const DaoMembersPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {items.map((item, index) => {
-                        onLoadItemDetails(item)
+                        getItemDetails(item)
                         return (
                             <DaoMemberListItem
                                 key={index}

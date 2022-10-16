@@ -829,6 +829,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             modified: string | Buffer
         }[],
         message: string,
+        isPullRequest: boolean,
         tags?: string,
         branchParent?: string,
         callback?: IPushCallback,
@@ -992,7 +993,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         ])
 
         // Set commit or start PR proposal
-        if (!branchTo.isProtected) {
+        if (!isPullRequest) {
             await retry(async () => {
                 await this._setCommit(branch, commitHash, blobsMeta.length)
             }, 3)

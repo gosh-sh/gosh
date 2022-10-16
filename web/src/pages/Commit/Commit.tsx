@@ -7,7 +7,7 @@ import CommitBlobs from './CommitBlobs'
 
 const CommitPage = () => {
     const { daoName, repoName, branchName, commitName } = useParams()
-    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 0)
+    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 5)
 
     const renderCommitter = (committer: string) => {
         const [username, email] = committer.split(' ')

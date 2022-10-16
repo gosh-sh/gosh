@@ -7,7 +7,7 @@ import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
 import { userAtom, useBranches } from 'react-gosh'
-import TextField from '../../../components/FormikForms/TextField'
+import { TextField } from '../../../components/Formik'
 
 type TBuildFormValues = {
     tag: string

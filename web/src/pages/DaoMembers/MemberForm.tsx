@@ -2,7 +2,7 @@ import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { useDaoMemberCreate } from 'react-gosh'
-import TextareaField from '../../components/FormikForms/TextareaField'
+import { TextareaField } from '../../components/Formik'
 import ToastError from '../../components/Error/ToastError'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 

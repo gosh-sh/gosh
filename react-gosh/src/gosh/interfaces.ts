@@ -128,6 +128,7 @@ interface IGoshRepositoryAdapter {
             modified: string | Buffer
         }[],
         message: string,
+        isPullRequest: boolean,
         tags?: string,
         branchParent?: string,
         callback?: IPushCallback,
