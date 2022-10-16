@@ -8,6 +8,7 @@ use crate::{
     ipfs::IpfsService,
 };
 use git_hash;
+use ton_client::utils::compress_zstd;
 
 use snapshot::Snapshot;
 
@@ -222,7 +223,7 @@ pub async fn inner_push_diff(
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
 ) -> Result<()> {
-    let diff = ton_client::utils::compress_zstd(diff, None)?;
+    let diff = compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
@@ -230,6 +231,7 @@ pub async fn inner_push_diff(
         let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
             // Ensure contract can accept this patch
+            let original_snapshot_content = compress_zstd(original_snapshot_content, None)?;
             let data = serde_json::json!({
                 "state": hex::encode(original_snapshot_content),
                 "diff": hex::encode(&diff)
