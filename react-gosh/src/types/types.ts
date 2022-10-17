@@ -31,7 +31,7 @@ export type TGoshDiff = {
     sha256: string
 }
 
-export enum EGoshBlobFlag {
+export enum EBlobFlag {
     BINARY = 1,
     COMPRESSED = 2,
     IPFS = 4,

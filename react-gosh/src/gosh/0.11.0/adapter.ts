@@ -2,7 +2,7 @@ import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
-import { EGoshBlobFlag, TAddress, TDao, TValidationResult } from '../../types'
+import { EBlobFlag, TAddress, TDao, TValidationResult } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
     IGoshAdapter,
@@ -863,18 +863,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
                 const compressed = await zstd.compress(modified)
                 let patch = null
-                let flags = EGoshBlobFlag.COMPRESSED
+                let flags = EBlobFlag.COMPRESSED
                 if (
+                    ((treeItem?.flags || 0) & EBlobFlag.IPFS) === EBlobFlag.IPFS ||
                     Buffer.isBuffer(original) ||
                     Buffer.isBuffer(modified) ||
                     Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
                 ) {
-                    flags |= EGoshBlobFlag.IPFS
-                    if (Buffer.isBuffer(modified)) flags |= EGoshBlobFlag.BINARY
+                    flags |= EBlobFlag.IPFS
+                    if (Buffer.isBuffer(modified)) flags |= EBlobFlag.BINARY
                 } else {
                     patch = this._generateBlobDiffPatch(treepath, modified, original)
                     if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
-                        flags |= EGoshBlobFlag.IPFS
+                        flags |= EBlobFlag.IPFS
                         patch = null
                     } else {
                         patch = await zstd.compress(patch)
@@ -882,7 +883,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     }
                 }
 
-                const isIpfs = (flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS
+                const isIpfs = (flags & EBlobFlag.IPFS) === EBlobFlag.IPFS
                 const hashes = {
                     sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
                     sha256: isIpfs
