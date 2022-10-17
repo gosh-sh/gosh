@@ -19,7 +19,8 @@ const DaoCreatePage = () => {
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            await daocreate.create(values.name)
+            const { name, members } = values
+            await daocreate.create(name, members.split('\n'))
             navigate('/a/orgs')
         } catch (e: any) {
             console.error(e.message)
@@ -68,9 +69,9 @@ const DaoCreatePage = () => {
                                 />
                             </div>
 
-                            {/* <div className="mt-6">
+                            <div className="mt-6">
                                 <Field
-                                    label="Members"
+                                    label="Add members (optional)"
                                     name="members"
                                     component={TextareaField}
                                     inputProps={{
@@ -86,7 +87,7 @@ const DaoCreatePage = () => {
                                     }}
                                     help="Put each @username from new line"
                                 />
-                            </div> */}
+                            </div>
 
                             <button
                                 type="submit"
@@ -100,7 +101,7 @@ const DaoCreatePage = () => {
                     )}
                 </Formik>
 
-                {/* <DaoCreateProgress progress={daocreate.progress} className={'mt-4'} /> */}
+                <DaoCreateProgress progress={daocreate.progress} className={'mt-4'} />
             </div>
         </div>
     )

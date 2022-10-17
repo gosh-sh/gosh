@@ -92,6 +92,23 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         return { valid: true }
     }
 
+    async isValidProfile(username: string[]): Promise<TAddress[]> {
+        return await Promise.all(
+            username.map(async (member) => {
+                member = member.trim()
+                const { valid, reason } = validateUsername(member)
+                if (!valid) throw new GoshError(`${member}: ${reason}`)
+
+                const profile = await this.getProfile({ username: member })
+                if (!(await profile.isDeployed())) {
+                    throw new GoshError(`${member}: Profile does not exist`)
+                }
+
+                return profile.address
+            }),
+        )
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         this.auth = { username, keys }
     }
@@ -314,23 +331,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async createMember(username: string[]): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        // Validate usernames and get profile addressed
-        const profiles = await Promise.all(
-            username.map(async (member) => {
-                member = member.trim()
-                const { valid, reason } = validateUsername(member)
-                if (!valid) throw new GoshError(`${member}: ${reason}`)
-
-                const profile = await this.gosh.getProfile({ username: member })
-                if (!(await profile.isDeployed())) {
-                    throw new GoshError(`${member}: Profile does not exist`)
-                }
-
-                return profile.address
-            }),
-        )
-
-        // Deploy profiles wallets
+        const profiles = await this.gosh.isValidProfile(username)
         await this.wallet.run('deployWalletDao', { pubaddr: profiles })
     }
 

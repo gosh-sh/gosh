@@ -165,7 +165,7 @@ function useDaoCreate() {
         isFetching: false,
     })
 
-    const create = async (name: string) => {
+    const create = async (name: string, username: string[]) => {
         if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         // Set initial progress
@@ -178,8 +178,9 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         try {
             const gosh = GoshAdapterFactory.createLatest()
+            const profiles = await gosh.isValidProfile(username)
             await retry(async () => {
-                await profile.deployDao(gosh, name, [profile.address])
+                await profile.deployDao(gosh, name, [profile.address, ...profiles])
             }, 3)
             isDaoDeployed = true
         } catch (e) {
@@ -189,6 +190,7 @@ function useDaoCreate() {
             setProgress((state) => ({
                 ...state,
                 isDaoDeployed,
+                isFetching: false,
             }))
         }
     }

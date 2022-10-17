@@ -29,6 +29,7 @@ interface IGoshAdapter {
     gosh: IGosh
 
     isValidDaoName(name: string): TValidationResult
+    isValidProfile(username: string[]): Promise<TAddress[]>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
@@ -287,7 +288,7 @@ interface IGoshSmvProposal extends IContract {
     }
 
     load(): Promise<void>
-    getDetails(n:number, walletAddress?: string): Promise<TGoshEventDetails>
+    getDetails(n: number, walletAddress?: string): Promise<TGoshEventDetails>
     getId(): Promise<string>
     getVotes(): Promise<{ yes: number; no: number }>
     getTime(): Promise<{ start: Date; finish: Date }>
