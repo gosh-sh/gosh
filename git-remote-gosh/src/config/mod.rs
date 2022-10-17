@@ -100,16 +100,14 @@ impl Config {
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
         let network_config = self.networks.get(network);
         match network_config {
-            None => {
-                defaults::NETWORK_ENDPOINTS
-                    .get(network)
-                    .and_then(|endpoints| Some(endpoints.clone()))
-            },
+            None => defaults::NETWORK_ENDPOINTS
+                .get(network)
+                .and_then(|endpoints| Some(endpoints.clone())),
             Some(network_config) => {
                 if network_config.endpoints.len() == 0 {
                     defaults::NETWORK_ENDPOINTS
-                    .get(network)
-                    .and_then(|endpoints| Some(endpoints.clone()))
+                        .get(network)
+                        .and_then(|endpoints| Some(endpoints.clone()))
                 } else {
                     Some(network_config.endpoints.clone())
                 }
@@ -127,10 +125,10 @@ impl Config {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
-    fn load_from(s: &str) -> Config {
+    pub fn load_from(s: &str) -> Config {
         return Config::load(s.as_bytes()).unwrap();
     }
 
@@ -163,11 +161,13 @@ mod tests {
             }
         "#,
         );
-        let wallet_config = config.find_network_user_wallet("foo").expect("It must be there");
+        let wallet_config = config
+            .find_network_user_wallet("foo")
+            .expect("It must be there");
         assert_eq!(wallet_config.pubkey, "bar");
         assert_eq!(wallet_config.secret, "baz");
     }
-    
+
     #[test]
     fn ensure_wallet_config_present_does_not_drop_default_endpoints() {
         let config = load_from(
@@ -184,13 +184,12 @@ mod tests {
             }
         "#,
         );
-        assert!(
-            config.find_network_endpoints("network.gosh.sh").is_some()
-        );
+        assert!(config.find_network_endpoints("network.gosh.sh").is_some());
         assert_eq!(
             config.find_network_endpoints("network.gosh.sh"),
-            defaults::NETWORK_ENDPOINTS.get("network.gosh.sh")
-                .map(|e|e.clone())
+            defaults::NETWORK_ENDPOINTS
+                .get("network.gosh.sh")
+                .map(|e| e.clone())
         );
     }
 

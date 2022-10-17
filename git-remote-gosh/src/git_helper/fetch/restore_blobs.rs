@@ -1,7 +1,7 @@
 use super::GitHelper;
-use crate::blockchain;
-use crate::blockchain::BlockchainContractAddress;
 use crate::blockchain::snapshot::diffs::DiffMessage;
+use crate::blockchain::BlockchainContractAddress;
+use crate::blockchain::{self, BlockchainService};
 use crate::git_helper::{GoshContract, TonClient};
 use crate::ipfs::{IpfsLoad, IpfsService};
 use futures::stream::FuturesUnordered;
@@ -114,7 +114,11 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         blobs.remove(&blob_id);
     }
 
-    log::info!("Expecting to restore blobs: {:?} from {}", blobs, snapshot_address);
+    log::info!(
+        "Expecting to restore blobs: {:?} from {}",
+        blobs,
+        snapshot_address
+    );
 
     // TODO: convert to async iterator
     // This should download next messages seemless
@@ -158,14 +162,15 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                     blockchain::Snapshot::load(es_client, snapshot_address).await?;
                 next_content.clone()
             } else {
-                let patched_blob_sha =
-                    &message.diff.modified_blob_sha1.as_ref().expect(
-                        "Option on this should be reverted. It must always be there",
-                    );
+                let patched_blob_sha = &message
+                    .diff
+                    .modified_blob_sha1
+                    .as_ref()
+                    .expect("Option on this should be reverted. It must always be there");
                 let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                let content = last_restored_snapshots.get(&patched_blob_sha).expect(
-                    "It is a sequence of changes. Sha must be correct. Fail otherwise",
-                );
+                let content = last_restored_snapshots
+                    .get(&patched_blob_sha)
+                    .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
                 content.to_vec()
             };
 
@@ -173,7 +178,8 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .diff
                 .with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
                     Some(patch) => {
-                        let blob_data = diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
+                        let blob_data =
+                            diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
                         Ok(blob_data)
                     }
                     None => panic!("Broken diff detected: neither ipfs nor patch exists"),
@@ -295,7 +301,7 @@ impl BlobsRebuildingPlan {
 
     pub async fn restore<'a, 'b>(
         &'b mut self,
-        git_helper: &mut GitHelper,
+        git_helper: &mut GitHelper<impl BlockchainService>,
     ) -> Result<(), Box<dyn Error>> {
         // Idea behind
         // --

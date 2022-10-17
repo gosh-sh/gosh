@@ -1,6 +1,8 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
-use crate::blockchain::{tvm_hash, BlockchainContractAddress, GoshContract, TonClient};
+use crate::blockchain::{
+    tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
+};
 use crate::ipfs::IpfsSave;
 use crate::{
     blockchain::{call, snapshot, user_wallet},
@@ -113,7 +115,7 @@ pub async fn is_diff_deployed(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn diff_address(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
 ) -> Result<BlockchainContractAddress> {
@@ -140,7 +142,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
 
 #[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -241,7 +243,11 @@ pub async fn inner_push_diff(
                 .await;
 
             if apply_patch_result.is_ok() {
-                if apply_patch_result.unwrap().hex_encoded_compressed_content.is_none() {
+                if apply_patch_result
+                    .unwrap()
+                    .hex_encoded_compressed_content
+                    .is_none()
+                {
                     is_going_to_ipfs = true;
                 }
             } else {
@@ -309,7 +315,7 @@ pub async fn inner_push_diff(
 
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
@@ -358,7 +364,7 @@ pub async fn push_new_branch_snapshot(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     branch_name: &str,
     file_path: &str,
 ) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {

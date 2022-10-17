@@ -2,7 +2,7 @@ use crate::git_helper::GitHelper;
 
 use ::git_object;
 
-use crate::blockchain::{self, tvm_hash, GoshBlobBitFlags};
+use crate::blockchain::{self, tvm_hash, BlockchainService, GoshBlobBitFlags};
 use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
@@ -61,7 +61,7 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     e: &EntryRef<'_>,
 ) -> Result<(String, TreeNode), Box<dyn Error>> {
     let mut buffer = vec![];
@@ -111,7 +111,7 @@ async fn construct_tree_node(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_tree(
-    context: &mut GitHelper,
+    context: &mut GitHelper<impl BlockchainService>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
 ) -> Result<(), Box<dyn Error>> {
