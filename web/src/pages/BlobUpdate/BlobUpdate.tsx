@@ -64,12 +64,13 @@ const BlobUpdatePage = () => {
                     dao={daoName!}
                     repo={repoName!}
                     branch={branchName}
-                    treepath={splitByPath(treepath!)[0]}
+                    treepath={treepath!}
                     initialValues={{
                         name: splitByPath(blob.path)[1],
                         content: blob.content ? blob.content.toString() : '',
                         title: '',
                     }}
+                    isUpdate
                     urlBack={urlBack}
                     progress={pushProgress}
                     onSubmit={onPush}

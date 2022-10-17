@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import { Tab } from '@headlessui/react'
-import { classNames, getCodeLanguageFromFilename } from 'react-gosh'
+import { classNames, getCodeLanguageFromFilename, splitByPath } from 'react-gosh'
 import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
 import CommitFields from './CommitFileds'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
@@ -30,6 +30,7 @@ type TBlobCommitFormProps = {
     treepath: string
     initialValues: TBlobCommitFormValues
     validationSchema?: object
+    isUpdate?: boolean
     isDisabled?: boolean
     extraButtons?: any
     urlBack?: string
@@ -46,6 +47,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
         treepath,
         initialValues,
         validationSchema,
+        isUpdate,
         isDisabled,
         extraButtons,
         urlBack,
@@ -57,6 +59,27 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState<number>(0)
     const [codeLanguage, setCodeLanguage] = useState<string>('plaintext')
+
+    const onFilenameBlur = (
+        e: any,
+        values: TBlobCommitFormValues,
+        handleBlur: any,
+        setFieldValue: any,
+    ) => {
+        if (isUpdate) return
+
+        // Formik `handleBlur` event
+        handleBlur(e)
+
+        // Resolve file code language by it's extension and update editor
+        const language = getCodeLanguageFromFilename(monaco, e.target.value)
+        setCodeLanguage(language)
+
+        // Set commit title
+        if (!isUpdate && !values.title) {
+            setFieldValue('title', `Create ${e.target.value}`)
+        }
+    }
 
     useEffect(() => {
         if (monaco && treepath) {
@@ -84,7 +107,9 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                     daoName={dao}
                                     repoName={repo}
                                     branchName={branch}
-                                    pathName={treepath}
+                                    pathName={
+                                        !isUpdate ? treepath : splitByPath(treepath)[0]
+                                    }
                                     isBlob={false}
                                 />
                                 <div>
@@ -97,30 +122,18 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                             autoComplete: 'off',
                                             placeholder: 'Name of new file',
                                             disabled:
+                                                isUpdate ||
                                                 isSubmitting ||
                                                 isDisabled ||
                                                 !monaco ||
                                                 activeTab === 1,
                                             onBlur: (e: any) => {
-                                                // Formik `handleBlur` event
-                                                handleBlur(e)
-
-                                                // Resolve file code language by it's extension
-                                                // and update editor
-                                                const language =
-                                                    getCodeLanguageFromFilename(
-                                                        monaco,
-                                                        e.target.value,
-                                                    )
-                                                setCodeLanguage(language)
-
-                                                // Set commit title
-                                                if (!values.title) {
-                                                    setFieldValue(
-                                                        'title',
-                                                        `Create ${e.target.value}`,
-                                                    )
-                                                }
+                                                onFilenameBlur(
+                                                    e,
+                                                    values,
+                                                    handleBlur,
+                                                    setFieldValue,
+                                                )
                                             },
                                         }}
                                     />
