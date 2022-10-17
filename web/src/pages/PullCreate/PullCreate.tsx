@@ -64,17 +64,6 @@ const PullCreatePage = () => {
                     initialValues={{
                         title: `Merge branch '${srcBranch?.name}' into '${dstBranch?.name}'`,
                     }}
-                    extraButtons={
-                        !srcBranch?.isProtected && (
-                            <Field
-                                name="deleteBranch"
-                                component={SwitchField}
-                                className="ml-4"
-                                label="Delete branch after merge"
-                                labelClassName="text-sm text-gray-505050"
-                            />
-                        )
-                    }
                     progress={pushProgress}
                     onSubmit={onPush}
                 />
