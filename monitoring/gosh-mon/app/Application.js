@@ -23,9 +23,9 @@ class Application {
     setDebug(debug) {
         this.debug = debug;
     }
-    async inquiry(debug) {
+    async inquiry(debug = false, cli = false) {
         const handler = this.handlerFactory().setApplication(this).setDebug(this.debug || debug);
-        const result = debug ? await handler.handle(true) : await handler.cachingHandle();
+        const result = (debug || cli) ? await handler.handle(debug) : await handler.cachingHandle();
         if (result.has('result'))
             this.lastResult = result.get('result');
         return this.promformatter.process(result, debug, this.debug || debug);

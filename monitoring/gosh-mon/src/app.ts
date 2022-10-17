@@ -4,6 +4,7 @@ import fs from "fs";
 import * as yaml from "js-yaml";
 import ScriptHandler from "./Handlers/ScriptHandler";
 import {clone} from "./Utils";
+import Redlock from "redlock";
 
 let conf: any = {};
 try {
@@ -19,6 +20,14 @@ try {
 ScriptHandler.Config = clone(conf);
 
 const mode = process.env['GM_MODE'] ?? process.argv[2];
+
+// @ts-ignore original lock entry contents value generator
+const redlock_orig_random = Redlock.prototype._random;
+
+// @ts-ignore append mode to tail to see in redis ui who locked what
+Redlock.prototype._random = function(): string {
+    return redlock_orig_random() + '_' + mode;
+}
 
 if (!mode) {
     console.error('Specify correct application mode via parameter or E2E_MODE env');
@@ -50,7 +59,7 @@ if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
         app.setDebug(true);
     console.log("Executing immediate inquiry");
     console.log("Handler: " + app.handlerFactory(true).describe());
-    app.inquiry(level >= 2)
+    app.inquiry(level >= 2, true)
         .then(res => {
             console.log("Result:\n" + res);
             process.exit(app.lastResult == 100 ? 0 : app.lastResult + 100);

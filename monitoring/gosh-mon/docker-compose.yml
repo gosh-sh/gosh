@@ -2,6 +2,15 @@ version: '2.2'
 
 services:
 
+  gosh-mon-redis:
+    image: redis:7.0.5
+    container_name: gosh-mon-redis
+    restart: "unless-stopped"
+    expose: ["6379"]
+    ports: ["127.0.0.1:6379:6379"]
+    networks:
+      gosh-monitoring: { }
+
 # app.gosh.sh
   gosh-mon-app-sm-rd: &service
     build:
