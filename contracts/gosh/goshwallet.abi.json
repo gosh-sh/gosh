@@ -752,9 +752,9 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_goshroot","type":"address"},
-		{"key":2,"name":"_goshdao","type":"address"},
-		{"key":3,"name":"_index","type":"uint128"}
+		{"key":1,"name":"_goshdao","type":"address"},
+		{"key":2,"name":"_index","type":"uint128"},
+		{"key":3,"name":"_goshroot","type":"address"}
 	],
 	"events": [
 	],
@@ -769,6 +769,9 @@
 		{"name":"m_tokenWallet","type":"address"},
 		{"name":"m_tokenBalance","type":"uint128"},
 		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_index","type":"uint128"},
 		{"name":"nonce","type":"uint256"},
 		{"name":"lockerTip3Wallet","type":"address"},
 		{"name":"initialized","type":"bool"},
@@ -789,9 +792,6 @@
 		{"name":"_access","type":"optional(uint256)"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
-		{"name":"_pubaddr","type":"address"},
-		{"name":"_goshdao","type":"address"},
-		{"name":"_index","type":"uint128"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},

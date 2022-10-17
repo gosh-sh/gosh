@@ -8,6 +8,7 @@ import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { GoshSmvProposal } from 'react-gosh/dist/gosh/0.11.0/goshsmvproposal'
+import { IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
 
 const EventsPage = () => {
     const pageSize = 10
@@ -31,7 +32,7 @@ const EventsPage = () => {
     }
 
     /** Load event details and update corresponging list item */
-    const setEventDetails = async (address: string) => {
+    const setEventDetails = async (address: string, walletAddress?: string) => {
         console.debug('Set event for', address)
         setEvents((state) => ({
             ...state,
@@ -42,7 +43,7 @@ const EventsPage = () => {
         }))
 
         const event = new GoshSmvProposal(AppConfig.goshclient, address)
-        const details = await event.getDetails()
+        const details = await event.getDetails(2, walletAddress)
 
         setEvents((state) => ({
             ...state,
@@ -138,7 +139,7 @@ const EventsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {events.items.slice(0, events.page * pageSize).map((event, index) => {
-                        if (!event.isBusy) setEventDetails(event.address)
+                        if (!event.isBusy) setEventDetails(event.address, smvBalance.wallet?.address)
                         return (
                             <EventListItem
                                 key={index}

@@ -138,4 +138,5 @@ everdev contract run $GOSH_ABI setProfileDao --input "{\"code\": \"$PROFILEDAO_C
 echo "========== Run Gosh setFlag (false)"
 everdev contract run $GOSH_ABI setFlag --input "{\"flag\":\"false\"}" --address $GOSH_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
-#echo "REACT_APP_GOSH_ROOTADDR = " $GOSHROOT_ADDR >> ../web/.env.development
+echo "REACT_APP_GOSH_ROOTADDR = " $GOSHROOT_ADDR >> ../web/.env.development
+echo "REACT_APP_GOSH = {\"$GOSH_VERSION\":  \"$GOSH_ADDR\" }" >> ../web/.env.development
