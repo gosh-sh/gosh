@@ -178,7 +178,10 @@ function useDaoCreate() {
         let isDaoDeployed: boolean
         try {
             const gosh = GoshAdapterFactory.createLatest()
+
+            username = username.filter((item) => !!item)
             const profiles = await gosh.isValidProfile(username)
+
             await retry(async () => {
                 await profile.deployDao(gosh, name, [profile.address, ...profiles])
             }, 3)
@@ -353,6 +356,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
 function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     const create = async (username: string[]) => {
+        username = username.filter((item) => !!item)
         await retry(async () => await dao.createMember(username), 3)
     }
     return create
