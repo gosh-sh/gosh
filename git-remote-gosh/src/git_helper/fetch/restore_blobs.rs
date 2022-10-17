@@ -94,7 +94,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
     )
     .await?;
-    log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
+    // log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
