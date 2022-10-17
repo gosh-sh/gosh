@@ -38,6 +38,7 @@ const EventPage = () => {
     }>({
         isFetching: true,
     })
+    const [walletAddr, setWalletAddr] = useState<string>()
 
     /** Send check trigger to event */
     const onProposalCheck = async () => {
@@ -82,8 +83,12 @@ const EventPage = () => {
     }
 
     useEffect(() => {
+        if (!walletAddr && wallet?.address) setWalletAddr(wallet.address)
+    }, [wallet?.address])
+
+    useEffect(() => {
         const getEvent = async () => {
-            if (!eventAddr) return
+            if (!eventAddr || !walletAddr) return
 
             const event = new GoshSmvProposal(AppConfig.goshclient, eventAddr)
             const details = await event.getDetails(1, wallet?.address)
@@ -101,7 +106,7 @@ const EventPage = () => {
         return () => {
             clearInterval(interval)
         }
-    }, [eventAddr, wallet])
+    }, [eventAddr, walletAddr])
 
     return (
         <div className="bordered-block px-7 py-8">
