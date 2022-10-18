@@ -65,7 +65,7 @@ abstract contract ReplayProtection is Errors {
         // Check whether the message is not expired and then save (messageHash, expireAt) in the state variable
         uint messageHash = tvm.hash(message);
         optional(mapping(uint256 => bool)) m = messages.fetch(expireAt);
-        require(!m.hasValue() || !m.get()[expireAt], 103);
+        require(!m.hasValue() || !m.get()[messageHash], 103);
         lastMessage = MessageInfo({messageHash: messageHash, expireAt: expireAt});
 
         // After reading message headers this function must return the rest of the body slice.
