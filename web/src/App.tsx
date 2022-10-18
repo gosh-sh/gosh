@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import ReactTooltip from 'react-tooltip'
-import { goshClient } from 'react-gosh'
+import { AppConfig, useNotificationMessages } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -17,12 +17,14 @@ import SigninPage from './pages/Signin'
 import DaosPage from './pages/Daos'
 import DaoPage from './pages/Dao'
 import DaoCreatePage from './pages/DaoCreate'
+import DaoUpgradePage from './pages/DaoUpgrade'
 import DaoWalletPage from './pages/DaoWallet'
 import DaoMembersPage from './pages/DaoMembers'
 import DaoReposPage from './pages/DaoRepos'
 import RepoCreatePage from './pages/RepoCreate'
 import ReposPage from './pages/Repos'
 import RepoPage from './pages/Repo'
+import RepoUpgradePage from './pages/RepoUpgrade'
 import BranchesPage from './pages/Branches'
 import BlobCreatePage from './pages/BlobCreate'
 import BlobUpdatePage from './pages/BlobUpdate'
@@ -30,6 +32,7 @@ import BlobPage from './pages/Blob'
 import CommitsPage from './pages/Commits'
 import CommitPage from './pages/Commit'
 import PullCreatePage from './pages/PullCreate'
+import MergeCreatePage from './pages/MergeCreate'
 import GotoPage from './pages/Goto'
 import EventsPage from './pages/Events'
 import EventPage from './pages/Event'
@@ -42,44 +45,58 @@ import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
 import CopyClipboard from './components/CopyClipboard'
+import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
+    useNotificationMessages()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
-    let timer: NodeJS.Timeout | null = null
-
-    const timerRestart = () => {
-        if (timer) clearInterval(timer)
-        timer = setInterval(async () => {
-            await goshClient.net.suspend()
-            console.debug('Gosh client suspended')
-            await goshClient.net.resume()
-            console.debug('Gosh client resumed')
-        }, 1000 * 60 * 10)
-    }
-
-    const onMouseMove = () => timerRestart()
 
     useEffect(() => {
-        if (!goshClient) return
-        goshClient.client.version().then(() => {
-            setIsInitialized(true)
+        const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
+        AppConfig.setup({
+            goshclient: {
+                network: {
+                    endpoints,
+                    queries_protocol:
+                        process.env.REACT_APP_ISDOCKEREXT === 'true'
+                            ? NetworkQueriesProtocol.HTTP
+                            : NetworkQueriesProtocol.WS,
+                    sending_endpoint_count: endpoints?.length,
+                },
+            },
+            goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
+            goshver: JSON.parse(process.env.REACT_APP_GOSH || '{}'),
+            ipfs: process.env.REACT_APP_IPFS || '',
+            isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         })
+        setIsInitialized(true)
     }, [])
 
     useEffect(() => {
+        const _restartTimer = () => {
+            if (timer) clearInterval(timer)
+            timer = setInterval(async () => {
+                await AppConfig.goshclient.net.suspend()
+                console.debug('Gosh client suspended')
+                await AppConfig.goshclient.net.resume()
+                console.debug('Gosh client resumed')
+            }, 1000 * 60 * 10)
+        }
+
         // Initialize gosh client suspend/resume timer
-        timerRestart()
+        let timer: NodeJS.Timeout | null = null
+        _restartTimer()
 
         // Listen for mouse events
-        window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('mousemove', _restartTimer)
 
         return () => {
             if (timer) {
                 clearTimeout(timer)
-                window.removeEventListener('mousemove', onMouseMove)
+                window.removeEventListener('mousemove', _restartTimer)
             }
         }
-    }, [onMouseMove, timer, timerRestart])
+    }, [])
 
     if (!isInitialized)
         return (
@@ -127,6 +144,7 @@ const App = () => {
                                 />
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route path="members" element={<DaoMembersPage />} />
+                                <Route path="upgrade" element={<DaoUpgradePage />} />
                             </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>
@@ -152,8 +170,10 @@ const App = () => {
                                 />
                             </Route>
                             <Route path="pull" element={<PullCreatePage />} />
+                            <Route path="merge" element={<MergeCreatePage />} />
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
+                            <Route path="upgrade" element={<RepoUpgradePage />} />
                         </Route>
                     </Route>
                     <Route path="*" element={<p className="text-lg">No match (404)</p>} />
@@ -164,26 +184,16 @@ const App = () => {
                     {process.env.REACT_APP_GOSH_NETWORK?.split(',')[0]}
                     <CopyClipboard
                         label={
-                            <span data-tip={process.env.REACT_APP_GOSH_ADDR}>
-                                {shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}
-                            </span>
-                        }
-                        componentProps={{
-                            text: process.env.REACT_APP_GOSH_ADDR ?? '',
-                        }}
-                    />
-                    <CopyClipboard
-                        label={
-                            <span data-tip={process.env.REACT_APP_CREATOR_ADDR}>
+                            <span data-tip={process.env.REACT_APP_GOSH_ROOTADDR}>
                                 {shortString(
-                                    process.env.REACT_APP_CREATOR_ADDR ?? '',
+                                    process.env.REACT_APP_GOSH_ROOTADDR ?? '',
                                     6,
                                     4,
                                 )}
                             </span>
                         }
                         componentProps={{
-                            text: process.env.REACT_APP_CREATOR_ADDR ?? '',
+                            text: process.env.REACT_APP_GOSH_ROOTADDR ?? '',
                         }}
                     />
                 </div>

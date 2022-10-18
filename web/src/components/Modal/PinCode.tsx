@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@headlessui/react'
-import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
+import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import {
     chacha20,
     generateRandomBytes,
-    goshClient,
-    userStateAtom,
-    userStatePersistAtom,
-    TUserStatePersist,
+    AppConfig,
+    TUserPersist,
+    useUser,
 } from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
@@ -23,15 +22,12 @@ type TPinCodeModalProps = {
 
 const PinCodeModal = (props: TPinCodeModalProps) => {
     const { phrase, unlock, onUnlock } = props
+    const user = useUser()
 
-    const [userStatePersist, setUserStatePersist] = useRecoilState(userStatePersistAtom)
-    const setUserState = useSetRecoilState(userStateAtom)
     const setModal = useSetRecoilState(appModalStateAtom)
-    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom)
-    const resetUserState = useResetRecoilState(userStateAtom)
     const resetModal = useResetRecoilState(appModalStateAtom)
     const [pin, setPin] = useState<string>('')
-    const [tmp, setTmp] = useState<TUserStatePersist>({ ...userStatePersist })
+    const [tmp, setTmp] = useState<TUserPersist>({ ...user.persist })
 
     const onPinSubmit = useCallback(
         async (pin: string) => {
@@ -39,14 +35,14 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             const pinKey = Number(pin).toString(16)
 
             if (phrase) {
-                const nonce = await generateRandomBytes(goshClient, 12, true)
+                const nonce = await generateRandomBytes(AppConfig.goshclient, 12, true)
                 const encrypted = await chacha20.encrypt(
-                    goshClient,
+                    AppConfig.goshclient,
                     Buffer.from(phrase).toString('base64'),
                     pinKey,
                     nonce,
                 )
-                setTmp({ nonce, phrase: encrypted, pin: pinHash })
+                setTmp((state) => ({ ...state, nonce, phrase: encrypted, pin: pinHash }))
                 setPin('')
             }
 
@@ -54,29 +50,34 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 if (pinHash !== tmp.pin) {
                     toast.error('Wrong PIN', { autoClose: 1500 })
                     setPin('')
-                    if (!unlock)
-                        setTmp({ phrase: undefined, nonce: undefined, pin: undefined })
+                    if (!unlock) {
+                        setTmp((state) => ({
+                            ...state,
+                            phrase: undefined,
+                            nonce: undefined,
+                            pin: undefined,
+                        }))
+                    }
                     return
                 }
 
                 let decrypted = await chacha20.decrypt(
-                    goshClient,
+                    AppConfig.goshclient,
                     tmp.phrase,
                     pinKey,
                     tmp.nonce,
                 )
                 decrypted = Buffer.from(decrypted, 'base64').toString()
-                const keys = await goshClient.crypto.mnemonic_derive_sign_keys({
+                const keys = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                     phrase: decrypted,
                 })
 
-                setUserStatePersist(tmp)
-                setUserState({ ...tmp, phrase: decrypted, keys })
+                user.setup(tmp, { phrase: decrypted, keys })
                 setModal({ isOpen: false, element: null })
                 onUnlock && onUnlock()
             }
         },
-        [phrase, unlock, tmp, onUnlock, setModal, setUserState, setUserStatePersist],
+        [phrase, unlock, tmp, onUnlock, setModal],
     )
 
     useEffect(() => {
@@ -109,8 +110,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     type="button"
                     className="btn btn--body w-full py-2 mt-4 leading-normal"
                     onClick={() => {
-                        resetUserState()
-                        resetUserStatePersist()
+                        user.signout()
                         resetModal()
                     }}
                 >

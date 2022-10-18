@@ -1,13 +1,12 @@
 {
 	"ABI version": 2,
-	"version": "2.2",
+	"version": "2.3",
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubkeysender","type":"uint256"},
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"rootgosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootrepo","type":"address"},
@@ -37,6 +36,13 @@
 			]
 		},
 		{
+			"name": "isReady",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
@@ -51,7 +57,8 @@
 			"name": "cancelDiff",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -60,7 +67,8 @@
 			"name": "approve",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -68,7 +76,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
-				{"name":"value","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -120,6 +128,22 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [
@@ -131,14 +155,16 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"version","type":"string"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_baseCommit","type":"string"},
 		{"name":"_basemaybe","type":"string"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
-		{"name":"_rootgosh","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_oldcommits","type":"string"},
 		{"name":"_commits","type":"string"},

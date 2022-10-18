@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { eventTypes } from 'react-gosh'
-import { TGoshEventDetails } from 'react-gosh'
+import { EventTypes, TGoshEventDetails } from 'react-gosh'
 import { shortString } from 'react-gosh'
 
 type TEventListItemProps = {
@@ -23,7 +22,7 @@ const EventListItem = (props: TEventListItemProps) => {
                         to={`/o/${daoName}/events/${event.address}`}
                         className="text-lg font-semibold hover:underline"
                     >
-                        {eventTypes[event.params.proposalKind]}
+                        {EventTypes[event.params.proposalKind]}
                     </Link>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">

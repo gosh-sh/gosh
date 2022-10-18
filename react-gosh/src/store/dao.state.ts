@@ -1,8 +1,13 @@
 import { atom } from 'recoil'
-import { TDaoDetails } from '../types'
+import { TDao, TWalletDetails } from '../types'
 
-const daoAtom = atom<TDaoDetails | undefined>({
+const daoAtom = atom<TDao | undefined>({
     key: 'GoshDaoAtom',
+    default: undefined,
+})
+
+export const walletAtom = atom<TWalletDetails | undefined>({
+    key: 'GoshWalletAtom',
     default: undefined,
 })
 

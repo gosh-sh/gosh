@@ -1,43 +1,51 @@
-import { Form, Formik, Field, ErrorMessage, FormikHelpers } from 'formik'
+import { Form, Formik, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
-import TextareaField from '../../components/FormikForms/TextareaField'
-import { useResetRecoilState, useSetRecoilState } from 'recoil'
+import { TextField, TextareaField } from '../../components/Formik'
+import { useSetRecoilState } from 'recoil'
 import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { goshClient, userStatePersistAtom } from 'react-gosh'
+import { useUser } from 'react-gosh'
+import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
+    username: string
     phrase: string
 }
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const userStatePersistReset = useResetRecoilState(userStatePersistAtom)
+    const { signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
 
-    const onFormSubmit = async (
-        values: TFormValues,
-        helpers: FormikHelpers<TFormValues>,
-    ) => {
-        const result = await goshClient.crypto.mnemonic_verify({ phrase: values.phrase })
-        if (!result.valid) {
-            helpers.setFieldError('phrase', 'Phrase is invalid')
+    const onFormSubmit = async (values: TFormValues) => {
+        try {
+            await signin({
+                ...values,
+                username: (values.username.startsWith('@')
+                    ? values.username
+                    : `@${values.username}`
+                ).trim(),
+            })
+
+            // Create PIN-code
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal
+                        phrase={values.phrase}
+                        onUnlock={() => navigate('/a/orgs', { replace: true })}
+                    />
+                ),
+            })
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
             return
         }
-
-        userStatePersistReset()
-        setModal({
-            static: true,
-            isOpen: true,
-            element: (
-                <PinCodeModal
-                    phrase={values.phrase}
-                    onUnlock={() => navigate('/a/orgs', { replace: true })}
-                />
-            ),
-        })
     }
 
     return (
@@ -50,14 +58,28 @@ const SigninPage = () => {
             </div>
 
             <Formik
-                initialValues={{ phrase: '' }}
+                initialValues={{ username: '', phrase: '' }}
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
+                    username: Yup.string()
+                        .max(64, 'Max length is 64 characters')
+                        .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),
                 })}
             >
                 {({ isSubmitting, touched, errors }) => (
                     <Form className="px-5 sm:px-124px">
+                        <div className="mb-3">
+                            <Field
+                                name="username"
+                                component={TextField}
+                                inputProps={{
+                                    autoComplete: 'off',
+                                    placeholder: 'Username',
+                                }}
+                            />
+                        </div>
+
                         <div>
                             <Field
                                 name="phrase"
@@ -66,7 +88,7 @@ const SigninPage = () => {
                                 inputProps={{
                                     className: '!px-7 !py-6',
                                     autoComplete: 'off',
-                                    placeholder: 'GOSH root seed phrase',
+                                    placeholder: 'Seed phrase',
                                 }}
                             />
                         </div>

@@ -1,12 +1,10 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames, userStateAtom, userStatePersistAtom } from 'react-gosh'
-import { useResetRecoilState } from 'recoil'
+import { classNames, useUser } from 'react-gosh'
 
 const DropdownMenu = () => {
-    const resetUserState = useResetRecoilState(userStateAtom)
-    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom)
+    const user = useUser()
     const items = [
         { to: '/a/orgs', title: 'Organizations', className: 'text-gray-050a15' },
         { to: '/a/repos', title: 'Repositories', className: 'text-gray-050a15' },
@@ -15,10 +13,7 @@ const DropdownMenu = () => {
             to: '',
             title: 'Sign out',
             className: 'text-red-dd3a3a',
-            onClick: () => {
-                resetUserState()
-                resetUserStatePersist()
-            },
+            onClick: user.signout,
         },
     ]
 
@@ -35,6 +30,7 @@ const DropdownMenu = () => {
                 leaveTo="transform opacity-0 scale-95"
             >
                 <Menu.Items className="dropdown-menu">
+                    <div>{user.user.username}</div>
                     {items.map((item, index) => (
                         <Menu.Item key={index}>
                             {({ active }) => (

@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from 'react-gosh'
+import { getCodeLanguageFromFilename, useBlob, useBranches } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -13,19 +13,18 @@ import {
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { useGoshBlob, useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 
 const BlobPage = () => {
-    const treePath = useParams()['*']
+    const treepath = useParams()['*']
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const monaco = useMonaco()
-    const { branches, branch } = useGoshRepoBranches(repo, branchName)
-    const { blob } = useGoshBlob(repo, branchName, treePath)
+    const { branches, branch } = useBranches(repo, branchName)
+    const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -36,7 +35,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treePath}`,
+                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treepath}`,
                             )
                         }
                     }}
@@ -46,7 +45,7 @@ const BlobPage = () => {
                         daoName={daoName}
                         repoName={repoName}
                         branchName={branchName}
-                        pathName={treePath}
+                        pathName={treepath}
                     />
                 </div>
                 <div className="grow text-right">
@@ -83,9 +82,9 @@ const BlobPage = () => {
                                         size: 'sm',
                                     }}
                                 />
-                                {!branch?.isProtected && wallet?.isDaoParticipant && (
+                                {!branch?.isProtected && dao.details.isAuthMember && (
                                     <Link
-                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treePath}`}
+                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treepath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />
@@ -94,7 +93,7 @@ const BlobPage = () => {
                             </>
                         ) : (
                             <FileDownload
-                                name={treePath}
+                                name={treepath}
                                 content={blob.content}
                                 label={<FontAwesomeIcon icon={faFloppyDisk} />}
                             />

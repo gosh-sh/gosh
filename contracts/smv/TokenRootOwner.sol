@@ -11,9 +11,9 @@ import "./External/tip3/TokenRoot.sol";
     @title Fungible token root's owner contract
 */
 contract TokenRootOwner is IAcceptTokensTransferCallback {
-    /* uint256 static nonce; */
-    TvmCell tokenRootCode;
-    TvmCell tokenWalletCode;
+    uint256 static nonce;
+    TvmCell m_tokenRootCode;
+    TvmCell m_tokenWalletCode;
     uint256 _rootpubkey;
 
 
@@ -26,14 +26,13 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
     mapping(address => ProjectCurrencyInfo) public projectTokens; // ProjectTokenWallet => ProjectCurrencyInfo
 
     function onAcceptTokensTransfer(
-        address tokenRoot,
-        uint128 amount,
-        address sender,
-        address senderWallet,
-        address remainingGasTo,
-        TvmCell payload
+        address /* tokenRoot */,
+        uint128 /* amount */,
+        address /* sender */,
+        address /* senderWallet */,
+        address /* remainingGasTo */,
+        TvmCell /* payload */
     ) override external {
-        tokenRoot; amount; sender; senderWallet; remainingGasTo; payload;
         revert();
     }
 
@@ -52,9 +51,10 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
         /* require(_rootpubkey != 0, 100);
         require(msg.pubkey() == _rootpubkey, 101);
         tvm.accept(); */
-
-        tokenRootCode = _tokenRootCode;
-        tokenWalletCode = _tokenWalletCode;
+        tvm.accept();
+        _rootpubkey =  tvm.pubkey();
+        m_tokenRootCode = _tokenRootCode;
+        m_tokenWalletCode = _tokenWalletCode;
     }
 
     function deployRoot(
@@ -102,9 +102,9 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
                 symbol_: "",
                 decimals_: 1,
                 rootOwner_: this,
-                walletCode_: tokenWalletCode
+                walletCode_: m_tokenWalletCode
             },
-            code: tokenRootCode
+            code: m_tokenRootCode
         }(
             initialSupplyTo,
             initialSupply,
@@ -150,11 +150,11 @@ contract TokenRootOwner is IAcceptTokensTransferCallback {
         uint128 amount,
         address recipient,
         uint128 deployWalletValue,
-        address remainingGasTo,
+        address remainingGasTo ,
         bool notify,
         TvmCell payload
     ) external view {
-        remainingGasTo;
+
         require(msg.pubkey() == _rootpubkey, 101);
         tvm.accept();
 

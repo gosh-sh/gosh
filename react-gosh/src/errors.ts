@@ -1,16 +1,31 @@
 export enum EGoshError {
-    NO_USER = 'User undefined',
+    PHRASE_INVALID = 'Seed phrase is invalid',
+
+    GOSH_UNDEFINED = 'Gosh undefined',
+
+    PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
+    PROFILE_EXISTS = 'Profile already exists',
+    PROFILE_PUBKEY_INVALID = 'Profile access denied with provided phrase/pubkey',
+    PROFILE_UNDEFINED = 'Profile undefined',
+    PROFILE_NO_SIGNER = 'Profile has no signer keys defined',
+
+    USER_KEYS_UNDEFINED = 'User keys undefined',
+    USER_NAME_UNDEFINED = 'User name undefined',
+    USER_NAME_INVALID = 'Incorrect username',
+
+    WALLET_UNDEFINED = 'Wallet undefined',
+    WALLET_NO_SIGNER = 'Wallet has no signer keys defined',
+
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
-    NO_CREATOR_ADDR = 'Gosh creator address undefined',
-    NO_ROOT = 'Gosh root undefined',
-    NO_DAO = 'Gosh DAO undefined',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',
     NO_BRANCH = 'Branch undefined',
 
+    DAO_NAME_INVALID = 'Incorrect DAO name',
     DAO_EXISTS = 'DAO already exists',
+    DAO_UNDEFINED = 'DAO undefined',
 
     PR_BRANCH = 'Branch is resticted for direct commit. Make PR instead',
     PR_NO_MERGE = 'Nothing to merge',
@@ -28,9 +43,9 @@ export enum EGoshError {
 
 export class GoshError extends Error {
     title: string
-    data?: object
+    data?: object | string
 
-    constructor(message: string, data?: object) {
+    constructor(message: string, data?: object | string) {
         super(message + (data ? ` (${JSON.stringify(data)})` : ''))
         this.name = 'GoshError'
         this.title = message

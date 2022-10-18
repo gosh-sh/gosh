@@ -1,12 +1,14 @@
 {
 	"ABI version": 2,
-	"version": "2.2",
+	"version": "2.3",
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"creator","type":"address"},
+				{"name":"rootpubaddr","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameDao","type":"string"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -19,10 +21,41 @@
 				{"name":"limit_time","type":"uint128"},
 				{"name":"limit_messages","type":"uint128"},
 				{"name":"lockerCode","type":"cell"},
+				{"name":"tokenWalletCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
 				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkey",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkeyIn",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyIn",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -34,6 +67,47 @@
 				{"name":"commit","type":"string"},
 				{"name":"label","type":"string"},
 				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstoneWallet",
+			"inputs": [
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForTombstone",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstoneDao",
+			"inputs": [
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -63,7 +137,17 @@
 		{
 			"name": "deployRepository",
 			"inputs": [
-				{"name":"nameRepo","type":"string"}
+				{"name":"nameRepo","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstone",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"description","type":"string"}
 			],
 			"outputs": [
 			]
@@ -111,7 +195,8 @@
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"tree","type":"address"}
+				{"name":"tree","type":"address"},
+				{"name":"upgrade","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -122,7 +207,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -205,22 +291,14 @@
 			]
 		},
 		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commitName","type":"string"},
-				{"name":"tree","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"numberChangedFiles","type":"uint128"}
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -229,7 +307,8 @@
 			"name": "startProposalForAddProtectedBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -238,7 +317,8 @@
 			"name": "startProposalForDeleteProtectedBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -255,7 +335,6 @@
 			"name": "isCompletedCallback",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"},
-				{"name":"_tokenLocker","type":"address"},
 				{"name":"res","type":"optional(bool)"},
 				{"name":"propData","type":"cell"}
 			],
@@ -325,19 +404,19 @@
 			]
 		},
 		{
-			"name": "getRootPubkey",
+			"name": "getRootAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
-			"name": "getWalletPubkey",
+			"name": "getWalletAddress",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"}
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -379,6 +458,14 @@
 			]
 		},
 		{
+			"name": "getWalletOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getWalletsCount",
 			"inputs": [
 			],
@@ -414,6 +501,14 @@
 			]
 		},
 		{
+			"name": "getAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(uint256)"}
+			]
+		},
+		{
 			"name": "onTokenWalletDeployed",
 			"inputs": [
 				{"name":"wallet","type":"address"}
@@ -445,14 +540,6 @@
 			]
 		},
 		{
-			"name": "onTokenBalanceUpdateWhileLockVoting",
-			"inputs": [
-				{"name":"balance","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "lockVoting",
 			"inputs": [
 				{"name":"amount","type":"uint128"}
@@ -471,20 +558,30 @@
 		{
 			"name": "voteFor",
 			"inputs": [
-				{"name":"platformCode","type":"cell"},
-				{"name":"clientCode","type":"cell"},
-				{"name":"proposal","type":"address"},
+				{"name":"platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "proposalAddress",
+			"name": "getPlatfotmId",
+			"inputs": [
+				{"name":"propId","type":"uint256"},
+				{"name":"platformType","type":"uint8"},
+				{"name":"_tip3VotingLocker","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "clientAddressForProposal",
 			"inputs": [
 				{"name":"_tip3VotingLocker","type":"address"},
-				{"name":"propId","type":"uint256"}
+				{"name":"_platform_id","type":"uint256"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -501,20 +598,10 @@
 			]
 		},
 		{
-			"name": "clientAddress",
-			"inputs": [
-				{"name":"_tip3VotingLocker","type":"address"},
-				{"name":"propId","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "killAccount",
 			"inputs": [
 				{"name":"address_to","type":"address"},
-				{"name":"tokens_to","type":"address"}
+				{"name":"value1","type":"address"}
 			],
 			"outputs": [
 			]
@@ -536,14 +623,8 @@
 			]
 		},
 		{
-			"name": "onAcceptTokensTransfer",
+			"name": "returnExtraLockerFunds",
 			"inputs": [
-				{"name":"tokenRoot","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"sender","type":"address"},
-				{"name":"sender_wallet","type":"address"},
-				{"name":"gasTo","type":"address"},
-				{"name":"payload","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -551,10 +632,10 @@
 		{
 			"name": "onAcceptTokensMint",
 			"inputs": [
-				{"name":"tokenRoot","type":"address"},
+				{"name":"value0","type":"address"},
 				{"name":"amount","type":"uint128"},
-				{"name":"remainingGasTo","type":"address"},
-				{"name":"payload","type":"cell"}
+				{"name":"gasTo","type":"address"},
+				{"name":"value3","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -562,35 +643,79 @@
 		{
 			"name": "onBounceTokensTransfer",
 			"inputs": [
-				{"name":"root","type":"address"},
+				{"name":"value0","type":"address"},
 				{"name":"amount","type":"uint128"},
-				{"name":"wallet_to","type":"address"}
+				{"name":"value2","type":"address"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "tip3Root",
+			"name": "onAcceptTokensTransfer",
 			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"gasTo","type":"address"},
+				{"name":"value5","type":"cell"}
 			],
 			"outputs": [
-				{"name":"tip3Root","type":"address"}
 			]
 		},
 		{
-			"name": "tip3Wallet",
+			"name": "updateTokenBalance",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"tip3Wallet","type":"address"}
 			]
 		},
 		{
-			"name": "tip3VotingLocker",
+			"name": "onUpdateBalance",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "m_tokenRoot",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"tip3VotingLocker","type":"address"}
+				{"name":"m_tokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenWallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWallet","type":"address"}
+			]
+		},
+		{
+			"name": "m_tokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "m_tokenWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_tokenWalletCode","type":"cell"}
 			]
 		},
 		{
@@ -610,11 +735,11 @@
 			]
 		},
 		{
-			"name": "_tokenBalance",
+			"name": "tip3VotingLocker",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"_tokenBalance","type":"uint128"}
+				{"name":"tip3VotingLocker","type":"address"}
 			]
 		},
 		{
@@ -627,20 +752,31 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_rootRepoPubkey","type":"uint256"},
-		{"key":2,"name":"_rootgosh","type":"address"},
-		{"key":3,"name":"_goshdao","type":"address"},
-		{"key":4,"name":"_index","type":"uint128"}
+		{"key":1,"name":"_goshdao","type":"address"},
+		{"key":2,"name":"_index","type":"uint128"},
+		{"key":3,"name":"_goshroot","type":"address"}
 	],
 	"events": [
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"tip3Root","type":"address"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"m_tokenRoot","type":"address"},
+		{"name":"m_tokenWallet","type":"address"},
+		{"name":"m_tokenBalance","type":"uint128"},
+		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_index","type":"uint128"},
 		{"name":"nonce","type":"uint256"},
-		{"name":"tip3Wallet","type":"address"},
+		{"name":"lockerTip3Wallet","type":"address"},
+		{"name":"initialized","type":"bool"},
 		{"name":"tip3VotingLocker","type":"address"},
+		{"name":"lastVoteResult","type":"optional(bool)"},
 		{"name":"clientCodeHash","type":"uint256"},
 		{"name":"clientCodeDepth","type":"uint16"},
 		{"name":"proposalCodeHash","type":"uint256"},
@@ -649,18 +785,14 @@
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"lockerCodeHash","type":"uint256"},
 		{"name":"lockerCodeDepth","type":"uint16"},
-		{"name":"lockerTip3Wallet","type":"address"},
-		{"name":"initialized","type":"bool"},
-		{"name":"_tokenBalance","type":"uint128"},
-		{"name":"m_messages","type":"map(uint256,uint32)"},
-		{"components":[{"name":"expireAt","type":"uint32"},{"name":"msgHash","type":"uint256"}],"name":"m_lastMsg","type":"tuple"},
-		{"name":"lastVoteResult","type":"optional(bool)"},
-		{"name":"lockingAmount","type":"uint128"},
-		{"name":"_creator","type":"address"},
-		{"name":"_rootRepoPubkey","type":"uint256"},
-		{"name":"_rootgosh","type":"address"},
-		{"name":"_goshdao","type":"address"},
-		{"name":"_index","type":"uint128"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_lockerCode","type":"cell"},
+		{"name":"_access","type":"optional(uint256)"},
+		{"name":"_goshroot","type":"address"},
+		{"name":"_rootpubaddr","type":"address"},
+		{"name":"_nameDao","type":"string"},
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
@@ -670,16 +802,12 @@
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
-		{"name":"m_SMVPlatformCode","type":"cell"},
-		{"name":"m_SMVClientCode","type":"cell"},
-		{"name":"m_SMVProposalCode","type":"cell"},
-		{"name":"m_lockerCode","type":"cell"},
-		{"name":"_tip3root","type":"address"},
 		{"name":"counter","type":"uint128"},
 		{"name":"_last_time","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_limit_messages","type":"uint128"},
 		{"name":"_limit_time","type":"uint128"},
-		{"name":"_walletcounter","type":"uint128"}
+		{"name":"_walletcounter","type":"uint128"},
+		{"name":"_tombstone","type":"bool"}
 	]
 }

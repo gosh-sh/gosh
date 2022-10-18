@@ -4,7 +4,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const AccountLayout = () => {
     const tabs = [
         { to: '/a/orgs', title: 'Organizations' },
-        { to: '/a/repos', title: 'Repositories' },
+        // { to: '/a/repos', title: 'Repositories' },
         { to: '/a/settings', title: 'Settings' },
     ]
 

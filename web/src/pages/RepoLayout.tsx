@@ -1,31 +1,38 @@
 import { useEffect, useState } from 'react'
-import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-icons'
+import {
+    faCode,
+    faCodePullRequest,
+    faCodeMerge,
+    faCube,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
-import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from '../hooks/gosh.hooks'
+import { classNames, useRepo, TWalletDetails, TDao, useBranches } from 'react-gosh'
 import {
-    IGoshRepository,
+    IGoshDaoAdapter,
+    IGoshRepositoryAdapter,
     IGoshWallet,
-    classNames,
-    userStatePersistAtom,
-    useDao,
-} from 'react-gosh'
-import { useRecoilValue } from 'recoil'
+} from 'react-gosh/dist/gosh/interfaces'
 
 export type TRepoLayoutOutletContext = {
-    repo: IGoshRepository
-    wallet?: IGoshWallet
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repo: IGoshRepositoryAdapter
+    wallet?: {
+        instance: IGoshWallet
+        details: TWalletDetails
+    }
 }
 
 const RepoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const repo = useGoshRepo(daoName, repoName)
-    const dao = useDao(daoName)
-    const wallet = useGoshWallet(dao.instance)
-    const { updateBranches } = useGoshRepoBranches(repo)
-    const [isFetched, setIsFetched] = useState<boolean>(false)
+    const { dao, adapter, isFetching } = useRepo(daoName!, repoName!)
+    const { updateBranches } = useBranches(adapter)
+    const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
         {
@@ -35,9 +42,21 @@ const RepoLayout = () => {
             public: true,
         },
         {
+            to: `/o/${daoName}/r/${repoName}/merge`,
+            title: 'Merge',
+            icon: faCodeMerge,
+            public: false,
+        },
+        {
             to: `/o/${daoName}/r/${repoName}/pull`,
             title: 'Pull request',
             icon: faCodePullRequest,
+            public: false,
+        },
+        {
+            to: `/o/${daoName}/r/${repoName}/upgrade`,
+            title: 'Upgrade',
+            icon: faWrench,
             public: false,
         },
     ]
@@ -52,15 +71,16 @@ const RepoLayout = () => {
     }
 
     useEffect(() => {
-        const init = async () => {
+        const _setup = async () => {
+            if (isFetching) return
+
             await updateBranches()
-            setIsFetched(true)
+            console.debug('UPDATE BRANCHES')
+            setIsReady(true)
         }
 
-        const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
-        if (repo && walletAwaited) init()
-    }, [repo, wallet, userStatePersist.phrase, updateBranches])
+        _setup()
+    }, [isFetching, updateBranches])
 
     return (
         <div className="container container--full my-10">
@@ -71,27 +91,37 @@ const RepoLayout = () => {
                 >
                     {daoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {dao.details?.version}
+                </span>
+
                 <span className="mx-2">/</span>
+
                 <Link
                     to={`/o/${daoName}/r/${repoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {repoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {adapter?.getVersion()}
+                </span>
             </h1>
 
-            {!isFetched && (
+            {!isReady && (
                 <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading repository...
                 </div>
             )}
 
-            {isFetched && (
+            {isReady && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
                         {tabs
-                            .filter((item) => (!wallet ? item.public : item))
+                            .filter((item) =>
+                                !dao.details?.isAuthMember ? item.public : item,
+                            )
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -116,7 +146,7 @@ const RepoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ repo, wallet }} />
+                    <Outlet context={{ dao, repo: adapter }} />
                 </>
             )}
         </div>
