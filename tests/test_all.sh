@@ -11,3 +11,4 @@ set -o pipefail
 ./06-sequential_merges.sh
 ./07-push_to_empty_main.sh
 ./08-repo_with_canceled_diffs.sh
+./09-ipfs_onchain_transition.sh
