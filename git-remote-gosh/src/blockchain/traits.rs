@@ -18,12 +18,13 @@ pub trait BlockchainService: Debug {
         repo_addr: &BlockchainContractAddress,
         branch_name: &str,
     ) -> Result<bool>;
+
     async fn remote_rev_parse(
         context: &TonClient,
         repository_address: &BlockchainContractAddress,
         rev: &str,
-    ) -> Result<Option<BlockchainContractAddress>> {
-        Ok(Some(BlockchainContractAddress::new("test")))
+    ) -> Result<Option<(BlockchainContractAddress, String)>> {
+        Ok(Some((BlockchainContractAddress::new("test"), "".to_owned())))
     }
 }
 
@@ -43,12 +44,13 @@ impl BlockchainService for Blockchain {
             .await?;
         Ok(result.is_ok)
     }
+
     #[instrument(level = "debug", skip(context))]
     async fn remote_rev_parse(
         context: &TonClient,
         repository_address: &BlockchainContractAddress,
         rev: &str,
-    ) -> Result<Option<BlockchainContractAddress>> {
+    ) -> Result<Option<(BlockchainContractAddress, String)>> {
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
         let args = serde_json::json!({ "name": rev });
         let result: GetAddrBranchResult = contract
@@ -57,7 +59,7 @@ impl BlockchainService for Blockchain {
         if result.branch.branch_name.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(result.branch.commit_address))
+            Ok(Some((result.branch.commit_address, result.branch.version)))
         }
     }
 }

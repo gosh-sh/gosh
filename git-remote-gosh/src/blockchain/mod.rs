@@ -132,6 +132,11 @@ impl GoshContract {
         log::trace!("run_statuc result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
+
+    pub async fn get_version(&self, context: &TonClient) -> Result<String> {
+        let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
+        Ok(result.version)
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -180,11 +185,14 @@ struct GetBoolResult {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BranchRef {
-    #[serde(rename = "key")]
+    #[serde(rename = "branchname")]
     pub branch_name: String,
 
-    #[serde(rename = "value")]
+    #[serde(rename = "commitaddr")]
     pub commit_address: BlockchainContractAddress,
+
+    #[serde(rename = "commitversion")]
+    pub version: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -203,6 +211,12 @@ struct GetAddrBranchResult {
 struct GetHeadResult {
     #[serde(rename = "value0")]
     pub head: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetVersionResult {
+    #[serde(rename = "value0")]
+    pub version: String,
 }
 
 pub type TonClient = Arc<ClientContext>;
