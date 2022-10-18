@@ -524,6 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_push_normal_ref() {
         let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
 
@@ -544,6 +545,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_push() -> Result<()> {
         log::info!("Preparing repository for tests");
         // TODO: rewrite from libgit2 to gitoxide

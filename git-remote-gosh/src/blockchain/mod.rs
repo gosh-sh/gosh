@@ -627,6 +627,7 @@ pub mod tests {
     // As of now they're not following contract changes
     // therefore not adding a value
     #[tokio::test]
+    #[ignore]
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
@@ -637,6 +638,7 @@ pub mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn ensure_run_static_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo)

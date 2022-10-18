@@ -1,17 +1,22 @@
 [[bin]]
+name = 'git-remote-gosh-impl'
+path = 'src/bin/main.rs'
+
+[[bin]]
 name = 'git-remote-gosh'
-path = 'src/main.rs'
+path = 'src/bin/dispatcher.rs'
 
 [lib]
 name = 'git_remote_gosh'
 path = 'src/lib.rs'
+exclude = 'src/bin/*'
 
 [package]
 edition = '2021'
 keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
-version = '2.1.19'
+version = '3.0.0'
 
 [profile.profiling]
 debug = 1

@@ -4,6 +4,7 @@ use std::fs;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test_log::test(tokio::test)]
+#[ignore]
 async fn test_push() -> Result<()> {
     log::info!("Preparing repository for tests");
     // TODO: rewrite from libgit2 to gitoxide
