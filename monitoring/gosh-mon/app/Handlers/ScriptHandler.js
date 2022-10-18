@@ -31,6 +31,7 @@ const yaml = __importStar(require("js-yaml"));
 const fs_1 = __importDefault(require("fs"));
 const selectHandler_1 = __importDefault(require("../selectHandler"));
 const Utils_1 = require("../Utils");
+const ScenarioHandler_1 = __importDefault(require("./ScenarioHandler"));
 class ScriptHandler extends AppHandler_1.default {
     constructor() {
         super(...arguments);
@@ -111,17 +112,27 @@ class ScriptHandler extends AppHandler_1.default {
             }
             const sub = (0, selectHandler_1.default)(conf.handler).setApplication(this.app).setDebug(debug).setSub(mode);
             sub.applyConfiguration(conf);
+            if (sub instanceof ScenarioHandler_1.default)
+                sub.setParentLog(this.log);
             console.log(`> Start step ${mode} handler ${conf.handler} <`);
             const res = await sub.handle(debug);
             console.log(`> Done step ${mode} handler ${conf.handler} <`);
             for (let k of res.keys()) {
-                all.set(k + `{sub="${mode}"}"`, res.get(k));
+                const kk = k.includes('}') ?
+                    k.replace('}', `,sub="${mode}"}"`) :
+                    k + `{sub="${mode}"}"`;
+                all.set(kk, res.get(k));
             }
             if (!res.has('result') || !res.has('value') || res.get('result') !== 100) {
                 all.set("result", steps);
                 all.set("timestamp", (0, Utils_1.now)());
                 all.set("started", this.started);
                 all.set("duration", (0, Utils_1.now)() - this.started);
+                try {
+                    await this.mkdirs(`errors/${mode}`);
+                    await this.dumpToFile(`errors/${mode}/script-error.log`, '', true);
+                }
+                catch (e) { }
                 return all;
             }
             steps++;

@@ -1,9 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'jenkins-docker-agent:1'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-        }
+    agent none
+    triggers {
+        cron('30 23 * * *') //run at 23:30:00 
+    }
+    options {
+        timestamps ()
     }
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
@@ -13,6 +14,12 @@ pipeline {
 
     stages {
         stage('Clone repository') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
@@ -23,6 +30,12 @@ pipeline {
             }
         }
         stage('Compile: SMV') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/smv') {
@@ -32,6 +45,12 @@ pipeline {
             }
         }
         stage('Compile: GOSH') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -41,6 +60,12 @@ pipeline {
             }
         }
         stage('Build: Git Helper') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
@@ -58,6 +83,12 @@ pipeline {
             }
         }
         stage('Build: Docker Extension') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -68,7 +99,13 @@ pipeline {
                 }
             }
         }
-        /*stage('Deploy: deploy smart-contracts') {
+        stage('Deploy: deploy smart-contracts') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('contracts/gosh') {
@@ -79,22 +116,13 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
             }
         }
-        stage('Tests: functional') {
-            steps {
-                script {
-                    if (!params.ONLYWEB) {
-                        dir('tests') {
-                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
-                            sh '''
-                                export PATH=/home/jenkins/bin:$PATH
-                                ./test_all.sh
-                            '''
-                        }
-                    }
+        stage('Web: deploy') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
                 }
             }
-        }
-        stage('Web: deploy') {
             steps {
                 script {
                     env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
@@ -109,6 +137,7 @@ pipeline {
                         if [ `docker ps | grep -o "gosh-web.*" | wc -l` -gt 1 ]; then docker ps | grep -o "gosh-web.*" | while read -r line ; do echo \$line ; done | sort | docker rm -f `head -n 1`; fi                                                    
                         make run MOUNT_DIR=/opt/${DOCKER_WEB_CONTAINER_NAME}/web ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
                         echo 'server_names_hash_bucket_size 1024;' > /opt/nginx/proxy.conf
+                        echo 'server { listen 80 default_server; return 404;}' >> /opt/nginx/proxy.conf
                         docker ps | grep -o "gosh-web.*" | while read -r line ; do sed "s/GOSH_WEB_VERSION/\$line/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf; done
                         docker restart nginx-test-app-gosh-sh
                         """  
@@ -118,28 +147,62 @@ pipeline {
             }
         }
         stage('Web: wait to be available') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 420 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 100 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
                 }
             }
         }
-        stage('Web: run tests') {
+        stage('Tests: functional') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
+            steps {
+                script {
+                    if (!params.ONLYWEB) {
+                        dir('tests') {
+                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
+                            sh '''
+                                export PATH=/home/jenkins/bin:$PATH
+                                ./test_all.sh
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        stage('Tests: Web') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     dir('monitoring/gosh-mon') {     
                         sh """
+                            cp config/credentials.yml.template config/credentials.yml
                             docker build -t gosh-mon .
                             docker run --rm \
-                                -e GM_MODE=seed-read \
+                                -e GM_MODE=app-script \
                                 -e RUN_NOW=1 \
-                                -e CONFIG_SEED=\'palm rebel eye blade write excess avoid define card mimic gas call\' \
-                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh \
+                                -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
+                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
                                 -v \$(pwd)/config:/home/node/app/config:ro \
                                 -v \$(pwd)/test-errors:/home/node/app/errors \
                                 gosh-mon
@@ -153,8 +216,39 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
+        stage("Prerelease: Git Helper Snap"){
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
+            steps {
+                script {
+                    if (!params.ONLYWEB && !params.DRYRUN) {
+                        dir('git-remote-gosh') {
+                        sh """
+                            cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 snap/git-remote-gosh
+                            sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snap/snapcraft.yaml
+                            chmod +x snap/git-remote-gosh
+                            cd snap
+                            tar -cvf git-remote-gosh.tar git-remote-gosh
+                            snapcraft clean --use-lxd
+                            snapcraft --use-lxd
+                            snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
+                        """
+                        }
+                    }
+                }
+            }
+        }
         stage('Prerelease: Git Helper - bin') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 script {
                     if (!params.ONLYWEB) {
@@ -174,6 +268,12 @@ pipeline {
             }
         }
         stage('Prerelease: push rc Git Helper Docker image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
@@ -190,6 +290,12 @@ pipeline {
             }
         }
         stage('Prerelease: push rc Docker Extension image') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                }
+            }
             steps {
                 retry(3) {
                     script {
@@ -204,11 +310,11 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-    post {
-        always {
-            cleanWs()
+            post {
+                always {
+                    cleanWs()
+                }
+            }
         }
     }
 }

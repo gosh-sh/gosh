@@ -28,18 +28,13 @@ REPO_NAME=repo6
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 
-# create repo
-WALLET_ABI=../contracts/gosh/goshwallet.abi.json
-
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
-
 wait_account_active $REPO_ADDR
-sleep 60
+sleep 30
 
-# clone repo
 echo "***** cloning repo *****"
 git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME
 
@@ -68,7 +63,7 @@ git push --set-upstream origin $BRANCH_NAME
 
 echo "***** awaiting set commit in dev *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 120
+sleep 30
 
 echo "***** cloning repo *****"
 cd ..
@@ -97,7 +92,7 @@ git push --set-upstream origin $BRANCH_NAME"2"
 
 echo "***** awaiting set commit in dev2 *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME"2"
-sleep 120
+sleep 30
 
 cd ../$REPO_NAME"-clone"
 git pull
@@ -123,7 +118,7 @@ git push
 
 echo "***** awaiting set commit in dev *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 120
+sleep 30
 
 cd ../$REPO_NAME"-clone"
 git pull
@@ -146,7 +141,7 @@ git push --set-upstream origin main
 
 echo "***** awaiting set commit in main *****"
 wait_set_commit $REPO_ADDR main
-sleep 120
+sleep 30
 
 cd ../$REPO_NAME"-clone"
 git pull

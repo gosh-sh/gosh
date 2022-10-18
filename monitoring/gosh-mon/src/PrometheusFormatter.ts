@@ -15,24 +15,38 @@ export default class PrometheusFormatter {
         this.tagpfx = tagpfx;
     }
 
-    process(data: MetricsMap, debug: boolean): string {
+    process(data: MetricsMap, debug: boolean, values_only: boolean = false): string {
         let out: string[] = [];
         let seen: Set<string> = new Set<string>();
-        for (let [k, v] of data) {
-            const m = this.prefix + k;
-            if (!seen.has(m) && !debug) {
-                out.push(`# HELP ${m} ${this.prefix.replaceAll('_', ' ').trimEnd()} ${k} metric`, `# TYPE ${m} gauge`);
-                seen.add(m);
-            }
-            let pm = m;
-            if (this.tagpfx != '') {
-                if (m.includes('{')) {
-                    pm = m.replace('{', '{' + this.tagpfx + ',');
-                } else {
-                    pm = m + '{' + this.tagpfx + '}';
+        try {
+            for (let [k, v] of data) {
+                try {
+                    if (v === undefined || v === null) {
+                        out.push(`# WARNING: ${k} has value of ${v} !!!`);
+                        continue;
+                    }
+                    const m = this.prefix + k;
+                    const sk: string = k.includes('{') ? k.substring(0, k.indexOf('{')) : m;
+                    const sm: string = this.prefix + sk;
+                    if (!seen.has(sm) && !values_only) {
+                        out.push(`# HELP ${sm} ${this.prefix.replaceAll('_', ' ').trimEnd()} ${sk} metric`, `# TYPE ${sm} gauge`);
+                        seen.add(sm);
+                    }
+                    let pm = m;
+                    if (this.tagpfx != '') {
+                        if (m.includes('{')) {
+                            pm = m.replace('{', '{' + this.tagpfx + ',');
+                        } else {
+                            pm = m + '{' + this.tagpfx + '}';
+                        }
+                    }
+                    out.push(`${pm} ${v}`);
+                } catch (e) {
+                    console.error(`Formatting ${k} failed:`, e);
                 }
             }
-            out.push(`${pm} ${v}`);
+        } catch (e) {
+            console.error(`Failed formatting data:`, e);
         }
         return out.join("\n");
     }

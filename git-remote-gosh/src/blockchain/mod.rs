@@ -12,6 +12,8 @@ mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
+mod traits;
+pub use traits::*;
 
 use ton_client::{
     abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
@@ -217,6 +219,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
 
     let config = ClientConfig {
         network: ton_client::net::NetworkConfig {
+            sending_endpoint_count: endpoints.len() as u8,
             endpoints: if endpoints.is_empty() {
                 None
             } else {
@@ -471,21 +474,6 @@ pub async fn branch_list(
     Ok(result)
 }
 
-#[instrument(level = "debug", skip(context))]
-pub async fn is_branch_protected(
-    context: &TonClient,
-    repo_addr: &BlockchainContractAddress,
-    branch_name: &str,
-) -> Result<bool> {
-    let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
-
-    let params = serde_json::json!({ "branch": branch_name });
-    let result: GetBoolResult = contract
-        .run_local(context, "isBranchProtected", Some(params))
-        .await?;
-    Ok(result.is_ok)
-}
-
 pub async fn set_head(
     context: &TonClient,
     wallet_addr: &BlockchainContractAddress,
@@ -498,24 +486,6 @@ pub async fn set_head(
     let result = call(context, &contract, "setHEAD", Some(args)).await?;
 
     Ok(())
-}
-
-#[instrument(level = "debug", skip(context))]
-pub async fn remote_rev_parse(
-    context: &TonClient,
-    repository_address: &BlockchainContractAddress,
-    rev: &str,
-) -> Result<Option<BlockchainContractAddress>> {
-    let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    let args = serde_json::json!({ "name": rev });
-    let result: GetAddrBranchResult = contract
-        .run_local(context, "getAddrBranch", Some(args))
-        .await?;
-    if result.branch.branch_name.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(result.branch.commit_address))
-    }
 }
 
 #[instrument(level = "debug", skip(context))]

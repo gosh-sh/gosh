@@ -164,8 +164,10 @@ services:
 #    init: true
 #    restart: "no"
 #    environment:
-#      - GM_MODE=app-script
-#      - ONESHOT_DEBUG=3
+#      - GM_MODE=rem-small-read-next
+#      - ONESHOT_DEBUG=2
+#      - CONFIG_PULL_VERBOSITY=4
+#      - CONFIG_PUSH_VERBOSITY=4
 #    volumes:
 #      - ./config:/home/node/app/config:ro
 #      - gm-test-data:/home/node/app/data

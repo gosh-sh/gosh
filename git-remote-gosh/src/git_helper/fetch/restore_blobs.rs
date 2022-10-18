@@ -1,10 +1,9 @@
 use super::GitHelper;
-use crate::blockchain;
+use crate::blockchain::snapshot::diffs::DiffMessage;
 use crate::blockchain::BlockchainContractAddress;
-use crate::git_helper::GoshContract;
-use crate::git_helper::TonClient;
-use crate::ipfs::IpfsLoad;
-use crate::ipfs::IpfsService;
+use crate::blockchain::{self, BlockchainService};
+use crate::git_helper::{GoshContract, TonClient};
+use crate::ipfs::{IpfsLoad, IpfsService};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use git_hash::ObjectId;
@@ -14,8 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::num::NonZeroUsize;
 use std::str::FromStr;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::vec::Vec;
 
 const FETCH_MAX_TRIES: i32 = 3;
@@ -96,7 +94,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
     )
     .await?;
-    log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
+    // log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
@@ -115,10 +113,6 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         last_restored_snapshots.put(blob_id, blob);
         blobs.remove(&blob_id);
     }
-    log::debug!(
-        "post last_restored_snapshots: {:#?}",
-        last_restored_snapshots
-    );
 
     log::info!(
         "Expecting to restore blobs: {:?} from {}",
@@ -131,41 +125,67 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut messages =
         blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
     let mut walked_through_ipfs = false;
+    let mut first_after_ipfs = false;
+    let mut preserved_message: Option<DiffMessage> = None;
+
     while !blobs.is_empty() {
         log::info!("Still expecting to restore blobs: {:?}", blobs);
         // take next a chunk of messages and reverse it on a snapshot
         // remove matching blob ids
         //
-        let message = messages.next(&es_client)
-            .await?
-            .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
+        let message = if let Some(unused_message) = preserved_message.clone() {
+            preserved_message = None;
+            unused_message
+        } else {
+            messages.next(&es_client)
+                .await?
+                .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.")
+        };
+        log::debug!("got message: {:?}", message);
 
         let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
             walked_through_ipfs = true;
             load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
         } else if walked_through_ipfs {
             walked_through_ipfs = false;
+            first_after_ipfs = true;
+
+            // we won't use the message, so we'll store it for the next iteration
+            preserved_message = Some(message);
+
             let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
             snapshot.next_content
         } else {
+            let patched_blob = if first_after_ipfs {
+                first_after_ipfs = false;
+                let blockchain::Snapshot { next_content, .. } =
+                    blockchain::Snapshot::load(es_client, snapshot_address).await?;
+                next_content.clone()
+            } else {
+                let patched_blob_sha = &message
+                    .diff
+                    .modified_blob_sha1
+                    .as_ref()
+                    .expect("Option on this should be reverted. It must always be there");
+                let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+                let content = last_restored_snapshots
+                    .get(&patched_blob_sha)
+                    .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+                content.to_vec()
+            };
+
             message
                 .diff
                 .with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
                     Some(patch) => {
-                        let patched_blob_sha =
-                            &message.diff.modified_blob_sha1.as_ref().expect(
-                                "Option on this should be reverted. It must always be there",
-                            );
-                        let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                        let patched_blob = last_restored_snapshots.get(&patched_blob_sha).expect(
-                            "It is a sequence of changes. Sha must be correct. Fail otherwise",
-                        );
-                        let blob_data = diffy::apply_bytes(patched_blob, &patch.clone().reverse())?;
+                        let blob_data =
+                            diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
                         Ok(blob_data)
                     }
-                    None => panic!("Broken diff detected: no ipfs neither patch exists"),
+                    None => panic!("Broken diff detected: neither ipfs nor patch exists"),
                 })?
         };
+
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
         let blob_id = write_git_data(repo, blob).await?;
         log::info!("Restored blob {}", blob_id);
@@ -281,7 +301,7 @@ impl BlobsRebuildingPlan {
 
     pub async fn restore<'a, 'b>(
         &'b mut self,
-        git_helper: &mut GitHelper,
+        git_helper: &mut GitHelper<impl BlockchainService>,
     ) -> Result<(), Box<dyn Error>> {
         // Idea behind
         // --

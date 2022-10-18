@@ -4,6 +4,7 @@ import * as yaml from "js-yaml";
 import fs from "fs";
 import selectHandler from "../selectHandler";
 import {now, nowms} from "../Utils";
+import ScenarioHandler from "./ScenarioHandler";
 
 export default class ScriptHandler extends AppHandler {
 
@@ -88,17 +89,26 @@ export default class ScriptHandler extends AppHandler {
             }
             const sub = selectHandler(conf.handler).setApplication(this.app).setDebug(debug).setSub(mode);
             sub.applyConfiguration(conf);
+            if (sub instanceof ScenarioHandler)
+                sub.setParentLog(this.log);
             console.log(`> Start step ${mode} handler ${conf.handler} <`);
             const res = await sub.handle(debug);
             console.log(`> Done step ${mode} handler ${conf.handler} <`);
             for (let k of res.keys()) {
-                all.set(k + `{sub="${mode}"}"`, res.get(k)!);
+                const kk = k.includes('}') ?
+                    k.replace('}', `,sub="${mode}"}"`) :
+                    k + `{sub="${mode}"}"`;
+                all.set(kk, res.get(k)!);
             }
             if (!res.has('result') || !res.has('value') || res.get('result') !== 100) {
                 all.set("result", steps);
                 all.set("timestamp", now());
                 all.set("started", this.started);
                 all.set("duration", now() - this.started);
+                try {
+                    await this.mkdirs(`errors/${mode}`);
+                    await this.dumpToFile(`errors/${mode}/script-error.log`, '', true);
+                } catch(e) {}
                 return all;
             }
             steps++;

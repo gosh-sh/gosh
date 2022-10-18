@@ -8,7 +8,10 @@ ENV	DEBIAN_FRONTEND=noninteractive
 ENV     NODEJS_VERSION=16.17.0
 ENV     PATH=/usr/local/lib/nodejs/node-v${NODEJS_VERSION}-linux-x64/bin:${PATH}
 
-RUN	apt -y update &&\
+RUN	apt update -y &&\
+	apt install -y software-properties-common &&\
+	apt-add-repository -y ppa:git-core/ppa &&\
+	apt update -y &&\
         apt -y install make curl jq libssl-dev git ca-certificates xz-utils &&\
         curl https://get.docker.com | bash &&\
         addgroup --gid 1000 jenkins &&\

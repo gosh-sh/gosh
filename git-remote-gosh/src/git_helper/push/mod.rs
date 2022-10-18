@@ -2,7 +2,9 @@
 #![allow(unused_imports)]
 use super::GitHelper;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
-use crate::blockchain::{user_wallet, BlockchainContractAddress, CreateBranchOperation, ZERO_SHA};
+use crate::blockchain::{
+    user_wallet, BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
+};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use git2::Repository;
@@ -44,7 +46,10 @@ impl PushBlobStatistics {
     } */
 }
 
-impl GitHelper {
+impl<Blockchain> GitHelper<Blockchain>
+where
+    Blockchain: BlockchainService,
+{
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
         &mut self,
@@ -250,7 +255,7 @@ impl GitHelper {
             iter.next().unwrap()
         };
         let parsed_remote_ref =
-            blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
+            Blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
                 .await?;
 
         let mut prev_commit_id: Option<ObjectId> = None;
@@ -260,19 +265,22 @@ impl GitHelper {
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
-            let is_protected = blockchain::is_branch_protected(
+            let is_protected = Blockchain::is_branch_protected(
                 &self.es_client,
                 &self.repo_addr,
                 remote_branch_name,
             )
             .await?;
             if is_protected {
-                return Err("This branch '{branch_name}' is protected. Go to app.gosh.sh and create a proposal to apply this branch change.".into());
+                return Err(format!(
+                    "This branch '{branch_name}' is protected. \
+                    Go to app.gosh.sh and create a proposal to apply this branch change."
+                )
+                .into());
             }
-            let remote_commit_addr = parsed_remote_ref.clone().unwrap();
             let remote_commit_addr =
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
-                    remote_commit_addr,
+                    parsed_remote_ref.clone().unwrap(),
                 );
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?
@@ -466,18 +474,74 @@ async fn delete_remote_ref(remote_ref: &str) -> Result<String> {
 mod tests {
     use std::fs;
 
+    use async_trait::async_trait;
     use git2::{
         string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
     };
 
+    use crate::blockchain::{BlockchainService, TonClient};
+    use crate::config::Config;
+    use crate::git_helper::test_utils::{self, setup_repo};
+    use crate::git_helper::tests::setup_test_helper;
+    use crate::logger::GitHelperLogger;
+
     use super::*;
 
-    // #[tokio::test]
-    // async fn ensure_push_ok() {
-    //     let local_ref = "refs/heads/demo";
-    //     let push_result = push_ref(local_ref, "refs/heads/demo").await.unwrap();
-    //     assert_eq!(format!("ok {}", local_ref), push_result);
-    // }
+    #[derive(Debug)]
+    struct TestBlockChain;
+
+    #[async_trait]
+    impl BlockchainService for TestBlockChain {
+        async fn is_branch_protected(
+            context: &TonClient,
+            repo_addr: &BlockchainContractAddress,
+            branch_name: &str,
+        ) -> Result<bool> {
+            Ok(true)
+        }
+    }
+
+    #[tokio::test]
+    #[should_panic]
+    async fn test_push_parotected_ref() {
+        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        let mut helper = setup_test_helper(
+            json!({
+                "ipfs": "foo.endpoint"
+            }),
+            "gosh://1/2/3",
+            repo,
+            TestBlockChain {},
+        );
+
+        let res = helper
+            .push("main:main")
+            .await
+            .map_err(|e| panic!("Error: {:?}", e))
+            .unwrap();
+        // expected panic: can't push to protected branch
+    }
+
+    #[tokio::test]
+    async fn test_push_normal_ref() {
+        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        let mut helper = setup_test_helper(
+            json!({
+                "ipfs": "foo.endpoint"
+            }),
+            "gosh://1/2/3",
+            repo,
+            TestBlockChain {},
+        );
+
+        let res = helper
+            .push("main:main")
+            .await
+            .map_err(|e| panic!("Error: {:?}", e))
+            .unwrap();
+    }
 
     #[tokio::test]
     async fn test_push() -> Result<()> {
@@ -485,17 +549,24 @@ mod tests {
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");
 
-        fs::remove_dir_all(&dir)?;
+        fs::remove_dir_all(&dir).unwrap_or(());
         fs::create_dir_all(&dir)?;
         fs::write(dir.join("readme.txt").to_owned(), "test")?;
         log::info!("Initializing git repo");
         println!("Testing push {:?}", dir);
 
+        let network = "vps23.ton.dev";
+        let root_contract = "0:54fdd2ac8027b16c83b2b8b0cc4360ff4135a936c355bdb5c4776bdd3190fefc";
+        let dao_name = "dadao";
+        let repo_name = "someflies";
+
+        let url = format!(
+            "gosh::{}://{}/{}/{}",
+            network, root_contract, dao_name, repo_name
+        );
+
         let repo = Repository::init(dir).expect("repository init successfuly");
-        repo.remote_set_url(
-            "origin",
-            "gosh::vps23.ton.dev://0:54fdd2ac8027b16c83b2b8b0cc4360ff4135a936c355bdb5c4776bdd3190fefc/dadao/somefiles",
-        )?;
+        repo.remote_set_url("origin", &url)?;
 
         let mut index = repo.index()?;
         index.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)?;
