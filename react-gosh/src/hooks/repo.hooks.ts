@@ -308,11 +308,13 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
 
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            const blob = await adapter.getBlob({ fullpath: `${branchData.name}/${path}` })
+            const { content } = await adapter.getBlob({
+                fullpath: `${branchData.name}/${path}`,
+            })
             setBlob((state) => ({
                 ...state,
                 path,
-                content: blob,
+                content,
                 isFetching: false,
             }))
         }
@@ -663,16 +665,16 @@ function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
                 const srcBlob = await repo.getBlob({
                     fullpath: `${srcBranch.name}/${treepath}`,
                 })
-                const dstBlob = exists
-                    ? await repo.getBlob({
-                          fullpath: `${dstBranch.name}/${treepath}`,
-                      })
-                    : ''
+                const dstBlob =
+                    exists &&
+                    (await repo.getBlob({
+                        fullpath: `${dstBranch.name}/${treepath}`,
+                    }))
 
                 return {
                     treepath,
-                    original: dstBlob,
-                    modified: srcBlob,
+                    original: dstBlob ? dstBlob.content : '',
+                    modified: srcBlob.content,
                     showDiff: index < showDiffNum,
                 }
             }),

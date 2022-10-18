@@ -103,7 +103,11 @@ interface IGoshRepositoryAdapter {
     getVersion(): string
     getDetails(): Promise<TRepository>
     getTree(commit: string, search?: string): Promise<{ tree: TTree; items: TTreeItem[] }>
-    getBlob(options: { fullpath?: string; address?: TAddress }): Promise<string | Buffer>
+    getBlob(options: { fullpath?: string; address?: TAddress }): Promise<{
+        onchain: { commit: string; content: string }
+        content: string | Buffer
+        ipfs: boolean
+    }>
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     getCommitBlob(
         treepath: string,

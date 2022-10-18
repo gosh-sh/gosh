@@ -495,26 +495,51 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return { tree, items }
     }
 
-    async getBlob(options: {
-        fullpath?: string
-        address?: TAddress
-    }): Promise<string | Buffer> {
+    async getBlob(options: { fullpath?: string; address?: TAddress }): Promise<{
+        onchain: { commit: string; content: string }
+        content: string | Buffer
+        ipfs: boolean
+    }> {
+        const result: {
+            onchain: { commit: string; content: string }
+            content: string | Buffer
+            ipfs: boolean
+        } = {
+            onchain: { commit: '', content: '' },
+            content: '',
+            ipfs: false,
+        }
+
         const snapshot = await this._getSnapshot(options)
         const data = await snapshot.runLocal('getSnapshot', {})
-        const { value0, value1, value2, value3, value4, value5 } = data
+        const { value0, value1, value2, value3, value4, value5, value6 } = data
 
         const patched = value0 === value3 ? value1 : value4
-        const ipfs = value0 === value3 ? value2 : value5
-        if (!patched && !ipfs) return ''
+        const ipfscid = value0 === value3 ? value2 : value5
 
-        const compressed = ipfs
-            ? (await goshipfs.read(ipfs)).toString()
-            : Buffer.from(patched, 'hex').toString('base64')
-        const decompressed = await zstd.decompress(compressed, false)
-        const buffer = Buffer.from(decompressed, 'base64')
+        // Read onchain snapshot content
+        if (patched) {
+            const compressed = Buffer.from(patched, 'hex').toString('base64')
+            const content = await zstd.decompress(compressed, true)
+            result.onchain = {
+                commit: value0 === value3 ? value0 : value3,
+                content: content,
+            }
+            result.content = content
+            result.ipfs = false
+        }
 
-        if (isUtf8(buffer)) return buffer.toString()
-        return buffer
+        // Read ipfs snapshot content
+        if (ipfscid) {
+            const compressed = (await goshipfs.read(ipfscid)).toString()
+            const decompressed = await zstd.decompress(compressed, false)
+            const buffer = Buffer.from(decompressed, 'base64')
+            result.onchain = { commit: value6, content: result.content as string }
+            result.content = isUtf8(buffer) ? buffer.toString() : buffer
+            result.ipfs = true
+        }
+
+        return result
     }
 
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
@@ -568,7 +593,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const snapshot = await this._getSnapshot({ fullpath })
 
         const applied = []
-        let blobParent: string | undefined
         let cursor: string | undefined
         while (true) {
             const page = await snapshot.getMessages({ msgType: ['IntIn'], cursor }, true)
@@ -579,10 +603,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             for (const { decoded } of page.messages) {
                 if (decoded.name !== 'approve') continue
                 approved.push(decoded.value.commit)
-                if (parentIsNextApproved) {
-                    blobParent = decoded.value.commit
-                    break
-                }
+                if (parentIsNextApproved) break
                 if (decoded.value.commit === target.name) parentIsNextApproved = true
             }
 
@@ -597,20 +618,29 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     .map(({ decoded }) => decoded.value.diff),
             )
 
-            if (!cursor || parent) break
+            if (!cursor || parentIsNextApproved) break
             await sleep(300)
         }
 
         // Restore blob content to parent commit
-        let previous = await this.getBlob({ fullpath })
+        const { onchain, content, ipfs } = await this.getBlob({ fullpath })
+        const parent = applied.slice(-1)[0].commit
+        let previous = content
         if (Buffer.isBuffer(previous)) return { previous, current: previous }
         for (const diff of applied) {
-            if (diff.patch && diff.commit === blobParent) break
+            if (ipfs && diff.commit === onchain.commit) previous = onchain.content
+            if (parent === target.name) {
+                previous = ''
+                break
+            }
+            if (diff.patch && diff.commit === parent) break
+
             previous = await this._applyBlobDiffPatch(previous, diff, true)
         }
 
         // Apply target commit diff
         let current = previous
+        if (Buffer.isBuffer(current)) return { previous, current }
         const diffs = applied.filter((diff) => diff.commit === target.name)
         for (const diff of diffs) {
             current = await this._applyBlobDiffPatch(current, diff)
@@ -642,12 +672,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getBranch(name: string): Promise<TBranch> {
-        const { key, value, version } = await this._getBranch(name)
+        const { branchname, commitaddr, commitversion } = await this._getBranch(name)
         return {
-            name: key,
+            name: branchname,
             commit: {
-                ...(await this.getCommit({ address: value })),
-                version,
+                ...(await this.getCommit({ address: commitaddr })),
+                version: commitversion,
             },
             isProtected: await this._isBranchProtected(name),
         }
@@ -657,14 +687,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { value0 } = await this.repo.runLocal('getAllAddress', {})
         return await Promise.all(
             value0.map(async (item: any) => {
-                const { key, value, version } = item
+                const { branchname, commitaddr, commitversion } = item
                 return {
-                    name: key,
+                    name: branchname,
                     commit: {
-                        ...(await this.getCommit({ address: value })),
-                        version,
+                        ...(await this.getCommit({ address: commitaddr })),
+                        version: commitversion,
                     },
-                    isProtected: await this._isBranchProtected(item.key),
+                    isProtected: await this._isBranchProtected(branchname),
                 }
             }),
         )
@@ -1145,7 +1175,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 chunk.map(async (item) => {
                     const treepath = getTreeItemFullPath(item)
                     const fullpath = `${branch}/${treepath}`
-                    const content = await this.getBlob({ fullpath })
+                    const { content } = await this.getBlob({ fullpath })
                     blobs.push({ treepath, content })
                 }),
             )
