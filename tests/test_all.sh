@@ -12,3 +12,4 @@ set -o pipefail
 ./07-push_to_empty_main.sh
 ./08-repo_with_canceled_diffs.sh
 ./09-ipfs_onchain_transition.sh
+./10-ensure_blobs_onchain.sh
