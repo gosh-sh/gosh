@@ -53,7 +53,8 @@ const App = () => {
 
     useEffect(() => {
         const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
-        AppConfig.setup({
+        const versions = JSON.parse(process.env.REACT_APP_GOSH || '{}')
+        const appconfig = {
             goshclient: {
                 network: {
                     endpoints,
@@ -65,11 +66,28 @@ const App = () => {
                 },
             },
             goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
-            goshver: JSON.parse(process.env.REACT_APP_GOSH || '{}'),
+            goshver: versions,
             ipfs: process.env.REACT_APP_IPFS || '',
             isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
-        })
+        }
+        AppConfig.setup(appconfig)
         setIsInitialized(true)
+
+        // Register service functions for testing/debugging
+        // @ts-ignore
+        window._setGoshVersionLimit = function (num: number) {
+            if (num < 1) {
+                console.log('Number should be >= 1')
+                return false
+            }
+
+            const sliced: any = {}
+            Object.keys(versions)
+                .slice(0, num)
+                .forEach((ver) => (sliced[ver] = versions[ver]))
+            AppConfig.setup({ ...appconfig, goshver: sliced })
+            return AppConfig.versions
+        }
     }, [])
 
     useEffect(() => {
