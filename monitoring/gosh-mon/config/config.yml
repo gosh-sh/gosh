@@ -50,9 +50,10 @@ includes:
     gosh_branch: "release:latest-prerelease"
     use_envs: require
     # separate org-repo for next
-    organization: nextmon-org
-    repository: nextmon-repo
+    organization: next-mon-org
+    repository: next-mon-repo
     redis_pref: next_
+    include: creds-next
 
   cron-rotate: &cron-rotate
     origin:       root
@@ -101,7 +102,7 @@ modes:
       - app-small
       - app-large
       - remote-small
-      - remote-large
+      - remote-large-2
     cron: true
     interval: 900
     do_lock: true
@@ -168,13 +169,13 @@ modes:
     do_lock: true
 
   rem-large-read: &rem-large-read
-    branch:     remote-large
+    branch:     remote-large-2
     handler:    remote-read
     large:      true
     timeout_ms: 50
 
   rem-large-write: &rem-large-write
-    branch:  remote-large
+    branch:  remote-large-2
     handler: remote-write
     large:   true
     interval: 450
@@ -208,7 +209,7 @@ modes:
 
   cron-rem-rotate-large: &cron-rem-rotate-large
     <<: *cron-rotate
-    branch:  remote-large
+    branch:  remote-large-2
     large:   true
 
   cron-rem-rotate-small-next:

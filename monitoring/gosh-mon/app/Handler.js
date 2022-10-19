@@ -85,5 +85,16 @@ class Handler {
         }
         return this.app.lastMetrics;
     }
+    finalize() {
+        try {
+            if (this.redis) {
+                this.redis?.quit();
+                if (this.redlock) {
+                    this.redlock.quit().then().catch();
+                }
+            }
+        }
+        catch (e) { }
+    }
 }
 exports.default = Handler;

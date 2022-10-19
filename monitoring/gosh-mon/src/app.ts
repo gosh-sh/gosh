@@ -43,6 +43,13 @@ for (let k in process.env) {
     }
 }
 
+if (c.include) {
+    const incl = yaml.load(fs.readFileSync('./config/' + c.include + '.yml', 'utf8'));
+    Object.assign(c, incl);
+    Object.assign(conf.global, incl);
+    console.log('Loaded included file ' + c.include);
+}
+
 const app: Application = new Application();
 app.handlerFactory = (silent?: boolean) => selectHandler(c.handler, silent).applyConfiguration(c);
 app.setInterval(c['interval'] - c['subinterval']);
