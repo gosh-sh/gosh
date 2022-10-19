@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { getCommitTime, useCommit } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
@@ -6,7 +6,7 @@ import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
 
 const CommitPage = () => {
-    const { daoName, repoName, branchName, commitName } = useParams()
+    const { daoName, repoName, commitName } = useParams()
     const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 5)
 
     const renderCommitter = (committer: string) => {
@@ -64,26 +64,7 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    {commit.branch !== branchName && (
-                        <div className="mt-4">
-                            <p className="text-sm">
-                                This commit was created in branch <b>{commit.branch}</b>
-                            </p>
-                            <p className="text-sm">
-                                To see the commit diff follow this
-                                <Link
-                                    to={`/o/${daoName}/r/${repoName}/commits/${commit.branch}/${commit.name}`}
-                                    className="ml-1 underline"
-                                >
-                                    link
-                                </Link>
-                            </p>
-                        </div>
-                    )}
-
-                    {commit.branch === branchName && (
-                        <CommitBlobs blobs={blobs} className="mt-4" />
-                    )}
+                    <CommitBlobs blobs={blobs} className="mt-4" />
                 </>
             )}
         </div>
