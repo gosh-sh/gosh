@@ -344,6 +344,10 @@ contract Repository is Modifiers{
     function getPrevious() external view returns(optional(AddrVersion)) {
         return _previousversion;
     }
+    
+    function getTombstone() external view returns(bool) {
+        return _tombstone;
+    }
           
     function getReady() external view returns(bool) {
         return _ready;

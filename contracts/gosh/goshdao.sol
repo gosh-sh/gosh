@@ -374,6 +374,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell s1 = _composeRepoStateInit(name);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+       
+    function getTombstone() external view returns(bool) {
+        return _tombstone;
+    }
     
     function getWallets() external view returns(address[]) {
         address[] AllWallets;
