@@ -601,21 +601,33 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const approved: string[] = []
             let parentIsNextApproved = false
             for (const { decoded } of page.messages) {
-                if (decoded.name !== 'approve') continue
-                approved.push(decoded.value.commit)
+                if (['approve', 'constructor'].indexOf(decoded.name) < 0) continue
+
+                const { value } = decoded
+                if (value.commit) approved.push(value.commit)
                 if (parentIsNextApproved) break
-                if (decoded.value.commit === target.name) parentIsNextApproved = true
+                if (value.commit === target.name) parentIsNextApproved = true
             }
 
             applied.push(
                 ...page.messages
                     .filter(({ decoded }) => {
+                        const { name, value } = decoded
+                        const key = name === 'applyDiff' ? 'namecommit' : 'commit'
                         return (
-                            decoded.name === 'applyDiff' &&
-                            approved.indexOf(decoded.value.namecommit) >= 0
+                            ['applyDiff', 'constructor'].indexOf(name) >= 0 &&
+                            approved.indexOf(value[key]) >= 0
                         )
                     })
-                    .map(({ decoded }) => decoded.value.diff),
+                    .map(({ decoded }) => {
+                        const { name, value } = decoded
+                        if (name === 'applyDiff') return decoded.value.diff
+                        return {
+                            commit: value.commit,
+                            patch: !!value.data,
+                            ipfs: value.ipfsdata,
+                        }
+                    }),
             )
 
             if (!cursor || parentIsNextApproved) break
