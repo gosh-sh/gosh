@@ -67,7 +67,7 @@ where
     pub async fn calculate_tree_address(
         &mut self,
         tree_id: git_hash::ObjectId,
-    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
+    ) -> anyhow::Result<BlockchainContractAddress> {
         Tree::calculate_address(
             &self.es_client,
             &mut self.repo_contract,
@@ -76,7 +76,7 @@ where
         .await
     }
 
-    pub fn new_es_client(&self) -> Result<TonClient, Box<dyn Error>> {
+    pub fn new_es_client(&self) -> anyhow::Result<TonClient> {
         Ok(create_client(&self.config, &self.remote.network)?)
     }
 
@@ -86,7 +86,7 @@ where
         url: &str,
         logger: Logger,
         blockchain: Blockchain,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> anyhow::Result<Self> {
         let remote = Remote::new(url, &config)?;
         let es_client = create_client(&config, &remote.network)?;
 
@@ -122,14 +122,14 @@ where
         })
     }
 
-    async fn capabilities(&self) -> Result<Vec<String>, Box<dyn Error>> {
+    async fn capabilities(&self) -> anyhow::Result<Vec<String>> {
         let mut caps = CAPABILITIES_LIST.map(&String::from).to_vec();
         caps.push("".to_owned());
         Ok(caps)
     }
 
     #[instrument(level = "debug", skip(self))]
-    async fn list(&self, for_push: bool) -> Result<Vec<String>, Box<dyn Error>> {
+    async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
         let refs = list::get_refs(&self.es_client, &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
@@ -147,7 +147,7 @@ where
         Ok(ref_list)
     }
 
-    async fn option(&mut self, name: &str, value: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    async fn option(&mut self, name: &str, value: &str) -> anyhow::Result<Vec<String>> {
         if name == "verbosity" {
             self.set_verbosity(value.parse()?);
             return Ok(vec!["ok".to_string()]);
@@ -163,7 +163,7 @@ where
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dyn Error>> {
+pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
     let blockchain = Blockchain {};
     let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
@@ -220,7 +220,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> Result<(), Box<dy
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (None, None, None) => return Ok(()),
-            _ => Err("unknown command")?,
+            _ => Err(anyhow::anyhow!("unknown command"))?,
         };
         for line in response {
             log::debug!("[{msg}] < {line}");

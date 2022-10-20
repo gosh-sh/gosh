@@ -24,8 +24,6 @@ mod parallel_diffs_upload_support;
 mod utilities;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 #[derive(Default)]
 struct PushBlobStatistics {
     pub new_snapshots: u32,
@@ -60,7 +58,7 @@ where
         branch_name: &str,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
             Some(original_blob_id),
@@ -91,9 +89,9 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut FuturesUnordered<
-            tokio::task::JoinHandle<std::result::Result<(), String>>,
+            tokio::task::JoinHandle<anyhow::Result<()>>,
         >,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         let join_handler =
             blockchain::snapshot::push_initial_snapshot(self, branch_name, file_path).await?;
         parallel_snapshot_uploads.push(join_handler);
@@ -140,9 +138,9 @@ where
         branch_name: &str,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut FuturesUnordered<
-            tokio::task::JoinHandle<std::result::Result<(), String>>,
+            tokio::task::JoinHandle<anyhow::Result<()>>,
         >,
-    ) -> Result<PushBlobStatistics> {
+    ) -> anyhow::Result<PushBlobStatistics> {
         let mut statistics = PushBlobStatistics::new();
         let prev_tree_root_id: Option<ObjectId> = {
             let buffer: Vec<u8> = Vec::new();
@@ -208,7 +206,7 @@ where
     }
 
     #[instrument(level = "debug", skip(self))]
-    fn get_parent_id(&mut self, commit_id: &ObjectId) -> Result<ObjectId> {
+    fn get_parent_id(&mut self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -231,7 +229,7 @@ where
 
     // find ancestor commit
     #[instrument(level = "debug", skip(self))]
-    async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> Result<String> {
+    async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
         // Note:
         // Here is the problem. We have file snapshot per branch per path.
         // However in git file is not attached to a branch neither it is bound to a path.
@@ -247,7 +245,7 @@ where
 
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut parallel_snapshot_uploads: FuturesUnordered<
-            tokio::task::JoinHandle<std::result::Result<(), String>>,
+            tokio::task::JoinHandle<anyhow::Result<()>>,
         > = FuturesUnordered::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
@@ -272,11 +270,10 @@ where
             )
             .await?;
             if is_protected {
-                return Err(format!(
+                anyhow::bail!(
                     "This branch '{branch_name}' is protected. \
                     Go to app.gosh.sh and create a proposal to apply this branch change."
-                )
-                .into());
+                );
             }
             let (remote_commit_addr, ..) = parsed_remote_ref.clone().unwrap();
             let remote_commit_addr =
@@ -425,10 +422,7 @@ where
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
         while let Some(finished_task) = parallel_snapshot_uploads.next().await {
-            let finished_task: std::result::Result<
-                std::result::Result<(), std::string::String>,
-                JoinError,
-            > = finished_task;
+            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
                     panic!("snapshots join-hanlder: {}", e);
@@ -455,7 +449,7 @@ where
     }
 
     #[instrument(level = "debug", skip(self))]
-    pub async fn push(&mut self, refs: &str) -> Result<String> {
+    pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
@@ -467,7 +461,7 @@ where
     }
 }
 
-async fn delete_remote_ref(remote_ref: &str) -> Result<String> {
+async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
@@ -497,8 +491,15 @@ mod tests {
             context: &TonClient,
             repo_addr: &BlockchainContractAddress,
             branch_name: &str,
-        ) -> Result<bool> {
+        ) -> anyhow::Result<bool> {
             Ok(true)
+        }
+        async fn remote_rev_parse(
+            context: &TonClient,
+            repository_address: &BlockchainContractAddress,
+            rev: &str,
+        ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
+            Ok(None)
         }
     }
 
@@ -545,7 +546,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_push() -> Result<()> {
+    async fn test_push() -> anyhow::Result<()> {
         log::info!("Preparing repository for tests");
         // TODO: rewrite from libgit2 to gitoxide
         let dir = std::env::temp_dir().join("test_push");

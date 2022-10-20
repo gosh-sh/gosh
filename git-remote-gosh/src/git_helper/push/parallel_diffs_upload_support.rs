@@ -1,4 +1,3 @@
-use super::Result;
 use crate::blockchain::BlockchainService;
 use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::GitHelper;
@@ -16,8 +15,7 @@ pub struct ParallelDiffsUploadSupport {
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
     expecting_deployed_contacts_addresses: Vec<BlockchainContractAddress>,
-    pushed_blobs:
-        FuturesUnordered<tokio::task::JoinHandle<std::result::Result<(), std::string::String>>>,
+    pushed_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>>,
 }
 
 pub struct ParallelDiff {
@@ -71,7 +69,7 @@ impl ParallelDiffsUploadSupport {
     pub async fn push_dangling(
         &mut self,
         context: &mut GitHelper<impl BlockchainService>,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         for (
             diff_coordinates,
             ParallelDiff {
@@ -119,7 +117,7 @@ impl ParallelDiffsUploadSupport {
     pub async fn wait_all_diffs(
         &mut self,
         context: &mut GitHelper<impl BlockchainService>,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
@@ -170,7 +168,7 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService>,
         diff: ParallelDiff,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         match self.dangling_diffs.get(&diff.file_path) {
             None => {}
             Some((

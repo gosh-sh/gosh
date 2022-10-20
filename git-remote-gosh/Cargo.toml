@@ -27,6 +27,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 mockall = '^0'
 
 [dependencies]
+anyhow='^1'
 mockall_double = '^0'
 async-trait = '^0'
 base64 = '^0'
