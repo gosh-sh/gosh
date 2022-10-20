@@ -131,7 +131,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         _access = pubkey;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
@@ -139,7 +138,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         _access = null;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
     }
 
@@ -148,7 +146,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)){
         _access = pubkey;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
@@ -156,7 +153,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)) {
         _access = null;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
     }
 
