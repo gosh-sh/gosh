@@ -5,6 +5,7 @@ import Spinner from '../../components/Spinner'
 import { getCommitTime, useBranches, useCommitList } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
+import Committer from '../../components/Commit/Committer'
 
 const CommitsPage = () => {
     const navigate = useNavigate()
@@ -16,18 +17,6 @@ const CommitsPage = () => {
         repo,
         branchName,
     )
-
-    const renderCommitter = (committer: string) => {
-        const [username, email] = committer.split(' ')
-        return (
-            <CopyClipboard
-                label={shortString(username)}
-                componentProps={{
-                    text: email,
-                }}
-            />
-        )
-    }
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -72,7 +61,7 @@ const CommitsPage = () => {
                                     <span className="mr-2 text-gray-050a15/65">
                                         Commit by
                                     </span>
-                                    {renderCommitter(commit.committer || '')}
+                                    <Committer committer={commit.committer} />
                                 </div>
                                 <div>
                                     <span className="mr-2 text-gray-050a15/65">at</span>

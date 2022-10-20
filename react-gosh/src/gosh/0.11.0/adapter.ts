@@ -45,6 +45,7 @@ import {
     IPushCallback,
     TBranch,
     TCommit,
+    TDiff,
     TRepository,
     TTag,
     TTree,
@@ -683,6 +684,72 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
+    async getPullRequestBlob(
+        item: { treepath: string; index: number },
+        commit: string,
+    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+        const details = await this.getCommit({ name: commit })
+
+        // If commit was accepted, get blob state at commit
+        if (item.index === -1) {
+            return await this.getCommitBlob(item.treepath, commit)
+        }
+
+        // If commit is not accepted, get blob state at parent commit
+        const parent = await this.getCommit({ address: details.parents[0] })
+
+        let previous: string | Buffer = ''
+        let current: string | Buffer = ''
+        const blob = await this._getSnapshot({
+            fullpath: `${parent.branch}/${item.treepath}`,
+        })
+        if (await blob.isDeployed()) {
+            const state = await this.getCommitBlob(item.treepath, parent.name)
+            previous = current = state.current
+        }
+
+        // Get diffs and apply
+        const diff = await this._getDiff(commit, item.index, 0)
+        const subdiffs = await this._getDiffs(diff)
+        for (const subdiff of subdiffs) {
+            current = await this._applyBlobDiffPatch(current, subdiff)
+        }
+
+        return { previous, current }
+    }
+
+    async getPullRequestBlobs(
+        commit: string,
+    ): Promise<{ treepath: string; index: number }[]> {
+        // Get IGoshDiff instance list for commit
+        const diffs: IGoshDiff[] = []
+        let index1 = 0
+        while (true) {
+            const diff = await this._getDiff(commit, index1, 0)
+            if (!(await diff.isDeployed())) break
+
+            diffs.push(diff)
+            index1++
+        }
+
+        // Get blobs list from commit (if commit was accepted)
+        if (!diffs.length) {
+            const blobs = await this.getCommitBlobs(commit)
+            return blobs.map((treepath) => ({ treepath, index: -1 }))
+        }
+
+        // Get blobs list from diffs (if commit is not accepted)
+        return await Promise.all(
+            diffs.map(async (diff, index) => {
+                const subdiffs = await this._getDiffs(diff)
+                const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
+                const name = await snapshot.getName()
+                const treepath = name.split('/').slice(1).join('/')
+                return { treepath, index }
+            }),
+        )
+    }
+
     async getBranch(name: string): Promise<TBranch> {
         const { branchname, commitaddr, commitversion } = await this._getBranch(name)
         return {
@@ -785,8 +852,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             fromCommit: fromBranch.commit.name,
         })
         const wait = await whileFinite(async () => {
-            const branch = await this.getBranch(name)
-            return branch.name === name
+            const { branchname } = await this._getBranch(name)
+            return branchname === name
         })
         if (!wait) throw new GoshError('Deploy branch timeout reached')
     }
@@ -799,8 +866,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Check branch
-        const { key } = await this._getBranch(name)
-        if (!key) throw new GoshError('Branch does not exist')
+        const { branchname } = await this._getBranch(name)
+        if (!branchname) throw new GoshError('Branch does not exist')
         if (await this._isBranchProtected(name)) {
             throw new GoshError('Branch is protected')
         }
@@ -827,8 +894,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             Name: name,
         })
         const wait = await whileFinite(async () => {
-            const { key } = await this._getBranch(name)
-            return !key
+            const { branchname } = await this._getBranch(name)
+            return !branchname
         })
         if (!wait) throw new GoshError('Delete branch timeout reached')
     }
@@ -1209,6 +1276,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return new GoshDiff(this.client, value0)
     }
 
+    private async _getDiffs(diff: IGoshDiff): Promise<TDiff[]> {
+        const { value0 } = await diff.runLocal('getdiffs', {})
+        return value0
+    }
+
     private async _getTag(address: TAddress): Promise<TTag> {
         const tag = new GoshTag(this.client, address)
         const commit = await tag.runLocal('getCommit', {})
@@ -1465,7 +1537,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _applyBlobDiffPatch(
         content: string | Buffer,
-        diff: any,
+        diff: TDiff,
         reverse: boolean = false,
     ): Promise<string | Buffer> {
         if (Buffer.isBuffer(content)) return content
@@ -1473,7 +1545,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { ipfs, patch } = diff
         const compressed = ipfs
             ? (await goshipfs.read(ipfs)).toString()
-            : Buffer.from(patch, 'hex').toString('base64')
+            : Buffer.from(patch!, 'hex').toString('base64')
         const decompressed = await zstd.decompress(compressed, false)
         const buffer = Buffer.from(decompressed, 'base64')
 
