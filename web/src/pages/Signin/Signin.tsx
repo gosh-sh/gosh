@@ -2,7 +2,7 @@ import { Form, Formik, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import { TextField, TextareaField } from '../../components/Formik'
 import { useSetRecoilState } from 'recoil'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
@@ -17,7 +17,7 @@ type TFormValues = {
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const { signin } = useUser()
+    const { persist, signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
 
     const onFormSubmit = async (values: TFormValues) => {
@@ -48,6 +48,7 @@ const SigninPage = () => {
         }
     }
 
+    if (persist.username) return <Navigate to="/a/orgs" />
     return (
         <div className="block-auth">
             <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-56px">
