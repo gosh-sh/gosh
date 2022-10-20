@@ -27,6 +27,11 @@ class WalletMonService extends Service_1.default {
                 m.set(`balance${tag}`, BigInt(w.balance));
                 m.set(`last_paid${tag}`, w.last_paid);
                 m.set(`last_trans_lt${tag}`, BigInt(w.last_trans_lt));
+                if (w.balance_other) {
+                    for (const bo of w.balance_other) {
+                        m.set((0, Utils_1.add_tag)(`balance_other${tag}`, `currency="${bo.currency}"`), BigInt(bo.value));
+                    }
+                }
             }
         }
     }
@@ -34,7 +39,7 @@ class WalletMonService extends Service_1.default {
         return await p('wallet_data', client.net.query_collection({
             collection: 'accounts',
             filter: { id: { in: Object.values(this._targets[name]) } },
-            result: "id balance last_paid last_trans_lt"
+            result: "id balance last_paid last_trans_lt balance_other { currency value }"
         }));
     }
 }
