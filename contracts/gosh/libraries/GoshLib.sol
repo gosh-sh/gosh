@@ -7,7 +7,7 @@
 pragma ever-solidity =0.64.0;
 
 library GoshLib {
-    string constant versionLib = "0.11.0";
+    string constant versionLib = "0.11.1";
 
     function buildSignatureCode(
         TvmCell originalCode,
