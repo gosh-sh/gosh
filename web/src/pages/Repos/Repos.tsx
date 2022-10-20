@@ -1,103 +1,82 @@
 import { useState } from 'react'
-import { useQuery } from 'react-query'
-import { useRecoilValue } from 'recoil'
-import Spinner from '../../components/Spinner'
-import { goshRoot } from 'react-gosh'
-import {
-    GoshDao,
-    GoshRepository,
-    GoshWallet,
-    userStateAtom,
-    TGoshRepoDetails,
-} from 'react-gosh'
-import RepoListItem from '../DaoRepos/RepoListItem'
 
 const RepositoriesPage = () => {
-    const userState = useRecoilValue(userStateAtom)
     const [search, setSearch] = useState<string>()
-    const repoListQuery = useQuery(
-        ['userRepositoryList'],
-        async (): Promise<{ repo: TGoshRepoDetails; daoName?: string }[]> => {
-            if (!userState.keys) return []
+    // const repoListQuery = useQuery(
+    //     ['userRepositoryList'],
+    //     async (): Promise<{ repo: TGoshRepo; daoName?: string }[]> => {
+    //         if (!userState.keys || !gosh) return []
 
-            // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(
-                `0x${userState.keys.public}`,
-            )
-            const walletCodeHash = await goshRoot.account.client.boc.get_boc_hash({
-                boc: walletCode,
-            })
-            const walletAddrs = await goshRoot.account.client.net.query_collection({
-                collection: 'accounts',
-                filter: {
-                    code_hash: { eq: walletCodeHash.hash },
-                },
-                result: 'id',
-            })
+    //         // Get GoshWallet code by user's pubkey and get all user's wallets
+    //         const walletCodeHash = await gosh.getDaoWalletCodeHash()
+    //         const walletAddrs = await gosh.client.net.query_collection({
+    //             collection: 'accounts',
+    //             filter: {
+    //                 code_hash: { eq: walletCodeHash },
+    //             },
+    //             result: 'id',
+    //         })
 
-            // Get GoshDaos from user's GoshWallets
-            const daoAddrs = new Set(
-                await Promise.all(
-                    (walletAddrs?.result || []).map(async (item: any) => {
-                        const wallet = new GoshWallet(goshRoot.account.client, item.id)
-                        return await wallet.getDaoAddr()
-                    }),
-                ),
-            )
-            const daos = Array.from(daoAddrs).map((addr) => {
-                return new GoshDao(goshRoot.account.client, addr)
-            })
+    //         // Get GoshDaos from user's GoshWallets
+    //         const daoAddrs = new Set(
+    //             await Promise.all(
+    //                 (walletAddrs?.result || []).map(async (item: any) => {
+    //                     const wallet = new GoshWallet(
+    //                         AppConfig.goshroot.account.client,
+    //                         item.id,
+    //                     )
+    //                     return await wallet.getDaoAddr()
+    //                 }),
+    //             ),
+    //         )
+    //         const daos = Array.from(daoAddrs).map((addr) => {
+    //             return new GoshDao(AppConfig.goshclient, addr)
+    //         })
 
-            // Get repos for each DAO
-            const repos = await Promise.all(
-                daos.map(async (dao) => {
-                    const repoCode = await goshRoot.getDaoRepoCode(dao.address)
-                    const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({
-                        boc: repoCode,
-                    })
-                    const repoAddrs = await goshRoot.account.client.net.query_collection({
-                        collection: 'accounts',
-                        filter: {
-                            code_hash: { eq: repoCodeHash.hash },
-                        },
-                        result: 'id',
-                    })
+    //         // Get repos for each DAO
+    //         const repos = await Promise.all(
+    //             daos.map(async (dao) => {
+    //                 const repoCodeHash = await gosh.getRepositoryCodeHash(dao.address)
+    //                 const repoAddrs = await gosh.client.net.query_collection({
+    //                     collection: 'accounts',
+    //                     filter: {
+    //                         code_hash: { eq: repoCodeHash },
+    //                     },
+    //                     result: 'id',
+    //                 })
 
-                    const repos = await Promise.all(
-                        (repoAddrs?.result || []).map(async (item) => {
-                            const repo = new GoshRepository(
-                                goshRoot.account.client,
-                                item.id,
-                            )
-                            return await repo.getDetails()
-                        }),
-                    )
-                    // TODO: Get dao name
-                    // return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
-                    return repos.map((repo) => ({ repo, daoName: '' }))
-                }),
-            )
+    //                 const repos = await Promise.all(
+    //                     (repoAddrs?.result || []).map(async (item) => {
+    //                         const repo = await gosh.getRepository({ address: item.id })
+    //                         return await repo.getDetails()
+    //                     }),
+    //                 )
+    //                 // TODO: Get dao name
+    //                 // return repos.map((repo) => ({ repo, daoName: dao.meta?.name }))
+    //                 return repos.map((repo) => ({ repo, daoName: '' }))
+    //             }),
+    //         )
 
-            return repos.reduce((items: any[], item) => {
-                items.push(...item)
-                return items
-            }, [])
-        },
-        {
-            enabled: !!goshRoot && !!userState.keys?.public,
-            select: (data) => {
-                if (!search) return data
-                const pattern = new RegExp(search, 'i')
-                return data.filter((item) => {
-                    return `${item.daoName}/${item.repo.name}`.search(pattern) >= 0
-                })
-            },
-        },
-    )
+    //         return repos.reduce((items: any[], item) => {
+    //             items.push(...item)
+    //             return items
+    //         }, [])
+    //     },
+    //     {
+    //         enabled: !!AppConfig.goshroot && !!userState.keys?.public,
+    //         select: (data) => {
+    //             if (!search) return data
+    //             const pattern = new RegExp(search, 'i')
+    //             return data.filter((item) => {
+    //                 return `${item.daoName}/${item.repo.name}`.search(pattern) >= 0
+    //             })
+    //         },
+    //     },
+    // )
 
     return (
         <>
-            <h3 className="font-semibold text-base mb-4">Repositories</h3>
+            {/* <h3 className="font-semibold text-base mb-4">Repositories</h3>
             <div className="flex flex-wrap gap-4 justify-between">
                 <div className="input grow">
                     <input
@@ -135,7 +114,7 @@ const RepositoriesPage = () => {
                             />
                         ),
                 )}
-            </div>
+            </div> */}
         </>
     )
 }

@@ -16,7 +16,7 @@ import "../libraries/TokenMsgFlag.sol";
 abstract contract TokenWalletBase is ITokenWallet {
 
     address static root_;
-    address static owner_;
+    address public static owner_;
 
     uint128 balance_;
 
@@ -73,7 +73,7 @@ abstract contract TokenWalletBase is ITokenWallet {
         } else {
             recipientWallet = address(tvm.hash(stateInit));
         }
-            
+
         balance_ -= amount;
 
         ITokenWallet(recipientWallet).acceptTransfer{ value: 0, flag: TokenMsgFlag.ALL_NOT_RESERVED, bounce: true }(

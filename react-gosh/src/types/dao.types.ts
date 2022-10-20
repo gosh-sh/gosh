@@ -1,50 +1,64 @@
-type TDaoDetails = {
-    address: string
+import { KeyPair } from '@eversdk/core'
+import { IGoshDaoAdapter } from '../gosh/interfaces'
+import { TAddress } from './types'
+
+type TDao = {
+    address: TAddress
     name: string
-    members: string[]
+    version: string
+    members: { profile: TAddress; wallet: TAddress }[]
     supply: number
-    ownerPubkey: string
+    owner: TAddress
+    isAuthOwner: boolean
+    isAuthMember: boolean
+    isAuthenticated: boolean
 }
 
-type TDaoListItem = Omit<TDaoDetails, 'members' | 'supply' | 'ownerPubkey'> & {
-    members?: string[]
+type TDaoListItem = Omit<
+    TDao,
+    'members' | 'supply' | 'owner' | 'isAuthOwner' | 'isAuthMember' | 'isAuthenticated'
+> & {
+    adapter: IGoshDaoAdapter
+    members?: { profile: TAddress; wallet: TAddress }[]
     supply?: number
-    ownerPubkey?: string
+    owner?: TAddress
+    isAuthOwner?: boolean
+    isAuthMember?: boolean
+    isAuthenticated?: boolean
     isLoadDetailsFired?: boolean
 }
 
 type TDaoCreateProgress = {
     isFetching: boolean
     isDaoDeployed?: boolean
-    members: TDaoMemberCreateProgress['members']
 }
 
 type TDaoMemberDetails = {
-    wallet: string
-    pubkey: string
+    name: string
+    profile: TAddress
+    wallet: TAddress
     smvBalance: number
 }
 
-type TDaoMemberListItem = Omit<TDaoMemberDetails, 'pubkey' | 'smvBalance'> & {
-    pubkey?: string
+type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
     smvBalance?: number
     isLoadDetailsFired?: boolean
 }
 
-type TDaoMemberCreateProgress = {
-    isFetching: boolean
-    members: {
-        pubkey: string
-        isDeployed?: boolean
-        isMinted?: boolean
-    }[]
+type TWalletDetails = {
+    address: TAddress
+    version: string
+    keys?: KeyPair
+    daoAddress: string
+    isDaoMember: boolean
+    isDaoOwner: boolean
 }
 
 export {
-    TDaoDetails,
+    TDao,
     TDaoListItem,
     TDaoCreateProgress,
     TDaoMemberDetails,
     TDaoMemberListItem,
-    TDaoMemberCreateProgress,
+    TWalletDetails,
 }

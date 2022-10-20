@@ -4,10 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity =0.64.0;
 
 library GoshLib {
-    string constant versionLib = "0.10.0";
+    string constant versionLib = "0.11.0";
 
     function buildSignatureCode(
         TvmCell originalCode,
@@ -25,11 +25,11 @@ library GoshLib {
     
     function buildWalletCode(
         TvmCell originalCode,
-        uint256 pubkey,
+        address pubaddr,
         string version
     ) public returns (TvmCell) {
         TvmBuilder b;
-        b.store(pubkey);
+        b.store(pubaddr);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

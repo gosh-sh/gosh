@@ -1,23 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Listbox } from '@headlessui/react'
-import { TGoshBranch } from 'react-gosh'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
 import { classNames } from 'react-gosh'
+import { TBranch } from 'react-gosh/dist/types/repo.types'
 
 type TBranchSelectProps = {
     className?: string
-    branch?: TGoshBranch
-    branches: TGoshBranch[]
+    branch?: TBranch
+    branches: TBranch[]
     disabled?: boolean
-    onChange(selected: TGoshBranch | undefined): void
+    onChange(selected: TBranch | undefined): void
 }
 
 const BranchSelect = (props: TBranchSelectProps) => {
     const { className, branch, branches, disabled, onChange } = props
     const searchRef = useRef<HTMLInputElement>(null)
     const [search, setSearch] = useState<string>('')
-    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
+    const [filtered, setFiltered] = useState<TBranch[]>(branches)
 
     useEffect(() => {
         if (search) {

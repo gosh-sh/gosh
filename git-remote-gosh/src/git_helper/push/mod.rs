@@ -278,9 +278,10 @@ where
                 )
                 .into());
             }
+            let (remote_commit_addr, ..) = parsed_remote_ref.clone().unwrap();
             let remote_commit_addr =
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
-                    parsed_remote_ref.clone().unwrap(),
+                    remote_commit_addr,
                 );
             let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
                 .await?

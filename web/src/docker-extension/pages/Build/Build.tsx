@@ -3,12 +3,11 @@ import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../../../pages/RepoLayout'
 import BranchSelect from '../../../components/BranchSelect'
 import * as Yup from 'yup'
-import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom, getCommit } from 'react-gosh'
-import TextField from '../../../components/FormikForms/TextField'
+import { userAtom, useBranches } from 'react-gosh'
+import { TextField } from '../../../components/Formik'
 
 type TBuildFormValues = {
     tag: string
@@ -16,14 +15,14 @@ type TBuildFormValues = {
 }
 
 const BuildPage = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const [output, setOutput] = useState('')
 
-    // const [dirUp] = splitByPath(treePath)
+    // const [dirUp] = splitByPath(treepath)
 
     const isDisabled = false
     const rootContract = process.env.REACT_APP_GOSH_ADDR
@@ -43,9 +42,10 @@ const BuildPage = () => {
         setOutput('')
         console.log('onBuild', values)
         if (!!branch) {
-            const commit = await getCommit(repo, branch.commitAddr)
+            const commit = await repo.getCommit({ address: branch.commit.address })
             console.log('commit', commit)
 
+            // TODO: Get GOSH version?
             await DockerClient.buildImage(
                 `gosh://${rootContract}/${daoName}/${repoName}`,
                 commit.name,
@@ -53,6 +53,7 @@ const BuildPage = () => {
                 values.tag,
                 appendLog,
                 userState,
+                '0.11.0',
             )
         } else {
             console.error(`Error: branch has no commit address`)

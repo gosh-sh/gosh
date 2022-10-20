@@ -10,7 +10,7 @@
 # 8. push changes
 # 9. update file (3) in repo9-clone1 (with data size 160Kb)
 # 10. push changes
-# 11. clone repo in repo8-clone2
+# 11. clone repo in repo9-clone2
 # 12. comparing repositories repo9-clone1 and repo9-clone2 (similar)
 
 set -e 

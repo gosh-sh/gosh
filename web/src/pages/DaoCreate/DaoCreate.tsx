@@ -1,12 +1,11 @@
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField, TextareaField } from '../../components/Formik'
 import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
 import { useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
-import TextareaField from '../../components/FormikForms/TextareaField'
 import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
@@ -16,11 +15,12 @@ type TFormValues = {
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const { createDao, progress } = useDaoCreate()
+    const daocreate = useDaoCreate()
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            await createDao(values.name, values.members.split('\n'))
+            const { name, members } = values
+            await daocreate.create(name, members.split('\n'))
             navigate('/a/orgs')
         } catch (e: any) {
             console.error(e.message)
@@ -71,16 +71,21 @@ const DaoCreatePage = () => {
 
                             <div className="mt-6">
                                 <Field
-                                    label="Members"
+                                    label="Add members (optional)"
                                     name="members"
                                     component={TextareaField}
                                     inputProps={{
-                                        placeholder: "Members' public keys",
+                                        placeholder: 'Username(s)',
                                         autoComplete: 'off',
                                         disabled: isSubmitting,
                                         rows: 5,
+                                        onChange: (e: any) =>
+                                            setFieldValue(
+                                                'members',
+                                                e.target.value.toLowerCase(),
+                                            ),
                                     }}
-                                    help="Put each public key (0x...) from new line"
+                                    help="Put each @username from new line"
                                 />
                             </div>
 
@@ -96,7 +101,7 @@ const DaoCreatePage = () => {
                     )}
                 </Formik>
 
-                <DaoCreateProgress progress={progress} className={'mt-4'} />
+                <DaoCreateProgress progress={daocreate.progress} className={'mt-4'} />
             </div>
         </div>
     )

@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
-import { GoshSmvProposal } from 'react-gosh'
 import { sleep } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { getPaginatedAccounts, goshClient } from 'react-gosh'
+import { getPaginatedAccounts, AppConfig } from 'react-gosh'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
+import { GoshSmvProposal } from 'react-gosh/dist/gosh/0.11.0/goshsmvproposal'
+import { IGoshWallet } from 'react-gosh/dist/gosh/interfaces'
 
 const EventsPage = () => {
     const pageSize = 10
 
     const { daoName } = useParams()
-    const { dao, wallet } = useOutletContext<TDaoLayoutOutletContext>()
-    const smvBalance = useSmvBalance(wallet)
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const smvBalance = useSmvBalance(dao.adapter, dao.details.isAuthenticated)
     const [events, setEvents] = useState<{
         items: any[]
         isFetching: boolean
@@ -25,13 +26,13 @@ const EventsPage = () => {
         page: 1,
     })
 
-    /** Load next chunk of events list items */
-    const onLoadMore = () => {
+    /** Get next chunk of events list items */
+    const getMore = () => {
         setEvents((state) => ({ ...state, page: state.page + 1 }))
     }
 
     /** Load event details and update corresponging list item */
-    const setEventDetails = async (address: string) => {
+    const setEventDetails = async (address: string, walletAddress?: string) => {
         console.debug('Set event for', address)
         setEvents((state) => ({
             ...state,
@@ -41,8 +42,8 @@ const EventsPage = () => {
             }),
         }))
 
-        const event = new GoshSmvProposal(dao.instance.account.client, address)
-        const details = await event.getDetails()
+        const event = new GoshSmvProposal(AppConfig.goshclient, address)
+        const details = await event.getDetails(2, walletAddress)
 
         setEvents((state) => ({
             ...state,
@@ -57,19 +58,18 @@ const EventsPage = () => {
     useEffect(() => {
         const getEventList = async () => {
             // Get events accounts by code
-            const code = await dao.instance.getSmvProposalCode()
-            const codeHash = await goshClient.boc.get_boc_hash({ boc: code })
+            const codeHash = await dao.adapter.getSmvProposalCodeHash()
             const list: any[] = []
             let next: string | undefined
             while (true) {
                 const accounts = await getPaginatedAccounts({
-                    filters: [`code_hash: {eq:"${codeHash.hash}"}`],
+                    filters: [`code_hash: {eq:"${codeHash}"}`],
                     limit: 50,
                     lastId: next,
                 })
                 const items = await Promise.all(
                     accounts.results.map(async ({ id }) => {
-                        const event = new GoshSmvProposal(dao.instance.account.client, id)
+                        const event = new GoshSmvProposal(AppConfig.goshclient, id)
                         return {
                             address: event.address,
                             params: await event.getParams(),
@@ -114,8 +114,9 @@ const EventsPage = () => {
         <div className="bordered-block px-7 py-8">
             <div>
                 <SmvBalance
-                    details={smvBalance}
-                    wallet={wallet}
+                    details={smvBalance.details}
+                    wallet={smvBalance.wallet!}
+                    dao={dao}
                     className="mb-5 bg-gray-100"
                 />
 
@@ -138,7 +139,7 @@ const EventsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {events.items.slice(0, events.page * pageSize).map((event, index) => {
-                        if (!event.isBusy) setEventDetails(event.address)
+                        if (!event.isBusy) setEventDetails(event.address, smvBalance.wallet?.address)
                         return (
                             <EventListItem
                                 key={index}
@@ -155,7 +156,7 @@ const EventsPage = () => {
                             className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                             type="button"
                             disabled={events.isFetching}
-                            onClick={onLoadMore}
+                            onClick={getMore}
                         >
                             {events.isFetching && <Spinner className="mr-2" />}
                             Load more

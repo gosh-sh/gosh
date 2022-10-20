@@ -23,7 +23,7 @@ import {
     Container as ContainerType,
 } from './../../interfaces'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom, shortString } from 'react-gosh'
+import { userAtom, shortString } from 'react-gosh'
 import CopyClipboard from '../../../components/CopyClipboard'
 
 const StatusDot = ({ status }: { status: string }) => (
@@ -274,7 +274,7 @@ function EnhancedTable<T extends { id: string }>({
 }
 
 const Main = () => {
-    const userState = useRecoilValue(userStateAtom)
+    const userState = useRecoilValue(userAtom)
     const [validation, setValidation] = useState<boolean | Validation>(false)
     const [containers, setContainers] = useState<{
         data: Array<ContainerType>
@@ -435,6 +435,7 @@ const Main = () => {
         }
         setValidation(validation)
 
+        // TODO: Get GOSH version?
         await DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
@@ -452,6 +453,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             userState,
+            '0.11.0',
         )
     }
 
@@ -464,6 +466,7 @@ const Main = () => {
             stdout: '',
         }
         setValidation(validation)
+        // TODO: Get GOSH version?
         DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
@@ -481,6 +484,7 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 }),
             userState,
+            '0.11.0',
         )
     }
 

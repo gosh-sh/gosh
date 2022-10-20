@@ -1,18 +1,17 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { useGoshRepoTree } from '../../hooks/gosh.hooks'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
 import Spinner from '../../components/Spinner'
+import { useBranches, useTree } from 'react-gosh'
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
-    const { tree, getTreeItems } = useGoshRepoTree(repo, branch)
+    const { branch } = useBranches(repo, branchName)
+    const { tree, getTreeItems } = useTree(daoName!, repoName!, branch?.commit)
     const [search, setSearch] = useState<string>('')
     const treeItems = useRecoilValue(getTreeItems(search))
 

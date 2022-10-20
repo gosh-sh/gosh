@@ -4,11 +4,11 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity =0.64.0;
 
-import "errors.sol";
+import "replayprotection.sol";
 
-//Structs
+//Structs  
 struct TreeAnswer {
     address sender;
     bool isCommit;
@@ -40,16 +40,22 @@ struct Diff {
 }
 
 struct Item {
-    string key;
-    address value;
+    string branchname;
+    address commitaddr;
+    string commitversion;
+}
+
+struct AddrVersion {
+    address addr;
+    string version;
 }
 
 struct GlobalConfig {
         address goshAddr;
 }
 
-abstract contract Modifiers is Errors {    
-    string constant versionModifiers = "0.10.0";
+abstract contract Modifiers is ReplayProtection {   
+    string constant versionModifiers = "1.0.0";
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
@@ -57,13 +63,15 @@ abstract contract Modifiers is Errors {
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
     uint128 constant FEE_DEPLOY_SNAPSHOT = 16 ton;
-    uint128 constant FEE_DEPLOY_COPY_SNAPSHOT = 2 ton;
     uint128 constant FEE_DEPLOY_BRANCH = 1.4 ton;
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
     uint128 constant FEE_DEPLOY_WALLET = 60 ton;
+    uint128 constant FEE_DEPLOY_PROFILE = 10000 ton;
+    uint128 constant FEE_DEPLOY_GOSH = 51 ton;
+    uint128 constant FEE_DEPLOY_DAO_PROFILE = 101 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
@@ -78,10 +86,10 @@ abstract contract Modifiers is Errors {
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
     uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
-
     
-    modifier onlyOwner {
-        require(msg.pubkey() == tvm.pubkey(), ERR_NOT_OWNER);
+    modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
+        require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
+        require(msg.pubkey() == rootpubkey.get(), ERR_NOT_OWNER);
         _;
     }
 
@@ -89,9 +97,9 @@ abstract contract Modifiers is Errors {
         require(msg.pubkey() == rootpubkey, ERR_NOT_OWNER);
         _;
     }
-
-    modifier accept() {
-        tvm.accept();
+    
+    modifier onlyOwnerAddress(address addr) {
+        require(msg.sender == addr, ERR_NOT_OWNER);
         _;
     }
     

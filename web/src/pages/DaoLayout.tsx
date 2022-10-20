@@ -1,31 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { useGoshWallet } from '../hooks/gosh.hooks'
-import {
-    IGoshDao,
-    IGoshWallet,
-    userStatePersistAtom,
-    classNames,
-    useDao,
-    TDaoDetails,
-} from 'react-gosh'
+import { classNames, useDao, TDao } from 'react-gosh'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 export type TDaoLayoutOutletContext = {
     dao: {
-        instance: IGoshDao
-        details: TDaoDetails
-        isOwner: boolean
+        adapter: IGoshDaoAdapter
+        details: TDao
     }
-    wallet?: IGoshWallet
 }
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName } = useParams()
-    const dao = useDao(daoName)
-    const wallet = useGoshWallet(dao.instance)
+    const dao = useDao(daoName!)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
@@ -36,10 +24,8 @@ const DaoLayout = () => {
     ]
 
     useEffect(() => {
-        const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
-        if (dao.instance && walletAwaited) setIsReady(true)
-    }, [dao.instance, userStatePersist.phrase, wallet])
+        if (!dao.isFetching) setIsReady(true)
+    }, [dao.isFetching])
 
     return (
         <div className="container container--full my-10">
@@ -47,20 +33,35 @@ const DaoLayout = () => {
                 <Link to={`/o/${daoName}`} className="font-semibold text-2xl">
                     {daoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {dao.details?.version}
+                </span>
             </h1>
 
-            {!isReady && (
+            {!dao.errors.length && !isReady && (
                 <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading organization...
                 </div>
             )}
 
-            {isReady && (
+            {!!dao.errors.length && (
+                <div className="p-3 bg-rose-600 text-white rounded">
+                    <ul>
+                        {dao.errors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {isReady && !dao.errors.length && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
                         {tabs
-                            .filter((item) => (!wallet ? item.public : item))
+                            .filter((item) =>
+                                !dao.details?.isAuthMember ? item.public : item,
+                            )
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -80,7 +81,7 @@ const DaoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ dao, wallet }} />
+                    <Outlet context={{ dao }} />
                 </>
             )}
         </div>

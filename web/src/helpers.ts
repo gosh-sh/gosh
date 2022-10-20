@@ -8,7 +8,7 @@ export const ToastOptionsShortcuts = {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
+        closeOnClick: false,
         pauseOnHover: true,
         pauseOnFocusLoss: false,
         draggable: true,

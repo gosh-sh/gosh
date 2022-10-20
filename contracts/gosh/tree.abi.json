@@ -1,73 +1,69 @@
 {
 	"ABI version": 2,
-	"version": "2.2",
+	"version": "2.3",
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"data","type":"map(uint256,tuple)"},
 				{"name":"ipfs","type":"optional(string)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
-				{"name":"rootPubkey","type":"uint256"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeCommit","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "countAll",
+			"name": "checkFull",
 			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"index","type":"uint128"}
+				{"name":"namecommit","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "count",
+			"name": "checkTree",
 			"inputs": [
-				{"name":"index","type":"uint256"}
+				{"name":"index","type":"uint256"},
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "gotCount",
+			"name": "answerIs",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"res","type":"uint128"}
+				{"name":"_ready","type":"bool"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "sendRequests",
+			"name": "getCheckTree",
 			"inputs": [
-				{"name":"index","type":"uint256"}
+				{"name":"name","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "getCountCommit",
+			"name": "gotCheckTree",
 			"inputs": [
-				{"name":"commit","type":"string"},
-				{"name":"repo","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getCountTree",
-			"inputs": [
-				{"name":"name","type":"string"}
+				{"name":"name","type":"string"},
+				{"name":"res","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -104,17 +100,10 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
-			]
-		},
-		{
-			"name": "getCount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
 			]
 		},
 		{
@@ -142,6 +131,22 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "storeValue",
+			"inputs": [
+				{"name":"newValue","type":"uint256"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [
@@ -154,23 +159,28 @@
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_shaTreeLocal","type":"uint256"},
 		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
 		{"name":"_ipfs","type":"optional(string)"},
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_rootGosh","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_goshroot","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_codeTree","type":"cell"},
 		{"name":"m_codeCommit","type":"cell"},
-		{"name":"_countFiles","type":"uint128"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"_needAnswer","type":"uint128"},
-		{"name":"_count","type":"bool"},
-		{"name":"_countend","type":"bool"},
-		{"components":[{"name":"sender","type":"address"},{"name":"isCommit","type":"bool"}],"name":"request","type":"tuple[]"},
-		{"name":"_flag","type":"bool"}
+		{"name":"_check","type":"bool"},
+		{"name":"_root","type":"bool"},
+		{"name":"_checkbranch","type":"string"},
+		{"name":"_checkaddr","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"}],"name":"_saved","type":"optional(tuple)"}
 	]
 }

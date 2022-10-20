@@ -14,28 +14,27 @@ import {
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
 import { useRecoilValue } from 'recoil'
-import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks'
 import Spinner from '../../components/Spinner'
-import { splitByPath } from 'react-gosh'
+import { splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 
 const RepoPage = () => {
-    const treePath = useParams()['*'] || ''
+    const treepath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
-    const tree = useGoshRepoTree(repo, branch, treePath)
-    const subtree = useRecoilValue(tree.getSubtree(treePath))
+    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const tree = useTree(daoName!, repoName!, branch?.commit, treepath)
+    const subtree = useRecoilValue(tree.getSubtree(treepath))
 
-    const [dirUp] = splitByPath(treePath)
+    const [dirUp] = splitByPath(treepath)
 
     useEffect(() => {
-        if (branch?.name) updateBranch(branch.name)
-    }, [branch?.name, updateBranch])
+        updateBranch(branchName)
+    }, [branchName, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -81,11 +80,11 @@ const RepoPage = () => {
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!branch?.isProtected && wallet?.isDaoParticipant && (
+                    {!branch?.isProtected && dao.details.isAuthMember && (
                         <Link
                             to={`/o/${daoName}/r/${repoName}/blobs/create/${
                                 branch?.name
-                            }${treePath && `/${treePath}`}`}
+                            }${treepath && `/${treepath}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
@@ -162,7 +161,7 @@ const RepoPage = () => {
                     </div>
                 )}
 
-                {!!subtree && treePath && (
+                {!!subtree && treepath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
                         to={`/o/${daoName}/r/${repoName}/tree/${branchName}${
