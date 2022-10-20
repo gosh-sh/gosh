@@ -15,7 +15,7 @@ import "goshwallet.sol";
 // import "action.sol";
 
 contract ContentSignature is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "0.11.1";
     address _pubaddr;
     address static _goshroot;
     address static _goshdao;

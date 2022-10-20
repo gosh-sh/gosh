@@ -25,7 +25,7 @@ struct PauseDiff {
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "0.11.1";
     
     uint128 static _index1;
     uint128 static _index2;

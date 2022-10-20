@@ -17,7 +17,7 @@ import "./modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "0.11.0";
+    string constant version = "0.11.1";
 
     bool _tombstone = false;
     optional(AddrVersion) _previousversion;
