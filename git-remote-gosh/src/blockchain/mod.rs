@@ -42,11 +42,12 @@ pub use user_wallet::user_wallet;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;
+use crate::config;
 
 use self::contract::{ContractInfo, ContractRead, ContractStatic};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
-pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
+pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
 const CACHE_PIN_STATIC: &str = "static";
 
 #[repr(u8)]

@@ -1,10 +1,6 @@
 [[bin]]
-name = 'git-remote-gosh-impl'
-path = 'src/bin/main.rs'
-
-[[bin]]
 name = 'git-remote-gosh'
-path = 'src/bin/dispatcher.rs'
+path = 'src/bin/main.rs'
 
 [lib]
 name = 'git_remote_gosh'
