@@ -823,6 +823,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get branch details and check name
         const fromBranch = await this.getBranch(from)
+        if (fromBranch.commit.name === ZERO_COMMIT) {
+            throw new GoshError(EGoshError.BRANCH_CREATE_EMPTY)
+        }
         if (fromBranch.name === name) return
 
         // Get `from` branch tree items and collect all blobs
