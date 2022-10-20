@@ -24,7 +24,7 @@ struct PauseTree {
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "0.11.1";
+    string constant version = "0.11.0";
     
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
