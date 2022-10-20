@@ -115,7 +115,7 @@ pub async fn is_diff_deployed(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn diff_address(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
 ) -> Result<BlockchainContractAddress> {
@@ -142,7 +142,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
 
 #[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -315,7 +315,7 @@ pub async fn inner_push_diff(
 
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
@@ -364,7 +364,7 @@ pub async fn push_new_branch_snapshot(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper,
     branch_name: &str,
     file_path: &str,
 ) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {

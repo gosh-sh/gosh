@@ -91,7 +91,7 @@ lazy_static! {
 }
 
 #[instrument(level = "debug", skip(context))]
-async fn zero_user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<GoshContract> {
+async fn zero_user_wallet(context: &GitHelper) -> Result<GoshContract> {
     if _USER_WALLET.read().unwrap().is_none() {
         let mut user_wallet = _USER_WALLET.write().unwrap();
         if user_wallet.is_none() {
@@ -117,7 +117,7 @@ async fn zero_user_wallet(context: &GitHelper<impl BlockchainService>) -> Result
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<GoshContract> {
+pub async fn user_wallet(context: &GitHelper) -> Result<GoshContract> {
     let config = user_wallet_config(context);
     if config.is_none() {
         return Err("User wallet config must be set".into());
@@ -161,7 +161,7 @@ pub async fn user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<
     .await
 }
 
-fn user_wallet_config(context: &GitHelper<impl BlockchainService>) -> Option<UserWalletConfig> {
+fn user_wallet_config(context: &GitHelper) -> Option<UserWalletConfig> {
     log::debug!("Searching for a wallet at {}", context.remote.network);
     context
         .config

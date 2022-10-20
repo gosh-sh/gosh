@@ -1,7 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
 use crate::blockchain::BlockchainContractAddress;
-use crate::blockchain::BlockchainService;
 use git_odb::Find;
 use git_odb::Write;
 
@@ -10,10 +9,7 @@ use std::error::Error;
 use std::str::FromStr;
 mod restore_blobs;
 
-impl<Blockchain> GitHelper<Blockchain>
-where
-    Blockchain: BlockchainService,
-{
+impl GitHelper {
     pub async fn calculate_commit_address(
         &mut self,
         commit_id: &git_hash::ObjectId,

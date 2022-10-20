@@ -1,9 +1,12 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
+use crate::blockchain::commit::BlockchainPushCommit;
+use crate::blockchain::tree::BlockchainPushTree;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
-    user_wallet, BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
+    user_wallet, Blockchain, BlockchainContractAddress, BlockchainService, CreateBranchOperation,
+    ZERO_SHA,
 };
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -46,10 +49,7 @@ impl PushBlobStatistics {
     } */
 }
 
-impl<Blockchain> GitHelper<Blockchain>
-where
-    Blockchain: BlockchainService,
-{
+impl GitHelper {
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
         &mut self,
@@ -254,9 +254,12 @@ where
             let mut iter = remote_ref.rsplit('/');
             iter.next().unwrap()
         };
-        let parsed_remote_ref =
-            Blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
-                .await?;
+        let parsed_remote_ref = BlockchainService::remote_rev_parse(
+            &self.es_client,
+            &self.repo_addr,
+            remote_branch_name,
+        )
+        .await?;
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
@@ -265,7 +268,7 @@ where
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
-            let is_protected = Blockchain::is_branch_protected(
+            let is_protected = BlockchainService::is_branch_protected(
                 &self.es_client,
                 &self.repo_addr,
                 remote_branch_name,
@@ -282,9 +285,10 @@ where
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
                     parsed_remote_ref.clone().unwrap(),
                 );
-            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
-                .await?
-                .unwrap();
+            let commit =
+                BlockchainService::get_commit_by_addr(&self.es_client, &remote_commit_addr)
+                    .await?
+                    .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
 
             if commit.sha != ZERO_SHA.to_owned() {
@@ -369,7 +373,8 @@ where
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
                         git_object::Kind::Commit => {
-                            blockchain::push_commit(self, &object_id, branch_name).await?;
+                            BlockchainPushCommit::push_commit(self, &object_id, branch_name)
+                                .await?;
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
                                 prev_commit_id,
@@ -414,7 +419,8 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            blockchain::push_tree(self, &object_id, &mut visited_trees).await?
+                            BlockchainPushTree::push_tree(self, &object_id, &mut visited_trees)
+                                .await?
                         }
                     }
                 }
@@ -472,39 +478,34 @@ async fn delete_remote_ref(remote_ref: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use async_trait::async_trait;
-    use git2::{
-        string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
+    use super::*;
+    use crate::blockchain::{
+        Blockchain, BlockchainService, GoshCommit, MockBlockchainService, TonClient,
     };
-
-    use crate::blockchain::{BlockchainService, TonClient};
     use crate::config::Config;
     use crate::git_helper::test_utils::{self, setup_repo};
     use crate::git_helper::tests::setup_test_helper;
     use crate::logger::GitHelperLogger;
-
-    use super::*;
-
-    #[derive(Debug)]
-    struct TestBlockChain;
-
-    #[async_trait]
-    impl BlockchainService for TestBlockChain {
-        async fn is_branch_protected(
-            context: &TonClient,
-            repo_addr: &BlockchainContractAddress,
-            branch_name: &str,
-        ) -> Result<bool> {
-            Ok(true)
-        }
-    }
+    use async_trait::async_trait;
+    use git2::{
+        string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
+    };
+    use mockall::predicate::*;
+    use mockall::*;
+    use std::fs;
 
     #[tokio::test]
     #[should_panic]
     async fn test_push_parotected_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        MockBlockchainService::is_branch_protected_context()
+            .expect()
+            .returning(|_, _, _| Ok(true));
+
+        MockBlockchainService::remote_rev_parse_context()
+            .expect()
+            .returning(|_, _, _| Ok(Some(BlockchainContractAddress::new("test"))));
 
         let mut helper = setup_test_helper(
             json!({
@@ -512,7 +513,6 @@ mod tests {
             }),
             "gosh://1/2/3",
             repo,
-            TestBlockChain {},
         );
 
         let res = helper
@@ -525,7 +525,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_normal_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        MockBlockchainService::is_branch_protected_context()
+            .expect()
+            .returning(|_, _, _| Ok(false));
+
+        MockBlockchainService::remote_rev_parse_context()
+            .expect()
+            .returning(|_, _, _| Ok(Some(BlockchainContractAddress::new("test"))));
 
         let mut helper = setup_test_helper(
             json!({
@@ -533,7 +541,6 @@ mod tests {
             }),
             "gosh://1/2/3",
             repo,
-            TestBlockChain {},
         );
 
         let res = helper

@@ -15,7 +15,7 @@ use std::{
 };
 
 pub use load::Tree;
-pub use save::push_tree;
+pub use save::BlockchainPushTree;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},

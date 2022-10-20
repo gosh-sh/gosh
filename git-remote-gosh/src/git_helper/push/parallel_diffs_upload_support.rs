@@ -68,10 +68,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub async fn push_dangling(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
-    ) -> Result<()> {
+    pub async fn push_dangling(&mut self, context: &mut GitHelper) -> Result<()> {
         for (
             diff_coordinates,
             ParallelDiff {
@@ -116,10 +113,7 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    pub async fn wait_all_diffs(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
-    ) -> Result<()> {
+    pub async fn wait_all_diffs(&mut self, context: &mut GitHelper) -> Result<()> {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
@@ -166,11 +160,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub async fn push(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
-        diff: ParallelDiff,
-    ) -> Result<()> {
+    pub async fn push(&mut self, context: &mut GitHelper, diff: ParallelDiff) -> Result<()> {
         match self.dangling_diffs.get(&diff.file_path) {
             None => {}
             Some((

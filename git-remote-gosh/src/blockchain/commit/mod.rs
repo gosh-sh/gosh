@@ -2,11 +2,12 @@ use crate::abi as gosh_abi;
 use crate::blockchain::TonClient;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-mod save;
+pub mod save;
 
 use crate::blockchain::serde_number::NumberU64;
 use crate::blockchain::Result;
-pub use save::{notify_commit, push_commit};
+pub use save::notify_commit;
+pub use save::BlockchainPushCommit;
 
 use super::GoshContract;
 
@@ -14,10 +15,10 @@ use super::GoshContract;
 #[abi = "commit.abi.json"]
 #[abi_data_fn = "getCommit"]
 pub struct GoshCommit {
-    repo: String,
+    pub repo: String,
     pub branch: String,
     pub sha: String,
-    parents: Vec<String>,
+    pub parents: Vec<String>,
     pub content: String,
 }
 

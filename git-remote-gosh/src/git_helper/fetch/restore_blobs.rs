@@ -301,7 +301,7 @@ impl BlobsRebuildingPlan {
 
     pub async fn restore<'a, 'b>(
         &'b mut self,
-        git_helper: &mut GitHelper<impl BlockchainService>,
+        git_helper: &mut GitHelper,
     ) -> Result<(), Box<dyn Error>> {
         // Idea behind
         // --

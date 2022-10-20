@@ -6,31 +6,24 @@ use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
-use ton_sdk::Block;
 
-use super::{BlockchainService, ZERO_SHA};
+use super::ZERO_SHA;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
-pub struct CreateBranchOperation<'a, BlockChain> {
+pub struct CreateBranchOperation<'a> {
     ancestor_commit: ObjectId,
     new_branch: String,
-    context: &'a mut GitHelper<BlockChain>,
+    context: &'a mut GitHelper,
 }
 
-impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
-where
-    Blockchain: Debug + BlockchainService,
-{
+impl<'a> CreateBranchOperation<'a> {
     pub fn new(
         ancestor_commit: ObjectId,
         branch_name: impl Into<String>,
-        context: &'a mut GitHelper<Blockchain>,
-    ) -> Self
-    where
-        Blockchain: BlockchainService,
-    {
+        context: &'a mut GitHelper,
+    ) -> Self {
         Self {
             ancestor_commit,
             new_branch: branch_name.into(),

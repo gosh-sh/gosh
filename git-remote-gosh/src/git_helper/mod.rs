@@ -26,11 +26,10 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
+pub struct GitHelper {
     pub config: Config,
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
-    pub blockchain: Blockchain,
     pub remote: Remote,
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
@@ -56,10 +55,7 @@ mod list;
 
 mod fmt;
 
-impl<Blockchain> GitHelper<Blockchain>
-where
-    Blockchain: BlockchainService,
-{
+impl GitHelper {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         &mut self.local_git_repository
     }
@@ -111,7 +107,6 @@ where
             config,
             es_client,
             ipfs_client,
-            blockchain,
             remote,
             dao_addr: dao.address,
             repo_addr,
@@ -242,15 +237,7 @@ pub mod tests {
 
     use super::*;
 
-    pub fn setup_test_helper<B>(
-        value: serde_json::Value,
-        url: &str,
-        repo: Repository,
-        blockchain: B,
-    ) -> GitHelper<B>
-    where
-        B: BlockchainService,
-    {
+    pub fn setup_test_helper(value: serde_json::Value, url: &str, repo: Repository) -> GitHelper {
         let config = load_from(&value.to_string());
         let logger = GitHelperLogger::init().unwrap();
 
@@ -270,7 +257,6 @@ pub mod tests {
             config,
             es_client,
             ipfs_client,
-            blockchain,
             remote,
             dao_addr,
             repo_addr,

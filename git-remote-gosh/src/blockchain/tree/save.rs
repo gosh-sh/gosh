@@ -1,6 +1,7 @@
 use crate::git_helper::GitHelper;
 
 use ::git_object;
+use async_trait::async_trait;
 
 use crate::blockchain::{self, tvm_hash, BlockchainService, GoshBlobBitFlags};
 use git_hash::ObjectId;
@@ -8,6 +9,7 @@ use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
+use std::marker::Sync;
 use std::vec::Vec;
 
 #[derive(Serialize, Debug)]
@@ -47,7 +49,7 @@ impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
     }
 }
 
-fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
+pub fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
     use git_object::tree::EntryMode::*;
     match entry_mode {
         Tree => "tree",
@@ -60,8 +62,8 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 }
 
 #[instrument(level = "debug", skip(context))]
-async fn construct_tree_node(
-    context: &mut GitHelper<impl BlockchainService>,
+pub async fn construct_tree_node(
+    context: &mut GitHelper,
     e: &EntryRef<'_>,
 ) -> Result<(String, TreeNode), Box<dyn Error>> {
     let mut buffer = vec![];
@@ -109,55 +111,58 @@ async fn construct_tree_node(
     Ok((format!("0x{}", key), tree_node))
 }
 
-#[instrument(level = "debug", skip(context))]
-pub async fn push_tree(
-    context: &mut GitHelper<impl BlockchainService>,
-    tree_id: &ObjectId,
-    visited: &mut HashSet<ObjectId>,
-) -> Result<(), Box<dyn Error>> {
-    let mut to_deploy = VecDeque::new();
-    to_deploy.push_back(*tree_id);
-    while let Some(tree_id) = to_deploy.pop_front() {
-        if visited.contains(&tree_id) {
-            continue;
-        }
-        visited.insert(tree_id);
-        let mut buffer: Vec<u8> = Vec::new();
-        let entry_ref_iter = context
-            .local_repository()
-            .objects
-            .try_find(tree_id, &mut buffer)?
-            .expect("Local object must be there")
-            .try_into_tree_iter()
-            .unwrap()
-            .entries()?;
-
-        let mut tree_nodes: HashMap<String, TreeNode> = HashMap::new();
-
-        for e in entry_ref_iter.iter() {
-            if e.mode == git_object::tree::EntryMode::Tree {
-                to_deploy.push_back(e.oid.into());
+// #[cfg_attr(test, mockall::automock)]
+#[async_trait]
+pub trait BlockchainPushTree: std::fmt::Debug {
+    async fn push_tree(
+        context: &mut GitHelper,
+        tree_id: &ObjectId,
+        visited: &mut HashSet<ObjectId>,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut to_deploy = VecDeque::new();
+        to_deploy.push_back(*tree_id);
+        while let Some(tree_id) = to_deploy.pop_front() {
+            if visited.contains(&tree_id) {
+                continue;
             }
-            let (hash, tree_node) = construct_tree_node(context, e).await?;
-            tree_nodes.insert(hash, tree_node);
+            visited.insert(tree_id);
+            let mut buffer: Vec<u8> = Vec::new();
+            let entry_ref_iter = context
+                .local_repository()
+                .objects
+                .try_find(tree_id, &mut buffer)?
+                .expect("Local object must be there")
+                .try_into_tree_iter()
+                .unwrap()
+                .entries()?;
+
+            let mut tree_nodes: HashMap<String, TreeNode> = HashMap::new();
+
+            for e in entry_ref_iter.iter() {
+                if e.mode == git_object::tree::EntryMode::Tree {
+                    to_deploy.push_back(e.oid.into());
+                }
+                let (hash, tree_node) = construct_tree_node(context, e).await?;
+                tree_nodes.insert(hash, tree_node);
+            }
+            let params = DeployTreeArgs {
+                sha: tree_id.to_hex().to_string(),
+                repo_name: context.remote.repo.clone(),
+                nodes: tree_nodes,
+                ipfs: None, // !!!
+            };
+            let params: serde_json::Value = serde_json::to_value(params)?;
+
+            let user_wallet_contract = blockchain::user_wallet(context).await?;
+
+            blockchain::call(
+                &context.es_client,
+                &user_wallet_contract,
+                "deployTree",
+                Some(params),
+            )
+            .await?;
         }
-        let params = DeployTreeArgs {
-            sha: tree_id.to_hex().to_string(),
-            repo_name: context.remote.repo.clone(),
-            nodes: tree_nodes,
-            ipfs: None, // !!!
-        };
-        let params: serde_json::Value = serde_json::to_value(params)?;
-
-        let user_wallet_contract = blockchain::user_wallet(context).await?;
-
-        blockchain::call(
-            &context.es_client,
-            &user_wallet_contract,
-            "deployTree",
-            Some(params),
-        )
-        .await?;
+        Ok(())
     }
-    Ok(())
 }
