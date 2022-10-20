@@ -26,6 +26,7 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
+#[derive(Clone)]
 pub struct GitHelper {
     pub config: Config,
     pub es_client: TonClient,

@@ -10,6 +10,7 @@ use std::{env, fmt};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
+#[derive(Clone)]
 pub struct GitHelperLogger {
     handler: Handle,
     verbosity: log::LevelFilter,

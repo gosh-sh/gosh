@@ -18,7 +18,7 @@ struct SaveRes {
     hash: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IpfsService {
     pub ipfs_endpoint_address: String,
     pub http_client: HttpClient,

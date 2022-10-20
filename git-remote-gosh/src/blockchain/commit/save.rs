@@ -30,7 +30,7 @@ pub trait BlockchainPushCommit {
         commit_id: &ObjectId,
         branch: &str,
     ) -> Result<(), Box<dyn Error>> {
-        let mut buffer: Pin<Vec<u8>> = Pin::new(Vec::new());
+        let mut buffer: Vec<u8> = Vec::new();
         let commit = context
             .local_repository()
             .objects

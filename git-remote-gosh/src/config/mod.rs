@@ -19,7 +19,7 @@ pub struct UserWalletConfig {
     pub secret: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
     #[serde(rename = "user-wallet")]
     user_wallet: Option<UserWalletConfig>,
@@ -29,7 +29,7 @@ pub struct NetworkConfig {
     endpoints: Vec<String>,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Config {
     #[serde(rename = "ipfs")]

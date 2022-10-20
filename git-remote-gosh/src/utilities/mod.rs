@@ -1,7 +1,7 @@
 use crate::blockchain::BlockchainContractAddress;
 use crate::config::Config;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Remote {
     pub scheme: String,
     pub network: String,
