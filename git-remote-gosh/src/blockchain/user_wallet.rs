@@ -22,12 +22,6 @@ struct GetProfileAddrResult {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetProfileAddrResult {
-    #[serde(rename = "value0")]
-    pub address: BlockchainContractAddress,
-}
-
-#[derive(Deserialize, Debug)]
 struct GetAddrWalletResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
