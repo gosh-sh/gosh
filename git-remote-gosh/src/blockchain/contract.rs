@@ -47,9 +47,7 @@ impl ContractRead for GoshContract {
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_local(client, self, function_name, args)
-            .await
-            .map_err(|e| anyhow::Error::from(e))?;
+        let result = run_local(client, self, function_name, args).await?;
         log::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
