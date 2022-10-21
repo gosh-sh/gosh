@@ -38,6 +38,10 @@ global:
   redis_host: gosh-mon-redis
   do_lock:    false
 
+  redlock_retry_delay_ms: 100
+  redlock_retry_jitter_ms: 10
+  redlock_autoextend_ms: 1000
+
 
 includes:
 

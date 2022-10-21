@@ -13,6 +13,9 @@ class Handler {
         this.lock_branch = '';
         this.redis_host = '';
         this.redis_pref = '';
+        this.redlock_retry_delay_ms = 100;
+        this.redlock_retry_jitter_ms = 10;
+        this.redlock_autoextend_ms = 1000;
         this.do_lock = false;
     }
     setApplication(app) {
@@ -30,10 +33,16 @@ class Handler {
     applyConfiguration(c) {
         if (c.branch)
             this.lock_branch = c.branch;
-        this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock']);
+        this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock',
+            'redlock_retry_delay_ms', 'redlock_retry_jitter_ms', 'redlock_autoextend_ms']);
         if (this.redis_host !== '') {
             this.redis = new ioredis_1.default({ host: this.redis_host });
-            this.redlock = new redlock_1.default([this.redis], { retryCount: 10, retryDelay: 100, retryJitter: 10, automaticExtensionThreshold: 1000 });
+            this.redlock = new redlock_1.default([this.redis], {
+                // retryCount is set manually each time redlock is used
+                retryDelay: this.redlock_retry_delay_ms,
+                retryJitter: this.redlock_retry_jitter_ms,
+                automaticExtensionThreshold: this.redlock_autoextend_ms
+            });
         }
         return this;
     }

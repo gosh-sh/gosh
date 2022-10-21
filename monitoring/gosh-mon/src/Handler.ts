@@ -23,7 +23,10 @@ export default abstract class Handler {
 
     protected redis?: Client;
     protected redlock?: Redlock;
-    protected lock?: Lock;
+
+    protected redlock_retry_delay_ms = 100;
+    protected redlock_retry_jitter_ms = 10;
+    protected redlock_autoextend_ms = 1000;
 
     protected do_lock = false;
 
@@ -45,11 +48,16 @@ export default abstract class Handler {
     applyConfiguration(c: any): Handler {
         if (c.branch)
             this.lock_branch = c.branch;
-        this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock']);
+        this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock',
+            'redlock_retry_delay_ms', 'redlock_retry_jitter_ms', 'redlock_autoextend_ms']);
         if (this.redis_host !== '') {
             this.redis = new Client({host: this.redis_host});
-            this.redlock = new Redlock([this.redis],
-                {retryCount: 10, retryDelay: 100, retryJitter: 10, automaticExtensionThreshold: 1000});
+            this.redlock = new Redlock([this.redis], {
+                // retryCount is set manually each time redlock is used
+                retryDelay: this.redlock_retry_delay_ms,
+                retryJitter: this.redlock_retry_jitter_ms,
+                automaticExtensionThreshold: this.redlock_autoextend_ms
+            });
         }
         return this;
     }

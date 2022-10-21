@@ -30,7 +30,9 @@ export default class AppRotateHandler extends AppHandler {
         const or = this.organization, re = this.repository, br = this.branch, fn = this.filename;
         const lck = this.redis_pref + this.lock_branch;
         let trash_count: number = 0;
-        return await this.redlock!.using([lck], 5000, {retryCount: this.lock_retry_s * 10},
+        return await this.redlock!.using([lck], 5000, {
+            retryCount: Math.round(this.lock_retry_s / (this.redlock_retry_delay_ms / 1000))
+        },
         async() =>
             await this.doSteps(
                 /* 0 - 9 */ ...this.initialSteps(debug, AppHandler.branchSteps),
