@@ -79,12 +79,12 @@ impl Config {
         &self.primary_network
     }
 
-    fn load<TReader: Read + Sized>(config_reader: TReader) -> Result<Self, Box<dyn Error>> {
+    fn load<TReader: Read + Sized>(config_reader: TReader) -> anyhow::Result<Self> {
         let config: Config = serde_json::from_reader(config_reader)?;
         Ok(config)
     }
 
-    pub fn init() -> Result<Self, Box<dyn Error>> {
+    pub fn init() -> anyhow::Result<Self> {
         let config_path =
             env::var("GOSH_CONFIG_PATH").unwrap_or_else(|_| defaults::CONFIG_LOCATION.to_string());
         let config_path = shellexpand::tilde(&config_path).into_owned();

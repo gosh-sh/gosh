@@ -6,8 +6,6 @@ use crate::abi as gosh_abi;
 use async_trait::async_trait;
 use std::fmt::Debug;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 #[derive(Debug)]
 pub struct Blockchain;
 
@@ -17,15 +15,13 @@ pub trait BlockchainService: Debug {
         context: &TonClient,
         repo_addr: &BlockchainContractAddress,
         branch_name: &str,
-    ) -> Result<bool>;
+    ) -> anyhow::Result<bool>;
 
     async fn remote_rev_parse(
         context: &TonClient,
         repository_address: &BlockchainContractAddress,
         rev: &str,
-    ) -> Result<Option<(BlockchainContractAddress, String)>> {
-        Ok(Some((BlockchainContractAddress::new("test"), "".to_owned())))
-    }
+    ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>>;
 }
 
 #[async_trait]
@@ -35,7 +31,7 @@ impl BlockchainService for Blockchain {
         context: &TonClient,
         repo_addr: &BlockchainContractAddress,
         branch_name: &str,
-    ) -> Result<bool> {
+    ) -> anyhow::Result<bool> {
         let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
         let params = serde_json::json!({ "branch": branch_name });
@@ -50,7 +46,7 @@ impl BlockchainService for Blockchain {
         context: &TonClient,
         repository_address: &BlockchainContractAddress,
         rev: &str,
-    ) -> Result<Option<(BlockchainContractAddress, String)>> {
+    ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
         let args = serde_json::json!({ "name": rev });
         let result: GetAddrBranchResult = contract

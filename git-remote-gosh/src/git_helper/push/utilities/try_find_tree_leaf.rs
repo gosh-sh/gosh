@@ -1,5 +1,4 @@
 use crate::blockchain;
-use crate::git_helper::push::Result;
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::FindExt;
@@ -10,7 +9,7 @@ pub fn try_find_tree_leaf(
     odb: &OdbHandle,
     tree_root_id: Option<ObjectId>,
     file_path: &Path,
-) -> Result<Option<ObjectId>> {
+) -> anyhow::Result<Option<ObjectId>> {
     let mut cursor: ObjectId = match tree_root_id {
         None => return Ok(None),
         Some(tree_root_id) => tree_root_id,
