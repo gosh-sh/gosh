@@ -36,7 +36,7 @@ pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
     logger: Logger,
-    gosh_root_contract: GoshContract,
+    pub gosh_root_contract: GoshContract,
     pub repo_contract: GoshContract,
 }
 

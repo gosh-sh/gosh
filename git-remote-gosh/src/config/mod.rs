@@ -17,6 +17,7 @@ pub const IPFS_CONTENT_THRESHOLD: usize = 15000;
 pub struct UserWalletConfig {
     pub pubkey: String,
     pub secret: String,
+    pub profile: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
