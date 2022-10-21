@@ -212,6 +212,14 @@
 			]
 		},
 		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "getWallets",
 			"inputs": [
 			],

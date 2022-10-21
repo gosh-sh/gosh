@@ -22,6 +22,7 @@ pub struct DeployCommitParams {
     pub parents: Vec<BlockchainContractAddress>,
     #[serde(rename = "tree")]
     pub tree_addr: BlockchainContractAddress,
+    upgrade: bool,
 }
 
 #[instrument(level = "debug")]
@@ -66,6 +67,7 @@ pub async fn push_commit(
         raw_commit,
         parents,
         tree_addr,
+        upgrade: false,
     };
     log::debug!("deployCommit params: {:?}", args);
 
@@ -82,13 +84,15 @@ pub async fn notify_commit(
     commit_id: &ObjectId,
     branch: &str,
     number_of_files_changed: u32,
+    number_of_commits: u64,
 ) -> Result<(), Box<dyn Error>> {
     let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
         "repoName": context.remote.repo.clone(),
         "branchName": branch.to_string(),
         "commit": commit_id.to_string(),
-        "numberChangedFiles": number_of_files_changed
+        "numberChangedFiles": number_of_files_changed,
+        "numberCommits": number_of_commits,
     });
     let result = call(&context.es_client, &wallet, "setCommit", Some(params)).await?;
     log::debug!("setCommit result: {:?}", result);

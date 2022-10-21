@@ -221,12 +221,12 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_id = commit_iter
             .parent_ids()
-            .map(|e| e.to_string())
+            .map(|e| e)
             .into_iter()
             .next()
-            .unwrap_or_else(|| ZERO_SHA.to_string());
+            .unwrap_or_else(|| *commit_id);
 
-        Ok(git_hash::ObjectId::from_str(&parent_id)?)
+        Ok(parent_id)
     }
 
     // find ancestor commit
@@ -363,6 +363,7 @@ where
             };
         }
 
+        let mut number_of_commits = 0u64;
         for line in out.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
@@ -404,6 +405,7 @@ where
 
                             commit_id = Some(object_id);
                             prev_commit_id = commit_id;
+                            number_of_commits += 1;
                         }
                         git_object::Kind::Blob => {
                             // Note: handled in the Commit section
@@ -445,6 +447,7 @@ where
             &latest_commit_id,
             branch_name,
             parallel_diffs_upload_support.get_parallels_number(),
+            number_of_commits,
         )
         .await?;
 

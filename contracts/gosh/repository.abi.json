@@ -355,6 +355,14 @@
 			]
 		},
 		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "getReady",
 			"inputs": [
 			],

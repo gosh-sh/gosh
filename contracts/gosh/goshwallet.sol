@@ -88,6 +88,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 limit_wallets,
         uint128 limit_time,
         uint128 limit_messages,
+        optional(uint256) access,
          //added for SMV
         TvmCell lockerCode,
         TvmCell tokenWalletCode,
@@ -115,6 +116,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _limit_wallets = limit_wallets;
         _limit_time = limit_time;
         _limit_messages = limit_messages;
+        _access = access;
         ///////////////////
         m_SMVPlatformCode = platformCode;
         m_SMVClientCode = clientCode;
@@ -131,7 +133,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         _access = pubkey;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
@@ -139,7 +140,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         _access = null;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
     }
 
@@ -148,7 +148,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)){
         _access = pubkey;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
@@ -156,7 +155,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)) {
         _access = null;
         getMoney();
-        if (_index != _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
     }
 
@@ -233,7 +231,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             m_CommitCode,
             m_RepositoryCode,
             m_WalletCode,
-            m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages,
+            m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
         getMoney();

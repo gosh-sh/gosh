@@ -20,6 +20,7 @@
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"limit_time","type":"uint128"},
 				{"name":"limit_messages","type":"uint128"},
+				{"name":"access","type":"optional(uint256)"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"tokenWalletCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
