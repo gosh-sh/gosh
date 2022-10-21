@@ -22,15 +22,6 @@ export type TGoshEventDetails = {
     your_votes: number
 }
 
-export type TGoshDiff = {
-    snap: string
-    patch: string | null
-    ipfs: string | null
-    commit: string
-    sha1: string
-    sha256: string
-}
-
 export enum EBlobFlag {
     BINARY = 1,
     COMPRESSED = 2,

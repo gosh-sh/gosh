@@ -59,6 +59,15 @@ type TTag = {
     content: string
 }
 
+type TDiff = {
+    snap: string
+    patch: string | null
+    ipfs: string | null
+    commit: string
+    sha1: string
+    sha256: string
+}
+
 type TPushCallbackParams = {
     treesBuild?: boolean
     treesDeploy?: { count?: number; total?: number }
@@ -90,6 +99,7 @@ export {
     TCommit,
     TBranch,
     TTag,
+    TDiff,
     TUpgradeData,
     IPushCallback,
     TPushCallbackParams,

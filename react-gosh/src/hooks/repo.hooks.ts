@@ -422,45 +422,11 @@ function useCommitList(
     }
 }
 
-function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+function _useCommit(dao: string, repo: string, commit: string) {
     const [adapter, setAdapter] = useState<IGoshRepositoryAdapter>()
     const [details, setDetails] = useState<{ isFetching: boolean; commit?: TCommit }>({
         isFetching: true,
     })
-    const [blobs, setBlobs] = useState<{
-        isFetching: boolean
-        items: {
-            treepath: string
-            commit: string
-            current: string | Buffer
-            previous: string | Buffer
-            showDiff: boolean
-            isFetching: boolean
-        }[]
-    }>({ isFetching: true, items: [] })
-
-    const onLoadDiff = async (index: number) => {
-        if (!adapter) return
-
-        setBlobs((state) => ({
-            ...state,
-            items: state.items.map((item, i) => {
-                return i === index ? { ...item, isFetching: true } : item
-            }),
-        }))
-
-        const { commit, treepath } = blobs.items[index]
-        const diff = await adapter.getCommitBlob(treepath, commit)
-
-        setBlobs((state) => ({
-            ...state,
-            items: state.items.map((item, i) => {
-                return i === index
-                    ? { ...item, ...diff, isFetching: false, showDiff: true }
-                    : item
-            }),
-        }))
-    }
 
     useEffect(() => {
         const _getCommit = async () => {
@@ -482,17 +448,60 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         _getCommit()
     }, [dao, repo, commit])
 
+    return {
+        repository: adapter,
+        commit: details,
+    }
+}
+
+function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+    const { repository, commit: details } = _useCommit(dao, repo, commit)
+    const [blobs, setBlobs] = useState<{
+        isFetching: boolean
+        items: {
+            treepath: string
+            commit: string
+            current: string | Buffer
+            previous: string | Buffer
+            showDiff: boolean
+            isFetching: boolean
+        }[]
+    }>({ isFetching: true, items: [] })
+
+    const getDiff = async (index: number) => {
+        if (!repository) return
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index ? { ...item, isFetching: true } : item
+            }),
+        }))
+
+        const { commit, treepath } = blobs.items[index]
+        const diff = await repository.getCommitBlob(treepath, commit)
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index
+                    ? { ...item, ...diff, isFetching: false, showDiff: true }
+                    : item
+            }),
+        }))
+    }
+
     useEffect(() => {
         const _getBlobs = async () => {
-            if (!adapter) return
+            if (!repository) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await adapter.getCommitBlobs(commit)
+            const blobs = await repository.getCommitBlobs(commit)
             const state = await Promise.all(
                 blobs.sort().map(async (treepath, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await adapter.getCommitBlob(treepath, commit)
+                            ? await repository.getCommitBlob(treepath, commit)
                             : { previous: '', current: '' }
                     return {
                         treepath,
@@ -507,7 +516,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }
 
         _getBlobs()
-    }, [adapter])
+    }, [repository])
 
     return {
         isFetching: details.isFetching,
@@ -515,7 +524,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         blobs: {
             isFetching: blobs.isFetching,
             items: blobs.items,
-            onLoadDiff,
+            getDiff,
         },
     }
 }
@@ -780,6 +789,87 @@ function usePullRequest(
     }
 }
 
+function usePullRequestCommit(
+    dao: string,
+    repo: string,
+    commit: string,
+    showDiffNum: number = 5,
+) {
+    const { repository, commit: details } = _useCommit(dao, repo, commit)
+    const [blobs, setBlobs] = useState<{
+        isFetching: boolean
+        items: {
+            item: {
+                treepath: string
+                index: number
+            }
+            current: string | Buffer
+            previous: string | Buffer
+            showDiff: boolean
+            isFetching: boolean
+        }[]
+    }>({ isFetching: true, items: [] })
+
+    const getDiff = async (index: number) => {
+        if (!repository) return
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index ? { ...item, isFetching: true } : item
+            }),
+        }))
+
+        const { item } = blobs.items[index]
+        const diff = await repository.getPullRequestBlob(item, commit)
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index
+                    ? { ...item, ...diff, isFetching: false, showDiff: true }
+                    : item
+            }),
+        }))
+    }
+
+    useEffect(() => {
+        const _getBlobs = async () => {
+            if (!repository) return
+
+            setBlobs({ isFetching: true, items: [] })
+            const blobs = await repository.getPullRequestBlobs(commit)
+            const state = await Promise.all(
+                blobs.map(async (item, i) => {
+                    const diff =
+                        i < showDiffNum
+                            ? await repository.getPullRequestBlob(item, commit)
+                            : { previous: '', current: '' }
+                    return {
+                        item,
+                        ...diff,
+                        showDiff: i < showDiffNum,
+                        isFetching: false,
+                    }
+                }),
+            )
+            setBlobs({ isFetching: false, items: state })
+        }
+
+        _getBlobs()
+    }, [repository])
+
+    return {
+        isFetching: details.isFetching,
+        commit: details.commit,
+        blobs: {
+            isFetching: blobs.isFetching,
+            items: blobs.items,
+            getDiff,
+        },
+    }
+}
+
 export {
     useRepoList,
     useRepo,
@@ -793,4 +883,5 @@ export {
     usePush,
     useMergeRequest,
     usePullRequest,
+    usePullRequestCommit,
 }
