@@ -31,7 +31,7 @@ export default abstract class GoshHandler extends ScenarioHandler {
         const eset = this.use_envs;
         if (eset !== 'disabled') {
             try {
-                const res = await fetch(this.appurl + 'envs.json');
+                const res = await fetch(this.appurl + '/envs.json');
                 const jr = await res.json();
                 const p = (eset === 'require') || (eset === 'priority');
                 this.ipfs_address = !p ? (this.ipfs_address ?? jr.ipfs) : (jr.ipfs ?? this.ipfs_address);

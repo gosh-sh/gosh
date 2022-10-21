@@ -35,6 +35,13 @@ global:
   push_verbosity: 1
   pull_verbosity: 1
 
+  redis_host: gosh-mon-redis
+  do_lock:    false
+
+  redlock_retry_delay_ms: 100
+  redlock_retry_jitter_ms: 10
+  redlock_autoextend_ms: 1000
+
 
 includes:
 
@@ -46,6 +53,18 @@ includes:
     # for remote
     gosh_branch: "release:latest-prerelease"
     use_envs: require
+    # separate org-repo for next
+    organization: next-mon-org
+    repository: next-mon-repo
+    redis_pref: next_
+    include: creds-next
+
+  cron-rotate: &cron-rotate
+    origin:       root
+    handler:      app-rotate
+    cron:         true
+    interval:     600
+    lock_retry_s: 1800
 
 
 modes:
@@ -87,9 +106,10 @@ modes:
       - app-small
       - app-large
       - remote-small
-      - remote-large
+      - remote-large-2
     cron: true
     interval: 900
+    do_lock: true
 
   app-small-read: &app-small-read
     branch:  app-small
@@ -101,6 +121,7 @@ modes:
     handler: app-write
     large:   false
     interval: 200
+    do_lock: true
 
   app-large-read: &app-large-read
     branch:     app-large
@@ -114,6 +135,7 @@ modes:
     large:      true
     timeout_ms: 15000
     interval:   450
+    do_lock:    true
 
   app-setup-next:
     <<: *app-setup
@@ -148,19 +170,21 @@ modes:
     large:      false
     interval:   150
     timeout_ms: 270
+    do_lock: true
 
   rem-large-read: &rem-large-read
-    branch:     remote-large
+    branch:     remote-large-2
     handler:    remote-read
     large:      true
     timeout_ms: 50
 
   rem-large-write: &rem-large-write
-    branch:  remote-large
+    branch:  remote-large-2
     handler: remote-write
     large:   true
     interval: 450
     timeout_ms: 270
+    do_lock: true
 
   rem-small-read-next:
     <<: *rem-small-read
@@ -176,4 +200,26 @@ modes:
 
   rem-large-write-next:
     <<: *rem-large-write
+    <<: *next
+
+# rotation cron
+  cron-rem-rotate-test:
+    <<: *cron-rotate
+    branch:  test-branch
+
+  cron-rem-rotate-small: &cron-rem-rotate-small
+    <<: *cron-rotate
+    branch:  remote-small
+
+  cron-rem-rotate-large: &cron-rem-rotate-large
+    <<: *cron-rotate
+    branch:  remote-large-2
+    large:   true
+
+  cron-rem-rotate-small-next:
+    <<: *cron-rem-rotate-small
+    <<: *next
+
+  cron-rem-rotate-large-next:
+    <<: *cron-rem-rotate-large
     <<: *next

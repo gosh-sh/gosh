@@ -32,6 +32,7 @@ const fs_1 = __importDefault(require("fs"));
 const yaml = __importStar(require("js-yaml"));
 const ScriptHandler_1 = __importDefault(require("./Handlers/ScriptHandler"));
 const Utils_1 = require("./Utils");
+const redlock_1 = __importDefault(require("redlock"));
 let conf = {};
 try {
     conf = yaml.load(fs_1.default.readFileSync('./config/config.yml', 'utf8'));
@@ -45,6 +46,12 @@ catch (e) {
 }
 ScriptHandler_1.default.Config = (0, Utils_1.clone)(conf);
 const mode = process.env['GM_MODE'] ?? process.argv[2];
+// @ts-ignore original lock entry contents value generator
+const redlock_orig_random = redlock_1.default.prototype._random;
+// @ts-ignore append mode to tail to see in redis ui who locked what
+redlock_1.default.prototype._random = function () {
+    return redlock_orig_random() + '_' + mode;
+};
 if (!mode) {
     console.error('Specify correct application mode via parameter or E2E_MODE env');
     console.error('Available: ' + Object.keys(conf['modes']).join(', '));
@@ -55,6 +62,12 @@ for (let k in process.env) {
     if (k.startsWith('CONFIG_')) {
         c[k.slice(7).toLowerCase()] = process.env[k];
     }
+}
+if (c.include) {
+    const incl = yaml.load(fs_1.default.readFileSync('./config/' + c.include + '.yml', 'utf8'));
+    Object.assign(c, incl);
+    Object.assign(conf.global, incl);
+    console.log('Loaded included file ' + c.include);
 }
 const app = new Application_1.default();
 app.handlerFactory = (silent) => (0, selectHandler_1.default)(c.handler, silent).applyConfiguration(c);
@@ -70,7 +83,7 @@ if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
         app.setDebug(true);
     console.log("Executing immediate inquiry");
     console.log("Handler: " + app.handlerFactory(true).describe());
-    app.inquiry(level >= 2)
+    app.inquiry(level >= 2, true)
         .then(res => {
         console.log("Result:\n" + res);
         process.exit(app.lastResult == 100 ? 0 : app.lastResult + 100);
