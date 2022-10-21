@@ -36,6 +36,7 @@ abstract contract ReplayProtection is Errors {
     
     modifier saveMsg() {
         _saveMsg();
+        tvm.commit();
         _;
     }
 
