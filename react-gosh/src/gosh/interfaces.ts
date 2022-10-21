@@ -114,6 +114,11 @@ interface IGoshRepositoryAdapter {
         commit: string,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }>
     getCommitBlobs(name: string): Promise<string[]>
+    getPullRequestBlob(
+        item: { treepath: string; index: number },
+        commit: string,
+    ): Promise<{ previous: string | Buffer; current: string | Buffer }>
+    getPullRequestBlobs(commit: string): Promise<{ treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>

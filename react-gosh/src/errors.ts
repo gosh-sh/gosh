@@ -13,6 +13,8 @@ export enum EGoshError {
     USER_NAME_UNDEFINED = 'User name undefined',
     USER_NAME_INVALID = 'Incorrect username',
 
+    BRANCH_CREATE_EMPTY = 'Can not create branch from empty branch',
+
     WALLET_UNDEFINED = 'Wallet undefined',
     WALLET_NO_SIGNER = 'Wallet has no signer keys defined',
 
