@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity >=0.64.0;
+pragma ever-solidity >=0.65.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
@@ -73,7 +73,7 @@ contract GoshRoot is Modifiers {
         return address(tvm.hash(_composeRepoStateInit(name, dao)));
     }
     
-    function deployProfile(string name, uint256 pubkey) public view accept {
+    function deployProfile(string name, uint256 pubkey) public view accept saveMsg {
         tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
@@ -84,7 +84,7 @@ contract GoshRoot is Modifiers {
     }
 
     
-    function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept {
+    function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {
         tvm.accept();
         require(_flag == false, ERR_GOSH_UPDATE);
         TvmCell s0 = tvm.buildStateInit({
@@ -191,7 +191,7 @@ contract GoshRoot is Modifiers {
     
     //Setters
     
-    function setFlag(bool flag) public onlyOwner accept {
+    function setFlag(bool flag) public onlyOwner accept saveMsg {
         _flag = flag;
     }
     
