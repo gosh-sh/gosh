@@ -27,7 +27,7 @@ contract Root is Modifiers {
         tvm.accept();
     }
 
-    function deployGosh(string version) public view onlyOwner accept saveMsg {
+    function deployGosh(string version) public onlyOwner accept saveMsg {
         require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
             code: _GoshCode[tvm.hash(version)].Value,
@@ -65,7 +65,7 @@ contract Root is Modifiers {
         GoshRoot(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
-    function updateCode(TvmCell newcode, TvmCell cell) public view onlyOwner accept saveMsg {
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
         onCodeUpgrade(cell);

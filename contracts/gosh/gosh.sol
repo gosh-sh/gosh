@@ -73,7 +73,7 @@ contract GoshRoot is Modifiers {
         return address(tvm.hash(_composeRepoStateInit(name, dao)));
     }
     
-    function deployProfile(string name, uint256 pubkey) public view accept saveMsg {
+    function deployProfile(string name, uint256 pubkey) public accept saveMsg {
         tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: m_codeProfile,
