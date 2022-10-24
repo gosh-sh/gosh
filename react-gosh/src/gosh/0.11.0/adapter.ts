@@ -588,76 +588,84 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         commit: string,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        const target = await this.getCommit({ name: commit })
+        // Get commit tree items filtered by blob tree path,
+        // find resulting blob sha1 after commit was applied
+        const tree = (await this.getTree(commit, treepath)).items
+        const sha1 = tree.find((item) => getTreeItemFullPath(item) === treepath)?.sha1
+        if (!sha1) {
+            throw new GoshError('Blob not found in commit tree', { commit, treepath })
+        }
 
+        // Get snapshot and read all incoming internal messages
+        const target = await this.getCommit({ name: commit })
         const fullpath = `${target.branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
+        const { messages } = await snapshot.getMessages(
+            { msgType: ['IntIn'] },
+            true,
+            true,
+        )
 
-        const applied = []
-        let cursor: string | undefined
-        while (true) {
-            const page = await snapshot.getMessages({ msgType: ['IntIn'], cursor }, true)
-            cursor = page.cursor
+        // Filter only approved diff messages
+        const approved: string[] = []
+        for (const { decoded } of messages) {
+            if (['approve', 'constructor'].indexOf(decoded.name) < 0) continue
+            const { value } = decoded
+            if (value.commit) approved.push(value.commit)
+        }
 
-            const approved: string[] = []
-            let parentIsNextApproved = false
-            for (const { decoded } of page.messages) {
-                if (['approve', 'constructor'].indexOf(decoded.name) < 0) continue
+        // Filter applied diff messages by approved and get diffs
+        const applied = messages
+            .filter(({ decoded }) => {
+                const { name, value } = decoded
+                const key = name === 'applyDiff' ? 'namecommit' : 'commit'
+                return (
+                    ['applyDiff', 'constructor'].indexOf(name) >= 0 &&
+                    approved.indexOf(value[key]) >= 0
+                )
+            })
+            .map(({ decoded }) => {
+                const { name, value } = decoded
+                if (name === 'applyDiff') return decoded.value.diff
+                return {
+                    commit: value.commit,
+                    patch: !!value.data,
+                    ipfs: value.ipfsdata,
+                }
+            })
 
-                const { value } = decoded
-                if (value.commit) approved.push(value.commit)
-                if (parentIsNextApproved) break
-                if (value.commit === target.name) parentIsNextApproved = true
+        // Restore blob state on current commit
+        const { onchain, content } = await this.getBlob({ fullpath })
+        let current = content
+        let prevIndex: number | undefined
+        for (const [i, diff] of applied.entries()) {
+            const prev = i > 0 && applied[i - 1]
+
+            if (prevIndex !== undefined) break
+            if (diff.ipfs && diff.sha1 !== sha1) continue
+            if (prev?.ipfs && diff.patch) current = onchain.content
+            if (diff.sha1 === sha1) {
+                prevIndex = diff.ipfs ? i + 1 : i
+                if (diff.patch) break
             }
-
-            applied.push(
-                ...page.messages
-                    .filter(({ decoded }) => {
-                        const { name, value } = decoded
-                        const key = name === 'applyDiff' ? 'namecommit' : 'commit'
-                        return (
-                            ['applyDiff', 'constructor'].indexOf(name) >= 0 &&
-                            approved.indexOf(value[key]) >= 0
-                        )
-                    })
-                    .map(({ decoded }) => {
-                        const { name, value } = decoded
-                        if (name === 'applyDiff') return decoded.value.diff
-                        return {
-                            commit: value.commit,
-                            patch: !!value.data,
-                            ipfs: value.ipfsdata,
-                        }
-                    }),
-            )
-
-            if (!cursor || parentIsNextApproved) break
-            await sleep(300)
+            current = await this._applyBlobDiffPatch(current, diff, true)
         }
 
-        // Restore blob content to parent commit
-        const { onchain, content, ipfs } = await this.getBlob({ fullpath })
-        const parent = applied.slice(-1)[0].commit
-        let previous = content
-        if (Buffer.isBuffer(previous)) return { previous, current: previous }
-        for (const diff of applied) {
-            if (ipfs && diff.commit === onchain.commit) previous = onchain.content
-            if (parent === target.name) {
-                previous = ''
-                break
+        // Restore blob state on commit before current
+        let previous = current
+        if (prevIndex !== undefined && applied[prevIndex]) {
+            const diff = applied[prevIndex]
+            const prev = prevIndex > 0 && applied[prevIndex - 1]
+
+            if (prev?.ipfs && diff.patch) previous = onchain.content
+            if (
+                !prev?.ipfs ||
+                (prev?.ipfs && diff.ipfs) ||
+                (prev?.ipfs && prev.sha1 !== sha1)
+            ) {
+                previous = await this._applyBlobDiffPatch(previous, diff, true)
             }
-            if (diff.patch && diff.commit === parent) break
-
-            previous = await this._applyBlobDiffPatch(previous, diff, true)
-        }
-
-        // Apply target commit diff
-        let current = previous
-        if (Buffer.isBuffer(current)) return { previous, current }
-        const diffs = applied.filter((diff) => diff.commit === target.name)
-        for (const diff of diffs) {
-            current = await this._applyBlobDiffPatch(current, diff)
-        }
+        } else previous = ''
 
         return { previous, current }
     }
@@ -688,33 +696,29 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         item: { treepath: string; index: number },
         commit: string,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        const details = await this.getCommit({ name: commit })
-
-        // If commit was accepted, get blob state at commit
+        // If commit was accepted, return blob state at commit
         if (item.index === -1) {
             return await this.getCommitBlob(item.treepath, commit)
         }
 
-        // If commit is not accepted, get blob state at parent commit
+        // Get blob state at parent commit, get diffs and apply
+        const details = await this.getCommit({ name: commit })
         const parent = await this.getCommit({ address: details.parents[0] })
 
-        let previous: string | Buffer = ''
-        let current: string | Buffer = ''
-        const blob = await this._getSnapshot({
-            fullpath: `${parent.branch}/${item.treepath}`,
-        })
-        if (await blob.isDeployed()) {
+        let previous: string | Buffer
+        let current: string | Buffer
+        try {
             const state = await this.getCommitBlob(item.treepath, parent.name)
             previous = current = state.current
+        } catch {
+            previous = current = ''
         }
 
-        // Get diffs and apply
         const diff = await this._getDiff(commit, item.index, 0)
         const subdiffs = await this._getDiffs(diff)
         for (const subdiff of subdiffs) {
             current = await this._applyBlobDiffPatch(current, subdiff)
         }
-
         return { previous, current }
     }
 
