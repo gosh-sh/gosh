@@ -7,18 +7,18 @@ use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 
-use super::{BlockchainService, ZERO_SHA};
+use super::{user_wallet::BlockchainUserWallet, BlockchainService, ZERO_SHA};
 
 #[derive(Debug)]
-pub struct CreateBranchOperation<'a, BlockChain> {
+pub struct CreateBranchOperation<'a, Blockchain> {
     ancestor_commit: ObjectId,
     new_branch: String,
-    context: &'a mut GitHelper<BlockChain>,
+    context: &'a mut GitHelper<Blockchain>,
 }
 
 impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
 where
-    Blockchain: Debug + BlockchainService,
+    Blockchain: Debug + BlockchainService + BlockchainUserWallet,
 {
     pub fn new(
         ancestor_commit: ObjectId,
@@ -47,7 +47,17 @@ where
 
     #[instrument(level = "debug")]
     async fn preinit_branch(&mut self) -> anyhow::Result<()> {
-        let wallet_contract = blockchain::user_wallet(self.context).await?;
+        let wallet = self
+            .context
+            .blockchain
+            .user_wallet(
+                &self.context.es_client,
+                &self.context.config,
+                &self.context.repo_contract,
+                &self.context.dao_addr,
+                &self.context.remote.network,
+            )
+            .await?;
         let params = serde_json::json!({
             "repoName": self.context.remote.repo,
             "newName": self.new_branch,
@@ -55,7 +65,7 @@ where
         });
         blockchain::call(
             &self.context.es_client,
-            &wallet_contract,
+            &wallet,
             "deployBranch",
             Some(params),
         )

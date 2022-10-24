@@ -1,11 +1,12 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
+use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::blockchain::{
     tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
 };
 use crate::ipfs::IpfsSave;
 use crate::{
-    blockchain::{call, snapshot, user_wallet},
+    blockchain::{call, snapshot},
     git_helper::GitHelper,
     ipfs::IpfsService,
 };
@@ -140,7 +141,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
 
 #[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -152,7 +153,16 @@ pub async fn push_diff(
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
 ) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
-    let wallet = user_wallet(context).await?;
+    let wallet = context
+        .blockchain
+        .user_wallet(
+            &context.es_client,
+            &context.config,
+            &context.repo_contract,
+            &context.dao_addr,
+            &context.remote.network,
+        )
+        .await?;
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &context.es_client,
         &mut context.repo_contract,
@@ -313,7 +323,7 @@ pub async fn inner_push_diff(
 
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
@@ -347,7 +357,16 @@ pub async fn push_new_branch_snapshot(
         ipfs,
     };
 
-    let wallet = user_wallet(context).await?;
+    let wallet = context
+        .blockchain
+        .user_wallet(
+            &context.es_client,
+            &context.config,
+            &context.repo_contract,
+            &context.dao_addr,
+            &context.remote.network,
+        )
+        .await?;
     let params = serde_json::to_value(args)?;
     let result = call(
         &context.es_client,
@@ -362,7 +381,7 @@ pub async fn push_new_branch_snapshot(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     branch_name: &str,
     file_path: &str,
 ) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
@@ -376,7 +395,16 @@ pub async fn push_initial_snapshot(
     };
     let branch_name = branch_name.to_string();
     let file_path = file_path.to_string();
-    let wallet = user_wallet(context).await?;
+    let wallet = context
+        .blockchain
+        .user_wallet(
+            &context.es_client,
+            &context.config,
+            &context.repo_contract,
+            &context.dao_addr,
+            &context.remote.network,
+        )
+        .await?;
     let params = serde_json::to_value(args)?;
     let es_client = context.es_client.clone();
     Ok(tokio::spawn(async move {

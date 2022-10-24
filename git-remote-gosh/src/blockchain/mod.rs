@@ -31,14 +31,13 @@ mod serde_number;
 pub mod snapshot;
 pub mod tree;
 mod tvm_hash;
-mod user_wallet;
+pub mod user_wallet;
 pub use commit::GoshCommit;
 pub use commit::{notify_commit, push_commit};
 use serde_number::Number;
 pub use snapshot::Snapshot;
 pub use tree::{push_tree, Tree};
 pub use tvm_hash::tvm_hash;
-pub use user_wallet::user_wallet;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;

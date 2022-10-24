@@ -164,7 +164,9 @@ where
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
 pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
-    let blockchain = Blockchain {};
+    let blockchain = Blockchain {
+        wallet_config: None,
+    };
     let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();

@@ -1,9 +1,7 @@
 extern crate shellexpand;
 use std::{
     collections::HashMap,
-    env,
-    error::Error,
-    fmt,
+    env, fmt,
     io::{BufReader, Read},
     path::Path,
 };
@@ -130,7 +128,7 @@ pub mod tests {
     use super::*;
 
     pub fn load_from(s: &str) -> Config {
-        return Config::load(s.as_bytes()).unwrap();
+        Config::load(s.as_bytes()).unwrap()
     }
 
     #[test]

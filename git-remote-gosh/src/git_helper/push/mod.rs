@@ -3,7 +3,8 @@
 use super::GitHelper;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
-    user_wallet, BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
+    user_wallet::BlockchainUserWallet, BlockchainContractAddress, BlockchainService,
+    CreateBranchOperation, ZERO_SHA,
 };
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -46,7 +47,7 @@ impl PushBlobStatistics {
 
 impl<Blockchain> GitHelper<Blockchain>
 where
-    Blockchain: BlockchainService,
+    Blockchain: BlockchainService + BlockchainUserWallet,
 {
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
@@ -478,38 +479,30 @@ mod tests {
     };
 
     use crate::blockchain::{BlockchainService, TonClient};
-    use crate::config::Config;
+    use crate::config::{Config, UserWalletConfig};
     use crate::git_helper::test_utils::{self, setup_repo};
     use crate::git_helper::tests::setup_test_helper;
     use crate::logger::GitHelperLogger;
 
     use super::*;
 
-    #[derive(Debug)]
-    struct TestBlockChain;
-
-    #[async_trait]
-    impl BlockchainService for TestBlockChain {
-        async fn is_branch_protected(
-            context: &TonClient,
-            repo_addr: &BlockchainContractAddress,
-            branch_name: &str,
-        ) -> anyhow::Result<bool> {
-            Ok(true)
-        }
-        async fn remote_rev_parse(
-            context: &TonClient,
-            repository_address: &BlockchainContractAddress,
-            rev: &str,
-        ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
-            Ok(None)
-        }
-    }
-
     #[tokio::test]
     #[should_panic]
     async fn test_push_parotected_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        blockchain::MockBlockchainService::is_branch_protected_context()
+            .expect()
+            .returning(|_, _, _| Ok(true));
+
+        blockchain::MockBlockchainService::remote_rev_parse_context()
+            .expect()
+            .returning(|_, _, _| {
+                Ok(Some((
+                    BlockchainContractAddress::new("test"),
+                    "test".to_owned(),
+                )))
+            });
 
         let mut helper = setup_test_helper(
             json!({
@@ -517,7 +510,9 @@ mod tests {
             }),
             "gosh://1/2/3",
             repo,
-            TestBlockChain {},
+            blockchain::Blockchain {
+                wallet_config: None,
+            },
         );
 
         let res = helper
@@ -530,7 +525,22 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_normal_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
+
+        blockchain::MockBlockchainService::is_branch_protected_context()
+            .expect()
+            .returning(|_, _, _| Ok(false));
+
+        blockchain::MockBlockchainService::remote_rev_parse_context()
+            .expect()
+            .returning(|_, _, _| {
+                Ok(Some((
+                    BlockchainContractAddress::new("test"),
+                    "test".to_owned(),
+                )))
+            });
+
+        // push_tree_context().expect().returning(|_, _, _| Ok(()));
 
         let mut helper = setup_test_helper(
             json!({
@@ -538,7 +548,9 @@ mod tests {
             }),
             "gosh://1/2/3",
             repo,
-            TestBlockChain {},
+            blockchain::Blockchain {
+                wallet_config: None,
+            },
         );
 
         let res = helper

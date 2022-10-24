@@ -1,6 +1,7 @@
+use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::git_helper::GitHelper;
 
-use ::git_object;
+use git_object;
 
 use crate::blockchain::{self, tvm_hash, BlockchainService, GoshBlobBitFlags};
 use git_hash::ObjectId;
@@ -111,7 +112,7 @@ async fn construct_tree_node(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_tree(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
 ) -> anyhow::Result<()> {
@@ -149,15 +150,18 @@ pub async fn push_tree(
         };
         let params: serde_json::Value = serde_json::to_value(params)?;
 
-        let user_wallet_contract = blockchain::user_wallet(context).await?;
+        let wallet = context
+            .blockchain
+            .user_wallet(
+                &context.es_client,
+                &context.config,
+                &context.repo_contract,
+                &context.dao_addr,
+                &context.remote.network,
+            )
+            .await?;
 
-        blockchain::call(
-            &context.es_client,
-            &user_wallet_contract,
-            "deployTree",
-            Some(params),
-        )
-        .await?;
+        blockchain::call(&context.es_client, &wallet, "deployTree", Some(params)).await?;
     }
     Ok(())
 }

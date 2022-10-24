@@ -1,7 +1,7 @@
 use crate::{
     blockchain::{
-        call, get_commit_address, user_wallet, BlockchainContractAddress, BlockchainService,
-        ZERO_SHA,
+        call, get_commit_address, user_wallet::BlockchainUserWallet, BlockchainContractAddress,
+        BlockchainService, ZERO_SHA,
     },
     git_helper::GitHelper,
 };
@@ -26,7 +26,7 @@ pub struct DeployCommitParams {
 
 #[instrument(level = "debug")]
 pub async fn push_commit(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     commit_id: &ObjectId,
     branch: &str,
 ) -> anyhow::Result<()> {
@@ -70,7 +70,16 @@ pub async fn push_commit(
     };
     log::debug!("deployCommit params: {:?}", args);
 
-    let wallet = user_wallet(context).await?;
+    let wallet = context
+        .blockchain
+        .user_wallet(
+            &context.es_client,
+            &context.config,
+            &context.repo_contract,
+            &context.dao_addr,
+            &context.remote.network,
+        )
+        .await?;
     let params = serde_json::to_value(args)?;
     let result = call(&context.es_client, &wallet, "deployCommit", Some(params)).await?;
     log::debug!("deployCommit result: {:?}", result);
@@ -79,13 +88,22 @@ pub async fn push_commit(
 
 #[instrument(level = "debug")]
 pub async fn notify_commit(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
     commit_id: &ObjectId,
     branch: &str,
     number_of_files_changed: u32,
     number_of_commits: u64,
 ) -> anyhow::Result<()> {
-    let wallet = user_wallet(context).await?;
+    let wallet = context
+        .blockchain
+        .user_wallet(
+            &context.es_client,
+            &context.config,
+            &context.repo_contract,
+            &context.dao_addr,
+            &context.remote.network,
+        )
+        .await?;
     let params = serde_json::json!({
         "repoName": context.remote.repo.clone(),
         "branchName": branch.to_string(),

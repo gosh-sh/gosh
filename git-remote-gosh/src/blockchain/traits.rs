@@ -2,13 +2,19 @@ use super::{
     contract::ContractRead, BlockchainContractAddress, GetAddrBranchResult, GetBoolResult,
     GoshContract, TonClient,
 };
-use crate::abi as gosh_abi;
+use crate::{abi as gosh_abi, config::UserWalletConfig};
 use async_trait::async_trait;
 use std::fmt::Debug;
 
 #[derive(Debug)]
-pub struct Blockchain;
+pub struct Blockchain {
+    pub wallet_config: Option<UserWalletConfig>,
+}
 
+#[cfg(test)]
+use mockall::automock;
+
+#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait BlockchainService: Debug {
     async fn is_branch_protected(
