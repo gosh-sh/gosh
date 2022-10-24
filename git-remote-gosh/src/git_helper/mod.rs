@@ -1,6 +1,5 @@
 #![allow(unused_variables)]
 use std::env;
-use std::error::Error;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 

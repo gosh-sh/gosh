@@ -8,7 +8,6 @@ use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::error::Error;
 use std::vec::Vec;
 
 #[derive(Serialize, Debug)]

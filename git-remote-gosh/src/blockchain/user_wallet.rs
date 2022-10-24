@@ -53,10 +53,7 @@ thread_local! {
 
 static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 lazy_static! {
-    // static ref _USER_WALLET: Arc<RefCell<RwLock<Option<GoshContract>>>> =
-    //     Arc::new(RefCell::new(RwLock::new(None)));
-    static ref _USER_WALLET: RwLock<Option<GoshContract>> =
-        RwLock::new(None);
+    static ref _USER_WALLET: RwLock<Option<GoshContract>> = RwLock::new(None);
 }
 
 async fn get_user_wallet(

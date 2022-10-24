@@ -6,7 +6,6 @@ use git_odb::Find;
 use git_odb::Write;
 
 use std::collections::{HashSet, VecDeque};
-use std::error::Error;
 use std::str::FromStr;
 mod restore_blobs;
 

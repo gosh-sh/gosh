@@ -1,7 +1,5 @@
-use anyhow::Result;
 use git_object::bstr::ByteSlice;
 use git_repository::Repository;
-use std::error::Error;
 use std::{env, fs};
 
 pub fn setup_repo(name: &str, script_path: &str) -> anyhow::Result<Repository> {

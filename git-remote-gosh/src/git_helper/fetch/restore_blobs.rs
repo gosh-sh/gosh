@@ -10,7 +10,6 @@ use git_hash::ObjectId;
 use git_odb::Write;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
-use std::error::Error;
 use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
