@@ -145,15 +145,6 @@
 			]
 		},
 		{
-			"name": "setTombstone",
-			"inputs": [
-				{"name":"nameRepo","type":"string"},
-				{"name":"description","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"branch","type":"string"},
@@ -510,6 +501,14 @@
 			]
 		},
 		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "onTokenWalletDeployed",
 			"inputs": [
 				{"name":"wallet","type":"address"}
@@ -761,6 +760,7 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
