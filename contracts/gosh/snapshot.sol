@@ -137,8 +137,13 @@ contract Snapshot is Modifiers {
         return _contractflex;
     }
     
-    function isReady() public view minValue(0.15 ton) {
-        Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready);
+    function isReady(uint256 sha1, uint128 typer) public view minValue(0.15 ton) {
+        if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
+            Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready, typer);
+        } else { 
+            Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, false, typer); 
+        }
+        
     }
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {

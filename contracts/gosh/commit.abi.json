@@ -28,8 +28,7 @@
 		{
 			"name": "isCorrect",
 			"inputs": [
-				{"name":"newname","type":"string"},
-				{"name":"fromcommit","type":"string"}
+				{"name":"newname","type":"string"}
 			],
 			"outputs": [
 			]
@@ -84,7 +83,8 @@
 		{
 			"name": "treeAccept",
 			"inputs": [
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]

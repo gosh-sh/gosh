@@ -121,9 +121,10 @@ contract Commit is Modifiers {
     }
     //Commit part
     
-    function isCorrect(string newname, string fromcommit) public view senderIs(_rootRepo){
+    function isCorrect(string newname) public senderIs(_rootRepo){
         tvm.accept();
-        Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, fromcommit);
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, newname, 0);
+        getMoney();
     }
     
     function allCorrect(uint128 number) public senderIs(_rootRepo){
@@ -165,7 +166,7 @@ contract Commit is Modifiers {
         tvm.accept();
         if (_initupgrade == true) { 
             require(_parents[0] == branchcommit, ERR_BAD_PARENT);
-            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); 
+            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); 
             _prevversion = oldversion; 
             return; 
         }
@@ -183,8 +184,10 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function treeAccept(string branch) public view senderIs(_tree) {
-        Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]);
+    function treeAccept(string branch, uint128 typer) public senderIs(_tree) {
+        if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
+        else { Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(branch, _nameCommit); }
+        getMoney();
     }
     
     function _sendAllDiff(string branch, address branchcommit, uint128 index, uint128 number) public senderIs(address(this)) {

@@ -38,6 +38,8 @@
 		{
 			"name": "isReady",
 			"inputs": [
+				{"name":"sha1","type":"uint256"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]

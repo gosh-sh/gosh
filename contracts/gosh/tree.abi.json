@@ -26,7 +26,8 @@
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"repo","type":"address"},
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -35,7 +36,8 @@
 			"name": "checkTree",
 			"inputs": [
 				{"name":"index","type":"uint256"},
-				{"name":"path","type":"string"}
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -44,7 +46,8 @@
 			"name": "answerIs",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"_ready","type":"bool"}
+				{"name":"_ready","type":"bool"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -54,7 +57,8 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"branch","type":"string"},
-				{"name":"path","type":"string"}
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -63,7 +67,8 @@
 			"name": "gotCheckTree",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"res","type":"bool"}
+				{"name":"res","type":"bool"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -181,6 +186,6 @@
 		{"name":"_checkbranch","type":"string"},
 		{"name":"_checkaddr","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"}],"name":"_saved","type":"optional(tuple)"}
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"}],"name":"_saved","type":"optional(tuple)"}
 	]
 }

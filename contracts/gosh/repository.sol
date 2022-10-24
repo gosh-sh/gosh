@@ -104,7 +104,7 @@ contract Repository is Modifiers{
         tvm.accept();
         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
         require("0000000000000000000000000000000000000000" != fromcommit, ERR_EMPTY_BRANCH);
-        Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
+        Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname);
     }
     
     function commitCorrect(string newname, string fromcommit) public senderIs(getCommitAddr(fromcommit)) {

@@ -21,6 +21,7 @@ import "goshdao.sol";
 struct PauseTree {
     uint256 index;
     string path;
+    uint128 typer;
 }
 
 /* Root contract of Tree */
@@ -76,43 +77,43 @@ contract Tree is Modifiers {
         getMoney();
     }    
     
-    function checkFull(string namecommit, address repo, string branch) public senderIs(getCommitAddr(namecommit, repo)) {
+    function checkFull(string namecommit, address repo, string branch, uint128 typer) public senderIs(getCommitAddr(namecommit, repo)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         _check = true;
         _checkbranch = branch;
         _root = true;
         _checkaddr = msg.sender;
         getMoney();
-        this.checkTree{value: 0.2 ton, flag: 1}(0, "");
+        this.checkTree{value: 0.2 ton, flag: 1}(0, "", typer);
     }
     
-    function checkTree(uint256 index, string path) public senderIs(address(this)) {
+    function checkTree(uint256 index, string path, uint128 typer) public senderIs(address(this)) {
         require(_check == true, ERR_PROCCESS_END);
-        if (address(this).balance < 5 ton) { _saved = PauseTree(index, path); return; }
+        if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
             if (obj.mode == "040000") { _needAnswer += 1; 
-                if (path != "" ) { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name); }
-                else { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name); }
+                if (path != "" ) { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name, typer); }
+                else { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name, typer); }
             }
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) { 
                 _needAnswer += 1;
-                if (path != "" ) { Snapshot(getSnapshotAddr(_checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(); }
-                else { Snapshot(getSnapshotAddr(_checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(); }
+                if (path != "" ) { Snapshot(getSnapshotAddr(_checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
+                else { Snapshot(getSnapshotAddr(_checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
             }
-            this.checkTree{value: 0.2 ton, flag: 1}(index + 1, path);
+            this.checkTree{value: 0.2 ton, flag: 1}(index + 1, path, typer);
         }
         getMoney();
     }
     
-    function answerIs(string name, bool _ready) public senderIs(getSnapshotAddr(_checkbranch, name)) {
+    function answerIs(string name, bool _ready, uint128 typer) public senderIs(getSnapshotAddr(_checkbranch, name)) {
         tvm.accept();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
         if (_ready == false) { 
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); } 
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); } 
             _check = false; 
             _needAnswer = 0; 
             getMoney(); 
@@ -121,14 +122,14 @@ contract Tree is Modifiers {
         _needAnswer -= 1;
         if (_needAnswer != 0) { getMoney(); return; }
         if (_saved.hasValue() == true) { return; }
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true); }  
-        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }  
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
         _check = false; 
         _needAnswer = 0;
         getMoney();
     }
     
-    function getCheckTree(string name, string branch, string path) public senderIs(getTreeAddr(name)) {
+    function getCheckTree(string name, string branch, string path, uint128 typer) public senderIs(getTreeAddr(name)) {
         tvm.accept();
         path += "/";
         require(_check == false, ERR_PROCCESS_IS_EXIST);
@@ -137,15 +138,15 @@ contract Tree is Modifiers {
         _checkaddr = msg.sender;
         _root = false;
         getMoney();
-        this.checkTree{value: 0.2 ton, flag: 1}(0, path);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, path, typer);
     }
     
-    function gotCheckTree(string name, bool res) public senderIs(getTreeAddr(name)) {
+    function gotCheckTree(string name, bool res, uint128 typer) public senderIs(getTreeAddr(name)) {
         tvm.accept();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
         if (res == false) { 
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); } 
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); } 
             _check = false; 
             _needAnswer = 0; 
             getMoney(); 
@@ -154,8 +155,8 @@ contract Tree is Modifiers {
         _needAnswer -= 1;
         if (_needAnswer != 0) { getMoney(); return; }
         if (_saved.hasValue() == true) { return; }
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true); }  
-        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }  
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
         getMoney();
     }
     
@@ -178,7 +179,7 @@ contract Tree is Modifiers {
             _flag = false;
             if (_saved.hasValue() == true) {
                 PauseTree val = _saved.get();
-                this.checkTree{value: 0.1 ton, flag: 1}(val.index, val.path);           
+                this.checkTree{value: 0.1 ton, flag: 1}(val.index, val.path, val.typer);           
                 _saved = null;
             }
         }
@@ -186,14 +187,14 @@ contract Tree is Modifiers {
     
     onBounce(TvmSlice body) external {
         body;
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, 0); }
         _check = false;
         _root = false;
         _needAnswer = 0;
     }
     
     fallback() external {
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, 0); }
         _check = false;
         _root = false;
         _needAnswer = 0;
