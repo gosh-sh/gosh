@@ -37,7 +37,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require ( msg.sender.value == expected, SMVErrors.error_not_my_client) ;
         _ ;
     }
-    
+
     string constant version = "0.11.0";
 
     address static _goshroot;
@@ -279,7 +279,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         //    counter += 1;
         //if (counter == _limit_messages) { checkDeployWallets(); }
         address[] emptyArr;
-        _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
+        if (previous.hasValue() == false) {
+            _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
+        }
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
             _pubaddr, nameRepo, _nameDao, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index, previous);
@@ -762,7 +764,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getAccess() external view returns(optional(uint256)) {
         return _access;
     }
-    
+
     function getTombstone() external view returns(bool) {
         return _tombstone;
     }

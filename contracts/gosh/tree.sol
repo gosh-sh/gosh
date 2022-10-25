@@ -157,6 +157,8 @@ contract Tree is Modifiers {
         if (_saved.hasValue() == true) { return; }
         if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
         else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
+        _check = false;
+        _needAnswer = 0;
         getMoney();
     }
 
