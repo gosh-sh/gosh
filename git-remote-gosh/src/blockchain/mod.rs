@@ -42,11 +42,12 @@ pub use user_wallet::user_wallet;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;
+use crate::config;
 
 use self::contract::{ContractInfo, ContractRead, ContractStatic};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
-pub const MAX_ONCHAIN_FILE_SIZE: u32 = 15360;
+pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
 const CACHE_PIN_STATIC: &str = "static";
 
 #[repr(u8)]
@@ -645,6 +646,7 @@ pub mod tests {
     // As of now they're not following contract changes
     // therefore not adding a value
     #[tokio::test]
+    #[ignore]
     async fn ensure_get_repo_address() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo).await;
@@ -655,6 +657,7 @@ pub mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn ensure_run_static_correctly() {
         let te = TestEnv::new();
         let repo_addr = get_repo_address(&te.client, &te.gosh, &te.dao, &te.repo)

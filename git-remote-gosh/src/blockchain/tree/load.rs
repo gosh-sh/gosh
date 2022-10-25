@@ -2,7 +2,7 @@ use crate::blockchain::{BlockchainContractAddress, GoshContract, Number, TonClie
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
-use std::error::Error;
+
 
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {

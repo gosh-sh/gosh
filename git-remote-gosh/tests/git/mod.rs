@@ -4,6 +4,7 @@ use std::fs;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test_log::test(tokio::test)]
+#[ignore]
 async fn test_push() -> Result<()> {
     log::info!("Preparing repository for tests");
     // TODO: rewrite from libgit2 to gitoxide
@@ -48,7 +49,7 @@ async fn test_push() -> Result<()> {
     println!("commit {:?}", commit.id());
 
     // get current branch
-    let branch = Branch::wrap(head);
+    let _branch = Branch::wrap(head);
     // set upstream
     // branch set upstream "origin"
     // branch.set_upstream(repo.remotes()?.get(0))?;

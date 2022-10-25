@@ -2,7 +2,6 @@ extern crate shellexpand;
 use std::{
     collections::HashMap,
     env,
-    error::Error,
     fmt,
     io::{BufReader, Read},
     path::Path,
@@ -10,8 +9,8 @@ use std::{
 
 mod defaults;
 
-pub const IPFS_DIFF_THRESHOLD: usize = 15000;
-pub const IPFS_CONTENT_THRESHOLD: usize = 15000;
+pub const IPFS_DIFF_THRESHOLD: usize = 63*1024; //63kb (1kb buffer)
+pub const IPFS_CONTENT_THRESHOLD: usize = 63*1024; // 63kb (1kb buffer)
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
@@ -155,7 +154,8 @@ pub mod tests {
                     "foo": {
                         "user-wallet": {
                             "pubkey": "bar",
-                            "secret": "baz"
+                            "secret": "baz",
+                            "profile": "foo"
                         }
                     }
                 }
@@ -167,6 +167,7 @@ pub mod tests {
             .expect("It must be there");
         assert_eq!(wallet_config.pubkey, "bar");
         assert_eq!(wallet_config.secret, "baz");
+        assert_eq!(wallet_config.profile, "foo");
     }
 
     #[test]
@@ -178,7 +179,8 @@ pub mod tests {
                     "network.gosh.sh": {
                         "user-wallet": {
                             "pubkey": "foo",
-                            "secret": "bar"
+                            "secret": "bar",
+                            "profile": "foo"
                         }
                     }
                 }

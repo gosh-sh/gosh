@@ -529,6 +529,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_push_normal_ref() {
         let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
 
@@ -548,6 +549,7 @@ mod tests {
             .unwrap();
     }
 
+    #[ignore]
     #[tokio::test]
     async fn test_push() -> anyhow::Result<()> {
         log::info!("Preparing repository for tests");
