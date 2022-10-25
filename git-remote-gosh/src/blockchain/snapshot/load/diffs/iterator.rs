@@ -1,8 +1,7 @@
 use crate::abi as gosh_abi;
-use crate::blockchain::GoshContract;
 use crate::blockchain::{
     get_commit_address, get_commit_by_addr, snapshot::diffs::Diff, BlockchainContractAddress,
-    Snapshot, TonClient,
+    GoshContract, Snapshot, TonClient,
 };
 use std::collections::HashMap;
 use std::iter::Iterator;

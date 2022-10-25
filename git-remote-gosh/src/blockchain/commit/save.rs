@@ -45,7 +45,7 @@ pub async fn push_commit(
     let mut parents: Vec<BlockchainContractAddress> = vec![];
     for id in parent_ids {
         let parent = get_commit_address(
-            &context.es_client,
+            &context.ever_client,
             &mut context.repo_contract,
             &id.to_string(),
         )
@@ -54,7 +54,7 @@ pub async fn push_commit(
     }
     if parents.is_empty() {
         let bogus_parent =
-            get_commit_address(&context.es_client, &mut context.repo_contract, ZERO_SHA).await?;
+            get_commit_address(&context.ever_client, &mut context.repo_contract, ZERO_SHA).await?;
         parents.push(bogus_parent);
     }
     let tree_addr = context.calculate_tree_address(tree_id).await?;
@@ -73,7 +73,7 @@ pub async fn push_commit(
     let wallet = context
         .blockchain
         .user_wallet(
-            &context.es_client,
+            &context.ever_client,
             &context.config,
             &context.repo_contract,
             &context.dao_addr,
@@ -81,7 +81,7 @@ pub async fn push_commit(
         )
         .await?;
     let params = serde_json::to_value(args)?;
-    let result = call(&context.es_client, &wallet, "deployCommit", Some(params)).await?;
+    let result = call(&context.ever_client, &wallet, "deployCommit", Some(params)).await?;
     log::debug!("deployCommit result: {:?}", result);
     Ok(())
 }
@@ -97,7 +97,7 @@ pub async fn notify_commit(
     let wallet = context
         .blockchain
         .user_wallet(
-            &context.es_client,
+            &context.ever_client,
             &context.config,
             &context.repo_contract,
             &context.dao_addr,
@@ -111,7 +111,7 @@ pub async fn notify_commit(
         "numberChangedFiles": number_of_files_changed,
         "numberCommits": number_of_commits,
     });
-    let result = call(&context.es_client, &wallet, "setCommit", Some(params)).await?;
+    let result = call(&context.ever_client, &wallet, "setCommit", Some(params)).await?;
     log::debug!("setCommit result: {:?}", result);
     Ok(())
 }

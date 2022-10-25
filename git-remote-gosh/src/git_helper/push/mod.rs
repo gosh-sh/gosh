@@ -280,7 +280,7 @@ where
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
                     remote_commit_addr,
                 );
-            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
+            let commit = blockchain::get_commit_by_addr(&self.ever_client, &remote_commit_addr)
                 .await?
                 .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);

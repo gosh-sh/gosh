@@ -101,7 +101,7 @@ impl ParallelDiffsUploadSupport {
                 .await?,
             );
             let diff_contract_address = blockchain::snapshot::diff_address(
-                &context.es_client,
+                &context.ever_client,
                 &mut context.repo_contract,
                 &self.last_commit_id,
                 diff_coordinates,
@@ -151,7 +151,8 @@ impl ParallelDiffsUploadSupport {
                 .expecting_deployed_contacts_addresses
                 .get(index)
                 .unwrap();
-            if blockchain::snapshot::is_diff_deployed(&context.es_client, expecting_address).await?
+            if blockchain::snapshot::is_diff_deployed(&context.ever_client, expecting_address)
+                .await?
             {
                 index += 1;
                 attempt = 0;

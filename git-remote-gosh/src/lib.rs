@@ -12,6 +12,9 @@ extern crate serde_json;
 extern crate base64;
 extern crate base64_serde;
 
+#[macro_use]
+extern crate derive_builder;
+
 extern crate git_hash;
 extern crate git_object;
 

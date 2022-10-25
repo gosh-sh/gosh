@@ -156,7 +156,7 @@ pub async fn push_diff(
     let wallet = context
         .blockchain
         .user_wallet(
-            &context.es_client,
+            &context.ever_client,
             &context.config,
             &context.repo_contract,
             &context.dao_addr,
@@ -164,7 +164,7 @@ pub async fn push_diff(
         )
         .await?;
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
-        &context.es_client,
+        &context.ever_client,
         &mut context.repo_contract,
         branch_name,
         file_path,
@@ -175,7 +175,7 @@ pub async fn push_diff(
     let diff = diff.to_owned();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-    let es_client = context.es_client.clone();
+    let es_client = context.ever_client.clone();
     let repo_name = context.remote.repo.clone();
     let commit_id = *commit_id;
     let branch_name = branch_name.to_owned();
@@ -360,7 +360,7 @@ pub async fn push_new_branch_snapshot(
     let wallet = context
         .blockchain
         .user_wallet(
-            &context.es_client,
+            &context.ever_client,
             &context.config,
             &context.repo_contract,
             &context.dao_addr,
@@ -369,7 +369,7 @@ pub async fn push_new_branch_snapshot(
         .await?;
     let params = serde_json::to_value(args)?;
     let result = call(
-        &context.es_client,
+        &context.ever_client,
         &wallet,
         "deployNewSnapshot",
         Some(params),
@@ -398,7 +398,7 @@ pub async fn push_initial_snapshot(
     let wallet = context
         .blockchain
         .user_wallet(
-            &context.es_client,
+            &context.ever_client,
             &context.config,
             &context.repo_contract,
             &context.dao_addr,
@@ -406,7 +406,7 @@ pub async fn push_initial_snapshot(
         )
         .await?;
     let params = serde_json::to_value(args)?;
-    let es_client = context.es_client.clone();
+    let es_client = context.ever_client.clone();
     Ok(tokio::spawn(async move {
         let mut attempt = 0;
         let result = loop {

@@ -14,7 +14,7 @@ use crate::config::{Config, UserWalletConfig};
 
 use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
-use super::{BlockchainContractAddress, Ever, GoshContract, TonClient};
+use super::{BlockchainContractAddress, Everscale, GoshContract, TonClient};
 
 #[derive(Deserialize, Debug)]
 struct GetProfileAddrResult {
@@ -58,37 +58,37 @@ async fn get_user_wallet(
     wallet: &UserWalletConfig,
     user_wallet_index: u64,
 ) -> anyhow::Result<GoshContract> {
-    match &blockchain.wallet_config() {
-        Some(UserWalletConfig {
-            pubkey,
-            secret,
-            profile,
-        }) => {
-            let result: GetProfileAddrResult = gosh_root
-                .run_local(
-                    client,
-                    "getProfileAddr",
-                    Some(serde_json::json!({ "name": profile })),
-                )
-                .await?;
-            let dao_contract = GoshContract::new(dao_address, abi::DAO);
+    let UserWalletConfig {
+        pubkey,
+        secret,
+        profile,
+    }: UserWalletConfig = blockchain
+        .wallet_config()
+        .clone()
+        .ok_or_else(|| anyhow::anyhow!("Wallet config expected"))?;
 
-            let params = serde_json::json!({
-                "pubaddr": result.address,
-                "index": user_wallet_index
-            });
-            let result: GetAddrWalletResult = dao_contract
-                .run_local(client, "getAddrWallet", Some(params))
-                .await?;
-            let user_wallet_address = result.address;
-            log::trace!("user_wallet address: {:?}", user_wallet_address);
-            let secrets = KeyPair::new(pubkey.into(), secret.into());
+    let result: GetProfileAddrResult = gosh_root
+        .run_local(
+            client,
+            "getProfileAddr",
+            Some(serde_json::json!({ "name": profile })),
+        )
+        .await?;
+    let dao_contract = GoshContract::new(dao_address, abi::DAO);
 
-            let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
-            Ok(contract)
-        }
-        None => anyhow::bail!("Wallet is not specified"),
-    }
+    let params = serde_json::json!({
+        "pubaddr": result.address,
+        "index": user_wallet_index
+    });
+    let result: GetAddrWalletResult = dao_contract
+        .run_local(client, "getAddrWallet", Some(params))
+        .await?;
+    let user_wallet_address = result.address;
+    log::trace!("user_wallet address: {:?}", user_wallet_address);
+    let secrets = KeyPair::new(pubkey.into(), secret.into());
+
+    let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
+    Ok(contract)
 }
 
 // #[instrument(level = "debug", skip(context))]
@@ -133,11 +133,10 @@ pub trait BlockchainUserWallet {
 }
 
 #[async_trait]
-impl BlockchainUserWallet for Ever {
+impl BlockchainUserWallet for Everscale {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }
-
     // #[instrument(level = "debug", skip(context))]
     async fn user_wallet(
         &self,
@@ -147,11 +146,11 @@ impl BlockchainUserWallet for Ever {
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
     ) -> anyhow::Result<GoshContract> {
-        let wallet_config = user_wallet_config(&config, &remote_network);
+        let wallet_config = self.wallet_config();
         if wallet_config.is_none() {
             anyhow::bail!("User wallet config must be set");
         }
-        let wallet_config = wallet_config.expect("Guarded");
+        let wallet_config = wallet_config.clone().expect("Guarded");
         let zero_wallet = zero_user_wallet(
             self,
             &client,
@@ -200,7 +199,7 @@ impl BlockchainUserWallet for Ever {
     }
 }
 
-fn user_wallet_config(config: &Config, remote_network: &str) -> Option<UserWalletConfig> {
+pub fn user_wallet_config(config: &Config, remote_network: &str) -> Option<UserWalletConfig> {
     log::debug!("Searching for a wallet at {}", remote_network);
     config.find_network_user_wallet(&remote_network)
 }

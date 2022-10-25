@@ -2,11 +2,14 @@ use super::{
     contract::ContractRead, BlockchainContractAddress, GetAddrBranchResult, GetBoolResult,
     GoshContract, TonClient,
 };
-use crate::{abi as gosh_abi, config::UserWalletConfig};
+use crate::{
+    abi as gosh_abi,
+    config::{NetworkConfig, UserWalletConfig},
+};
 use async_trait::async_trait;
 use std::fmt::Debug;
 
-// #[cfg_attr(test, mockall::automock)]
+#[cfg_attr(test, mockall::automock)]
 #[async_trait]
 pub trait BlockchainService: Debug + Sync + Send {
     fn client(&self) -> &TonClient;
@@ -45,30 +48,26 @@ pub trait BlockchainService: Debug + Sync + Send {
     }
 }
 
-pub struct Ever {
+#[derive(Builder, Clone)]
+pub struct Everscale {
+    pub network: NetworkConfig,
     pub wallet_config: Option<UserWalletConfig>,
     pub ever_client: TonClient,
+    pub root_contract: GoshContract,
+    pub repo_contract: GoshContract,
 }
 
-impl Ever {
-    pub fn new(wallet_config: Option<UserWalletConfig>, ever_client: TonClient) -> Self {
-        Self {
-            wallet_config,
-            ever_client,
-        }
-    }
-}
+impl Everscale {}
 
-impl std::fmt::Debug for Ever {
+impl std::fmt::Debug for Everscale {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Ever")
-            .field("wallet_config", &self.wallet_config)
-            .finish()
+        // TODO
+        f.debug_struct("Everscale").finish()
     }
 }
 
 #[async_trait]
-impl BlockchainService for Ever {
+impl BlockchainService for Everscale {
     fn client(&self) -> &TonClient {
         &self.ever_client
     }

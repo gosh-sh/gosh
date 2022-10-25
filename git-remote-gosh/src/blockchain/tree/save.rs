@@ -93,7 +93,7 @@ async fn construct_tree_node(
                 //    tvm_hash instead it will not break
                 sha256::digest_bytes(content)
             } else {
-                tvm_hash(&context.es_client, content).await?
+                tvm_hash(&context.ever_client, content).await?
             }
         }
         Commit => unimplemented!(),
@@ -102,7 +102,7 @@ async fn construct_tree_node(
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
     let type_obj = &tree_node.type_obj;
     let key = tvm_hash(
-        &context.es_client,
+        &context.ever_client,
         format!("{}:{}", type_obj, file_name).as_bytes(),
     )
     .await?;
@@ -152,7 +152,7 @@ pub async fn push_tree(
         let wallet = context
             .blockchain
             .user_wallet(
-                &context.es_client,
+                &context.ever_client,
                 &context.config,
                 &context.repo_contract,
                 &context.dao_addr,
@@ -160,7 +160,7 @@ pub async fn push_tree(
             )
             .await?;
 
-        blockchain::call(&context.es_client, &wallet, "deployTree", Some(params)).await?;
+        blockchain::call(&context.ever_client, &wallet, "deployTree", Some(params)).await?;
     }
     Ok(())
 }

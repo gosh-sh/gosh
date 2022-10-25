@@ -18,7 +18,7 @@ pub struct UserWalletConfig {
     pub profile: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
     #[serde(rename = "user-wallet")]
     user_wallet: Option<UserWalletConfig>,

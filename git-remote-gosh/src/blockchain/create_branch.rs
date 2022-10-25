@@ -51,7 +51,7 @@ where
             .context
             .blockchain
             .user_wallet(
-                &self.context.es_client,
+                &self.context.ever_client,
                 &self.context.config,
                 &self.context.repo_contract,
                 &self.context.dao_addr,
@@ -64,7 +64,7 @@ where
             "fromCommit": self.ancestor_commit.to_string(),
         });
         blockchain::call(
-            &self.context.es_client,
+            &self.context.ever_client,
             &wallet,
             "deployBranch",
             Some(params),
