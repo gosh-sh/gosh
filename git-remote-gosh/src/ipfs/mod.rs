@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use reqwest::multipart;
 use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
-use std::{error::Error, marker::Send, marker::Sync, path::Path, time::Duration};
+use std::{marker::Send, marker::Sync, path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::{strategy::ExponentialBackoff, Retry};
 

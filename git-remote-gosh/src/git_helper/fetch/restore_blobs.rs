@@ -10,7 +10,7 @@ use git_hash::ObjectId;
 use git_odb::Write;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
-use std::error::Error;
+
 use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -320,7 +320,7 @@ impl BlobsRebuildingPlan {
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
-        let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> =
+        let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> =
             Arc::new(Mutex::new(HashSet::new()));
         let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> =
             FuturesUnordered::new();
@@ -334,7 +334,7 @@ impl BlobsRebuildingPlan {
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
             fetched_blobs.push(tokio::spawn(async move {
-                let mut attempt = 0;
+                let attempt = 0;
                 let result = loop {
                     let result = restore_a_set_of_blobs_from_a_known_snapshot(
                         &es_client,

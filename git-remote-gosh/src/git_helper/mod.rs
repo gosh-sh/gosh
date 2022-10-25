@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 use std::env;
-use std::error::Error;
+
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
@@ -258,7 +258,7 @@ pub mod tests {
 
         let es_client = create_client(&config, &remote.network).unwrap();
 
-        let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+        let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
         let dao_addr = BlockchainContractAddress::new("123");
         let repo_addr = BlockchainContractAddress::new("123");

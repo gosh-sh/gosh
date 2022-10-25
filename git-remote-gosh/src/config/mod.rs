@@ -2,7 +2,6 @@ extern crate shellexpand;
 use std::{
     collections::HashMap,
     env,
-    error::Error,
     fmt,
     io::{BufReader, Read},
     path::Path,

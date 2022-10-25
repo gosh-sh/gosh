@@ -49,7 +49,7 @@ async fn test_push() -> Result<()> {
     println!("commit {:?}", commit.id());
 
     // get current branch
-    let branch = Branch::wrap(head);
+    let _branch = Branch::wrap(head);
     // set upstream
     // branch set upstream "origin"
     // branch.set_upstream(repo.remotes()?.get(0))?;
