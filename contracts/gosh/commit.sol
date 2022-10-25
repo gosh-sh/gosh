@@ -166,7 +166,8 @@ contract Commit is Modifiers {
         tvm.accept();
         if (_initupgrade == true) { 
             require(_parents[0] == branchcommit, ERR_BAD_PARENT);
-            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); 
+            if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
+            else { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch); }
             _prevversion = oldversion; 
             return; 
         }
