@@ -23,7 +23,7 @@ where
             self.repo_addr,
             commit_id
         );
-        let repo_contract = &mut self.repo_contract;
+        let repo_contract = &mut self.blockchain.repo_contract().clone();
         blockchain::get_commit_address(&self.ever_client, repo_contract, &commit_id).await
     }
 
@@ -114,9 +114,10 @@ where
                 log::info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
+                let mut repo_contract = self.blockchain.repo_contract().clone();
                 let address = blockchain::Tree::calculate_address(
-                    &self.ever_client,
-                    &mut self.repo_contract,
+                    &self.blockchain.client().clone(),
+                    &mut repo_contract,
                     &tree_object_id,
                 )
                 .await?;
@@ -148,9 +149,10 @@ where
 
                             // Note:
                             // Removing prefixing "/" in the path
+                            let mut repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = blockchain::Snapshot::calculate_address(
-                                &self.ever_client,
-                                &mut self.repo_contract,
+                                &self.blockchain.client().clone(),
+                                &mut repo_contract,
                                 branch,
                                 &file_path[1..],
                             )

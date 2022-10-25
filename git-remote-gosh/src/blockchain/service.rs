@@ -13,6 +13,8 @@ use std::fmt::Debug;
 #[async_trait]
 pub trait BlockchainService: Debug + Sync + Send {
     fn client(&self) -> &TonClient;
+    fn root_contract(&self) -> &GoshContract;
+    fn repo_contract(&self) -> &GoshContract;
 
     #[instrument(level = "debug")]
     async fn is_branch_protected(
@@ -70,5 +72,13 @@ impl std::fmt::Debug for Everscale {
 impl BlockchainService for Everscale {
     fn client(&self) -> &TonClient {
         &self.ever_client
+    }
+
+    fn root_contract(&self) -> &GoshContract {
+        &self.root_contract
+    }
+
+    fn repo_contract(&self) -> &GoshContract {
+        &self.repo_contract
     }
 }

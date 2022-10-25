@@ -1,6 +1,8 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
+use crate::blockchain::commit::BlockchainCommit;
+use crate::blockchain::get_commit_address;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
     user_wallet::BlockchainUserWallet, BlockchainContractAddress, BlockchainService,
@@ -47,7 +49,7 @@ impl PushBlobStatistics {
 
 impl<Blockchain> GitHelper<Blockchain>
 where
-    Blockchain: BlockchainService + BlockchainUserWallet,
+    Blockchain: BlockchainService + BlockchainUserWallet + BlockchainCommit,
 {
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
@@ -280,9 +282,10 @@ where
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
                     remote_commit_addr,
                 );
-            let commit = blockchain::get_commit_by_addr(&self.ever_client, &remote_commit_addr)
-                .await?
-                .unwrap();
+            let commit =
+                blockchain::get_commit_by_addr(&self.blockchain.client(), &remote_commit_addr)
+                    .await?
+                    .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
 
             if commit.sha != ZERO_SHA.to_owned() {
@@ -368,7 +371,55 @@ where
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
                         git_object::Kind::Commit => {
-                            blockchain::push_commit(self, &object_id, branch_name).await?;
+                            // TODO: consider extract to a function
+                            let mut buffer: Vec<u8> = Vec::new();
+                            let commit = self
+                                .local_repository()
+                                .objects
+                                .try_find(object_id, &mut buffer)?
+                                .expect("Commit should exists");
+
+                            let raw_commit = String::from_utf8(commit.data.to_vec())?;
+
+                            let mut commit_iter = commit.try_into_commit_iter().unwrap();
+                            let tree_id = commit_iter.tree_id()?;
+                            let parent_ids: Vec<String> =
+                                commit_iter.parent_ids().map(|e| e.to_string()).collect();
+                            let mut parents: Vec<BlockchainContractAddress> = vec![];
+                            let mut repo_contract = self.blockchain.repo_contract().clone();
+
+                            for id in parent_ids {
+                                let parent = get_commit_address(
+                                    &self.blockchain.client(),
+                                    &mut repo_contract,
+                                    &id.to_string(),
+                                )
+                                .await?;
+                                parents.push(parent);
+                            }
+                            if parents.is_empty() {
+                                let bogus_parent = get_commit_address(
+                                    &self.blockchain.client(),
+                                    &mut repo_contract,
+                                    ZERO_SHA,
+                                )
+                                .await?;
+                                parents.push(bogus_parent);
+                            }
+                            let tree_addr = self.calculate_tree_address(tree_id).await?;
+
+                            self.blockchain
+                                .push_commit(
+                                    &object_id,
+                                    branch_name,
+                                    &tree_addr,
+                                    &self.remote,
+                                    &self.dao_addr,
+                                    raw_commit,
+                                    parents,
+                                )
+                                .await?;
+
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
                                 prev_commit_id,
@@ -436,14 +487,16 @@ where
             }
         }
         // 9. Set commit (move HEAD)
-        blockchain::notify_commit(
-            self,
-            &latest_commit_id,
-            branch_name,
-            parallel_diffs_upload_support.get_parallels_number(),
-            number_of_commits,
-        )
-        .await?;
+        self.blockchain
+            .notify_commit(
+                &latest_commit_id,
+                branch_name,
+                parallel_diffs_upload_support.get_parallels_number(),
+                number_of_commits,
+                &self.remote,
+                &self.dao_addr,
+            )
+            .await?;
 
         // 10. move HEAD
         //

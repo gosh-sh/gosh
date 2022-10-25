@@ -100,9 +100,10 @@ impl ParallelDiffsUploadSupport {
                 )
                 .await?,
             );
+            let mut repo_contract = context.blockchain.repo_contract().clone();
             let diff_contract_address = blockchain::snapshot::diff_address(
-                &context.ever_client,
-                &mut context.repo_contract,
+                &context.blockchain.client(),
+                &mut repo_contract,
                 &self.last_commit_id,
                 diff_coordinates,
             )

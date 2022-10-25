@@ -29,6 +29,7 @@ static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
     pub config: Config,
+    #[deprecated(note = "use self.blockchain.client()")]
     pub ever_client: TonClient,
     pub ipfs_client: IpfsService,
     pub blockchain: Blockchain,
@@ -37,8 +38,6 @@ pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
     logger: Logger,
-    pub gosh_root_contract: GoshContract,
-    pub repo_contract: GoshContract,
 }
 
 #[derive(Deserialize, Debug)]
@@ -69,9 +68,10 @@ where
         &mut self,
         tree_id: git_hash::ObjectId,
     ) -> anyhow::Result<BlockchainContractAddress> {
+        let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
-            &self.ever_client,
-            &mut self.repo_contract,
+            &self.blockchain.client().clone(),
+            &mut repo_contract,
             &tree_id.to_string(),
         )
         .await
@@ -87,6 +87,7 @@ where
         url: &str,
         logger: Logger,
         blockchain: Blockchain,
+        ipfs: IpfsService,
     ) -> anyhow::Result<Self> {
         // TODO: remove duplicate logic
         let remote = Remote::new(url, &config)?;
@@ -106,7 +107,6 @@ where
             get_repo_address(&ever_client, &remote.gosh, &remote.dao, &remote.repo).await?;
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
 
-        let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
         log::info!("Opening repo at {}", local_git_dir);
@@ -114,15 +114,13 @@ where
         Ok(Self {
             config,
             ever_client,
-            ipfs_client,
+            ipfs_client: ipfs,
             blockchain,
             remote,
             dao_addr: dao.address,
             repo_addr,
             local_git_repository,
             logger,
-            gosh_root_contract,
-            repo_contract,
         })
     }
 
@@ -188,7 +186,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
     let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
     blockchain_builder.repo_contract(repo_contract);
 
-    let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
+    let ipfs = IpfsService::build(config.ipfs_http_endpoint())?;
     let local_git_dir = env::var("GIT_DIR")?;
     let local_git_repository = git_repository::open(&local_git_dir)?;
     log::info!("Opening repo at {}", local_git_dir);
@@ -197,7 +195,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
 
     let blockchain = blockchain_builder.build()?;
 
-    let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
+    let mut helper = GitHelper::build(config, url, logger, blockchain, ipfs).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -307,8 +305,6 @@ pub mod tests {
             dao_addr,
             repo_addr,
             logger,
-            gosh_root_contract,
-            repo_contract,
             local_git_repository: repo,
         }
     }

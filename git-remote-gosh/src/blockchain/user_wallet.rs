@@ -14,7 +14,7 @@ use crate::config::{Config, UserWalletConfig};
 
 use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
-use super::{BlockchainContractAddress, Everscale, GoshContract, TonClient};
+use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient};
 
 #[derive(Deserialize, Debug)]
 struct GetProfileAddrResult {
@@ -95,7 +95,6 @@ async fn get_user_wallet(
 async fn zero_user_wallet(
     blockchain: &impl BlockchainUserWallet,
     context: &TonClient,
-    config: &Config,
     remote_network: &str,
     root_contract: &GoshContract,
     dao_addr: &BlockchainContractAddress,
@@ -103,11 +102,12 @@ async fn zero_user_wallet(
     if _USER_WALLET.read().await.is_none() {
         let mut user_wallet = _USER_WALLET.write().await;
         if user_wallet.is_none() {
-            let config = user_wallet_config(&config, &remote_network);
-            if config.is_none() {
+            // TODO: fix this madness
+            let wallet_config = blockchain.wallet_config();
+            if wallet_config.is_none() {
                 anyhow::bail!("User wallet config must be set");
             }
-            let config = config.expect("Guarded");
+            let config = wallet_config.as_ref().expect("Guarded");
             *user_wallet = Some(
                 get_user_wallet(blockchain, &context, &root_contract, &dao_addr, &config, 0)
                     .await?,
@@ -122,11 +122,17 @@ async fn zero_user_wallet(
 #[async_trait]
 pub trait BlockchainUserWallet {
     fn wallet_config(&self) -> &Option<UserWalletConfig>;
+    #[deprecated]
     async fn user_wallet(
         &self,
         client: &TonClient,
         config: &Config,
         gosh_root: &GoshContract,
+        dao_address: &BlockchainContractAddress,
+        remote_network: &str,
+    ) -> anyhow::Result<GoshContract>;
+    async fn user_wallet2(
+        &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
     ) -> anyhow::Result<GoshContract>;
@@ -151,12 +157,61 @@ impl BlockchainUserWallet for Everscale {
             anyhow::bail!("User wallet config must be set");
         }
         let wallet_config = wallet_config.clone().expect("Guarded");
-        let zero_wallet = zero_user_wallet(
+        let zero_wallet =
+            zero_user_wallet(self, &client, &remote_network, &gosh_root, &dao_address).await?;
+
+        let (user_wallet_index, max_number_of_user_wallets) = {
+            match user_wallet_config_max_number_of_mirrors(&client, &zero_wallet).await {
+                Err(e) => {
+                    log::warn!("user_wallet_config_max_number_of_mirrors error: {}", e);
+                    return Ok(zero_wallet);
+                }
+                Ok(max_number_of_user_wallets) => {
+                    let next_index = USER_WALLET_INDEX
+                        .with(|e| e.replace_with(|&mut v| (v + 1) % max_number_of_user_wallets));
+                    (next_index, max_number_of_user_wallets)
+                }
+            }
+        };
+
+        INIT_USER_WALLET_MIRRORS.call_once(|| {
+            let es_client = client.clone();
+            let zero_wallet = zero_wallet.clone();
+            task::block_in_place(move || {
+                Handle::current().block_on(init_user_wallet_mirrors(
+                    &es_client,
+                    &zero_wallet,
+                    max_number_of_user_wallets,
+                ));
+            });
+        });
+
+        get_user_wallet(
             self,
             &client,
-            &config,
-            &remote_network,
             &gosh_root,
+            &dao_address,
+            &wallet_config,
+            user_wallet_index,
+        )
+        .await
+    }
+    async fn user_wallet2(
+        &self,
+        dao_address: &BlockchainContractAddress,
+        remote_network: &str,
+    ) -> anyhow::Result<GoshContract> {
+        let client = self.client();
+        let wallet_config = self.wallet_config();
+        if wallet_config.is_none() {
+            anyhow::bail!("User wallet config must be set");
+        }
+        let wallet_config = wallet_config.clone().expect("Guarded");
+        let zero_wallet = zero_user_wallet(
+            self,
+            self.client(),
+            &remote_network,
+            self.root_contract(),
             &dao_address,
         )
         .await?;
@@ -190,7 +245,7 @@ impl BlockchainUserWallet for Everscale {
         get_user_wallet(
             self,
             &client,
-            &gosh_root,
+            &self.root_contract(),
             &dao_address,
             &wallet_config,
             user_wallet_index,

@@ -328,7 +328,7 @@ impl BlobsRebuildingPlan {
             let es_client = git_helper.ever_client.clone();
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
-            let mut repo_contract = git_helper.repo_contract.clone();
+            let mut repo_contract = git_helper.blockchain.repo_contract().clone();
             let snapshot_address_clone = snapshot_address.clone();
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);

@@ -151,13 +151,7 @@ pub async fn push_tree(
 
         let wallet = context
             .blockchain
-            .user_wallet(
-                &context.ever_client,
-                &context.config,
-                &context.repo_contract,
-                &context.dao_addr,
-                &context.remote.network,
-            )
+            .user_wallet2(&context.dao_addr, &context.remote.network)
             .await?;
 
         blockchain::call(&context.ever_client, &wallet, "deployTree", Some(params)).await?;
