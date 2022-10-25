@@ -42,37 +42,16 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     address static _goshroot;
     address _rootpubaddr;
-/*     address _pubaddr;
-    address static _goshdao;
-    uint128 static _index;
- */    string _nameDao;
+    string _nameDao;
     bool _flag = false;
-    TvmCell m_RepositoryCode;
-    TvmCell m_CommitCode;
-    TvmCell m_WalletCode;
-    TvmCell m_TagCode;
-    TvmCell m_SnapshotCode;
-    TvmCell m_codeTree;
-    TvmCell m_codeDiff;
-    TvmCell m_contentSignature;
-
-/*     TvmCell m_SMVPlatformCode;
-    TvmCell m_SMVClientCode;
-     TvmCell m_SMVProposalCode;
-    TvmCell m_lockerCode;
-     address _tip3root;
- */
+    mapping(uint8 => TvmCell) _code;
     uint128 counter = 0;
     uint128 _last_time = 0;
-    uint128 _limit_wallets;
-    uint128 _limit_messages;
-    uint128 _limit_time;
     uint128 _walletcounter = 1;
+    uint128 _limit_wallets;
 
     bool _tombstone = false;
 
-/*     optional(uint256) _access;
- */
     constructor(
         address rootpubaddr,
         address pubaddr,
@@ -86,10 +65,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell codeDiff,
         TvmCell contentSignature,
         uint128 limit_wallets,
-        uint128 limit_time,
-        uint128 limit_messages,
         optional(uint256) access,
-         //added for SMV
+        //added for SMV
         TvmCell lockerCode,
         TvmCell tokenWalletCode,
         TvmCell platformCode,
@@ -101,29 +78,25 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                         proposalCode.depth(), _tip3Root
     ) {
         _rootpubaddr = rootpubaddr;
-/*         _pubaddr = pubaddr;
- */        _nameDao = nameDao;
-        m_WalletCode = WalletCode;
+        _nameDao = nameDao;
+        _code[m_WalletCode] = WalletCode;
         if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
-        m_CommitCode = commitCode;
-        m_RepositoryCode = repositoryCode;
-        m_TagCode = TagCode;
-        m_SnapshotCode = SnapshotCode;
-        m_codeTree = codeTree;
-        m_codeDiff = codeDiff;
-        m_contentSignature = contentSignature;
-        _limit_wallets = limit_wallets;
-        _limit_time = limit_time;
-        _limit_messages = limit_messages;
+        _code[m_CommitCode] = commitCode;
+        _code[m_RepositoryCode] = repositoryCode;
+        _code[m_TagCode] = TagCode;
+        _code[m_SnapshotCode] = SnapshotCode;
+        _code[m_TreeCode] = codeTree;
+        _code[m_DiffCode] = codeDiff;
+        _code[m_contentSignature] = contentSignature;
         _access = access;
+        _limit_wallets = limit_wallets;
         ///////////////////
         m_SMVPlatformCode = platformCode;
         m_SMVClientCode = clientCode;
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
-/*         _tip3root = _tip3Root;
- */        Profile(_pubaddr).deployedWallet(_goshroot, _goshdao, _index, version);
+        Profile(_pubaddr).deployedWallet(_goshroot, _goshdao, _index, version);
         getMoney();
     }
 
@@ -167,32 +140,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
-        TvmCell deployCode = GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _goshroot : _goshroot, _goshdao : _goshdao}});
         new ContentSignature{
             stateInit: s1, value: 5 ton, wid: 0
-        }(_pubaddr, m_WalletCode, content, _index);
+        }(_pubaddr, _code[m_WalletCode], content, _index);
         getMoney();
     }
 
-    //Multiwallets part
-/*
-    function checkDeployWallets() private {
-        counter = 0;
-        if (now - _last_time > _limit_time) { _last_time = now; return; }
-        if (_walletcounter >= _limit_wallets) { return; }
-        if (_index != 0) { GoshWallet(_getWalletAddr(0)).askForDeploy{value : 0.2 ton, flag: 1}(_index); _last_time = now; return; }
-        _deployWallet();
-        _last_time = now;
-        getMoney();
-    }
-*/
-
-/*
-    function askForDeploy(uint128 index) public senderIs(_getWalletAddr(index)) {
-        _deployWallet();
-    }
-*/
     function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
         _tombstone = true;
         if (_index >= _walletcounter - 1) { return; }
@@ -228,10 +183,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         new GoshWallet {
             stateInit: s1, value: 60 ton, wid: 0
         }(  _rootpubaddr, _pubaddr, _nameDao,
-            m_CommitCode,
-            m_RepositoryCode,
-            m_WalletCode,
-            m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, _access,
+            _code[m_CommitCode],
+            _code[m_RepositoryCode],
+            _code[m_WalletCode],
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
         getMoney();
@@ -250,7 +205,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
@@ -276,19 +231,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkName(nameRepo), ERR_WRONG_NAME);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address[] emptyArr;
         _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
         TvmCell s1 = _composeRepoStateInit(nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
-            _pubaddr, nameRepo, _nameDao, _goshdao, _goshroot, m_CommitCode, m_WalletCode, m_TagCode, m_SnapshotCode, m_codeTree, m_codeDiff, _index, previous);
+            _pubaddr, nameRepo, _nameDao, _goshdao, _goshroot, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _index, previous);
         getMoney();
     }
 
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
-            m_RepositoryCode, _goshroot, _goshdao, version
+            _code[m_RepositoryCode], _goshroot, _goshdao, version
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -297,27 +250,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         });
     }
 
- /*   function setTombstone(string nameRepo, string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-        description;
-    	Repository(_buildRepositoryAddr(nameRepo)).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
-    }*/
-
-
     //Snapshot part
     function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkey(_access.get())  accept saveMsg{
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _goshroot, _goshdao, repo, m_SnapshotCode, m_CommitCode, m_codeDiff, m_WalletCode, m_codeTree, branch, name, _index, snapshotdata, snapshotipfs, commit);
+        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _goshroot, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], branch, name, _index, snapshotdata, snapshotipfs, commit);
         getMoney();
     }
 
     function deleteSnapshot(address snap) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         Snapshot(snap).destroy{
             value: 0.1 ton, bounce: true, flag: 1
         }(_pubaddr, _index);
@@ -335,8 +278,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool last
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         _deployDiff(repoName, branchName, commitName, diffs, index1, index2, last);
     }
 
@@ -352,12 +293,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeDiffStateInit(commitName, repo, index1, index2);
         new DiffC {stateInit: s1, value: FEE_DEPLOY_DIFF, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _goshroot, _pubaddr, repoName, branchName, repo, m_WalletCode, m_codeDiff, m_CommitCode, diffs, _index, last);
+            _goshdao, _goshroot, _pubaddr, repoName, branchName, repo, _code[m_WalletCode], _code[m_DiffCode], _code[m_CommitCode], diffs, _index, last);
         getMoney();
     }
 
     function _composeDiffStateInit(string _commit, address repo, uint128 index1, uint128 index2) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, repo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_DiffCode], repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
@@ -374,8 +315,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         _deployCommit(repoName, branchName, commitName, fullCommit, parents, tree, upgrade);
     }
 
@@ -391,7 +330,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s1 = _composeCommitStateInit(commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _goshroot, _pubaddr, repoName, branchName, fullCommit, parents, repo, m_WalletCode, m_CommitCode, m_codeDiff, m_SnapshotCode, tree, _index, upgrade);
+            _goshdao, _goshroot, _pubaddr, repoName, branchName, fullCommit, parents, repo, _code[m_WalletCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_SnapshotCode], tree, _index, upgrade);
         getMoney();
     }
 
@@ -408,15 +347,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
         isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         tvm.accept();
         _saveMsg();
         getMoney();
     }
 
     function _composeCommitStateInit(string _commit, address repo) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, repo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
         return stateInit;
     }
@@ -429,8 +366,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkName(newName), ERR_WRONG_NAME);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
         Repository(repo).deployBranch{
             value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
@@ -442,8 +377,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string Name
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
         Repository(repo).deleteBranch{
             value: FEE_DESTROY_BRANCH, bounce: true, flag: 1
@@ -455,8 +388,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
         Repository(repo).setHEAD{value: 1 ton, bounce: true, flag: 1}(_pubaddr, branchName, _index);
         getMoney();
@@ -471,23 +402,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address commit
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
-        TvmCell deployCode = GoshLib.buildTagCode(m_TagCode, repo, version);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
             stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, nameCommit, commit, content, _goshroot, _goshdao, m_WalletCode, _index);
+        }(_pubaddr, nameCommit, commit, content, _goshroot, _goshdao, _code[m_WalletCode], _index);
         getMoney();
     }
 
     function deleteTag(string repoName, string nametag) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         address repo = _buildRepositoryAddr(repoName);
-        TvmCell deployCode = GoshLib.buildTagCode(m_TagCode, repo, version);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         address tagaddr = address.makeAddrStd(0, tvm.hash(s1));
         Tag(tagaddr).destroy{
@@ -502,12 +429,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).getConfigInfo{value: 0.15 ton, bounce: true, flag: 1}(_pubaddr, _index);
     }
 
-    function setConfig(uint128 limit_wallets, uint128 limit_time, uint128 limit_messages) public senderIs(_goshdao) {
+    function setConfig(uint128 limit_wallets) public senderIs(_goshdao) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _limit_wallets = limit_wallets;
-        _limit_time = limit_time;
-        _limit_messages = limit_messages;
         getMoney();
     }
 
@@ -520,8 +445,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(string) ipfs
     ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
-        //    counter += 1;
-        //if (counter == _limit_messages) { checkDeployWallets(); }
         _deployTree(repoName, shaTree, datatree, ipfs);
     }
 
@@ -535,14 +458,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeTreeStateInit(shaTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, datatree, ipfs, _goshroot, _goshdao, m_WalletCode, m_codeDiff, m_codeTree, m_CommitCode, m_SnapshotCode, _index);
+        }(_pubaddr, datatree, ipfs, _goshroot, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], _index);
         getMoney();
     }
 
     function _composeTreeStateInit(string shaTree, address repo) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: repo}});
-        //return tvm.insertPubkey(stateInit, pubkey);
         return stateInit;
     }
 
@@ -563,7 +485,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 prop_id = tvm.hash(dataCell);
         uint32 startTime = now + startTimeAfter;
         uint32 finishTime = now + startTimeAfter + durationTime;
-        startProposal(/* m_SMVPlatformCode, m_SMVProposalCode, */ prop_id, dataCell, startTime, finishTime, num_clients );
+        startProposal(prop_id, dataCell, startTime, finishTime, num_clients );
     }
 
     function startProposalForSetCommit(
@@ -687,14 +609,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     //Getters
     function getContentCode(string repoName) external view returns(TvmCell) {
         address repo = _buildRepositoryAddr(repoName);
-        return GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+        return GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
     }
 
     function getContentAdress(string repoName,
         string commit,
         string label) external view returns(address) {
         address repo = _buildRepositoryAddr(repoName);
-        TvmCell deployCode = GoshLib.buildSignatureCode(m_contentSignature, repo, version);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _goshroot : _goshroot, _goshdao : _goshdao}});
        return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -722,17 +644,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
     function getSnapshotCode(string branch, address repo) external view returns(TvmCell) {
-        return GoshLib.buildSnapshotCode(m_SnapshotCode, repo, branch, version);
+        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
     }
 
-    function getConfig() external view returns(uint128 /*, uint128, uint128*/) {
-        return (_limit_wallets /*, _limit_time, _limit_messages */);
+    function getConfig() external view returns(uint128) {
+        return (_limit_wallets);
     }
 
     function getWalletAddr(uint128 index) external view returns(address) {
@@ -772,7 +694,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     //
     function _buildRepositoryAddr(string name) private view returns (address) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
-            m_RepositoryCode, _goshroot, _goshdao, version
+            _code[m_RepositoryCode], _goshroot, _goshdao, version
         );
         return address(tvm.hash(tvm.buildStateInit({
             code: deployCode,
@@ -786,7 +708,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit
     ) private view returns(address) {
         address repo = _buildRepositoryAddr(repoName);
-        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, repo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], repo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode,
             contr: Commit,

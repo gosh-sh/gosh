@@ -57,6 +57,19 @@ struct GlobalConfig {
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.0.0";
     
+    //TvmCell constants
+    uint8 constant m_RepositoryCode = 1;
+    uint8 constant m_CommitCode = 2;
+    uint8 constant m_WalletCode = 3;
+    uint8 constant m_TagCode = 4;
+    uint8 constant m_SnapshotCode = 5;
+    uint8 constant m_TreeCode = 6;
+    uint8 constant m_DiffCode = 7;
+    uint8 constant m_contentSignature= 8;
+    uint8 constant m_DaoCode = 9;
+    uint8 constant m_ProfileCode = 10;
+    uint8 constant m_ProfileDaoCode = 11;
+    
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;
     uint128 constant FEE_DEPLOY_REPO = 15 ton;
