@@ -21,6 +21,12 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
+RELEASE_VERSION :=$(patsubst "%",%,$(strip $(subst "version":,,$(shell grep "version" "../version.json"))))
+
+.PHONY: rename_impl_to_semver
+rename_impl_to_semver:
+	-find ./target -name 'git-remote-gosh-impl*' -exec sh -c 'mv $$0 "$$(echo "$$0" | sed s/impl/v${RELEASE_VERSION}/ )" ' {}  \;
+
 .PHONY: clear_screen
 clear_screen:
 	-clear && printf '\e[3J'

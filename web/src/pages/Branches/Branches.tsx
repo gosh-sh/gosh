@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
-import { retry, useBranches } from 'react-gosh'
+import { retry, useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -35,22 +35,23 @@ export const BranchesPage = () => {
     )
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, branch, updateBranches } = useBranches(repo, branchName)
+    const {
+        create: createBranch,
+        destroy: deleteBranch,
+        status,
+        setLockStatusTmp,
+    } = useBranchManagement(dao.details, repo)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
-    const [branchesBusy, setBranchesBusy] = useState<{
-        [key: string]: { busy: boolean; lock: boolean; delete: boolean }
-    }>({})
 
     /** Lock branch by SMV */
     const onBranchLock = async (name: string) => {
         try {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: true, lock: true },
-            }))
+            setLockStatusTmp(name, true)
 
-            // if (await repo.isBranchProtected(name))
-            //     throw new Error('Branch is already protected')
+            const check = branches.find((branch) => branch.name === name)
+            if (check?.isProtected) throw new Error('Branch is already protected')
+
             if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvDetails.smvBalance < 20)
@@ -62,23 +63,18 @@ export const BranchesPage = () => {
             console.error(e)
             toast.error(<ToastError error={e} />)
         } finally {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: false, lock: false },
-            }))
+            setLockStatusTmp(name, false)
         }
     }
 
     /** Unlock branch by SMV */
     const onBranchUnlock = async (name: string) => {
         try {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: true, lock: true },
-            }))
+            setLockStatusTmp(name, true)
 
-            // const isProtected = await repo.isBranchProtected(name)
-            // if (!isProtected) throw new Error('Branch is not protected')
+            const check = branches.find((branch) => branch.name === name)
+            if (!check?.isProtected) throw new Error('Branch is not protected')
+
             if (!repo) throw new GoshError(EGoshError.NO_REPO)
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
             if (smvDetails.smvBalance < 20)
@@ -90,10 +86,7 @@ export const BranchesPage = () => {
             console.error(e)
             toast.error(<ToastError error={e} />)
         } finally {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: false, lock: false },
-            }))
+            setLockStatusTmp(name, false)
         }
     }
 
@@ -103,12 +96,10 @@ export const BranchesPage = () => {
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            await retry(async () => {
-                if (!repo) throw new GoshError(EGoshError.NO_REPO)
-                if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
-                await repo.deployBranch(values.newName.toLowerCase(), values.from.name)
-            }, 3)
-            await updateBranches()
+            const { newName, from } = values
+            if (!from) throw new GoshError(EGoshError.NO_BRANCH)
+
+            await createBranch(newName, from.name)
             helpers.resetForm()
             helpers.setFieldValue('from', values.from)
         } catch (e: any) {
@@ -121,19 +112,8 @@ export const BranchesPage = () => {
     const onBranchDelete = async (name: string) => {
         if (window.confirm(`Delete branch '${name}'?`)) {
             try {
-                setBranchesBusy((state) => ({
-                    ...state,
-                    [name]: { ...state[name], busy: true, delete: true },
-                }))
-
-                if (!repo) throw new GoshError(EGoshError.NO_REPO)
-                await retry(async () => await repo.deleteBranch(name), 3)
-                await updateBranches()
+                await deleteBranch(name)
             } catch (e: any) {
-                setBranchesBusy((state) => ({
-                    ...state,
-                    [name]: { ...state[name], busy: false, delete: false },
-                }))
                 console.error(e)
                 toast.error(<ToastError error={e} />)
             }
@@ -263,10 +243,10 @@ export const BranchesPage = () => {
                                         }}
                                         disabled={
                                             smvDetails.smvBusy ||
-                                            branchesBusy[branch.name]?.busy
+                                            status[branch.name]?.isBusy
                                         }
                                     >
-                                        {branchesBusy[branch.name]?.lock ? (
+                                        {status[branch.name]?.isLock ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon
@@ -289,11 +269,11 @@ export const BranchesPage = () => {
                                         onClick={() => onBranchDelete(branch.name)}
                                         disabled={
                                             branch.isProtected ||
-                                            branchesBusy[branch.name]?.busy ||
+                                            status[branch.name]?.isBusy ||
                                             ['main', 'master'].indexOf(branch.name) >= 0
                                         }
                                     >
-                                        {branchesBusy[branch.name]?.delete ? (
+                                        {status[branch.name]?.isDestroy ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon icon={faTrash} size="sm" />

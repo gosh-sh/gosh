@@ -4,6 +4,7 @@ use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::blockchain::{
     tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
 };
+use crate::config;
 use crate::ipfs::IpfsSave;
 use crate::{
     blockchain::{call, snapshot},
@@ -95,7 +96,7 @@ pub struct PushDiffCoordinate {
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     log::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
-    let content = base64::encode(content);
+    let content = base64::encode(&content);
     let content = content.as_bytes().to_vec();
 
     ipfs_client.save_blob(&content).await
@@ -327,7 +328,7 @@ pub async fn push_new_branch_snapshot(
     let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
     log::debug!("compressed to {} size", content.len());
 
-    let (content, ipfs) = if content.len() > 15000 {
+    let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&context.ipfs_client, original_content)
