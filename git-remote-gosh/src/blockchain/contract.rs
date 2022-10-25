@@ -123,7 +123,7 @@ mod tests {
             let v: serde_json::Value = json!({
                 "value0": {
                     "branchname": "branch_name",
-                    "commitaddr": "0:0000000000000000000000000000000000000000000000000000000000000000",
+                    "commitaddr": format!("0:{:64}", 0),
                     "commitversion": "commit_version"
                 }
             });
@@ -142,7 +142,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(result.branch.branch_name, "branch_name");
-        assert_eq!(result.branch.commit_address, BlockchainContractAddress::new("0:0000000000000000000000000000000000000000000000000000000000000000"));
+        assert_eq!(
+            result.branch.commit_address,
+            BlockchainContractAddress::new(format!("0:{:64}", 0))
+        );
         assert_eq!(result.branch.version, "commit_version");
     }
 }
