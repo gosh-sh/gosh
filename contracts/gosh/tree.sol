@@ -36,11 +36,7 @@ contract Tree is Modifiers {
     address _pubaddr;
     address _goshroot;
     address _goshdao;
-    TvmCell m_WalletCode;
-    TvmCell m_codeDiff;
-    TvmCell m_codeTree;
-    TvmCell m_codeCommit;
-    TvmCell m_SnapshotCode;
+    mapping(uint8 => TvmCell) _code;
     uint128 _needAnswer = 0;
     bool _check = false;
     bool _root = false;
@@ -63,16 +59,16 @@ contract Tree is Modifiers {
         uint128 index) public {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;
-        m_SnapshotCode = SnapshotCode;
+        _code[m_WalletCode] = WalletCode;
+        _code[m_SnapshotCode] = SnapshotCode;
         _pubaddr = pubaddr;
         _goshroot = rootGosh;
         _goshdao = goshdao;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _ipfs = ipfs;
-        m_codeDiff = codeDiff;
-        m_codeTree = codeTree;
-        m_codeCommit = codeCommit;
+        _code[m_DiffCode] = codeDiff;
+        _code[m_TreeCode] = codeTree;
+        _code[m_CommitCode] = codeCommit;
         _tree = data;
         getMoney();
     }
@@ -170,7 +166,7 @@ contract Tree is Modifiers {
     }
 
     function getSnapshotAddr(string branch, string name) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_SnapshotCode, _repo, branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], _repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
@@ -260,13 +256,13 @@ contract Tree is Modifiers {
     }
 
     function getCommitAddr(string commit, address repo) internal view returns(address) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_codeCommit, repo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: commit}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
     function getTreeAddr(string sha) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: sha, _repo: _repo}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
@@ -278,7 +274,7 @@ contract Tree is Modifiers {
     }
 
     function _composeDiffStateInit(string commit, address repo, uint128 index1, uint128 index2) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, repo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_DiffCode], repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
@@ -290,7 +286,7 @@ contract Tree is Modifiers {
     }
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,

@@ -20,7 +20,7 @@ contract ContentSignature is Modifiers {
     address _pubaddr;
     address static _goshroot;
     address static _goshdao;
-    TvmCell m_WalletCode;
+    mapping(uint8 => TvmCell) _code;
     string _content;
     string static _label;
     string static _commit;
@@ -29,7 +29,7 @@ contract ContentSignature is Modifiers {
     constructor(address pubaddr, TvmCell WalletCode, string content, uint128 index) public {
         tvm.accept();
         _content = content;
-        m_WalletCode = WalletCode;
+        _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
 //        _action = action;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -37,7 +37,7 @@ contract ContentSignature is Modifiers {
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
