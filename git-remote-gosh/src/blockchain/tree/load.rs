@@ -2,7 +2,7 @@ use crate::blockchain::{BlockchainContractAddress, GoshContract, Number, TonClie
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
-use std::error::Error;
+
 
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
@@ -36,7 +36,7 @@ impl Tree {
         context: &TonClient,
         repo_contract: &mut GoshContract,
         tree_obj_sha1: &str,
-    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
+    ) -> anyhow::Result<BlockchainContractAddress> {
         let params = serde_json::json!({ "treeName": tree_obj_sha1 });
         let result: GetTreeResult = repo_contract
             .run_static(context, "getTreeAddr", Some(params))

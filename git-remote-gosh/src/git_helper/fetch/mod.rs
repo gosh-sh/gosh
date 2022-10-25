@@ -6,7 +6,7 @@ use git_odb::Find;
 use git_odb::Write;
 
 use std::collections::{HashSet, VecDeque};
-use std::error::Error;
+
 use std::str::FromStr;
 mod restore_blobs;
 
@@ -17,7 +17,7 @@ where
     pub async fn calculate_commit_address(
         &mut self,
         commit_id: &git_hash::ObjectId,
-    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
+    ) -> anyhow::Result<BlockchainContractAddress> {
         let commit_id = format!("{}", commit_id);
         log::info!(
             "Calculating commit address for repository {} and commit id <{}>",
@@ -35,7 +35,7 @@ where
     async fn write_git_object(
         &mut self,
         obj: impl git_object::WriteTo,
-    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+    ) -> anyhow::Result<git_hash::ObjectId> {
         log::info!("Writing git object");
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
@@ -51,7 +51,7 @@ where
     async fn write_git_data<'a>(
         &mut self,
         obj: git_object::Data<'a>,
-    ) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+    ) -> anyhow::Result<git_hash::ObjectId> {
         log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
@@ -62,10 +62,10 @@ where
     }
 
     #[instrument(level = "debug")]
-    pub async fn fetch(&mut self, sha: &str, name: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {
-            return Err("Error. Can not fetch an object without refs/heads/ prefix")?;
+            anyhow::bail!("Error. Can not fetch an object without refs/heads/ prefix");
         }
         log::info!("Fetching sha: {} name: {}", sha, name);
         let branch: &str = {

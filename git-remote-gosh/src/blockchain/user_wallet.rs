@@ -15,7 +15,11 @@ use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
 use super::{BlockchainContractAddress, BlockchainService, GoshContract, TonClient};
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[derive(Deserialize, Debug)]
+struct GetProfileAddrResult {
+    #[serde(rename = "value0")]
+    pub address: BlockchainContractAddress,
+}
 
 #[derive(Deserialize, Debug)]
 struct GetAddrWalletResult {
@@ -50,33 +54,31 @@ static INIT_USER_WALLET_MIRRORS: Once = Once::new();
 
 pub async fn get_user_wallet(
     client: &TonClient,
+    gosh_root: &GoshContract,
     dao_address: &BlockchainContractAddress,
-    pubkey: &str,
-    secret: &str,
+    wallet: &UserWalletConfig,
     user_wallet_index: u64,
-) -> Result<GoshContract> {
-    // let gosh_root_contract = GoshContract::new(
-    //     gosh_root_contract_address,
-    //     abi::GOSH
-    // );
-
-    // let dao_address: GetAddrDaoResult = gosh_root_contract.run_static(
-    //     &client,
-    //     "getAddrDao",
-    //     Some(serde_json::json!({
-    //         "name": dao_name
-    //     }))
-    // ).await?;
-    let dao_contract = GoshContract::new(dao_address, abi::DAO);
-    let result: GetAddrWalletResult = dao_contract
+) -> anyhow::Result<GoshContract> {
+    let UserWalletConfig {
+        pubkey,
+        secret,
+        profile,
+    } = wallet;
+    let result: GetProfileAddrResult = gosh_root
         .run_local(
             client,
-            "getAddrWallet",
-            Some(serde_json::json!({
-                "pubkey": format!("0x{}", pubkey),
-                "index": user_wallet_index
-            })),
+            "getProfileAddr",
+            Some(serde_json::json!({ "name": profile })),
         )
+        .await?;
+    let dao_contract = GoshContract::new(dao_address, abi::DAO);
+
+    let params = serde_json::json!({
+        "pubaddr": result.address,
+        "index": user_wallet_index
+    });
+    let result: GetAddrWalletResult = dao_contract
+        .run_local(client, "getAddrWallet", Some(params))
         .await?;
     let user_wallet_address = result.address;
     log::trace!("user_wallet address: {:?}", user_wallet_address);
@@ -91,21 +93,23 @@ lazy_static! {
 }
 
 #[instrument(level = "debug", skip(context))]
-async fn zero_user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<GoshContract> {
+async fn zero_user_wallet(
+    context: &GitHelper<impl BlockchainService>,
+) -> anyhow::Result<GoshContract> {
     if _USER_WALLET.read().unwrap().is_none() {
         let mut user_wallet = _USER_WALLET.write().unwrap();
         if user_wallet.is_none() {
             let config = user_wallet_config(context);
             if config.is_none() {
-                return Err("User wallet config must be set".into());
+                anyhow::bail!("User wallet config must be set");
             }
             let config = config.expect("Guarded");
             *user_wallet = Some(
                 get_user_wallet(
                     &context.es_client,
+                    &context.gosh_root_contract,
                     &context.dao_addr,
-                    &config.pubkey,
-                    &config.secret,
+                    &config,
                     0,
                 )
                 .await?,
@@ -117,10 +121,12 @@ async fn zero_user_wallet(context: &GitHelper<impl BlockchainService>) -> Result
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<GoshContract> {
+pub async fn user_wallet(
+    context: &GitHelper<impl BlockchainService>,
+) -> anyhow::Result<GoshContract> {
     let config = user_wallet_config(context);
     if config.is_none() {
-        return Err("User wallet config must be set".into());
+        anyhow::bail!("User wallet config must be set");
     }
     let config = config.expect("Guarded");
     let zero_wallet = zero_user_wallet(context).await?;
@@ -153,9 +159,9 @@ pub async fn user_wallet(context: &GitHelper<impl BlockchainService>) -> Result<
 
     get_user_wallet(
         &context.es_client,
+        &context.gosh_root_contract,
         &context.dao_addr,
-        &config.pubkey,
-        &config.secret,
+        &config,
         user_wallet_index,
     )
     .await
@@ -172,7 +178,7 @@ async fn init_user_wallet_mirrors<C>(
     client: &TonClient,
     user_wallet_contract: &C,
     max_number_of_mirrors: u64,
-) -> Result<()>
+) -> anyhow::Result<()>
 where
     C: ContractRead + ContractInfo,
 {
@@ -196,7 +202,7 @@ where
 async fn user_wallet_config_max_number_of_mirrors(
     client: &TonClient,
     user_wallet_contract: &impl ContractRead,
-) -> Result<u64> {
+) -> anyhow::Result<u64> {
     let result: GetConfigResult = user_wallet_contract
         .read_state(client, "getConfig", None)
         .await?;

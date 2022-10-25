@@ -1,5 +1,5 @@
 import { TonClient } from '@eversdk/core'
-import { TAddress, TGoshDiff } from '../../types'
+import { TAddress } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshDiff } from '../interfaces'
 

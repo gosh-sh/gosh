@@ -2,11 +2,10 @@ use async_trait::async_trait;
 use reqwest::multipart;
 use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
-use std::{error::Error, marker::Send, marker::Sync, path::Path, time::Duration};
+use std::{marker::Send, marker::Sync, path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::{strategy::ExponentialBackoff, Retry};
 
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type HttpClient = reqwest_middleware::ClientWithMiddleware;
 
 static MAX_RETRIES: usize = 20;
@@ -31,13 +30,13 @@ pub trait IpfsInfo {
 
 #[async_trait]
 pub trait IpfsSave {
-    async fn save_blob(&self, blob: &[u8]) -> Result<String>;
-    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> Result<String>;
+    async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String>;
+    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String>;
 }
 
 #[async_trait]
 pub trait IpfsLoad {
-    async fn load(&self, cid: &str) -> Result<Vec<u8>>;
+    async fn load(&self, cid: &str) -> anyhow::Result<Vec<u8>>;
 }
 
 impl IpfsService {
@@ -57,7 +56,7 @@ impl IpfsService {
     }
 
     ///
-    pub fn build(ipfs_endpoint_address: &str) -> Result<Self> {
+    pub fn build(ipfs_endpoint_address: &str) -> anyhow::Result<Self> {
         let reqwest_client = reqwest::Client::builder().build()?;
 
         Ok(Self {
@@ -88,7 +87,7 @@ impl IpfsService {
             .take(MAX_RETRIES)
     }
 
-    async fn save_body<U, B>(cli: &HttpClient, url: U, body: B) -> Result<String>
+    async fn save_body<U, B>(cli: &HttpClient, url: U, body: B) -> anyhow::Result<String>
     where
         U: reqwest::IntoUrl,
         B: Into<reqwest::Body>,
@@ -100,7 +99,11 @@ impl IpfsService {
         Ok(response_body.hash)
     }
 
-    async fn save_blob_retriable(cli: &HttpClient, url: &str, blob: &[u8]) -> Result<String> {
+    async fn save_blob_retriable(
+        cli: &HttpClient,
+        url: &str,
+        blob: &[u8],
+    ) -> anyhow::Result<String> {
         // TODO: to_owned is not really necessary since reqwest doesn't modify body
         // so may be there's more clever way to not to copy blob
         IpfsService::save_body(cli, url, blob.to_owned()).await
@@ -110,7 +113,7 @@ impl IpfsService {
         cli: &HttpClient,
         url: &str,
         path: impl AsRef<Path>,
-    ) -> Result<String> {
+    ) -> anyhow::Result<String> {
         // in case of file upload usually you want to store metadata, but:
         // 1) reqwest async has no support for file
         // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
@@ -119,7 +122,7 @@ impl IpfsService {
         IpfsService::save_body(cli, url, body).await
     }
 
-    async fn load_retriable(cli: &HttpClient, url: &str) -> Result<Vec<u8>> {
+    async fn load_retriable(cli: &HttpClient, url: &str) -> anyhow::Result<Vec<u8>> {
         log::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
         log::info!("Got response: {:?}", response);
@@ -130,7 +133,7 @@ impl IpfsService {
 
 #[async_trait]
 impl IpfsSave for IpfsService {
-    async fn save_blob(&self, blob: &[u8]) -> Result<String> {
+    async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String> {
         log::debug!("Uploading blob to IPFS");
 
         let url = format!(
@@ -144,7 +147,7 @@ impl IpfsSave for IpfsService {
         .await
     }
 
-    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> Result<String> {
+    async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String> {
         log::debug!(
             "Uploading file to IPFS: {}",
             path.as_ref().to_string_lossy()
@@ -164,7 +167,7 @@ impl IpfsSave for IpfsService {
 
 #[async_trait]
 impl IpfsLoad for IpfsService {
-    async fn load(&self, cid: &str) -> Result<Vec<u8>> {
+    async fn load(&self, cid: &str) -> anyhow::Result<Vec<u8>> {
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
 
         Retry::spawn(self.retry_strategy(), || {

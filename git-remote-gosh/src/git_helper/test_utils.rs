@@ -1,10 +1,10 @@
+
 use git_object::bstr::ByteSlice;
 use git_repository::Repository;
-use std::error::Error;
-use std::result::Result;
+
 use std::{env, fs};
 
-pub fn setup_repo(name: &str, script_path: &str) -> Result<Repository, Box<dyn Error>> {
+pub fn setup_repo(name: &str, script_path: &str) -> anyhow::Result<Repository> {
     println!("Testing push: current_dir = {:?}", env::current_dir()?);
 
     let dir = std::env::temp_dir().join(name);

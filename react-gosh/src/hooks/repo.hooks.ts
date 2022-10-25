@@ -255,6 +255,49 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
     return { branches, branch, updateBranch, updateBranches }
 }
 
+function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
+    const { updateBranches } = useBranches(repo)
+    const { pushUpgrade } = _usePush(dao, repo)
+    const [status, setStatus] = useState<{
+        [name: string]: { isBusy?: boolean; isDestroy?: boolean; isLock?: boolean }
+    }>({})
+
+    const create = async (name: string, from: string) => {
+        const branch = await repo.getBranch(from)
+        await pushUpgrade(branch.name, branch.commit.name, branch.commit.version)
+        await repo.deployBranch(name.toLowerCase(), from.toLowerCase())
+        await updateBranches()
+    }
+
+    const destroy = async (name: string) => {
+        try {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: true, isDestroy: true },
+            }))
+            await repo.deleteBranch(name.toLowerCase())
+            await updateBranches()
+        } catch (e) {
+            throw e
+        } finally {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: false, isDestroy: false },
+            }))
+        }
+    }
+
+    // Temporary setter until smv branch operations are not moved here
+    const setLockStatusTmp = (name: string, isLock: boolean) => {
+        setStatus((state) => ({
+            ...state,
+            [name]: { ...state[name], isBusy: isLock, isLock },
+        }))
+    }
+
+    return { status, create, destroy, setLockStatusTmp }
+}
+
 function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
     const [tree, setTree] = useRecoilState(treeAtom)
 
@@ -367,12 +410,10 @@ function useCommitList(
             if (!prev) break
 
             const commit = await _getCommit(prev)
-            if (commit.name !== ZERO_COMMIT) list.push(commit)
+            const { name, initupgrade, parents, versionPrev } = commit
+            if (name !== ZERO_COMMIT && !initupgrade) list.push(commit)
 
-            const parent = await _getCommit({
-                address: commit.parents[0],
-                version: commit.versionPrev,
-            })
+            const parent = await _getCommit({ address: parents[0], version: versionPrev })
             prev =
                 parent.name !== ZERO_COMMIT
                     ? { address: parent.address, version: parent.version }
@@ -422,45 +463,11 @@ function useCommitList(
     }
 }
 
-function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+function _useCommit(dao: string, repo: string, commit: string) {
     const [adapter, setAdapter] = useState<IGoshRepositoryAdapter>()
     const [details, setDetails] = useState<{ isFetching: boolean; commit?: TCommit }>({
         isFetching: true,
     })
-    const [blobs, setBlobs] = useState<{
-        isFetching: boolean
-        items: {
-            treepath: string
-            commit: string
-            current: string | Buffer
-            previous: string | Buffer
-            showDiff: boolean
-            isFetching: boolean
-        }[]
-    }>({ isFetching: true, items: [] })
-
-    const onLoadDiff = async (index: number) => {
-        if (!adapter) return
-
-        setBlobs((state) => ({
-            ...state,
-            items: state.items.map((item, i) => {
-                return i === index ? { ...item, isFetching: true } : item
-            }),
-        }))
-
-        const { commit, treepath } = blobs.items[index]
-        const diff = await adapter.getCommitBlob(treepath, commit)
-
-        setBlobs((state) => ({
-            ...state,
-            items: state.items.map((item, i) => {
-                return i === index
-                    ? { ...item, ...diff, isFetching: false, showDiff: true }
-                    : item
-            }),
-        }))
-    }
 
     useEffect(() => {
         const _getCommit = async () => {
@@ -470,6 +477,8 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
                 const repository = await gosh.getRepository({ path: `${dao}/${repo}` })
                 try {
                     const data = await repository.getCommit({ name: commit })
+                    if (data.initupgrade) continue
+
                     setAdapter(repository)
                     setDetails((state) => ({ ...state, commit: data, isFetching: false }))
                     break
@@ -482,17 +491,60 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         _getCommit()
     }, [dao, repo, commit])
 
+    return {
+        repository: adapter,
+        commit: details,
+    }
+}
+
+function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+    const { repository, commit: details } = _useCommit(dao, repo, commit)
+    const [blobs, setBlobs] = useState<{
+        isFetching: boolean
+        items: {
+            treepath: string
+            commit: string
+            current: string | Buffer
+            previous: string | Buffer
+            showDiff: boolean
+            isFetching: boolean
+        }[]
+    }>({ isFetching: true, items: [] })
+
+    const getDiff = async (index: number) => {
+        if (!repository) return
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index ? { ...item, isFetching: true } : item
+            }),
+        }))
+
+        const { commit, treepath } = blobs.items[index]
+        const diff = await repository.getCommitBlob(treepath, commit)
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index
+                    ? { ...item, ...diff, isFetching: false, showDiff: true }
+                    : item
+            }),
+        }))
+    }
+
     useEffect(() => {
         const _getBlobs = async () => {
-            if (!adapter) return
+            if (!repository) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await adapter.getCommitBlobs(commit)
+            const blobs = await repository.getCommitBlobs(commit)
             const state = await Promise.all(
                 blobs.sort().map(async (treepath, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await adapter.getCommitBlob(treepath, commit)
+                            ? await repository.getCommitBlob(treepath, commit)
                             : { previous: '', current: '' }
                     return {
                         treepath,
@@ -507,7 +559,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }
 
         _getBlobs()
-    }, [adapter])
+    }, [repository])
 
     return {
         isFetching: details.isFetching,
@@ -515,7 +567,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         blobs: {
             isFetching: blobs.isFetching,
             items: blobs.items,
-            onLoadDiff,
+            getDiff,
         },
     }
 }
@@ -539,15 +591,8 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
         if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
 
-        if (repo.getVersion() !== branchData.commit.version) {
-            const gosh = GoshAdapterFactory.create(branchData.commit.version)
-            const name = await repo.getName()
-            const repoOld = await gosh.getRepository({
-                path: `${dao.name}/${name}`,
-            })
-            const upgradeData = await repoOld.getUpgrade(branchData.commit.name)
-            await repo.pushUpgrade(upgradeData)
-        }
+        const { name, version } = branchData.commit
+        await pushUpgrade(branchData.name, name, version)
 
         message = [title, message].filter((v) => !!v).join('\n\n')
         await repo.push(
@@ -560,6 +605,18 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
             pushCallback,
         )
         !isPullRequest && (await updateBranch(branchData.name))
+    }
+
+    const pushUpgrade = async (branch: string, commit: string, version: string) => {
+        if (repo.getVersion() !== version) {
+            const gosh = GoshAdapterFactory.create(version)
+            const name = await repo.getName()
+            const repoOld = await gosh.getRepository({ path: `${dao.name}/${name}` })
+
+            const upgradeData = await repoOld.getUpgrade(commit)
+            upgradeData.commit.branch = branch // Force branch name
+            await repo.pushUpgrade(upgradeData)
+        }
     }
 
     const pushCallback = (params: TPushCallbackParams) => {
@@ -577,7 +634,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         })
     }
 
-    return { branch: branchData, push, progress }
+    return { branch: branchData, push, pushUpgrade, progress }
 }
 
 function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
@@ -600,7 +657,11 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
     return { push, progress }
 }
 
-function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
+function _useMergeRequest(
+    dao: string,
+    repo: IGoshRepositoryAdapter,
+    showDiffNum: number,
+) {
     const [srcBranch, setSrcBranch] = useState<TBranch>()
     const [dstBranch, setDstBranch] = useState<TBranch>()
     const [progress, setProgress] = useState<{
@@ -612,6 +673,14 @@ function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
             showDiff: boolean
         }[]
     }>({ isFetching: false, items: [] })
+
+    const _getRepository = async (version: string) => {
+        if (repo.getVersion() === version) return repo
+
+        const gosh = GoshAdapterFactory.create(version)
+        const name = await repo.getName()
+        return await gosh.getRepository({ path: `${dao}/${name}` })
+    }
 
     const getDiff = (i: number) =>
         setProgress((state) => ({
@@ -635,10 +704,14 @@ function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
             return
         }
 
+        // Get repostory adapters depending on commit version
+        const srcRepo = await _getRepository(srcBranch.commit.version)
+        const dstRepo = await _getRepository(dstBranch.commit.version)
+
         // Get tree items for each branch
         const [srcTreeItems, dstTreeItems] = await Promise.all([
-            (async () => (await repo.getTree(srcBranch.commit.name)).items)(),
-            (async () => (await repo.getTree(dstBranch.commit.name)).items)(),
+            (async () => (await srcRepo.getTree(srcBranch.commit.name)).items)(),
+            (async () => (await dstRepo.getTree(dstBranch.commit.name)).items)(),
         ])
 
         // Compare trees and get added/updated treepath
@@ -662,12 +735,12 @@ function _useMergeRequest(repo: IGoshRepositoryAdapter, showDiffNum: number) {
         // Read blobs content from built tree diff
         const blobDiff = await Promise.all(
             treeDiff.map(async ({ treepath, exists }, index) => {
-                const srcBlob = await repo.getBlob({
+                const srcBlob = await srcRepo.getBlob({
                     fullpath: `${srcBranch.name}/${treepath}`,
                 })
                 const dstBlob =
                     exists &&
-                    (await repo.getBlob({
+                    (await dstRepo.getBlob({
                         fullpath: `${dstBranch.name}/${treepath}`,
                     }))
 
@@ -709,7 +782,7 @@ function useMergeRequest(
         dstBranch,
         build,
         progress: buildProgress,
-    } = _useMergeRequest(repo, showDiffNum)
+    } = _useMergeRequest(dao.name, repo, showDiffNum)
     const { push: _push, progress: pushProgress } = _usePush(dao, repo, dstBranch?.name)
 
     const push = async (
@@ -748,8 +821,12 @@ function usePullRequest(
         dstBranch,
         build,
         progress: buildProgress,
-    } = _useMergeRequest(repo, showDiffNum)
-    const { push: _push, progress } = _usePush(dao, repo, dstBranch?.name)
+    } = _useMergeRequest(dao.name, repo, showDiffNum)
+    const {
+        push: _push,
+        pushUpgrade: _pushUpgrade,
+        progress,
+    } = _usePush(dao, repo, dstBranch?.name)
 
     const push = async (
         title: string,
@@ -762,6 +839,9 @@ function usePullRequest(
         if (smv.smvBalance < 20) {
             throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
         }
+
+        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
+        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
 
         await _push(title, buildProgress.items, true, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
@@ -780,12 +860,94 @@ function usePullRequest(
     }
 }
 
+function usePullRequestCommit(
+    dao: string,
+    repo: string,
+    commit: string,
+    showDiffNum: number = 5,
+) {
+    const { repository, commit: details } = _useCommit(dao, repo, commit)
+    const [blobs, setBlobs] = useState<{
+        isFetching: boolean
+        items: {
+            item: {
+                treepath: string
+                index: number
+            }
+            current: string | Buffer
+            previous: string | Buffer
+            showDiff: boolean
+            isFetching: boolean
+        }[]
+    }>({ isFetching: true, items: [] })
+
+    const getDiff = async (index: number) => {
+        if (!repository) return
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index ? { ...item, isFetching: true } : item
+            }),
+        }))
+
+        const { item } = blobs.items[index]
+        const diff = await repository.getPullRequestBlob(item, commit)
+
+        setBlobs((state) => ({
+            ...state,
+            items: state.items.map((item, i) => {
+                return i === index
+                    ? { ...item, ...diff, isFetching: false, showDiff: true }
+                    : item
+            }),
+        }))
+    }
+
+    useEffect(() => {
+        const _getBlobs = async () => {
+            if (!repository) return
+
+            setBlobs({ isFetching: true, items: [] })
+            const blobs = await repository.getPullRequestBlobs(commit)
+            const state = await Promise.all(
+                blobs.map(async (item, i) => {
+                    const diff =
+                        i < showDiffNum
+                            ? await repository.getPullRequestBlob(item, commit)
+                            : { previous: '', current: '' }
+                    return {
+                        item,
+                        ...diff,
+                        showDiff: i < showDiffNum,
+                        isFetching: false,
+                    }
+                }),
+            )
+            setBlobs({ isFetching: false, items: state })
+        }
+
+        _getBlobs()
+    }, [repository])
+
+    return {
+        isFetching: details.isFetching,
+        commit: details.commit,
+        blobs: {
+            isFetching: blobs.isFetching,
+            items: blobs.items,
+            getDiff,
+        },
+    }
+}
+
 export {
     useRepoList,
     useRepo,
     useRepoCreate,
     useRepoUpgrade,
     useBranches,
+    useBranchManagement,
     useTree,
     useBlob,
     useCommitList,
@@ -793,4 +955,5 @@ export {
     usePush,
     useMergeRequest,
     usePullRequest,
+    usePullRequestCommit,
 }

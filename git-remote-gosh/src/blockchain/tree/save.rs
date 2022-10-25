@@ -7,7 +7,7 @@ use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::error::Error;
+
 use std::vec::Vec;
 
 #[derive(Serialize, Debug)]
@@ -63,7 +63,7 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
 async fn construct_tree_node(
     context: &mut GitHelper<impl BlockchainService>,
     e: &EntryRef<'_>,
-) -> Result<(String, TreeNode), Box<dyn Error>> {
+) -> anyhow::Result<(String, TreeNode)> {
     let mut buffer = vec![];
     use git_object::tree::EntryMode::*;
     let content_hash = match e.mode {
@@ -114,7 +114,7 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
-) -> Result<(), Box<dyn Error>> {
+) -> anyhow::Result<()> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
     while let Some(tree_id) = to_deploy.pop_front() {

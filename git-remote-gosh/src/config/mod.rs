@@ -2,7 +2,6 @@ extern crate shellexpand;
 use std::{
     collections::HashMap,
     env,
-    error::Error,
     fmt,
     io::{BufReader, Read},
     path::Path,
@@ -10,13 +9,14 @@ use std::{
 
 mod defaults;
 
-pub const IPFS_DIFF_THRESHOLD: usize = 15000;
-pub const IPFS_CONTENT_THRESHOLD: usize = 15000;
+pub const IPFS_DIFF_THRESHOLD: usize = 63*1024; //63kb (1kb buffer)
+pub const IPFS_CONTENT_THRESHOLD: usize = 63*1024; // 63kb (1kb buffer)
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
     pub pubkey: String,
     pub secret: String,
+    pub profile: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -78,12 +78,12 @@ impl Config {
         &self.primary_network
     }
 
-    fn load<TReader: Read + Sized>(config_reader: TReader) -> Result<Self, Box<dyn Error>> {
+    fn load<TReader: Read + Sized>(config_reader: TReader) -> anyhow::Result<Self> {
         let config: Config = serde_json::from_reader(config_reader)?;
         Ok(config)
     }
 
-    pub fn init() -> Result<Self, Box<dyn Error>> {
+    pub fn init() -> anyhow::Result<Self> {
         let config_path =
             env::var("GOSH_CONFIG_PATH").unwrap_or_else(|_| defaults::CONFIG_LOCATION.to_string());
         let config_path = shellexpand::tilde(&config_path).into_owned();
@@ -154,7 +154,8 @@ pub mod tests {
                     "foo": {
                         "user-wallet": {
                             "pubkey": "bar",
-                            "secret": "baz"
+                            "secret": "baz",
+                            "profile": "foo"
                         }
                     }
                 }
@@ -166,6 +167,7 @@ pub mod tests {
             .expect("It must be there");
         assert_eq!(wallet_config.pubkey, "bar");
         assert_eq!(wallet_config.secret, "baz");
+        assert_eq!(wallet_config.profile, "foo");
     }
 
     #[test]
@@ -177,7 +179,8 @@ pub mod tests {
                     "network.gosh.sh": {
                         "user-wallet": {
                             "pubkey": "foo",
-                            "secret": "bar"
+                            "secret": "bar",
+                            "profile": "foo"
                         }
                     }
                 }

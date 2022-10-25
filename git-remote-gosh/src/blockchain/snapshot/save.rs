@@ -3,6 +3,7 @@ use crate::abi as gosh_abi;
 use crate::blockchain::{
     tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
 };
+use crate::config;
 use crate::ipfs::IpfsSave;
 use crate::{
     blockchain::{call, snapshot, user_wallet},
@@ -16,8 +17,6 @@ use snapshot::Snapshot;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Deserialize, Debug)]
 struct GetDiffAddrResult {
@@ -93,10 +92,10 @@ pub struct PushDiffCoordinate {
 }
 
 #[instrument(level = "debug")]
-async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<String> {
+async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     log::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
-    let content = base64::encode(content);
+    let content = base64::encode(&content);
     let content = content.as_bytes().to_vec();
 
     ipfs_client.save_blob(&content).await
@@ -106,9 +105,9 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> Result<
 pub async fn is_diff_deployed(
     context: &TonClient,
     contract_address: &BlockchainContractAddress,
-) -> Result<bool> {
+) -> anyhow::Result<bool> {
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
-    let result: Result<GetVersionResult> =
+    let result: anyhow::Result<GetVersionResult> =
         diff_contract.run_local(context, "getVersion", None).await;
     Ok(result.is_ok())
 }
@@ -118,7 +117,7 @@ pub async fn diff_address(
     context: &mut GitHelper<impl BlockchainService>,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
-) -> Result<BlockchainContractAddress> {
+) -> anyhow::Result<BlockchainContractAddress> {
     let params = serde_json::json!({
         "commitName": last_commit_id.to_string(),
         "index1": diff_coordinate.index_of_parallel_thread,
@@ -153,7 +152,7 @@ pub async fn push_diff(
     original_snapshot_content: &Vec<u8>,
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
-) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
+) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
     let wallet = user_wallet(context).await?;
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &context.es_client,
@@ -204,7 +203,7 @@ pub async fn push_diff(
                 std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };
-        result.map_err(|e| e.to_string())
+        result.map_err(|e| anyhow::Error::from(e))
     }))
 }
 
@@ -224,7 +223,7 @@ pub async fn inner_push_diff(
     original_snapshot_content: &Vec<u8>,
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     let diff = compress_zstd(diff, None)?;
     log::debug!("compressed to {} size", diff.len());
 
@@ -320,11 +319,11 @@ pub async fn push_new_branch_snapshot(
     branch_name: &str,
     file_path: &str,
     original_content: &[u8],
-) -> Result<()> {
+) -> anyhow::Result<()> {
     let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
     log::debug!("compressed to {} size", content.len());
 
-    let (content, ipfs) = if content.len() > 15000 {
+    let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&context.ipfs_client, original_content)
@@ -367,7 +366,7 @@ pub async fn push_initial_snapshot(
     context: &mut GitHelper<impl BlockchainService>,
     branch_name: &str,
     file_path: &str,
-) -> Result<tokio::task::JoinHandle<std::result::Result<(), String>>> {
+) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
     let args = DeploySnapshotParams {
         repo_address: context.repo_addr.clone(),
         branch_name: branch_name.to_string(),
@@ -392,7 +391,7 @@ pub async fn push_initial_snapshot(
                 Some(params.clone()),
             )
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| anyhow::Error::from(e))
             .map(|e| ());
 
             if result.is_ok() || attempt > PUSH_SNAPSHOT_MAX_TRIES {

@@ -13,13 +13,13 @@ type TCommitBlobsType = {
             showDiff: boolean
             isFetching: boolean
         }[]
-        onLoadDiff(index: number): void
+        getDiff(index: number): void
     }
 }
 
 const CommitBlobs = (props: TCommitBlobsType) => {
     const { className, blobs } = props
-    const { isFetching, items, onLoadDiff } = blobs
+    const { isFetching, items, getDiff } = blobs
 
     return (
         <div className={className}>
@@ -41,7 +41,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                         <button
                             className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
                             disabled={isFetching}
-                            onClick={() => onLoadDiff(index)}
+                            onClick={() => getDiff(index)}
                         >
                             {isFetching && <Spinner className="mr-2" size="sm" />}
                             Load diff

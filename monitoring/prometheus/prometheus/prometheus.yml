@@ -37,6 +37,11 @@ scrape_configs:
     scrape_interval: 15s
     static_configs:
       - targets: ['trcnt-stat:9123']
+      
+  - job_name: 'wallet-mon'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['wallet-mon:9888']
 
   - job_name: 'gosh-mon-read'
     scrape_interval: 60s

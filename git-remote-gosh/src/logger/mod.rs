@@ -4,7 +4,7 @@ use log4rs::{
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
 };
-use std::error::Error;
+
 use std::str::FromStr;
 use std::{env, fmt};
 
@@ -15,8 +15,6 @@ pub struct GitHelperLogger {
     verbosity: log::LevelFilter,
 }
 
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
-
 impl fmt::Debug for GitHelperLogger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("GitHelperLogger")
@@ -26,7 +24,7 @@ impl fmt::Debug for GitHelperLogger {
 }
 
 impl GitHelperLogger {
-    pub fn init() -> Result<Self> {
+    pub fn init() -> anyhow::Result<Self> {
         let verbosity_level = Self::calculate_log_level(0);
         let initial_config = Self::build_config(verbosity_level)?;
 
@@ -37,7 +35,7 @@ impl GitHelperLogger {
         })
     }
 
-    pub fn set_verbosity(&mut self, verbosity_level: u8) -> Result<()> {
+    pub fn set_verbosity(&mut self, verbosity_level: u8) -> anyhow::Result<()> {
         let verbosity_level = Self::calculate_log_level(verbosity_level);
         let new_config = Self::build_config(verbosity_level)?;
         self.handler.set_config(new_config);
@@ -62,7 +60,7 @@ impl GitHelperLogger {
         }
     }
 
-    fn build_config(log_level: log::LevelFilter) -> Result<Config> {
+    fn build_config(log_level: log::LevelFilter) -> anyhow::Result<Config> {
         // WARNING: Do not add stdout logger!
         // because it will break gitremote-helper logic
         let stderr_appender = Appender::builder().build(

@@ -3,7 +3,7 @@ import { Form, Formik, Field } from 'formik'
 import * as Yup from 'yup'
 import { TextareaField, TextField, SwitchField } from '../../components/Formik'
 import { useSetRecoilState } from 'recoil'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { TonClient } from '@eversdk/core'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
@@ -21,7 +21,7 @@ type TFormValues = {
 
 const SignupPage = () => {
     const navigate = useNavigate()
-    const user = useUser()
+    const { persist, signup, signupProgress } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [phrase, setPhrase] = useState<string>('')
 
@@ -32,7 +32,7 @@ const SignupPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            await user.signup({
+            await signup({
                 ...values,
                 username: (values.username.startsWith('@')
                     ? values.username
@@ -62,6 +62,7 @@ const SignupPage = () => {
         generatePhrase(AppConfig.goshclient)
     }, [])
 
+    if (persist.username) return <Navigate to="/a/orgs" />
     return (
         <div className="block-auth">
             <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-117%">
@@ -135,10 +136,7 @@ const SignupPage = () => {
                 )}
             </Formik>
 
-            <SignupProgress
-                progress={user.signupProgress}
-                className="mt-4 mx-5 sm:mx-124px"
-            />
+            <SignupProgress progress={signupProgress} className="mt-4 mx-5 sm:mx-124px" />
         </div>
     )
 }

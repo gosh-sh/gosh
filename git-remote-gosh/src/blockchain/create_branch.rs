@@ -6,11 +6,8 @@ use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
-use ton_sdk::Block;
 
 use super::{BlockchainService, ZERO_SHA};
-
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
 pub struct CreateBranchOperation<'a, BlockChain> {
@@ -38,7 +35,7 @@ where
         }
     }
 
-    async fn prepare_commit_for_branching(&mut self) -> Result<()> {
+    async fn prepare_commit_for_branching(&mut self) -> anyhow::Result<()> {
         // We must prepare root tree for this commit
         // It needs to know a number of all blobs
         // in the entire tree
@@ -49,7 +46,7 @@ where
     }
 
     #[instrument(level = "debug")]
-    async fn preinit_branch(&mut self) -> Result<()> {
+    async fn preinit_branch(&mut self) -> anyhow::Result<()> {
         let wallet_contract = blockchain::user_wallet(self.context).await?;
         let params = serde_json::json!({
             "repoName": self.context.remote.repo,
@@ -67,7 +64,7 @@ where
     }
 
     #[instrument(level = "debug")]
-    async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> Result<()> {
+    async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> anyhow::Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
         let content = self
             .context
@@ -91,7 +88,7 @@ where
     }
 
     #[instrument(level = "debug")]
-    async fn push_initial_snapshots(&mut self) -> Result<()> {
+    async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let all_files: Vec<recorder::Entry> = {
             self.context
                 .local_repository()
@@ -124,7 +121,7 @@ where
     }
 
     #[instrument(level = "debug")]
-    async fn wait_branch_ready(&mut self) -> Result<()> {
+    async fn wait_branch_ready(&mut self) -> anyhow::Result<()> {
         // Ensure repository contract state
         // Ping Sergey Horelishev for details
         // todo!();
@@ -135,7 +132,7 @@ where
     /// Returns false if it was a branch from a commit
     /// and true if it was the first ever branch
     #[instrument(level = "debug")]
-    pub async fn run(&mut self) -> Result<bool> {
+    pub async fn run(&mut self) -> anyhow::Result<bool> {
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
         self.preinit_branch().await?;

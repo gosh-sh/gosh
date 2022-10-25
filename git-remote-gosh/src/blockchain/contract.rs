@@ -6,8 +6,6 @@ use crate::blockchain::{run_local, run_static};
 
 use super::{GoshContract, TonClient};
 
-type Result<T> = std::result::Result<T, String>;
-
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;
     fn get_address(&self) -> &super::BlockchainContractAddress;
@@ -33,7 +31,7 @@ pub trait ContractRead: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>;
 }
@@ -45,15 +43,13 @@ impl ContractRead for GoshContract {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_local(client, self, function_name, args)
-            .await
-            .map_err(|e| e.to_string())?;
+        let result = run_local(client, self, function_name, args).await?;
         log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| e.to_string())?)
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -64,7 +60,7 @@ pub trait ContractStatic: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>;
 }
@@ -76,15 +72,13 @@ impl ContractStatic for GoshContract {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_static(client, self, function_name, args)
-            .await
-            .map_err(|e| e.to_string())?;
+        let result = run_static(client, self, function_name, args).await?;
         log::trace!("run_statuc result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| e.to_string())?)
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -95,7 +89,7 @@ pub trait ContractMutate: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
@@ -107,7 +101,7 @@ pub trait ContractMutate: Debug {
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{create_client, GetAddrBranchResult},
+        blockchain::{create_client, GetAddrBranchResult, BlockchainContractAddress},
         config::Config,
     };
     use std::sync::Arc;
@@ -122,17 +116,19 @@ mod tests {
             context: &TonClient,
             function_name: &str,
             args: Option<serde_json::Value>,
-        ) -> Result<T>
+        ) -> anyhow::Result<T>
         where
             T: for<'de> Deserialize<'de>,
         {
-            serde_json::from_value::<T>(json!({
+            let v: serde_json::Value = json!({
                 "value0": {
-                    "key": "branch_key",
-                    "value": "branch_value",
+                    "branchname": "branch_name",
+                    "commitaddr": format!("0:{:64}", 0),
+                    "commitversion": "commit_version"
                 }
-            }))
-            .map_err(|e| e.to_string())
+            });
+            serde_json::from_value::<T>(v)
+            .map_err(|e| anyhow::Error::from(e))
         }
     }
 
@@ -145,6 +141,11 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(result.branch.branch_name, "branch_key");
+        assert_eq!(result.branch.branch_name, "branch_name");
+        assert_eq!(
+            result.branch.commit_address,
+            BlockchainContractAddress::new(format!("0:{:64}", 0))
+        );
+        assert_eq!(result.branch.version, "commit_version");
     }
 }

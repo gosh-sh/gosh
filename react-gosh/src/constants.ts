@@ -1,5 +1,5 @@
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000'
-export const MAX_ONCHAIN_SIZE = 15360
+export const MAX_ONCHAIN_SIZE = 64512
 
 export const EventTypes: { [key: number]: string } = {
     1: 'Pull request',

@@ -12,12 +12,12 @@ pub struct Remote {
 }
 
 impl Remote {
-    pub fn new(url: &str, config: &Config) -> Result<Self, String> {
+    pub fn new(url: &str, config: &Config) -> anyhow::Result<Self> {
         deconstruct_remote(url, config)
     }
 }
 
-fn deconstruct_remote(input: &str, config: &Config) -> Result<Remote, String> {
+fn deconstruct_remote(input: &str, config: &Config) -> anyhow::Result<Remote> {
     let malformed_err = format!("The following URL is malformed:\n\t{input}\nThe URL must be in the following format: gosh::<network>://<account>@<repository>");
 
     let mut splitted_url = input.split("://");
@@ -25,13 +25,13 @@ fn deconstruct_remote(input: &str, config: &Config) -> Result<Remote, String> {
     let tail = splitted_url.next().unwrap_or("");
 
     if head.is_empty() || tail.is_empty() {
-        return Err(malformed_err);
+        anyhow::bail!(malformed_err);
     }
 
     let mut splitted_head = head.split("::");
     let mut scheme = splitted_head.next().unwrap();
     if scheme.is_empty() {
-        return Err(malformed_err);
+        anyhow::bail!(malformed_err);
     }
 
     let mut network = splitted_head.next().unwrap_or("");
@@ -54,7 +54,7 @@ fn deconstruct_remote(input: &str, config: &Config) -> Result<Remote, String> {
     let repo = splitted_path.next().unwrap_or("");
 
     if gosh.is_empty() || dao.is_empty() || repo.is_empty() {
-        return Err(malformed_err);
+        anyhow::bail!(malformed_err);
     }
 
     if network.is_empty() {

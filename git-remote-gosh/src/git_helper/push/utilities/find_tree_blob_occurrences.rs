@@ -18,15 +18,13 @@ use std::{
     vec::Vec,
 };
 
-use crate::git_helper::push::Result;
-
 pub fn find_tree_blob_occurrences(
     node_path: &Path,
     odb: &OdbHandle,
     tree_id: &ObjectId,
     blob_id: &ObjectId,
     buffer: &mut Vec<PathBuf>,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     use git_object::tree::EntryMode::*;
     let mut tree_object_buffer: Vec<u8> = Vec::new();
     let tree = odb.find_tree(tree_id, &mut tree_object_buffer)?;

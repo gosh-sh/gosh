@@ -1,7 +1,5 @@
-import { Field } from 'formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { SwitchField } from '../../components/Formik'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { usePullRequest } from 'react-gosh'
 import { toast } from 'react-toastify'

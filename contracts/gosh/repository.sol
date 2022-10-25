@@ -39,8 +39,8 @@ contract Repository is Modifiers{
     bool _ready = false;
 
     constructor(
-        address pubaddr, 
-        string name, 
+        address pubaddr,
+        string name,
         string nameDao,
         address goshdao,
         address rootgosh,
@@ -55,7 +55,7 @@ contract Repository is Modifiers{
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;        
+        m_WalletCode = WalletCode;
         _pubaddr = pubaddr;
         _goshroot = rootgosh;
         _goshdao = goshdao;
@@ -74,52 +74,52 @@ contract Repository is Modifiers{
         _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
         _head = "main";
     }
-    
+
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_goshroot) accept {
-        if (prev.addr != address(this)) { 
+        if (prev.addr != address(this)) {
             Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(false, _Branches, _protectedBranch, _head);
         }
         Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(true, _Branches, _protectedBranch, _head);
-    } 
-    
+    }
+
     function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
         if (ans == false) { selfdestruct(_goshdao); }
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
         _ready = true;
-    } 
-    
+    }
+
     /*function setTombstone(address pubaddr, uint128 index, string description) public {
         description;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _tombstone = true;
     }*/
 
-    //Branch part  
-    function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
+    //Branch part
+    function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
         require("0000000000000000000000000000000000000000" != fromcommit, ERR_EMPTY_BRANCH);
-        Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname);
+        Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
     }
-    
+
     function commitCorrect(string newname, string fromcommit) public senderIs(getCommitAddr(fromcommit)) {
         tvm.accept();
          require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
         _Branches[tvm.hash(newname)] = Item(newname, getCommitAddr(fromcommit), version);
     }
-    
+
     function deleteBranch(address pubaddr, string name, uint128 index) public minValue(0.3 ton){
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
         tvm.accept();
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        delete _Branches[tvm.hash(name)]; 
+        delete _Branches[tvm.hash(name)];
     }
 
     //Access part
@@ -144,7 +144,7 @@ contract Repository is Modifiers{
         });
         return _contractflex;
     }
-    
+
     function initCommit(string namecommit, string branch, address commit) public view senderIs(getCommitAddr(namecommit)) accept {
         require(_previousversion.hasValue(), ERR_WRONG_DATA);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
@@ -152,7 +152,7 @@ contract Repository is Modifiers{
     }
 
     function isCorrectCommit(string namecommit, string branch, address commit) public view {
-        if ((_Branches[tvm.hash(branch)].commitaddr == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].commitaddr)) { 
+        if ((_Branches[tvm.hash(branch)].commitaddr == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].commitaddr)) {
             Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
         }
     }
@@ -160,7 +160,7 @@ contract Repository is Modifiers{
     function commitCanceled(string namecommit, string branch) public senderIs(getCommitAddr(namecommit)) view accept {
         namecommit; branch;
     }
-    
+
     function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {
         _Branches[tvm.hash(branch)] = Item(branch, getCommitAddr(namecommit), version);
     }
@@ -171,7 +171,7 @@ contract Repository is Modifiers{
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits);
     }
-    
+
     function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
@@ -185,7 +185,7 @@ contract Repository is Modifiers{
         selfdestruct(msg.sender);
     }
 
-    //Setters    
+    //Setters
     function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
@@ -207,9 +207,9 @@ contract Repository is Modifiers{
         tvm.accept();
         _head = nameBranch;
     }
-    
+
     //Protected branch
-        
+
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
@@ -218,7 +218,7 @@ contract Repository is Modifiers{
         if (_protectedBranch[tvm.hash(branch)] == true) { return; }
         _addProtectedBranch(branch);
     }
-    
+
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
@@ -228,26 +228,26 @@ contract Repository is Modifiers{
         if (_protectedBranch[tvm.hash(branch)] == false) { return; }
         _deleteProtectedBranch(branch);
     }
-    
+
     function _addProtectedBranch(string branch) private {
         _protectedBranch[tvm.hash(branch)] = true;
     }
-    
+
     function _deleteProtectedBranch(string branch) private {
         delete _protectedBranch[tvm.hash(branch)];
     }
-    
+
     function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == false) {
-            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits); 
+            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits);
             return;
         }
     }
-    
+
     function _composeTreeStateInit(string shaTree) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: address(this)}});
@@ -259,24 +259,24 @@ contract Repository is Modifiers{
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
-    
+
     //Getters
-        
+
     function isBranchProtected(string branch) external view returns(bool) {
-        if (_protectedBranch.exists(tvm.hash(branch)) == false) { 
-            return false; 
+        if (_protectedBranch.exists(tvm.hash(branch)) == false) {
+            return false;
         }
-        if (_protectedBranch[tvm.hash(branch)] == false) { 
+        if (_protectedBranch[tvm.hash(branch)] == false) {
             return false;
         }
         return true;
     }
-    
+
     function getTreeAddr(string treeName) external view returns(address) {
         TvmCell s1 = _composeTreeStateInit(treeName);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
-    
+
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
         return _protectedBranch;
     }
@@ -303,7 +303,7 @@ contract Repository is Modifiers{
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
-    
+
     function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {
         TvmCell s1 = _composeDiffStateInit(commitName, address(this), index1, index2);
         return  address(tvm.hash(s1));
@@ -337,19 +337,19 @@ contract Repository is Modifiers{
     function getVersion() external pure returns(string) {
         return version;
     }
-    
+
     function getOwner() external view returns(address) {
         return _pubaddr;
     }
-      
+
     function getPrevious() external view returns(optional(AddrVersion)) {
         return _previousversion;
     }
-    
+
     function getTombstone() external view returns(bool) {
         return _tombstone;
     }
-          
+
     function getReady() external view returns(bool) {
         return _ready;
     }

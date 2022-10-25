@@ -45,6 +45,7 @@ import {
     IPushCallback,
     TBranch,
     TCommit,
+    TDiff,
     TRepository,
     TTag,
     TTree,
@@ -587,64 +588,84 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         commit: string,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        const target = await this.getCommit({ name: commit })
+        // Get commit tree items filtered by blob tree path,
+        // find resulting blob sha1 after commit was applied
+        const tree = (await this.getTree(commit, treepath)).items
+        const sha1 = tree.find((item) => getTreeItemFullPath(item) === treepath)?.sha1
+        if (!sha1) {
+            throw new GoshError('Blob not found in commit tree', { commit, treepath })
+        }
 
+        // Get snapshot and read all incoming internal messages
+        const target = await this.getCommit({ name: commit })
         const fullpath = `${target.branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
+        const { messages } = await snapshot.getMessages(
+            { msgType: ['IntIn'] },
+            true,
+            true,
+        )
 
-        const applied = []
-        let cursor: string | undefined
-        while (true) {
-            const page = await snapshot.getMessages({ msgType: ['IntIn'], cursor }, true)
-            cursor = page.cursor
+        // Filter only approved diff messages
+        const approved: string[] = []
+        for (const { decoded } of messages) {
+            if (['approve', 'constructor'].indexOf(decoded.name) < 0) continue
+            const { value } = decoded
+            if (value.commit) approved.push(value.commit)
+        }
 
-            const approved: string[] = []
-            let parentIsNextApproved = false
-            for (const { decoded } of page.messages) {
-                if (decoded.name !== 'approve') continue
-                approved.push(decoded.value.commit)
-                if (parentIsNextApproved) break
-                if (decoded.value.commit === target.name) parentIsNextApproved = true
+        // Filter applied diff messages by approved and get diffs
+        const applied = messages
+            .filter(({ decoded }) => {
+                const { name, value } = decoded
+                const key = name === 'applyDiff' ? 'namecommit' : 'commit'
+                return (
+                    ['applyDiff', 'constructor'].indexOf(name) >= 0 &&
+                    approved.indexOf(value[key]) >= 0
+                )
+            })
+            .map(({ decoded }) => {
+                const { name, value } = decoded
+                if (name === 'applyDiff') return decoded.value.diff
+                return {
+                    commit: value.commit,
+                    patch: !!value.data,
+                    ipfs: value.ipfsdata,
+                }
+            })
+
+        // Restore blob state on current commit
+        const { onchain, content } = await this.getBlob({ fullpath })
+        let current = content
+        let prevIndex: number | undefined
+        for (const [i, diff] of applied.entries()) {
+            const prev = i > 0 && applied[i - 1]
+
+            if (prevIndex !== undefined) break
+            if (diff.ipfs && diff.sha1 !== sha1) continue
+            if (prev?.ipfs && diff.patch) current = onchain.content
+            if (diff.sha1 === sha1) {
+                prevIndex = diff.ipfs ? i + 1 : i
+                if (diff.patch) break
             }
-
-            applied.push(
-                ...page.messages
-                    .filter(({ decoded }) => {
-                        return (
-                            decoded.name === 'applyDiff' &&
-                            approved.indexOf(decoded.value.namecommit) >= 0
-                        )
-                    })
-                    .map(({ decoded }) => decoded.value.diff),
-            )
-
-            if (!cursor || parentIsNextApproved) break
-            await sleep(300)
+            current = await this._applyBlobDiffPatch(current, diff, true)
         }
 
-        // Restore blob content to parent commit
-        const { onchain, content, ipfs } = await this.getBlob({ fullpath })
-        const parent = applied.slice(-1)[0].commit
-        let previous = content
-        if (Buffer.isBuffer(previous)) return { previous, current: previous }
-        for (const diff of applied) {
-            if (ipfs && diff.commit === onchain.commit) previous = onchain.content
-            if (parent === target.name) {
-                previous = ''
-                break
+        // Restore blob state on commit before current
+        let previous = current
+        if (prevIndex !== undefined && applied[prevIndex]) {
+            const diff = applied[prevIndex]
+            const prev = prevIndex > 0 && applied[prevIndex - 1]
+
+            if (prev?.ipfs && diff.patch) previous = onchain.content
+            if (
+                !prev?.ipfs ||
+                (prev?.ipfs && diff.ipfs) ||
+                (prev?.ipfs && prev.sha1 !== sha1)
+            ) {
+                previous = await this._applyBlobDiffPatch(previous, diff, true)
             }
-            if (diff.patch && diff.commit === parent) break
-
-            previous = await this._applyBlobDiffPatch(previous, diff, true)
-        }
-
-        // Apply target commit diff
-        let current = previous
-        if (Buffer.isBuffer(current)) return { previous, current }
-        const diffs = applied.filter((diff) => diff.commit === target.name)
-        for (const diff of diffs) {
-            current = await this._applyBlobDiffPatch(current, diff)
-        }
+        } else previous = ''
 
         return { previous, current }
     }
@@ -667,6 +688,68 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const snapshot = await this._getSnapshot({ address })
                 const { value0 } = await snapshot.runLocal('getName', {})
                 return value0.split('/').slice(1).join('/')
+            }),
+        )
+    }
+
+    async getPullRequestBlob(
+        item: { treepath: string; index: number },
+        commit: string,
+    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+        // If commit was accepted, return blob state at commit
+        if (item.index === -1) {
+            return await this.getCommitBlob(item.treepath, commit)
+        }
+
+        // Get blob state at parent commit, get diffs and apply
+        const details = await this.getCommit({ name: commit })
+        const parent = await this.getCommit({ address: details.parents[0] })
+
+        let previous: string | Buffer
+        let current: string | Buffer
+        try {
+            const state = await this.getCommitBlob(item.treepath, parent.name)
+            previous = current = state.current
+        } catch {
+            previous = current = ''
+        }
+
+        const diff = await this._getDiff(commit, item.index, 0)
+        const subdiffs = await this._getDiffs(diff)
+        for (const subdiff of subdiffs) {
+            current = await this._applyBlobDiffPatch(current, subdiff)
+        }
+        return { previous, current }
+    }
+
+    async getPullRequestBlobs(
+        commit: string,
+    ): Promise<{ treepath: string; index: number }[]> {
+        // Get IGoshDiff instance list for commit
+        const diffs: IGoshDiff[] = []
+        let index1 = 0
+        while (true) {
+            const diff = await this._getDiff(commit, index1, 0)
+            if (!(await diff.isDeployed())) break
+
+            diffs.push(diff)
+            index1++
+        }
+
+        // Get blobs list from commit (if commit was accepted)
+        if (!diffs.length) {
+            const blobs = await this.getCommitBlobs(commit)
+            return blobs.map((treepath) => ({ treepath, index: -1 }))
+        }
+
+        // Get blobs list from diffs (if commit is not accepted)
+        return await Promise.all(
+            diffs.map(async (diff, index) => {
+                const subdiffs = await this._getDiffs(diff)
+                const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
+                const name = await snapshot.getName()
+                const treepath = name.split('/').slice(1).join('/')
+                return { treepath, index }
             }),
         )
     }
@@ -773,8 +856,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             fromCommit: fromBranch.commit.name,
         })
         const wait = await whileFinite(async () => {
-            const branch = await this.getBranch(name)
-            return branch.name === name
+            const { branchname } = await this._getBranch(name)
+            return branchname === name
         })
         if (!wait) throw new GoshError('Deploy branch timeout reached')
     }
@@ -787,8 +870,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Check branch
-        const { key } = await this._getBranch(name)
-        if (!key) throw new GoshError('Branch does not exist')
+        const { branchname } = await this._getBranch(name)
+        if (!branchname) throw new GoshError('Branch does not exist')
         if (await this._isBranchProtected(name)) {
             throw new GoshError('Branch is protected')
         }
@@ -815,8 +898,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             Name: name,
         })
         const wait = await whileFinite(async () => {
-            const { key } = await this._getBranch(name)
-            return !key
+            const { branchname } = await this._getBranch(name)
+            return !branchname
         })
         if (!wait) throw new GoshError('Delete branch timeout reached')
     }
@@ -1197,6 +1280,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return new GoshDiff(this.client, value0)
     }
 
+    private async _getDiffs(diff: IGoshDiff): Promise<TDiff[]> {
+        const { value0 } = await diff.runLocal('getdiffs', {})
+        return value0
+    }
+
     private async _getTag(address: TAddress): Promise<TTag> {
         const tag = new GoshTag(this.client, address)
         const commit = await tag.runLocal('getCommit', {})
@@ -1453,7 +1541,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _applyBlobDiffPatch(
         content: string | Buffer,
-        diff: any,
+        diff: TDiff,
         reverse: boolean = false,
     ): Promise<string | Buffer> {
         if (Buffer.isBuffer(content)) return content
@@ -1461,7 +1549,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { ipfs, patch } = diff
         const compressed = ipfs
             ? (await goshipfs.read(ipfs)).toString()
-            : Buffer.from(patch, 'hex').toString('base64')
+            : Buffer.from(patch!, 'hex').toString('base64')
         const decompressed = await zstd.decompress(compressed, false)
         const buffer = Buffer.from(decompressed, 'base64')
 
