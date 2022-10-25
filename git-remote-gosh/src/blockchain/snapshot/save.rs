@@ -114,7 +114,8 @@ pub async fn is_diff_deployed(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn diff_address(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &TonClient,
+    repo_contract: &mut GoshContract,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
 ) -> anyhow::Result<BlockchainContractAddress> {
@@ -123,9 +124,8 @@ pub async fn diff_address(
         "index1": diff_coordinate.index_of_parallel_thread,
         "index2": diff_coordinate.order_of_diff_in_the_parallel_thread,
     });
-    let result: GetDiffAddrResult = context
-        .repo_contract
-        .run_static(&context.es_client, "getDiffAddr", Some(params))
+    let result: GetDiffAddrResult = repo_contract
+        .run_static(&context, "getDiffAddr", Some(params))
         .await?;
     Ok(result.address)
 }

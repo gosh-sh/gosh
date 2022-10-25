@@ -100,9 +100,13 @@ impl ParallelDiffsUploadSupport {
                 )
                 .await?,
             );
-            let diff_contract_address =
-                blockchain::snapshot::diff_address(context, &self.last_commit_id, diff_coordinates)
-                    .await?;
+            let diff_contract_address = blockchain::snapshot::diff_address(
+                &context.es_client,
+                &mut context.repo_contract,
+                &self.last_commit_id,
+                diff_coordinates,
+            )
+            .await?;
             log::debug!(
                 "diff_contract_address <commit: {}, coord: {:?}>: {}",
                 self.last_commit_id,

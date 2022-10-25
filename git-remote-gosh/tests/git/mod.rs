@@ -1,10 +1,8 @@
 use git2::{Branch, IndexAddOption, Repository, Signature, Time};
 use std::fs;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 #[test_log::test(tokio::test)]
-async fn test_push() -> Result<()> {
+async fn test_push() -> anyhow::Result<()> {
     log::info!("Preparing repository for tests");
     // TODO: rewrite from libgit2 to gitoxide
     let dir = std::env::temp_dir().join("test_push");

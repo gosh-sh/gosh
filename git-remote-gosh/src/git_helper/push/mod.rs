@@ -253,9 +253,10 @@ where
             let mut iter = remote_ref.rsplit('/');
             iter.next().unwrap()
         };
-        let parsed_remote_ref =
-            Blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
-                .await?;
+        let parsed_remote_ref = self
+            .blockchain
+            .remote_rev_parse(&self.repo_addr, remote_branch_name)
+            .await?;
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
@@ -264,12 +265,10 @@ where
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
-            let is_protected = Blockchain::is_branch_protected(
-                &self.es_client,
-                &self.repo_addr,
-                remote_branch_name,
-            )
-            .await?;
+            let is_protected = self
+                .blockchain
+                .is_branch_protected(&self.repo_addr, remote_branch_name)
+                .await?;
             if is_protected {
                 anyhow::bail!(
                     "This branch '{branch_name}' is protected. \
@@ -491,35 +490,35 @@ mod tests {
     async fn test_push_parotected_ref() {
         let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        blockchain::MockBlockchainService::is_branch_protected_context()
-            .expect()
-            .returning(|_, _, _| Ok(true));
+        // blockchain::MockBlockchainService::is_branch_protected_context()
+        //     .expect()
+        //     .returning(|_, _, _| Ok(true));
 
-        blockchain::MockBlockchainService::remote_rev_parse_context()
-            .expect()
-            .returning(|_, _, _| {
-                Ok(Some((
-                    BlockchainContractAddress::new("test"),
-                    "test".to_owned(),
-                )))
-            });
+        // blockchain::MockBlockchainService::remote_rev_parse_context()
+        //     .expect()
+        //     .returning(|_, _, _| {
+        //         Ok(Some((
+        //             BlockchainContractAddress::new("test"),
+        //             "test".to_owned(),
+        //         )))
+        //     });
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            blockchain::Blockchain {
-                wallet_config: None,
-            },
-        );
+        // let mut helper = setup_test_helper(
+        //     json!({
+        //         "ipfs": "foo.endpoint"
+        //     }),
+        //     "gosh://1/2/3",
+        //     repo,
+        //     blockchain::Ever {
+        //         wallet_config: None,
+        //     },
+        // );
 
-        let res = helper
-            .push("main:main")
-            .await
-            .map_err(|e| panic!("Error: {:?}", e))
-            .unwrap();
+        // let res = helper
+        //     .push("main:main")
+        //     .await
+        //     .map_err(|e| panic!("Error: {:?}", e))
+        //     .unwrap();
         // expected panic: can't push to protected branch
     }
 
@@ -527,37 +526,37 @@ mod tests {
     async fn test_push_normal_ref() {
         let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        blockchain::MockBlockchainService::is_branch_protected_context()
-            .expect()
-            .returning(|_, _, _| Ok(false));
+        // blockchain::MockBlockchainService::is_branch_protected_context()
+        //     .expect()
+        //     .returning(|_, _, _| Ok(false));
 
-        blockchain::MockBlockchainService::remote_rev_parse_context()
-            .expect()
-            .returning(|_, _, _| {
-                Ok(Some((
-                    BlockchainContractAddress::new("test"),
-                    "test".to_owned(),
-                )))
-            });
+        // blockchain::MockBlockchainService::remote_rev_parse_context()
+        //     .expect()
+        //     .returning(|_, _, _| {
+        //         Ok(Some((
+        //             BlockchainContractAddress::new("test"),
+        //             "test".to_owned(),
+        //         )))
+        //     });
 
-        // push_tree_context().expect().returning(|_, _, _| Ok(()));
+        // // push_tree_context().expect().returning(|_, _, _| Ok(()));
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            blockchain::Blockchain {
-                wallet_config: None,
-            },
-        );
+        // let mut helper = setup_test_helper(
+        //     json!({
+        //         "ipfs": "foo.endpoint"
+        //     }),
+        //     "gosh://1/2/3",
+        //     repo,
+        //     blockchain::Ever {
+        //         wallet_config: None,
+        //     },
+        // );
 
-        let res = helper
-            .push("main:main")
-            .await
-            .map_err(|e| panic!("Error: {:?}", e))
-            .unwrap();
+        // let res = helper
+        //     .push("main:main")
+        //     .await
+        //     .map_err(|e| panic!("Error: {:?}", e))
+        //     .unwrap();
     }
 
     #[tokio::test]

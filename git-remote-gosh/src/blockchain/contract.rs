@@ -12,16 +12,16 @@ pub trait ContractInfo: Debug {
     fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair>;
 }
 
-impl ContractInfo for GoshContract {
-    fn get_abi(&self) -> &ton_client::abi::Abi {
-        &self.abi
-    }
-    fn get_address(&self) -> &super::BlockchainContractAddress {
-        &self.address
-    }
-    fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair> {
-        &self.keys
-    }
+#[async_trait]
+pub trait ContractStatic: Debug {
+    async fn static_method<T>(
+        &mut self,
+        client: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+    where
+        for<'de> T: Deserialize<'de>;
 }
 
 #[async_trait]
@@ -37,9 +37,9 @@ pub trait ContractRead: Debug {
 }
 
 #[async_trait]
-impl ContractRead for GoshContract {
-    async fn read_state<T>(
-        &self,
+pub trait ContractMutate: Debug {
+    async fn mutate_stte<T>(
+        &mut self,
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
@@ -47,22 +47,8 @@ impl ContractRead for GoshContract {
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_local(client, self, function_name, args).await?;
-        log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
+        todo!()
     }
-}
-
-#[async_trait]
-pub trait ContractStatic: Debug {
-    async fn static_method<T>(
-        &mut self,
-        client: &TonClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        for<'de> T: Deserialize<'de>;
 }
 
 #[async_trait]
@@ -79,21 +65,6 @@ impl ContractStatic for GoshContract {
         let result = run_static(client, self, function_name, args).await?;
         log::trace!("run_statuc result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
-    }
-}
-
-#[async_trait]
-pub trait ContractMutate: Debug {
-    async fn mutate_stte<T>(
-        &mut self,
-        client: &TonClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        for<'de> T: Deserialize<'de>,
-    {
-        todo!()
     }
 }
 

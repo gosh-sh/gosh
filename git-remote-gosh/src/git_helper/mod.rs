@@ -14,7 +14,7 @@ use crate::blockchain::{
     TonClient,
     Tree,
 };
-use crate::blockchain::{Blockchain, BlockchainContractAddress};
+use crate::blockchain::{BlockchainContractAddress, Ever};
 use crate::config::Config;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
@@ -25,7 +25,7 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
+pub struct GitHelper<Blockchain = crate::blockchain::Ever> {
     pub config: Config,
     pub es_client: TonClient,
     pub ipfs_client: IpfsService,
@@ -79,21 +79,24 @@ where
         Ok(create_client(&self.config, &self.remote.network)?)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(ever_client))]
     async fn build(
         config: Config,
         url: &str,
         logger: Logger,
         blockchain: Blockchain,
+        remote: Remote,
+        ever_client: TonClient,
     ) -> anyhow::Result<Self> {
-        let remote = Remote::new(url, &config)?;
-        let es_client = create_client(&config, &remote.network)?;
+        // let remote = Remote::new(url, &config)?;
+        // let es_client = create_client(&config, &remote.network)?;
+        let es_client = ever_client.clone();
 
         let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
         let dao: GetAddrDaoResult = gosh_root_contract
             .run_static(
-                &es_client,
+                &ever_client,
                 "getAddrDao",
                 Some(serde_json::json!({ "name": remote.dao })),
             )
@@ -163,10 +166,15 @@ where
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
 pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
-    let blockchain = Blockchain {
+    let remote = Remote::new(url, &config)?;
+    let ever_client = create_client(&config, &remote.network)?;
+    let blockchain = Ever {
         wallet_config: None,
+        ever_client: ever_client.clone(),
     };
-    let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
+    // TODO: implement GitHelperBuilder pattern
+    let mut helper =
+        GitHelper::build(config, url, logger, blockchain, remote, ever_client.clone()).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 

@@ -14,7 +14,7 @@ use crate::config::{Config, UserWalletConfig};
 
 use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
-use super::{Blockchain, BlockchainContractAddress, GoshContract, TonClient};
+use super::{BlockchainContractAddress, Ever, GoshContract, TonClient};
 
 #[derive(Deserialize, Debug)]
 struct GetProfileAddrResult {
@@ -27,12 +27,6 @@ struct GetAddrWalletResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
 }
-
-/* #[derive(Deserialize, Debug)]
-struct GetAddrDaoResult {
-    #[serde(rename = "value0")]
-    pub address: BlockchainContractAddress,
-} */
 
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {
@@ -139,7 +133,7 @@ pub trait BlockchainUserWallet {
 }
 
 #[async_trait]
-impl BlockchainUserWallet for Blockchain {
+impl BlockchainUserWallet for Ever {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }

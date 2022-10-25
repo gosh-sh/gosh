@@ -1,4 +1,5 @@
 #![allow(unused_variables)]
+use async_trait::async_trait;
 use base64;
 use base64_serde::base64_serde_type;
 
@@ -7,13 +8,14 @@ use serde_json;
 
 use std::{env, fmt, sync::Arc};
 
+mod client;
 mod contract;
 mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
-mod traits;
-pub use traits::*;
+mod service;
+pub use service::*;
 
 use ton_client::{
     abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
@@ -135,6 +137,35 @@ impl GoshContract {
     pub async fn get_version(&self, context: &TonClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
         Ok(result.version)
+    }
+}
+
+impl ContractInfo for GoshContract {
+    fn get_abi(&self) -> &ton_client::abi::Abi {
+        &self.abi
+    }
+    fn get_address(&self) -> &BlockchainContractAddress {
+        &self.address
+    }
+    fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair> {
+        &self.keys
+    }
+}
+
+#[async_trait]
+impl ContractRead for GoshContract {
+    async fn read_state<T>(
+        &self,
+        client: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+    where
+        for<'de> T: Deserialize<'de>,
+    {
+        let result = run_local(client, self, function_name, args).await?;
+        log::trace!("run_local result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
