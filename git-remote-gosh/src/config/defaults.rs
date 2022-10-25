@@ -29,10 +29,7 @@ lazy_static! {
                 "https://gra01.net.everos.dev".to_owned(),
             ]
         ),
-        (
-            "vps23.ton.dev".to_owned(),
-            vec!["vps23.ton.dev".to_owned()]
-        ),
+        ("vps23.ton.dev".to_owned(), vec!["vps23.ton.dev".to_owned()]),
         (
             "localhost".to_owned(),
             vec![

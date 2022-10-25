@@ -4,22 +4,11 @@ import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
+import Committer from '../../components/Commit/Committer'
 
 const CommitPage = () => {
     const { daoName, repoName, commitName } = useParams()
     const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 5)
-
-    const renderCommitter = (committer: string) => {
-        const [username, email] = committer.split(' ')
-        return (
-            <CopyClipboard
-                label={username}
-                componentProps={{
-                    text: email,
-                }}
-            />
-        )
-    }
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -46,7 +35,7 @@ const CommitPage = () => {
                                 <span className="mr-2 text-gray-050a15/65">
                                     Commit by
                                 </span>
-                                {renderCommitter(commit.committer)}
+                                <Committer committer={commit.committer} />
                             </div>
                             <div>
                                 <span className="mr-2 text-gray-050a15/65">at</span>

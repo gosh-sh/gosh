@@ -26,7 +26,7 @@ pub struct BlobsRebuildingPlan {
 async fn load_data_from_ipfs(
     ipfs_client: &impl IpfsLoad,
     ipfs_address: &str,
-) -> Result<Vec<u8>, Box<dyn Error>> {
+) -> anyhow::Result<Vec<u8>> {
     let ipfs_data = ipfs_client.load(ipfs_address).await?;
     let compressed_data = base64::decode(ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
@@ -37,7 +37,7 @@ async fn load_data_from_ipfs(
 async fn write_git_data<'a>(
     repo: &mut git_repository::Repository,
     obj: git_object::Data<'a>,
-) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+) -> anyhow::Result<git_hash::ObjectId> {
     log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
     let store = &mut repo.objects;
     // It should refresh once even if the refresh mode is never, just to initialize the index
@@ -50,7 +50,7 @@ async fn write_git_data<'a>(
 async fn write_git_object(
     repo: &mut git_repository::Repository,
     obj: impl git_object::WriteTo,
-) -> Result<git_hash::ObjectId, Box<dyn Error>> {
+) -> anyhow::Result<git_hash::ObjectId> {
     log::info!("Writing git object");
     let store = &mut repo.objects;
     // It should refresh once even if the refresh mode is never, just to initialize the index
@@ -71,7 +71,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     snapshot_address: &blockchain::BlockchainContractAddress,
     blobs: &mut HashSet<git_hash::ObjectId>,
     visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
-) -> Result<(), Box<dyn Error>> {
+) -> anyhow::Result<()> {
     log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
         let visited = visited.lock().unwrap();
@@ -176,7 +176,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
             message
                 .diff
-                .with_patch::<_, Result<Vec<u8>, Box<dyn Error>>>(|e| match e {
+                .with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
                     Some(patch) => {
                         let blob_data =
                             diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
@@ -203,7 +203,7 @@ async fn convert_snapshot_into_blob(
     ipfs_client: &impl IpfsLoad,
     content: &[u8],
     ipfs: &Option<String>,
-) -> Result<(git_object::Object, Vec<u8>), Box<dyn Error>> {
+) -> anyhow::Result<(git_object::Object, Vec<u8>)> {
     let ipfs_data = if let Some(ipfs_address) = ipfs {
         load_data_from_ipfs(ipfs_client, ipfs_address).await?
     } else {
@@ -261,7 +261,7 @@ impl BlobsRebuildingPlan {
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
-    ) -> Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>), Box<dyn Error>> {
+    ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
         let ipfs_client = IpfsService::new(ipfs_endpoint);
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         log::info!("Loaded a snapshot: {:?}", snapshot);
@@ -302,7 +302,7 @@ impl BlobsRebuildingPlan {
     pub async fn restore<'a, 'b>(
         &'b mut self,
         git_helper: &mut GitHelper<impl BlockchainService>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> anyhow::Result<()> {
         // Idea behind
         // --
         // We've marked all blob hashes that needs to be restored
@@ -322,9 +322,8 @@ impl BlobsRebuildingPlan {
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let mut visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> =
             Arc::new(Mutex::new(HashSet::new()));
-        let mut fetched_blobs: FuturesUnordered<
-            tokio::task::JoinHandle<std::result::Result<(), std::string::String>>,
-        > = FuturesUnordered::new();
+        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> =
+            FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
             let es_client = git_helper.es_client.clone();
@@ -357,7 +356,7 @@ impl BlobsRebuildingPlan {
                         std::thread::sleep(std::time::Duration::from_secs(5));
                     }
                 };
-                result.map_err(|e| e.to_string())
+                result.map_err(|e| anyhow::Error::from(e))
             }));
             blobs.clear();
         }

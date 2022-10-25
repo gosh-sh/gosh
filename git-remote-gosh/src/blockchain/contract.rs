@@ -6,8 +6,6 @@ use crate::blockchain::{run_local, run_static};
 
 use super::{GoshContract, TonClient};
 
-type Result<T> = std::result::Result<T, String>;
-
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;
     fn get_address(&self) -> &super::BlockchainContractAddress;
@@ -33,7 +31,7 @@ pub trait ContractRead: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>;
 }
@@ -45,15 +43,13 @@ impl ContractRead for GoshContract {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_local(client, self, function_name, args)
-            .await
-            .map_err(|e| e.to_string())?;
+        let result = run_local(client, self, function_name, args).await?;
         log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| e.to_string())?)
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -64,7 +60,7 @@ pub trait ContractStatic: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>;
 }
@@ -76,15 +72,13 @@ impl ContractStatic for GoshContract {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_static(client, self, function_name, args)
-            .await
-            .map_err(|e| e.to_string())?;
+        let result = run_static(client, self, function_name, args).await?;
         log::trace!("run_statuc result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| e.to_string())?)
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -95,7 +89,7 @@ pub trait ContractMutate: Debug {
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>,
     {
@@ -122,7 +116,7 @@ mod tests {
             context: &TonClient,
             function_name: &str,
             args: Option<serde_json::Value>,
-        ) -> Result<T>
+        ) -> anyhow::Result<T>
         where
             T: for<'de> Deserialize<'de>,
         {
@@ -132,7 +126,7 @@ mod tests {
                     "value": "branch_value",
                 }
             }))
-            .map_err(|e| e.to_string())
+            .map_err(|e| anyhow::Error::from(e))
         }
     }
 

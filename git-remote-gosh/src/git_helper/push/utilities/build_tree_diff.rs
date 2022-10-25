@@ -20,8 +20,6 @@ use std::{
     vec::Vec,
 };
 
-use crate::git_helper::push::Result;
-
 pub struct TreeDiff {
     pub added: Vec<recorder::Entry>,
     pub deleted: Vec<recorder::Entry>,
@@ -39,7 +37,7 @@ impl TreeDiff {
     }
 }
 
-fn all_files(repository: &Repository, tree_root: ObjectId) -> Result<Vec<recorder::Entry>> {
+fn all_files(repository: &Repository, tree_root: ObjectId) -> anyhow::Result<Vec<recorder::Entry>> {
     let all_objects: Vec<recorder::Entry> = {
         repository
             .find_object(tree_root)?
@@ -67,7 +65,7 @@ pub fn build_tree_diff_from_commits(
     repository: &Repository,
     original_commit_id: Option<ObjectId>,
     next_commit_id: ObjectId,
-) -> Result<TreeDiff> {
+) -> anyhow::Result<TreeDiff> {
     let original_tree_root_id = match original_commit_id {
         Some(commit_id) => {
             if commit_id == ObjectId::from_str(ZERO_SHA).unwrap() {
@@ -75,7 +73,7 @@ pub fn build_tree_diff_from_commits(
             } else {
                 Some(repository.find_object(commit_id)?.into_commit().tree()?.id)
             }
-        },
+        }
         None => None,
     };
     let next_tree_root_id = repository
@@ -90,7 +88,7 @@ pub fn build_tree_diff(
     repository: &Repository,
     original_tree_root_id: Option<ObjectId>,
     next_tree_root_id: ObjectId,
-) -> Result<TreeDiff> {
+) -> anyhow::Result<TreeDiff> {
     let mut original_files_state: HashMap<_, _> = match original_tree_root_id {
         Some(root_id) => all_files(repository, root_id)?
             .into_iter()

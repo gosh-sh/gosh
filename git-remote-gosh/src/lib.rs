@@ -32,18 +32,18 @@ pub mod ipfs;
 pub(crate) mod logger;
 pub mod utilities;
 
-use std::{env::args, error::Error};
+use std::env::args;
 
 #[instrument(level = "debug")]
-pub async fn run() -> Result<(), Box<dyn Error>> {
+pub async fn run() -> anyhow::Result<()> {
     let logger = logger::GitHelperLogger::init()?;
     let config = config::Config::init()?;
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     log::info!("git-remote-gosh v{version}");
     eprintln!("git-remote-gosh v{version}");
-    let url = args()
-        .nth(2)
-        .ok_or("Wrong args for git-remote call\nRequired: <name> <url>")?;
+    let url = args().nth(2).ok_or(anyhow::anyhow!(
+        "Wrong args for git-remote call\nRequired: <name> <url>"
+    ))?;
     crate::git_helper::run(config, &url, logger).await?;
     Ok(())
 }

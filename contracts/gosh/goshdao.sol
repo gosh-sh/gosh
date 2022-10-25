@@ -270,7 +270,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _pubaddr, pubaddr, _nameDao, m_CommitCode, 
             m_RepositoryCode,
             m_WalletCode,
-            m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, 
+            m_TagCode, m_codeSnapshot, m_codeTree, m_codeDiff, m_contentSignature, _limit_wallets, _limit_time, _limit_messages, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _rootTokenRoot);
         getMoney();
@@ -373,6 +373,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getAddrRepository(string name) external view returns(address) {
         TvmCell s1 = _composeRepoStateInit(name);
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+       
+    function getTombstone() external view returns(bool) {
+        return _tombstone;
     }
     
     function getWallets() external view returns(address[]) {
