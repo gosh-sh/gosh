@@ -549,6 +549,7 @@ mod tests {
             .unwrap();
     }
 
+    #[ignore]
     #[tokio::test]
     async fn test_push() -> anyhow::Result<()> {
         log::info!("Preparing repository for tests");

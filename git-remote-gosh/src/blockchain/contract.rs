@@ -120,12 +120,13 @@ mod tests {
         where
             T: for<'de> Deserialize<'de>,
         {
-            serde_json::from_value::<T>(json!({
+            let v: serde_json::Value = json!({
                 "value0": {
                     "key": "branch_key",
                     "value": "branch_value",
                 }
-            }))
+            });
+            serde_json::from_value::<T>(v)
             .map_err(|e| anyhow::Error::from(e))
         }
     }

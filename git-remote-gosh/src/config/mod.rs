@@ -155,7 +155,8 @@ pub mod tests {
                     "foo": {
                         "user-wallet": {
                             "pubkey": "bar",
-                            "secret": "baz"
+                            "secret": "baz",
+                            "profile": "foo"
                         }
                     }
                 }
@@ -167,6 +168,7 @@ pub mod tests {
             .expect("It must be there");
         assert_eq!(wallet_config.pubkey, "bar");
         assert_eq!(wallet_config.secret, "baz");
+        assert_eq!(wallet_config.profile, "foo");
     }
 
     #[test]
@@ -178,7 +180,8 @@ pub mod tests {
                     "network.gosh.sh": {
                         "user-wallet": {
                             "pubkey": "foo",
-                            "secret": "bar"
+                            "secret": "bar",
+                            "profile": "foo"
                         }
                     }
                 }

@@ -95,7 +95,7 @@ pub struct PushDiffCoordinate {
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     log::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
-    let content = base64::encode(content);
+    let content = base64::encode(&content);
     let content = content.as_bytes().to_vec();
 
     ipfs_client.save_blob(&content).await
