@@ -22,7 +22,7 @@ lazy_static! {
 }
 
 /*
-pub fn open_repo() -> Result<Repository, String> {
+pub fn open_repo() -> anyhow::Result<Repository> {
     match Repository::open_from_env() {
         Ok(repo) => Ok(repo),
         Err(e) => Err(format!("error: failed to open local repository: {e}")),
@@ -63,10 +63,10 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
 pub async fn get_refs(
     context: &TonClient,
     repo_addr: &BlockchainContractAddress,
-) -> Result<Option<Vec<String>>, String> {
+) -> anyhow::Result<Option<Vec<String>>> {
     let _list = branch_list(context, repo_addr)
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| anyhow::Error::from(e))?
         .branch_ref;
     if _list.is_empty() {
         return Ok(None);

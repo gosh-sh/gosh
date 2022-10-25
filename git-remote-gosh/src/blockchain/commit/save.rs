@@ -7,7 +7,6 @@ use crate::{
 };
 use git_hash::ObjectId;
 use git_odb::Find;
-use std::error::Error;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -30,7 +29,7 @@ pub async fn push_commit(
     context: &mut GitHelper<impl BlockchainService>,
     commit_id: &ObjectId,
     branch: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> anyhow::Result<()> {
     let mut buffer: Vec<u8> = Vec::new();
     let commit = context
         .local_repository()
@@ -85,7 +84,7 @@ pub async fn notify_commit(
     branch: &str,
     number_of_files_changed: u32,
     number_of_commits: u64,
-) -> Result<(), Box<dyn Error>> {
+) -> anyhow::Result<()> {
     let wallet = user_wallet(context).await?;
     let params = serde_json::json!({
         "repoName": context.remote.repo.clone(),

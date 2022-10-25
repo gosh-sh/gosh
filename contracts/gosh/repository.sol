@@ -96,13 +96,13 @@ contract Repository is Modifiers{
     }
 
     //Branch part  
-    function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public view minValue(0.5 ton) {
+    function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
-        require("0000000000000000000000000000000000000000" != fromcommit, ERR_EMPTY_BRANCH);
+        if ("0000000000000000000000000000000000000000" == fromcommit) { _Branches[tvm.hash(newname)] = Item(newname, getCommitAddr(fromcommit), version); return; }
         Commit(getCommitAddr(fromcommit)).isCorrect{value: 0.23 ton, flag: 1}(newname, fromcommit);
     }
     

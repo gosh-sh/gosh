@@ -5,7 +5,6 @@ use crate::blockchain::{GoshContract, TonClient};
 use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
-use std::error::Error;
 use std::fmt;
 use std::option::Option;
 pub mod diffs;
@@ -60,7 +59,7 @@ impl Snapshot {
         repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
-    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
+    ) -> anyhow::Result<BlockchainContractAddress> {
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
@@ -75,7 +74,7 @@ impl Snapshot {
     pub async fn get_file_path(
         context: &TonClient,
         address: &BlockchainContractAddress,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> anyhow::Result<String> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.run_local(context, "getName", None).await?;
         log::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);

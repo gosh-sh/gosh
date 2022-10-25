@@ -5,7 +5,6 @@ use ton_client::net::ParamsOfQuery;
 mod save;
 
 use crate::blockchain::serde_number::NumberU64;
-use crate::blockchain::Result;
 pub use save::{notify_commit, push_commit};
 
 use super::GoshContract;
@@ -69,7 +68,7 @@ pub async fn get_set_commit_created_at_time(
     repo_contract: &mut GoshContract,
     commit_id: &str,
     branch_name: &str,
-) -> Result<u64> {
+) -> anyhow::Result<u64> {
     let mut created_at = 0u64;
     let mut cursor: Option<String> = None;
     let query = r#"query($repo_address: String!, $after: String){

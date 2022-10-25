@@ -5,7 +5,7 @@ use crate::blockchain::{
     Snapshot, TonClient,
 };
 use std::collections::HashMap;
-use std::{error::Error, iter::Iterator};
+use std::iter::Iterator;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
@@ -100,10 +100,7 @@ impl DiffMessagesIterator {
     }
 
     #[instrument(level = "debug", skip(client))]
-    pub async fn next(
-        &mut self,
-        client: &TonClient,
-    ) -> Result<Option<DiffMessage>, Box<dyn Error>> {
+    pub async fn next(&mut self, client: &TonClient) -> anyhow::Result<Option<DiffMessage>> {
         while !self.is_buffer_ready() && self.next.is_some() {
             self.try_load_next_chunk(client).await?;
         }
@@ -116,7 +113,7 @@ impl DiffMessagesIterator {
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
         skip_series: bool,
-    ) -> Result<Option<NextChunk>, Box<dyn Error>> {
+    ) -> anyhow::Result<Option<NextChunk>> {
         let address = current_snapshot_address;
         Ok(match next_page_info {
             Some(next_page_info) => Some(NextChunk::MessagesPage(
@@ -162,7 +159,7 @@ impl DiffMessagesIterator {
     }
 
     #[instrument(level = "debug", skip(client))]
-    async fn try_load_next_chunk(&mut self, client: &TonClient) -> Result<(), Box<dyn Error>> {
+    async fn try_load_next_chunk(&mut self, client: &TonClient) -> anyhow::Result<()> {
         log::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
@@ -260,7 +257,7 @@ pub async fn load_messages_to(
     cursor: &Option<String>,
     stop_on: Option<u64>,
     skip_series: bool,
-) -> Result<(Vec<DiffMessage>, PageIterator), Box<dyn Error>> {
+) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
     let mut subsequent_page_info: Option<String> = None;
     let mut skip = skip_series;
     let query = r#"query($addr: String!, $before: String){
@@ -392,7 +389,7 @@ pub async fn load_messages_to(
 pub async fn load_transactions(
     context: &TonClient,
     msg_ids: &Vec<String>,
-) -> Result<HashMap<String, Vec<String>>, Box<dyn Error>> {
+) -> anyhow::Result<HashMap<String, Vec<String>>> {
     let query = r#"query($msg_ids: [String!]) {
         transactions(filter: {
           in_msg: { in: $msg_ids }
@@ -429,7 +426,7 @@ pub async fn load_transactions(
 pub async fn check_approve_result(
     context: &TonClient,
     msg_id: &str,
-) -> Result<Option<bool>, Box<dyn Error>> {
+) -> anyhow::Result<Option<bool>> {
     let query = r#"query($msg_id: String!) {
         messages(filter: {
           id: { eq: $msg_id }

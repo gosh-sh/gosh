@@ -1,0 +1,21 @@
+version: '2.2'
+
+services:
+
+  wallet-mon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet-mon
+    restart: "unless-stopped"
+    expose: [9888]
+    ports: ["127.0.0.1:9888:9888"]
+    volumes:
+      - ./config:/home/node/app/config:ro
+    networks:
+      gosh-monitoring:
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring

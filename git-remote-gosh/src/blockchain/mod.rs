@@ -110,7 +110,7 @@ impl GoshContract {
         context: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         T: de::DeserializeOwned,
     {
@@ -125,7 +125,7 @@ impl GoshContract {
         context: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
-    ) -> Result<T>
+    ) -> anyhow::Result<T>
     where
         T: de::DeserializeOwned,
     {
@@ -134,7 +134,7 @@ impl GoshContract {
         Ok(serde_json::from_value::<T>(result)?)
     }
 
-    pub async fn get_version(&self, context: &TonClient) -> Result<String> {
+    pub async fn get_version(&self, context: &TonClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
         Ok(result.version)
     }
@@ -221,10 +221,9 @@ struct GetVersionResult {
 }
 
 pub type TonClient = Arc<ClientContext>;
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[instrument(level = "debug")]
-pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonClient, String> {
+pub fn create_client(config: &Config, network: &str) -> anyhow::Result<TonClient> {
     let endpoints = config
         .find_network_endpoints(network)
         .expect("Unknown network");
@@ -255,7 +254,7 @@ pub fn create_client(config: &Config, network: &str) -> std::result::Result<TonC
         ..Default::default()
     };
     let es_client = ClientContext::new(config)
-        .map_err(|e| format!("failed to create EverSDK client: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("failed to create EverSDK client: {}", e))?;
 
     Ok(Arc::new(es_client))
 }
@@ -265,7 +264,7 @@ async fn run_local(
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
-) -> Result<serde_json::Value> {
+) -> anyhow::Result<serde_json::Value> {
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));
@@ -283,10 +282,11 @@ async fn run_local(
     .map(|r| r.result)?;
 
     if query.is_empty() {
-        return Err(Box::new(RunLocalError::from(format!(
+        anyhow::bail!(
             "account with address {} not found. Was trying to call {}",
-            contract.address, function_name
-        ))));
+            contract.address,
+            function_name,
+        );
     }
     let account_boc = &query[0]["boc"].as_str();
     let call_set = match args {
@@ -331,7 +331,7 @@ async fn run_static(
     contract: &mut GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
-) -> Result<serde_json::Value> {
+) -> anyhow::Result<serde_json::Value> {
     let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
         log::trace!("run_static: use cached boc ref");
         (boc_ref, Some(BocCacheType::Unpinned))
@@ -354,10 +354,11 @@ async fn run_static(
         .map(|r| r.result)?;
 
         if query.is_empty() {
-            return Err(Box::new(RunLocalError::from(format!(
+            anyhow::bail!(
                 "account with address {} not found. Was trying to call {}",
-                contract.address, function_name
-            ))));
+                contract.address,
+                function_name,
+            );
         }
         let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
         let ResultOfBocCacheSet { boc_ref } = cache_set(
@@ -421,7 +422,7 @@ async fn call(
     contract: &impl ContractInfo,
     function_name: &str,
     args: Option<serde_json::Value>,
-) -> Result<CallResult> {
+) -> anyhow::Result<CallResult> {
     let call_set = match args {
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),
@@ -468,7 +469,7 @@ pub async fn get_repo_address(
     gosh_root_addr: &BlockchainContractAddress,
     dao: &str,
     repo: &str,
-) -> Result<BlockchainContractAddress> {
+) -> anyhow::Result<BlockchainContractAddress> {
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
@@ -482,7 +483,7 @@ pub async fn get_repo_address(
 pub async fn branch_list(
     context: &TonClient,
     repo_addr: &BlockchainContractAddress,
-) -> Result<GetAllAddressResult> {
+) -> anyhow::Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
@@ -495,7 +496,7 @@ pub async fn set_head(
     repo_name: &str,
     new_head: &str,
     keys: KeyPair,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
     let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
     let result = call(context, &contract, "setHEAD", Some(args)).await?;
@@ -508,7 +509,7 @@ pub async fn get_commit_address(
     context: &TonClient,
     repo_contract: &mut impl ContractStatic,
     sha: &str,
-) -> Result<BlockchainContractAddress> {
+) -> anyhow::Result<BlockchainContractAddress> {
     let result: GetCommitAddrResult = repo_contract
         .static_method(
             context,
@@ -523,12 +524,15 @@ pub async fn get_commit_address(
 pub async fn get_commit_by_addr(
     context: &TonClient,
     address: &BlockchainContractAddress,
-) -> Result<Option<GoshCommit>> {
+) -> anyhow::Result<Option<GoshCommit>> {
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
 
-pub async fn get_head(context: &TonClient, address: &BlockchainContractAddress) -> Result<String> {
+pub async fn get_head(
+    context: &TonClient,
+    address: &BlockchainContractAddress,
+) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
     Ok(result.head)
