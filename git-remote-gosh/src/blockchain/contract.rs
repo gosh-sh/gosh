@@ -101,7 +101,7 @@ pub trait ContractMutate: Debug {
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{create_client, GetAddrBranchResult},
+        blockchain::{create_client, GetAddrBranchResult, BlockchainContractAddress},
         config::Config,
     };
     use std::sync::Arc;
@@ -122,8 +122,9 @@ mod tests {
         {
             let v: serde_json::Value = json!({
                 "value0": {
-                    "key": "branch_key",
-                    "value": "branch_value",
+                    "branchname": "branch_name",
+                    "commitaddr": "0:0000000000000000000000000000000000000000000000000000000000000000",
+                    "commitversion": "commit_version"
                 }
             });
             serde_json::from_value::<T>(v)
@@ -140,6 +141,8 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(result.branch.branch_name, "branch_key");
+        assert_eq!(result.branch.branch_name, "branch_name");
+        assert_eq!(result.branch.commit_address, BlockchainContractAddress::new("0:0000000000000000000000000000000000000000000000000000000000000000"));
+        assert_eq!(result.branch.version, "commit_version");
     }
 }
