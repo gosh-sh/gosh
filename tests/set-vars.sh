@@ -7,41 +7,44 @@ export NETWORK=vps23.ton.dev
 
 tonos-cli config --url $NETWORK
 
-# Should exist gosh root and Dao creater
+# Should exist root and gosh root
 
 export GOSH_ROOT_ADDR=`cat ../contracts/gosh/GoshRoot.addr`
-export DAO_CREATOR_ADDR=`cat ../contracts/gosh/GoshDaoCreator.addr`
 
 export GOSH_ABI=../contracts/gosh/gosh.abi.json
-DAO_CREATOR_ABI=../contracts/gosh/daocreator.abi.json
+USER_PROFILE_ABI=../contracts/gosh/profile.abi.json
 export REPO_ABI=../contracts/gosh/repository.abi.json
 DAO1_ABI=../contracts/gosh/goshdao.abi.json
 
-# create DAO
-
-export DAO1_NAME=dao-001
-
-# generate dao1 keys
+# generate user keys
 SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
 DAO1_KEYS=test.keys.json
 tonos-cli getkeypair -o $DAO1_KEYS -p "$SEED"
 DAO1_PUBKEY=$(cat $DAO1_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
-# deploy DAO
-tonos-cli call --abi $DAO_CREATOR_ABI $DAO_CREATOR_ADDR deployDao "{\"root_pubkey\":\"$DAO1_PUBKEY\",\"name\":\"$DAO1_NAME\"}"
-DAO1_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrDao "{\"name\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+# *create Profile
+USER_PROFILE_NAME="@user100"
+tonos-cli call --abi $GOSH_ABI $GOSH_ROOT_ADDR deployProfile "{\"pubkey\":\"$DAO1_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
+USER_PROFILE_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-# create gosh wallet
+# *deploy DAO
+export DAO1_NAME=dao-100
+tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $DAO1_KEYS deployDao \
+  "{\"goshroot\":\"$GOSH_ROOT_ADDR\", \"name\":\"$DAO1_NAME\", \"previous\":null, \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
+DAO1_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrDao "{\"name\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 # user keys
 export WALLET_KEYS=$DAO1_KEYS
 WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
-# deploy Wallet
-tonos-cli call --abi $DAO1_ABI --sign $DAO1_KEYS $DAO1_ADDR deployWallet "{\"pubkey\":\"$WALLET_PUBKEY\"}" || exit 1
-WALLET_ADDR=$(tonos-cli -j run $DAO1_ADDR getAddrWallet "{\"pubkey\":\"$WALLET_PUBKEY\",\"index\":0}" --abi $DAO1_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+WALLET_ADDR=$(tonos-cli -j run $DAO1_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO1_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 export WALLET_ADDR
 export WALLET_ABI=../contracts/gosh/goshwallet.abi.json
+
+tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
+  "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
+
+GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 
 USER_CONFIG=~/.gosh/config.json
 
@@ -57,6 +60,7 @@ tee $USER_CONFIG <<EOF
   "networks": {
     "$NETWORK": {
       "user-wallet": {
+        "profile": "$USER_PROFILE_NAME",
         "pubkey": "$WALLET_PUBKEY",
         "secret": "$WALLET_SECRET"
       },
@@ -68,7 +72,9 @@ EOF
 
 echo ===============================================
 echo "  Gosh root:" $GOSH_ROOT_ADDR
-echo "DAO creator:" $DAO_CREATOR_ADDR
+echo ================ USER PROFILE =================
+echo "   Profile name:" $USER_PROFILE_NAME
+echo "Profile address:" $USER_PROFILE_ADDR
 echo ===================== DAO =====================
 echo "   DAO name:" $DAO1_NAME
 echo "DAO address:" $DAO1_ADDR
