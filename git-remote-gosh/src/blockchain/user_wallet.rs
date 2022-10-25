@@ -122,16 +122,7 @@ async fn zero_user_wallet(
 #[async_trait]
 pub trait BlockchainUserWallet {
     fn wallet_config(&self) -> &Option<UserWalletConfig>;
-    #[deprecated]
     async fn user_wallet(
-        &self,
-        client: &TonClient,
-        config: &Config,
-        gosh_root: &GoshContract,
-        dao_address: &BlockchainContractAddress,
-        remote_network: &str,
-    ) -> anyhow::Result<GoshContract>;
-    async fn user_wallet2(
         &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
@@ -145,58 +136,6 @@ impl BlockchainUserWallet for Everscale {
     }
     // #[instrument(level = "debug", skip(context))]
     async fn user_wallet(
-        &self,
-        client: &TonClient,
-        config: &Config,
-        gosh_root: &GoshContract,
-        dao_address: &BlockchainContractAddress,
-        remote_network: &str,
-    ) -> anyhow::Result<GoshContract> {
-        let wallet_config = self.wallet_config();
-        if wallet_config.is_none() {
-            anyhow::bail!("User wallet config must be set");
-        }
-        let wallet_config = wallet_config.clone().expect("Guarded");
-        let zero_wallet =
-            zero_user_wallet(self, &client, &remote_network, &gosh_root, &dao_address).await?;
-
-        let (user_wallet_index, max_number_of_user_wallets) = {
-            match user_wallet_config_max_number_of_mirrors(&client, &zero_wallet).await {
-                Err(e) => {
-                    log::warn!("user_wallet_config_max_number_of_mirrors error: {}", e);
-                    return Ok(zero_wallet);
-                }
-                Ok(max_number_of_user_wallets) => {
-                    let next_index = USER_WALLET_INDEX
-                        .with(|e| e.replace_with(|&mut v| (v + 1) % max_number_of_user_wallets));
-                    (next_index, max_number_of_user_wallets)
-                }
-            }
-        };
-
-        INIT_USER_WALLET_MIRRORS.call_once(|| {
-            let es_client = client.clone();
-            let zero_wallet = zero_wallet.clone();
-            task::block_in_place(move || {
-                Handle::current().block_on(init_user_wallet_mirrors(
-                    &es_client,
-                    &zero_wallet,
-                    max_number_of_user_wallets,
-                ));
-            });
-        });
-
-        get_user_wallet(
-            self,
-            &client,
-            &gosh_root,
-            &dao_address,
-            &wallet_config,
-            user_wallet_index,
-        )
-        .await
-    }
-    async fn user_wallet2(
         &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,

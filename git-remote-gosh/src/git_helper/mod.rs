@@ -6,15 +6,7 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use crate::abi as gosh_abi;
 use crate::blockchain::user_wallet::user_wallet_config;
 use crate::blockchain::{
-    create_client,
-    get_head,
-    get_repo_address,
-    BlockchainService,
-    Everscale,
-    GoshContract,
-    // set_head,
-    TonClient,
-    Tree,
+    create_client, get_head, get_repo_address, BlockchainService, GoshContract, TonClient, Tree,
 };
 use crate::blockchain::{BlockchainContractAddress, EverscaleBuilder};
 use crate::config::Config;

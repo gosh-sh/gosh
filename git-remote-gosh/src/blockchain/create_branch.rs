@@ -50,7 +50,7 @@ where
         let wallet = self
             .context
             .blockchain
-            .user_wallet2(&self.context.dao_addr, &self.context.remote.network)
+            .user_wallet(&self.context.dao_addr, &self.context.remote.network)
             .await?;
         let params = serde_json::json!({
             "repoName": self.context.remote.repo,

@@ -1,12 +1,11 @@
 #![allow(unused_variables)]
-use async_trait::async_trait;
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::{de, Deserialize};
+use serde::Deserialize;
 use serde_json;
 
-use std::{env, fmt, sync::Arc};
+use std::{env, sync::Arc};
 
 mod client;
 mod contract;
@@ -18,7 +17,7 @@ mod service;
 pub use service::*;
 
 use ton_client::{
-    abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
+    abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
     crypto::KeyPair,
     net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},

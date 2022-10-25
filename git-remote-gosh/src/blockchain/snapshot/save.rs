@@ -155,7 +155,7 @@ pub async fn push_diff(
 ) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
     let wallet = context
         .blockchain
-        .user_wallet2(&context.dao_addr, &context.remote.network)
+        .user_wallet(&context.dao_addr, &context.remote.network)
         .await?;
     let mut repo_contract = context.blockchain.repo_contract().clone();
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
@@ -354,7 +354,7 @@ pub async fn push_new_branch_snapshot(
 
     let wallet = context
         .blockchain
-        .user_wallet2(&context.dao_addr, &context.remote.network)
+        .user_wallet(&context.dao_addr, &context.remote.network)
         .await?;
     let params = serde_json::to_value(args)?;
     let result = call(
@@ -386,7 +386,7 @@ pub async fn push_initial_snapshot(
     let file_path = file_path.to_string();
     let wallet = context
         .blockchain
-        .user_wallet2(&context.dao_addr, &context.remote.network)
+        .user_wallet(&context.dao_addr, &context.remote.network)
         .await?;
     let params = serde_json::to_value(args)?;
     let es_client = context.ever_client.clone();
