@@ -224,8 +224,12 @@ where
             .parent_ids()
             .map(|e| e)
             .into_iter()
-            .next()
-            .unwrap_or_else(|| *commit_id);
+            .next();
+
+        let parent_id = match parent_id {
+            Some(value) => value,
+            None => ObjectId::from_str(ZERO_SHA)?
+        };
 
         Ok(parent_id)
     }

@@ -23,7 +23,8 @@ REPO_NAME=repo8
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
 [ -d $REPO_NAME"-clone3" ] && rm -rf $REPO_NAME"-clone3"
 
-tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository "{\"nameRepo\":\"$REPO_NAME\"}" || exit 1
+tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
