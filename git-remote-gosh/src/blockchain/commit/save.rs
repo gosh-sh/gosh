@@ -1,7 +1,7 @@
 use crate::{
     blockchain::{
-        call, user_wallet::BlockchainUserWallet, BlockchainContractAddress, BlockchainService,
-        Everscale,
+        call, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
+        BlockchainService, Everscale,
     },
     utilities::Remote,
 };
@@ -24,8 +24,9 @@ pub struct DeployCommitParams {
     upgrade: bool,
 }
 
+#[cfg_attr(test, mockall::automock)]
 #[async_trait]
-pub trait BlockchainCommitPusher: BlockchainService + BlockchainUserWallet {
+pub trait BlockchainPusher {
     async fn push_commit(
         &self,
         commit_id: &ObjectId,
@@ -48,7 +49,7 @@ pub trait BlockchainCommitPusher: BlockchainService + BlockchainUserWallet {
 }
 
 #[async_trait]
-impl BlockchainCommitPusher for Everscale {
+impl BlockchainPusher for Everscale {
     // #[instrument(level = "debug")]
     async fn push_commit(
         &self,

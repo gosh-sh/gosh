@@ -1,12 +1,10 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain::commit::BlockchainCommitPusher;
 use crate::blockchain::get_commit_address;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
-    user_wallet::BlockchainUserWallet, BlockchainContractAddress, BlockchainService,
-    CreateBranchOperation, ZERO_SHA,
+    BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
 };
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -49,7 +47,7 @@ impl PushBlobStatistics {
 
 impl<Blockchain> GitHelper<Blockchain>
 where
-    Blockchain: BlockchainService + BlockchainUserWallet + BlockchainCommitPusher,
+    Blockchain: BlockchainService,
 {
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
@@ -220,15 +218,11 @@ where
         let raw_commit = String::from_utf8(commit.data.to_vec())?;
 
         let commit_iter = commit.try_into_commit_iter().unwrap();
-        let parent_id = commit_iter
-            .parent_ids()
-            .map(|e| e)
-            .into_iter()
-            .next();
+        let parent_id = commit_iter.parent_ids().map(|e| e).into_iter().next();
 
         let parent_id = match parent_id {
             Some(value) => value,
-            None => ObjectId::from_str(ZERO_SHA)?
+            None => ObjectId::from_str(ZERO_SHA)?,
         };
 
         Ok(parent_id)

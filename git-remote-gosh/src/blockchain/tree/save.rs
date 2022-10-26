@@ -1,4 +1,3 @@
-use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::git_helper::GitHelper;
 
 use git_object;
@@ -111,7 +110,7 @@ async fn construct_tree_node(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_tree(
-    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+    context: &mut GitHelper<impl BlockchainService>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
 ) -> anyhow::Result<()> {

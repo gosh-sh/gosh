@@ -1,4 +1,3 @@
-use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::blockchain::BlockchainService;
 use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::GitHelper;
@@ -69,7 +68,7 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn push_dangling(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+        context: &mut GitHelper<impl BlockchainService>,
     ) -> anyhow::Result<()> {
         for (
             diff_coordinates,
@@ -173,7 +172,7 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn push(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+        context: &mut GitHelper<impl BlockchainService>,
         diff: ParallelDiff,
     ) -> anyhow::Result<()> {
         match self.dangling_diffs.get(&diff.file_path) {

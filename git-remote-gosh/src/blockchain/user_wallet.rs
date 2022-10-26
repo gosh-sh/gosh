@@ -12,6 +12,7 @@ use crate::abi;
 use crate::blockchain::call;
 use crate::config::{Config, UserWalletConfig};
 
+use super::commit::save::BlockchainPusher;
 use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
 use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient};
@@ -51,7 +52,7 @@ lazy_static! {
 }
 
 async fn get_user_wallet(
-    blockchain: &impl BlockchainUserWallet,
+    blockchain: &impl BlockchainService,
     client: &TonClient,
     gosh_root: &GoshContract,
     dao_address: &BlockchainContractAddress,
@@ -93,7 +94,7 @@ async fn get_user_wallet(
 
 // #[instrument(level = "debug", skip(context))]
 async fn zero_user_wallet(
-    blockchain: &impl BlockchainUserWallet,
+    blockchain: &impl BlockchainService,
     context: &TonClient,
     remote_network: &str,
     root_contract: &GoshContract,
@@ -118,9 +119,9 @@ async fn zero_user_wallet(
     Ok(_USER_WALLET.read().await.as_ref().unwrap().clone())
 }
 
-// #[cfg_attr(test, mockall::automock)]
+#[cfg_attr(test, mockall::automock)]
 #[async_trait]
-pub trait BlockchainUserWallet {
+pub trait BlockchainUserWalletService {
     fn wallet_config(&self) -> &Option<UserWalletConfig>;
     async fn user_wallet(
         &self,
@@ -130,7 +131,7 @@ pub trait BlockchainUserWallet {
 }
 
 #[async_trait]
-impl BlockchainUserWallet for Everscale {
+impl BlockchainUserWalletService for Everscale {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }

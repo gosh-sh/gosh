@@ -7,7 +7,7 @@ use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 
-use super::{user_wallet::BlockchainUserWallet, BlockchainService, ZERO_SHA};
+use super::{BlockchainService, ZERO_SHA};
 
 #[derive(Debug)]
 pub struct CreateBranchOperation<'a, Blockchain> {
@@ -18,7 +18,7 @@ pub struct CreateBranchOperation<'a, Blockchain> {
 
 impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
 where
-    Blockchain: Debug + BlockchainService + BlockchainUserWallet,
+    Blockchain: BlockchainService,
 {
     pub fn new(
         ancestor_commit: ObjectId,

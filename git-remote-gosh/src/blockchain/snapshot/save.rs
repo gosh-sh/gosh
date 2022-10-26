@@ -1,6 +1,5 @@
 #![allow(unused_variables)]
 use crate::abi as gosh_abi;
-use crate::blockchain::user_wallet::BlockchainUserWallet;
 use crate::blockchain::{
     tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
 };
@@ -142,7 +141,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
 
 #[instrument(level = "debug", skip(diff, new_snapshot_content))]
 pub async fn push_diff(
-    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -319,7 +318,7 @@ pub async fn inner_push_diff(
 
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
-    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+    context: &mut GitHelper<impl BlockchainService>,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
@@ -371,7 +370,7 @@ pub async fn push_new_branch_snapshot(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
-    context: &mut GitHelper<impl BlockchainService + BlockchainUserWallet>,
+    context: &mut GitHelper<impl BlockchainService>,
     branch_name: &str,
     file_path: &str,
 ) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
