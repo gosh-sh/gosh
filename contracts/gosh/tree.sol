@@ -94,7 +94,7 @@ contract Tree is Modifiers {
                 if (path != "" ) { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name, typer); }
                 else { Tree(getTreeAddr(obj.sha1)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name, typer); }
             }
-            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000") || (obj.mode == "160000")) {
+            else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                 _needAnswer += 1;
                 if (path != "" ) { Snapshot(getSnapshotAddr(_checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
                 else { Snapshot(getSnapshotAddr(_checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
