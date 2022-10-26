@@ -1,21 +1,14 @@
 #![allow(unused_variables)]
 use std::env;
 
-
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::abi as gosh_abi;
+use crate::blockchain::user_wallet::user_wallet_config;
 use crate::blockchain::{
-    create_client,
-    get_head,
-    get_repo_address,
-    BlockchainService,
-    GoshContract,
-    // set_head,
-    TonClient,
-    Tree,
+    create_client, get_head, get_repo_address, BlockchainService, GoshContract, TonClient, Tree,
 };
-use crate::blockchain::{Blockchain, BlockchainContractAddress};
+use crate::blockchain::{BlockchainContractAddress, EverscaleBuilder};
 use crate::config::Config;
 use crate::ipfs::IpfsService;
 use crate::logger::GitHelperLogger as Logger;
@@ -26,9 +19,10 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
+pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
     pub config: Config,
-    pub es_client: TonClient,
+    #[deprecated(note = "use self.blockchain.client()")]
+    pub ever_client: TonClient,
     pub ipfs_client: IpfsService,
     pub blockchain: Blockchain,
     pub remote: Remote,
@@ -36,8 +30,6 @@ pub struct GitHelper<Blockchain = crate::blockchain::Blockchain> {
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
     logger: Logger,
-    pub gosh_root_contract: GoshContract,
-    pub repo_contract: GoshContract,
 }
 
 #[derive(Deserialize, Debug)]
@@ -68,9 +60,10 @@ where
         &mut self,
         tree_id: git_hash::ObjectId,
     ) -> anyhow::Result<BlockchainContractAddress> {
+        let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
-            &self.es_client,
-            &mut self.repo_contract,
+            &self.blockchain.client().clone(),
+            &mut repo_contract,
             &tree_id.to_string(),
         )
         .await
@@ -80,45 +73,46 @@ where
         Ok(create_client(&self.config, &self.remote.network)?)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(blockchain))]
     async fn build(
         config: Config,
         url: &str,
         logger: Logger,
         blockchain: Blockchain,
+        ipfs: IpfsService,
     ) -> anyhow::Result<Self> {
+        // TODO: remove duplicate logic
         let remote = Remote::new(url, &config)?;
-        let es_client = create_client(&config, &remote.network)?;
+        let ever_client = create_client(&config, &remote.network)?;
 
         let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
         let dao: GetAddrDaoResult = gosh_root_contract
             .run_static(
-                &es_client,
+                &ever_client,
                 "getAddrDao",
                 Some(serde_json::json!({ "name": remote.dao })),
             )
             .await?;
 
         let repo_addr =
-            get_repo_address(&es_client, &remote.gosh, &remote.dao, &remote.repo).await?;
+            get_repo_address(&ever_client, &remote.gosh, &remote.dao, &remote.repo).await?;
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
-        let ipfs_client = IpfsService::build(config.ipfs_http_endpoint())?;
+
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
         log::info!("Opening repo at {}", local_git_dir);
+
         Ok(Self {
             config,
-            es_client,
-            ipfs_client,
+            ever_client,
+            ipfs_client: ipfs,
             blockchain,
             remote,
             dao_addr: dao.address,
             repo_addr,
             local_git_repository,
             logger,
-            gosh_root_contract,
-            repo_contract,
         })
     }
 
@@ -130,10 +124,10 @@ where
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
-        let refs = list::get_refs(&self.es_client, &self.repo_addr).await?;
+        let refs = list::get_refs(&self.ever_client, &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
-            let head = get_head(&self.es_client, &self.repo_addr).await?;
+            let head = get_head(&self.ever_client, &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head));
@@ -164,8 +158,36 @@ where
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
 pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
-    let blockchain = Blockchain {};
-    let mut helper = GitHelper::build(config, url, logger, blockchain).await?;
+    // concrete implementation for Ever in this case
+    let mut blockchain_builder = EverscaleBuilder::default();
+    let remote = Remote::new(url, &config)?;
+    let ever_client = create_client(&config, &remote.network)?;
+    blockchain_builder.ever_client(ever_client.clone());
+    let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+
+    let dao: GetAddrDaoResult = gosh_root_contract
+        .run_static(
+            &ever_client,
+            "getAddrDao",
+            Some(serde_json::json!({ "name": remote.dao })),
+        )
+        .await?;
+    blockchain_builder.root_contract(gosh_root_contract);
+
+    let repo_addr = get_repo_address(&ever_client, &remote.gosh, &remote.dao, &remote.repo).await?;
+    let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
+    blockchain_builder.repo_contract(repo_contract);
+
+    let ipfs = IpfsService::build(config.ipfs_http_endpoint())?;
+    let local_git_dir = env::var("GIT_DIR")?;
+    let local_git_repository = git_repository::open(&local_git_dir)?;
+    log::info!("Opening repo at {}", local_git_dir);
+
+    blockchain_builder.wallet_config(user_wallet_config(&config, &remote.network));
+
+    let blockchain = blockchain_builder.build()?;
+
+    let mut helper = GitHelper::build(config, url, logger, blockchain, ipfs).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -268,15 +290,13 @@ pub mod tests {
 
         GitHelper {
             config,
-            es_client,
+            ever_client: es_client,
             ipfs_client,
             blockchain,
             remote,
             dao_addr,
             repo_addr,
             logger,
-            gosh_root_contract,
-            repo_contract,
             local_git_repository: repo,
         }
     }

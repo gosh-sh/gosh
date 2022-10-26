@@ -3,7 +3,6 @@ use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
 
-
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
     pub flags: Number,

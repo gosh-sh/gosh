@@ -2,21 +2,21 @@
 use base64;
 use base64_serde::base64_serde_type;
 
-use serde::{de, Deserialize};
+use serde::Deserialize;
 use serde_json;
 
-use std::{env, fmt, sync::Arc};
+use std::{env, sync::Arc};
 
 mod contract;
 mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
-mod traits;
-pub use traits::*;
+mod service;
+pub use service::*;
 
 use ton_client::{
-    abi::{encode_message, Abi, CallSet, ParamsOfEncodeMessage, Signer},
+    abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
     crypto::KeyPair,
     net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},
@@ -31,19 +31,18 @@ mod serde_number;
 pub mod snapshot;
 pub mod tree;
 mod tvm_hash;
-mod user_wallet;
+pub mod user_wallet;
 pub use commit::GoshCommit;
-pub use commit::{notify_commit, push_commit};
 use serde_number::Number;
 pub use snapshot::Snapshot;
 pub use tree::{push_tree, Tree};
 pub use tvm_hash::tvm_hash;
-pub use user_wallet::user_wallet;
 
 use crate::abi as gosh_abi;
 use crate::config::Config;
 use crate::config;
 
+pub use self::contract::GoshContract;
 use self::contract::{ContractInfo, ContractRead, ContractStatic};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
@@ -58,87 +57,6 @@ pub enum GoshBlobBitFlags {
 }
 
 base64_serde_type!(Base64Standard, base64::STANDARD);
-
-#[derive(Clone)]
-pub struct GoshContract {
-    address: BlockchainContractAddress,
-    pretty_name: String,
-    abi: Abi,
-    keys: Option<KeyPair>,
-    boc_ref: Option<String>,
-}
-
-impl fmt::Debug for GoshContract {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let struct_name = format!("GoshContract<{}>", self.pretty_name);
-        f.debug_struct(&struct_name)
-            .field("address", &self.address)
-            .finish_non_exhaustive()
-    }
-}
-
-impl GoshContract {
-    pub fn new<T>(address: T, (pretty_name, abi): (&str, &str)) -> Self
-    where
-        T: Into<BlockchainContractAddress>,
-    {
-        GoshContract {
-            pretty_name: pretty_name.to_owned(),
-            address: address.into(),
-            abi: Abi::Json(abi.to_string()),
-            keys: None,
-            boc_ref: None,
-        }
-    }
-
-    pub fn new_with_keys<T>(address: T, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self
-    where
-        T: Into<BlockchainContractAddress>,
-    {
-        GoshContract {
-            pretty_name: pretty_name.to_owned(),
-            address: address.into(),
-            abi: Abi::Json(abi.to_string()),
-            keys: Some(keys),
-            boc_ref: None,
-        }
-    }
-
-    #[instrument(level = "debug", skip(context))]
-    pub async fn run_local<T>(
-        &self,
-        context: &TonClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        T: de::DeserializeOwned,
-    {
-        let result = run_local(context, self, function_name, args).await?;
-        log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result)?)
-    }
-
-    #[instrument(level = "debug", skip(context))]
-    pub async fn run_static<T>(
-        &mut self,
-        context: &TonClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        T: de::DeserializeOwned,
-    {
-        let result = run_static(context, self, function_name, args).await?;
-        log::trace!("run_statuc result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result)?)
-    }
-
-    pub async fn get_version(&self, context: &TonClient) -> anyhow::Result<String> {
-        let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
-        Ok(result.version)
-    }
-}
 
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {

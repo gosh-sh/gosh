@@ -1,10 +1,9 @@
-use async_trait::async_trait;
-use serde::Deserialize;
-use std::fmt::Debug;
-
+use super::{BlockchainContractAddress, GetVersionResult, TonClient};
 use crate::blockchain::{run_local, run_static};
-
-use super::{GoshContract, TonClient};
+use async_trait::async_trait;
+use serde::{de, Deserialize};
+use std::fmt::Debug;
+use ton_client::{abi::Abi, crypto::KeyPair};
 
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;
@@ -12,16 +11,16 @@ pub trait ContractInfo: Debug {
     fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair>;
 }
 
-impl ContractInfo for GoshContract {
-    fn get_abi(&self) -> &ton_client::abi::Abi {
-        &self.abi
-    }
-    fn get_address(&self) -> &super::BlockchainContractAddress {
-        &self.address
-    }
-    fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair> {
-        &self.keys
-    }
+#[async_trait]
+pub trait ContractStatic: Debug {
+    async fn static_method<T>(
+        &mut self,
+        client: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+    where
+        for<'de> T: Deserialize<'de>;
 }
 
 #[async_trait]
@@ -37,9 +36,9 @@ pub trait ContractRead: Debug {
 }
 
 #[async_trait]
-impl ContractRead for GoshContract {
-    async fn read_state<T>(
-        &self,
+pub trait ContractMutate: Debug {
+    async fn mutate_state<T>(
+        &mut self,
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
@@ -47,22 +46,8 @@ impl ContractRead for GoshContract {
     where
         for<'de> T: Deserialize<'de>,
     {
-        let result = run_local(client, self, function_name, args).await?;
-        log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
+        todo!()
     }
-}
-
-#[async_trait]
-pub trait ContractStatic: Debug {
-    async fn static_method<T>(
-        &mut self,
-        client: &TonClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        for<'de> T: Deserialize<'de>;
 }
 
 #[async_trait]
@@ -82,10 +67,103 @@ impl ContractStatic for GoshContract {
     }
 }
 
-#[async_trait]
-pub trait ContractMutate: Debug {
-    async fn mutate_stte<T>(
+#[derive(Clone)]
+pub struct GoshContract {
+    pub address: BlockchainContractAddress,
+    pub pretty_name: String,
+    pub abi: Abi,
+    pub keys: Option<KeyPair>,
+    pub boc_ref: Option<String>,
+}
+
+impl std::fmt::Debug for GoshContract {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let struct_name = format!("GoshContract<{}>", self.pretty_name);
+        f.debug_struct(&struct_name)
+            .field("address", &self.address)
+            .finish_non_exhaustive()
+    }
+}
+
+impl GoshContract {
+    pub fn new<T>(address: T, (pretty_name, abi): (&str, &str)) -> Self
+    where
+        T: Into<BlockchainContractAddress>,
+    {
+        GoshContract {
+            pretty_name: pretty_name.to_owned(),
+            address: address.into(),
+            abi: Abi::Json(abi.to_string()),
+            keys: None,
+            boc_ref: None,
+        }
+    }
+
+    pub fn new_with_keys<T>(address: T, (pretty_name, abi): (&str, &str), keys: KeyPair) -> Self
+    where
+        T: Into<BlockchainContractAddress>,
+    {
+        GoshContract {
+            pretty_name: pretty_name.to_owned(),
+            address: address.into(),
+            abi: Abi::Json(abi.to_string()),
+            keys: Some(keys),
+            boc_ref: None,
+        }
+    }
+
+    #[instrument(level = "debug", skip(context))]
+    pub async fn run_local<T>(
+        &self,
+        context: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+    where
+        T: de::DeserializeOwned,
+    {
+        let result = run_local(context, self, function_name, args).await?;
+        log::trace!("run_local result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result)?)
+    }
+
+    #[instrument(level = "debug", skip(context))]
+    pub async fn run_static<T>(
         &mut self,
+        context: &TonClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+    where
+        T: de::DeserializeOwned,
+    {
+        let result = run_static(context, self, function_name, args).await?;
+        log::trace!("run_statuc result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result)?)
+    }
+
+    pub async fn get_version(&self, context: &TonClient) -> anyhow::Result<String> {
+        let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
+        Ok(result.version)
+    }
+}
+
+impl ContractInfo for GoshContract {
+    fn get_abi(&self) -> &ton_client::abi::Abi {
+        &self.abi
+    }
+    fn get_address(&self) -> &BlockchainContractAddress {
+        &self.address
+    }
+    fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair> {
+        &self.keys
+    }
+}
+
+#[async_trait]
+impl ContractRead for GoshContract {
+    async fn read_state<T>(
+        &self,
         client: &TonClient,
         function_name: &str,
         args: Option<serde_json::Value>,
@@ -93,7 +171,9 @@ pub trait ContractMutate: Debug {
     where
         for<'de> T: Deserialize<'de>,
     {
-        todo!()
+        let result = run_local(client, self, function_name, args).await?;
+        log::trace!("run_local result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -101,7 +181,7 @@ pub trait ContractMutate: Debug {
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{create_client, GetAddrBranchResult, BlockchainContractAddress},
+        blockchain::{create_client, BlockchainContractAddress, GetAddrBranchResult},
         config::Config,
     };
     use std::sync::Arc;
@@ -127,8 +207,7 @@ mod tests {
                     "commitversion": "commit_version"
                 }
             });
-            serde_json::from_value::<T>(v)
-            .map_err(|e| anyhow::Error::from(e))
+            serde_json::from_value::<T>(v).map_err(|e| anyhow::Error::from(e))
         }
     }
 

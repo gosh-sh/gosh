@@ -1,9 +1,10 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
+use crate::blockchain::get_commit_address;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
-    user_wallet, BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
+    BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
 };
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -217,15 +218,11 @@ where
         let raw_commit = String::from_utf8(commit.data.to_vec())?;
 
         let commit_iter = commit.try_into_commit_iter().unwrap();
-        let parent_id = commit_iter
-            .parent_ids()
-            .map(|e| e)
-            .into_iter()
-            .next();
+        let parent_id = commit_iter.parent_ids().map(|e| e).into_iter().next();
 
         let parent_id = match parent_id {
             Some(value) => value,
-            None => ObjectId::from_str(ZERO_SHA)?
+            None => ObjectId::from_str(ZERO_SHA)?,
         };
 
         Ok(parent_id)
@@ -256,9 +253,10 @@ where
             let mut iter = remote_ref.rsplit('/');
             iter.next().unwrap()
         };
-        let parsed_remote_ref =
-            Blockchain::remote_rev_parse(&self.es_client, &self.repo_addr, remote_branch_name)
-                .await?;
+        let parsed_remote_ref = self
+            .blockchain
+            .remote_rev_parse(&self.repo_addr, remote_branch_name)
+            .await?;
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
@@ -267,12 +265,10 @@ where
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
-            let is_protected = Blockchain::is_branch_protected(
-                &self.es_client,
-                &self.repo_addr,
-                remote_branch_name,
-            )
-            .await?;
+            let is_protected = self
+                .blockchain
+                .is_branch_protected(&self.repo_addr, remote_branch_name)
+                .await?;
             if is_protected {
                 anyhow::bail!(
                     "This branch '{branch_name}' is protected. \
@@ -284,9 +280,10 @@ where
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
                     remote_commit_addr,
                 );
-            let commit = blockchain::get_commit_by_addr(&self.es_client, &remote_commit_addr)
-                .await?
-                .unwrap();
+            let commit =
+                blockchain::get_commit_by_addr(&self.blockchain.client(), &remote_commit_addr)
+                    .await?
+                    .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
 
             if commit.sha != ZERO_SHA.to_owned() {
@@ -372,7 +369,55 @@ where
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
                         git_object::Kind::Commit => {
-                            blockchain::push_commit(self, &object_id, branch_name).await?;
+                            // TODO: consider extract to a function
+                            let mut buffer: Vec<u8> = Vec::new();
+                            let commit = self
+                                .local_repository()
+                                .objects
+                                .try_find(object_id, &mut buffer)?
+                                .expect("Commit should exists");
+
+                            let raw_commit = String::from_utf8(commit.data.to_vec())?;
+
+                            let mut commit_iter = commit.try_into_commit_iter().unwrap();
+                            let tree_id = commit_iter.tree_id()?;
+                            let parent_ids: Vec<String> =
+                                commit_iter.parent_ids().map(|e| e.to_string()).collect();
+                            let mut parents: Vec<BlockchainContractAddress> = vec![];
+                            let mut repo_contract = self.blockchain.repo_contract().clone();
+
+                            for id in parent_ids {
+                                let parent = get_commit_address(
+                                    &self.blockchain.client(),
+                                    &mut repo_contract,
+                                    &id.to_string(),
+                                )
+                                .await?;
+                                parents.push(parent);
+                            }
+                            if parents.is_empty() {
+                                let bogus_parent = get_commit_address(
+                                    &self.blockchain.client(),
+                                    &mut repo_contract,
+                                    ZERO_SHA,
+                                )
+                                .await?;
+                                parents.push(bogus_parent);
+                            }
+                            let tree_addr = self.calculate_tree_address(tree_id).await?;
+
+                            self.blockchain
+                                .push_commit(
+                                    &object_id,
+                                    branch_name,
+                                    &tree_addr,
+                                    &self.remote,
+                                    &self.dao_addr,
+                                    raw_commit,
+                                    parents,
+                                )
+                                .await?;
+
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
                                 prev_commit_id,
@@ -440,14 +485,16 @@ where
             }
         }
         // 9. Set commit (move HEAD)
-        blockchain::notify_commit(
-            self,
-            &latest_commit_id,
-            branch_name,
-            parallel_diffs_upload_support.get_parallels_number(),
-            number_of_commits,
-        )
-        .await?;
+        self.blockchain
+            .notify_commit(
+                &latest_commit_id,
+                branch_name,
+                parallel_diffs_upload_support.get_parallels_number(),
+                number_of_commits,
+                &self.remote,
+                &self.dao_addr,
+            )
+            .await?;
 
         // 10. move HEAD
         //
@@ -482,75 +529,86 @@ mod tests {
     };
 
     use crate::blockchain::{BlockchainService, TonClient};
-    use crate::config::Config;
+    use crate::config::{Config, UserWalletConfig};
     use crate::git_helper::test_utils::{self, setup_repo};
     use crate::git_helper::tests::setup_test_helper;
     use crate::logger::GitHelperLogger;
 
     use super::*;
 
-    #[derive(Debug)]
-    struct TestBlockChain;
-
-    #[async_trait]
-    impl BlockchainService for TestBlockChain {
-        async fn is_branch_protected(
-            context: &TonClient,
-            repo_addr: &BlockchainContractAddress,
-            branch_name: &str,
-        ) -> anyhow::Result<bool> {
-            Ok(true)
-        }
-        async fn remote_rev_parse(
-            context: &TonClient,
-            repository_address: &BlockchainContractAddress,
-            rev: &str,
-        ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
-            Ok(None)
-        }
-    }
-
     #[tokio::test]
     #[should_panic]
     async fn test_push_parotected_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            TestBlockChain {},
-        );
+        // blockchain::MockBlockchainService::is_branch_protected_context()
+        //     .expect()
+        //     .returning(|_, _, _| Ok(true));
 
-        let res = helper
-            .push("main:main")
-            .await
-            .map_err(|e| panic!("Error: {:?}", e))
-            .unwrap();
+        // blockchain::MockBlockchainService::remote_rev_parse_context()
+        //     .expect()
+        //     .returning(|_, _, _| {
+        //         Ok(Some((
+        //             BlockchainContractAddress::new("test"),
+        //             "test".to_owned(),
+        //         )))
+        //     });
+
+        // let mut helper = setup_test_helper(
+        //     json!({
+        //         "ipfs": "foo.endpoint"
+        //     }),
+        //     "gosh://1/2/3",
+        //     repo,
+        //     blockchain::Ever {
+        //         wallet_config: None,
+        //     },
+        // );
+
+        // let res = helper
+        //     .push("main:main")
+        //     .await
+        //     .map_err(|e| panic!("Error: {:?}", e))
+        //     .unwrap();
         // expected panic: can't push to protected branch
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_push_normal_ref() {
-        let repo = setup_repo("test_push", "tests/fixtures/make_remote_repo.sh").unwrap();
+        let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            TestBlockChain {},
-        );
+        // blockchain::MockBlockchainService::is_branch_protected_context()
+        //     .expect()
+        //     .returning(|_, _, _| Ok(false));
 
-        let res = helper
-            .push("main:main")
-            .await
-            .map_err(|e| panic!("Error: {:?}", e))
-            .unwrap();
+        // blockchain::MockBlockchainService::remote_rev_parse_context()
+        //     .expect()
+        //     .returning(|_, _, _| {
+        //         Ok(Some((
+        //             BlockchainContractAddress::new("test"),
+        //             "test".to_owned(),
+        //         )))
+        //     });
+
+        // // push_tree_context().expect().returning(|_, _, _| Ok(()));
+
+        // let mut helper = setup_test_helper(
+        //     json!({
+        //         "ipfs": "foo.endpoint"
+        //     }),
+        //     "gosh://1/2/3",
+        //     repo,
+        //     blockchain::Ever {
+        //         wallet_config: None,
+        //     },
+        // );
+
+        // let res = helper
+        //     .push("main:main")
+        //     .await
+        //     .map_err(|e| panic!("Error: {:?}", e))
+        //     .unwrap();
     }
 
     #[ignore]

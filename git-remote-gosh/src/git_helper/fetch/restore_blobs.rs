@@ -10,7 +10,6 @@ use git_hash::ObjectId;
 use git_odb::Write;
 use lru::LruCache;
 use std::collections::{HashMap, HashSet};
-
 use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -320,16 +319,15 @@ impl BlobsRebuildingPlan {
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
         log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
-        let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> =
-            Arc::new(Mutex::new(HashSet::new()));
+        let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
         let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> =
             FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.es_client.clone();
+            let es_client = git_helper.ever_client.clone();
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
-            let mut repo_contract = git_helper.repo_contract.clone();
+            let mut repo_contract = git_helper.blockchain.repo_contract().clone();
             let snapshot_address_clone = snapshot_address.clone();
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);

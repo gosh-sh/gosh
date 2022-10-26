@@ -1,16 +1,15 @@
 extern crate shellexpand;
 use std::{
     collections::HashMap,
-    env,
-    fmt,
+    env, fmt,
     io::{BufReader, Read},
     path::Path,
 };
 
 mod defaults;
 
-pub const IPFS_DIFF_THRESHOLD: usize = 63*1024; //63kb (1kb buffer)
-pub const IPFS_CONTENT_THRESHOLD: usize = 63*1024; // 63kb (1kb buffer)
+pub const IPFS_DIFF_THRESHOLD: usize = 63 * 1024; //63kb (1kb buffer)
+pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
@@ -19,7 +18,7 @@ pub struct UserWalletConfig {
     pub profile: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
     #[serde(rename = "user-wallet")]
     user_wallet: Option<UserWalletConfig>,
@@ -129,7 +128,7 @@ pub mod tests {
     use super::*;
 
     pub fn load_from(s: &str) -> Config {
-        return Config::load(s.as_bytes()).unwrap();
+        Config::load(s.as_bytes()).unwrap()
     }
 
     #[test]

@@ -1,5 +1,4 @@
 use super::GitHelper;
-
 use std::fmt;
 
 impl<Blockchain> fmt::Debug for GitHelper<Blockchain> {

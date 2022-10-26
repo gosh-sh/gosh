@@ -6,7 +6,6 @@ use git_odb::Find;
 use git_odb::Write;
 
 use std::collections::{HashSet, VecDeque};
-
 use std::str::FromStr;
 mod restore_blobs;
 
@@ -24,8 +23,8 @@ where
             self.repo_addr,
             commit_id
         );
-        let repo_contract = &mut self.repo_contract;
-        blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await
+        let repo_contract = &mut self.blockchain.repo_contract().clone();
+        blockchain::get_commit_address(&self.ever_client, repo_contract, &commit_id).await
     }
 
     pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
@@ -115,14 +114,16 @@ where
                 log::info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
+                let mut repo_contract = self.blockchain.repo_contract().clone();
                 let address = blockchain::Tree::calculate_address(
-                    &self.es_client,
-                    &mut self.repo_contract,
+                    &self.blockchain.client().clone(),
+                    &mut repo_contract,
                     &tree_object_id,
                 )
                 .await?;
 
-                let onchain_tree_object = blockchain::Tree::load(&self.es_client, &address).await?;
+                let onchain_tree_object =
+                    blockchain::Tree::load(&self.ever_client, &address).await?;
                 let tree_object: git_object::Tree = onchain_tree_object.into();
 
                 log::info!("Tree obj parsed {}", id);
@@ -146,12 +147,13 @@ where
                             log::trace!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
-                            // Note:
-                            // Removing prefixing "/" in the path
+                            let mut repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = blockchain::Snapshot::calculate_address(
-                                &self.es_client,
-                                &mut self.repo_contract,
+                                &self.blockchain.client().clone(),
+                                &mut repo_contract,
                                 branch,
+                                // Note:
+                                // Removing prefixing "/" in the path
                                 &file_path[1..],
                             )
                             .await?;
@@ -182,7 +184,8 @@ where
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
-                let onchain_commit = blockchain::GoshCommit::load(&self.es_client, address).await?;
+                let onchain_commit =
+                    blockchain::GoshCommit::load(&self.ever_client, address).await?;
                 log::info!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
