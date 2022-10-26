@@ -28,7 +28,7 @@ function wait_set_commit {
     is_ok=0
 
     while [ $SECONDS -lt $stop_at ]; do
-        last_commit_addr=`tonos-cli -j -u $NETWORK run $repo_addr getAddrBranch '{"name":"'"$branch"'"}' --abi ../$REPO_ABI | jq -r .value0.value`
+        last_commit_addr=`tonos-cli -j -u $NETWORK run $repo_addr getAddrBranch '{"name":"'"$branch"'"}' --abi ../$REPO_ABI | jq -r .value0.commitaddr`
         if [ "$last_commit_addr" = "$expected_commit_addr" ]; then
             is_ok=1
             echo set_commit success
