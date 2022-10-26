@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain::commit::BlockchainCommit;
+use crate::blockchain::commit::BlockchainCommitPusher;
 use crate::blockchain::get_commit_address;
 use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
@@ -49,7 +49,7 @@ impl PushBlobStatistics {
 
 impl<Blockchain> GitHelper<Blockchain>
 where
-    Blockchain: BlockchainService + BlockchainUserWallet + BlockchainCommit,
+    Blockchain: BlockchainService + BlockchainUserWallet + BlockchainCommitPusher,
 {
     #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(

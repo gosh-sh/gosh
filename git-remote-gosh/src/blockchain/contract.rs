@@ -37,7 +37,7 @@ pub trait ContractRead: Debug {
 
 #[async_trait]
 pub trait ContractMutate: Debug {
-    async fn mutate_stte<T>(
+    async fn mutate_state<T>(
         &mut self,
         client: &TonClient,
         function_name: &str,
@@ -181,7 +181,7 @@ impl ContractRead for GoshContract {
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{create_client, GetAddrBranchResult, BlockchainContractAddress},
+        blockchain::{create_client, BlockchainContractAddress, GetAddrBranchResult},
         config::Config,
     };
     use std::sync::Arc;
@@ -207,8 +207,7 @@ mod tests {
                     "commitversion": "commit_version"
                 }
             });
-            serde_json::from_value::<T>(v)
-            .map_err(|e| anyhow::Error::from(e))
+            serde_json::from_value::<T>(v).map_err(|e| anyhow::Error::from(e))
         }
     }
 

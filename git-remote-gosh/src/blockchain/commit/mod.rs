@@ -4,7 +4,7 @@ use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 mod save;
 
-pub use self::save::BlockchainCommit;
+pub use self::save::BlockchainCommitPusher;
 use crate::blockchain::serde_number::NumberU64;
 
 use super::GoshContract;

@@ -25,7 +25,7 @@ pub struct DeployCommitParams {
 }
 
 #[async_trait]
-pub trait BlockchainCommit: BlockchainService + BlockchainUserWallet {
+pub trait BlockchainCommitPusher: BlockchainService + BlockchainUserWallet {
     async fn push_commit(
         &self,
         commit_id: &ObjectId,
@@ -48,7 +48,7 @@ pub trait BlockchainCommit: BlockchainService + BlockchainUserWallet {
 }
 
 #[async_trait]
-impl BlockchainCommit for Everscale {
+impl BlockchainCommitPusher for Everscale {
     // #[instrument(level = "debug")]
     async fn push_commit(
         &self,
