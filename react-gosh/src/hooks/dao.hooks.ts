@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { retry } from '../helpers'
 import { userAtom, daoAtom, walletAtom } from '../store'
 import { TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
 import { EGoshError, GoshError } from '../errors'
@@ -181,10 +180,7 @@ function useDaoCreate() {
 
             username = username.filter((item) => !!item)
             const profiles = await gosh.isValidProfile(username)
-
-            await retry(async () => {
-                await profile.deployDao(gosh, name, [profile.address, ...profiles])
-            }, 3)
+            await profile.deployDao(gosh, name, [profile.address, ...profiles])
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -225,12 +221,9 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
 
         const profileGoshAddress = await profile.getGoshAddress()
         if (profileGoshAddress !== gosh.gosh.address) {
-            await retry(async () => await profile.setGoshAddress(gosh.gosh.address), 3)
+            await profile.setGoshAddress(gosh.gosh.address)
         }
-
-        await retry(async () => {
-            await profile.deployDao(gosh, await dao.getName(), [], dao.getAddress())
-        }, 3)
+        await profile.deployDao(gosh, await dao.getName(), [], dao.getAddress())
     }
 
     return { versions, upgrade }
@@ -357,7 +350,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     const create = async (username: string[]) => {
         username = username.filter((item) => !!item)
-        await retry(async () => await dao.createMember(username), 3)
+        await dao.createMember(username)
     }
     return create
 }
@@ -369,7 +362,7 @@ function useDaoMemberDelete(dao: IGoshDaoAdapter) {
 
     const remove = async (username: string[]) => {
         setFetching((state) => [...state, ...username])
-        await retry(async () => await dao.deleteMember(username), 3)
+        await dao.deleteMember(username)
         setFetching((state) => state.filter((item) => username.indexOf(item) < 0))
     }
 

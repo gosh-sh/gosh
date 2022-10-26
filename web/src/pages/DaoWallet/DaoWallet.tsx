@@ -4,7 +4,7 @@ import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError, retry } from 'react-gosh'
+import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -26,7 +26,7 @@ const DaoWalletPage = () => {
         try {
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await retry(() => wallet!.lockVoting(values.amount), 3)
+            await wallet!.lockVoting(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -39,7 +39,7 @@ const DaoWalletPage = () => {
         try {
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await retry(() => wallet!.unlockVoting(values.amount), 3)
+            await wallet!.unlockVoting(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
@@ -51,7 +51,7 @@ const DaoWalletPage = () => {
         try {
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            await retry(() => wallet!.updateHead(), 3)
+            await wallet!.updateHead()
             toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
             console.error(e.message)
