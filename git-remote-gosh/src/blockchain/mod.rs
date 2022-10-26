@@ -7,7 +7,6 @@ use serde_json;
 
 use std::{env, sync::Arc};
 
-mod client;
 mod contract;
 mod error;
 use error::RunLocalError;
