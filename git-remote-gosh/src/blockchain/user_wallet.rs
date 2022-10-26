@@ -12,7 +12,7 @@ use crate::abi;
 use crate::blockchain::call;
 use crate::config::{Config, UserWalletConfig};
 
-use super::commit::save::BlockchainPusher;
+use super::commit::save::BlockchainCommitPusher;
 use super::contract::{ContractInfo, ContractRead};
 use super::serde_number::NumberU64;
 use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient};

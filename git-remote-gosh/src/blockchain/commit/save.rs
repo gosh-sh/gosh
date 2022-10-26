@@ -26,7 +26,7 @@ pub struct DeployCommitParams {
 
 #[cfg_attr(test, mockall::automock)]
 #[async_trait]
-pub trait BlockchainPusher {
+pub trait BlockchainCommitPusher {
     async fn push_commit(
         &self,
         commit_id: &ObjectId,
@@ -49,7 +49,7 @@ pub trait BlockchainPusher {
 }
 
 #[async_trait]
-impl BlockchainPusher for Everscale {
+impl BlockchainCommitPusher for Everscale {
     // #[instrument(level = "debug")]
     async fn push_commit(
         &self,

@@ -147,13 +147,13 @@ where
                             log::trace!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
-                            // Note:
-                            // Removing prefixing "/" in the path
                             let mut repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &self.blockchain.client().clone(),
                                 &mut repo_contract,
                                 branch,
+                                // Note:
+                                // Removing prefixing "/" in the path
                                 &file_path[1..],
                             )
                             .await?;

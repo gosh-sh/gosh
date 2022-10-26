@@ -1,5 +1,5 @@
 use super::{
-    commit::save::BlockchainPusher, contract::ContractRead,
+    commit::save::BlockchainCommitPusher, contract::ContractRead,
     user_wallet::BlockchainUserWalletService, BlockchainContractAddress, GetAddrBranchResult,
     GetBoolResult, GoshContract, TonClient,
 };
@@ -11,13 +11,35 @@ use async_trait::async_trait;
 use std::fmt::Debug;
 
 #[async_trait]
+pub trait BlockchainBranchesService {
+    async fn is_branch_protected(
+        &self,
+        repository_address: &BlockchainContractAddress,
+        branch_name: &str,
+    ) -> anyhow::Result<bool>;
+    async fn remote_rev_parse(
+        &self,
+        repository_address: &BlockchainContractAddress,
+        rev: &str,
+    ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>>;
+}
+
+#[async_trait]
 pub trait BlockchainService:
-    Debug + Sync + Send + BlockchainPusher + BlockchainUserWalletService
+    Debug
+    + Sync
+    + Send
+    + BlockchainCommitPusher
+    + BlockchainUserWalletService
+    + BlockchainBranchesService
 {
     fn client(&self) -> &TonClient;
     fn root_contract(&self) -> &GoshContract;
     fn repo_contract(&self) -> &GoshContract;
+}
 
+#[async_trait]
+impl BlockchainBranchesService for Everscale {
     #[instrument(level = "debug")]
     async fn is_branch_protected(
         &self,
