@@ -4,9 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
+pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
@@ -37,9 +38,7 @@ contract DiffC is Modifiers {
     string _name;
     bool check = false;
     Diff[] _diff;
-    TvmCell m_WalletCode;
-    TvmCell m_codeDiff;
-    TvmCell m_CommitCode;
+    mapping(uint8 => TvmCell) _code;
     address _goshroot;
     uint128 _approved = 0;
     string _branchName;
@@ -49,6 +48,8 @@ contract DiffC is Modifiers {
     bool _entry;
     bool _flag = false;
     bool _isCancel = false;
+    
+    uint128 timeMoney = 0; 
     
     optional(PauseDiff) _saved; 
 
@@ -67,7 +68,7 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;        
+        _code[m_WalletCode] = WalletCode;        
         _goshroot = rootGosh;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
@@ -75,14 +76,15 @@ contract DiffC is Modifiers {
         _name = nameRepo;
         _rootRepo = repo;
         _nameBranch = nameBranch;
-        m_codeDiff = codeDiff;
-        m_CommitCode = CommitCode;
+        _code[m_DiffCode] = codeDiff;
+        _code[m_CommitCode] = CommitCode;
         _diff = diffs;
         _last = last;
         getMoney();
     }
     
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 100 ton) { return; }
         _flag = true;
@@ -104,7 +106,7 @@ contract DiffC is Modifiers {
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
@@ -138,7 +140,7 @@ contract DiffC is Modifiers {
     function _buildCommitAddr(
         string commit
     ) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, _rootRepo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode,
             contr: Commit,
@@ -170,6 +172,7 @@ contract DiffC is Modifiers {
     
     function sendDiff(uint128 index, address branchcommit) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (_isCancel == true) { return; }
         if (address(this).balance < 5 ton) { _saved = PauseDiff(0, branchcommit, index); return; }
         if (index > _diff.length) { return; }
@@ -180,7 +183,6 @@ contract DiffC is Modifiers {
             return; 
         }
         Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
-        getMoney();
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
@@ -242,6 +244,7 @@ contract DiffC is Modifiers {
     function applyDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
@@ -250,13 +253,13 @@ contract DiffC is Modifiers {
         }
         Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit); 
         Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
-        getMoney();
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     
     function cancelDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
         if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
         if (index > _diff.length) { delete _diff; _approved = 0; return; }
@@ -265,7 +268,6 @@ contract DiffC is Modifiers {
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
         Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit);
-        getMoney();
         this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     
@@ -275,7 +277,7 @@ contract DiffC is Modifiers {
     }
     
     function _composeDiffStateInit(uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_codeDiff, _rootRepo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_DiffCode], _rootRepo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _nameCommit, _index1: _index1, _index2: index}});
         return stateInit;
     }

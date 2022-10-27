@@ -75,7 +75,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -87,6 +86,6 @@
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_goshdao","type":"address"},
-		{"name":"m_WalletCode","type":"cell"}
+		{"name":"_code","type":"map(uint8,cell)"}
 	]
 }

@@ -26,7 +26,8 @@
 			"inputs": [
 				{"name":"namecommit","type":"string"},
 				{"name":"repo","type":"address"},
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -35,7 +36,8 @@
 			"name": "checkTree",
 			"inputs": [
 				{"name":"index","type":"uint256"},
-				{"name":"path","type":"string"}
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -44,7 +46,8 @@
 			"name": "answerIs",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"_ready","type":"bool"}
+				{"name":"_ready","type":"bool"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -54,7 +57,8 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"branch","type":"string"},
-				{"name":"path","type":"string"}
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -63,7 +67,8 @@
 			"name": "gotCheckTree",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"res","type":"bool"}
+				{"name":"res","type":"bool"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -157,7 +162,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -170,17 +174,14 @@
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_goshdao","type":"address"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
-		{"name":"m_codeTree","type":"cell"},
-		{"name":"m_codeCommit","type":"cell"},
-		{"name":"m_SnapshotCode","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_needAnswer","type":"uint128"},
 		{"name":"_check","type":"bool"},
 		{"name":"_root","type":"bool"},
 		{"name":"_checkbranch","type":"string"},
 		{"name":"_checkaddr","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"}],"name":"_saved","type":"optional(tuple)"}
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"timeMoney","type":"uint128"}
 	]
 }

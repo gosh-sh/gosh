@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
@@ -21,6 +21,8 @@ contract ProfileDao is Modifiers {
     address _pubaddr;
     bool _flag = false;
     mapping(uint256 => bool) _owners;
+    
+    uint128 timeMoney = 0;
 
     constructor() public {
         _pubaddr = msg.sender;
@@ -37,6 +39,7 @@ contract ProfileDao is Modifiers {
 
     //Money part
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;

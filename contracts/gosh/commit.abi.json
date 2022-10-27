@@ -28,8 +28,7 @@
 		{
 			"name": "isCorrect",
 			"inputs": [
-				{"name":"newname","type":"string"},
-				{"name":"fromcommit","type":"string"}
+				{"name":"newname","type":"string"}
 			],
 			"outputs": [
 			]
@@ -84,7 +83,8 @@
 		{
 			"name": "treeAccept",
 			"inputs": [
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -358,7 +358,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -371,10 +370,7 @@
 		{"name":"_commit","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_SnapshotCode","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_parents","type":"address[]"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_tree","type":"address"},
@@ -392,6 +388,7 @@
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
 		{"name":"_initupgrade","type":"bool"},
-		{"name":"_prevversion","type":"optional(string)"}
+		{"name":"_prevversion","type":"optional(string)"},
+		{"name":"timeMoney","type":"uint128"}
 	]
 }

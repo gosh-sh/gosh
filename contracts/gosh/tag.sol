@@ -4,9 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
+pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
@@ -23,7 +24,7 @@ contract Tag is Modifiers{
     address _pubaddr;
     address _goshroot;
     address _goshdao;
-    TvmCell m_WalletCode;
+    mapping(uint8 => TvmCell) _code;
     
     constructor(
         address pubaddr,
@@ -36,7 +37,7 @@ contract Tag is Modifiers{
         uint128 index) public onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;
+        _code[m_WalletCode] = WalletCode;
         _goshroot = goshaddr;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
@@ -53,7 +54,7 @@ contract Tag is Modifiers{
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,

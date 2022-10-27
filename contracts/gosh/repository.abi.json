@@ -44,16 +44,6 @@
 			]
 		},
 		{
-			"name": "setTombstone",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"index","type":"uint128"},
-				{"name":"description","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployBranch",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -386,7 +376,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -394,12 +383,7 @@
 		{"name":"_tombstone","type":"bool"},
 		{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"_previousversion","type":"optional(tuple)"},
 		{"name":"_pubaddr","type":"address"},
-		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_SnapshotCode","type":"cell"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_codeTag","type":"cell"},
-		{"name":"m_codeTree","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_goshroot","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_nameDao","type":"string"},
