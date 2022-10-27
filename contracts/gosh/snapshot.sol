@@ -4,9 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
+pragma AbiHeader time;
 
 import "./libraries/GoshLib.sol";
 import "./modifiers/modifiers.sol";
@@ -30,11 +31,7 @@ contract Snapshot is Modifiers {
     string _commits;
     optional(string) _ipfs;
     optional(string) _ipfsold;
-    TvmCell m_codeSnapshot;
-    TvmCell m_CommitCode;
-    TvmCell m_codeDiff;
-    TvmCell m_WalletCode;
-    TvmCell m_codeTree;
+    mapping(uint8 => TvmCell) _code;
     string static NameOfFile;
     bool _applying = false;
     string _name; 
@@ -61,16 +58,16 @@ contract Snapshot is Modifiers {
         tvm.accept();
         _pubaddr = pubaddr;
         _rootRepo = rootrepo;
-        m_codeSnapshot = codeSnapshot;
-        m_CommitCode = codeCommit;
-        m_codeDiff = codeDiff;
+        _code[m_SnapshotCode] = codeSnapshot;
+        _code[m_CommitCode] = codeCommit;
+        _code[m_DiffCode] = codeDiff;
         _snapshot = gosh.zip("");
         _oldsnapshot = _snapshot;
         _branch = branch;
         _name = name;
         _goshroot = rootgosh;
         _goshdao = goshdao;
-        m_WalletCode = WalletCode;
+        _code[m_WalletCode] = WalletCode;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _oldcommits = commit;
         _commits = commit;
@@ -79,7 +76,7 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _baseCommit = commit;
-        m_codeTree = codeTree;
+        _code[m_TreeCode] = codeTree;
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);
             require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
@@ -91,14 +88,13 @@ contract Snapshot is Modifiers {
             
             Commit(_buildCommitAddr(_oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
-            //TODO CHECK
         }
     }
 
     function _buildCommitAddr(
         string commit
     ) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildCommitCode(m_CommitCode, _rootRepo, version);
+        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
             contr: Commit,
@@ -114,7 +110,7 @@ contract Snapshot is Modifiers {
     }
     
     function getTreeAddr(string shaTree) internal view returns(address) {
-        TvmCell deployCode = GoshLib.buildTreeCode(m_codeTree, version);
+        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
         //return tvm.insertPubkey(stateInit, pubkey);
         return address.makeAddrStd(0, tvm.hash(stateInit));
@@ -127,7 +123,7 @@ contract Snapshot is Modifiers {
     }
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubaddr, version);
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
@@ -136,8 +132,13 @@ contract Snapshot is Modifiers {
         return _contractflex;
     }
     
-    function isReady() public view minValue(0.15 ton) {
-        Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready);
+    function isReady(uint256 sha1, uint128 typer) public view minValue(0.15 ton) {
+        if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
+            Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready, typer);
+        } else { 
+            Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, false, typer); 
+        }
+        
     }
 
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
@@ -213,7 +214,7 @@ contract Snapshot is Modifiers {
 
     //Private getters
     function getSnapshotAddr(string branch, string name) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(m_codeSnapshot, _rootRepo, branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], _rootRepo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         return addr;
@@ -224,7 +225,7 @@ contract Snapshot is Modifiers {
         uint128 index1,
         uint128 index2
     ) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildDiffCode(m_codeDiff, _rootRepo, version);
+        TvmCell deployCode = GoshLib.buildDiffCode(_code[m_DiffCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
             contr: DiffC,

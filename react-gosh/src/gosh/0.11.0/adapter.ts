@@ -810,13 +810,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getUpgrade(commit: string): Promise<TUpgradeData> {
         const commitData = await this.getCommit({ name: commit })
+        if (commitData.name === ZERO_COMMIT) {
+            return {
+                commit: {
+                    ...commitData,
+                    tree: ZERO_COMMIT,
+                    parents: [commitData.address],
+                },
+                tree: {},
+                blobs: [],
+            }
+        }
+
+        // Get non-zero commit data
         const { tree, items } = await this.getTree(commit)
         const blobs = await this._getTreeBlobs(items, commitData.branch)
         return {
-            commit: {
-                ...commitData,
-                parents: [commitData.address],
-            },
+            commit: { ...commitData, parents: [commitData.address] },
             tree,
             blobs,
         }

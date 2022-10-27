@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 
 import "replayprotection.sol";
 
@@ -56,6 +56,19 @@ struct GlobalConfig {
 
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.0.0";
+    
+    //TvmCell constants
+    uint8 constant m_RepositoryCode = 1;
+    uint8 constant m_CommitCode = 2;
+    uint8 constant m_WalletCode = 3;
+    uint8 constant m_TagCode = 4;
+    uint8 constant m_SnapshotCode = 5;
+    uint8 constant m_TreeCode = 6;
+    uint8 constant m_DiffCode = 7;
+    uint8 constant m_contentSignature= 8;
+    uint8 constant m_DaoCode = 9;
+    uint8 constant m_ProfileCode = 10;
+    uint8 constant m_ProfileDaoCode = 11;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 31000 ton;

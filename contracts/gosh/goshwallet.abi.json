@@ -18,8 +18,6 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
 				{"name":"limit_wallets","type":"uint128"},
-				{"name":"limit_time","type":"uint128"},
-				{"name":"limit_messages","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"tokenWalletCode","type":"cell"},
@@ -145,15 +143,6 @@
 			]
 		},
 		{
-			"name": "setTombstone",
-			"inputs": [
-				{"name":"nameRepo","type":"string"},
-				{"name":"description","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"branch","type":"string"},
@@ -273,9 +262,7 @@
 		{
 			"name": "setConfig",
 			"inputs": [
-				{"name":"limit_wallets","type":"uint128"},
-				{"name":"limit_time","type":"uint128"},
-				{"name":"limit_messages","type":"uint128"}
+				{"name":"limit_wallets","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -507,6 +494,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"optional(uint256)"}
+			]
+		},
+		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
 			]
 		},
 		{
@@ -761,7 +756,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -795,20 +789,11 @@
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_flag","type":"bool"},
-		{"name":"m_RepositoryCode","type":"cell"},
-		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_TagCode","type":"cell"},
-		{"name":"m_SnapshotCode","type":"cell"},
-		{"name":"m_codeTree","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
-		{"name":"m_contentSignature","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"counter","type":"uint128"},
 		{"name":"_last_time","type":"uint128"},
-		{"name":"_limit_wallets","type":"uint128"},
-		{"name":"_limit_messages","type":"uint128"},
-		{"name":"_limit_time","type":"uint128"},
 		{"name":"_walletcounter","type":"uint128"},
+		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_tombstone","type":"bool"}
 	]
 }

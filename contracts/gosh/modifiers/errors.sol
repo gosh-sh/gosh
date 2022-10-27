@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ever-solidity =0.64.0;
+pragma ever-solidity >=0.66.0;
 
 abstract contract Errors {
     string constant versionErrors = "1.0.0";
@@ -50,10 +50,10 @@ abstract contract Errors {
     uint constant ERR_REPOSITORY_NOT_READY = 239;
     uint constant ERR_PREV_NOT_EXIST = 240;
     uint constant ERR_WRONG_DAO = 241;
-    uint constant ERR_TOMBSTONE = 241;
-    uint constant ERR_BAD_NUMBER_CUSTODIANS = 242;
-    uint constant ERR_NOTHING_TO_CONFIRM = 243;
-    uint constant ERR_ALREADY_CONFIRMED = 244;
-    uint constant ERR_WRONG_NUMBER_MEMBER = 245;
-    uint constant ERR_BAD_PARENT = 246;
+    uint constant ERR_TOMBSTONE = 242;
+    uint constant ERR_BAD_NUMBER_CUSTODIANS = 243;
+    uint constant ERR_NOTHING_TO_CONFIRM = 244;
+    uint constant ERR_ALREADY_CONFIRMED = 245;
+    uint constant ERR_WRONG_NUMBER_MEMBER = 246;
+    uint constant ERR_BAD_PARENT = 247;
 }

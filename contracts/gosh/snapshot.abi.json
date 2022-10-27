@@ -38,6 +38,8 @@
 		{
 			"name": "isReady",
 			"inputs": [
+				{"name":"sha1","type":"uint256"},
+				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -153,7 +155,6 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
@@ -170,11 +171,7 @@
 		{"name":"_commits","type":"string"},
 		{"name":"_ipfs","type":"optional(string)"},
 		{"name":"_ipfsold","type":"optional(string)"},
-		{"name":"m_codeSnapshot","type":"cell"},
-		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_codeTree","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
