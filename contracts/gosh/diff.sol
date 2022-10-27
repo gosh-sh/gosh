@@ -49,6 +49,8 @@ contract DiffC is Modifiers {
     bool _flag = false;
     bool _isCancel = false;
     
+    uint128 timeMoney = 0; 
+    
     optional(PauseDiff) _saved; 
 
     constructor(address goshdao, 
@@ -82,6 +84,7 @@ contract DiffC is Modifiers {
     }
     
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 100 ton) { return; }
         _flag = true;
@@ -169,6 +172,7 @@ contract DiffC is Modifiers {
     
     function sendDiff(uint128 index, address branchcommit) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (_isCancel == true) { return; }
         if (address(this).balance < 5 ton) { _saved = PauseDiff(0, branchcommit, index); return; }
         if (index > _diff.length) { return; }
@@ -179,7 +183,6 @@ contract DiffC is Modifiers {
             return; 
         }
         Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
-        getMoney();
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
@@ -241,6 +244,7 @@ contract DiffC is Modifiers {
     function applyDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
@@ -249,13 +253,13 @@ contract DiffC is Modifiers {
         }
         Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit); 
         Commit(_buildCommitAddr(_diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
-        getMoney();
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     
     function cancelDiff(
         uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
         if (_last == false) { DiffC(getDiffAddress(_index2 + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
         if (index > _diff.length) { delete _diff; _approved = 0; return; }
@@ -264,7 +268,6 @@ contract DiffC is Modifiers {
             selfdestruct(_buildCommitAddr(_nameCommit)); return;
         }
         Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit);
-        getMoney();
         this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     

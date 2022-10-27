@@ -45,6 +45,8 @@ contract Tree is Modifiers {
     bool _flag = false;
     optional(PauseTree) _saved;
 
+    uint128 timeMoney = 0; 
+    
     constructor(
         address pubaddr,
         mapping(uint256 => TreeObject) data,
@@ -85,6 +87,7 @@ contract Tree is Modifiers {
 
     function checkTree(uint256 index, string path, uint128 typer) public senderIs(address(this)) {
         require(_check == true, ERR_PROCCESS_END);
+        getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
@@ -101,28 +104,26 @@ contract Tree is Modifiers {
             }
             this.checkTree{value: 0.2 ton, flag: 1}(index + 1, path, typer);
         }
-        getMoney();
     }
 
     function answerIs(string name, bool _ready, uint128 typer) public senderIs(getSnapshotAddr(_checkbranch, name)) {
         tvm.accept();
+        getMoney();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
         if (_ready == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
             _needAnswer = 0;
-            getMoney();
             return;
         }
         _needAnswer -= 1;
-        if (_needAnswer != 0) { getMoney(); return; }
+        if (_needAnswer != 0) { return; }
         if (_saved.hasValue() == true) { return; }
         if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
         else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
         _check = false;
         _needAnswer = 0;
-        getMoney();
     }
 
     function getCheckTree(string name, string branch, string path, uint128 typer) public senderIs(getTreeAddr(name)) {
@@ -139,26 +140,26 @@ contract Tree is Modifiers {
 
     function gotCheckTree(string name, bool res, uint128 typer) public senderIs(getTreeAddr(name)) {
         tvm.accept();
+        getMoney();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
         if (res == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
             _needAnswer = 0;
-            getMoney();
             return;
         }
         _needAnswer -= 1;
-        if (_needAnswer != 0) { getMoney(); return; }
+        if (_needAnswer != 0) { return; }
         if (_saved.hasValue() == true) { return; }
         if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
         else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
         _check = false;
         _needAnswer = 0;
-        getMoney();
     }
 
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 300 ton) { return; }
         _flag = true;

@@ -43,7 +43,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     bool _flag = false;
     bool _tombstone = false;
-
+    
+    uint128 timeMoney = 0;
+    optional(address[]) saveaddr;
+    optional(uint128) saveind;
+    
     constructor(
         address pubaddr, 
         address profiledao,
@@ -135,6 +139,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
@@ -231,6 +236,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     function deployWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
         tvm.accept();
+        getMoney();
+        if (address(this).balance < 100 ton) { saveaddr = pubmem; saveind = index; return; }
         if (index >= pubmem.length) { return; }
         deployWalletIn(pubmem[index]);
         index += 1;
@@ -326,6 +333,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     receive() external {
         if (msg.sender == _goshroot) {
             _flag = false;
+            if ((saveaddr.hasValue() == true) && (saveind.hasValue() == true)) {
+                this.deployWallets{value: 0.1 ton, flag: 1}(saveaddr.get(), saveind.get());
+                saveaddr = null;
+                saveind = null;
+            }
         }
     }
 

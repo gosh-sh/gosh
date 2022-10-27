@@ -416,6 +416,9 @@
 		{"name":"_rootTokenRoot","type":"address"},
 		{"name":"_lastAccountAddress","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"name":"_tombstone","type":"bool"}
+		{"name":"_tombstone","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"name":"saveaddr","type":"optional(address[])"},
+		{"name":"saveind","type":"optional(uint128)"}
 	]
 }

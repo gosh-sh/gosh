@@ -21,6 +21,8 @@ contract ProfileDao is Modifiers {
     address _pubaddr;
     bool _flag = false;
     mapping(uint256 => bool) _owners;
+    
+    uint128 timeMoney = 0;
 
     constructor() public {
         _pubaddr = msg.sender;
@@ -37,6 +39,7 @@ contract ProfileDao is Modifiers {
 
     //Money part
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
