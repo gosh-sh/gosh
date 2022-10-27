@@ -198,6 +198,7 @@
 		{"name":"_entry","type":"bool"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_isCancel","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"send","type":"uint128"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"}],"name":"_saved","type":"optional(tuple)"}
 	]
 }

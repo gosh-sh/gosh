@@ -50,6 +50,8 @@ contract Profile is Modifiers {
     uint8 _custodians = 1;
     uint8 _needcustodians = 1;
     uint128 _expTime = 600;
+    
+    uint128 timeMoney = 0;
 
     constructor( TvmCell codeProfileDao,
         uint256 pubkey
@@ -297,6 +299,7 @@ contract Profile is Modifiers {
 
     //Money part
     function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;

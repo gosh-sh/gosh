@@ -388,6 +388,7 @@
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
 		{"name":"_initupgrade","type":"bool"},
-		{"name":"_prevversion","type":"optional(string)"}
+		{"name":"_prevversion","type":"optional(string)"},
+		{"name":"timeMoney","type":"uint128"}
 	]
 }
