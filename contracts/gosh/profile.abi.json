@@ -100,25 +100,10 @@
 			]
 		},
 		{
-			"name": "destroyDao",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "sendMoneyProfileDao",
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"value","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroy",
-			"inputs": [
 			],
 			"outputs": [
 			]
