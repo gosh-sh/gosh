@@ -159,7 +159,7 @@ pub async fn push_diff(
         .await?;
     let mut repo_contract = context.blockchain.repo_contract().clone();
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
-        &context.ever_client,
+        &context.blockchain.client(),
         &mut repo_contract,
         branch_name,
         file_path,
@@ -170,7 +170,7 @@ pub async fn push_diff(
     let diff = diff.to_owned();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-    let es_client = context.ever_client.clone();
+    let es_client = context.blockchain.client().clone();
     let repo_name = context.remote.repo.clone();
     let commit_id = *commit_id;
     let branch_name = branch_name.to_owned();
@@ -224,6 +224,7 @@ pub async fn inner_push_diff(
     diff_coordinate: &PushDiffCoordinate,
     last_commit_id: &git_hash::ObjectId,
     is_last: bool,
+    // TODO: why not just &[u8]
     original_snapshot_content: &Vec<u8>,
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
@@ -277,7 +278,7 @@ pub async fn inner_push_diff(
     };
     let content_sha256 = {
         if ipfs.is_some() {
-            format!("0x{}", sha256::digest_bytes(new_snapshot_content))
+            format!("0x{}", sha256::digest(&**new_snapshot_content))
         } else {
             format!("0x{}", tvm_hash(&es_client, new_snapshot_content).await?)
         }
@@ -358,7 +359,7 @@ pub async fn push_new_branch_snapshot(
         .await?;
     let params = serde_json::to_value(args)?;
     let result = call(
-        &context.ever_client,
+        &context.blockchain.client(),
         &wallet,
         "deployNewSnapshot",
         Some(params),
@@ -389,7 +390,7 @@ pub async fn push_initial_snapshot(
         .user_wallet(&context.dao_addr, &context.remote.network)
         .await?;
     let params = serde_json::to_value(args)?;
-    let es_client = context.ever_client.clone();
+    let es_client = context.blockchain.client().clone();
     Ok(tokio::spawn(async move {
         let mut attempt = 0;
         let result = loop {

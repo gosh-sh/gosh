@@ -39,8 +39,8 @@ pub use tree::{push_tree, Tree};
 pub use tvm_hash::tvm_hash;
 
 use crate::abi as gosh_abi;
-use crate::config::Config;
 use crate::config;
+use crate::config::Config;
 
 pub use self::contract::GoshContract;
 use self::contract::{ContractInfo, ContractRead, ContractStatic};

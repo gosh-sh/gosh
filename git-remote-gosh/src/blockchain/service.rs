@@ -109,80 +109,70 @@ impl BlockchainService for Everscale {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
-    // mockall::mock! {
-    //     _BlockchainService {
+    use super::*;
+    use crate::utilities::Remote;
+    use git_hash::ObjectId;
 
-    //     }
+    // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
+    mockall::mock! {
+        #[derive(Debug, Clone)]
+        Everscale {
+            // empty
+        }
 
-    //     impl BlockchainService for _BlockchainService {
-    //     fn client(&self) -> &TonClient;
-    //     fn root_contract(&self) -> &GoshContract;
-    //     fn repo_contract(&self) -> &GoshContract;
+        #[async_trait]
+        impl BlockchainCommitPusher for Everscale {
+            async fn push_commit(
+                &self,
+                commit_id: &ObjectId,
+                branch: &str,
+                tree_addr: &BlockchainContractAddress,
+                remote: &Remote,
+                dao_addr: &BlockchainContractAddress,
+                raw_commit: String,
+                parents: Vec<BlockchainContractAddress>,
+            ) -> anyhow::Result<()>;
+            async fn notify_commit(
+                &self,
+                commit_id: &ObjectId,
+                branch: &str,
+                number_of_files_changed: u32,
+                number_of_commits: u64,
+                remote: &Remote,
+                dao_addr: &BlockchainContractAddress,
+            ) -> anyhow::Result<()>;
+        }
 
-    //     #[instrument(level = "debug")]
-    //     async fn is_branch_protected(
-    //         &self,
-    //         repository_address: &BlockchainContractAddress,
-    //         branch_name: &str,
-    //     ) -> anyhow::Result<bool> {
-    //         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
+        #[async_trait]
+        impl BlockchainUserWalletService for Everscale {
+            fn wallet_config(&self) -> &Option<UserWalletConfig>;
+            async fn user_wallet(
+                &self,
+                dao_address: &BlockchainContractAddress,
+                remote_network: &str,
+            ) -> anyhow::Result<GoshContract>;
 
-    //         let params = serde_json::json!({ "branch": branch_name });
-    //         let result: GetBoolResult = contract
-    //             .run_local(self.client(), "isBranchProtected", Some(params))
-    //             .await?;
-    //         Ok(result.is_ok)
-    //     }
+        }
 
-    //     async fn remote_rev_parse(
-    //         &self,
-    //         repository_address: &BlockchainContractAddress,
-    //         rev: &str,
-    //     ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
-    //         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
-    //         let args = serde_json::json!({ "name": rev });
-    //         let result: GetAddrBranchResult = contract
-    //             .read_state(self.client(), "getAddrBranch", Some(args))
-    //             .await?;
-    //         if result.branch.branch_name.is_empty() {
-    //             Ok(None)
-    //         } else {
-    //             Ok(Some((result.branch.commit_address, result.branch.version)))
-    //         }
-    //     }
+        #[async_trait]
+        impl BlockchainBranchesService for Everscale {
+            async fn is_branch_protected(
+                &self,
+                repository_address: &BlockchainContractAddress,
+                branch_name: &str,
+            ) -> anyhow::Result<bool>;
+            async fn remote_rev_parse(
+                &self,
+                repository_address: &BlockchainContractAddress,
+                rev: &str,
+            ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>>;
+        }
 
-    //     }
-    //     impl BlockchainPusher for _BlockchainService {
-
-    //     async fn push_commit(
-    //         &self,
-    //         commit_id: &ObjectId,
-    //         branch: &str,
-    //         tree_addr: &BlockchainContractAddress,
-    //         remote: &Remote,
-    //         dao_addr: &BlockchainContractAddress,
-    //         raw_commit: String,
-    //         parents: Vec<BlockchainContractAddress>,
-    //     ) -> anyhow::Result<()>;
-    //     async fn notify_commit(
-    //         &self,
-    //         commit_id: &ObjectId,
-    //         branch: &str,
-    //         number_of_files_changed: u32,
-    //         number_of_commits: u64,
-    //         remote: &Remote,
-    //         dao_addr: &BlockchainContractAddress,
-    //     ) -> anyhow::Result<()>;
-    //     }
-    //     impl BlockchainUserWalletService for _BlockchainService {
-    //     fn wallet_config(&self) -> &Option<UserWalletConfig>;
-    //     async fn user_wallet(
-    //         &self,
-    //         dao_address: &BlockchainContractAddress,
-    //         remote_network: &str,
-    //     ) -> anyhow::Result<GoshContract>;
-
-    //     }
-    // }
+        #[async_trait]
+        impl BlockchainService for Everscale {
+            fn client(&self) -> &TonClient;
+            fn root_contract(&self) -> &GoshContract;
+            fn repo_contract(&self) -> &GoshContract;
+        }
+    }
 }

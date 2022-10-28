@@ -21,8 +21,6 @@ static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
     pub config: Config,
-    #[deprecated(note = "use self.blockchain.client()")]
-    pub ever_client: TonClient,
     pub ipfs_client: IpfsService,
     pub blockchain: Blockchain,
     pub remote: Remote,
@@ -105,7 +103,6 @@ where
 
         Ok(Self {
             config,
-            ever_client,
             ipfs_client: ipfs,
             blockchain,
             remote,
@@ -124,10 +121,10 @@ where
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
-        let refs = list::get_refs(&self.ever_client, &self.repo_addr).await?;
+        let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
-            let head = get_head(&self.ever_client, &self.repo_addr).await?;
+            let head = get_head(&self.blockchain.client(), &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head));
@@ -290,7 +287,6 @@ pub mod tests {
 
         GitHelper {
             config,
-            ever_client: es_client,
             ipfs_client,
             blockchain,
             remote,

@@ -58,7 +58,7 @@ where
             "fromCommit": self.ancestor_commit.to_string(),
         });
         blockchain::call(
-            &self.context.ever_client,
+            &self.context.blockchain.client(),
             &wallet,
             "deployBranch",
             Some(params),

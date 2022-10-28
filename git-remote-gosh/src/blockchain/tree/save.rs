@@ -71,7 +71,7 @@ async fn construct_tree_node(
                 .local_repository()
                 .objects
                 .try_find(e.oid, &mut buffer)?;
-            sha256::digest_bytes(&buffer)
+            sha256::digest(&*buffer)
         }
         Blob | BlobExecutable => {
             let content = context
@@ -90,9 +90,9 @@ async fn construct_tree_node(
                 //    goes to IPFS
                 // 3. If we though that this file DOES NOT go to IPFS and calculated
                 //    tvm_hash instead it will not break
-                sha256::digest_bytes(content)
+                sha256::digest(content)
             } else {
-                tvm_hash(&context.ever_client, content).await?
+                tvm_hash(&context.blockchain.client(), content).await?
             }
         }
         Commit => unimplemented!(),
@@ -101,7 +101,7 @@ async fn construct_tree_node(
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));
     let type_obj = &tree_node.type_obj;
     let key = tvm_hash(
-        &context.ever_client,
+        &context.blockchain.client(),
         format!("{}:{}", type_obj, file_name).as_bytes(),
     )
     .await?;
@@ -153,7 +153,13 @@ pub async fn push_tree(
             .user_wallet(&context.dao_addr, &context.remote.network)
             .await?;
 
-        blockchain::call(&context.ever_client, &wallet, "deployTree", Some(params)).await?;
+        blockchain::call(
+            &context.blockchain.client(),
+            &wallet,
+            "deployTree",
+            Some(params),
+        )
+        .await?;
     }
     Ok(())
 }

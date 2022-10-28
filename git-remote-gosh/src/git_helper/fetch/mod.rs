@@ -24,7 +24,7 @@ where
             commit_id
         );
         let repo_contract = &mut self.blockchain.repo_contract().clone();
-        blockchain::get_commit_address(&self.ever_client, repo_contract, &commit_id).await
+        blockchain::get_commit_address(&self.blockchain.client(), repo_contract, &commit_id).await
     }
 
     pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
@@ -123,7 +123,7 @@ where
                 .await?;
 
                 let onchain_tree_object =
-                    blockchain::Tree::load(&self.ever_client, &address).await?;
+                    blockchain::Tree::load(&self.blockchain.client(), &address).await?;
                 let tree_object: git_object::Tree = onchain_tree_object.into();
 
                 log::info!("Tree obj parsed {}", id);
@@ -185,7 +185,7 @@ where
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.ever_client, address).await?;
+                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await?;
                 log::info!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
