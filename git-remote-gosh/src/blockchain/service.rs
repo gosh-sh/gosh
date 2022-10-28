@@ -108,7 +108,7 @@ impl BlockchainService for Everscale {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use crate::utilities::Remote;
     use git_hash::ObjectId;
@@ -116,7 +116,7 @@ mod tests {
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
         #[derive(Debug, Clone)]
-        Everscale {
+        pub Everscale {
             // empty
         }
 

@@ -3,13 +3,13 @@ use git_repository::Repository;
 use std::{env, fs};
 
 pub fn setup_repo(name: &str, script_path: &str) -> anyhow::Result<Repository> {
-    println!("Testing push: current_dir = {:?}", env::current_dir()?);
+    eprintln!("Testing push: current_dir = {:?}", env::current_dir()?);
 
     let dir = std::env::temp_dir().join(name);
     if dir.exists() {
         fs::remove_dir_all(&dir).unwrap();
     }
-    println!("Testing push: dir = {:?}", dir);
+    eprintln!("Testing push: dir = {:?}", dir);
 
     fs::create_dir_all(&dir)?;
 
@@ -21,11 +21,11 @@ pub fn setup_repo(name: &str, script_path: &str) -> anyhow::Result<Repository> {
         .current_dir(&dir)
         .output()?;
 
-    println!("stdout: \n{}", output.stdout.to_str_lossy());
-    println!("stderr: \n{}", output.stderr.to_str_lossy());
+    eprintln!("stdout: \n{}", output.stdout.to_str_lossy());
+    eprintln!("stderr: \n{}", output.stderr.to_str_lossy());
 
     let repo = git_repository::open(&dir)?;
-    println!("Repo: {:?}", repo);
+    eprintln!("Repo: {:?}", repo);
 
     Ok(repo)
 }

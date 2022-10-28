@@ -1,14 +1,13 @@
 #![allow(unused_variables)]
-use crate::abi as gosh_abi;
-use crate::blockchain::{
-    tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract, TonClient,
-};
-use crate::config;
-use crate::ipfs::IpfsSave;
 use crate::{
-    blockchain::{call, snapshot},
+    abi as gosh_abi,
+    blockchain::{
+        call, snapshot, tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract,
+        TonClient,
+    },
+    config,
     git_helper::GitHelper,
-    ipfs::IpfsService,
+    ipfs::{IpfsSave, IpfsService},
 };
 use git_hash;
 use ton_client::utils::compress_zstd;
@@ -203,7 +202,11 @@ pub async fn push_diff(
             if result.is_ok() || attempt > PUSH_DIFF_MAX_TRIES {
                 break result;
             } else {
-                log::debug!("inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}", diff_coordinate, result.unwrap_err());
+                log::debug!(
+                    "inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}",
+                    diff_coordinate,
+                    result.unwrap_err()
+                );
                 std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };

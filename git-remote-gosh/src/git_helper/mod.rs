@@ -3,16 +3,18 @@ use std::env;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use crate::abi as gosh_abi;
-use crate::blockchain::user_wallet::user_wallet_config;
-use crate::blockchain::{
-    create_client, get_head, get_repo_address, BlockchainService, GoshContract, TonClient, Tree,
+use crate::{
+    abi as gosh_abi,
+    blockchain::{
+        create_client, get_head, get_repo_address, user_wallet::user_wallet_config,
+        BlockchainContractAddress, BlockchainService, EverscaleBuilder, GoshContract, TonClient,
+        Tree,
+    },
+    config::Config,
+    ipfs::IpfsService,
+    logger::GitHelperLogger as Logger,
+    utilities::Remote,
 };
-use crate::blockchain::{BlockchainContractAddress, EverscaleBuilder};
-use crate::config::Config;
-use crate::ipfs::IpfsService;
-use crate::logger::GitHelperLogger as Logger;
-use crate::utilities::Remote;
 
 #[cfg(test)]
 mod test_utils;
@@ -65,10 +67,6 @@ where
             &tree_id.to_string(),
         )
         .await
-    }
-
-    pub fn new_es_client(&self) -> anyhow::Result<TonClient> {
-        Ok(create_client(&self.config, &self.remote.network)?)
     }
 
     #[instrument(level = "debug", skip(blockchain))]
@@ -253,11 +251,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
 pub mod tests {
     use git_repository::Repository;
 
-    use crate::{
-        blockchain::{create_client, BlockchainService},
-        config::tests::load_from,
-        logger::GitHelperLogger,
-    };
+    use crate::{blockchain::BlockchainService, config::tests::load_from, logger::GitHelperLogger};
 
     use super::*;
 
@@ -271,11 +265,9 @@ pub mod tests {
         B: BlockchainService,
     {
         let config = load_from(&value.to_string());
-        let logger = GitHelperLogger::init().unwrap();
+        let logger = GitHelperLogger::init().expect("logger init error");
 
         let remote = Remote::new(url, &config).unwrap();
-
-        let es_client = create_client(&config, &remote.network).unwrap();
 
         let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 

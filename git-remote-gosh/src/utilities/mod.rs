@@ -1,5 +1,4 @@
-use crate::blockchain::BlockchainContractAddress;
-use crate::config::Config;
+use crate::{blockchain::BlockchainContractAddress, config::Config};
 
 #[derive(Debug)]
 pub struct Remote {
@@ -18,7 +17,9 @@ impl Remote {
 }
 
 fn deconstruct_remote(input: &str, config: &Config) -> anyhow::Result<Remote> {
-    let malformed_err = format!("The following URL is malformed:\n\t{input}\nThe URL must be in the following format: gosh::<network>://<account>@<repository>");
+    let malformed_err = format!(
+        "The following URL is malformed:\n\t{input}\nThe URL must be in the following format: gosh::<network>://<account>@<repository>"
+    );
 
     let mut splitted_url = input.split("://");
     let head = splitted_url.next().unwrap();

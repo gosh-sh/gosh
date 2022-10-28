@@ -1,12 +1,14 @@
 use super::GitHelper;
-use crate::blockchain;
-use crate::blockchain::BlockchainContractAddress;
-use crate::blockchain::BlockchainService;
-use git_odb::Find;
-use git_odb::Write;
+use crate::{
+    blockchain,
+    blockchain::{BlockchainContractAddress, BlockchainService},
+};
+use git_odb::{Find, Write};
 
-use std::collections::{HashSet, VecDeque};
-use std::str::FromStr;
+use std::{
+    collections::{HashSet, VecDeque},
+    str::FromStr,
+};
 mod restore_blobs;
 
 impl<Blockchain> GitHelper<Blockchain>

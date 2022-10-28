@@ -6,8 +6,10 @@ use crate::blockchain::{self, tvm_hash, BlockchainService, GoshBlobBitFlags};
 use git_hash::ObjectId;
 use git_object::tree::{self, EntryRef};
 use git_odb::{self, Find, FindExt};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::vec::Vec;
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    vec::Vec,
+};
 
 #[derive(Serialize, Debug)]
 pub struct TreeNode {

@@ -12,7 +12,7 @@ mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
-mod service;
+pub mod service;
 pub use service::*;
 
 use ton_client::{
@@ -38,9 +38,7 @@ pub use snapshot::Snapshot;
 pub use tree::{push_tree, Tree};
 pub use tvm_hash::tvm_hash;
 
-use crate::abi as gosh_abi;
-use crate::config;
-use crate::config::Config;
+use crate::{abi as gosh_abi, config, config::Config};
 
 pub use self::contract::GoshContract;
 use self::contract::{ContractInfo, ContractRead, ContractStatic};
