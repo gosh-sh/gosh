@@ -99,7 +99,7 @@ pipeline {
                 }
             }
         }*/
-        stage('Deploy: deploy smart-contracts') {
+        /*stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -163,7 +163,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Tests: functional') {
             agent {
                 docker {
@@ -175,7 +175,7 @@ pipeline {
                 script {
                     if (!params.ONLYWEB) {
                         dir('tests') {
-                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
+                            //sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
                             List<String> files = sh(script: 'ls | grep "[0-9]\\+"', returnStdout: true).trim().split('\n')
                             def tests = files.Tests.split(',')
                             for (int i = 0; i < tests.length; i++) {
