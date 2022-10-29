@@ -82,7 +82,7 @@ pipeline {
                 }
             }
         }
-        stage('Build: Docker Extension') {
+        /*stage('Build: Docker Extension') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -98,7 +98,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
