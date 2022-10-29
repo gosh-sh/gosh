@@ -27,7 +27,7 @@ tonos-cli getkeypair -o $DAO1_KEYS -p "$SEED"
 DAO1_PUBKEY=$(cat $DAO1_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile
-USER_PROFILE_NAME="@user100"
+USER_PROFILE_NAME="user100"
 tonos-cli call --abi $GOSH_ABI $GOSH_ROOT_ADDR deployProfile "{\"pubkey\":\"$DAO1_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
 USER_PROFILE_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
