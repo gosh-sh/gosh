@@ -1,4 +1,3 @@
-import { TonClient } from '@eversdk/core'
 import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import { sleep } from './utils'
@@ -172,11 +171,10 @@ export const getCommitTime = (str: string): Date => {
 }
 
 export const generateRandomBytes = async (
-    client: TonClient,
     length: number,
     hex: boolean = false,
 ): Promise<string> => {
-    const result = await client.crypto.generate_random_bytes({ length })
+    const result = await AppConfig.goshclient.crypto.generate_random_bytes({ length })
     if (hex) return Buffer.from(result.bytes, 'base64').toString('hex')
     return result.bytes
 }
@@ -187,26 +185,16 @@ export const getTreeItemFullPath = (item: TTreeItem): string => {
 }
 
 export const chacha20 = {
-    async encrypt(
-        client: TonClient,
-        data: string,
-        key: string,
-        nonce: string,
-    ): Promise<string> {
-        const result = await client.crypto.chacha20({
+    async encrypt(data: string, key: string, nonce: string): Promise<string> {
+        const result = await AppConfig.goshclient.crypto.chacha20({
             data,
             key: key.padStart(64, '0'),
             nonce,
         })
         return result.data
     },
-    async decrypt(
-        client: TonClient,
-        data: string,
-        key: string,
-        nonce: string,
-    ): Promise<string> {
-        const result = await client.crypto.chacha20({
+    async decrypt(data: string, key: string, nonce: string): Promise<string> {
+        const result = await AppConfig.goshclient.crypto.chacha20({
             data,
             key: key.padStart(64, '0'),
             nonce,
@@ -267,10 +255,28 @@ export const goshipfs = {
     },
 }
 
-export const splitByChunk = (array: any[], chunkSize: number = 10): any[][] => {
+export const splitByChunk = <T,>(array: T[], chunkSize: number = 10): T[][] => {
     const chunks = []
     for (let i = 0; i < array.length; i += chunkSize) {
         chunks.push(array.slice(i, i + chunkSize))
     }
     return chunks
+}
+
+export const executeByChunk = async <Input, Output>(
+    array: Input[],
+    chunkSize: number,
+    executor: (params: Input, index: number) => Promise<Output>,
+): Promise<Output[]> => {
+    const result: Output[] = []
+    const chunks = splitByChunk(array, chunkSize)
+    for (const [index, chunk] of chunks.entries()) {
+        const part = await Promise.all(
+            chunk.map(async (params, i) => await executor(params, index * chunkSize + i)),
+        )
+        console.debug('Chunk part', part)
+        result.push(...part)
+        await sleep(300)
+    }
+    return result
 }

@@ -35,9 +35,8 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             const pinKey = Number(pin).toString(16)
 
             if (phrase) {
-                const nonce = await generateRandomBytes(AppConfig.goshclient, 12, true)
+                const nonce = await generateRandomBytes(12, true)
                 const encrypted = await chacha20.encrypt(
-                    AppConfig.goshclient,
                     Buffer.from(phrase).toString('base64'),
                     pinKey,
                     nonce,
@@ -61,12 +60,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     return
                 }
 
-                let decrypted = await chacha20.decrypt(
-                    AppConfig.goshclient,
-                    tmp.phrase,
-                    pinKey,
-                    tmp.nonce,
-                )
+                let decrypted = await chacha20.decrypt(tmp.phrase, pinKey, tmp.nonce)
                 decrypted = Buffer.from(decrypted, 'base64').toString()
                 const keys = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                     phrase: decrypted,
