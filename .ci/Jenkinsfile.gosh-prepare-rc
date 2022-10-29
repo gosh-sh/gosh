@@ -177,6 +177,7 @@ pipeline {
                         dir('tests') {
                             //sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
                             List<String> tests = sh(script: 'ls | grep "[0-9]\\+"', returnStdout: true).trim().split('\n')
+                            echo ${tests}
                             //def tests = files.Tests.split(',')
                             for (int i = 0; i < tests.length; i++) {
                                 stage("Test ${tests[i]}") {
