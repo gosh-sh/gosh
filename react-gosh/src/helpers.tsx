@@ -274,7 +274,6 @@ export const executeByChunk = async <Input, Output>(
         const part = await Promise.all(
             chunk.map(async (params, i) => await executor(params, index * chunkSize + i)),
         )
-        console.debug('Chunk part', part)
         result.push(...part)
         await sleep(300)
     }
