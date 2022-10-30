@@ -82,7 +82,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Build: Docker Extension') {
+        stage('Build: Docker Extension') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -98,7 +98,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
@@ -116,7 +116,7 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
             }
         }
-        /*stage('Web: deploy') {
+        stage('Web: deploy') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -163,7 +163,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Tests: functional') {
             agent {
                 docker {
@@ -175,9 +175,8 @@ pipeline {
                 script {
                     if (!params.ONLYWEB) {
                         dir('tests') {
-                            //sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
+                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
                             def tests = sh(script: 'ls | grep "[0-9]\\+"', returnStdout: true).trim().split('\n')
-                            //def tests = files.Tests.split(',')
                             sh """
                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                 ./set-vars.sh
@@ -206,19 +205,24 @@ pipeline {
             }
             steps {
                 script {
-                    dir('monitoring/gosh-mon') {     
-                        sh """
-                            cp config/credentials.yml.template config/credentials.yml
-                            docker build -t gosh-mon .
-                            docker run --rm \
-                                -e GM_MODE=app-script \
-                                -e RUN_NOW=1 \
-                                -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
-                                -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
-                                -v \$(pwd)/config:/home/node/app/config:ro \
-                                -v \$(pwd)/test-errors:/home/node/app/errors \
-                                gosh-mon
-                        """
+                    dir('monitoring/gosh-mon') {   
+                        sh "cp config/credentials.yml.template config/credentials.yml"
+                        sh "docker build -t gosh-mon ."
+                        def tests = ["seed-read", "root-check"]
+                        for (int i = 0; i < tests.length; i++) {
+                            stage("Test ${tests[i]}") {
+                            sh """
+                                docker run --rm \
+                                    -e GM_MODE=${tests[i]} \
+                                    -e RUN_NOW=1 \
+                                    -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
+                                    -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
+                                    -v \$(pwd)/config:/home/node/app/config:ro \
+                                    -v \$(pwd)/test-errors:/home/node/app/errors \
+                                    gosh-mon
+                            """
+                            }
+                        }
                     }   
                 }
             }
