@@ -1,0 +1,777 @@
+{
+"apiVersion": 1,
+"groups":
+    {
+    "folder": "Gosh",
+    "interval": "10s",
+    "name": "gosh",
+    "orgId": 1,
+    "rules":
+        [
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "21Ebn9S4z",
+                "__panelId__": "3",
+                "description": "Gosh creator token balance is low, watch out for depletion!"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "datasource":
+                            {
+                            "type": "prometheus",
+                            "uid": "PBFA97CFB590B2093"
+                            },
+                        "editorMode": "code",
+                        "expr": "wallet_mon_balance{network=\"gosh\",name=\"creator\"} / 1000000000",
+                        "interval": "",
+                        "intervalMs": 15000,
+                        "legendFormat": "{{addr}}",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 3600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        10000000
+                                        ],
+                                    "type": "lt"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "5m",
+            "id": 1,
+            "labels":
+                {
+                "network": "main",
+                "severity": "warning",
+                "target": "balance"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Main network gosh creator token balance warning",
+            "uid": "DOve6rS4z",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "21Ebn9S4z",
+                "__panelId__": "5",
+                "description": "Gosh creator token balance is low, watch out for depletion!"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "datasource":
+                            {
+                            "type": "prometheus",
+                            "uid": "PBFA97CFB590B2093"
+                            },
+                        "editorMode": "code",
+                        "expr": "wallet_mon_balance{network=\"test\",name=\"creator\"} / 1000000000",
+                        "interval": "",
+                        "intervalMs": 15000,
+                        "legendFormat": "{{addr}}",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 3600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        2000000
+                                        ],
+                                    "type": "lt"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "5m",
+            "id": 2,
+            "labels":
+                {
+                "network": "test",
+                "severity": "warning",
+                "target": "balance"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Test network gosh creator token balance warning",
+            "uid": "B_o_RCS4k",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "21Ebn9S4z",
+                "__panelId__": "3"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "datasource":
+                            {
+                            "type": "prometheus",
+                            "uid": "PBFA97CFB590B2093"
+                            },
+                        "editorMode": "code",
+                        "expr": "wallet_mon_balance{network=\"gosh\",name=\"creator\"} / 1000000000",
+                        "interval": "",
+                        "intervalMs": 15000,
+                        "legendFormat": "{{addr}}",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 3600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        5000000
+                                        ],
+                                    "type": "lt"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "5m",
+            "id": 3,
+            "labels":
+                {
+                "network": "main",
+                "severity": "critical",
+                "target": "balance"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Main network gosh creator token balance critical",
+            "uid": "pghqRCS4z",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "21Ebn9S4z",
+                "__panelId__": "5",
+                "description": "Gosh creator token balance is VERY low, watch out for depletion NOW!"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "datasource":
+                            {
+                            "type": "prometheus",
+                            "uid": "PBFA97CFB590B2093"
+                            },
+                        "editorMode": "code",
+                        "expr": "wallet_mon_balance{network=\"test\",name=\"creator\"} / 1000000000",
+                        "interval": "",
+                        "intervalMs": 15000,
+                        "legendFormat": "{{addr}}",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 21600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        1000000
+                                        ],
+                                    "type": "lt"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "5m",
+            "id": 4,
+            "labels":
+                {
+                "network": "test",
+                "severity": "critical",
+                "target": "balance"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Test network gosh creator token balance critical",
+            "uid": "TZXKzjSVk",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "iuvtNY_7k",
+                "__panelId__": "21",
+                "description": "Some end-to-end monitoring tests are failing, check them out!",
+                "runbook_url": "https://gmlogs.monitoring.gosh.sh/"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "editorMode": "code",
+                        "expr": "gosh_mon_result{mode!~\".+-next\"}",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "legendFormat": "__auto",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 3600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        100,
+                                        100
+                                        ],
+                                    "type": "outside_range"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "30m",
+            "id": 5,
+            "labels":
+                {
+                "network": "main",
+                "severity": "critical",
+                "target": "e2e"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Gosh end to end monitoring test failed in main",
+            "uid": "OtqXzjS4k",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "iuvtNY_7k",
+                "__panelId__": "29",
+                "description": "Some end-to-end monitoring tests are failing, check them out!",
+                "runbook_url": "https://gmlogs.monitoring.gosh.sh/"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "editorMode": "code",
+                        "expr": "gosh_mon_result{mode=~\".+-next\"}",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "legendFormat": "__auto",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 600,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        100,
+                                        100
+                                        ],
+                                    "type": "outside_range"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "30m",
+            "id": 6,
+            "labels":
+                {
+                "network": "test",
+                "severity": "warning",
+                "target": "e2e"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "Gosh end to end monitoring test failed in test",
+            "uid": "MaFViCS4k",
+            "updated": "2022-10-21T11:16:38Z"
+            },
+            {
+            "annotations":
+                {
+                "__dashboardUid__": "iuvtNY_7k",
+                "__panelId__": "33",
+                "description": "\"It is a sequence of changes. Sha must be correct. Fail otherwise\" was found in logs",
+                "runbook_url": "https://gmlogs.monitoring.gosh.sh/"
+                },
+            "condition": "B",
+            "data":
+                [
+                    {
+                    "datasourceUid": "PBFA97CFB590B2093",
+                    "model":
+                        {
+                        "datasource":
+                            {
+                            "type": "prometheus",
+                            "uid": "PBFA97CFB590B2093"
+                            },
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "gosh_mon_log_count{item=\"sha_incorrect\"}",
+                        "interval": "",
+                        "intervalMs": 15000,
+                        "legendFormat": "{{mode}}",
+                        "maxDataPoints": 43200,
+                        "range": true,
+                        "refId": "A"
+                        },
+                    "queryType": "",
+                    "refId": "A",
+                    "relativeTimeRange":
+                        {
+                        "from": 86400,
+                        "to": 0
+                        }
+                    },
+                    {
+                    "datasourceUid": "-100",
+                    "model":
+                        {
+                        "conditions":
+                            [
+                                {
+                                "evaluator":
+                                    {
+                                    "params":
+                                        [
+                                        0
+                                        ],
+                                    "type": "gt"
+                                    },
+                                "operator":
+                                    {
+                                    "type": "and"
+                                    },
+                                "query":
+                                    {
+                                    "params":
+                                        [
+                                        "A"
+                                        ]
+                                    },
+                                "reducer":
+                                    {
+                                    "params":
+                                        [
+                                        ],
+                                    "type": "last"
+                                    },
+                                "type": "query"
+                                }
+                            ],
+                        "datasource":
+                            {
+                            "type": "__expr__",
+                            "uid": "-100"
+                            },
+                        "expression": "A",
+                        "hide": false,
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "classic_conditions"
+                        },
+                    "queryType": "",
+                    "refId": "B",
+                    "relativeTimeRange":
+                        {
+                        "from": 0,
+                        "to": 0
+                        }
+                    }
+                ],
+            "execErrState": "Alerting",
+            "folderUID": "goshdashb",
+            "for": "10s",
+            "id": 7,
+            "labels":
+                {
+                "severity": "critical",
+                "target": "seq-sha"
+                },
+            "noDataState": "NoData",
+            "orgID": 1,
+            "ruleGroup": "gosh",
+            "title": "sha_incorrect occurrences ",
+            "uid": "gIip9eI4z",
+            "updated": "2022-10-21T11:16:38Z"
+            }
+        ]
+    }
+}
