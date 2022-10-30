@@ -1,4 +1,4 @@
-FROM    ubuntu:focal
+FROM    ubuntu:latest
 
 ENV     EVERDEV_VERSION=latest
 ENV     EVERDEV_SOL_COMPILER_VERSION=0.62.0
@@ -12,7 +12,7 @@ RUN	apt update -y &&\
 	apt install -y software-properties-common &&\
 	apt-add-repository -y ppa:git-core/ppa &&\
 	apt update -y &&\
-        apt -y install make curl jq libssl-dev git ca-certificates xz-utils &&\
+        apt -y install make curl wget jq libssl-dev git ca-certificates xz-utils libc-bin libc6 &&\
         curl https://get.docker.com | bash &&\
         addgroup --gid 1000 jenkins &&\
         adduser --home /home/jenkins --shell /bin/bash --uid 1000 --ingroup jenkins jenkins --disabled-password &&\
@@ -22,7 +22,11 @@ RUN	apt update -y &&\
         usermod -aG docker jenkins &&\
         chown -R jenkins: /home/jenkins &&\
         chown -R jenkins: /usr/local/lib/nodejs &&\
+	wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb &&\
+	dpkg -i libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb &&\
         apt -y clean
+
+RUN 	apt install openssl
 
 USER    jenkins
 WORKDIR	/home/jenkins
