@@ -63,7 +63,7 @@ contract Repository is Modifiers{
         _code[m_SnapshotCode] = SnapshotCode;
         _code[m_DiffCode] = codeDiff;
         _previousversion = previousversion;
-        if (_previousversion.hasValue()) { GoshRoot(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
+        if (_previousversion.hasValue()) { SystemContract(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);

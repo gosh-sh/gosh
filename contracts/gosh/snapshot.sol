@@ -169,8 +169,8 @@ contract Snapshot is Modifiers {
                 DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
                 return;
             }
-//            optional(bytes) res = gosh.applyZipBinPatchQ(_snapshot, diff.patch.get());
-            optional(bytes) res = gosh.applyZipPatchQ(_snapshot, diff.patch.get());
+            optional(bytes) res = gosh.applyZipBinPatchQ(_snapshot, diff.patch.get());
+//            optional(bytes) res = gosh.applyZipPatchQ(_snapshot, diff.patch.get());
             if (res.hasValue() != true) {
                 DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
                 return;

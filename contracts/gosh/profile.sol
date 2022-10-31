@@ -12,7 +12,7 @@ pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
-import "gosh.sol";
+import "systemcontract.sol";
 import "goshdao.sol";
 import "profiledao.sol";
 
@@ -280,7 +280,7 @@ contract Profile is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        GoshRoot(_goshroot).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
+        SystemContract(_goshroot).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
     }
 
     //Fallback/Receive
@@ -291,7 +291,7 @@ contract Profile is Modifiers {
     }
 
     //Setters
-    function setNewGoshRoot(address goshroot) public onlyOwnerPubkeyList {
+    function setNewSystemContract(address goshroot) public onlyOwnerPubkeyList {
         tvm.accept();
         _goshroot = goshroot;
     }
@@ -312,7 +312,7 @@ contract Profile is Modifiers {
         return _owners;
     }
     
-    function getCurrentGoshRoot() external view returns(address) {
+    function getCurrentSystemContract() external view returns(address) {
         return _goshroot;
     }
 

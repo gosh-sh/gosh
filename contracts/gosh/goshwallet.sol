@@ -14,11 +14,10 @@ pragma AbiHeader time;
 import "commit.sol";
 import "diff.sol";
 import "tag.sol";
-import "gosh.sol";
+import "systemcontract.sol";
 import "tree.sol";
 import "goshwallet.sol";
-/* import "goshdao.sol";
- */import "profile.sol";
+import "profile.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
@@ -222,7 +221,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (_flag == true) { return; }
         if (address(this).balance > 20000 ton) { return; }
         _flag = true;
-        GoshRoot(_goshroot).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
+        SystemContract(_goshroot).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
 
     function destroyObject(address obj) public onlyOwnerPubkey(_access.get())  accept view {
@@ -644,7 +643,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return  address(tvm.hash(s1));
     }
 
-    function getAddrRootGosh() external view returns(address) {
+    function getAddrSystemContract() external view returns(address) {
         return _goshroot;
     }
 
