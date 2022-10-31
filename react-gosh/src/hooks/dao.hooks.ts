@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
+import { executeByChunk } from '../helpers'
 import { userAtom, daoAtom, walletAtom } from '../store'
 import { TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
 import { EGoshError, GoshError } from '../errors'
@@ -7,6 +8,7 @@ import { AppConfig } from '../appconfig'
 import { useProfile } from './user.hooks'
 import { IGoshDaoAdapter, IGoshWallet } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
+import { MAX_PARALLEL_READ } from '../constants'
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
@@ -58,19 +60,29 @@ function useDaoList(perPage: number) {
             if (!profile) return
 
             // Get DAO details (prepare DAO list items)
-            const daos = await profile.getDaos()
-            const items = await Promise.all(
-                daos.map(async (dao) => {
-                    return {
-                        adapter: dao,
-                        address: dao.getAddress(),
-                        name: await dao.getName(),
-                        version: dao.getVersion(),
-                    }
+            const adapters = await profile.getDaos()
+            const dirty = await executeByChunk(
+                adapters,
+                MAX_PARALLEL_READ,
+                async (adapter) => ({
+                    adapter,
+                    address: adapter.getAddress(),
+                    name: await adapter.getName(),
+                    version: adapter.getVersion(),
                 }),
             )
+
+            const clean: TDaoListItem[] = []
+            dirty.forEach((item) => {
+                const { name, version } = item
+                const index = clean.findIndex((a) => a.name === name)
+
+                if (index < 0) clean.push(item)
+                else if (clean[index].version < version) clean[index] = item
+            })
+
             setDaos((state) => {
-                const merged = [...state.items, ...items]
+                const merged = [...state.items, ...clean]
                 return {
                     items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
                     filtered: { search: '', items: merged.map((item) => item.address) },
@@ -129,7 +141,6 @@ function useDao(name: string) {
             let instance: IGoshDaoAdapter | undefined
             for (const version of Object.keys(AppConfig.versions).reverse()) {
                 const gosh = GoshAdapterFactory.create(version)
-                console.debug('Gosh', version)
                 const check = await gosh.getDao({ name })
                 if (await check.isDeployed()) {
                     instance = check
@@ -281,13 +292,16 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         const _getMemberList = async () => {
             const gosh = GoshAdapterFactory.createLatest()
             const details = await dao.getDetails()
-            const items = await Promise.all(
-                details.members.map(async (member) => {
+            const items = await executeByChunk(
+                details.members,
+                MAX_PARALLEL_READ,
+                async (member) => {
                     const profile = await gosh.getProfile({ address: member.profile })
                     const name = await profile.getName()
                     return { ...member, name }
-                }),
+                },
             )
+
             setMembers((state) => ({
                 ...state,
                 items: items.sort((a, b) => (a.name > b.name ? 1 : -1)),

@@ -27,7 +27,6 @@ import { GoshWallet } from './goshwallet'
 import { GoshSnapshot } from './goshsnapshot'
 import {
     getAllAccounts,
-    getPaginatedAccounts,
     getTreeItemFullPath,
     sha1,
     sha1Tree,
@@ -37,6 +36,7 @@ import {
     unixtimeWithTz,
     zstd,
     goshipfs,
+    executeByChunk,
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
@@ -54,7 +54,12 @@ import {
 import { GoshTag } from './goshtag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
-import { MAX_ONCHAIN_SIZE, ZERO_COMMIT } from '../../constants'
+import {
+    MAX_ONCHAIN_SIZE,
+    MAX_PARALLEL_READ,
+    MAX_PARALLEL_WRITE,
+    ZERO_COMMIT,
+} from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { validateUsername } from '../../validators'
 
@@ -93,20 +98,18 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
     }
 
     async isValidProfile(username: string[]): Promise<TAddress[]> {
-        return await Promise.all(
-            username.map(async (member) => {
-                member = member.trim()
-                const { valid, reason } = validateUsername(member)
-                if (!valid) throw new GoshError(`${member}: ${reason}`)
+        return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
+            member = member.trim()
+            const { valid, reason } = validateUsername(member)
+            if (!valid) throw new GoshError(`${member}: ${reason}`)
 
-                const profile = await this.getProfile({ username: member })
-                if (!(await profile.isDeployed())) {
-                    throw new GoshError(`${member}: Profile does not exist`)
-                }
+            const profile = await this.getProfile({ username: member })
+            if (!(await profile.isDeployed())) {
+                throw new GoshError(`${member}: Profile does not exist`)
+            }
 
-                return profile.address
-            }),
-        )
+            return profile.address
+        })
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
@@ -341,11 +344,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async deleteMember(username: string[]): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const profiles = await Promise.all(
-            username.map(async (member) => {
+        const profiles = await executeByChunk(
+            username,
+            MAX_PARALLEL_READ,
+            async (member) => {
                 const profile = await this.gosh.getProfile({ username: member })
                 return profile.address
-            }),
+            },
         )
         await this.wallet.run('deleteWalletDao', { pubaddr: profiles })
     }
@@ -445,7 +450,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             address: this.repo.address,
             name: await this.getName(),
             version: this.repo.version,
-            branches: await this.getBranches(),
+            branches: (await this._getBranches()).length,
             head: await this.getHead(),
             tags: await this.getTags(),
         }
@@ -676,7 +681,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const commit = await this._getCommit({ name })
         const branch = await commit.runLocal('getNameBranch', {})
         const { messages } = await commit.getMessages({ msgType: ['IntIn'] }, true, true)
-        const blobs = messages
+        const addresses = messages
             .filter(({ decoded }) => {
                 if (!decoded) return false
 
@@ -685,12 +690,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
             .map(({ decoded }) => decoded.value.value0.snap)
 
-        return await Promise.all(
-            blobs.map(async (address) => {
+        return await executeByChunk<TAddress, TAddress>(
+            addresses,
+            MAX_PARALLEL_READ,
+            async (address) => {
                 const snapshot = await this._getSnapshot({ address })
-                const { value0 } = await snapshot.runLocal('getName', {})
-                return value0.split('/').slice(1).join('/')
-            }),
+                const name = await snapshot.getName()
+                return name.split('/').slice(1).join('/')
+            },
         )
     }
 
@@ -745,14 +752,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get blobs list from diffs (if commit is not accepted)
-        return await Promise.all(
-            diffs.map(async (diff, index) => {
+        return await executeByChunk<IGoshDiff, { treepath: string; index: number }>(
+            diffs,
+            MAX_PARALLEL_READ,
+            async (diff, index) => {
                 const subdiffs = await this._getDiffs(diff)
                 const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
                 const name = await snapshot.getName()
                 const treepath = name.split('/').slice(1).join('/')
                 return { treepath, index }
-            }),
+            },
         )
     }
 
@@ -769,9 +778,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getBranches(): Promise<TBranch[]> {
-        const { value0 } = await this.repo.runLocal('getAllAddress', {})
-        return await Promise.all(
-            value0.map(async (item: any) => {
+        const items = await this._getBranches()
+        return await executeByChunk<any, TBranch>(
+            items,
+            MAX_PARALLEL_READ,
+            async (item) => {
                 const { branchname, commitaddr, commitversion } = item
                 return {
                     name: branchname,
@@ -781,7 +792,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     },
                     isProtected: await this._isBranchProtected(branchname),
                 }
-            }),
+            },
         )
     }
 
@@ -789,24 +800,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get repo tag code and all tag accounts addresses
         const code = await this.repo.runLocal('getTagCode', {})
         const codeHash = await this.client.boc.get_boc_hash({ boc: code.value0 })
-        const accounts: string[] = []
-        let next: string | undefined
-        while (true) {
-            const { results, lastId, completed } = await getPaginatedAccounts({
-                filters: [`code_hash: {eq:"${codeHash.hash}"}`],
-                limit: 50,
-                lastId: next,
-            })
-            accounts.push(...results.map((item) => item.id))
-            next = lastId
-            if (completed) break
-        }
+        const accounts: string[] = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash.hash}"}`],
+        })
 
         // Read each tag account details
-        return await Promise.all(
-            accounts.map(async (address) => {
+        return await executeByChunk<TAddress, TTag>(
+            accounts,
+            MAX_PARALLEL_READ,
+            async (address) => {
                 return await this._getTag(address)
-            }),
+            },
         )
     }
 
@@ -846,20 +850,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const blobs = await this._getTreeBlobs(items, fromBranch.name)
 
         // Deploy snapshots (split by chunks)
-        for (const chunk of splitByChunk(blobs, 20)) {
-            await Promise.all(
-                chunk.map(async (blob) => {
-                    const { treepath, content } = blob
-                    await this._deploySnapshot(
-                        name,
-                        fromBranch.commit.name,
-                        treepath,
-                        content,
-                    )
-                }),
-            )
-            await sleep(300)
-        }
+        await executeByChunk(blobs, MAX_PARALLEL_WRITE, async ({ treepath, content }) => {
+            await this._deploySnapshot(name, fromBranch.commit.name, treepath, content)
+        })
 
         // Deploy new branch
         await this.auth.wallet.run('deployBranch', {
@@ -894,15 +887,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const accounts = await getAllAccounts({
             filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
         })
-        const snaps = accounts.map((account) => account.id)
-        for (const chunk of splitByChunk(snaps, 20)) {
-            await Promise.all(
-                chunk.map(async (address) => {
-                    await this.auth!.wallet.run('deleteSnapshot', { snap: address })
-                }),
-            )
-            await sleep(200)
-        }
+        await executeByChunk(
+            accounts.map((account) => account.id),
+            MAX_PARALLEL_WRITE,
+            async (address) => {
+                await this.auth!.wallet.run('deleteSnapshot', { snap: address })
+            },
+        )
 
         // Delete branch and wait for it to be deleted
         await this.auth.wallet.run('deleteBranch', {
@@ -963,26 +954,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const taglist = tags ? tags.split(' ') : []
-        const callbackDummy = () => {}
-        callback = callback || callbackDummy
+        const cb: IPushCallback = (params) => callback && callback(params)
 
         // Get branch info and get branch tree
         const branchTo = await this.getBranch(branch)
         const { items } = await this.getTree(branchTo.commit.name)
 
         // Generate blobs meta object
-        const blobsMeta: {
-            snapshot: TAddress
-            treepath: string
-            treeItem?: TTreeItem
-            compressed: string
-            patch: string | null
-            isIpfs: boolean
-            flags: number
-            hashes: { sha1: string; sha256: string }
-        }[] = await Promise.all(
-            blobs.map(async ({ treepath, original, modified }) => {
-                const treeItem = items.find((it) => getTreeItemFullPath(it) === treepath)
+        const blobsMeta = await executeByChunk(
+            blobs,
+            MAX_PARALLEL_READ,
+            async ({ treepath, original, modified }) => {
+                const treeItem: TTreeItem | undefined = items.find((it) => {
+                    return getTreeItemFullPath(it) === treepath
+                })
                 if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
                 if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
                 if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
@@ -1010,7 +995,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 }
 
                 const isIpfs = (flags & EBlobFlag.IPFS) === EBlobFlag.IPFS
-                const hashes = {
+                const hashes: { sha1: string; sha256: string } = {
                     sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
                     sha256: isIpfs
                         ? sha256(modified, true)
@@ -1027,33 +1012,31 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     flags,
                     hashes,
                 }
-            }),
+            },
         )
 
         // Add/update tree items by incoming blobs
         const updatedTrees: string[] = []
-        await Promise.all(
-            blobs.map(async ({ treepath }) => {
-                const blobmeta = blobsMeta.find((data) => data.treepath === treepath)
-                const { hashes, flags, treeItem } = blobmeta!
+        blobs.forEach(({ treepath }) => {
+            const blobmeta = blobsMeta.find((data) => data.treepath === treepath)
+            const { hashes, flags, treeItem } = blobmeta!
 
-                this._getTreeItemsFromPath(treepath, hashes, flags, treeItem).forEach(
-                    (item) => {
-                        const pathindex = updatedTrees.findIndex((p) => p === item.path)
-                        if (pathindex < 0) updatedTrees.push(item.path)
+            this._getTreeItemsFromPath(treepath, hashes, flags, treeItem).forEach(
+                (item) => {
+                    const pathindex = updatedTrees.findIndex((p) => p === item.path)
+                    if (pathindex < 0) updatedTrees.push(item.path)
 
-                        const itemIndex = items.findIndex((itm) => {
-                            return item.path === itm.path && item.name === itm.name
-                        })
-                        if (itemIndex >= 0) items[itemIndex] = item
-                        else items.push(item)
-                    },
-                )
-            }),
-        )
+                    const itemIndex = items.findIndex((itm) => {
+                        return item.path === itm.path && item.name === itm.name
+                    })
+                    if (itemIndex >= 0) items[itemIndex] = item
+                    else items.push(item)
+                },
+            )
+        })
         const updatedTree = this._updateSubtreesHash(this._getTreeFromItems(items))
         const updatedTreeHash = sha1Tree(updatedTree[''], 'sha1')
-        callback({
+        cb({
             treesBuild: true,
             treesDeploy: { count: 0, total: updatedTrees.length },
             snapsDeploy: { count: 0, total: blobsMeta.length },
@@ -1070,34 +1053,42 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             // Deploy snapshots
             (async () => {
                 let counter = 0
-                for (const { treepath } of blobsMeta) {
-                    await this._deploySnapshot(branch, '', treepath)
-                    callback({ snapsDeploy: { count: ++counter } })
-                }
+                await executeByChunk(
+                    blobsMeta,
+                    MAX_PARALLEL_WRITE,
+                    async ({ treepath }) => {
+                        await this._deploySnapshot(branch, '', treepath)
+                        cb({ snapsDeploy: { count: ++counter } })
+                    },
+                )
             })(),
             // Deploy trees
             (async () => {
                 let counter = 0
-                for (const path of updatedTrees) {
+                await executeByChunk(updatedTrees, MAX_PARALLEL_WRITE, async (path) => {
                     await this._deployTree(updatedTree[path])
-                    callback({ treesDeploy: { count: ++counter } })
-                }
+                    cb({ treesDeploy: { count: ++counter } })
+                })
             })(),
             // Deploy diffs
             (async () => {
                 let counter = 0
-                for (let i = 0; i < blobsMeta.length; i++) {
-                    await this._deployDiff(branch, commitHash, blobsMeta[i], i)
-                    callback({ diffsDeploy: { count: ++counter } })
-                }
+                await executeByChunk(
+                    blobsMeta,
+                    MAX_PARALLEL_WRITE,
+                    async (meta, index) => {
+                        await this._deployDiff(branch, commitHash, meta, index)
+                        cb({ diffsDeploy: { count: ++counter } })
+                    },
+                )
             })(),
             // Deploy tags
             (async () => {
                 let counter = 0
-                for (const tag of taglist) {
+                await executeByChunk(taglist, MAX_PARALLEL_WRITE, async (tag) => {
                     await this._deployTag(commitHash, tag)
-                    callback({ tagsDeploy: { count: ++counter } })
-                }
+                    cb({ tagsDeploy: { count: ++counter } })
+                })
             })(),
             // Deploy commit
             (async () => {
@@ -1109,7 +1100,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     updatedTreeHash,
                     false,
                 )
-                callback({ commitDeploy: true })
+                cb({ commitDeploy: true })
             })(),
         ])
 
@@ -1124,7 +1115,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         } else {
             await this._startProposalForSetCommit(branch, commitHash, blobsMeta.length)
         }
-        callback({ completed: true })
+        cb({ completed: true })
     }
 
     async pushUpgrade(data: TUpgradeData): Promise<void> {
@@ -1135,10 +1126,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             // Deploy trees
             (async () => {
                 let counter = 0
-                for (const path of Object.keys(tree)) {
-                    await this._deployTree(tree[path])
-                    // callback({ treesDeploy: { count: ++counter } })
-                }
+                await executeByChunk(
+                    Object.keys(tree),
+                    MAX_PARALLEL_WRITE,
+                    async (path) => {
+                        await this._deployTree(tree[path])
+                        // callback({ treesDeploy: { count: ++counter } })
+                    },
+                )
             })(),
             // Deploy commit
             (async () => {
@@ -1156,10 +1151,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy snapshots
         let counter = 0
-        for (const { treepath, content } of blobs) {
+        await executeByChunk(blobs, MAX_PARALLEL_WRITE, async ({ treepath, content }) => {
             await this._deploySnapshot(commit.branch, commit.name, treepath, content)
             // callback({ snapsDeploy: { count: ++counter } })
-        }
+        })
 
         // Set commit
         await this._setCommit(commit.branch, commit.name, blobs.length)
@@ -1174,6 +1169,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { value0 } = await this.repo.runLocal('isBranchProtected', {
             branch: name,
         })
+        return value0
+    }
+
+    private async _getBranches(): Promise<any[]> {
+        const { value0 } = await this.repo.runLocal('getAllAddress', {})
         return value0
     }
 
@@ -1244,19 +1244,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const filtered = items.filter(
             (item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0,
         )
-        const blobs: { treepath: string; content: string | Buffer }[] = []
-        for (const chunk of splitByChunk(filtered, 20)) {
-            await Promise.all(
-                chunk.map(async (item) => {
-                    const treepath = getTreeItemFullPath(item)
-                    const fullpath = `${branch}/${treepath}`
-                    const { content } = await this.getBlob({ fullpath })
-                    blobs.push({ treepath, content })
-                }),
-            )
-            await sleep(300)
-        }
-        return blobs
+        return await executeByChunk(filtered, MAX_PARALLEL_READ, async (item) => {
+            const treepath = getTreeItemFullPath(item)
+            const fullpath = `${branch}/${treepath}`
+            const { content } = await this.getBlob({ fullpath })
+            return { treepath, content }
+        })
     }
 
     private async _getDiff(

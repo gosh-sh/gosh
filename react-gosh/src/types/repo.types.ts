@@ -5,14 +5,14 @@ type TRepository = {
     address: TAddress
     name: string
     version: string
-    branches: TBranch[]
+    branches: number
     head: string
     tags: TTag[]
 }
 
 type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'tags'> & {
     adapter: IGoshRepositoryAdapter
-    branches?: TBranch[]
+    branches?: number
     head?: string
     tags?: TTag[]
     isLoadDetailsFired?: boolean

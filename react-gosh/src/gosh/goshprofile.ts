@@ -11,6 +11,8 @@ import { GoshProfileDao } from './goshprofiledao'
 import { EGoshError, GoshError } from '../errors'
 import { whileFinite } from '../utils'
 import { GoshAdapterFactory } from './factories'
+import { executeByChunk } from '../helpers'
+import { MAX_PARALLEL_READ } from '../constants'
 
 class GoshProfile extends BaseContract implements IGoshProfile {
     static key: string = 'profile'
@@ -60,26 +62,19 @@ class GoshProfile extends BaseContract implements IGoshProfile {
             true,
         )
 
-        const names: string[] = []
-        const adapters = await Promise.all(
-            messages
-                .filter(({ decoded }) => decoded && decoded.name === 'deployedWallet')
-                .map(async ({ decoded }) => {
-                    const { goshdao, ver } = decoded.value
-                    const adapter = GoshAdapterFactory.create(ver)
-                    const daoAdapter = await adapter.getDao({
-                        address: goshdao,
-                        useAuth: false,
-                    })
-
-                    const name = await daoAdapter.getName()
-                    if (names.indexOf(name) < 0) {
-                        names.push(name)
-                        return daoAdapter
-                    }
-                }),
+        return await executeByChunk(
+            messages.filter(({ decoded }) => {
+                if (!decoded) return false
+                const { name, value } = decoded
+                return name === 'deployedWallet' && +value.index === 0
+            }),
+            MAX_PARALLEL_READ,
+            async ({ decoded }) => {
+                const { goshdao, ver } = decoded.value
+                const gosh = GoshAdapterFactory.create(ver)
+                return await gosh.getDao({ address: goshdao, useAuth: false })
+            },
         )
-        return adapters.filter((adapter) => !!adapter) as IGoshDaoAdapter[]
     }
 
     async getOwners(): Promise<TAddress[]> {

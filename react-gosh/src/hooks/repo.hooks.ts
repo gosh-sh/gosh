@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { AppConfig } from '../appconfig'
-import { ZERO_COMMIT } from '../constants'
+import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { getAllAccounts, getTreeItemFullPath } from '../helpers'
+import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
 import { TAddress, TDao, TSmvBalanceDetails } from '../types'
 import {
@@ -16,6 +16,7 @@ import {
     TTree,
     TTreeItem,
 } from '../types/repo.types'
+import { sleep } from '../utils'
 
 function useRepoList(dao: string, perPage: number) {
     const [search, setSearch] = useState<string>('')
@@ -75,27 +76,19 @@ function useRepoList(dao: string, perPage: number) {
                 const accounts = await getAllAccounts({
                     filters: [`code_hash: {eq:"${codeHash}"}`],
                 })
-                const addresses = accounts.map(({ id }) => id)
-                const veritems = await Promise.all(
-                    addresses.map(async (address) => {
+                const veritems = await executeByChunk(
+                    accounts.map(({ id }) => id),
+                    MAX_PARALLEL_READ,
+                    async (address) => {
                         const adapter = await daoAdapter.getRepository({ address })
                         const name = await adapter.getName()
-                        if (names.indexOf(name) < 0) {
-                            names.push(name)
-                            return {
-                                adapter,
-                                address,
-                                name,
-                                version,
-                            }
-                        }
-                    }),
-                )
+                        if (names.indexOf(name) >= 0) return null
 
-                const unique = veritems.filter(
-                    (veritem) => !!veritem,
-                ) as TRepositoryListItem[]
-                items.push(...unique)
+                        names.push(name)
+                        return { adapter, address, name, version }
+                    },
+                )
+                items.push(...(veritems.filter((v) => !!v) as TRepositoryListItem[]))
             }
 
             setRepos((state) => {
@@ -216,8 +209,8 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
         }
 
         const gosh = GoshAdapterFactory.create(version)
-        const daoAdapter = await gosh.getDao({ name: dao })
-        await daoAdapter.deployRepository(await repo.getName(), {
+        const adapter = await gosh.getDao({ name: dao })
+        await adapter.deployRepository(await repo.getName(), {
             addr: repo.getAddress(),
             version: repo.getVersion(),
         })
@@ -420,7 +413,9 @@ function useCommitList(
                     ? { address: parent.address, version: parent.version }
                     : undefined
             count++
+            await sleep(300)
         }
+
         setCommits((curr) => ({
             list: [...curr.list, ...list],
             isFetching: false,
@@ -706,8 +701,10 @@ function _useMergeRequest(
         }
 
         // Get repostory adapters depending on commit version
-        const srcRepo = await _getRepository(srcBranch.commit.version)
-        const dstRepo = await _getRepository(dstBranch.commit.version)
+        const [srcRepo, dstRepo] = await Promise.all([
+            (async () => await _getRepository(srcBranch.commit.version))(),
+            (async () => await _getRepository(dstBranch.commit.version))(),
+        ])
 
         // Get tree items for each branch
         const [srcTreeItems, dstTreeItems] = await Promise.all([
@@ -719,7 +716,7 @@ function _useMergeRequest(
         const treeDiff: { treepath: string; exists: boolean }[] = []
         srcTreeItems
             .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
-            .map(async (srcItem) => {
+            .map((srcItem) => {
                 const treepath = getTreeItemFullPath(srcItem)
                 const dstItem = dstTreeItems
                     .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
@@ -734,24 +731,25 @@ function _useMergeRequest(
             })
 
         // Read blobs content from built tree diff
-        const blobDiff = await Promise.all(
-            treeDiff.map(async ({ treepath, exists }, index) => {
-                const srcBlob = await srcRepo.getBlob({
-                    fullpath: `${srcBranch.name}/${treepath}`,
-                })
-                const dstBlob =
-                    exists &&
-                    (await dstRepo.getBlob({
-                        fullpath: `${dstBranch.name}/${treepath}`,
-                    }))
+        const blobDiff = await executeByChunk(
+            treeDiff,
+            MAX_PARALLEL_READ,
+            async ({ treepath, exists }, index) => {
+                const srcFullPath = `${srcBranch.name}/${treepath}`
+                const srcBlob = await srcRepo.getBlob({ fullpath: srcFullPath })
+
+                const dstFullPath = `${dstBranch.name}/${treepath}`
+                const dstBlob = exists
+                    ? (await dstRepo.getBlob({ fullpath: dstFullPath })).content
+                    : ''
 
                 return {
                     treepath,
-                    original: dstBlob ? dstBlob.content : '',
+                    original: dstBlob,
                     modified: srcBlob.content,
                     showDiff: index < showDiffNum,
                 }
-            }),
+            },
         )
 
         setSrcBranch(srcBranch)

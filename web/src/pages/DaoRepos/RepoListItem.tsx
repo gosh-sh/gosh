@@ -9,7 +9,7 @@ type TRepositoryListItemProps = {
     daoName: string
     daoLink?: boolean
     item: Omit<TRepository, 'branches' | 'head' | 'tags'> & {
-        branches?: TBranch[]
+        branches?: number
         head?: string
         tags?: TTag[]
     }
@@ -67,7 +67,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches?.length}
+                        {item.branches}
                     </div>
                     {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />
