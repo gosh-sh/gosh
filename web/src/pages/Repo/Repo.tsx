@@ -34,9 +34,9 @@ const RepoPage = () => {
     const [dirUp] = splitByPath(treepath)
 
     const getRemoteUrl = (short: boolean): string => {
-        let vgosh = AppConfig.versions[repo.getVersion()]
-        if (short) vgosh = shortString(vgosh)
-        return `gosh://${vgosh}/${daoName}/${repoName}`
+        const goshAddress = AppConfig.versions[repo.getVersion()]
+        const goshstr = short ? shortString(goshAddress) : goshAddress
+        return `gosh://${goshstr}/${daoName}/${repoName}`
     }
 
     useEffect(() => {
