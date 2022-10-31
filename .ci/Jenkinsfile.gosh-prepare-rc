@@ -186,7 +186,7 @@ pipeline {
                                     sh """
                                         export PATH=/home/jenkins/bin:$PATH
                                         . ./env.env
-                                        ./\${tests[i]}
+                                        ./${tests[i]}
                                     """
                                 }
                             }
