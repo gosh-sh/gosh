@@ -10,14 +10,14 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
-import "gosh.sol";
+import "systemcontract.sol";
 
 struct GoshV {
     string Key;
     TvmCell Value;
 }
-/* Root contract of goshroot */
-contract Root is Modifiers {
+/* Version contract of gosh */
+contract VersionController is Modifiers {
     string constant _version = "1.0.0";
 
     mapping(uint256 => GoshV) _GoshCode;
@@ -31,11 +31,11 @@ contract Root is Modifiers {
         require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
             code: _GoshCode[tvm.hash(version)].Value,
-            contr: GoshRoot,
+            contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
         });
-        new GoshRoot {stateInit: s1, value: FEE_DEPLOY_GOSH, wid: 0, flag: 1}();
+        new SystemContract {stateInit: s1, value: FEE_DEPLOY_GOSH, wid: 0, flag: 1}();
     }
 
     function setGoshCode(TvmCell code, string version) public  onlyOwner accept {       
@@ -48,7 +48,7 @@ contract Root is Modifiers {
         require(_GoshCode.exists(tvm.hash(prev.version)), ERR_GOSH_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
             code: _GoshCode[tvm.hash(version)].Value,
-            contr: GoshRoot,
+            contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
         });
@@ -57,12 +57,12 @@ contract Root is Modifiers {
         tvm.accept();
         s1 = tvm.buildStateInit({
             code: _GoshCode[tvm.hash(prev.version)].Value,
-            contr: GoshRoot,
+            contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
-        GoshRoot(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
+        SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
@@ -84,7 +84,7 @@ contract Root is Modifiers {
         require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
             code: _GoshCode[tvm.hash(version)].Value,
-            contr: GoshRoot,
+            contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
         });

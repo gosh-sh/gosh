@@ -15,12 +15,12 @@ import "goshdao.sol";
 import "repository.sol";
 import "commit.sol";
 import "profile.sol";
-import "root.sol";
+import "versioncontroller.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 
-/* Root contract of Gosh */
-contract GoshRoot is Modifiers {
+/* System contract of Gosh version*/
+contract SystemContract is Modifiers {
     string constant version = "0.11.0";
     
     address _root;
@@ -49,7 +49,7 @@ contract GoshRoot is Modifiers {
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        Root(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
+        VersionController(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
     }
     
     function checkUpdateRepo3(string name, string namedao, AddrVersion prev, address answer) public view senderIs(_root) accept {
