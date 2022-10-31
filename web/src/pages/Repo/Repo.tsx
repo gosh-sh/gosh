@@ -16,7 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { splitByPath, useBranches, useTree } from 'react-gosh'
+import { AppConfig, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
@@ -32,6 +32,12 @@ const RepoPage = () => {
     const subtree = useRecoilValue(tree.getSubtree(treepath))
 
     const [dirUp] = splitByPath(treepath)
+
+    const getRemoteUrl = (short: boolean): string => {
+        let vgosh = AppConfig.versions[repo.getVersion()]
+        if (short) vgosh = shortString(vgosh)
+        return `gosh://${vgosh}/${daoName}/${repoName}`
+    }
 
     useEffect(() => {
         updateBranch(branchName)
@@ -125,15 +131,11 @@ const RepoPage = () => {
                                         items-center text-gray-0a1124/65"
                                     >
                                         <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
-                                            gosh://
-                                            {shortString(
-                                                process.env.REACT_APP_GOSH_ADDR ?? '',
-                                            )}
-                                            /{daoName}/{repoName}
+                                            {getRemoteUrl(true)}
                                         </div>
                                         <CopyClipboard
                                             componentProps={{
-                                                text: `gosh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`,
+                                                text: getRemoteUrl(false),
                                             }}
                                             iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
                                             iconProps={{
