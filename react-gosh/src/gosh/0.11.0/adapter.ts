@@ -847,9 +847,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { items } = await this.getTree(fromBranch.commit.name)
         const blobs = await this._getTreeBlobs(items, fromBranch.name)
 
-        // Deploy snapshots (split by chunks)
-        await executeByChunk(blobs, MAX_PARALLEL_WRITE, async ({ treepath, content }) => {
-            await this._deploySnapshot(name, fromBranch.commit.name, treepath, content)
+        // Deploy snapshots
+        await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
+            await this._deploySnapshot(
+                name,
+                fromBranch.commit.name,
+                treepath,
+                content,
+                wallet,
+            )
         })
 
         // Deploy new branch
@@ -885,11 +891,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const accounts = await getAllAccounts({
             filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
         })
-        await executeByChunk(
+        await this._runMultiwallet(
             accounts.map((account) => account.id),
-            MAX_PARALLEL_WRITE,
-            async (address) => {
-                await this.auth!.wallet.run('deleteSnapshot', { snap: address })
+            async (wallet, address) => {
+                await wallet.run('deleteSnapshot', { snap: address })
             },
         )
 
@@ -1314,6 +1319,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string,
         treepath: string,
         content?: string | Buffer,
+        wallet?: IGoshWallet,
     ): Promise<IGoshSnapshot> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1337,7 +1343,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        await this.auth.wallet.run('deployNewSnapshot', {
+        wallet = wallet || this.auth.wallet
+        await wallet.run('deployNewSnapshot', {
             branch,
             commit,
             repo: this.repo.address,
@@ -1346,6 +1353,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             snapshotipfs: data.snapshotIpfs,
         })
         return snapshot
+    }
+
+    private async _getSubwallet(index: number): Promise<IGoshWallet> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (this.auth.wallet.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const { value0 } = await this.auth.wallet.runLocal('getWalletAddr', { index })
+        const subwallet = new GoshWallet(this.client, value0, {
+            keys: this.auth.wallet.account.signer.keys,
+        })
+
+        if (!(await subwallet.isDeployed())) {
+            await this.auth.wallet.run('deployWallet', {})
+        }
+
+        return subwallet
     }
 
     private async _deployTree(items: TTreeItem[]): Promise<void> {
@@ -1491,6 +1516,45 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             numberCommits: 1,
             num_clients: await locker.getNumClients(),
         })
+    }
+
+    private async _runMultiwallet<Input, Output>(
+        array: Input[],
+        executor: (wallet: IGoshWallet, params: Input) => Promise<Output>,
+    ): Promise<Output[]> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        // Get/deploy wallets
+        const wallets = await Promise.all(
+            Array.from(new Array(10)).map(async (_, index) => {
+                if (index === 0) return this.auth!.wallet
+                return await this._getSubwallet(index)
+            }),
+        )
+        console.debug('Wallets', wallets)
+
+        // Split array for chunks for each wallet
+        const walletChunkSize = Math.ceil(array.length / wallets.length)
+        const chunks = splitByChunk(array, walletChunkSize)
+        console.debug('Wallet chunk size', walletChunkSize)
+        console.debug('Chunks', chunks)
+
+        // Run chunk for each wallet
+        const result: Output[] = []
+        await Promise.all(
+            chunks.map(async (chunk, index) => {
+                const subresult = await executeByChunk(
+                    chunk,
+                    MAX_PARALLEL_WRITE,
+                    async (params) => {
+                        console.debug('Wallet index', index, wallets[index])
+                        return await executor(wallets[index], params)
+                    },
+                )
+                result.push(...subresult)
+            }),
+        )
+        return result
     }
 
     private async _generateCommit(
