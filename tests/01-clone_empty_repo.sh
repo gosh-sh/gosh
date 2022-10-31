@@ -12,6 +12,7 @@ tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployReposito
 REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
+. ./env.env
 wait_account_active $REPO_ADDR
 sleep 30
 
