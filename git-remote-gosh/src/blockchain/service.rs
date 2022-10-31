@@ -1,7 +1,7 @@
 use super::{
     commit::save::BlockchainCommitPusher, contract::ContractRead,
-    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, GetAddrBranchResult,
-    GetBoolResult, GoshCommit, GoshContract, TonClient,
+    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, Everscale,
+    GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract, TonClient,
 };
 use crate::{
     abi as gosh_abi,
@@ -92,15 +92,6 @@ impl BlockchainCommitService for Everscale {
     ) -> anyhow::Result<Option<GoshCommit>> {
         Ok(Some(GoshCommit::load(self.client(), address).await?))
     }
-}
-
-#[derive(Builder, Clone)]
-pub struct Everscale {
-    pub network: NetworkConfig,
-    pub wallet_config: Option<UserWalletConfig>,
-    pub ever_client: TonClient,
-    pub root_contract: GoshContract,
-    pub repo_contract: GoshContract,
 }
 
 impl Everscale {}
