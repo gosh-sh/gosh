@@ -1,22 +1,36 @@
+use log::LevelFilter;
 use log4rs::{
     append::console::{ConsoleAppender, Target},
     config::{Appender, Root},
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
 };
-use std::{env, fmt, str::FromStr};
+use std::{env, fmt, str::FromStr, sync::Arc};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
+lazy_static! {
+    static ref LOG_HANDLER: Arc<Handle> = {
+        // make empty log4rs handler
+        let root = Root::builder().build(LevelFilter::Off);
+        let config = Config::builder().build(root).unwrap();
+        let handler = init_config(config).unwrap();
+        Arc::new(handler)
+    };
+}
+
+pub fn global_log_handler() -> Arc<Handle> {
+    LOG_HANDLER.clone()
+}
+
 pub struct GitHelperLogger {
-    handler: Handle,
-    verbosity: log::LevelFilter,
+    verbosity_level: log::LevelFilter,
 }
 
 impl fmt::Debug for GitHelperLogger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("GitHelperLogger")
-            .field("verbosity", &self.verbosity)
+            .field("verbosity", &self.verbosity_level)
             .finish_non_exhaustive()
     }
 }
@@ -26,22 +40,21 @@ impl GitHelperLogger {
         let verbosity_level = Self::calculate_log_level(0);
         let initial_config = Self::build_config(verbosity_level)?;
 
-        let log_handler = init_config(initial_config)?;
-        Ok(Self {
-            handler: log_handler,
-            verbosity: verbosity_level,
-        })
+        global_log_handler().set_config(initial_config);
+
+        Ok(Self { verbosity_level })
     }
 
-    pub fn set_verbosity(&mut self, verbosity_level: u8) -> anyhow::Result<()> {
-        let verbosity_level = Self::calculate_log_level(verbosity_level);
+    pub fn set_verbosity(&mut self, verbosity: u8) -> anyhow::Result<()> {
+        let verbosity_level = Self::calculate_log_level(verbosity);
         let new_config = Self::build_config(verbosity_level)?;
-        self.handler.set_config(new_config);
-        self.verbosity = verbosity_level;
+        global_log_handler().set_config(new_config);
+        self.verbosity_level = verbosity_level;
         Ok(())
     }
 
-    fn calculate_log_level(verbosity_level: u8) -> log::LevelFilter {
+    fn calculate_log_level(verbosity: u8) -> log::LevelFilter {
+        // TODO: fix ambiguity with arg verbosity and implicit use of env
         if let Ok(verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
             let verbosity = u8::from_str(&verbosity).unwrap_or_default();
             if verbosity > 0 {
@@ -49,7 +62,7 @@ impl GitHelperLogger {
             }
         }
 
-        match verbosity_level {
+        match verbosity {
             0 => log::LevelFilter::Off,
             1 => log::LevelFilter::Error,
             2 => log::LevelFilter::Warn,
@@ -58,7 +71,7 @@ impl GitHelperLogger {
         }
     }
 
-    fn build_config(log_level: log::LevelFilter) -> anyhow::Result<Config> {
+    fn build_config(verbosity_level: log::LevelFilter) -> anyhow::Result<Config> {
         // WARNING: Do not add stdout logger!
         // because it will break gitremote-helper logic
         let stderr_appender = Appender::builder().build(
@@ -72,6 +85,6 @@ impl GitHelperLogger {
         );
         Ok(Config::builder()
             .appender(stderr_appender)
-            .build(Root::builder().appender("stderr").build(log_level))?)
+            .build(Root::builder().appender("stderr").build(verbosity_level))?)
     }
 }

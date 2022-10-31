@@ -92,6 +92,7 @@ echo "========== Get Gosh address"
 GOSH_ADDR=$(everdev contract run-local $GOSHROOT_ABI getGoshAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $GOSHROOT_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
 echo "     ====> Gosh address: $GOSH_ADDR"
 echo $GOSH_ADDR > $GOSH_PATH/Gosh-${GOSH_VERSION}.addr
+echo $GOSH_ADDR > $GOSH_PATH/Gosh.addr
 
 # Send tokens to Gosh
 echo "     ====> Send tokens to Gosh"
