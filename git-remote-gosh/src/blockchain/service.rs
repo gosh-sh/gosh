@@ -1,7 +1,7 @@
 use super::{
     commit::save::BlockchainCommitPusher, contract::ContractRead,
     user_wallet::BlockchainUserWalletService, BlockchainContractAddress, GetAddrBranchResult,
-    GetBoolResult, GoshContract, TonClient,
+    GetBoolResult, GoshCommit, GoshContract, TonClient,
 };
 use crate::{
     abi as gosh_abi,
@@ -25,10 +25,19 @@ pub trait BlockchainBranchesService {
 }
 
 #[async_trait]
+pub trait BlockchainCommitService {
+    async fn get_commit_by_addr(
+        &self,
+        address: &BlockchainContractAddress,
+    ) -> anyhow::Result<Option<GoshCommit>>;
+}
+
+#[async_trait]
 pub trait BlockchainService:
     Debug
     + Sync
     + Send
+    + BlockchainCommitService
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
@@ -71,6 +80,17 @@ impl BlockchainBranchesService for Everscale {
         } else {
             Ok(Some((result.branch.commit_address, result.branch.version)))
         }
+    }
+}
+
+#[async_trait]
+impl BlockchainCommitService for Everscale {
+    #[instrument(level = "debug")]
+    async fn get_commit_by_addr(
+        &self,
+        address: &BlockchainContractAddress,
+    ) -> anyhow::Result<Option<GoshCommit>> {
+        Ok(Some(GoshCommit::load(self.client(), address).await?))
     }
 }
 
@@ -166,6 +186,14 @@ pub mod tests {
                 repository_address: &BlockchainContractAddress,
                 rev: &str,
             ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>>;
+        }
+
+        #[async_trait]
+        impl BlockchainCommitService for Everscale {
+            async fn get_commit_by_addr(
+                &self,
+                address: &BlockchainContractAddress,
+            ) -> anyhow::Result<Option<GoshCommit>>;
         }
 
         #[async_trait]
