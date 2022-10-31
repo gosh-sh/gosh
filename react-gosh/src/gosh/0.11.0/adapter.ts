@@ -31,7 +31,6 @@ import {
     sha1,
     sha1Tree,
     sha256,
-    splitByChunk,
     splitByPath,
     unixtimeWithTz,
     zstd,
