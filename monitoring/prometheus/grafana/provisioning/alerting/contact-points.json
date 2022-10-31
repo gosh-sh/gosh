@@ -1,0 +1,72 @@
+{
+"apiVersion": 1,
+"contactPoints":
+    [
+        {
+        "disableResolveMessage": false,
+        "name": "discord-balance",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1027183040394432542",
+            "use_discord_username": false
+            },
+        "type": "discord",
+        "uid": "jHGzgjS4z"
+        },
+        {
+        "disableResolveMessage": false,
+        "name": "discord-e2e",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1027183288147787836",
+            "use_discord_username": false
+            },
+        "type": "discord",
+        "uid": "XxFjzCS4z"
+        },
+        {
+        "disableResolveMessage": false,
+        "name": "discord-e2e-test",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1032927739692462100",
+            "use_discord_username": false
+            },
+        "type": "discord",
+        "uid": "AtVaJeS4k"
+        },
+        {
+        "disableResolveMessage": false,
+        "name": "discord-generic",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1032566934199341066",
+            "use_discord_username": false
+            },
+        "type": "discord",
+        "uid": "mHaAerIVk"
+        },
+        {
+        "disableResolveMessage": false,
+        "name": "discord-seq-sha",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1027139203164819527",
+            "use_discord_username": false
+            },
+        "type": "discord",
+        "uid": "GAMN96SVz"
+        },
+        {
+        "disableResolveMessage": false,
+        "name": "discord-test",
+        "settings":
+            {
+            "url": "${DISCORD_HOOK_URL}?thread_id=1032565615988318208",
+            "use_discord_username": true
+            },
+        "type": "discord",
+        "uid": "nXdd69S4kz"
+        }
+    ]
+}

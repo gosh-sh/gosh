@@ -1,8 +1,9 @@
 #![allow(unused_variables)]
 
-use serde::de::Error as SerdeError;
-use serde::de::Visitor;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{
+    de::{Error as SerdeError, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
 
 use std::fmt;
 

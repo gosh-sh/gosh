@@ -1,10 +1,9 @@
 import { KeyPair } from '@eversdk/core'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
-import { retry } from '../helpers'
 import { userAtom, userPersistAtom, userProfileSelector } from '../store'
 import { TUserSignupProgress, TUserPersist } from '../types'
 import { validatePhrase, validateUsername } from '../validators'
@@ -73,7 +72,7 @@ function useUser() {
 
         let isProfileDeployed = false
         try {
-            await retry(() => gosh.deployProfile(username, derived.public), 3)
+            await gosh.deployProfile(username, derived.public)
             isProfileDeployed = true
         } catch (e) {
             isProfileDeployed = false

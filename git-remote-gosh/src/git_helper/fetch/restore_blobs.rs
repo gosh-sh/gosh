@@ -1,19 +1,22 @@
 use super::GitHelper;
-use crate::blockchain::snapshot::diffs::DiffMessage;
-use crate::blockchain::BlockchainContractAddress;
-use crate::blockchain::{self, BlockchainService};
-use crate::git_helper::{GoshContract, TonClient};
-use crate::ipfs::{IpfsLoad, IpfsService};
-use futures::stream::FuturesUnordered;
-use futures::StreamExt;
+use crate::{
+    blockchain::{
+        self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
+    },
+    git_helper::{GoshContract, TonClient},
+    ipfs::{IpfsLoad, IpfsService},
+};
+use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::ObjectId;
 use git_odb::Write;
 use lru::LruCache;
-use std::collections::{HashMap, HashSet};
-use std::num::NonZeroUsize;
-use std::str::FromStr;
-use std::sync::{Arc, Mutex};
-use std::vec::Vec;
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroUsize,
+    str::FromStr,
+    sync::{Arc, Mutex},
+    vec::Vec,
+};
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -324,7 +327,7 @@ impl BlobsRebuildingPlan {
             FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.ever_client.clone();
+            let es_client = git_helper.blockchain.client().clone();
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
             let mut repo_contract = git_helper.blockchain.repo_contract().clone();

@@ -3,16 +3,18 @@ use std::env;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use crate::abi as gosh_abi;
-use crate::blockchain::user_wallet::user_wallet_config;
-use crate::blockchain::{
-    create_client, get_head, get_repo_address, BlockchainService, GoshContract, TonClient, Tree,
+use crate::{
+    abi as gosh_abi,
+    blockchain::{
+        create_client, get_head, get_repo_address, user_wallet::user_wallet_config,
+        BlockchainContractAddress, BlockchainService, EverscaleBuilder, GoshContract, TonClient,
+        Tree,
+    },
+    config::Config,
+    ipfs::IpfsService,
+    logger::GitHelperLogger as Logger,
+    utilities::Remote,
 };
-use crate::blockchain::{BlockchainContractAddress, EverscaleBuilder};
-use crate::config::Config;
-use crate::ipfs::IpfsService;
-use crate::logger::GitHelperLogger as Logger;
-use crate::utilities::Remote;
 
 #[cfg(test)]
 mod test_utils;
@@ -21,8 +23,6 @@ static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
     pub config: Config,
-    #[deprecated(note = "use self.blockchain.client()")]
-    pub ever_client: TonClient,
     pub ipfs_client: IpfsService,
     pub blockchain: Blockchain,
     pub remote: Remote,
@@ -69,10 +69,6 @@ where
         .await
     }
 
-    pub fn new_es_client(&self) -> anyhow::Result<TonClient> {
-        Ok(create_client(&self.config, &self.remote.network)?)
-    }
-
     #[instrument(level = "debug", skip(blockchain))]
     async fn build(
         config: Config,
@@ -105,7 +101,6 @@ where
 
         Ok(Self {
             config,
-            ever_client,
             ipfs_client: ipfs,
             blockchain,
             remote,
@@ -124,10 +119,10 @@ where
 
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
-        let refs = list::get_refs(&self.ever_client, &self.repo_addr).await?;
+        let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
-            let head = get_head(&self.ever_client, &self.repo_addr).await?;
+            let head = get_head(&self.blockchain.client(), &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
                 ref_list.push(format!("@refs/heads/{} HEAD", head));
@@ -256,11 +251,7 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
 pub mod tests {
     use git_repository::Repository;
 
-    use crate::{
-        blockchain::{create_client, BlockchainService},
-        config::tests::load_from,
-        logger::GitHelperLogger,
-    };
+    use crate::{blockchain::BlockchainService, config::tests::load_from, logger::GitHelperLogger};
 
     use super::*;
 
@@ -274,11 +265,9 @@ pub mod tests {
         B: BlockchainService,
     {
         let config = load_from(&value.to_string());
-        let logger = GitHelperLogger::init().unwrap();
+        let logger = GitHelperLogger::init().expect("logger init error");
 
         let remote = Remote::new(url, &config).unwrap();
-
-        let es_client = create_client(&config, &remote.network).unwrap();
 
         let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
@@ -290,7 +279,6 @@ pub mod tests {
 
         GitHelper {
             config,
-            ever_client: es_client,
             ipfs_client,
             blockchain,
             remote,

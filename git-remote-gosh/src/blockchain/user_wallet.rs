@@ -1,21 +1,20 @@
 use async_trait::async_trait;
-use cached::proc_macro::cached;
-use cached::SizedCache;
-use std::cell::RefCell;
-use std::sync::Once;
-use tokio::runtime::Handle;
-use tokio::sync::RwLock;
-use tokio::task;
+use cached::{proc_macro::cached, SizedCache};
+use std::{cell::RefCell, sync::Once};
+use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
 
-use crate::abi;
-use crate::blockchain::call;
-use crate::config::{Config, UserWalletConfig};
+use crate::{
+    abi,
+    blockchain::call,
+    config::{Config, UserWalletConfig},
+};
 
-use super::commit::save::BlockchainCommitPusher;
-use super::contract::{ContractInfo, ContractRead};
-use super::serde_number::NumberU64;
-use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient};
+use super::{
+    contract::{ContractInfo, ContractRead},
+    serde_number::NumberU64,
+    BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient,
+};
 
 #[derive(Deserialize, Debug)]
 struct GetProfileAddrResult {
