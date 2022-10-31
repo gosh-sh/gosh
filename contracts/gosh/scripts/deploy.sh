@@ -16,14 +16,14 @@ SIGNER="GOSHRootSigner" # will be created automatically
 WALLET_SIGNER="GiverWalletSigner" # will be created automatically
 GOSH_PATH="../../gosh"
 SMV_PATH="../../smv"
-GOSHROOT_ABI="$GOSH_PATH/root.abi.json"
-GOSH_ABI="$GOSH_PATH/gosh.abi.json"
+GOSHROOT_ABI="$GOSH_PATH/versioncontroller.abi.json"
+GOSH_ABI="$GOSH_PATH/systemcontract.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
 GIVER_WALLET_KEYS_PATH=/tmp/giver.keys.json
 
 GOSH_BALANCE=400000000000000
 
-GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/gosh.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
+GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 echo $GOSH_VERSION
 
 # Generate GOSH keys
@@ -43,7 +43,7 @@ everdev signer add $WALLET_SIGNER $GIVER_WALLET_KEYS_PATH
 # ############################################################
 # Get codes
 # ############################################################
-GOSH_CODE=$(everdev contract dt $GOSH_PATH/gosh.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+GOSH_CODE=$(everdev contract dt $GOSH_PATH/systemcontract.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TOKEN_ROOT_CODE=$(everdev contract dt $SMV_PATH/TokenRoot.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TOKEN_WALLET_CODE=$(everdev contract dt $SMV_PATH/TokenWallet.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TOKEN_LOCKER_CODE=$(everdev contract dt $SMV_PATH/SMVTokenLocker.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
