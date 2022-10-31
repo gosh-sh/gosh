@@ -405,6 +405,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private client: TonClient
     private repo: IGoshRepository
     private name?: string
+    private subwallets: IGoshWallet[] = []
 
     auth?: { username: string; wallet: IGoshWallet }
 
@@ -1053,61 +1054,44 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { commitHash, commitContent, commitParentAddrs } =
             await this._generateCommit(branchTo, updatedTreeHash, message, branchParent)
 
-        // Deploy everything for commit with commit
-        await Promise.all([
-            // Deploy snapshots
-            (async () => {
-                let counter = 0
-                await executeByChunk(
-                    blobsMeta,
-                    MAX_PARALLEL_WRITE,
-                    async ({ treepath }) => {
-                        await this._deploySnapshot(branch, '', treepath)
-                        cb({ snapsDeploy: { count: ++counter } })
-                    },
-                )
-            })(),
-            // Deploy trees
-            (async () => {
-                let counter = 0
-                await executeByChunk(updatedTrees, MAX_PARALLEL_WRITE, async (path) => {
-                    await this._deployTree(updatedTree[path])
-                    cb({ treesDeploy: { count: ++counter } })
-                })
-            })(),
-            // Deploy diffs
-            (async () => {
-                let counter = 0
-                await executeByChunk(
-                    blobsMeta,
-                    MAX_PARALLEL_WRITE,
-                    async (meta, index) => {
-                        await this._deployDiff(branch, commitHash, meta, index)
-                        cb({ diffsDeploy: { count: ++counter } })
-                    },
-                )
-            })(),
-            // Deploy tags
-            (async () => {
-                let counter = 0
-                await executeByChunk(taglist, MAX_PARALLEL_WRITE, async (tag) => {
-                    await this._deployTag(commitHash, tag)
-                    cb({ tagsDeploy: { count: ++counter } })
-                })
-            })(),
-            // Deploy commit
-            (async () => {
-                await this._deployCommit(
-                    branch,
-                    commitHash,
-                    commitContent,
-                    commitParentAddrs,
-                    updatedTreeHash,
-                    false,
-                )
-                cb({ commitDeploy: true })
-            })(),
-        ])
+        // Deploy snapshots
+        let snapCounter = 0
+        await this._runMultiwallet(blobsMeta, async (wallet, { treepath }) => {
+            await this._deploySnapshot(branch, '', treepath, undefined, wallet)
+            cb({ snapsDeploy: { count: ++snapCounter } })
+        })
+
+        // Deploy trees
+        let treeCounter = 0
+        await this._runMultiwallet(updatedTrees, async (wallet, path) => {
+            await this._deployTree(updatedTree[path], wallet)
+            cb({ treesDeploy: { count: ++treeCounter } })
+        })
+
+        // Deploy diffs
+        let diffCounter = 0
+        await this._runMultiwallet(blobsMeta, async (wallet, meta, index) => {
+            await this._deployDiff(branch, commitHash, meta, index, wallet)
+            cb({ diffsDeploy: { count: ++diffCounter } })
+        })
+
+        // Deploy tags
+        let tagsCounter = 0
+        await this._runMultiwallet(taglist, async (wallet, tag) => {
+            await this._deployTag(commitHash, tag, wallet)
+            cb({ tagsDeploy: { count: ++tagsCounter } })
+        })
+
+        // Deploy commit
+        await this._deployCommit(
+            branch,
+            commitHash,
+            commitContent,
+            commitParentAddrs,
+            updatedTreeHash,
+            false,
+        )
+        cb({ commitDeploy: true })
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
@@ -1126,39 +1110,30 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async pushUpgrade(data: TUpgradeData): Promise<void> {
         const { blobs, commit, tree } = data
 
-        // Deploy everything for commit with commit
-        await Promise.all([
-            // Deploy trees
-            (async () => {
-                let counter = 0
-                await executeByChunk(
-                    Object.keys(tree),
-                    MAX_PARALLEL_WRITE,
-                    async (path) => {
-                        await this._deployTree(tree[path])
-                        // callback({ treesDeploy: { count: ++counter } })
-                    },
-                )
-            })(),
-            // Deploy commit
-            (async () => {
-                await this._deployCommit(
-                    commit.branch,
-                    commit.name,
-                    commit.content,
-                    commit.parents,
-                    commit.tree,
-                    true,
-                )
-                // callback({ commitDeploy: true })
-            })(),
-        ])
+        // Deploy trees
+        await this._runMultiwallet(Object.keys(tree), async (wallet, path) => {
+            await this._deployTree(tree[path], wallet)
+        })
+
+        // Deploy commit
+        await this._deployCommit(
+            commit.branch,
+            commit.name,
+            commit.content,
+            commit.parents,
+            commit.tree,
+            true,
+        )
 
         // Deploy snapshots
-        let counter = 0
-        await executeByChunk(blobs, MAX_PARALLEL_WRITE, async ({ treepath, content }) => {
-            await this._deploySnapshot(commit.branch, commit.name, treepath, content)
-            // callback({ snapsDeploy: { count: ++counter } })
+        await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
+            await this._deploySnapshot(
+                commit.branch,
+                commit.name,
+                treepath,
+                content,
+                wallet,
+            )
         })
 
         // Set commit
@@ -1355,7 +1330,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return subwallet
     }
 
-    private async _deployTree(items: TTreeItem[]): Promise<void> {
+    private async _deployTree(items: TTreeItem[], wallet?: IGoshWallet): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         // Check if deployed
@@ -1376,7 +1351,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 sha256,
             }
         }
-        await this.auth.wallet.run('deployTree', {
+
+        wallet = wallet || this.auth.wallet
+        await wallet.run('deployTree', {
             repoName: await this.repo.getName(),
             shaTree: hash,
             datatree,
@@ -1398,6 +1375,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             hashes: { sha1: string; sha256: string }
         },
         index1: number,
+        wallet?: IGoshWallet,
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1415,7 +1393,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             ipfs,
             ...hashes,
         }
-        await this.auth.wallet.run('deployDiff', {
+
+        wallet = wallet || this.auth.wallet
+        await wallet.run('deployDiff', {
             repoName: await this.getName(),
             branchName: branch,
             commitName: commit,
@@ -1426,11 +1406,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    private async _deployTag(commit: string, content: string): Promise<void> {
+    private async _deployTag(
+        commit: string,
+        content: string,
+        wallet?: IGoshWallet,
+    ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const commitContract = await this._getCommit({ name: commit })
-        await this.auth.wallet.run('deployTag', {
+        wallet = wallet || this.auth.wallet
+        await wallet.run('deployTag', {
             repoName: await this.getName(),
             nametag: sha1(content, 'tag', 'sha1'),
             nameCommit: commit,
@@ -1502,24 +1487,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _runMultiwallet<Input, Output>(
         array: Input[],
-        executor: (wallet: IGoshWallet, params: Input) => Promise<Output>,
+        executor: (wallet: IGoshWallet, params: Input, index: number) => Promise<Output>,
     ): Promise<Output[]> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         // Get/deploy wallets
-        const wallets = await Promise.all(
-            Array.from(new Array(10)).map(async (_, index) => {
-                if (index === 0) return this.auth!.wallet
-                return await this._getSubwallet(index)
-            }),
-        )
-        console.debug('Wallets', wallets)
+        if (this.subwallets.length !== 10) {
+            this.subwallets = await Promise.all(
+                Array.from(new Array(10)).map(async (_, index) => {
+                    if (index === 0) return this.auth!.wallet
+                    return await this._getSubwallet(index)
+                }),
+            )
+        }
 
         // Split array for chunks for each wallet
-        const walletChunkSize = Math.ceil(array.length / wallets.length)
+        const walletChunkSize = Math.ceil(array.length / this.subwallets.length)
         const chunks = splitByChunk(array, walletChunkSize)
-        console.debug('Wallet chunk size', walletChunkSize)
-        console.debug('Chunks', chunks)
 
         // Run chunk for each wallet
         const result: Output[] = []
@@ -1528,9 +1512,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const subresult = await executeByChunk(
                     chunk,
                     MAX_PARALLEL_WRITE,
-                    async (params) => {
-                        console.debug('Wallet index', index, wallets[index])
-                        return await executor(wallets[index], params)
+                    async (params, i) => {
+                        const gIndex = walletChunkSize * index + i
+                        return await executor(this.subwallets[index], params, gIndex)
                     },
                 )
                 result.push(...subresult)
