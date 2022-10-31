@@ -210,12 +210,10 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
 
         const gosh = GoshAdapterFactory.create(version)
         const adapter = await gosh.getDao({ name: dao })
-        await retry(async () => {
-            await adapter.deployRepository(await repo.getName(), {
-                addr: repo.getAddress(),
-                version: repo.getVersion(),
-            })
-        }, 3)
+        await adapter.deployRepository(await repo.getName(), {
+            addr: repo.getAddress(),
+            version: repo.getVersion(),
+        })
     }
 
     return { versions, upgrade }

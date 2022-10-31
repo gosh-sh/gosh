@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { executeByChunk, retry } from '../helpers'
+import { executeByChunk } from '../helpers'
 import { userAtom, daoAtom, walletAtom } from '../store'
 import { TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
 import { EGoshError, GoshError } from '../errors'

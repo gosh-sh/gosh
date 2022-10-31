@@ -1057,9 +1057,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     blobsMeta,
                     MAX_PARALLEL_WRITE,
                     async ({ treepath }) => {
-                        await retry(async () => {
-                            await this._deploySnapshot(branch, '', treepath)
-                        }, 3)
+                        await this._deploySnapshot(branch, '', treepath)
                         cb({ snapsDeploy: { count: ++counter } })
                     },
                 )
@@ -1079,9 +1077,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     blobsMeta,
                     MAX_PARALLEL_WRITE,
                     async (meta, index) => {
-                        await retry(async () => {
-                            await this._deployDiff(branch, commitHash, meta, index)
-                        }, 3)
+                        await this._deployDiff(branch, commitHash, meta, index)
                         cb({ diffsDeploy: { count: ++counter } })
                     },
                 )
