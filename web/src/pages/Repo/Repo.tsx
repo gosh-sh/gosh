@@ -7,7 +7,7 @@ import {
     faClockRotateLeft,
     faCodeBranch,
     faFolder,
-    faFolderOpen,
+    faRightLong,
     faMagnifyingGlass,
     faFileCirclePlus,
     faCode,
@@ -181,19 +181,22 @@ const RepoPage = () => {
 
                         if (item.type === 'commit') {
                             return (
-                                <div key={index} className="py-3 text-sm">
-                                    <FontAwesomeIcon
-                                        className="mr-2"
-                                        icon={faFolderOpen}
-                                        fixedWidth
-                                    />
-                                    {item.name}
+                                <div key={index} className="py-3">
+                                    <span className="fa-layers fa-fw mr-2">
+                                        <FontAwesomeIcon icon={faFolder} size="1x" />
+                                        <FontAwesomeIcon
+                                            icon={faRightLong}
+                                            transform="shrink-6 down-1"
+                                            inverse
+                                        />
+                                    </span>
+                                    <span className="text-sm">{item.name}</span>
                                 </div>
                             )
                         }
 
                         return (
-                            <div key={index} className="py-3 text-sm">
+                            <div key={index} className="py-3">
                                 <Link
                                     className="hover:underline"
                                     to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
@@ -201,9 +204,10 @@ const RepoPage = () => {
                                     <FontAwesomeIcon
                                         className="mr-2"
                                         icon={item.type === 'tree' ? faFolder : faFile}
+                                        size="1x"
                                         fixedWidth
                                     />
-                                    {item.name}
+                                    <span className="text-sm">{item.name}</span>
                                 </Link>
                             </div>
                         )
