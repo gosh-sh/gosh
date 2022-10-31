@@ -167,13 +167,13 @@ interface IContract {
         functionName: string,
         input: object,
         options?: AccountRunOptions,
-        writeLog?: boolean,
+        settings?: { logging?: boolean; retries?: number },
     ): Promise<ResultOfProcessMessage>
     runLocal(
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        writeLog?: boolean,
+        settings?: { logging?: boolean; retries?: number },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }

@@ -4,8 +4,7 @@ use log4rs::{
     encode::pattern::PatternEncoder,
     init_config, Config, Handle,
 };
-use std::str::FromStr;
-use std::{env, fmt};
+use std::{env, fmt, str::FromStr};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 

@@ -12,7 +12,7 @@ mod error;
 use error::RunLocalError;
 mod create_branch;
 pub use create_branch::CreateBranchOperation;
-mod service;
+pub mod service;
 pub use service::*;
 
 use ton_client::{
@@ -38,9 +38,11 @@ pub use snapshot::Snapshot;
 pub use tree::{push_tree, Tree};
 pub use tvm_hash::tvm_hash;
 
-use crate::abi as gosh_abi;
-use crate::config::Config;
-use crate::config;
+use crate::{
+    abi as gosh_abi,
+    config::Config,
+    config::{self, UserWalletConfig},
+};
 
 pub use self::contract::GoshContract;
 use self::contract::{ContractInfo, ContractRead, ContractStatic};
@@ -139,6 +141,14 @@ struct GetVersionResult {
 }
 
 pub type TonClient = Arc<ClientContext>;
+
+#[derive(Builder, Clone)]
+pub struct Everscale {
+    wallet_config: Option<UserWalletConfig>,
+    ever_client: TonClient,
+    root_contract: GoshContract,
+    repo_contract: GoshContract,
+}
 
 #[instrument(level = "debug")]
 pub fn create_client(config: &Config, network: &str) -> anyhow::Result<TonClient> {
