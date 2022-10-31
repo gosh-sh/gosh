@@ -13,7 +13,7 @@ tonos-cli config --url $NETWORK
 export GOSH_ROOT_ADDR=`cat ../contracts/gosh/Gosh.addr`
 echo "GOSH_ROOT_ADDR=$GOSH_ROOT_ADDR" >> env.env
 
-export GOSH_ABI=../contracts/gosh/gosh.abi.json
+export GOSH_ABI=../contracts/gosh/systemcontract.abi.json
 USER_PROFILE_ABI=../contracts/gosh/profile.abi.json
 echo "GOSH_ABI=$GOSH_ABI" >> env.env
 export REPO_ABI=../contracts/gosh/repository.abi.json
@@ -27,12 +27,12 @@ tonos-cli getkeypair -o $DAO1_KEYS -p "$SEED"
 DAO1_PUBKEY=$(cat $DAO1_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile
-USER_PROFILE_NAME="@user100"
+USER_PROFILE_NAME="@user201"
 tonos-cli call --abi $GOSH_ABI $GOSH_ROOT_ADDR deployProfile "{\"pubkey\":\"$DAO1_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
 USER_PROFILE_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 # *deploy DAO
-export DAO1_NAME=dao-100
+export DAO1_NAME=dao-201
 echo "DAO1_NAME=$DAO1_NAME" >> env.env
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $DAO1_KEYS deployDao \
   "{\"goshroot\":\"$GOSH_ROOT_ADDR\", \"name\":\"$DAO1_NAME\", \"previous\":null, \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
