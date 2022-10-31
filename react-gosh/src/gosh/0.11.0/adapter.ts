@@ -148,7 +148,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
             adapter = new GoshDaoAdapter(this, value0)
         }
 
-        if (useAuth && this.auth && (await adapter.isDeployed())) {
+        if (useAuth && this.auth) {
             await adapter.setAuth(this.auth.username, this.auth.keys)
         }
         return adapter
@@ -219,8 +219,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
+        if (!(await this.isDeployed())) return
+
         this.profile = await this.gosh.getProfile({ username })
         this.wallet = await this._getWallet(0, keys)
+        if (!(await this.wallet.isDeployed())) return
 
         const { value0: pubkey } = await this.wallet.runLocal('getAccess', {})
         console.debug('DaoAdapterAuth', pubkey)

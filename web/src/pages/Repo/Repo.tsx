@@ -7,6 +7,7 @@ import {
     faClockRotateLeft,
     faCodeBranch,
     faFolder,
+    faFolderOpen,
     faMagnifyingGlass,
     faFileCirclePlus,
     faCode,
@@ -172,31 +173,41 @@ const RepoPage = () => {
                     </Link>
                 )}
                 <div className="divide-y divide-gray-c4c4c4">
-                    {!!subtree &&
-                        subtree?.map((item: any, index: number) => {
-                            const path = [item.path, item.name]
-                                .filter((part) => part !== '')
-                                .join('/')
-                            const type = item.type === 'tree' ? 'tree' : 'blobs/view'
+                    {subtree?.map((item: any, index: number) => {
+                        const path = [item.path, item.name]
+                            .filter((part) => part !== '')
+                            .join('/')
+                        const type = item.type === 'tree' ? 'tree' : 'blobs/view'
 
+                        if (item.type === 'commit') {
                             return (
-                                <div key={index} className="py-3">
-                                    <Link
-                                        className="hover:underline text-sm"
-                                        to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
-                                    >
-                                        <FontAwesomeIcon
-                                            className="mr-2"
-                                            icon={
-                                                item.type === 'tree' ? faFolder : faFile
-                                            }
-                                            fixedWidth
-                                        />
-                                        {item.name}
-                                    </Link>
+                                <div key={index} className="py-3 text-sm">
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        icon={faFolderOpen}
+                                        fixedWidth
+                                    />
+                                    {item.name}
                                 </div>
                             )
-                        })}
+                        }
+
+                        return (
+                            <div key={index} className="py-3 text-sm">
+                                <Link
+                                    className="hover:underline"
+                                    to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
+                                >
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        icon={item.type === 'tree' ? faFolder : faFile}
+                                        fixedWidth
+                                    />
+                                    {item.name}
+                                </Link>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         </div>
