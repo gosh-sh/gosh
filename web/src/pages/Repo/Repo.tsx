@@ -7,6 +7,7 @@ import {
     faClockRotateLeft,
     faCodeBranch,
     faFolder,
+    faRightLong,
     faMagnifyingGlass,
     faFileCirclePlus,
     faCode,
@@ -172,31 +173,45 @@ const RepoPage = () => {
                     </Link>
                 )}
                 <div className="divide-y divide-gray-c4c4c4">
-                    {!!subtree &&
-                        subtree?.map((item: any, index: number) => {
-                            const path = [item.path, item.name]
-                                .filter((part) => part !== '')
-                                .join('/')
-                            const type = item.type === 'tree' ? 'tree' : 'blobs/view'
+                    {subtree?.map((item: any, index: number) => {
+                        const path = [item.path, item.name]
+                            .filter((part) => part !== '')
+                            .join('/')
+                        const type = item.type === 'tree' ? 'tree' : 'blobs/view'
 
+                        if (item.type === 'commit') {
                             return (
                                 <div key={index} className="py-3">
-                                    <Link
-                                        className="hover:underline text-sm"
-                                        to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
-                                    >
+                                    <span className="fa-layers fa-fw mr-2">
+                                        <FontAwesomeIcon icon={faFolder} size="1x" />
                                         <FontAwesomeIcon
-                                            className="mr-2"
-                                            icon={
-                                                item.type === 'tree' ? faFolder : faFile
-                                            }
-                                            fixedWidth
+                                            icon={faRightLong}
+                                            transform="shrink-6 down-1"
+                                            inverse
                                         />
-                                        {item.name}
-                                    </Link>
+                                    </span>
+                                    <span className="text-sm">{item.name}</span>
                                 </div>
                             )
-                        })}
+                        }
+
+                        return (
+                            <div key={index} className="py-3">
+                                <Link
+                                    className="hover:underline"
+                                    to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
+                                >
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        icon={item.type === 'tree' ? faFolder : faFile}
+                                        size="1x"
+                                        fixedWidth
+                                    />
+                                    <span className="text-sm">{item.name}</span>
+                                </Link>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         </div>

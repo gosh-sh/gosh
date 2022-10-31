@@ -5,7 +5,7 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts, getTreeItemFullPath, retry } from '../helpers'
+import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
 import { TAddress, TDao, TSmvBalanceDetails } from '../types'
 import {
@@ -13,6 +13,8 @@ import {
     TCommit,
     TPushCallbackParams,
     TRepositoryListItem,
+    TTree,
+    TTreeItem,
 } from '../types/repo.types'
 import { sleep } from '../utils'
 
@@ -178,7 +180,7 @@ function useRepo(dao: string, repo: string) {
 
 function useRepoCreate(dao: IGoshDaoAdapter) {
     const create = async (name: string) => {
-        await retry(() => dao.deployRepository(name), 3)
+        await dao.deployRepository(name)
     }
 
     return { create }
@@ -299,7 +301,10 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
 
     useEffect(() => {
         const _getTree = async () => {
-            let newtree = { tree: { '': [] }, items: [] }
+            let newtree: { tree: TTree; items: TTreeItem[] } = {
+                tree: { '': [] },
+                items: [],
+            }
 
             if (!commit || commit.name === ZERO_COMMIT) {
                 setTree(newtree)
@@ -309,9 +314,7 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
             setTree(undefined)
             const gosh = GoshAdapterFactory.create(commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            newtree = await retry(async () => {
-                return await adapter.getTree(commit.name, filterPath)
-            }, 2)
+            newtree = await adapter.getTree(commit.name, filterPath)
             setTree(newtree)
         }
 
@@ -793,7 +796,7 @@ function useMergeRequest(
 
         await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
-            await retry(() => repo.deleteBranch(srcBranch!.name), 3)
+            await repo.deleteBranch(srcBranch!.name)
             await updateBranches()
         }
     }
@@ -843,7 +846,7 @@ function usePullRequest(
 
         await _push(title, buildProgress.items, true, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
-            await retry(() => repo.deleteBranch(srcBranch!.name), 3)
+            await repo.deleteBranch(srcBranch!.name)
             await updateBranches()
         }
     }

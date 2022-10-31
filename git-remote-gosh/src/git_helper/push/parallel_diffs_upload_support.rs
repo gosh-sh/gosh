@@ -151,8 +151,11 @@ impl ParallelDiffsUploadSupport {
                 .expecting_deployed_contacts_addresses
                 .get(index)
                 .unwrap();
-            if blockchain::snapshot::is_diff_deployed(&context.ever_client, expecting_address)
-                .await?
+            if blockchain::snapshot::is_diff_deployed(
+                &context.blockchain.client(),
+                expecting_address,
+            )
+            .await?
             {
                 index += 1;
                 attempt = 0;

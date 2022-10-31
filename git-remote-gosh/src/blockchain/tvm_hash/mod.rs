@@ -1,8 +1,11 @@
 use crate::blockchain::TonClient;
-use ton_client::abi::{
-    decode_boc, encode_boc, AbiParam, ParamsOfAbiEncodeBoc, ParamsOfDecodeBoc, ResultOfAbiEncodeBoc,
+use ton_client::{
+    abi::{
+        decode_boc, encode_boc, AbiParam, ParamsOfAbiEncodeBoc, ParamsOfDecodeBoc,
+        ResultOfAbiEncodeBoc,
+    },
+    boc::{get_boc_hash, ParamsOfGetBocHash, ResultOfGetBocHash},
 };
-use ton_client::boc::{get_boc_hash, ParamsOfGetBocHash, ResultOfGetBocHash};
 
 pub async fn tvm_hash(context: &TonClient, data: &[u8]) -> anyhow::Result<String> {
     let params = ParamsOfAbiEncodeBoc {

@@ -1,22 +1,20 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 use super::GitHelper;
-use crate::blockchain::get_commit_address;
-use crate::blockchain::{self, tree::into_tree_contract_complient_path};
 use crate::blockchain::{
-    BlockchainContractAddress, BlockchainService, CreateBranchOperation, ZERO_SHA,
+    self, get_commit_address, tree::into_tree_contract_complient_path, BlockchainContractAddress,
+    BlockchainService, CreateBranchOperation, ZERO_SHA,
 };
-use futures::stream::FuturesUnordered;
-use futures::StreamExt;
+use futures::{stream::FuturesUnordered, StreamExt};
 use git2::Repository;
 use git_hash::{self, ObjectId};
 use git_odb::{Find, Write};
-use std::env::current_dir;
-use std::path::PathBuf;
-use std::process::{Command, Stdio};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    env::current_dir,
     error::Error,
+    path::PathBuf,
+    process::{Command, Stdio},
     str::FromStr,
     vec::Vec,
 };
@@ -280,10 +278,11 @@ where
                 BlockchainContractAddress::todo_investigate_unexpected_convertion(
                     remote_commit_addr,
                 );
-            let commit =
-                blockchain::get_commit_by_addr(&self.blockchain.client(), &remote_commit_addr)
-                    .await?
-                    .unwrap();
+            let commit = self
+                .blockchain
+                .get_commit_by_addr(&remote_commit_addr)
+                .await?
+                .unwrap();
             prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
 
             if commit.sha != ZERO_SHA.to_owned() {
@@ -527,88 +526,99 @@ mod tests {
     use git2::{
         string_array::StringArray, Branch, IndexAddOption, IndexTime, Repository, Signature, Time,
     };
+    use log4rs::encode::json;
 
-    use crate::blockchain::{BlockchainService, TonClient};
-    use crate::config::{Config, UserWalletConfig};
-    use crate::git_helper::test_utils::{self, setup_repo};
-    use crate::git_helper::tests::setup_test_helper;
-    use crate::logger::GitHelperLogger;
+    use crate::{
+        blockchain::{BlockchainService, GoshCommit, TonClient},
+        config::{Config, UserWalletConfig},
+        git_helper::{
+            test_utils::{self, setup_repo},
+            tests::setup_test_helper,
+        },
+        logger::GitHelperLogger,
+    };
+    use blockchain::service::tests::MockEverscale;
 
     use super::*;
 
     #[tokio::test]
-    #[should_panic]
     async fn test_push_parotected_ref() {
         let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        // blockchain::MockBlockchainService::is_branch_protected_context()
-        //     .expect()
-        //     .returning(|_, _, _| Ok(true));
+        let mut mock_blockchain = MockEverscale::new();
+        mock_blockchain
+            .expect_is_branch_protected()
+            .returning(|_, _| Ok(true));
+        mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
+            Ok(Some((
+                blockchain::BlockchainContractAddress::new("test"),
+                "test".to_owned(),
+            )))
+        });
 
-        // blockchain::MockBlockchainService::remote_rev_parse_context()
-        //     .expect()
-        //     .returning(|_, _, _| {
-        //         Ok(Some((
-        //             BlockchainContractAddress::new("test"),
-        //             "test".to_owned(),
-        //         )))
-        //     });
+        let mut helper = setup_test_helper(
+            json!({
+                "ipfs": "foo.endpoint"
+            }),
+            "gosh://1/2/3",
+            repo,
+            mock_blockchain,
+        );
 
-        // let mut helper = setup_test_helper(
-        //     json!({
-        //         "ipfs": "foo.endpoint"
-        //     }),
-        //     "gosh://1/2/3",
-        //     repo,
-        //     blockchain::Ever {
-        //         wallet_config: None,
-        //     },
-        // );
-
-        // let res = helper
-        //     .push("main:main")
-        //     .await
-        //     .map_err(|e| panic!("Error: {:?}", e))
-        //     .unwrap();
-        // expected panic: can't push to protected branch
+        match helper.push("main:main").await {
+            Err(e) => assert!(e.to_string().contains("protected")),
+            _ => panic!("Protected branch push should panic"),
+        }
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_push_normal_ref() {
+        // TODO: need more smart test
         let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        // blockchain::MockBlockchainService::is_branch_protected_context()
-        //     .expect()
-        //     .returning(|_, _, _| Ok(false));
+        let mut mock_blockchain = MockEverscale::new();
+        mock_blockchain
+            .expect_is_branch_protected()
+            .returning(|_, _| Ok(false));
 
-        // blockchain::MockBlockchainService::remote_rev_parse_context()
-        //     .expect()
-        //     .returning(|_, _, _| {
-        //         Ok(Some((
-        //             BlockchainContractAddress::new("test"),
-        //             "test".to_owned(),
-        //         )))
-        //     });
+        mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
+            Ok(Some((
+                blockchain::BlockchainContractAddress::new("test"),
+                "test".to_owned(),
+            )))
+        });
 
-        // // push_tree_context().expect().returning(|_, _, _| Ok(()));
+        // TODO: fix bad object stderr from git command
+        let sha = repo.head_commit().unwrap().id.to_string();
+        mock_blockchain
+            .expect_get_commit_by_addr()
+            .returning(move |_| {
+                Ok(Some(
+                    serde_json::from_value(json! ({
+                        "repo": "",
+                        "branch": "main",
+                        "sha": sha,
+                        "parents": [],
+                        "content": "",
+                    }))
+                    .unwrap(),
+                ))
+            });
 
-        // let mut helper = setup_test_helper(
-        //     json!({
-        //         "ipfs": "foo.endpoint"
-        //     }),
-        //     "gosh://1/2/3",
-        //     repo,
-        //     blockchain::Ever {
-        //         wallet_config: None,
-        //     },
-        // );
+        mock_blockchain
+            .expect_notify_commit()
+            .returning(|_, _, _, _, _, _| Ok(()));
 
-        // let res = helper
-        //     .push("main:main")
-        //     .await
-        //     .map_err(|e| panic!("Error: {:?}", e))
-        //     .unwrap();
+        let mut helper = setup_test_helper(
+            json!({
+                "ipfs": "foo.endpoint"
+            }),
+            "gosh://1/2/3",
+            repo,
+            mock_blockchain,
+        );
+
+        let res = helper.push("main:main").await.unwrap();
     }
 
     #[ignore]

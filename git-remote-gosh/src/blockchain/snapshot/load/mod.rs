@@ -1,12 +1,13 @@
 #![allow(unused_variables)]
-use crate::abi as gosh_abi;
-use crate::blockchain::{GoshContract, TonClient};
+use crate::{
+    abi as gosh_abi,
+    blockchain::{GoshContract, TonClient},
+};
 
 use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
-use std::fmt;
-use std::option::Option;
+use std::{fmt, option::Option};
 pub mod diffs;
 
 #[derive(Deserialize, Debug, DataContract)]

@@ -11,7 +11,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
-import { retry, useBranchManagement, useBranches } from 'react-gosh'
+import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useSmvBalance } from '../../hooks/gosh.hooks'
@@ -57,7 +57,7 @@ export const BranchesPage = () => {
             if (smvDetails.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await retry(async () => await repo.lockBranch(name), 3)
+            await repo.lockBranch(name)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
@@ -80,7 +80,7 @@ export const BranchesPage = () => {
             if (smvDetails.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await retry(async () => await repo.unlockBranch(name), 3)
+            await repo.unlockBranch(name)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)

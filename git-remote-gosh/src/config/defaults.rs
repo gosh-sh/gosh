@@ -1,6 +1,5 @@
 use lazy_static::*;
-use std::collections::HashMap;
-use std::vec::Vec;
+use std::{collections::HashMap, vec::Vec};
 
 pub const PRIMARY_NETWORK: &str = "network.gosh.sh";
 pub const IPFS_HTTP_ENDPOINT: &str = "https://ipfs.network.gosh.sh";

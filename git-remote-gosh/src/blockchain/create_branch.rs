@@ -1,7 +1,6 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::blockchain;
-use crate::git_helper::GitHelper;
+use crate::{blockchain, git_helper::GitHelper};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
@@ -58,7 +57,7 @@ where
             "fromCommit": self.ancestor_commit.to_string(),
         });
         blockchain::call(
-            &self.context.ever_client,
+            &self.context.blockchain.client(),
             &wallet,
             "deployBranch",
             Some(params),
