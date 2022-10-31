@@ -17,6 +17,7 @@ import ABI from '../resources/contracts/abi.json'
 import { GoshError } from '../errors'
 import { sleep } from '../utils'
 import { TAddress } from '../types'
+import { retry } from '../helpers'
 
 class BaseContract implements IContract {
     address: TAddress
@@ -152,11 +153,16 @@ class BaseContract implements IContract {
         functionName: string,
         input: object,
         options?: AccountRunOptions,
-        writeLog: boolean = true,
+        settings?: { logging?: boolean; retries?: number },
     ): Promise<ResultOfProcessMessage> {
-        if (writeLog) console.debug('[Run]', { functionName, input, options })
-        const result = await this.account.run(functionName, input, options)
-        if (writeLog) console.debug('[Run result]', { functionName, result })
+        const { logging = true, retries = 3 } = settings ?? {}
+
+        if (logging) console.debug('[Run]', { functionName, input, options })
+        const result = await retry(async () => {
+            return await this.account.run(functionName, input, options)
+        }, retries)
+        if (logging) console.debug('[Run result]', { functionName, result })
+
         return result
     }
 
@@ -164,10 +170,15 @@ class BaseContract implements IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        writeLog: boolean = true,
+        settings?: { logging?: boolean; retries?: number },
     ): Promise<any> {
-        const result = await this.account.runLocal(functionName, input, options)
-        if (writeLog) console.debug('[RunLocal]', { functionName, input, result })
+        const { logging = true, retries = 1 } = settings ?? {}
+
+        const result = await retry(async () => {
+            return await this.account.runLocal(functionName, input, options)
+        }, retries)
+        if (logging) console.debug('[RunLocal]', { functionName, input, result })
+
         return result.decoded?.output
     }
 

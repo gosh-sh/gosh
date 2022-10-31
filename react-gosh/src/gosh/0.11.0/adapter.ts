@@ -29,7 +29,6 @@ import {
     getAllAccounts,
     getPaginatedAccounts,
     getTreeItemFullPath,
-    retry,
     sha1,
     sha1Tree,
     sha256,
@@ -1069,9 +1068,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             (async () => {
                 let counter = 0
                 for (const { treepath } of blobsMeta) {
-                    await retry(async () => {
-                        await this._deploySnapshot(branch, '', treepath)
-                    }, 3)
+                    await this._deploySnapshot(branch, '', treepath)
                     callback({ snapsDeploy: { count: ++counter } })
                 }
             })(),
@@ -1079,7 +1076,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             (async () => {
                 let counter = 0
                 for (const path of updatedTrees) {
-                    await retry(async () => await this._deployTree(updatedTree[path]), 3)
+                    await this._deployTree(updatedTree[path])
                     callback({ treesDeploy: { count: ++counter } })
                 }
             })(),
@@ -1087,9 +1084,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             (async () => {
                 let counter = 0
                 for (let i = 0; i < blobsMeta.length; i++) {
-                    await retry(async () => {
-                        await this._deployDiff(branch, commitHash, blobsMeta[i], i)
-                    }, 3)
+                    await this._deployDiff(branch, commitHash, blobsMeta[i], i)
                     callback({ diffsDeploy: { count: ++counter } })
                 }
             })(),
@@ -1097,44 +1092,34 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             (async () => {
                 let counter = 0
                 for (const tag of taglist) {
-                    await retry(async () => await this._deployTag(commitHash, tag), 3)
+                    await this._deployTag(commitHash, tag)
                     callback({ tagsDeploy: { count: ++counter } })
                 }
             })(),
             // Deploy commit
             (async () => {
-                await retry(async () => {
-                    await this._deployCommit(
-                        branch,
-                        commitHash,
-                        commitContent,
-                        commitParentAddrs,
-                        updatedTreeHash,
-                        false,
-                    )
-                }, 3)
+                await this._deployCommit(
+                    branch,
+                    commitHash,
+                    commitContent,
+                    commitParentAddrs,
+                    updatedTreeHash,
+                    false,
+                )
                 callback({ commitDeploy: true })
             })(),
         ])
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
-            await retry(async () => {
-                await this._setCommit(branch, commitHash, blobsMeta.length)
-            }, 3)
+            await this._setCommit(branch, commitHash, blobsMeta.length)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
             })
             if (!wait) throw new GoshError('Push timeout reached')
         } else {
-            await retry(async () => {
-                await this._startProposalForSetCommit(
-                    branch,
-                    commitHash,
-                    blobsMeta.length,
-                )
-            }, 3)
+            await this._startProposalForSetCommit(branch, commitHash, blobsMeta.length)
         }
         callback({ completed: true })
     }
@@ -1148,22 +1133,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             (async () => {
                 let counter = 0
                 for (const path of Object.keys(tree)) {
-                    await retry(async () => await this._deployTree(tree[path]), 3)
+                    await this._deployTree(tree[path])
                     // callback({ treesDeploy: { count: ++counter } })
                 }
             })(),
             // Deploy commit
             (async () => {
-                await retry(async () => {
-                    await this._deployCommit(
-                        commit.branch,
-                        commit.name,
-                        commit.content,
-                        commit.parents,
-                        commit.tree,
-                        true,
-                    )
-                }, 3)
+                await this._deployCommit(
+                    commit.branch,
+                    commit.name,
+                    commit.content,
+                    commit.parents,
+                    commit.tree,
+                    true,
+                )
                 // callback({ commitDeploy: true })
             })(),
         ])
@@ -1171,16 +1154,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Deploy snapshots
         let counter = 0
         for (const { treepath, content } of blobs) {
-            await retry(async () => {
-                await this._deploySnapshot(commit.branch, commit.name, treepath, content)
-            }, 3)
+            await this._deploySnapshot(commit.branch, commit.name, treepath, content)
             // callback({ snapsDeploy: { count: ++counter } })
         }
 
         // Set commit
-        await retry(async () => {
-            await this._setCommit(commit.branch, commit.name, blobs.length)
-        }, 3)
+        await this._setCommit(commit.branch, commit.name, blobs.length)
         const wait = await whileFinite(async () => {
             const check = await this.getBranch(commit.branch)
             return check.commit.address !== commit.address
