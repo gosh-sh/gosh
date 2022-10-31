@@ -98,7 +98,7 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
     }
 
     async isValidProfile(username: string[]): Promise<TAddress[]> {
-        return await executeByChunk(username, MAX_ONCHAIN_SIZE, async (member) => {
+        return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
             const { valid, reason } = validateUsername(member)
             if (!valid) throw new GoshError(`${member}: ${reason}`)
