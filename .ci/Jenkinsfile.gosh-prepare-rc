@@ -208,7 +208,7 @@ pipeline {
                     dir('monitoring/gosh-mon') {   
                         sh "cp config/credentials.yml.template config/credentials.yml"
                         sh "docker build -t gosh-mon ."
-                        def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3-', returnStdout: true).trim().split('\n')
+                        def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3- | tr -d "^M"', returnStdout: true).trim().split('\n')
                         for (int i = 0; i < tests.length; i++) {
                             stage("Test ${tests[i]}") {
                             sh """
