@@ -229,20 +229,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
     }
 
-    /* function setTombstoneDao(string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-    	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
-    }
-
-    function deployWalletDao(address[] pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
-    }
-
-    function deleteWalletDao(address[] pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
-    } */
-
     function deployWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         if (_walletcounter >= _limit_wallets) { return; }
@@ -696,7 +682,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Selfdestruct
     function destroy() public senderIs(_goshdao) {
-        selfdestruct(_goshdao);
+        this.destroyWalletAll{value : 0.2 ton, flag: 1}();
+    }
+    
+    function destroyWalletAll() public senderIs(address(this)) {
+        if (_walletcounter <= 1) { selfdestruct(_goshdao); }
+        if (_index != 0) { return; }
+         GoshWallet(_getWalletAddr(_walletcounter - 1)).askForDestroy{value : 0.2 ton, flag: 1}();
+         _walletcounter -= 1;
+        this.destroyWalletAll{value : 0.2 ton, flag: 1}();
     }
 
     function askForDestroy() public senderIs(_getWalletAddr(0)) {

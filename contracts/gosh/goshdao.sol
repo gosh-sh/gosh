@@ -283,7 +283,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (index >= pubmem.length) { return; }
         deleteWalletIn(pubmem[index]);
         index += 1;
-        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+        this.deleteWallets{value: 0.1 ton, flag: 1}(pubmem, index);
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
