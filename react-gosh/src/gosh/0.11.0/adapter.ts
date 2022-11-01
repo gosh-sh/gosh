@@ -1509,9 +1509,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const result: Output[] = []
         await Promise.all(
             chunks.map(async (chunk, index) => {
+                const chunkSize = Math.floor(MAX_PARALLEL_WRITE / chunks.length)
                 const subresult = await executeByChunk(
                     chunk,
-                    MAX_PARALLEL_WRITE,
+                    chunkSize,
                     async (params, i) => {
                         const gIndex = walletChunkSize * index + i
                         return await executor(this.subwallets[index], params, gIndex)
