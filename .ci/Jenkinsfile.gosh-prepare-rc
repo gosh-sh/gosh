@@ -116,7 +116,7 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
             }
         }
-        stage('Web: deploy') {
+        /*stage('Web: deploy') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -163,7 +163,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Tests: functional') {
             agent {
                 docker {
