@@ -376,7 +376,7 @@
 			]
 		},
 		{
-			"name": "getAddrRootGosh",
+			"name": "getAddrSystemContract",
 			"inputs": [
 			],
 			"outputs": [

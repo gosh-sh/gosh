@@ -11,7 +11,7 @@ pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "goshwallet.sol";
-import "gosh.sol";
+import "systemcontract.sol";
 import "tree.sol";
 import "diff.sol";
 import "commit.sol";
@@ -144,7 +144,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
         _flag = true;
-        GoshRoot(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
+        SystemContract(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
