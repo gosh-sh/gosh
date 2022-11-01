@@ -213,7 +213,7 @@ pipeline {
                             stage("Test ${tests[i]}") {
                             sh """
                                 docker run --rm \
-                                    -e GM_MODE=${tests[i]} \
+                                    -e GM_MODE="${tests[i]}" \
                                     -e RUN_NOW=1 \
                                     -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
                                     -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
