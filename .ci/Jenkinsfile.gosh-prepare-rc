@@ -211,16 +211,17 @@ pipeline {
                         def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3- | tr -d "^M"', returnStdout: true).trim().split('\n')
                         for (int i = 0; i < tests.length; i++) {
                             stage("Test ${tests[i]}") {
-                            sh """
-                                docker run --rm \
-                                    -e GM_MODE='${tests[i]}.trim()' \
-                                    -e RUN_NOW=1 \
-                                    -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
-                                    -e CONFIG_APPURL=https://gosh-web-167-cicd-tests-fw-check-2-1-19.gosh.sh/ \
-                                    -v \$(pwd)/config:/home/node/app/config:ro \
-                                    -v \$(pwd)/test-errors:/home/node/app/errors \
-                                    gosh-mon
-                            """
+                                def mode = ${tests[i]}.trim();
+                                sh """
+                                    docker run --rm \
+                                        -e GM_MODE='$mode' \
+                                        -e RUN_NOW=1 \
+                                        -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
+                                        -e CONFIG_APPURL=https://gosh-web-167-cicd-tests-fw-check-2-1-19.gosh.sh/ \
+                                        -v \$(pwd)/config:/home/node/app/config:ro \
+                                        -v \$(pwd)/test-errors:/home/node/app/errors \
+                                        gosh-mon
+                                """
                             }
                         }
                     }   
