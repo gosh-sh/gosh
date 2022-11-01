@@ -182,11 +182,6 @@ impl BlockchainUserWalletService for Everscale {
     }
 }
 
-pub fn user_wallet_config(config: &Config, remote_network: &str) -> Option<UserWalletConfig> {
-    log::debug!("Searching for a wallet at {}", remote_network);
-    config.find_network_user_wallet(&remote_network)
-}
-
 async fn init_user_wallet_mirrors<C>(
     client: &TonClient,
     user_wallet_contract: &C,
