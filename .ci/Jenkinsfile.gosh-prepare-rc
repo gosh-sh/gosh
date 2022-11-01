@@ -99,7 +99,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Deploy: deploy smart-contracts') {
+        stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -163,7 +163,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Tests: functional') {
             agent {
                 docker {
