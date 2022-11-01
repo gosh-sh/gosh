@@ -10,7 +10,7 @@ tonos-cli config --url $NETWORK
 
 # Should exist root and gosh root
 
-export GOSH_ROOT_ADDR=`cat ../contracts/gosh/Gosh.addr`
+export GOSH_ROOT_ADDR=`cat ../contracts/gosh/SystemContract.addr`
 echo "export GOSH_ROOT_ADDR=$GOSH_ROOT_ADDR" >> env.env
 
 export GOSH_ABI=../contracts/gosh/systemcontract.abi.json

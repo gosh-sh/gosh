@@ -126,7 +126,7 @@ pipeline {
             steps {
                 script {
                     env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/GoshRoot.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
                         touch ${DOCKER_WEB_CONTAINER_NAME}.gosh.sh
                         sed -i '/REACT_APP_GOSH_ROOTADDR/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
