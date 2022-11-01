@@ -88,25 +88,28 @@
 			]
 		},
 		{
-			"name": "setTombstoneDao",
+			"name": "startProposalForSetTombstoneDao",
 			"inputs": [
-				{"name":"description","type":"string"}
+				{"name":"description","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "deployWalletDao",
+			"name": "startProposalForDeployWalletDao",
 			"inputs": [
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "deleteWalletDao",
+			"name": "startProposalForDeleteWalletDao",
 			"inputs": [
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]

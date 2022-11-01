@@ -161,7 +161,75 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
 
-    function setTombstoneDao(string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function startProposalForSetTombstoneDao(
+        string description,
+        uint128 num_clients
+    ) public onlyOwnerPubkey(_access.get()) accept saveMsg {
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, description);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+
+    function startProposalForDeployWalletDao(
+        address[] pubaddr,
+        uint128 num_clients
+    ) public onlyOwnerPubkey(_access.get()) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, pubaddr);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+
+    function startProposalForDeleteWalletDao(
+        address[] pubaddr,
+        uint128 num_clients
+    ) public onlyOwnerPubkey(_access.get()) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, pubaddr);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+
+    function _setTombstoneDao(string description) private view {
+    	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
+    }
+
+    function _deployWalletDao(address[] pubaddr) private view {
+        if (_tombstone) return;
+        //require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
+    }
+
+    function _deleteWalletDao(address[] pubaddr) private view {
+        if (_tombstone) return;
+        //require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
+    }
+
+    /* function setTombstoneDao(string description) public onlyOwnerPubkey(_access.get())  accept saveMsg {
     	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
     }
 
@@ -173,7 +241,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deleteWalletDao(address[] pubaddr) public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
-    }
+    } */
 
     function deployWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -602,6 +670,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 (string repoName, string branchName) = s.decode(string, string);
                 Repository(_buildRepositoryAddr(repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
+            } else
+            if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
+                (string description) = s.decode(string);
+                _setTombstoneDao(description);
+            } else
+            if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
+                //_deployWalletDao(address[] pubaddr)
+                (address[] pubaddr) = s.decode(address[]);
+                _deployWalletDao(pubaddr);
+            } else
+            if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
+                (address[] pubaddr) = s.decode(address[]);
+                _deleteWalletDao(pubaddr);
             }
         }
     }

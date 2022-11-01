@@ -96,9 +96,22 @@ abstract contract Modifiers is ReplayProtection {
     uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
     uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
 
+    uint32 constant SET_TOMBSTONE_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant SET_TOMBSTONE_PROPOSAL_DURATION  = 1 weeks;
+
+    uint32 constant DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant DEPLOY_WALLET_DAO_PROPOSAL_DURATION  = 1 weeks;
+
+    uint32 constant DELETE_WALLET_DAO_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant DELETE_WALLET_DAO_PROPOSAL_DURATION  = 1 weeks; 
+
+
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
     uint256 constant DELETE_PROTECTED_BRANCH_PROPOSAL_KIND = 3;
+    uint256 constant SET_TOMBSTONE_PROPOSAL_KIND = 4;
+    uint256 constant DEPLOY_WALLET_DAO_PROPOSAL_KIND = 5;
+    uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
