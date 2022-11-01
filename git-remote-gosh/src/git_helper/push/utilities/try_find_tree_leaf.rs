@@ -34,7 +34,7 @@ pub fn try_find_tree_leaf(
                     tree::EntryMode::Blob
                     | tree::EntryMode::BlobExecutable
                     | tree::EntryMode::Link => true,
-                    tree::EntryMode::Commit => panic!("Unsupported"),
+                    tree::EntryMode::Commit => false,
                 }
             });
             return Ok(result.map(|e| e.oid.into()));
@@ -48,7 +48,7 @@ pub fn try_find_tree_leaf(
                     tree::EntryMode::Blob
                     | tree::EntryMode::BlobExecutable
                     | tree::EntryMode::Link => false,
-                    tree::EntryMode::Commit => panic!("Unsupported"),
+                    tree::EntryMode::Commit => false,
                 }
             });
             if result.is_none() {

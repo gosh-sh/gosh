@@ -54,9 +54,7 @@ fn all_files(repository: &Repository, tree_root: ObjectId) -> anyhow::Result<Vec
             tree::EntryMode::Blob | tree::EntryMode::BlobExecutable => true,
             tree::EntryMode::Link => true,
             tree::EntryMode::Tree => false,
-            tree::EntryMode::Commit => {
-                panic!("Commits of git submodules are not supported yet");
-            }
+            tree::EntryMode::Commit => false,
         })
         .collect())
 }

@@ -140,10 +140,7 @@ where
                             };
                             tree_obj_queue.push_back(to_load);
                         }
-                        git_object::tree::EntryMode::Commit => {
-                            log::trace!("Tree entry: commit {}->{}", id, oid);
-                            commits_queue.push_back(oid);
-                        }
+                        git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
                             log::trace!("Tree entry: blob {}->{}", id, oid);
