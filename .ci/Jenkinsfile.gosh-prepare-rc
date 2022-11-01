@@ -208,7 +208,10 @@ pipeline {
                     dir('monitoring/gosh-mon') {   
                         sh "cp config/credentials.yml.template config/credentials.yml"
                         sh "docker build -t gosh-mon ."
-                        def tests = ["seed-read", "root-check"]
+                        def getTests(){
+                            return ['seed-read', 'root-check']
+                        }
+                        def tests = getTests()
                         for (int i = 0; i < tests.length; i++) {
                             stage("Test ${tests[i]}") {
                             sh """
