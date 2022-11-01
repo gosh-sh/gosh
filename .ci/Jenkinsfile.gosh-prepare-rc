@@ -216,7 +216,7 @@ pipeline {
                                         -e GM_MODE='${tests[i].trim()}' \
                                         -e RUN_NOW=1 \
                                         -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
-                                        -e CONFIG_APPURL=https://gosh-web-167-cicd-tests-fw-check-2-1-19.gosh.sh/ \
+                                        -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
                                         -v \$(pwd)/config:/home/node/app/config:ro \
                                         -v \$(pwd)/test-errors:/home/node/app/errors \
                                         gosh-mon
