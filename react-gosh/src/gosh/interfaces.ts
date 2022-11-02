@@ -64,6 +64,7 @@ interface IGoshDaoAdapter {
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
+    getRemoteConfig(): Promise<object>
     getRepository(options: {
         name?: string
         address?: TAddress
@@ -123,6 +124,11 @@ interface IGoshRepositoryAdapter {
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>
     getUpgrade(commit: string): Promise<TUpgradeData>
+    getContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+    ): Promise<string>
 
     deployBranch(name: string, from: string): Promise<void>
     deleteBranch(name: string): Promise<void>
@@ -144,6 +150,13 @@ interface IGoshRepositoryAdapter {
         callback?: IPushCallback,
     ): Promise<void>
     pushUpgrade(data: TUpgradeData): Promise<void>
+
+    deployContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+        content: string,
+    ): Promise<void>
 }
 
 interface IContract {

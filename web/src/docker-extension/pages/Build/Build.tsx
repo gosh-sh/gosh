@@ -5,8 +5,7 @@ import BranchSelect from '../../../components/BranchSelect'
 import * as Yup from 'yup'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
-import { useRecoilValue } from 'recoil'
-import { userAtom, useBranches } from 'react-gosh'
+import { useBranches, AppConfig } from 'react-gosh'
 import { TextField } from '../../../components/Formik'
 
 type TBuildFormValues = {
@@ -15,17 +14,13 @@ type TBuildFormValues = {
 }
 
 const BuildPage = () => {
-    const userState = useRecoilValue(userAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const [output, setOutput] = useState('')
 
-    // const [dirUp] = splitByPath(treepath)
-
     const isDisabled = false
-    const rootContract = process.env.REACT_APP_GOSH_ADDR
 
     const appendLog = (...args: string[]) => {
         console.log('appendLog', args)
@@ -40,20 +35,15 @@ const BuildPage = () => {
 
     const onBuild = async (values: TBuildFormValues, { setSubmitting }: any) => {
         setOutput('')
-        console.log('onBuild', values)
         if (!!branch) {
             const commit = await repo.getCommit({ address: branch.commit.address })
-            console.log('commit', commit)
 
-            // TODO: Get GOSH version?
             await DockerClient.buildImage(
-                `gosh://${rootContract}/${daoName}/${repoName}`,
+                `gosh://${AppConfig.versions[repo.getVersion()]}/${daoName}/${repoName}`,
                 commit.name,
                 values.imageDockerfile,
                 values.tag,
                 appendLog,
-                userState,
-                '0.11.0',
             )
         } else {
             console.error(`Error: branch has no commit address`)
