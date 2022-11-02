@@ -119,14 +119,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function turnOnPubkeyIn(
         uint256 pubkey
-    ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)){
+    ) public senderIs(_getWalletAddr(_index - 1)) accept saveMsg {
         _access = pubkey;
         getMoney();
         GoshWallet(_getWalletAddr(_index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
     function turnOffPubkeyIn(
-    ) public accept saveMsg senderIs(_getWalletAddr(_index - 1)) {
+    ) public senderIs(_getWalletAddr(_index - 1)) accept saveMsg {
         _access = null;
         getMoney();
         GoshWallet(_getWalletAddr(_index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();
@@ -681,7 +681,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Selfdestruct
-    function destroy() public senderIs(_goshdao) {
+    function destroy() public view senderIs(_goshdao) {
         this.destroyWalletAll{value : 0.2 ton, flag: 1}();
     }
     

@@ -281,7 +281,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"address"}
+				{"name":"value0","type":"optional(address)"}
 			]
 		},
 		{
@@ -343,14 +343,6 @@
 			]
 		},
 		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "projectTokens",
 			"inputs": [
 			],
@@ -405,7 +397,7 @@
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
-		{"name":"_previous","type":"address"},
+		{"name":"_previous","type":"optional(address)"},
 		{"name":"_wallets","type":"map(uint256,address)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_limit_wallets","type":"uint128"},

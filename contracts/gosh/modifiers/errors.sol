@@ -57,4 +57,5 @@ abstract contract Errors {
     uint constant ERR_WRONG_NUMBER_MEMBER = 246;
     uint constant ERR_BAD_PARENT = 247;
     uint constant ERR_TOO_LOW_BALANCE = 248;
+    uint constant ERR_FIRST_DAO = 249;
 }

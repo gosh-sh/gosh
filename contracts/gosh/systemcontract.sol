@@ -45,10 +45,11 @@ contract SystemContract is Modifiers {
         _root = msg.sender;
     }
     
-    function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view accept {
+    function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view {
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
         VersionController(_root).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
     }
     
@@ -64,7 +65,6 @@ contract SystemContract is Modifiers {
     }
     
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
-        tvm.accept();
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
@@ -75,7 +75,6 @@ contract SystemContract is Modifiers {
 
     
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {
-        tvm.accept();
         require(_flag == false, ERR_GOSH_UPDATE);
         TvmCell s0 = tvm.buildStateInit({
             code: _code[m_ProfileDaoCode],

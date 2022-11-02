@@ -262,7 +262,6 @@ contract Profile is Modifiers {
     }
 
     function sendMoneyProfileDao(string name, uint128 value) public view {
-        tvm.accept();
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,

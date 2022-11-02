@@ -341,14 +341,6 @@
 			"outputs": [
 				{"name":"value0","type":"bool"}
 			]
-		},
-		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
 		}
 	],
 	"data": [

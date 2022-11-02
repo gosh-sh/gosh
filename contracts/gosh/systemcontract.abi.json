@@ -377,14 +377,6 @@
 			]
 		},
 		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "_lastGoshDao",
 			"inputs": [
 			],

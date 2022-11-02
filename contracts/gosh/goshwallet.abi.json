@@ -685,14 +685,6 @@
 			]
 		},
 		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "m_tokenRoot",
 			"inputs": [
 			],
