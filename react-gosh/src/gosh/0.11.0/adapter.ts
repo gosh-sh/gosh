@@ -36,6 +36,7 @@ import {
     zstd,
     goshipfs,
     executeByChunk,
+    splitByChunk,
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
