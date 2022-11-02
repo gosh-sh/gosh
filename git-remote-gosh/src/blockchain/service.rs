@@ -3,10 +3,7 @@ use super::{
     user_wallet::BlockchainUserWalletService, BlockchainContractAddress, Everscale,
     GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract, TonClient,
 };
-use crate::{
-    abi as gosh_abi,
-    config::{NetworkConfig, UserWalletConfig},
-};
+use crate::abi as gosh_abi;
 use async_trait::async_trait;
 use std::fmt::Debug;
 
@@ -121,6 +118,7 @@ impl BlockchainService for Everscale {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use crate::config::UserWalletConfig;
     use crate::utilities::Remote;
     use git_hash::ObjectId;
 

@@ -55,7 +55,7 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
         Blob => "blob",
         BlobExecutable => "blobExecutable",
         Link => "link",
-        Commit => unimplemented!(),
+        Commit => "commit",
     }
     .to_owned()
 }
@@ -68,7 +68,7 @@ async fn construct_tree_node(
     let mut buffer = vec![];
     use git_object::tree::EntryMode::*;
     let content_hash = match e.mode {
-        Tree | Link => {
+        Tree | Link | Commit => {
             let _ = context
                 .local_repository()
                 .objects
@@ -97,7 +97,6 @@ async fn construct_tree_node(
                 tvm_hash(&context.blockchain.client(), content).await?
             }
         }
-        Commit => unimplemented!(),
     };
     let file_name = e.filename.to_string();
     let tree_node = TreeNode::from((format!("0x{content_hash}"), e));

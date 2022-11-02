@@ -25,11 +25,11 @@ const CommitProgress = (props: TPushCallbackParams) => {
     return (
         <UILog>
             <UILogItem result={treesBuild}>Build updated tree...</UILogItem>
-            <UILogItem result={getCountersFlag(treesDeploy)}>
-                Deploy trees... ({treesDeploy?.count}/{treesDeploy?.total})
-            </UILogItem>
             <UILogItem result={getCountersFlag(snapsDeploy)}>
                 Deploy snapshots... ({snapsDeploy?.count}/{snapsDeploy?.total})
+            </UILogItem>
+            <UILogItem result={getCountersFlag(treesDeploy)}>
+                Deploy trees... ({treesDeploy?.count}/{treesDeploy?.total})
             </UILogItem>
             <UILogItem result={getCountersFlag(diffsDeploy)}>
                 Deploy diffs... ({diffsDeploy?.count}/{diffsDeploy?.total})
