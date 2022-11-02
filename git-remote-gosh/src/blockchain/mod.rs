@@ -5,7 +5,7 @@ use base64_serde::base64_serde_type;
 use serde::Deserialize;
 use serde_json;
 
-use std::{env, sync::Arc};
+use std::sync::Arc;
 
 mod contract;
 mod error;
@@ -19,10 +19,10 @@ use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
     crypto::KeyPair,
-    net::{query_collection, NetworkQueriesProtocol, ParamsOfQueryCollection},
+    net::{query_collection, ParamsOfQueryCollection},
     processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
     tvm::{run_tvm, ParamsOfRunTvm},
-    ClientConfig, ClientContext,
+    ClientContext,
 };
 mod blockchain_contract_address;
 pub use blockchain_contract_address::BlockchainContractAddress;
@@ -40,7 +40,6 @@ pub use tvm_hash::tvm_hash;
 
 use crate::{
     abi as gosh_abi,
-    config::Config,
     config::{self, UserWalletConfig},
 };
 
@@ -148,43 +147,6 @@ pub struct Everscale {
     ever_client: TonClient,
     root_contract: GoshContract,
     repo_contract: GoshContract,
-}
-
-#[instrument(level = "debug")]
-pub fn create_client(config: &Config, network: &str) -> anyhow::Result<TonClient> {
-    let endpoints = config
-        .find_network_endpoints(network)
-        .expect("Unknown network");
-    let proto = env::var("GOSH_PROTO")
-        .unwrap_or_else(|_| ".git".to_string())
-        .to_lowercase();
-
-    let config = ClientConfig {
-        network: ton_client::net::NetworkConfig {
-            sending_endpoint_count: endpoints.len() as u8,
-            endpoints: if endpoints.is_empty() {
-                None
-            } else {
-                Some(endpoints)
-            },
-            queries_protocol: if proto.starts_with("http") {
-                NetworkQueriesProtocol::HTTP
-            } else {
-                NetworkQueriesProtocol::WS
-            },
-            network_retries_count: 5,
-            message_retries_count: 10,
-            message_processing_timeout: 220000000,
-            wait_for_timeout: 220000000,
-            query_timeout: 220000000,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
-    let es_client = ClientContext::new(config)
-        .map_err(|e| anyhow::anyhow!("failed to create EverSDK client: {}", e))?;
-
-    Ok(Arc::new(es_client))
 }
 
 async fn run_local(
@@ -470,7 +432,10 @@ pub async fn get_head(
 pub mod tests {
 
     use super::*;
-    use crate::config;
+    use crate::{
+        config::{self, Config},
+        git_helper::ever_client::create_client,
+    };
 
     pub struct TestEnv {
         config: Config,

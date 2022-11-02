@@ -6,15 +6,17 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use crate::{
     abi as gosh_abi,
     blockchain::{
-        create_client, get_head, get_repo_address, BlockchainContractAddress, BlockchainService,
-        EverscaleBuilder, GoshContract, TonClient, Tree,
+        get_head, get_repo_address, BlockchainContractAddress, BlockchainService, EverscaleBuilder,
+        GoshContract, TonClient, Tree,
     },
     config::Config,
+    git_helper::ever_client::create_client,
     ipfs::IpfsService,
     logger::GitHelperLogger as Logger,
     utilities::Remote,
 };
 
+pub mod ever_client;
 #[cfg(test)]
 mod test_utils;
 

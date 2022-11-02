@@ -171,7 +171,8 @@ mod tests {
     impl TestEnv {
         fn new() -> Self {
             let cfg = config::Config::init().unwrap();
-            let client = crate::blockchain::create_client(&cfg, "vps23.ton.dev").unwrap();
+            let client =
+                crate::git_helper::ever_client::create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
                 config: cfg,
                 client,
