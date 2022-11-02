@@ -25,7 +25,7 @@ REPO_NAME=repo8
 
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
-REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
@@ -33,7 +33,7 @@ sleep 30
 
 # 2
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone1"
+git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
 
 cd $REPO_NAME"-clone1"
 
@@ -65,7 +65,7 @@ sleep 30
 cd ..
 
 # 5
-git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone2"
+git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
 
 cd $REPO_NAME"-clone1"
 
@@ -106,7 +106,7 @@ cd ..
 
 # 10
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone3"
+git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone3"
 
 # 11
 echo "***** comparing repositories *****"
