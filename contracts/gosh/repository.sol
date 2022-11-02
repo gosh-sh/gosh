@@ -45,6 +45,7 @@ contract Repository is Modifiers{
         TvmCell SnapshotCode,
         TvmCell codeTree,
         TvmCell codeDiff,
+        TvmCell contentSignature,
         uint128 index,
         optional(AddrVersion) previousversion
         ) public {
@@ -62,6 +63,7 @@ contract Repository is Modifiers{
         _code[m_TreeCode] = codeTree;
         _code[m_SnapshotCode] = SnapshotCode;
         _code[m_DiffCode] = codeDiff;
+        _code[m_contentSignature] = contentSignature;
         _previousversion = previousversion;
         if (_previousversion.hasValue()) { SystemContract(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
@@ -256,6 +258,13 @@ contract Repository is Modifiers{
     }
 
     //Getters
+    function getContentAdress(string commit,
+        string label) external view returns(address) {
+        address repo = address(this);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _goshroot : _goshroot, _goshdao : _goshdao}});
+       return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
     function isBranchProtected(string branch) external view returns(bool) {
         if (_protectedBranch.exists(tvm.hash(branch)) == false) {
