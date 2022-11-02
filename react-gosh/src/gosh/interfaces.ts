@@ -255,13 +255,6 @@ interface IGoshWallet extends IContract {
     voteFor(proposalAddr: string, choice: boolean, amount: number): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
-    deployContent(
-        repoName: string,
-        commitName: string,
-        label: string,
-        content: string,
-    ): Promise<void>
-    getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
 }
 
 interface IGoshCommit extends IContract {
