@@ -13,3 +13,4 @@ set -o pipefail
 ./08-repo_with_canceled_diffs.test.sh
 ./09-ipfs_onchain_transition.test.sh
 ./10-ensure_blobs_onchain.test.sh
+./11-git_submodules.test.sh
