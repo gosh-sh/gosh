@@ -1,4 +1,4 @@
-use super::{BlockchainContractAddress, GetVersionResult, TonClient};
+use super::{BlockchainContractAddress, EverClient, GetVersionResult};
 use crate::blockchain::{run_local, run_static};
 use async_trait::async_trait;
 use serde::{de, Deserialize};
@@ -15,7 +15,7 @@ pub trait ContractInfo: Debug {
 pub trait ContractStatic: Debug {
     async fn static_method<T>(
         &mut self,
-        client: &TonClient,
+        client: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -27,7 +27,7 @@ pub trait ContractStatic: Debug {
 pub trait ContractRead: Debug {
     async fn read_state<T>(
         &self,
-        client: &TonClient,
+        client: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -39,7 +39,7 @@ pub trait ContractRead: Debug {
 pub trait ContractMutate: Debug {
     async fn mutate_state<T>(
         &mut self,
-        client: &TonClient,
+        client: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -54,7 +54,7 @@ pub trait ContractMutate: Debug {
 impl ContractStatic for GoshContract {
     async fn static_method<T>(
         &mut self,
-        client: &TonClient,
+        client: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -115,7 +115,7 @@ impl GoshContract {
     #[instrument(level = "debug", skip(context))]
     pub async fn run_local<T>(
         &self,
-        context: &TonClient,
+        context: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -130,7 +130,7 @@ impl GoshContract {
     #[instrument(level = "debug", skip(context))]
     pub async fn run_static<T>(
         &mut self,
-        context: &TonClient,
+        context: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -142,7 +142,7 @@ impl GoshContract {
         Ok(serde_json::from_value::<T>(result)?)
     }
 
-    pub async fn get_version(&self, context: &TonClient) -> anyhow::Result<String> {
+    pub async fn get_version(&self, context: &EverClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
         Ok(result.version)
     }
@@ -164,7 +164,7 @@ impl ContractInfo for GoshContract {
 impl ContractRead for GoshContract {
     async fn read_state<T>(
         &self,
-        client: &TonClient,
+        client: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
@@ -194,7 +194,7 @@ mod tests {
     impl ContractRead for TestDummyContract {
         async fn read_state<T>(
             &self,
-            context: &TonClient,
+            context: &EverClient,
             function_name: &str,
             args: Option<serde_json::Value>,
         ) -> anyhow::Result<T>

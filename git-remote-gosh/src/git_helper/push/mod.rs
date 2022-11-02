@@ -529,7 +529,7 @@ mod tests {
     use log4rs::encode::json;
 
     use crate::{
-        blockchain::{BlockchainService, GoshCommit, TonClient},
+        blockchain::{BlockchainService, EverClient, GoshCommit},
         config::{Config, UserWalletConfig},
         git_helper::{
             test_utils::{self, setup_repo},

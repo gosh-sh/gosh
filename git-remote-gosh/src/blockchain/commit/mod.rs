@@ -1,5 +1,5 @@
 use crate::abi as gosh_abi;
-use crate::blockchain::TonClient;
+use crate::blockchain::EverClient;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 pub mod save;
@@ -63,7 +63,7 @@ struct SetCommitArgs {
 
 #[instrument(level = "debug", skip(context))]
 pub async fn get_set_commit_created_at_time(
-    context: &TonClient,
+    context: &EverClient,
     repo_contract: &mut GoshContract,
     commit_id: &str,
     branch_name: &str,
@@ -165,7 +165,7 @@ mod tests {
 
     pub struct TestEnv {
         config: config::Config,
-        client: TonClient,
+        client: EverClient,
     }
 
     impl TestEnv {
