@@ -181,8 +181,9 @@ impl ContractRead for GoshContract {
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{create_client, BlockchainContractAddress, GetAddrBranchResult},
+        blockchain::{BlockchainContractAddress, GetAddrBranchResult},
         config::Config,
+        git_helper::ever_client::create_client,
     };
     use std::sync::Arc;
 
