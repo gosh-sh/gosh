@@ -138,7 +138,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         string label,
         string content
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
@@ -164,7 +164,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForSetTombstoneDao(
         string description,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get()) accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, description);
@@ -178,7 +178,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeployWalletDao(
         address[] pubaddr,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get()) {
+    ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _saveMsg();
@@ -197,7 +197,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeleteWalletDao(
         address[] pubaddr,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get()) {
+    ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _saveMsg();
@@ -229,7 +229,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
     }
 
-    function deployWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         if (_walletcounter >= _limit_wallets) { return; }
         if (_index != 0) { return; }
@@ -247,7 +247,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function destroyWallet() public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function destroyWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         if (_walletcounter <= 1) { return; }
         if (_index != 0) { return; }
          GoshWallet(_getWalletAddr(_walletcounter - 1)).askForDestroy{value : 0.2 ton, flag: 1}();
@@ -278,13 +278,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         SystemContract(_goshroot).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
 
-    function destroyObject(address obj) public onlyOwnerPubkey(_access.get())  accept view {
+    function destroyObject(address obj) public onlyOwnerPubkeyOptional(_access)  accept view {
         require(_tombstone == false, ERR_TOMBSTONE);
         Object(obj).destroy{value : 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     //Repository part
-    function deployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkName(nameRepo), ERR_WRONG_NAME);
@@ -310,7 +310,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Snapshot part
-    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkey(_access.get())  accept saveMsg{
+    function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(_tombstone == false, ERR_TOMBSTONE);
         TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
@@ -318,7 +318,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function deleteSnapshot(address snap) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deleteSnapshot(address snap) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         Snapshot(snap).destroy{
@@ -336,7 +336,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 index1,
         uint128 index2,
         bool last
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         _deployDiff(repoName, branchName, commitName, diffs, index1, index2, last);
@@ -373,7 +373,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address[] parents,
         address tree,
         bool upgrade
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
@@ -402,7 +402,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles,
         uint128 numberCommits
-    ) public onlyOwnerPubkey(_access.get())  {
+    ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         address repo = _buildRepositoryAddr(repoName);
@@ -425,7 +425,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string newName,
         string fromCommit
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkName(newName), ERR_WRONG_NAME);
@@ -438,7 +438,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deleteBranch(
         string repoName,
         string Name
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
@@ -450,7 +450,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function setHEAD(
         string repoName,
         string branchName
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
@@ -465,7 +465,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nameCommit,
         string content,
         address commit
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
@@ -477,7 +477,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function deleteTag(string repoName, string nametag) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function deleteTag(string repoName, string nametag) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
@@ -491,7 +491,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Config
-    function updateConfig() public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    function updateConfig() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         GoshDao(_goshdao).getConfigInfo{value: 0.15 ton, bounce: true, flag: 1}(_pubaddr, _index);
@@ -511,7 +511,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string shaTree,
         mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs
-    ) public onlyOwnerPubkey(_access.get())  accept saveMsg {
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         _deployTree(repoName, shaTree, datatree, ipfs);
@@ -564,7 +564,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 numberChangedFiles,
         uint128 numberCommits,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get())  {
+    ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _saveMsg();
@@ -583,7 +583,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get())  {
+    ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _saveMsg();
@@ -602,7 +602,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         uint128 num_clients
-    ) public onlyOwnerPubkey(_access.get())  {
+    ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         _saveMsg();
@@ -617,7 +617,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function tryProposalResult(address proposal) public onlyOwnerPubkey(_access.get())  accept saveMsg{
+    function tryProposalResult(address proposal) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         ISMVProposal(proposal).isCompleted{
