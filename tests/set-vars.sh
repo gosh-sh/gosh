@@ -10,14 +10,14 @@ tonos-cli config --url $NETWORK
 
 # Should exist root and gosh root
 
-export GOSH_ROOT_ADDR=`cat ../contracts/gosh/Gosh.addr`
-echo "GOSH_ROOT_ADDR=$GOSH_ROOT_ADDR" >> env.env
+export GOSH_ROOT_ADDR=`cat ../contracts/gosh/SystemContract.addr`
+echo "export GOSH_ROOT_ADDR=$GOSH_ROOT_ADDR" >> env.env
 
 export GOSH_ABI=../contracts/gosh/systemcontract.abi.json
 USER_PROFILE_ABI=../contracts/gosh/profile.abi.json
-echo "GOSH_ABI=$GOSH_ABI" >> env.env
+echo "export GOSH_ABI=$GOSH_ABI" >> env.env
 export REPO_ABI=../contracts/gosh/repository.abi.json
-echo "REPO_ABI=$REPO_ABI" >> env.env
+echo "export REPO_ABI=$REPO_ABI" >> env.env
 DAO1_ABI=../contracts/gosh/goshdao.abi.json
 
 # generate user keys
@@ -32,22 +32,22 @@ tonos-cli call --abi $GOSH_ABI $GOSH_ROOT_ADDR deployProfile "{\"pubkey\":\"$DAO
 USER_PROFILE_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 # *deploy DAO
-export DAO1_NAME=dao-201
-echo "DAO1_NAME=$DAO1_NAME" >> env.env
+export DAO1_NAME=dao-100
+echo "export DAO1_NAME=$DAO1_NAME" >> env.env
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $DAO1_KEYS deployDao \
   "{\"goshroot\":\"$GOSH_ROOT_ADDR\", \"name\":\"$DAO1_NAME\", \"previous\":null, \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
 DAO1_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrDao "{\"name\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 # user keys
 export WALLET_KEYS=$DAO1_KEYS
-echo "WALLET_KEYS=$WALLET_KEYS" >> env.env
+echo "export WALLET_KEYS=$WALLET_KEYS" >> env.env
 WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 WALLET_ADDR=$(tonos-cli -j run $DAO1_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO1_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 export WALLET_ADDR
-echo "WALLET_ADDR=$WALLET_ADDR" >> env.env
+echo "export WALLET_ADDR=$WALLET_ADDR" >> env.env
 export WALLET_ABI=../contracts/gosh/goshwallet.abi.json
-echo "WALLET_ABI=$WALLET_ABI" >> env.env
+echo "export WALLET_ABI=$WALLET_ABI" >> env.env
 
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
   "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
