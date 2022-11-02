@@ -55,9 +55,8 @@ impl GitHelperLogger {
 
     fn calculate_log_level(verbosity: u8) -> log::LevelFilter {
         // TODO: fix ambiguity with arg verbosity and implicit use of env
-        if let Ok(verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
-            let verbosity = u8::from_str(&verbosity).unwrap_or_default();
-            if verbosity > 0 {
+        if let Ok(trace_verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
+            if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
                 return log::LevelFilter::Trace;
             }
         }
