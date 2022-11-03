@@ -36,6 +36,7 @@ import {
     zstd,
     goshipfs,
     executeByChunk,
+    splitByChunk,
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
@@ -61,6 +62,7 @@ import {
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { validateUsername } from '../../validators'
+import { GoshContentSignature } from './goshcontentsignature'
 
 class GoshAdapter_0_11_0 implements IGoshAdapter {
     private static instance: GoshAdapter_0_11_0
@@ -261,6 +263,28 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
+        }
+    }
+
+    async getRemoteConfig(): Promise<object> {
+        if (!this.profile || !this.wallet || this.wallet.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const keys = this.wallet.account.signer.keys
+        const { endpoints } = await this.client.net.get_endpoints()
+        return {
+            'primary-network': 'primary',
+            networks: {
+                primary: {
+                    'user-wallet': {
+                        profile: await this.profile.getName(),
+                        pubkey: keys.public,
+                        secret: keys.secret,
+                    },
+                    endpoints,
+                },
+            },
         }
     }
 
@@ -838,6 +862,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
     }
 
+    async getContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+    ): Promise<string> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const { value0: address } = await this.auth.wallet.runLocal('getContentAdress', {
+            repoName: repository,
+            commit,
+            label,
+        })
+
+        const instance = new GoshContentSignature(this.client, address)
+        const { value0 } = await instance.runLocal('getContent', {})
+        return value0
+    }
+
     async deployBranch(name: string, from: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1142,6 +1184,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return check.commit.address !== commit.address
         })
         if (!wait) throw new GoshError('Push upgrade timeout reached')
+    }
+
+    async deployContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+        content: string,
+    ): Promise<void> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        await this.auth.wallet.run('deployContent', {
+            repoName: repository,
+            commit,
+            label,
+            content,
+        })
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
