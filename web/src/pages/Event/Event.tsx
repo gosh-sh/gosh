@@ -19,6 +19,7 @@ import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
 import { GoshSmvProposal } from 'react-gosh/dist/gosh/0.11.0/goshsmvproposal'
 import MemberEvent from './MemberEvent'
+import DaoUpgradeEvent from './DaoUpgradeEvent'
 
 type TFormValues = {
     approve: string
@@ -55,9 +56,7 @@ const EventPage = () => {
             }
             if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
 
-            /*             const smvPlatformCode = await goshRoot.getSmvPlatformCode()
-            const smvClientCode = await dao.instance.getSmvClientCode()
- */ const choice = values.approve === 'true'
+            const choice = values.approve === 'true'
             await wallet!.voteFor(event.details.address, choice, values.amount)
             toast.success('Vote accepted, event details will be updated soon')
         } catch (e: any) {
@@ -277,6 +276,9 @@ const EventPage = () => {
             {(event.details?.params.proposalKind === EEventType.DAO_MEMBER_ADD ||
                 event.details?.params.proposalKind === EEventType.DAO_MEMBER_DELETE) && (
                 <MemberEvent daoName={daoName} details={event.details} />
+            )}
+            {event.details?.params.proposalKind === EEventType.DAO_UPGRADE && (
+                <DaoUpgradeEvent daoName={daoName} details={event.details} />
             )}
         </div>
     )

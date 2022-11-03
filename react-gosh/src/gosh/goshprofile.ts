@@ -91,7 +91,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
         gosh: IGoshAdapter,
         name: string,
         members: TAddress[],
-        prev?: string | undefined,
+        prev?: TAddress | undefined,
     ): Promise<IGoshDaoAdapter> {
         const { valid, reason } = gosh.isValidDaoName(name)
         if (!valid) throw new GoshError(EGoshError.DAO_NAME_INVALID, reason)
@@ -115,7 +115,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
 
         const dao = await gosh.getDao({ name: name.toLowerCase(), useAuth: false })
         await this.run('deployDao', {
-            goshroot: gosh.gosh.address,
+            systemcontract: gosh.gosh.address,
             name: name.toLowerCase(),
             pubmem: members,
             previous: prev || null,
@@ -135,7 +135,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async setGoshAddress(address: TAddress): Promise<void> {
-        await this.run('setNewSystemContract', { goshroot: address })
+        await this.run('setNewSystemContract', { systemcontract: address })
     }
 
     async turnOn(wallet: TAddress, pubkey: string, keys: KeyPair): Promise<void> {
