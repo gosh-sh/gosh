@@ -1,7 +1,7 @@
 use super::{
-    commit::save::BlockchainCommitPusher, contract::ContractRead,
-    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, EverClient, Everscale,
-    GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
+    branch::DeployBranch, call::BlockchainCall, commit::save::BlockchainCommitPusher,
+    contract::ContractRead, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
+    EverClient, Everscale, GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -38,6 +38,8 @@ pub trait BlockchainService:
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
+    // TODO: fix naming later
+    + DeployBranch
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;

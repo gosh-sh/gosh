@@ -1,7 +1,7 @@
 use crate::{
     blockchain::{
-        call, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
-        BlockchainService, Everscale,
+        call, call::BlockchainCall, user_wallet::BlockchainUserWalletService,
+        BlockchainContractAddress, BlockchainService, Everscale,
     },
     utilities::Remote,
 };
@@ -74,7 +74,7 @@ impl BlockchainCommitPusher for Everscale {
 
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::to_value(args)?;
-        let result = call(&self.client(), &wallet, "deployCommit", Some(params)).await?;
+        let result = self.call(&wallet, "deployCommit", Some(params)).await?;
         log::debug!("deployCommit result: {:?}", result);
         Ok(())
     }
