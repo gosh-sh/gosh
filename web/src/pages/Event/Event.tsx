@@ -18,6 +18,7 @@ import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import BranchEvent from './BranchEvent'
 import { GoshSmvProposal } from 'react-gosh/dist/gosh/0.11.0/goshsmvproposal'
+import MemberEvent from './MemberEvent'
 
 type TFormValues = {
     approve: string
@@ -31,7 +32,6 @@ const EventPage = () => {
         dao.adapter,
         dao.details.isAuthenticated,
     )
-    const [check, setCheck] = useState<boolean>(false)
     const [event, setEvent] = useState<{
         details?: TGoshEventDetails
         isFetching: boolean
@@ -39,22 +39,6 @@ const EventPage = () => {
         isFetching: true,
     })
     const [walletAddr, setWalletAddr] = useState<string>()
-
-    /** Send check trigger to event */
-    const onProposalCheck = async () => {
-        try {
-            if (!event.details) throw new GoshError(EGoshError.SMV_NO_PROPOSAL)
-            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            setCheck(true)
-            await wallet!.tryProposalResult(event.details.address)
-            toast.success('Re-check submitted, event details will be updated soon')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(e.message)
-        } finally {
-            setCheck(false)
-        }
-    }
 
     /** Submit vote */
     const onProposalSubmit = async (values: TFormValues) => {
@@ -201,19 +185,6 @@ const EventPage = () => {
                                 </span>
                             </div>
                         </div>
-                        {dao.details.isAuthMember && !event.details.status.completed && (
-                            <div>
-                                <button
-                                    type="button"
-                                    className="btn btn--body text-sm px-4 py-1.5"
-                                    onClick={onProposalCheck}
-                                    disabled={check || smvDetails.smvBusy}
-                                >
-                                    {check && <Spinner className="mr-2" />}
-                                    Re-check
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     {dao.details.isAuthMember && !event.details?.status.completed && (
@@ -302,6 +273,10 @@ const EventPage = () => {
             {(event.details?.params.proposalKind === EEventType.BRANCH_LOCK ||
                 event.details?.params.proposalKind === EEventType.BRANCH_UNLOCK) && (
                 <BranchEvent daoName={daoName} details={event.details} />
+            )}
+            {(event.details?.params.proposalKind === EEventType.DAO_MEMBER_ADD ||
+                event.details?.params.proposalKind === EEventType.DAO_MEMBER_DELETE) && (
+                <MemberEvent daoName={daoName} details={event.details} />
             )}
         </div>
     )

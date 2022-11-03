@@ -32,6 +32,8 @@ export enum EEventType {
     PR = 1,
     BRANCH_LOCK = 2,
     BRANCH_UNLOCK = 3,
+    DAO_MEMBER_ADD = 5,
+    DAO_MEMBER_DELETE = 6,
 }
 
 export type TValidationResult = {

@@ -338,7 +338,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const profiles = await this.gosh.isValidProfile(username)
-        await this.wallet.run('deployWalletDao', { pubaddr: profiles })
+        const locker = await this.wallet.getSmvLocker()
+        await this.wallet.run('startProposalForDeployWalletDao', {
+            pubaddr: profiles,
+            num_clients: await locker.getNumClients(),
+        })
     }
 
     async deleteMember(username: string[]): Promise<void> {
@@ -352,7 +356,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 return profile.address
             },
         )
-        await this.wallet.run('deleteWalletDao', { pubaddr: profiles })
+        const locker = await this.wallet.getSmvLocker()
+        await this.wallet.run('startProposalForDeleteWalletDao', {
+            pubaddr: profiles,
+            num_clients: await locker.getNumClients(),
+        })
     }
 
     async _isAuthMember(): Promise<boolean> {

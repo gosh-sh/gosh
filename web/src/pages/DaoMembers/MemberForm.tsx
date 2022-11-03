@@ -5,6 +5,7 @@ import { useDaoMemberCreate } from 'react-gosh'
 import { TextareaField } from '../../components/Formik'
 import ToastError from '../../components/Error/ToastError'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { useNavigate, useParams } from 'react-router-dom'
 
 type TMemberFormValues = {
     members: string
@@ -16,6 +17,8 @@ type TDaoMemberFormProps = {
 
 const DaoMemberForm = (props: TDaoMemberFormProps) => {
     const { dao } = props
+    const { daoName } = useParams()
+    const navigate = useNavigate()
     const createDaoMember = useDaoMemberCreate(dao)
 
     const onCreateMember = async (
@@ -25,6 +28,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
         try {
             await createDaoMember(values.members.split('\n'))
             helpers.resetForm()
+            navigate(`/o/${daoName}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

@@ -56,8 +56,8 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
  */
     async getDetails(n: number, walletAddress?: string): Promise<TGoshEventDetails> {
         const isCompleted = await this.isCompleted()
-/*         console.log(n)
- */        return {
+        /*         console.log(n)
+         */ return {
             address: this.address,
             id: await this.getId(),
             params: await this.getParams(),
@@ -83,6 +83,12 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         try {
             return await this.getGoshDeleteProtectedBranchProposalParams()
         } catch {}
+        try {
+            return await this.getGoshDeployWalletDaoProposalParams()
+        } catch {}
+        try {
+            return await this.getGoshDeleteWalletDaoProposalParams()
+        } catch {}
         return null
     }
 
@@ -98,8 +104,8 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
 
     async getClientAddress(walletAddress?: string): Promise<string> {
         try {
-/*             console.log(walletAddress)
- */            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
+            /*             console.log(walletAddress)
+             */ if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
 
             const wallet = new GoshWallet(this.account.client, walletAddress!)
             const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {}))
@@ -141,7 +147,9 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
             const client = new GoshSmvClient(this.account.client, clientAddress)
             /* return 7 */
             const clientDeployed = await client.isDeployed()
-            const result = clientDeployed ? await client.account.runLocal('amount_locked', {}) : undefined
+            const result = clientDeployed
+                ? await client.account.runLocal('amount_locked', {})
+                : undefined
             return parseInt(result?.decoded?.output.value0) || 0
         } catch (e: any) {
             console.error(e.message)
@@ -178,6 +186,30 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     async getGoshDeleteProtectedBranchProposalParams(): Promise<any> {
         const result = await this.account.runLocal(
             'getGoshDeleteProtectedBranchProposalParams',
+            {},
+        )
+        const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshDeployWalletDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshDeployWalletDaoProposalParams',
+            {},
+        )
+        const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshDeleteWalletDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshDeleteWalletDaoProposalParams',
             {},
         )
         const decoded = result.decoded?.output
