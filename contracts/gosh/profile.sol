@@ -265,7 +265,7 @@ contract Profile is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
         address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
         require(daoprofile == msg.sender, ERR_SENDER_NO_ALLOWED);
