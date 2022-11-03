@@ -77,7 +77,7 @@ contract SystemContract is Modifiers {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
-            varInit: {_name: name}
+            varInit: {_name: name, _versioncontroller: _versionController}
         });
         new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], pubkey);
     }
@@ -309,7 +309,7 @@ contract SystemContract is Modifiers {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versionController}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -318,7 +318,7 @@ contract SystemContract is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versionController}
         });
         return address(tvm.hash(s0));
     }   

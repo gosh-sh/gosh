@@ -323,7 +323,7 @@ contract Profile is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
         return address(tvm.hash(s0));
     }

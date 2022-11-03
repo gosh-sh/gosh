@@ -119,7 +119,7 @@ contract VersionController is Modifiers {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: address(this)}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -128,7 +128,7 @@ contract VersionController is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: address(this)}
         });
         return address(tvm.hash(s0));
     }
