@@ -328,7 +328,7 @@ contract DiffC is Modifiers {
         return _diff;
     }
 
-    function getNextAdress() external view returns(address) {
+    function getNextAddress() external view returns(address) {
         return getDiffAddress(_index2 + 1);
     }
     

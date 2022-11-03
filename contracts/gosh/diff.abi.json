@@ -133,7 +133,7 @@
 			]
 		},
 		{
-			"name": "getNextAdress",
+			"name": "getNextAddress",
 			"inputs": [
 			],
 			"outputs": [

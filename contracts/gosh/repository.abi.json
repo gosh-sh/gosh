@@ -200,7 +200,7 @@
 			]
 		},
 		{
-			"name": "getContentAdress",
+			"name": "getContentAddress",
 			"inputs": [
 				{"name":"commit","type":"string"},
 				{"name":"label","type":"string"}
@@ -299,7 +299,7 @@
 			]
 		},
 		{
-			"name": "getGoshAdress",
+			"name": "getGoshAddress",
 			"inputs": [
 			],
 			"outputs": [

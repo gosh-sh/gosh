@@ -271,7 +271,7 @@
 			]
 		},
 		{
-			"name": "getRepoAdress",
+			"name": "getRepoAddress",
 			"inputs": [
 			],
 			"outputs": [
@@ -287,7 +287,7 @@
 			]
 		},
 		{
-			"name": "getDiffAdress",
+			"name": "getDiffAddress",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"}

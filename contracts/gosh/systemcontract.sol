@@ -273,7 +273,7 @@ contract SystemContract is Modifiers {
     }
 
     //Getters
-    function getContentAdress(string repoName,
+    function getContentAddress(string repoName,
         string daoName,
         string commit,
         string label) external view returns(address) {

@@ -440,7 +440,7 @@ contract Commit is Modifiers {
         return _nameBranch;
     }
 
-    function getRepoAdress() external view returns(address) {
+    function getRepoAddress() external view returns(address) {
         return _rootRepo;
     }
 
@@ -448,7 +448,7 @@ contract Commit is Modifiers {
         return _prevversion;
     }
 
-    function getDiffAdress(uint128 index1, uint128 index2) external view returns(address) {
+    function getDiffAddress(uint128 index1, uint128 index2) external view returns(address) {
         return getDiffAddress(_nameCommit, index1, index2);
     }
 

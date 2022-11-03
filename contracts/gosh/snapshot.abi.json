@@ -108,7 +108,7 @@
 			]
 		},
 		{
-			"name": "getRepoAdress",
+			"name": "getRepoAddress",
 			"inputs": [
 			],
 			"outputs": [

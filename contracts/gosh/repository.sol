@@ -258,7 +258,7 @@ contract Repository is Modifiers{
     }
 
     //Getters
-    function getContentAdress(string commit,
+    function getContentAddress(string commit,
         string label) external view returns(address) {
         address repo = address(this);
         TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
@@ -321,7 +321,7 @@ contract Repository is Modifiers{
         return GoshLib.buildTagCode(_code[m_TagCode], address(this), version);
     }
 
-    function getGoshAdress() external view returns(address) {
+    function getGoshAddress() external view returns(address) {
         return _systemcontract;
     }
 

@@ -259,7 +259,7 @@ contract Snapshot is Modifiers {
         return NameOfFile;
     }
 
-    function getRepoAdress() external view returns(address) {
+    function getRepoAddress() external view returns(address) {
         return _rootRepo;
     }
     

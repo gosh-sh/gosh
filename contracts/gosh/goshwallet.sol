@@ -733,7 +733,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
     }
 
-    function getContentAdress(string repoName,
+    function getContentAddress(string repoName,
         string commit,
         string label) external view returns(address) {
         address repo = _buildRepositoryAddr(repoName);

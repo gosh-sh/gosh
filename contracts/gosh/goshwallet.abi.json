@@ -373,7 +373,7 @@
 			]
 		},
 		{
-			"name": "getContentAdress",
+			"name": "getContentAddress",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"commit","type":"string"},
