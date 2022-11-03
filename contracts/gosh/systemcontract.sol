@@ -88,7 +88,7 @@ contract SystemContract is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versionController}
         });
         require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(checkName(name), ERR_WRONG_NAME);
