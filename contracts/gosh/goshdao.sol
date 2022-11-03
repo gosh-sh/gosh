@@ -23,7 +23,7 @@ import "../smv/TokenRootOwner.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.11.0";
     
-    address _systemcontract;
+    address static _systemcontract;
     address _pubaddr;
     address _profiledao;
     string _nameDao;
