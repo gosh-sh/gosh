@@ -261,6 +261,13 @@ function getGoshDeleteWalletDaoProposalParams () external view
     (proposalKind, pubaddr) = s.decode(uint256, address[]);
 }
 
+function getGoshUpgradeDaoProposalParams () external view
+         returns( uint256  proposalKind, string newversion, string description)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, newversion, description) = s.decode(uint256, string, string);
+}
+
 
 ////////////////////////////////////
 
