@@ -1,7 +1,7 @@
 use git2::{Object, ObjectType, Oid, Repository};
 use std::collections::HashMap;
 
-use crate::blockchain::{branch_list, get_commit_by_addr, BlockchainContractAddress, TonClient};
+use crate::blockchain::{branch_list, get_commit_by_addr, BlockchainContractAddress, EverClient};
 
 const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
 // pub const EMPTY_TREE_SHA: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"; // $ echo -n '' | git hash-object --stdin -t tree
@@ -61,7 +61,7 @@ fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
 }
 
 pub async fn get_refs(
-    context: &TonClient,
+    context: &EverClient,
     repo_addr: &BlockchainContractAddress,
 ) -> anyhow::Result<Option<Vec<String>>> {
     let _list = branch_list(context, repo_addr)

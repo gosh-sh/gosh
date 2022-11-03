@@ -3,7 +3,7 @@ use crate::{
     blockchain::{
         self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
     },
-    git_helper::{GoshContract, TonClient},
+    git_helper::{EverClient, GoshContract},
     ipfs::{IpfsLoad, IpfsService},
 };
 use futures::{stream::FuturesUnordered, StreamExt};
@@ -66,7 +66,7 @@ async fn write_git_object(
 }
 
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
-    es_client: &TonClient,
+    es_client: &EverClient,
     ipfs_endpoint: &str,
     repo: &mut git_repository::Repository,
     repo_contract: &mut GoshContract,
@@ -259,7 +259,7 @@ impl BlobsRebuildingPlan {
     }
 
     async fn restore_snapshot_blob(
-        es_client: &TonClient,
+        es_client: &EverClient,
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,

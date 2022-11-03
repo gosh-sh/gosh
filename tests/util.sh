@@ -1,3 +1,5 @@
+. ./env.env
+
 function wait_account_active {
     stop_at=$((SECONDS+120))
     contract_addr=$1

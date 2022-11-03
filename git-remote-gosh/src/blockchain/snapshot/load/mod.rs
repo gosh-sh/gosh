@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use crate::{
     abi as gosh_abi,
-    blockchain::{GoshContract, TonClient},
+    blockchain::{EverClient, GoshContract},
 };
 
 use crate::blockchain::BlockchainContractAddress;
@@ -56,7 +56,7 @@ struct GetSnapshotFilePath {
 impl Snapshot {
     #[instrument(level = "debug", skip(context))]
     pub async fn calculate_address(
-        context: &TonClient,
+        context: &EverClient,
         repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
@@ -73,7 +73,7 @@ impl Snapshot {
 
     #[instrument(level = "debug", skip(context))]
     pub async fn get_file_path(
-        context: &TonClient,
+        context: &EverClient,
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<String> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);

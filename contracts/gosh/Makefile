@@ -35,7 +35,7 @@ deploy-docker:
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		-v ${KEYS_PATH}:/tmp/giver.keys.json \
 		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
-		-e GOSH_ROOT_SEED_FILE_OUT="gosh.seed" \
+		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
 		-e NETWORK=${NETWORK} \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
@@ -45,8 +45,8 @@ upgrade-docker:
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		-v ${KEYS_PATH}:/tmp/giver.keys.json \
 		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
-		-e GOSH_ROOT_SEED_FILE_OUT="gosh.seed" \
-		-e GOSHROOT_ADDR=${GOSHROOT_ADDR} \
+		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
+		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \
 		-e NETWORK=${NETWORK} \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./upgrade.sh'

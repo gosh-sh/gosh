@@ -10,8 +10,8 @@ from pathlib import Path
 SRC_CONTRACTS_PATH = Path('../contracts')
 DST_CONTRACTS_PATH = Path('./src/resources/contracts/abi.json')
 CONTRACTS = [
-    'gosh/root',
-    'gosh/gosh',
+    'gosh/versioncontroller',
+    'gosh/systemcontract',
     'gosh/goshdao',
     'gosh/profile',
     'gosh/profiledao',
@@ -37,7 +37,7 @@ def main():
 
     abis = {}
     if Path.exists(DST_CONTRACTS_PATH):
-        abis = json.load(open(DST_CONTRACTS_PATH))
+        abis = json.load(open(DST_CONTRACTS_PATH, encoding='utf8'))
 
     if not abis.get(version):
         abis[version] = {}
@@ -45,12 +45,12 @@ def main():
     for contract in CONTRACTS:
         src = SRC_CONTRACTS_PATH / f'{contract}.abi.json'
         key = contract.replace('gosh/', '').replace('smv/', '').lower()
-        if key in ['root', 'profile', 'profiledao']:
-            abis[key] = json.load(open(src))
+        if key in ['versioncontroller', 'profile', 'profiledao']:
+            abis[key] = json.load(open(src, encoding='utf8'))
         else:
-            abis[version][key] = json.load(open(src))
+            abis[version][key] = json.load(open(src, encoding='utf8'))
 
-    json.dump(abis, open(DST_CONTRACTS_PATH, 'w'))
+    json.dump(abis, open(DST_CONTRACTS_PATH, 'w', encoding='utf8'))
 
 
 if __name__ == '__main__':

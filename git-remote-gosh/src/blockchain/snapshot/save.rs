@@ -2,8 +2,8 @@
 use crate::{
     abi as gosh_abi,
     blockchain::{
-        call, snapshot, tvm_hash, BlockchainContractAddress, BlockchainService, GoshContract,
-        TonClient,
+        call, snapshot, tvm_hash, BlockchainContractAddress, BlockchainService, EverClient,
+        GoshContract,
     },
     config,
     git_helper::GitHelper,
@@ -102,7 +102,7 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow:
 
 #[instrument(level = "debug", skip(context))]
 pub async fn is_diff_deployed(
-    context: &TonClient,
+    context: &EverClient,
     contract_address: &BlockchainContractAddress,
 ) -> anyhow::Result<bool> {
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
@@ -113,7 +113,7 @@ pub async fn is_diff_deployed(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn diff_address(
-    context: &TonClient,
+    context: &EverClient,
     repo_contract: &mut GoshContract,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
@@ -219,7 +219,7 @@ pub async fn inner_push_diff(
     snapshot_addr: BlockchainContractAddress,
     wallet: GoshContract,
     ipfs_endpoint: &str,
-    es_client: TonClient,
+    es_client: EverClient,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,

@@ -6,16 +6,17 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use crate::{
     abi as gosh_abi,
     blockchain::{
-        create_client, get_head, get_repo_address, user_wallet::user_wallet_config,
-        BlockchainContractAddress, BlockchainService, EverscaleBuilder, GoshContract, TonClient,
-        Tree,
+        get_head, get_repo_address, BlockchainContractAddress, BlockchainService, EverClient,
+        EverscaleBuilder, GoshContract, Tree,
     },
     config::Config,
+    git_helper::ever_client::create_client,
     ipfs::IpfsService,
     logger::GitHelperLogger as Logger,
     utilities::Remote,
 };
 
+pub mod ever_client;
 #[cfg(test)]
 mod test_utils;
 
@@ -158,8 +159,8 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
     let remote = Remote::new(url, &config)?;
     let ever_client = create_client(&config, &remote.network)?;
     blockchain_builder.ever_client(ever_client.clone());
-    let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
+    let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
     let dao: GetAddrDaoResult = gosh_root_contract
         .run_static(
             &ever_client,
@@ -173,14 +174,16 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
     let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
     blockchain_builder.repo_contract(repo_contract);
 
-    let ipfs = IpfsService::build(config.ipfs_http_endpoint())?;
     let local_git_dir = env::var("GIT_DIR")?;
     let local_git_repository = git_repository::open(&local_git_dir)?;
     log::info!("Opening repo at {}", local_git_dir);
 
-    blockchain_builder.wallet_config(user_wallet_config(&config, &remote.network));
+    log::debug!("Searching for a wallet at {}", &remote.network);
+    blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
     let blockchain = blockchain_builder.build()?;
+
+    let ipfs = IpfsService::build(config.ipfs_http_endpoint())?;
 
     let mut helper = GitHelper::build(config, url, logger, blockchain, ipfs).await?;
     let mut lines = BufReader::new(io::stdin()).lines();

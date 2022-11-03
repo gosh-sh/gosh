@@ -1,4 +1,4 @@
-use crate::blockchain::TonClient;
+use crate::blockchain::EverClient;
 use ton_client::{
     abi::{
         decode_boc, encode_boc, AbiParam, ParamsOfAbiEncodeBoc, ParamsOfDecodeBoc,
@@ -7,7 +7,7 @@ use ton_client::{
     boc::{get_boc_hash, ParamsOfGetBocHash, ResultOfGetBocHash},
 };
 
-pub async fn tvm_hash(context: &TonClient, data: &[u8]) -> anyhow::Result<String> {
+pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<String> {
     let params = ParamsOfAbiEncodeBoc {
         params: vec![AbiParam {
             name: "data".to_string(),

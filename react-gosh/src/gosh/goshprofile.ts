@@ -83,7 +83,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async getGoshAddress(): Promise<TAddress> {
-        const { value0 } = await this.runLocal('getCurrentGoshRoot', {})
+        const { value0 } = await this.runLocal('getCurrentSystemContract', {})
         return value0
     }
 
@@ -135,7 +135,7 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async setGoshAddress(address: TAddress): Promise<void> {
-        await this.run('setNewGoshRoot', { goshroot: address })
+        await this.run('setNewSystemContract', { goshroot: address })
     }
 
     async turnOn(wallet: TAddress, pubkey: string, keys: KeyPair): Promise<void> {

@@ -4,16 +4,12 @@ use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
 
-use crate::{
-    abi,
-    blockchain::call,
-    config::{Config, UserWalletConfig},
-};
+use crate::{abi, blockchain::call, config::UserWalletConfig};
 
 use super::{
     contract::{ContractInfo, ContractRead},
     serde_number::NumberU64,
-    BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient,
+    BlockchainContractAddress, BlockchainService, EverClient, Everscale, GoshContract,
 };
 
 #[derive(Deserialize, Debug)]
@@ -52,7 +48,6 @@ lazy_static! {
 
 async fn get_user_wallet(
     blockchain: &impl BlockchainService,
-    client: &TonClient,
     gosh_root: &GoshContract,
     dao_address: &BlockchainContractAddress,
     wallet: &UserWalletConfig,
@@ -69,7 +64,7 @@ async fn get_user_wallet(
 
     let result: GetProfileAddrResult = gosh_root
         .run_local(
-            client,
+            blockchain.client(),
             "getProfileAddr",
             Some(serde_json::json!({ "name": profile })),
         )
@@ -81,7 +76,7 @@ async fn get_user_wallet(
         "index": user_wallet_index
     });
     let result: GetAddrWalletResult = dao_contract
-        .run_local(client, "getAddrWallet", Some(params))
+        .run_local(blockchain.client(), "getAddrWallet", Some(params))
         .await?;
     let user_wallet_address = result.address;
     log::trace!("user_wallet address: {:?}", user_wallet_address);
@@ -94,7 +89,6 @@ async fn get_user_wallet(
 // #[instrument(level = "debug", skip(context))]
 async fn zero_user_wallet(
     blockchain: &impl BlockchainService,
-    context: &TonClient,
     remote_network: &str,
     root_contract: &GoshContract,
     dao_addr: &BlockchainContractAddress,
@@ -108,10 +102,8 @@ async fn zero_user_wallet(
                 anyhow::bail!("User wallet config must be set");
             }
             let config = wallet_config.as_ref().expect("Guarded");
-            *user_wallet = Some(
-                get_user_wallet(blockchain, &context, &root_contract, &dao_addr, &config, 0)
-                    .await?,
-            );
+            *user_wallet =
+                Some(get_user_wallet(blockchain, &root_contract, &dao_addr, &config, 0).await?);
         }
     };
 
@@ -146,14 +138,8 @@ impl BlockchainUserWalletService for Everscale {
             anyhow::bail!("User wallet config must be set");
         }
         let wallet_config = wallet_config.clone().expect("Guarded");
-        let zero_wallet = zero_user_wallet(
-            self,
-            self.client(),
-            &remote_network,
-            self.root_contract(),
-            &dao_address,
-        )
-        .await?;
+        let zero_wallet =
+            zero_user_wallet(self, &remote_network, self.root_contract(), &dao_address).await?;
 
         let (user_wallet_index, max_number_of_user_wallets) = {
             match user_wallet_config_max_number_of_mirrors(&client, &zero_wallet).await {
@@ -183,7 +169,6 @@ impl BlockchainUserWalletService for Everscale {
 
         get_user_wallet(
             self,
-            &client,
             &self.root_contract(),
             &dao_address,
             &wallet_config,
@@ -193,13 +178,8 @@ impl BlockchainUserWalletService for Everscale {
     }
 }
 
-pub fn user_wallet_config(config: &Config, remote_network: &str) -> Option<UserWalletConfig> {
-    log::debug!("Searching for a wallet at {}", remote_network);
-    config.find_network_user_wallet(&remote_network)
-}
-
 async fn init_user_wallet_mirrors<C>(
-    client: &TonClient,
+    client: &EverClient,
     user_wallet_contract: &C,
     max_number_of_mirrors: u64,
 ) -> anyhow::Result<()>
@@ -224,7 +204,7 @@ where
     convert = r#"{ "user_wallet_config_max_number_of_mirrors".to_string() }"#
 )]
 async fn user_wallet_config_max_number_of_mirrors(
-    client: &TonClient,
+    client: &EverClient,
     user_wallet_contract: &impl ContractRead,
 ) -> anyhow::Result<u64> {
     let result: GetConfigResult = user_wallet_contract
