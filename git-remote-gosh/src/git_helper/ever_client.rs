@@ -1,9 +1,9 @@
-use crate::{blockchain::TonClient, config::Config};
+use crate::{blockchain::EverClient, config::Config};
 use std::{env, sync::Arc};
 use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext};
 
 #[instrument(level = "debug")]
-pub fn create_client(config: &Config, network: &str) -> anyhow::Result<TonClient> {
+pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClient> {
     let endpoints = config
         .find_network_endpoints(network)
         .expect("Unknown network");

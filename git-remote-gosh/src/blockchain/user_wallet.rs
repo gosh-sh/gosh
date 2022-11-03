@@ -9,7 +9,7 @@ use crate::{abi, blockchain::call, config::UserWalletConfig};
 use super::{
     contract::{ContractInfo, ContractRead},
     serde_number::NumberU64,
-    BlockchainContractAddress, BlockchainService, Everscale, GoshContract, TonClient,
+    BlockchainContractAddress, BlockchainService, EverClient, Everscale, GoshContract,
 };
 
 #[derive(Deserialize, Debug)]
@@ -179,7 +179,7 @@ impl BlockchainUserWalletService for Everscale {
 }
 
 async fn init_user_wallet_mirrors<C>(
-    client: &TonClient,
+    client: &EverClient,
     user_wallet_contract: &C,
     max_number_of_mirrors: u64,
 ) -> anyhow::Result<()>
@@ -204,7 +204,7 @@ where
     convert = r#"{ "user_wallet_config_max_number_of_mirrors".to_string() }"#
 )]
 async fn user_wallet_config_max_number_of_mirrors(
-    client: &TonClient,
+    client: &EverClient,
     user_wallet_contract: &impl ContractRead,
 ) -> anyhow::Result<u64> {
     let result: GetConfigResult = user_wallet_contract

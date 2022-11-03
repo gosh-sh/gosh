@@ -1,8 +1,8 @@
 use crate::abi as gosh_abi;
 use crate::blockchain::get_commit_by_addr;
 use crate::blockchain::{
-    get_commit_address, snapshot::diffs::Diff, BlockchainContractAddress, GoshContract, Snapshot,
-    TonClient,
+    get_commit_address, snapshot::diffs::Diff, BlockchainContractAddress, EverClient, GoshContract,
+    Snapshot,
 };
 use std::collections::HashMap;
 use std::iter::Iterator;
@@ -100,7 +100,7 @@ impl DiffMessagesIterator {
     }
 
     #[instrument(level = "debug", skip(client))]
-    pub async fn next(&mut self, client: &TonClient) -> anyhow::Result<Option<DiffMessage>> {
+    pub async fn next(&mut self, client: &EverClient) -> anyhow::Result<Option<DiffMessage>> {
         while !self.is_buffer_ready() && self.next.is_some() {
             self.try_load_next_chunk(client).await?;
         }
@@ -108,7 +108,7 @@ impl DiffMessagesIterator {
     }
 
     async fn into_next_page(
-        client: &TonClient,
+        client: &EverClient,
         current_snapshot_address: &BlockchainContractAddress,
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
@@ -159,7 +159,7 @@ impl DiffMessagesIterator {
     }
 
     #[instrument(level = "debug", skip(client))]
-    async fn try_load_next_chunk(&mut self, client: &TonClient) -> anyhow::Result<()> {
+    async fn try_load_next_chunk(&mut self, client: &EverClient) -> anyhow::Result<()> {
         log::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
@@ -252,7 +252,7 @@ impl DiffMessagesIterator {
 
 #[instrument(level = "debug", skip(context))]
 pub async fn load_messages_to(
-    context: &TonClient,
+    context: &EverClient,
     address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
@@ -387,7 +387,7 @@ pub async fn load_messages_to(
 }
 
 pub async fn load_transactions(
-    context: &TonClient,
+    context: &EverClient,
     msg_ids: &Vec<String>,
 ) -> anyhow::Result<HashMap<String, Vec<String>>> {
     let query = r#"query($msg_ids: [String!]) {
@@ -424,7 +424,7 @@ pub async fn load_transactions(
 }
 
 pub async fn check_approve_result(
-    context: &TonClient,
+    context: &EverClient,
     msg_id: &str,
 ) -> anyhow::Result<Option<bool>> {
     let query = r#"query($msg_id: String!) {

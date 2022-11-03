@@ -1,7 +1,7 @@
 use super::{
     commit::save::BlockchainCommitPusher, contract::ContractRead,
-    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, Everscale,
-    GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract, TonClient,
+    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, EverClient, Everscale,
+    GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -39,7 +39,7 @@ pub trait BlockchainService:
     + BlockchainUserWalletService
     + BlockchainBranchesService
 {
-    fn client(&self) -> &TonClient;
+    fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
     fn repo_contract(&self) -> &GoshContract;
 }
@@ -102,7 +102,7 @@ impl std::fmt::Debug for Everscale {
 
 #[async_trait]
 impl BlockchainService for Everscale {
-    fn client(&self) -> &TonClient {
+    fn client(&self) -> &EverClient {
         &self.ever_client
     }
 
@@ -187,7 +187,7 @@ pub mod tests {
 
         #[async_trait]
         impl BlockchainService for Everscale {
-            fn client(&self) -> &TonClient;
+            fn client(&self) -> &EverClient;
             fn root_contract(&self) -> &GoshContract;
             fn repo_contract(&self) -> &GoshContract;
         }
