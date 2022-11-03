@@ -149,12 +149,12 @@ contract SystemContract is Modifiers {
 
     function _composeWalletStateInit(address pubaddr, address dao, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
             varInit: {_systemcontract : address(this), _goshdao: dao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
 
     function _composeDaoStateInit(string name) internal view returns(TvmCell) {
