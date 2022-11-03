@@ -61,10 +61,10 @@ modifier check_token_root {
     _ ;
 }
 
-function onCodeUpgrade (uint256 _platform_id, 
+function onCodeUpgrade (uint256 _platform_id,
                         uint128 amountToLock,
-                        uint128 /* totalVotes */, 
-                        TvmCell staticCell, 
+                        uint128 /* totalVotes */,
+                        TvmCell staticCell,
                         TvmCell inputCell) internal override
 {
     tvm.resetStorage();
@@ -98,13 +98,13 @@ function onCodeUpgrade (uint256 _platform_id,
     if (extra == 0)
     {
         optional (address) emptyAddress;
-        optional (uint128) emptyValue; 
+        optional (uint128) emptyValue;
         ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag:128+32} (platform_id, false, emptyAddress, emptyValue, true);
     }
     else
     {
         //ISMVTokenLocker(tokenLocker).onInitialized {value: SMVConstants.EPSILON_FEE, flag: 1} (platform_id);
-        delete_and_do_action();    
+        delete_and_do_action();
     }
 }
 
@@ -137,7 +137,7 @@ function do_action() internal override
 function performAction (uint128 /* amountToLock */, uint128 /* total_votes */, TvmCell /* inputCell */) external override check_locker
 {
     optional (address) emptyAddress;
-    optional (uint128) emptyValue; 
+    optional (uint128) emptyValue;
     uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
     ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue, false);
 }
@@ -148,7 +148,7 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     //require(!proposalBusy, SMVErrors.proposal_is_busy);
     tvm.accept();
 
-    bool allowed = //(!proposalBusy) && 
+    bool allowed = //(!proposalBusy) &&
                    (now >= startTime) &&  (now < finishTime) && (!votingResult.hasValue());
 
     if (!allowed)
@@ -164,19 +164,19 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     }
 }
 
-function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount) external override check_external_client(_locker,_platform_id) 
+function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount) external override check_external_client(_locker,_platform_id)
 {
     require(msg.value >= SMVConstants.PROPOSAL_VOTING_FEE, SMVErrors.error_balance_too_low);
 
     tvm.accept();
 
     if (/* (proposalBusy) || */ (now < startTime) || (now >= finishTime) || (votingResult.hasValue()) )
-        //return {value:0, flag: 64} false; 
+        //return {value:0, flag: 64} false;
         ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
-    else {    
+    else {
 //        tryEarlyComplete(totalSupply);
 
-        if (votingResult.hasValue()) 
+        if (votingResult.hasValue())
             ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
         else
         {
@@ -196,8 +196,8 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
 
 function completeVoting() internal
 {
-    if ((address(this).balance > SMVConstants.PROPOSAL_MIN_BALANCE + SMVConstants.VOTING_COMPLETION_FEE) && 
-        (now >= startTime) && 
+    if ((address(this).balance > SMVConstants.PROPOSAL_MIN_BALANCE + SMVConstants.VOTING_COMPLETION_FEE) &&
+        (now >= startTime) &&
         (!votingResult.hasValue())/* || (proposalBusy) */)
     {
         if (now < finishTime)
@@ -211,7 +211,7 @@ function isCompleted () override public
 {
     require (msg.value > SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
 
-    completeVoting(); 
+    completeVoting();
     IVotingResultRecipient(msg.sender).isCompletedCallback {value:0, flag: 64} (platform_id, votingResult, propData);
 }
 
@@ -226,25 +226,39 @@ function _isCompleted () public view returns (optional (bool))
 
 //gosh only
 //b.store(proposalKind, repoName, branchName, commitName, fullCommit, parent1, parent2);
-function getGoshSetCommitProposalParams () external view 
+function getGoshSetCommitProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName,  string commit)
 {
     TvmSlice s = propData.toSlice();
     (proposalKind,  repoName,  branchName,  commit) = s.decode(uint256, string, string, string);
 }
 
-function getGoshAddProtectedBranchProposalParams () external view 
+function getGoshAddProtectedBranchProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName)
 {
     TvmSlice s = propData.toSlice();
     (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
 }
 
-function getGoshDeleteProtectedBranchProposalParams () external view 
+function getGoshDeleteProtectedBranchProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName)
 {
     TvmSlice s = propData.toSlice();
     (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
+}
+
+function getGoshDeployWalletDaoProposalParams () external view
+         returns( uint256  proposalKind, address[] pubaddr)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, pubaddr) = s.decode(uint256, address[]);
+}
+
+function getGoshDeleteWalletDaoProposalParams () external view
+         returns( uint256  proposalKind, address[] pubaddr)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, pubaddr) = s.decode(uint256, address[]);
 }
 
 
@@ -271,7 +285,7 @@ function continueUpdateHead (uint256 _platform_id) external override check_clien
 
 /* function onProposalCompletedWhileUpdateHead (optional (bool) completed) external check_myself */
 function continueUpdateHeadHere () internal view
-{   
+{
     if (votingResult.hasValue())
     {
         ISMVTokenLocker(tokenLocker).onClientRemoved {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id);
@@ -300,9 +314,9 @@ function updateHead() external override check_locker()
 {
     require(isHead(), SMVErrors.error_i_am_not_head);
     require(address(this).balance >= SMVConstants.PROPOSAL_MIN_BALANCE +
-                                     SMVConstants.VOTING_COMPLETION_FEE +                               
+                                     SMVConstants.VOTING_COMPLETION_FEE +
                                      2*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    
+
     completeVoting();
     continueUpdateHeadHere();
 }
@@ -316,7 +330,7 @@ function tryEarlyComplete (uint128 t) internal override
   uint128 y = votesYes;
   uint128 n = votesNo;
   if (2 * y > t) {
-    votingResult.set(true) ; 
+    votingResult.set(true) ;
     realFinishTime = now;
   } else
     if (2 * n > t) {
