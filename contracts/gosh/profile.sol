@@ -22,7 +22,7 @@ struct MessageProfile {
     uint32 mask;
     uint8 signsReceived;
     optional(uint256) pubkey;
-    optional(address) walletgoshroot;
+    optional(address) walletsystemcontract;
     optional(string) name;
     optional(address) previous;
     optional(uint8) newneed;
@@ -41,7 +41,7 @@ contract Profile is Modifiers {
         _;
     }
 
-    address _goshroot;
+    address _systemcontract;
     bool _flag = false;
     mapping(uint256 => uint8) _owners;
     mapping(uint8 => uint256) _index;
@@ -56,7 +56,7 @@ contract Profile is Modifiers {
     constructor( TvmCell codeProfileDao,
         uint256 pubkey
     ) public {
-        _goshroot = msg.sender;
+        _systemcontract = msg.sender;
         m_codeProfileDao = codeProfileDao;
         _owners[pubkey] = 0;
         _index[0] = pubkey;
@@ -79,8 +79,8 @@ contract Profile is Modifiers {
         return _checkBit(mask, custodianIndex);
     }
     
-    function deployedWallet(address goshroot, address goshdao, uint128 index, string ver) public pure {
-        goshroot; goshdao; index; ver;
+    function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public pure {
+        systemcontract; goshdao; index; ver;
     }
     
     function _generateId() inline private pure returns (uint64) {
@@ -97,9 +97,9 @@ contract Profile is Modifiers {
         if (_messages[id].signsReceived != _needcustodians) { return; }
         if (_messages[id].index == 1) { _addPubkey(_messages[id].pubkey.get()); return; }
         if (_messages[id].index == 2) { _deletePubkey(_messages[id].pubkey.get()); delete _messages[id]; return; }
-        if (_messages[id].index == 3) { _turnOn(_messages[id].walletgoshroot.get(), _messages[id].pubkey.get()); delete _messages[id]; return; }
-        if (_messages[id].index == 4) { _turnOff(_messages[id].walletgoshroot.get()); delete _messages[id]; return; }
-        if (_messages[id].index == 5) { _deployDao(_messages[id].walletgoshroot.get(), _messages[id].name.get(), _messages[id].previous, _messages[id].pubmembers.get()); delete _messages[id]; return; }
+        if (_messages[id].index == 3) { _turnOn(_messages[id].walletsystemcontract.get(), _messages[id].pubkey.get()); delete _messages[id]; return; }
+        if (_messages[id].index == 4) { _turnOff(_messages[id].walletsystemcontract.get()); delete _messages[id]; return; }
+        if (_messages[id].index == 5) { _deployDao(_messages[id].walletsystemcontract.get(), _messages[id].name.get(), _messages[id].previous, _messages[id].pubmembers.get()); delete _messages[id]; return; }
         if (_messages[id].index == 7) { _needcustodians = _messages[id].newneed.get(); delete _messages; return; }      
         if (_messages[id].index == 8) { _expTime = _messages[id].time.get(); delete _messages[id]; return; }         
     }
@@ -237,28 +237,28 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(4, now + _expTime, mask, 1, null, wallet, null, null, null, null, null);
     }
 
-    function deployDao(address goshroot, string name, optional(address) previous, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
+    function deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
         if (previous.hasValue()) { require(pubmem.length == 0, ERR_WRONG_NUMBER_MEMBER); } 
         else { require(pubmem.length > 0, ERR_WRONG_NUMBER_MEMBER); }
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
-            _deployDao(goshroot, name, previous, pubmem);
+            _deployDao(systemcontract, name, previous, pubmem);
             return; 
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, goshroot, name, previous, null, null, pubmem);
+        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, systemcontract, name, previous, null, null, pubmem);
     }
     
-    function _deployDao(address goshroot, string name, optional(address) previous, address[] pubmem) private view  accept  {
+    function _deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) private view  accept  {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
             varInit: {_name : name}
         });
         address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
-        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(goshroot, previous, pubmem);
+        ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(systemcontract, previous, pubmem);
     }
 
     function sendMoneyProfileDao(string name, uint128 value) public view {
@@ -279,20 +279,20 @@ contract Profile is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        SystemContract(_goshroot).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
+        SystemContract(_systemcontract).sendMoneyProfile{value : 0.2 ton}(_name, 1000 ton);
     }
 
     //Fallback/Receive
     receive() external {
-        if (msg.sender == _goshroot) {
+        if (msg.sender == _systemcontract) {
             _flag = false;
         }
     }
 
     //Setters
-    function setNewSystemContract(address goshroot) public onlyOwnerPubkeyList {
+    function setNewSystemContract(address systemcontract) public onlyOwnerPubkeyList {
         tvm.accept();
-        _goshroot = goshroot;
+        _systemcontract = systemcontract;
     }
 
     //Getters
@@ -312,7 +312,7 @@ contract Profile is Modifiers {
     }
     
     function getCurrentSystemContract() external view returns(address) {
-        return _goshroot;
+        return _systemcontract;
     }
 
     function isPubkeyCorrect(uint256 pubkey) external view returns(bool) {

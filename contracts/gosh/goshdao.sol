@@ -23,7 +23,7 @@ import "../smv/TokenRootOwner.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.11.0";
     
-    address static _goshroot;
+    address _systemcontract;
     address _pubaddr;
     address _profiledao;
     string _nameDao;
@@ -69,7 +69,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell TokenRootCode,
         TvmCell TokenWalletCode,
         ////////////////////////
-        optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
+        optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_systemcontract) {
         tvm.accept();
         _profiledao = profiledao;
         _pubaddr = pubaddr;
@@ -134,7 +134,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
         _flag = true;
-        SystemContract(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
+        SystemContract(_systemcontract).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
@@ -281,7 +281,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: address(this), _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: address(this), _index: index}
         });
         return _contractflex;
     }
@@ -297,7 +297,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
-            _code[m_RepositoryCode], _goshroot, address(this), version
+            _code[m_RepositoryCode], _systemcontract, address(this), version
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -321,7 +321,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     //Fallback/Receive
     receive() external {
-        if (msg.sender == _goshroot) {
+        if (msg.sender == _systemcontract) {
             _flag = false;
             if ((saveaddr.hasValue() == true) && (saveind.hasValue() == true)) {
                 this.deployWallets{value: 0.1 ton, flag: 1}(saveaddr.get(), saveind.get());

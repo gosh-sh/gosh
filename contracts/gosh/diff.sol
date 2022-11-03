@@ -39,7 +39,7 @@ contract DiffC is Modifiers {
     bool check = false;
     Diff[] _diff;
     mapping(uint8 => TvmCell) _code;
-    address _goshroot;
+    address _systemcontract;
     uint128 _approved = 0;
     string _branchName;
     address _branchcommit;
@@ -68,8 +68,8 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        _code[m_WalletCode] = WalletCode;        
-        _goshroot = rootGosh;
+        _code[m_WalletCode] = WalletCode;         
+        _systemcontract = rootGosh;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -110,7 +110,7 @@ contract DiffC is Modifiers {
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: { _systemcontract: _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }

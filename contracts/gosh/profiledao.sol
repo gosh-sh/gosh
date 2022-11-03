@@ -29,8 +29,8 @@ contract ProfileDao is Modifiers {
         getMoney();
     }
     
-    function deployDao(address goshroot, optional(address) previous, address[] pubmem) public view onlyOwnerAddress(_pubaddr)  accept {
-        SystemContract(goshroot).deployDao{value: 0.1 ton, flag : 1}(_name, _pubaddr, previous, pubmem);
+    function deployDao(address systemcontract, optional(address) previous, address[] pubmem) public view onlyOwnerAddress(_pubaddr)  accept {
+        SystemContract(systemcontract).deployDao{value: 0.1 ton, flag : 1}(_name, _pubaddr, previous, pubmem);
     }
     
     function deployedDao(string name, string ver) public pure {

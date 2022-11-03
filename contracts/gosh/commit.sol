@@ -39,7 +39,7 @@ contract Commit is Modifiers {
     bool check = false;
     mapping(uint8 => TvmCell) _code;
     address[] _parents;
-    address _goshroot;
+    address _systemcontract;
     address _tree;
     string _branchName;
     address _branchCommit;
@@ -75,7 +75,7 @@ contract Commit is Modifiers {
         uint128 index,
         bool upgrade
         ) public {
-        _goshroot = rootGosh;
+        _systemcontract = rootGosh;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
         require(_nameCommit != "", ERR_NO_DATA);
@@ -115,7 +115,7 @@ contract Commit is Modifiers {
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: { _systemcontract: _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }

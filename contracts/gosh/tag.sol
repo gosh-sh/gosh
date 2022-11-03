@@ -22,7 +22,7 @@ contract Tag is Modifiers{
     string _content;
     address _commit;
     address _pubaddr;
-    address _goshroot;
+    address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
     
@@ -38,7 +38,7 @@ contract Tag is Modifiers{
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
-        _goshroot = goshaddr;
+        _systemcontract = goshaddr;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -58,7 +58,7 @@ contract Tag is Modifiers{
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }

@@ -25,7 +25,7 @@ contract Snapshot is Modifiers {
     address _rootRepo;
     bytes _snapshot;
     bytes _oldsnapshot;
-    address _goshroot;
+    address _systemcontract;
     address _goshdao;
     string _oldcommits;
     string _commits;
@@ -65,7 +65,7 @@ contract Snapshot is Modifiers {
         _oldsnapshot = _snapshot;
         _branch = branch;
         _name = name;
-        _goshroot = rootgosh;
+        _systemcontract = rootgosh;
         _goshdao = goshdao;
         _code[m_WalletCode] = WalletCode;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -127,7 +127,7 @@ contract Snapshot is Modifiers {
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }

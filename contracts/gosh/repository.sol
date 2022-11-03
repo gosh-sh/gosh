@@ -24,7 +24,7 @@ contract Repository is Modifiers{
     optional(AddrVersion) _previousversion;
     address _pubaddr;
     mapping(uint8 => TvmCell) _code;
-    address _goshroot;
+    address _systemcontract;
     string static _name;
     string _nameDao;
     address _goshdao;
@@ -53,7 +53,7 @@ contract Repository is Modifiers{
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
-        _goshroot = rootgosh;
+        _systemcontract = rootgosh;
         _goshdao = goshdao;
         _nameDao = nameDao;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -65,14 +65,14 @@ contract Repository is Modifiers{
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
         _previousversion = previousversion;
-        if (_previousversion.hasValue()) { SystemContract(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
+        if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
         _head = "main";
     }
 
-    function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_goshroot) accept {
+    function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
         if (prev.addr != address(this)) {
             Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(false, _Branches, _protectedBranch, _head);
         }
@@ -137,7 +137,7 @@ contract Repository is Modifiers{
         TvmCell _contractflex = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contractflex;
     }
@@ -262,7 +262,7 @@ contract Repository is Modifiers{
         string label) external view returns(address) {
         address repo = address(this);
         TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _goshroot : _goshroot, _goshdao : _goshdao}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});
        return address.makeAddrStd(0, tvm.hash(s1));
     }
 
@@ -322,7 +322,7 @@ contract Repository is Modifiers{
     }
 
     function getGoshAdress() external view returns(address) {
-        return _goshroot;
+        return _systemcontract;
     }
 
     function getName() external view returns(string) {
