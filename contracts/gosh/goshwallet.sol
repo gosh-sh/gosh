@@ -183,6 +183,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string description,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
@@ -640,7 +641,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function tryProposalResult(address proposal) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
         ISMVProposal(proposal).isCompleted{
             value: SMVConstants.VOTING_COMPLETION_FEE + SMVConstants.EPSILON_FEE
         }();
@@ -653,7 +653,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(bool) res,
         TvmCell propData
     ) external override check_client(_platform_id) {
-        require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         //for tests
         lastVoteResult = res;
@@ -664,6 +663,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             uint256 kind = s.decode(uint256);
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits) =
                     s.decode(string, string, string, uint128, uint128);
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
@@ -671,23 +671,28 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.71 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 (string repoName, string branchName) = s.decode(string, string);
                 Repository(_buildRepositoryAddr(repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 (string repoName, string branchName) = s.decode(string, string);
                 Repository(_buildRepositoryAddr(repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 (string description) = s.decode(string);
                 _setTombstoneDao(description);
             } else
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
                 (address[] pubaddr) = s.decode(address[]);
                 _deployWalletDao(pubaddr);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
+                require(_tombstone == false, ERR_TOMBSTONE);
                 (address[] pubaddr) = s.decode(address[]);
                 _deleteWalletDao(pubaddr);
             } else

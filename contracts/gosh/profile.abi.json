@@ -93,7 +93,6 @@
 			"inputs": [
 				{"name":"systemcontract","type":"address"},
 				{"name":"name","type":"string"},
-				{"name":"previous","type":"optional(address)"},
 				{"name":"pubmem","type":"address[]"}
 			],
 			"outputs": [

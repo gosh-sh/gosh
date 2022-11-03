@@ -238,18 +238,17 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(4, now + _expTime, mask, 1, null, wallet, null, null, null, null, null);
     }
 
-    function deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
+    function deployDao(address systemcontract, string name, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
-        if (previous.hasValue()) { require(pubmem.length == 0, ERR_WRONG_NUMBER_MEMBER); } 
-        else { require(pubmem.length > 0, ERR_WRONG_NUMBER_MEMBER); }
+        require(pubmem.length > 0, ERR_WRONG_NUMBER_MEMBER);
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
-            _deployDao(systemcontract, name, previous, pubmem);
+            _deployDao(systemcontract, name, null, pubmem);
             return; 
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, systemcontract, name, previous, null, null, pubmem);
+        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, systemcontract, name, null, null, null, pubmem);
     }
     
     function _deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) private view  accept  {
