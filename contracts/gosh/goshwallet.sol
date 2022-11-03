@@ -50,7 +50,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 _limit_wallets;
 
     bool _tombstone = false;
-    
+
     uint128 timeMoney = 0;
 
     constructor(
@@ -684,7 +684,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function destroy() public view senderIs(_goshdao) {
         this.destroyWalletAll{value : 0.2 ton, flag: 1}();
     }
-    
+
     function destroyWalletAll() public senderIs(address(this)) {
         if (_walletcounter <= 1) { selfdestruct(_goshdao); }
         if (_index != 0) { return; }
@@ -694,7 +694,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function askForDestroy() public senderIs(_getWalletAddr(0)) {
-        selfdestruct(msg.sender);
+        selfdestruct(_goshdao);
     }
 
     //Getters
