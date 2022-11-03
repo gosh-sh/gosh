@@ -84,6 +84,17 @@
 			]
 		},
 		{
+			"name": "upgradeDao",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},

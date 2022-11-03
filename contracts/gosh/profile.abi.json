@@ -177,7 +177,8 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_name","type":"string"}
+		{"key":1,"name":"_versioncontroller","type":"address"},
+		{"key":2,"name":"_name","type":"string"}
 	],
 	"events": [
 	],
@@ -188,6 +189,7 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"m_codeProfileDao","type":"cell"},
+		{"name":"_versioncontroller","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_flag","type":"bool"},

@@ -39,10 +39,19 @@ contract SystemContract is Modifiers {
 
     address public _lastGoshDao;
     
-    constructor() public {
+    constructor(mapping(uint8 => TvmCell) code) public {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
+        _code = code;
         _versionController = msg.sender;
+    }
+    
+    function upgradeDao1(string namedao, string newversion) public view {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        VersionController(_versionController).upgradeDao2{value : 0.3 ton, flag: 1}(namedao, newversion, msg.sender, version);
     }
     
     function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view {
@@ -217,26 +226,6 @@ contract SystemContract is Modifiers {
     }
 
     //////////////////////////////////////////////////////////////////////
-
-    function setProfile(TvmCell code) public  onlyOwner accept {
-        require(_flag == true, ERR_GOSH_UPDATE);
-        TvmBuilder b;
-        b.store(_versionController);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        _code[m_ProfileCode] = tvm.setCodeSalt(code, b.toCell());
-    }
-    
-    function setProfileDao(TvmCell code) public  onlyOwner accept {
-        require(_flag == true, ERR_GOSH_UPDATE);
-        TvmBuilder b;
-        b.store(_versionController);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        _code[m_ProfileDaoCode] = tvm.setCodeSalt(code, b.toCell());
-    }
     
     function setDiff(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
@@ -314,7 +303,7 @@ contract SystemContract is Modifiers {
         return GoshLib.buildRepositoryCode(
             _code[m_RepositoryCode], address(this), dao, version
         );
-    }
+    }    
     
     function getProfileAddr(string name) external view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
@@ -332,7 +321,7 @@ contract SystemContract is Modifiers {
             varInit: {_name : name}
         });
         return address(tvm.hash(s0));
-    }
+    }   
 
     function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
         return GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);

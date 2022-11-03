@@ -6,6 +6,16 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"code","type":"map(uint8,cell)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeDao1",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -131,22 +141,6 @@
 		},
 		{
 			"name": "setSMVProposal",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setProfile",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setProfileDao",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],

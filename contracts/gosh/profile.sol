@@ -33,7 +33,8 @@ struct MessageProfile {
 contract Profile is Modifiers {
     string constant version = "1.0.0";
     TvmCell m_codeProfileDao;
-
+    
+    address static _versioncontroller;
     string static _name;
 
     modifier onlyOwnerPubkeyList() {
@@ -255,7 +256,7 @@ contract Profile is Modifiers {
         TvmCell s0 = tvm.buildStateInit({
             code: m_codeProfileDao,
             contr: ProfileDao,
-            varInit: {_name : name}
+            varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
         address daoprofile = new ProfileDao {stateInit: s0, value: FEE_DEPLOY_DAO_PROFILE, wid: 0, flag: 1}();
         ProfileDao(daoprofile).deployDao{value: 0.1 ton, flag : 1}(systemcontract, previous, pubmem);

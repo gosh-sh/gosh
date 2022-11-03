@@ -17,6 +17,7 @@ import "profile.sol";
 
 contract ProfileDao is Modifiers {
     string constant version = "1.0.0";
+    address static _versioncontroller;
     string static _name;
     address _pubaddr;
     bool _flag = false;
@@ -30,6 +31,10 @@ contract ProfileDao is Modifiers {
     }
     
     function deployDao(address systemcontract, optional(address) previous, address[] pubmem) public view onlyOwnerAddress(_pubaddr)  accept {
+        SystemContract(systemcontract).deployDao{value: 0.1 ton, flag : 1}(_name, _pubaddr, previous, pubmem);
+    }
+    
+    function upgradeDao(address systemcontract, optional(address) previous, address[] pubmem) public view senderIs(_versioncontroller)  accept {
         SystemContract(systemcontract).deployDao{value: 0.1 ton, flag : 1}(_name, _pubaddr, previous, pubmem);
     }
     

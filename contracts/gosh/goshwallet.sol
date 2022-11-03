@@ -162,6 +162,22 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
+    
+    function startProposalForUpgradeDao(
+        string newversion,
+        string description,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, newversion, description);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
 
     function startProposalForSetTombstoneDao(
         string description,
@@ -218,6 +234,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function _setTombstoneDao(string description) private view {
     	GoshDao(_goshdao).setTombstone{value : 0.1 ton, flag : 1}(_pubaddr, _index, description);
+    }
+    
+    function _upgradeDao(string newversion, string description) private view {
+    	GoshDao(_goshdao).upgradeDao{value : 0.1 ton, flag : 1}(newversion, description, _pubaddr, _index);
     }
 
     function _deployWalletDao(address[] pubaddr) private view {
@@ -670,7 +690,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
                 (address[] pubaddr) = s.decode(address[]);
                 _deleteWalletDao(pubaddr);
-            }
+            } else
+            if (kind == SET_UPGRADE_PROPOSAL_KIND) {
+                (string newversion, string description) = s.decode(string, string);
+                _upgradeDao(newversion, description);
+            }            
         }
     }
 

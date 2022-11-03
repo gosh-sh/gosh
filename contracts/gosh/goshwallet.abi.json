@@ -88,6 +88,16 @@
 			]
 		},
 		{
+			"name": "startProposalForUpgradeDao",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForSetTombstoneDao",
 			"inputs": [
 				{"name":"description","type":"string"},
