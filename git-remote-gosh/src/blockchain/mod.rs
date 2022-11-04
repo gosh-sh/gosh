@@ -307,6 +307,7 @@ async fn default_callback(pe: ProcessingEvent) {
 }
 
 #[instrument(level = "debug", skip(context, contract))]
+#[deprecated(note = "use blockchain.call() instead")]
 async fn call(
     context: &EverClient,
     contract: &impl ContractInfo,

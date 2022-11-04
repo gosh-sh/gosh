@@ -1,6 +1,6 @@
 use super::call::BlockchainCall;
 use super::contract::ContractInfo;
-use super::{CallResult, Everscale};
+use super::Everscale;
 use async_trait::async_trait;
 
 #[async_trait]
@@ -36,31 +36,5 @@ impl DeployBranch for Everscale {
         self.call(wallet, "deployBranch", Some(params))
             .await
             .map(|_| ())
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use super::*;
-
-    // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
-    mockall::mock! {
-        #[derive(Debug, Clone)]
-        pub Everscale {
-            // empty
-        }
-
-        #[async_trait]
-        impl DeployBranch for Everscale {
-            async fn deploy_branch<W>(
-                &self,
-                wallet: &W,
-                repo_name: &str,
-                new_name: &str,
-                from_commit: &str,
-            ) -> anyhow::Result<CallResult>
-            where
-                W: ContractInfo + Sync + 'static;
-        }
     }
 }
