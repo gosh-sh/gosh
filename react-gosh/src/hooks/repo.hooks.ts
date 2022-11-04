@@ -7,7 +7,7 @@ import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
 import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
-import { TAddress, TDao, TSmvBalanceDetails } from '../types'
+import { TAddress, TDao } from '../types'
 import {
     TBranch,
     TCommit,
@@ -280,15 +280,41 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         }
     }
 
-    // Temporary setter until smv branch operations are not moved here
-    const setLockStatusTmp = (name: string, isLock: boolean) => {
-        setStatus((state) => ({
-            ...state,
-            [name]: { ...state[name], isBusy: isLock, isLock },
-        }))
+    const lock = async (name: string) => {
+        try {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: true, isLock: true },
+            }))
+            await repo.lockBranch(name.toLowerCase())
+        } catch (e) {
+            throw e
+        } finally {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: false, isLock: false },
+            }))
+        }
     }
 
-    return { status, create, destroy, setLockStatusTmp }
+    const unlock = async (name: string) => {
+        try {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: true, isLock: true },
+            }))
+            await repo.unlockBranch(name.toLowerCase())
+        } catch (e) {
+            throw e
+        } finally {
+            setStatus((state) => ({
+                ...state,
+                [name]: { ...state[name], isBusy: false, isLock: false },
+            }))
+        }
+    }
+
+    return { status, create, destroy, lock, unlock }
 }
 
 function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
@@ -634,7 +660,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
 }
 
 function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
-    const { branch: branchData, push: _push, progress } = _usePush(dao, repo, branch)
+    const { push: _push, progress } = _usePush(dao, repo, branch)
 
     const push = async (
         title: string,
@@ -646,7 +672,6 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
         message?: string,
         tags?: string,
     ) => {
-        if (branchData!.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
         await _push(title, blobs, false, message, tags)
     }
 
@@ -790,8 +815,6 @@ function useMergeRequest(
         tags?: string,
         deleteSrcBranch?: boolean,
     ) => {
-        if (dstBranch!.isProtected) throw new GoshError(EGoshError.PR_BRANCH)
-
         await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
             await repo.deleteBranch(srcBranch!.name)
@@ -829,16 +852,10 @@ function usePullRequest(
 
     const push = async (
         title: string,
-        smv: TSmvBalanceDetails,
         message?: string,
         tags?: string,
         deleteSrcBranch?: boolean,
     ) => {
-        if (smv.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-        if (smv.smvBalance < 20) {
-            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
-        }
-
         const { name: srcCommit, version: srcVersion } = srcBranch!.commit
         await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
 

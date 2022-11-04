@@ -1,4 +1,5 @@
 import { TonClient } from '@eversdk/core'
+import { EGoshError, GoshError } from '../../errors'
 import { TAddress } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshSmvLocker } from '../interfaces'
@@ -9,6 +10,13 @@ class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvLocker.key, address, { version: GoshSmvLocker.version })
+    }
+
+    async validateProposalStart(): Promise<void> {
+        if (await this.getIsBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+
+        const { total } = await this.getVotes()
+        if (total < 20) throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
     }
 
     /*     async getDetails(): Promise<any> {

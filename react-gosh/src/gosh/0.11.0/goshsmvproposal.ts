@@ -1,5 +1,5 @@
 import { TonClient } from '@eversdk/core'
-import { TAddress, TGoshEventDetails } from '../../types'
+import { EEventType, TAddress, TGoshEventDetails } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshSmvProposal } from '../interfaces'
 import { GoshError, EGoshError } from '../../errors'
@@ -74,22 +74,23 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     }
 
     async getParams(): Promise<any> {
-        try {
-            return await this.getGoshSetCommitProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshAddProtectedBranchProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshDeleteProtectedBranchProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshDeployWalletDaoProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshDeleteWalletDaoProposalParams()
-        } catch {}
-        return null
+        const proposalType = await this.getGoshProposalType()
+        switch (proposalType) {
+            case EEventType.DAO_UPGRADE:
+                return await this.getGoshUpgradeDaoProposalParams()
+            case EEventType.DAO_MEMBER_ADD:
+                return await this.getGoshDeployWalletDaoProposalParams()
+            case EEventType.DAO_MEMBER_DELETE:
+                return await this.getGoshDeleteWalletDaoProposalParams()
+            case EEventType.BRANCH_LOCK:
+                return await this.getGoshAddProtectedBranchProposalParams()
+            case EEventType.BRANCH_UNLOCK:
+                return await this.getGoshDeleteProtectedBranchProposalParams()
+            case EEventType.PR:
+                return await this.getGoshSetCommitProposalParams()
+            default:
+                return null
+        }
     }
 
     async getId(): Promise<string> {
@@ -162,6 +163,12 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
         return result.decoded?.output.platform_id
     }
 
+    async getGoshProposalType(): Promise<number> {
+        const result = await this.account.runLocal('getGoshProposalKind', {})
+        const { proposalKind } = result.decoded?.output
+        return +proposalKind
+    }
+
     async getGoshSetCommitProposalParams(): Promise<any> {
         const result = await this.account.runLocal('getGoshSetCommitProposalParams', {})
         const decoded = result.decoded?.output
@@ -213,6 +220,16 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
             {},
         )
         const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshUpgradeDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal('getGoshUpgradeDaoProposalParams', {})
+        const decoded = result.decoded?.output
+        console.debug('Decoded', decoded)
         return {
             ...decoded,
             proposalKind: parseInt(decoded.proposalKind),

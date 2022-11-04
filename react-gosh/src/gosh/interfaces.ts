@@ -318,9 +318,11 @@ interface IGoshSmvProposal extends IContract {
 }
 
 interface IGoshSmvLocker extends IContract {
-    /** Old interface */
     address: TAddress
 
+    validateProposalStart(): Promise<void>
+
+    /** Old interface */
     getDetails(): Promise<any>
     getVotes(): Promise<{ total: number; locked: number }>
     getIsBusy(): Promise<boolean>
