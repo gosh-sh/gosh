@@ -258,8 +258,7 @@ contract Repository is Modifiers{
     }
 
     //Getters
-    function getContentAddress(string commit,
-        string label) external view returns(address) {
+    function getContentAddress(string commit, string label) external view returns(address) {
         address repo = address(this);
         TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});

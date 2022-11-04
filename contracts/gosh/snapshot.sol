@@ -91,9 +91,7 @@ contract Snapshot is Modifiers {
         }
     }
 
-    function _buildCommitAddr(
-        string commit
-    ) private view returns(address) {
+    function _buildCommitAddr(string commit) private view returns(address) {
         TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
@@ -219,11 +217,7 @@ contract Snapshot is Modifiers {
         return addr;
     }
 
-    function _buildDiffAddr(
-        string commit,
-        uint128 index1,
-        uint128 index2
-    ) private view returns(address) {
+    function _buildDiffAddr(string commit, uint128 index1, uint128 index2) private view returns(address) {
         TvmCell deployCode = GoshLib.buildDiffCode(_code[m_DiffCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 

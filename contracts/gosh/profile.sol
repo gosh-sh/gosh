@@ -118,9 +118,7 @@ contract Profile is Modifiers {
         }
     }
     
-        function setNewExpiredTime(
-        uint128 time
-    ) public onlyOwnerPubkeyList  accept saveMsg {
+    function setNewExpiredTime(uint128 time) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
@@ -133,9 +131,7 @@ contract Profile is Modifiers {
     }
 
     
-    function setNewNeedCustodians(
-        uint8 need
-    ) public onlyOwnerPubkeyList  accept saveMsg {
+    function setNewNeedCustodians(uint8 need) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians >= need, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
@@ -150,9 +146,7 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(7, now + _expTime, mask, 1, null, null, null, null, need, null, null);
     }
 
-    function addPubkey(
-        uint256 pubkey
-    ) public onlyOwnerPubkeyList  accept saveMsg {
+    function addPubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians < MAX_CUSTODIANS, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
@@ -165,9 +159,7 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(1, now + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
     }
 
-    function deletePubkey(
-        uint256 pubkey
-    ) public onlyOwnerPubkeyList  accept saveMsg {
+    function deletePubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians > _needcustodians, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
@@ -180,9 +172,7 @@ contract Profile is Modifiers {
         _messages[_generateId()] = MessageProfile(2, now + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
     }
     
-    function _addPubkey(
-        uint256 pubkey
-    ) private  accept  {
+    function _addPubkey(uint256 pubkey) private  accept  {
         require(_custodians < MAX_CUSTODIANS, ERR_BAD_NUMBER_CUSTODIANS);      
         _owners[pubkey] = _custodians;
         _index[_custodians] = pubkey;
@@ -191,9 +181,7 @@ contract Profile is Modifiers {
         getMoney();
     }
 
-    function _deletePubkey(
-        uint256 pubkey
-    ) private  accept  {
+    function _deletePubkey(uint256 pubkey) private  accept  {
         require(_custodians > 1, ERR_BAD_NUMBER_CUSTODIANS);
         _custodians -= 1;
         uint8 ind = _owners[pubkey];

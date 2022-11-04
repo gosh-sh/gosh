@@ -137,9 +137,7 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function _buildCommitAddr(
-        string commit
-    ) private view returns(address) {
+    function _buildCommitAddr(string commit) private view returns(address) {
         TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode,
@@ -241,8 +239,7 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function applyDiff(
-        uint128 index) public senderIs(address(this)) {
+    function applyDiff(uint128 index) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
@@ -256,8 +253,7 @@ contract DiffC is Modifiers {
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     
-    function cancelDiff(
-        uint128 index) public senderIs(address(this)) {
+    function cancelDiff(uint128 index) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
