@@ -1,5 +1,5 @@
 use super::{
-    commit::save::BlockchainCommitPusher, contract::ContractRead,
+    branch::DeployBranch, commit::save::BlockchainCommitPusher, contract::ContractRead,
     user_wallet::BlockchainUserWalletService, BlockchainContractAddress, EverClient, Everscale,
     GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
 };
@@ -38,6 +38,8 @@ pub trait BlockchainService:
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
+    // TODO: fix naming later
+    + DeployBranch
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
@@ -118,15 +120,27 @@ impl BlockchainService for Everscale {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::config::UserWalletConfig;
-    use crate::utilities::Remote;
+    use crate::{blockchain::contract::ContractInfo, config::UserWalletConfig, utilities::Remote};
     use git_hash::ObjectId;
 
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
-        #[derive(Debug, Clone)]
+        #[derive(Debug)]
         pub Everscale {
             // empty
+        }
+
+        #[async_trait]
+        impl DeployBranch for Everscale {
+            async fn deploy_branch<W>(
+                &self,
+                wallet: &W,
+                repo_name: &str,
+                new_name: &str,
+                from_commit: &str,
+            ) -> anyhow::Result<()>
+            where
+                W: ContractInfo + Sync + 'static;
         }
 
         #[async_trait]

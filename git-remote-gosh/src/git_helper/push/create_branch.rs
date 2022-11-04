@@ -1,6 +1,9 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{blockchain, git_helper::GitHelper};
+use crate::{
+    blockchain::{self, branch::DeployBranch},
+    git_helper::GitHelper,
+};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
@@ -51,16 +54,13 @@ where
             .blockchain
             .user_wallet(&self.context.dao_addr, &self.context.remote.network)
             .await?;
-        let params = serde_json::json!({
-            "repoName": self.context.remote.repo,
-            "newName": self.new_branch,
-            "fromCommit": self.ancestor_commit.to_string(),
-        });
-        blockchain::call(
-            &self.context.blockchain.client(),
+
+        DeployBranch::deploy_branch(
+            &self.context.blockchain,
             &wallet,
-            "deployBranch",
-            Some(params),
+            &self.context.remote.repo,
+            &self.new_branch,
+            &self.ancestor_commit.to_string(),
         )
         .await?;
         Ok(())
