@@ -1,5 +1,5 @@
 import { TonClient } from '@eversdk/core'
-import { TAddress, TGoshEventDetails } from '../../types'
+import { EEventType, TAddress, TGoshEventDetails } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshSmvProposal } from '../interfaces'
 import { GoshError, EGoshError } from '../../errors'
@@ -56,8 +56,8 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
  */
     async getDetails(n: number, walletAddress?: string): Promise<TGoshEventDetails> {
         const isCompleted = await this.isCompleted()
-/*         console.log(n)
- */        return {
+        /*         console.log(n)
+         */ return {
             address: this.address,
             id: await this.getId(),
             params: await this.getParams(),
@@ -74,16 +74,23 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     }
 
     async getParams(): Promise<any> {
-        try {
-            return await this.getGoshSetCommitProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshAddProtectedBranchProposalParams()
-        } catch {}
-        try {
-            return await this.getGoshDeleteProtectedBranchProposalParams()
-        } catch {}
-        return null
+        const proposalType = await this.getGoshProposalType()
+        switch (proposalType) {
+            case EEventType.DAO_UPGRADE:
+                return await this.getGoshUpgradeDaoProposalParams()
+            case EEventType.DAO_MEMBER_ADD:
+                return await this.getGoshDeployWalletDaoProposalParams()
+            case EEventType.DAO_MEMBER_DELETE:
+                return await this.getGoshDeleteWalletDaoProposalParams()
+            case EEventType.BRANCH_LOCK:
+                return await this.getGoshAddProtectedBranchProposalParams()
+            case EEventType.BRANCH_UNLOCK:
+                return await this.getGoshDeleteProtectedBranchProposalParams()
+            case EEventType.PR:
+                return await this.getGoshSetCommitProposalParams()
+            default:
+                return null
+        }
     }
 
     async getId(): Promise<string> {
@@ -98,8 +105,8 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
 
     async getClientAddress(walletAddress?: string): Promise<string> {
         try {
-/*             console.log(walletAddress)
- */            if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
+            /*             console.log(walletAddress)
+             */ if (!walletAddress) throw new GoshError(EGoshError.NO_WALLET)
 
             const wallet = new GoshWallet(this.account.client, walletAddress!)
             const lockerAddress = (await wallet.account.runLocal('tip3VotingLocker', {}))
@@ -141,7 +148,9 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
             const client = new GoshSmvClient(this.account.client, clientAddress)
             /* return 7 */
             const clientDeployed = await client.isDeployed()
-            const result = clientDeployed ? await client.account.runLocal('amount_locked', {}) : undefined
+            const result = clientDeployed
+                ? await client.account.runLocal('amount_locked', {})
+                : undefined
             return parseInt(result?.decoded?.output.value0) || 0
         } catch (e: any) {
             console.error(e.message)
@@ -152,6 +161,12 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
     async getPlatformId(): Promise<number> {
         const result = await this.account.runLocal('platform_id', {})
         return result.decoded?.output.platform_id
+    }
+
+    async getGoshProposalType(): Promise<number> {
+        const result = await this.account.runLocal('getGoshProposalKind', {})
+        const { proposalKind } = result.decoded?.output
+        return +proposalKind
     }
 
     async getGoshSetCommitProposalParams(): Promise<any> {
@@ -181,6 +196,40 @@ class GoshSmvProposal extends BaseContract implements IGoshSmvProposal {
             {},
         )
         const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshDeployWalletDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshDeployWalletDaoProposalParams',
+            {},
+        )
+        const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshDeleteWalletDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal(
+            'getGoshDeleteWalletDaoProposalParams',
+            {},
+        )
+        const decoded = result.decoded?.output
+        return {
+            ...decoded,
+            proposalKind: parseInt(decoded.proposalKind),
+        }
+    }
+
+    async getGoshUpgradeDaoProposalParams(): Promise<any> {
+        const result = await this.account.runLocal('getGoshUpgradeDaoProposalParams', {})
+        const decoded = result.decoded?.output
+        console.debug('Decoded', decoded)
         return {
             ...decoded,
             proposalKind: parseInt(decoded.proposalKind),

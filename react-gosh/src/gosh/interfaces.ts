@@ -64,6 +64,7 @@ interface IGoshDaoAdapter {
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
+    getRemoteConfig(): Promise<object>
     getRepository(options: {
         name?: string
         address?: TAddress
@@ -85,6 +86,8 @@ interface IGoshDaoAdapter {
 
     createMember(username: string[]): Promise<void>
     deleteMember(username: string[]): Promise<void>
+
+    upgrade(version: string, description?: string): Promise<void>
 
     // TODO: Remove from interface and make private after useWallet hook removal
     _isAuthMember(): Promise<boolean>
@@ -123,6 +126,11 @@ interface IGoshRepositoryAdapter {
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>
     getUpgrade(commit: string): Promise<TUpgradeData>
+    getContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+    ): Promise<string>
 
     deployBranch(name: string, from: string): Promise<void>
     deleteBranch(name: string): Promise<void>
@@ -144,6 +152,13 @@ interface IGoshRepositoryAdapter {
         callback?: IPushCallback,
     ): Promise<void>
     pushUpgrade(data: TUpgradeData): Promise<void>
+
+    deployContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+        content: string,
+    ): Promise<void>
 }
 
 interface IContract {
@@ -180,9 +195,6 @@ interface IContract {
 
 interface IGoshRoot extends IContract {
     address: TAddress
-
-    getGoshAddr(version: string): Promise<string>
-    getVersions(): Promise<any>
 }
 
 interface IGoshProfile extends IContract {
@@ -201,7 +213,7 @@ interface IGoshProfile extends IContract {
         gosh: IGoshAdapter,
         name: string,
         members: TAddress[],
-        prev?: string,
+        prev?: TAddress,
     ): Promise<IGoshDaoAdapter>
 
     setGoshAddress(address: TAddress): Promise<void>
@@ -242,13 +254,6 @@ interface IGoshWallet extends IContract {
     voteFor(proposalAddr: string, choice: boolean, amount: number): Promise<void>
     tryProposalResult(proposalAddr: string): Promise<void>
     updateHead(): Promise<void>
-    deployContent(
-        repoName: string,
-        commitName: string,
-        label: string,
-        content: string,
-    ): Promise<void>
-    getContentAdress(repoName: string, commitName: string, label: string): Promise<string>
 }
 
 interface IGoshCommit extends IContract {
@@ -313,9 +318,11 @@ interface IGoshSmvProposal extends IContract {
 }
 
 interface IGoshSmvLocker extends IContract {
-    /** Old interface */
     address: TAddress
 
+    validateProposalStart(): Promise<void>
+
+    /** Old interface */
     getDetails(): Promise<any>
     getVotes(): Promise<{ total: number; locked: number }>
     getIsBusy(): Promise<boolean>

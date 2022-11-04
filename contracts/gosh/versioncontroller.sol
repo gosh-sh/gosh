@@ -11,43 +11,74 @@ pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "systemcontract.sol";
+import "profiledao.sol";
 
-struct GoshV {
+struct SystemContractV {
     string Key;
     TvmCell Value;
 }
-/* Version contract of gosh */
+/* Version contract of SystemContract */
 contract VersionController is Modifiers {
     string constant _version = "1.0.0";
 
-    mapping(uint256 => GoshV) _GoshCode;
+    mapping(uint256 => SystemContractV) _SystemContractCode;
+    mapping(uint8 => TvmCell) _code;
 
     constructor() public onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
     }
 
-    function deployGosh(string version) public onlyOwner accept saveMsg {
-        require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
+    function deploySystemContract(string version) public onlyOwner accept saveMsg {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
-            code: _GoshCode[tvm.hash(version)].Value,
+            code: _SystemContractCode[tvm.hash(version)].Value,
             contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
         });
-        new SystemContract {stateInit: s1, value: FEE_DEPLOY_GOSH, wid: 0, flag: 1}();
+        new SystemContract {stateInit: s1, value: FEE_DEPLOY_SYSTEM_CONTRACT, wid: 0, flag: 1}(_code);
     }
 
-    function setGoshCode(TvmCell code, string version) public  onlyOwner accept {       
-        require(_GoshCode.exists(tvm.hash(version)) == false, ERR_GOSH_BAD_VERSION);
-        _GoshCode[tvm.hash(version)] = GoshV(version, code);
+    function setSystemContractCode(TvmCell code, string version) public  onlyOwner accept {       
+        require(_SystemContractCode.exists(tvm.hash(version)) == false, ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        _SystemContractCode[tvm.hash(version)] = SystemContractV(version, code);
+    }
+    
+    function upgradeDao2(string namedao, string version, address previous, string previousversion) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        TvmCell s0 = tvm.buildStateInit({
+            code: _code[m_ProfileDaoCode],
+            contr: ProfileDao,
+            varInit: {_name : namedao, _versioncontroller: address(this)}
+        });
+        address daoprofile = address.makeAddrStd(0, tvm.hash(s0));
+        address[] pubmem;
+        ProfileDao(daoprofile).upgradeDao{value: 0.1 ton, flag : 1}(addr, previous, pubmem);
     }
     
     function checkUpdateRepo2(string name, string namedao, string version, AddrVersion prev, address answer) public view {
-        require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
-        require(_GoshCode.exists(tvm.hash(prev.version)), ERR_GOSH_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(prev.version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
-            code: _GoshCode[tvm.hash(version)].Value,
+            code: _SystemContractCode[tvm.hash(version)].Value,
             contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
@@ -56,7 +87,7 @@ contract VersionController is Modifiers {
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         s1 = tvm.buildStateInit({
-            code: _GoshCode[tvm.hash(prev.version)].Value,
+            code: _SystemContractCode[tvm.hash(prev.version)].Value,
             contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
@@ -73,17 +104,44 @@ contract VersionController is Modifiers {
 
     function onCodeUpgrade(TvmCell cell) private pure {
     }
-
-    //Getters
-    function getGoshCode(string version) external view returns(GoshV) {
-        require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
-        return _GoshCode[tvm.hash(version)];
+    
+    //Setters
+    function setProfile(TvmCell code) public  onlyOwner accept {
+        _code[m_ProfileCode] = code;
+    }
+    
+    function setProfileDao(TvmCell code) public  onlyOwner accept {
+        _code[m_ProfileDaoCode] = code;
     }
 
-    function getGoshAddr(string version) external view returns(address) {
-        require(_GoshCode.exists(tvm.hash(version)), ERR_GOSH_BAD_VERSION);
+    //Getters   
+    function getProfileAddr(string name) external view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
-            code: _GoshCode[tvm.hash(version)].Value,
+            code: _code[m_ProfileCode],
+            contr: Profile,
+            varInit: {_name : name, _versioncontroller: address(this)}
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getProfileDaoAddr(string name) external view returns(address){
+        TvmCell s0 = tvm.buildStateInit({
+            code: _code[m_ProfileDaoCode],
+            contr: ProfileDao,
+            varInit: {_name : name, _versioncontroller: address(this)}
+        });
+        return address(tvm.hash(s0));
+    }
+    
+    function getSystemContractCode(string version) external view returns(SystemContractV) {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        return _SystemContractCode[tvm.hash(version)];
+    }
+
+    function getSystemContractAddr(string version) external view returns(address) {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
             contr: SystemContract,
             pubkey: tvm.pubkey(),
             varInit: {}
@@ -91,8 +149,8 @@ contract VersionController is Modifiers {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function getVersions() external view returns(mapping(uint256 => GoshV)) {
-        return _GoshCode;
+    function getVersions() external view returns(mapping(uint256 => SystemContractV)) {
+        return _SystemContractCode;
     }
 
     function getVersion() external pure returns(string) {

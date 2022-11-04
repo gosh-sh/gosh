@@ -39,7 +39,7 @@ contract DiffC is Modifiers {
     bool check = false;
     Diff[] _diff;
     mapping(uint8 => TvmCell) _code;
-    address _goshroot;
+    address _systemcontract;
     uint128 _approved = 0;
     string _branchName;
     address _branchcommit;
@@ -68,8 +68,8 @@ contract DiffC is Modifiers {
         ) public {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        _code[m_WalletCode] = WalletCode;        
-        _goshroot = rootGosh;
+        _code[m_WalletCode] = WalletCode;         
+        _systemcontract = rootGosh;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -107,12 +107,12 @@ contract DiffC is Modifiers {
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: { _systemcontract: _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     
     //Tree part
@@ -137,9 +137,7 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function _buildCommitAddr(
-        string commit
-    ) private view returns(address) {
+    function _buildCommitAddr(string commit) private view returns(address) {
         TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode,
@@ -241,8 +239,7 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function applyDiff(
-        uint128 index) public senderIs(address(this)) {
+    function applyDiff(uint128 index) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
@@ -256,8 +253,7 @@ contract DiffC is Modifiers {
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
     }
     
-    function cancelDiff(
-        uint128 index) public senderIs(address(this)) {
+    function cancelDiff(uint128 index) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
@@ -328,7 +324,7 @@ contract DiffC is Modifiers {
         return _diff;
     }
 
-    function getNextAdress() external view returns(address) {
+    function getNextAddress() external view returns(address) {
         return getDiffAddress(_index2 + 1);
     }
     

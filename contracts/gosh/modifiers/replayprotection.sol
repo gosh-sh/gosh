@@ -45,16 +45,6 @@ abstract contract ReplayProtection is Errors {
         messages[lastMessage.expireAt][lastMessage.messageHash] = true;
     }
     
-    // Colls a function body and then gc()
-    modifier clear {
-        _;
-        gc();
-    }
-    
-    function storeValue(uint newValue) public onlyOwner accept saveMsg {
-        __value = newValue;
-    }
-    
     // Function with predefined name which is used to replace custom replay protection.
     function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
         body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.

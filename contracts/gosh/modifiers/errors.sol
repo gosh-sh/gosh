@@ -45,7 +45,7 @@ abstract contract Errors {
     uint constant ERR_EMPTY_BRANCH = 234;
     uint constant ERR_GOSH_UPDATE = 235;
     uint constant ERR_OLD_CONTRACT = 236;
-    uint constant ERR_GOSH_BAD_VERSION = 237;
+    uint constant ERR_SYSTEM_CONTRACT_BAD_VERSION = 237;
     uint constant ERR_BAD_COUNT_PARENTS = 238;
     uint constant ERR_REPOSITORY_NOT_READY = 239;
     uint constant ERR_PREV_NOT_EXIST = 240;
@@ -57,4 +57,5 @@ abstract contract Errors {
     uint constant ERR_WRONG_NUMBER_MEMBER = 246;
     uint constant ERR_BAD_PARENT = 247;
     uint constant ERR_TOO_LOW_BALANCE = 248;
+    uint constant ERR_FIRST_DAO = 249;
 }

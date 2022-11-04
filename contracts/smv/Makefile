@@ -18,15 +18,21 @@ build-contracts:
 	../compiler/tvm_linker compile TokenWallet.code -o TokenWallet.tvc --lib ../compiler/stdlib_sol.tvm || exit $$@; \
 
 prepare-docker:
-	docker build -t everdev:latest ../../
+	docker build -t everdev:latest ../../.ci/
 
 build-contracts-docker:
 	docker run -it --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		everdev:latest \
-		/bin/bash -c 'cd /opt/gosh/contracts/smv && ./compile_TIP3.sh'
+		/bin/bash -c 'cd /opt/gosh/contracts/smv && make build-contracts'
 
-	docker run -it --rm \
-		-v ${CURDIR}/../:/opt/gosh/contracts \
-		everdev:latest \
-		/bin/bash -c 'cd /opt/gosh/contracts/smv && ./compile_all.sh'
+# build-contracts-docker:
+# 	docker run -it --rm \
+# 		-v ${CURDIR}/../:/opt/gosh/contracts \
+# 		everdev:latest \
+# 		/bin/bash -c 'cd /opt/gosh/contracts/smv && ./compile_TIP3.sh'
+
+# 	docker run -it --rm \
+# 		-v ${CURDIR}/../:/opt/gosh/contracts \
+# 		everdev:latest \
+# 		/bin/bash -c 'cd /opt/gosh/contracts/smv && ./compile_all.sh'

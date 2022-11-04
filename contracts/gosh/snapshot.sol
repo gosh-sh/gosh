@@ -25,7 +25,7 @@ contract Snapshot is Modifiers {
     address _rootRepo;
     bytes _snapshot;
     bytes _oldsnapshot;
-    address _goshroot;
+    address _systemcontract;
     address _goshdao;
     string _oldcommits;
     string _commits;
@@ -65,7 +65,7 @@ contract Snapshot is Modifiers {
         _oldsnapshot = _snapshot;
         _branch = branch;
         _name = name;
-        _goshroot = rootgosh;
+        _systemcontract = rootgosh;
         _goshdao = goshdao;
         _code[m_WalletCode] = WalletCode;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -91,9 +91,7 @@ contract Snapshot is Modifiers {
         }
     }
 
-    function _buildCommitAddr(
-        string commit
-    ) private view returns(address) {
+    function _buildCommitAddr(string commit) private view returns(address) {
         TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
@@ -124,12 +122,12 @@ contract Snapshot is Modifiers {
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     
     function isReady(uint256 sha1, uint128 typer) public view minValue(0.15 ton) {
@@ -219,11 +217,7 @@ contract Snapshot is Modifiers {
         return addr;
     }
 
-    function _buildDiffAddr(
-        string commit,
-        uint128 index1,
-        uint128 index2
-    ) private view returns(address) {
+    function _buildDiffAddr(string commit, uint128 index1, uint128 index2) private view returns(address) {
         TvmCell deployCode = GoshLib.buildDiffCode(_code[m_DiffCode], _rootRepo, version);
         TvmCell state = tvm.buildStateInit({
             code: deployCode, 
@@ -259,7 +253,7 @@ contract Snapshot is Modifiers {
         return NameOfFile;
     }
 
-    function getRepoAdress() external view returns(address) {
+    function getRepoAddress() external view returns(address) {
         return _rootRepo;
     }
     

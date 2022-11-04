@@ -38,8 +38,9 @@ export const BranchesPage = () => {
     const {
         create: createBranch,
         destroy: deleteBranch,
+        lock: lockBranch,
+        unlock: unlockBranch,
         status,
-        setLockStatusTmp,
     } = useBranchManagement(dao.details, repo)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
@@ -47,46 +48,22 @@ export const BranchesPage = () => {
     /** Lock branch by SMV */
     const onBranchLock = async (name: string) => {
         try {
-            setLockStatusTmp(name, true)
-
-            const check = branches.find((branch) => branch.name === name)
-            if (check?.isProtected) throw new Error('Branch is already protected')
-
-            if (!repo) throw new GoshError(EGoshError.NO_REPO)
-            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvDetails.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
-
-            await repo.lockBranch(name)
+            await lockBranch(name)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
-        } finally {
-            setLockStatusTmp(name, false)
         }
     }
 
     /** Unlock branch by SMV */
     const onBranchUnlock = async (name: string) => {
         try {
-            setLockStatusTmp(name, true)
-
-            const check = branches.find((branch) => branch.name === name)
-            if (!check?.isProtected) throw new Error('Branch is not protected')
-
-            if (!repo) throw new GoshError(EGoshError.NO_REPO)
-            if (smvDetails.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvDetails.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
-
-            await repo.unlockBranch(name)
+            await unlockBranch(name)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
-        } finally {
-            setLockStatusTmp(name, false)
         }
     }
 

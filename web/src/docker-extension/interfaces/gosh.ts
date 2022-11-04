@@ -19,8 +19,8 @@ export type Image = {
     validated: Status
     id: string
     imageHash: string
-    goshAddress: string
-    goshCommitHash: string
+    remoteUrl: string
+    commit: string
 }
 
 export type Container = Image & {

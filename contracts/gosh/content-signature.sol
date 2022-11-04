@@ -18,7 +18,7 @@ import "goshwallet.sol";
 contract ContentSignature is Modifiers {
     string constant version = "0.11.0";
     address _pubaddr;
-    address static _goshroot;
+    address static _systemcontract;
     address static _goshdao;
     mapping(uint8 => TvmCell) _code;
     string _content;
@@ -38,12 +38,12 @@ contract ContentSignature is Modifiers {
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     
     function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {

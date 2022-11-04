@@ -15,7 +15,7 @@
 		{
 			"name": "deployedWallet",
 			"inputs": [
-				{"name":"goshroot","type":"address"},
+				{"name":"systemcontract","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"ver","type":"string"}
@@ -91,9 +91,8 @@
 		{
 			"name": "deployDao",
 			"inputs": [
-				{"name":"goshroot","type":"address"},
+				{"name":"systemcontract","type":"address"},
 				{"name":"name","type":"string"},
-				{"name":"previous","type":"optional(address)"},
 				{"name":"pubmem","type":"address[]"}
 			],
 			"outputs": [
@@ -111,7 +110,7 @@
 		{
 			"name": "setNewSystemContract",
 			"inputs": [
-				{"name":"goshroot","type":"address"}
+				{"name":"systemcontract","type":"address"}
 			],
 			"outputs": [
 			]
@@ -121,7 +120,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
+				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
 			]
 		},
 		{
@@ -174,18 +173,11 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
-		},
-		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
 		}
 	],
 	"data": [
-		{"key":1,"name":"_name","type":"string"}
+		{"key":1,"name":"_versioncontroller","type":"address"},
+		{"key":2,"name":"_name","type":"string"}
 	],
 	"events": [
 	],
@@ -196,12 +188,13 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"m_codeProfileDao","type":"cell"},
+		{"name":"_versioncontroller","type":"address"},
 		{"name":"_name","type":"string"},
-		{"name":"_goshroot","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_owners","type":"map(uint256,uint8)"},
 		{"name":"_index","type":"map(uint8,uint256)"},
-		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletgoshroot","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
 		{"name":"_custodians","type":"uint8"},
 		{"name":"_needcustodians","type":"uint8"},
 		{"name":"_expTime","type":"uint128"},

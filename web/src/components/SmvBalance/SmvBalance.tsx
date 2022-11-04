@@ -60,21 +60,10 @@ const SmvBalance = (props: TSmvBalanceProps) => {
                     <span className="font-semibold mr-2">Wallet balance:</span>
                     {details.balance}
                 </div>
-                <div>
+                {/* <div>
                     <span className="font-semibold mr-2">num clients:</span>
                     {details.numClients}
-                </div>
-            </div>
-            <div>
-                <div>
-                    <span className="font-semibold mr-2">goshBalance:</span>
-                    {details.goshBalance}
-                </div>
-                <div>
-                    <span className="font-semibold mr-2">goshLockerBalance:</span>
-                    {details.goshLockerBalance}
-                </div>
-
+                </div> */}
                 <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
                     <FontAwesomeIcon
                         icon={faCircle}

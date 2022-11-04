@@ -36,6 +36,7 @@ import {
     zstd,
     goshipfs,
     executeByChunk,
+    splitByChunk,
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
@@ -61,6 +62,7 @@ import {
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { validateUsername } from '../../validators'
+import { GoshContentSignature } from './goshcontentsignature'
 
 class GoshAdapter_0_11_0 implements IGoshAdapter {
     private static instance: GoshAdapter_0_11_0
@@ -264,6 +266,28 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async getRemoteConfig(): Promise<object> {
+        if (!this.profile || !this.wallet || this.wallet.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const keys = this.wallet.account.signer.keys
+        const { endpoints } = await this.client.net.get_endpoints()
+        return {
+            'primary-network': 'primary',
+            networks: {
+                primary: {
+                    'user-wallet': {
+                        profile: await this.profile.getName(),
+                        pubkey: keys.public,
+                        secret: keys.secret,
+                    },
+                    endpoints,
+                },
+            },
+        }
+    }
+
     async getRepository(options: {
         name?: string
         address?: TAddress
@@ -337,7 +361,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const profiles = await this.gosh.isValidProfile(username)
-        await this.wallet.run('deployWalletDao', { pubaddr: profiles })
+
+        const locker = await this.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
+        await this.wallet.run('startProposalForDeployWalletDao', {
+            pubaddr: profiles,
+            num_clients: await locker.getNumClients(),
+        })
     }
 
     async deleteMember(username: string[]): Promise<void> {
@@ -351,7 +382,27 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 return profile.address
             },
         )
-        await this.wallet.run('deleteWalletDao', { pubaddr: profiles })
+
+        const locker = await this.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
+        await this.wallet.run('startProposalForDeleteWalletDao', {
+            pubaddr: profiles,
+            num_clients: await locker.getNumClients(),
+        })
+    }
+
+    async upgrade(version: string, description?: string | undefined): Promise<void> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const locker = await this.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
+        await this.wallet.run('startProposalForUpgradeDao', {
+            newversion: version,
+            description: description ?? `Upgrade DAO to version ${version}`,
+            num_clients: await locker.getNumClients(),
+        })
     }
 
     async _isAuthMember(): Promise<boolean> {
@@ -838,6 +889,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
     }
 
+    async getContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+    ): Promise<string> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const { value0: address } = await this.auth.wallet.runLocal('getContentAddress', {
+            repoName: repository,
+            commit,
+            label,
+        })
+
+        const instance = new GoshContentSignature(this.client, address)
+        const { value0 } = await instance.runLocal('getContent', {})
+        return value0
+    }
+
     async deployBranch(name: string, from: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -914,8 +983,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async lockBranch(name: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (await this._isBranchProtected(name)) {
+            throw new GoshError('Branch is already protected')
+        }
 
         const locker = await this.auth.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
         await this.auth.wallet.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
@@ -925,8 +999,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async unlockBranch(name: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!(await this._isBranchProtected(name))) {
+            throw new GoshError('Branch is not protected')
+        }
 
         const locker = await this.auth.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
         await this.auth.wallet.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
@@ -964,6 +1043,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get branch info and get branch tree
         const branchTo = await this.getBranch(branch)
         const { items } = await this.getTree(branchTo.commit.name)
+
+        // Validation
+        if (!isPullRequest && branchTo.isProtected) {
+            throw new GoshError(EGoshError.PR_BRANCH)
+        }
+        if (isPullRequest) {
+            const locker = await this.auth.wallet.getSmvLocker()
+            await locker.validateProposalStart()
+        }
 
         // Generate blobs meta object
         const blobsMeta = await executeByChunk(
@@ -1142,6 +1230,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return check.commit.address !== commit.address
         })
         if (!wait) throw new GoshError('Push upgrade timeout reached')
+    }
+
+    async deployContentSignature(
+        repository: string,
+        commit: string,
+        label: string,
+        content: string,
+    ): Promise<void> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        await this.auth.wallet.run('deployContent', {
+            repoName: repository,
+            commit,
+            label,
+            content,
+        })
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
@@ -1474,6 +1578,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const locker = await this.auth.wallet.getSmvLocker()
+        await locker.validateProposalStart()
+
         await this.auth.wallet.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,

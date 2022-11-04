@@ -18,7 +18,7 @@ class AppConfig {
         isDockerExt: boolean
     }) {
         const { goshclient, goshroot, goshver, ipfs, isDockerExt } = params
-        if (!goshroot) throw Error('Gosh root address is undefined')
+        if (!goshroot) throw Error('Gosh version controller address is undefined')
         if (!Object.keys(goshver).length) throw Error('Gosh versions undefined')
         if (!ipfs) throw Error('IPFS url is undefined')
 

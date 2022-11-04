@@ -80,33 +80,6 @@ class GoshWallet extends BaseContract implements IGoshWallet {
     async updateHead(): Promise<void> {
         await this.run('updateHead', {})
     }
-
-    async deployContent(
-        repoName: string,
-        commitName: string,
-        label: string,
-        content: string,
-    ): Promise<void> {
-        await this.run('deployContent', {
-            repoName,
-            commit: commitName,
-            label,
-            content,
-        })
-    }
-
-    async getContentAdress(
-        repoName: string,
-        commitName: string,
-        label: string,
-    ): Promise<string> {
-        const result = await this.account.runLocal('getContentAdress', {
-            repoName,
-            commit: commitName,
-            label,
-        })
-        return result.decoded?.output.value0
-    }
 }
 
 export { GoshWallet }

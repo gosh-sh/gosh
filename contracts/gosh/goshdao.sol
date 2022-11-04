@@ -23,11 +23,11 @@ import "../smv/TokenRootOwner.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "0.11.0";
     
-    address static _goshroot;
+    address static _systemcontract;
     address _pubaddr;
     address _profiledao;
     string _nameDao;
-    address _previous;
+    optional(address) _previous;
     mapping(uint256 => address  ) _wallets;
     mapping(uint8 => TvmCell) _code;
     
@@ -69,7 +69,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell TokenRootCode,
         TvmCell TokenWalletCode,
         ////////////////////////
-        optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_goshroot) {
+        optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_systemcontract) {
         tvm.accept();
         _profiledao = profiledao;
         _pubaddr = pubaddr;
@@ -95,27 +95,28 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { 
-            _previous = previous.get(); 
-            GoshDao(_previous).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
+            _previous = previous; 
+            GoshDao(_previous.get()).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
         }
         else { this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, 0); }
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
-    function getPreviousInfo(string name) public view {
+    function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
         GoshDao(msg.sender).getPreviousInfo1{value: 0.1 ton, flag: 1}(_wallets);
     }
     
-    function getPreviousInfo1(mapping(uint256 => address) wallets) public view {
-        require(_previous == msg.sender, ERR_WRONG_DAO);
+    function getPreviousInfo1(mapping(uint256 => address) wallets) public internalMsg view {
+        require(_previous.hasValue() == true, ERR_FIRST_DAO);
+        require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
         uint256 zero;
         this.returnWallets{value: 0.1 ton}(zero, wallets);
     }
     
-    function returnWallets(uint256 key, mapping(uint256 => address) wallets) public senderIs(address(this)) accept {
+    function returnWallets(uint256 key, mapping(uint256 => address) wallets) public internalMsg senderIs(address(this)) accept {
         optional(uint256, address) res = wallets.next(key);
         if (res.hasValue()) {
             address pub;
@@ -127,24 +128,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function _buildRepositoryAddr(string name) private view returns (address) {
-        TvmCell deployCode = GoshLib.buildRepositoryCode(
-            _code[m_RepositoryCode], _goshroot, address(this), version
-        );
-        return address(tvm.hash(tvm.buildStateInit({
-            code: deployCode,
-            contr: Repository,
-            varInit: { _name: name }
-        })));
-    }
-    
     function getMoney() private {
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 30000 ton) { return; }
         tvm.accept();
         _flag = true;
-        SystemContract(_goshroot).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
+        SystemContract(_systemcontract).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
@@ -190,6 +180,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: repo}});
         return stateInit;
+    }
+    
+    function upgradeDao(string newversion, string description, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+        description;
+        _tombstone = true;
+        getMoney();
+        uint256 zero;
+        if (_tombstone == false) { this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description); }
+        SystemContract(_systemcontract).upgradeDao1{value : 0.1 ton, flag: 1}(_nameDao, newversion);
     }
 
     //Wallet part
@@ -283,17 +282,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (index >= pubmem.length) { return; }
         deleteWalletIn(pubmem[index]);
         index += 1;
-        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+        this.deleteWallets{value: 0.1 ton, flag: 1}(pubmem, index);
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: address(this), _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: address(this), _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     
     function getConfigInfo(address pubaddr, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index)) {
@@ -307,7 +306,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
-            _code[m_RepositoryCode], _goshroot, address(this), version
+            _code[m_RepositoryCode], _systemcontract, address(this), version
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -331,7 +330,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     //Fallback/Receive
     receive() external {
-        if (msg.sender == _goshroot) {
+        if (msg.sender == _systemcontract) {
             _flag = false;
             if ((saveaddr.hasValue() == true) && (saveind.hasValue() == true)) {
                 this.deployWallets{value: 0.1 ton, flag: 1}(saveaddr.get(), saveind.get());
@@ -403,7 +402,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _pubaddr;
     }
     
-    function getPreviousDaoAddr() external view returns(address) {
+    function getPreviousDaoAddr() external view returns(optional(address)) {
         return _previous;
     }
 }

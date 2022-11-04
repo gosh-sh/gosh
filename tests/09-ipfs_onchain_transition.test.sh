@@ -1,22 +1,23 @@
 #!/bin/bash
 
 # 1. create repo
-# 2. clone repo into repo10-clone1
-# 3. add new file in repo10-clone1
-# 4. push changes and ensure that blob goes onchain
-# 5. update file (1) in repo10-clone1 
-# 6. push changes and ensure that blob goes onchain
-# 7. update file (2) in repo10-clone1
-# 8. push changes and ensure that blob goes onchain
-# 9. clone repo in repo10-clone2
-# 10. comparing repositories repo10-clone1 and repo10-clone2 (similar)
-
+# 2. clone repo into repo9-clone1
+# 3. add new file in repo9-clone1
+# 4. push changes
+# 5. update file (1) in repo9-clone1 
+# 6. push changes
+# 7. update file (2) in repo9-clone1
+# 8. push changes
+# 9. update file (3) in repo9-clone1 (with data size 160Kb)
+# 10. push changes
+# 11. clone repo in repo9-clone2
+# 12. comparing repositories repo9-clone1 and repo9-clone2 (similar)
 
 set -e 
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo10
+REPO_NAME=repo9
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
@@ -24,14 +25,14 @@ REPO_NAME=repo10
 #1-2
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
-REPO_ADDR=$(tonos-cli -j run $GOSH_ROOT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO1_NAME\"}" --abi $GOSH_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone1"
+git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
 
 cd $REPO_NAME"-clone1"
 
@@ -53,7 +54,7 @@ git add $FILE1
 git commit -m "added-$FILE1-now-$CHANGE"
 
 echo "***** awaiting push $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME
 
 echo "***** awaiting set commit into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -66,7 +67,7 @@ git add $FILE1
 git commit -m "push (1)-$CHANGE"
 
 echo "***** awaiting push (1) $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME
 
 echo "***** awaiting set commit (1) into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -79,19 +80,32 @@ git add $FILE1
 git commit -m "push (2)-$CHANGE"
 
 echo "***** awaiting push (2) $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME
 
 echo "***** awaiting set commit (2) into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME
 sleep 30
 
+# 9-10
+dd if=/dev/urandom of=$FILE1 bs=16K count=10
+
+git add $FILE1
+git commit -m "push (3)-$CHANGE"
+
+echo "***** awaiting push (3) $FILE1 into $BRANCH_NAME *****"
+git push -u origin $BRANCH_NAME
+
+echo "***** awaiting set commit (3) into $BRANCH_NAME *****"
+wait_set_commit $REPO_ADDR $BRANCH_NAME
+sleep 30
+
 cd ..
 
-# 9
+# 11
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$GOSH_ROOT_ADDR/$DAO1_NAME/$REPO_NAME $REPO_NAME"-clone2"
+git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
 
-# 10
+# 12
 echo "***** comparing repositories *****"
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME"-clone1" $REPO_NAME"-clone2" --exclude ".git"; then

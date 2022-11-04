@@ -7,11 +7,11 @@ use serde_json;
 
 use std::sync::Arc;
 
+pub mod branch;
+mod call;
 mod contract;
 mod error;
 use error::RunLocalError;
-mod create_branch;
-pub use create_branch::CreateBranchOperation;
 pub mod service;
 pub use service::*;
 
@@ -139,18 +139,18 @@ struct GetVersionResult {
     pub version: String,
 }
 
-pub type TonClient = Arc<ClientContext>;
+pub type EverClient = Arc<ClientContext>;
 
 #[derive(Builder, Clone)]
 pub struct Everscale {
     wallet_config: Option<UserWalletConfig>,
-    ever_client: TonClient,
+    ever_client: EverClient,
     root_contract: GoshContract,
     repo_contract: GoshContract,
 }
 
 async fn run_local(
-    context: &TonClient,
+    context: &EverClient,
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
@@ -217,7 +217,7 @@ async fn run_local(
 }
 
 async fn run_static(
-    context: &TonClient,
+    context: &EverClient,
     contract: &mut GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
@@ -307,8 +307,9 @@ async fn default_callback(pe: ProcessingEvent) {
 }
 
 #[instrument(level = "debug", skip(context, contract))]
+#[deprecated(note = "use blockchain.call() instead")]
 async fn call(
-    context: &TonClient,
+    context: &EverClient,
     contract: &impl ContractInfo,
     function_name: &str,
     args: Option<serde_json::Value>,
@@ -355,7 +356,7 @@ async fn call(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn get_repo_address(
-    context: &TonClient,
+    context: &EverClient,
     gosh_root_addr: &BlockchainContractAddress,
     dao: &str,
     repo: &str,
@@ -371,7 +372,7 @@ pub async fn get_repo_address(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn branch_list(
-    context: &TonClient,
+    context: &EverClient,
     repo_addr: &BlockchainContractAddress,
 ) -> anyhow::Result<GetAllAddressResult> {
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
@@ -381,7 +382,7 @@ pub async fn branch_list(
 }
 
 pub async fn set_head(
-    context: &TonClient,
+    context: &EverClient,
     wallet_addr: &BlockchainContractAddress,
     repo_name: &str,
     new_head: &str,
@@ -396,7 +397,7 @@ pub async fn set_head(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_address(
-    context: &TonClient,
+    context: &EverClient,
     repo_contract: &mut impl ContractStatic,
     sha: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
@@ -412,7 +413,7 @@ pub async fn get_commit_address(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn get_commit_by_addr(
-    context: &TonClient,
+    context: &EverClient,
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<Option<GoshCommit>> {
     let commit = GoshCommit::load(context, address).await?;
@@ -420,7 +421,7 @@ pub async fn get_commit_by_addr(
 }
 
 pub async fn get_head(
-    context: &TonClient,
+    context: &EverClient,
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
@@ -439,7 +440,7 @@ pub mod tests {
 
     pub struct TestEnv {
         config: Config,
-        pub client: TonClient,
+        pub client: EverClient,
         gosh: BlockchainContractAddress,
         dao: String,
         repo: String,

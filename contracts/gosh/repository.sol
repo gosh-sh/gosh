@@ -24,7 +24,7 @@ contract Repository is Modifiers{
     optional(AddrVersion) _previousversion;
     address _pubaddr;
     mapping(uint8 => TvmCell) _code;
-    address _goshroot;
+    address _systemcontract;
     string static _name;
     string _nameDao;
     address _goshdao;
@@ -45,6 +45,7 @@ contract Repository is Modifiers{
         TvmCell SnapshotCode,
         TvmCell codeTree,
         TvmCell codeDiff,
+        TvmCell contentSignature,
         uint128 index,
         optional(AddrVersion) previousversion
         ) public {
@@ -52,7 +53,7 @@ contract Repository is Modifiers{
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
-        _goshroot = rootgosh;
+        _systemcontract = rootgosh;
         _goshdao = goshdao;
         _nameDao = nameDao;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -62,15 +63,16 @@ contract Repository is Modifiers{
         _code[m_TreeCode] = codeTree;
         _code[m_SnapshotCode] = SnapshotCode;
         _code[m_DiffCode] = codeDiff;
+        _code[m_contentSignature] = contentSignature;
         _previousversion = previousversion;
-        if (_previousversion.hasValue()) { SystemContract(_goshroot).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
+        if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
         _head = "main";
     }
 
-    function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_goshroot) accept {
+    function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
         if (prev.addr != address(this)) {
             Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(false, _Branches, _protectedBranch, _head);
         }
@@ -132,12 +134,12 @@ contract Repository is Modifiers{
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
 
     function initCommit(string namecommit, string branch, address commit) public view senderIs(getCommitAddr(namecommit)) accept {
@@ -256,6 +258,12 @@ contract Repository is Modifiers{
     }
 
     //Getters
+    function getContentAddress(string commit, string label) external view returns(address) {
+        address repo = address(this);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});
+       return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
     function isBranchProtected(string branch) external view returns(bool) {
         if (_protectedBranch.exists(tvm.hash(branch)) == false) {
@@ -312,8 +320,8 @@ contract Repository is Modifiers{
         return GoshLib.buildTagCode(_code[m_TagCode], address(this), version);
     }
 
-    function getGoshAdress() external view returns(address) {
-        return _goshroot;
+    function getGoshAddress() external view returns(address) {
+        return _systemcontract;
     }
 
     function getName() external view returns(string) {
