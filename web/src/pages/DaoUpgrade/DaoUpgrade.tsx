@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
 import { useDaoUpgrade } from 'react-gosh'
@@ -12,6 +12,7 @@ type TFormValues = {
 }
 
 const DaoUpgradePage = () => {
+    const { daoName } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const navigate = useNavigate()
     const { versions, upgrade: upgradeDao } = useDaoUpgrade(dao.adapter)
@@ -19,7 +20,7 @@ const DaoUpgradePage = () => {
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
             await upgradeDao(values.version)
-            navigate('/a/orgs')
+            navigate(`/o/${daoName}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

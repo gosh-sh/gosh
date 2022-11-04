@@ -87,6 +87,8 @@ interface IGoshDaoAdapter {
     createMember(username: string[]): Promise<void>
     deleteMember(username: string[]): Promise<void>
 
+    upgrade(version: string, description?: string): Promise<void>
+
     // TODO: Remove from interface and make private after useWallet hook removal
     _isAuthMember(): Promise<boolean>
     _getOwner(): Promise<string>
@@ -193,9 +195,6 @@ interface IContract {
 
 interface IGoshRoot extends IContract {
     address: TAddress
-
-    getGoshAddr(version: string): Promise<string>
-    getVersions(): Promise<any>
 }
 
 interface IGoshProfile extends IContract {
@@ -214,7 +213,7 @@ interface IGoshProfile extends IContract {
         gosh: IGoshAdapter,
         name: string,
         members: TAddress[],
-        prev?: string,
+        prev?: TAddress,
     ): Promise<IGoshDaoAdapter>
 
     setGoshAddress(address: TAddress): Promise<void>
@@ -319,9 +318,11 @@ interface IGoshSmvProposal extends IContract {
 }
 
 interface IGoshSmvLocker extends IContract {
-    /** Old interface */
     address: TAddress
 
+    validateProposalStart(): Promise<void>
+
+    /** Old interface */
     getDetails(): Promise<any>
     getVotes(): Promise<{ total: number; locked: number }>
     getIsBusy(): Promise<boolean>

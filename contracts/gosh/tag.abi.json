@@ -58,14 +58,6 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
-		},
-		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
 		}
 	],
 	"data": [
@@ -84,7 +76,7 @@
 		{"name":"_content","type":"string"},
 		{"name":"_commit","type":"address"},
 		{"name":"_pubaddr","type":"address"},
-		{"name":"_goshroot","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"}
 	]

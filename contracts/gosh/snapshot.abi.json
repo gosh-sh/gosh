@@ -108,7 +108,7 @@
 			]
 		},
 		{
-			"name": "getRepoAdress",
+			"name": "getRepoAddress",
 			"inputs": [
 			],
 			"outputs": [
@@ -138,14 +138,6 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
-		},
-		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
 		}
 	],
 	"data": [
@@ -165,7 +157,7 @@
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
-		{"name":"_goshroot","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_oldcommits","type":"string"},
 		{"name":"_commits","type":"string"},

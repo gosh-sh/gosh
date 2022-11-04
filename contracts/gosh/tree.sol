@@ -34,7 +34,7 @@ contract Tree is Modifiers {
     address static _repo;
     optional(string) _ipfs;
     address _pubaddr;
-    address _goshroot;
+    address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
     uint128 _needAnswer = 0;
@@ -64,7 +64,7 @@ contract Tree is Modifiers {
         _code[m_WalletCode] = WalletCode;
         _code[m_SnapshotCode] = SnapshotCode;
         _pubaddr = pubaddr;
-        _goshroot = rootGosh;
+        _systemcontract = rootGosh;
         _goshdao = goshdao;
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _ipfs = ipfs;
@@ -288,12 +288,12 @@ contract Tree is Modifiers {
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
 
     function destroy(address pubaddr, uint128 index) public {

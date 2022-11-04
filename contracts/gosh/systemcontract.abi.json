@@ -6,6 +6,16 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"code","type":"map(uint8,cell)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeDao1",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -138,22 +148,6 @@
 			]
 		},
 		{
-			"name": "setProfile",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setProfileDao",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "setDiff",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -226,7 +220,7 @@
 			]
 		},
 		{
-			"name": "getContentAdress",
+			"name": "getContentAddress",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"daoName","type":"string"},
@@ -377,14 +371,6 @@
 			]
 		},
 		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "_lastGoshDao",
 			"inputs": [
 			],
@@ -403,7 +389,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"name":"_root","type":"address"},
+		{"name":"_versionController","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"m_TokenLockerCode","type":"cell"},

@@ -84,6 +84,17 @@
 			]
 		},
 		{
+			"name": "upgradeDao",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -281,7 +292,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"address"}
+				{"name":"value0","type":"optional(address)"}
 			]
 		},
 		{
@@ -343,14 +354,6 @@
 			]
 		},
 		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "projectTokens",
 			"inputs": [
 			],
@@ -385,7 +388,7 @@
 	],
 	"data": [
 		{"key":1,"name":"nonce","type":"uint256"},
-		{"key":2,"name":"_goshroot","type":"address"}
+		{"key":2,"name":"_systemcontract","type":"address"}
 	],
 	"events": [
 	],
@@ -401,11 +404,11 @@
 		{"name":"_rootpubkey","type":"uint256"},
 		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
 		{"name":"lastWalletDeployed","type":"address"},
-		{"name":"_goshroot","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
-		{"name":"_previous","type":"address"},
+		{"name":"_previous","type":"optional(address)"},
 		{"name":"_wallets","type":"map(uint256,address)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_limit_wallets","type":"uint128"},

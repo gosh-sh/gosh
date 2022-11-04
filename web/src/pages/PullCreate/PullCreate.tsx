@@ -1,6 +1,5 @@
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { usePullRequest } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
@@ -13,12 +12,6 @@ const PullCreatePage = () => {
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { srcBranch, dstBranch, build, buildProgress, push, pushProgress } =
         usePullRequest(dao.details, repo)
-
-    const { details: smvDetails } = useSmvBalance(
-        dao.adapter,
-        dao.details.isAuthenticated,
-    )
-
     const { isFetching, isEmpty } = buildProgress
 
     const onBuild = async (values: any) => {
@@ -34,7 +27,7 @@ const PullCreatePage = () => {
     const onPush = async (values: any) => {
         try {
             const { title, message, tags, deleteBranch } = values
-            await push(title, smvDetails, message, tags, deleteBranch)
+            await push(title, message, tags, deleteBranch)
             navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e.message)

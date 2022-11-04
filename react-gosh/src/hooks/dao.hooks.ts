@@ -209,7 +209,6 @@ function useDaoCreate() {
 }
 
 function useDaoUpgrade(dao: IGoshDaoAdapter) {
-    const profile = useProfile()
     const [versions, setVersions] = useState<string[]>()
 
     useEffect(() => {
@@ -223,18 +222,10 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
     }, [dao])
 
     const upgrade = async (version: string) => {
-        if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
             throw new GoshError(`Gosh version ${version} is not supported`)
         }
-
-        const gosh = GoshAdapterFactory.create(version)
-
-        const profileGoshAddress = await profile.getGoshAddress()
-        if (profileGoshAddress !== gosh.gosh.address) {
-            await profile.setGoshAddress(gosh.gosh.address)
-        }
-        await profile.deployDao(gosh, await dao.getName(), [], dao.getAddress())
+        await dao.upgrade(version)
     }
 
     return { versions, upgrade }

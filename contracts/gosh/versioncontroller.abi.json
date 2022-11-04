@@ -11,7 +11,7 @@
 			]
 		},
 		{
-			"name": "deployGosh",
+			"name": "deploySystemContract",
 			"inputs": [
 				{"name":"version","type":"string"}
 			],
@@ -19,10 +19,21 @@
 			]
 		},
 		{
-			"name": "setGoshCode",
+			"name": "setSystemContractCode",
 			"inputs": [
 				{"name":"code","type":"cell"},
 				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeDao2",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"version","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"previousversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -49,7 +60,41 @@
 			]
 		},
 		{
-			"name": "getGoshCode",
+			"name": "setProfile",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setProfileDao",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getProfileAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProfileDaoAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSystemContractCode",
 			"inputs": [
 				{"name":"version","type":"string"}
 			],
@@ -58,7 +103,7 @@
 			]
 		},
 		{
-			"name": "getGoshAddr",
+			"name": "getSystemContractAddr",
 			"inputs": [
 				{"name":"version","type":"string"}
 			],
@@ -81,14 +126,6 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
-		},
-		{
-			"name": "storeValue",
-			"inputs": [
-				{"name":"newValue","type":"uint256"}
-			],
-			"outputs": [
-			]
 		}
 	],
 	"data": [
@@ -101,6 +138,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"cell"}],"name":"_GoshCode","type":"map(uint256,tuple)"}
+		{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"cell"}],"name":"_SystemContractCode","type":"map(uint256,tuple)"},
+		{"name":"_code","type":"map(uint8,cell)"}
 	]
 }

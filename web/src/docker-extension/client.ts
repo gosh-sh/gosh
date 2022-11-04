@@ -150,11 +150,8 @@ export class DockerClient {
 
     static _getRepositoryTuple(fullRepositoryName: string): [string, string, string] {
         // TODO: handle errors
-        const [goshRootContract, goshDao, goshRepositoryName] = fullRepositoryName
-            .slice('gosh://'.length)
-            .split('/')
-
-        return [goshRootContract, goshDao, goshRepositoryName]
+        const [gosh, dao, repo] = fullRepositoryName.slice('gosh://'.length).split('/')
+        return [gosh, dao, repo]
     }
 
     /**

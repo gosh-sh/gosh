@@ -14,6 +14,7 @@ const SettingsPage = () => {
         networks: {
             [networkName]: {
                 'user-wallet': {
+                    profile: user.username,
                     pubkey: user.keys?.public,
                     secret: user.keys?.secret,
                 },

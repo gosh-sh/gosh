@@ -113,6 +113,7 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
 function onTokenWalletDeployed(address wallet) external view check_token_root
 {
   require (wallet == m_tokenWallet);
+  require(_index == 0);
   tvm.accept();
   GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, 100, _index);
 
@@ -126,8 +127,8 @@ function proposalIsCompleted(address proposal) external onlyOwnerPubkey(_access.
       value: SMVConstants.VOTING_COMPLETION_FEE + SMVConstants.EPSILON_FEE
     }();
 }
-/* 
-function isCompletedCallback (uint256 , address , optional (bool) votingResult, TvmCell ) public  
+/*
+function isCompletedCallback (uint256 , address , optional (bool) votingResult, TvmCell ) public
 {
      lastVoteResult = votingResult;
  }
@@ -150,7 +151,7 @@ function onLockerTokenWalletDeployed (address wallet) external check_token_root
       lockerTip3Wallet = wallet;
 }
 
-/* 
+/*
 function onTokenBalanceUpdateWhileLockVoting (uint128 balance) external check_wallet
 {
     if (lockingAmount == 0) {lockingAmount = balance;}
@@ -162,7 +163,7 @@ function onTokenBalanceUpdateWhileLockVoting (uint128 balance) external check_wa
                                           (lockingAmount, tip3VotingLocker, 0, address(this), true, empty) ;
         _tokenBalance = balance - lockingAmount;
     }
-    else 
+    else
       _tokenBalance = balance;
 
     lockingAmount = 0;

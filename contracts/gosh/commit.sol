@@ -39,7 +39,7 @@ contract Commit is Modifiers {
     bool check = false;
     mapping(uint8 => TvmCell) _code;
     address[] _parents;
-    address _goshroot;
+    address _systemcontract;
     address _tree;
     string _branchName;
     address _branchCommit;
@@ -75,7 +75,7 @@ contract Commit is Modifiers {
         uint128 index,
         bool upgrade
         ) public {
-        _goshroot = rootGosh;
+        _systemcontract = rootGosh;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
         require(_nameCommit != "", ERR_NO_DATA);
@@ -112,12 +112,12 @@ contract Commit is Modifiers {
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshroot : _goshroot, _goshdao: _goshdao, _index: index}
+            varInit: { _systemcontract: _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     //Commit part
 
@@ -440,7 +440,7 @@ contract Commit is Modifiers {
         return _nameBranch;
     }
 
-    function getRepoAdress() external view returns(address) {
+    function getRepoAddress() external view returns(address) {
         return _rootRepo;
     }
 
@@ -448,7 +448,7 @@ contract Commit is Modifiers {
         return _prevversion;
     }
 
-    function getDiffAdress(uint128 index1, uint128 index2) external view returns(address) {
+    function getDiffAddress(uint128 index1, uint128 index2) external view returns(address) {
         return getDiffAddress(_nameCommit, index1, index2);
     }
 
