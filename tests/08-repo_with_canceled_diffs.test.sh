@@ -12,8 +12,7 @@
 # 10. clone repo in repo8-clone3
 # 11. comparing repositories repo8-clone1 and repo8-clone3 (similar)
 
-set -e 
-set -o pipefail
+set -e
 . ./util.sh
 
 #1
