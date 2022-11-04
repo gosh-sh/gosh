@@ -181,18 +181,30 @@ pipeline {
                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                 ./set-vars.sh
                             """
-                            for (int i = 0; i < tests.length; i++) {
-                                stage("Test ${tests[i]}") {
-                                    sh """
-                                        export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-                                        . ./env.env
-                                        ./${tests[i]}
-                                    """
-                                }
+                            def parallelStages = [:]                            
+                            tests.each { i ->
+                                parallelStages[i] = {
+                                    node {
+                                        stage("Test ${tests[i]}") {
+                                            sh """
+                                                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                                                . ./env.env
+                                                ./${tests[i]}
+                                            """
+                                        }
+                                    }
+                                } 
                             }
                         }
                         
                     }
+                }
+                parallel(
+                a: {
+                    echo "This is branch a"
+                },
+                b: {
+                    echo "This is branch b"
                 }
             }
         }
