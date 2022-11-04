@@ -98,7 +98,7 @@ git add .
 git commit -m "added-$FILE2-now-$CHANGE"
 
 echo "***** push $FILE2 into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+git push -u origin $BRANCH_NAME 2>&1 | grep 'fetch first'
 
 sleep 30
 
