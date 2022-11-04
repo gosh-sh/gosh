@@ -185,7 +185,7 @@ pipeline {
                             tests.each { i ->
                                 parallelStages[i] = {
                                     node {
-                                        stage("Test ${tests[i]}") {
+                                        stage("${tests[i]}") {
                                             sh """
                                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                                 . ./env.env
