@@ -9,7 +9,6 @@ use crate::{
     git_helper::push::create_branch::CreateBranchOperation,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
-use git2::Repository;
 use git_hash::{self, ObjectId};
 use git_odb::{Find, Write};
 use std::{

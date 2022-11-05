@@ -1,4 +1,3 @@
-use git2::{Object, ObjectType, Oid, Repository};
 use std::collections::HashMap;
 
 use crate::blockchain::{branch_list, get_commit_by_addr, BlockchainContractAddress, EverClient};
@@ -30,35 +29,35 @@ pub fn open_repo() -> anyhow::Result<Repository> {
 }
 */
 
-fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
-    let odb = repo.odb().ok()?;
-    let oid = Oid::from_str(sha).ok()?;
-    let odb_object = odb.read(oid).ok()?;
-    let object_type = odb_object.kind();
+// fn _object_data(repo: Repository, sha: &str) -> Option<Object> {
+//     let odb = repo.odb().ok()?;
+//     let oid = Oid::from_str(sha).ok()?;
+//     let odb_object = odb.read(oid).ok()?;
+//     let object_type = odb_object.kind();
 
-    match object_type {
-        ObjectType::Any => {
-            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-            None
-        }
-        ObjectType::Commit => {
-            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-            None
-        }
-        ObjectType::Tree => {
-            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-            None
-        }
-        ObjectType::Blob => {
-            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-            None
-        }
-        ObjectType::Tag => {
-            log::debug!("unsupported type: {} (sha: {})", object_type, sha);
-            None
-        }
-    }
-}
+//     match object_type {
+//         ObjectType::Any => {
+//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             None
+//         }
+//         ObjectType::Commit => {
+//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             None
+//         }
+//         ObjectType::Tree => {
+//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             None
+//         }
+//         ObjectType::Blob => {
+//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             None
+//         }
+//         ObjectType::Tag => {
+//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             None
+//         }
+//     }
+// }
 
 pub async fn get_refs(
     context: &EverClient,
