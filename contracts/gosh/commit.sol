@@ -150,13 +150,18 @@ contract Commit is Modifiers {
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
         Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit, _nameBranch);
+        _diffcheck = true;
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
 
     function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (index >= number) { return; }
+        if (index >= number) { 
+            _diffcheck = false;
+            _commitcheck = false;
+            return; 
+        }
         if (address(this).balance < 5 ton) { _saved = Pause(false, "", address.makeAddrNone(), index, number); return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
