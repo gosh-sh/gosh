@@ -156,7 +156,11 @@ contract Commit is Modifiers {
     function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (index >= number) { return; }
+        if (index >= number) { 
+            _diffcheck = false;
+            _commitcheck = false;
+            return; 
+        }
         if (address(this).balance < 5 ton) { _saved = Pause(false, "", address.makeAddrNone(), index, number); return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
@@ -298,6 +302,7 @@ contract Commit is Modifiers {
             _number = 0;
         }
         else {
+            _diffcheck = true;
             this.cancelCommit{value: 0.2 ton, flag: 1}(_nameCommit, _number);
             _number = 0;
         }
