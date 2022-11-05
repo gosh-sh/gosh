@@ -573,8 +573,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const data = await snapshot.runLocal('getSnapshot', {})
         const { value0, value1, value2, value3, value4, value5, value6 } = data
 
-        const patched = value0 === value3 ? value1 : value4
-        const ipfscid = value0 === value3 ? value2 : value5
+        const name = options.fullpath || (await snapshot.getName())
+        const branch = name.split('/')[0]
+        const { commit } = await this.getBranch(branch)
+
+        const patched = value0 === commit.name ? value1 : value4
+        const ipfscid = value0 === commit.name ? value2 : value5
 
         // Read onchain snapshot content
         if (patched) {
