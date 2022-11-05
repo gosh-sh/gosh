@@ -150,7 +150,6 @@ contract Commit is Modifiers {
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
         Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit, _nameBranch);
-        _diffcheck = true;
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
 
@@ -303,6 +302,7 @@ contract Commit is Modifiers {
             _number = 0;
         }
         else {
+            _diffcheck = true;
             this.cancelCommit{value: 0.2 ton, flag: 1}(_nameCommit, _number);
             _number = 0;
         }
