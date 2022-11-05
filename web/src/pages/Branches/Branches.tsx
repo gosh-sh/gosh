@@ -14,7 +14,6 @@ import Spinner from '../../components/Spinner'
 import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
-import { useSmvBalance } from '../../hooks/gosh.hooks'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
@@ -29,10 +28,6 @@ export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const { details: smvDetails } = useSmvBalance(
-        dao.adapter,
-        dao.details.isAuthenticated,
-    )
     const [branchName, setBranchName] = useState<string>('main')
     const { branches, branch, updateBranches } = useBranches(repo, branchName)
     const {
@@ -218,10 +213,7 @@ export const BranchesPage = () => {
                                                 ? onBranchUnlock(branch.name)
                                                 : onBranchLock(branch.name)
                                         }}
-                                        disabled={
-                                            smvDetails.smvBusy ||
-                                            status[branch.name]?.isBusy
-                                        }
+                                        disabled={status[branch.name]?.isBusy}
                                     >
                                         {status[branch.name]?.isLock ? (
                                             <Spinner size="xs" />
