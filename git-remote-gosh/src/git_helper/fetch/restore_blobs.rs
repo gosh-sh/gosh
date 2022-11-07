@@ -4,7 +4,7 @@ use crate::{
         self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{EverClient, GoshContract},
-    ipfs::{IpfsLoad, IpfsService},
+    ipfs::{service::FileLoad, IpfsService},
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::ObjectId;
@@ -26,7 +26,7 @@ pub struct BlobsRebuildingPlan {
 
 #[instrument(level = "debug", skip(ipfs_client))]
 async fn load_data_from_ipfs(
-    ipfs_client: &impl IpfsLoad,
+    ipfs_client: &impl FileLoad,
     ipfs_address: &str,
 ) -> anyhow::Result<Vec<u8>> {
     let ipfs_data = ipfs_client.load(ipfs_address).await?;
@@ -202,7 +202,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 }
 
 async fn convert_snapshot_into_blob(
-    ipfs_client: &impl IpfsLoad,
+    ipfs_client: &impl FileLoad,
     content: &[u8],
     ipfs: &Option<String>,
 ) -> anyhow::Result<(git_object::Object, Vec<u8>)> {

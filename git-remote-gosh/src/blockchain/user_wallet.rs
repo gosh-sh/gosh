@@ -163,7 +163,7 @@ impl BlockchainUserWalletService for Everscale {
                     &es_client,
                     &zero_wallet,
                     max_number_of_user_wallets,
-                ));
+                )); // Result is unused. MB add '?'
             });
         });
 
