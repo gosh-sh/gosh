@@ -326,10 +326,14 @@ where
         let cmd = Command::new("git")
             .args(cmd_args)
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
+        if !cmd_out.status.success() {
+            return Ok(format!("error {remote_ref} fetch first\n"));
+        }
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
 
