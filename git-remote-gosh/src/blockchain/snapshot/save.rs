@@ -7,7 +7,7 @@ use crate::{
     },
     config,
     git_helper::GitHelper,
-    ipfs::{IpfsSave, IpfsService},
+    ipfs::{service::FileSave, IpfsService},
 };
 use git_hash;
 use ton_client::utils::compress_zstd;

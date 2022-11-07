@@ -11,10 +11,13 @@ use crate::{
     },
     config::Config,
     git_helper::ever_client::create_client,
-    ipfs::IpfsService,
+    ipfs::{
+        service::FileService,
+    },
     logger::GitHelperLogger as Logger,
     utilities::Remote,
 };
+use crate::ipfs::build_ipfs;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -22,9 +25,12 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
-pub struct GitHelper<Blockchain = crate::blockchain::Everscale> {
+pub struct GitHelper<
+    Blockchain = crate::blockchain::Everscale,
+    FileProvider = crate::ipfs::IpfsService
+> {
     pub config: Config,
-    pub ipfs_client: IpfsService,
+    pub ipfs_client: FileProvider,
     pub blockchain: Blockchain,
     pub remote: Remote,
     pub dao_addr: BlockchainContractAddress,
@@ -49,9 +55,10 @@ mod list;
 
 mod fmt;
 
-impl<Blockchain> GitHelper<Blockchain>
+impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
 where
     Blockchain: BlockchainService,
+    FileProvider: FileService,
 {
     pub fn local_repository(&mut self) -> &mut git_repository::Repository {
         &mut self.local_git_repository
@@ -76,7 +83,7 @@ where
         url: &str,
         logger: Logger,
         blockchain: Blockchain,
-        ipfs: IpfsService,
+        ipfs: FileProvider,
     ) -> anyhow::Result<Self> {
         // TODO: remove duplicate logic
         let remote = Remote::new(url, &config)?;
@@ -150,10 +157,7 @@ where
     }
 }
 
-// Implement protocol defined here:
-// https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
-#[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
+async fn build_blockchain(config: &Config, url: &str) -> anyhow::Result<crate::blockchain::Everscale> {
     // concrete implementation for Ever in this case
     let mut blockchain_builder = EverscaleBuilder::default();
     let remote = Remote::new(url, &config)?;
@@ -181,9 +185,15 @@ pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()
     log::debug!("Searching for a wallet at {}", &remote.network);
     blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
-    let blockchain = blockchain_builder.build()?;
+    Ok(blockchain_builder.build()?)
+}
 
-    let ipfs = IpfsService::build(config.ipfs_http_endpoint())?;
+// Implement protocol defined here:
+// https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
+#[instrument(level = "debug")]
+pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
+    let blockchain = build_blockchain(&config, url).await?;
+    let ipfs = build_ipfs(config.ipfs_http_endpoint())?;
 
     let mut helper = GitHelper::build(config, url, logger, blockchain, ipfs).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
@@ -277,7 +287,7 @@ pub mod tests {
         let dao_addr = BlockchainContractAddress::new("123");
         let repo_addr = BlockchainContractAddress::new("123");
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
-        let ipfs_client = IpfsService::build(config.ipfs_http_endpoint()).unwrap();
+        let ipfs_client = build_ipfs(config.ipfs_http_endpoint()).unwrap();
         // let local_git_dir = env::var("GIT_DIR").unwrap();
 
         GitHelper {
