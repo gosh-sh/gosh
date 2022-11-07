@@ -38,7 +38,7 @@ pub use snapshot::Snapshot;
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
 
-use crate::{
+pub use crate::{
     abi as gosh_abi,
     config::{self, UserWalletConfig},
 };

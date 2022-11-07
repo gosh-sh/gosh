@@ -1,5 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
+use self::push_diff::push_initial_snapshot;
+
 use super::GitHelper;
 use crate::{
     blockchain::{
@@ -23,6 +25,7 @@ use std::{
 use tokio::task::JoinError;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod push_diff;
 mod push_tree;
 use push_tree::push_tree;
 mod utilities;
@@ -50,9 +53,9 @@ impl PushBlobStatistics {
 
 impl<Blockchain> GitHelper<Blockchain>
 where
-    Blockchain: BlockchainService,
+    Blockchain: BlockchainService + 'static,
 {
-    #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
+    // #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
         &mut self,
         file_path: &str,
@@ -83,7 +86,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
+    // #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -96,8 +99,7 @@ where
             tokio::task::JoinHandle<anyhow::Result<()>>,
         >,
     ) -> anyhow::Result<()> {
-        let join_handler =
-            blockchain::snapshot::push_initial_snapshot(self, branch_name, file_path).await?;
+        let join_handler = push_initial_snapshot(self, branch_name, file_path).await?;
         parallel_snapshot_uploads.push(join_handler);
 
         let file_diff =

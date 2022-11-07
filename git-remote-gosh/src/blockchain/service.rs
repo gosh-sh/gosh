@@ -1,7 +1,12 @@
 use super::{
-    branch::DeployBranch, commit::save::BlockchainCommitPusher, contract::ContractRead,
-    tree::DeployTree, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
-    EverClient, Everscale, GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
+    branch::DeployBranch,
+    commit::save::BlockchainCommitPusher,
+    contract::ContractRead,
+    snapshot::save::{DeployDiff, DeployNewSnapshot},
+    tree::DeployTree,
+    user_wallet::BlockchainUserWalletService,
+    BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
+    GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -32,8 +37,10 @@ pub trait BlockchainCommitService {
 #[async_trait]
 pub trait BlockchainService:
     Debug
+    + Clone
     + Sync
     + Send
+    //
     + BlockchainCommitService
     + BlockchainCommitPusher
     + BlockchainUserWalletService
@@ -41,6 +48,8 @@ pub trait BlockchainService:
     // TODO: fix naming later
     + DeployBranch
     + DeployTree
+    + DeployDiff
+    + DeployNewSnapshot
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
@@ -94,7 +103,7 @@ impl BlockchainCommitService for Everscale {
     }
 }
 
-impl Everscale {}
+// impl Everscale {}
 
 impl std::fmt::Debug for Everscale {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -122,7 +131,7 @@ impl BlockchainService for Everscale {
 pub mod tests {
     use super::*;
     use crate::{
-        blockchain::{contract::ContractInfo, tree::TreeNode},
+        blockchain::{contract::ContractInfo, snapshot::save::Diff, tree::TreeNode},
         config::UserWalletConfig,
         utilities::Remote,
     };
@@ -134,6 +143,10 @@ pub mod tests {
         #[derive(Debug)]
         pub Everscale {
             // empty
+        }
+
+        impl Clone for Everscale {
+            fn clone(&self) -> Self;
         }
 
         #[async_trait]
@@ -157,6 +170,38 @@ pub mod tests {
                 sha: &str,
                 repo_name: &str,
                 nodes: HashMap<String, TreeNode>,
+            ) -> anyhow::Result<()>
+            where
+                W: ContractInfo + Sync + 'static;
+        }
+
+        #[async_trait]
+        impl DeployDiff for Everscale {
+            async fn deploy_diff<W>(
+                &self,
+                wallet: &W,
+                repo_name: String,
+                branch_name: String,
+                commit_id: String,
+                diffs: Vec<Diff>,
+                index1: u32,
+                index2: u32,
+                last: bool,
+            ) -> anyhow::Result<()>
+            where
+                W: ContractInfo + Sync + 'static;
+        }
+
+        #[async_trait]
+        impl DeployNewSnapshot for Everscale {
+            async fn deploy_new_snapshot<W>(
+                &self,
+                wallet: &W,
+                repo_address: BlockchainContractAddress,
+                branch_name: String,
+                commit_id: String,
+                file_path: String,
+                content: String,
             ) -> anyhow::Result<()>
             where
                 W: ContractInfo + Sync + 'static;
