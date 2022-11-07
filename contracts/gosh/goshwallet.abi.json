@@ -645,6 +645,14 @@
 			]
 		},
 		{
+			"name": "m_pseudoDAOBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_pseudoDAOBalance","type":"uint128"}
+			]
+		},
+		{
 			"name": "lockerTip3Wallet",
 			"inputs": [
 			],

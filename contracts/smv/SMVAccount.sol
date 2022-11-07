@@ -88,15 +88,18 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _proposalCodeHash, uint16 _proposalCodeDepth,
             address _tip3Root) public
 {
+    _pubaddr = pubaddr; /* from goshWallet */
+    if (_index != 0) return;
+
     require(address(this).balance >= 2*SMVConstants.TIP3_WALLET_DEPLOY_VALUE +
                                      2*SMVConstants.TIP3_WALLET_INIT_VALUE +
                                      SMVConstants.ACCOUNT_INIT_VALUE +
                                      SMVConstants.LOCKER_INIT_VALUE +
                                      SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
     tvm.accept();
-
+    
     initialized = false;
-    _pubaddr = pubaddr; /* from goshWallet */
+    
     m_tokenRoot = _tip3Root;
     m_tokenWalletCode = tokenWalletCode;
     /* ITokenRoot(m_tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
@@ -120,15 +123,12 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
     lockerCodeDepth = lockerCode.depth();
 
     //m_tokenWallet = address.makeAddrStd(0,tvm.hash(_buildWalletInitData()));
-
+    
     tip3VotingLocker = new SMVTokenLocker { value: SMVConstants.LOCKER_INIT_VALUE +
                                                    SMVConstants.ACTION_FEE,
                                             stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot);
     //GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, DEFAULT_DAO_BALANCE, _index);
-    if (_index == 0)
-        m_pseudoDAOBalance = DEFAULT_DAO_BALANCE;
-    else
-        m_pseudoDAOBalance = 0;
+    m_pseudoDAOBalance = DEFAULT_DAO_BALANCE;
 }
 
 /* function onTokenWalletDeployed(address wallet) external view check_token_root
