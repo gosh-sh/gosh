@@ -35,7 +35,7 @@ pub mod user_wallet;
 pub use commit::GoshCommit;
 use serde_number::Number;
 pub use snapshot::Snapshot;
-pub use tree::{push_tree, Tree};
+pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
 
 use crate::{

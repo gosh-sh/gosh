@@ -23,6 +23,8 @@ use std::{
 use tokio::task::JoinError;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod push_tree;
+use push_tree::push_tree;
 mod utilities;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 
@@ -465,7 +467,7 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            blockchain::push_tree(self, &object_id, &mut visited_trees).await?
+                            push_tree(self, &object_id, &mut visited_trees).await?
                         }
                     }
                 }
