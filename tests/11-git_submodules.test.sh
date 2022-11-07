@@ -14,30 +14,11 @@ set -o pipefail
 . ./util.sh
 
 REPO_NAME=repo11
-SUBMODULE=~/sm-local
 BRANCH_NAME=main
 TESTS_DIR=`pwd`
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
-[ -d $SUBMODULE ] && rm -rf $SUBMODULE
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
-
-# create local repo (local submodule)
-mkdir $SUBMODULE
-cd $SUBMODULE
-
-git init
-git branch -m main
-
-# config git client
-git config user.email "foo@bar.com"
-git config user.name "My name"
-
-date +%s > file.txt
-git add file.txt
-git commit -m "Added file.txt"
-
-cd $TESTS_DIR
 
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
@@ -69,36 +50,12 @@ echo "foo" > foo-$CHANGE.txt
 git add foo-$CHANGE.txt
 git commit -m "foo-$CHANGE"
 
-SUBMODULE_DEST=from-local
-
-# add submodule to repo and push it
-git submodule add $SUBMODULE $SUBMODULE_DEST
-git commit -m "Added local submodule"
-echo "***** awaiting push into $BRANCH_NAME *****"
-git push --set-upstream origin $BRANCH_NAME
-
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
-
-echo "***** cloning repo *****"
-cd ..
-git clone --recurse-submodules \
-    gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
-
-echo "***** comparing repositories *****"
-diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 20
-
-rm -fr $REPO_NAME"-clone"
-
-cd $REPO_NAME
-
 SUBMODULE_DEST=from-github
 
 git submodule add https://github.com/gosh-sh/test-repo.git SUBMODULE_DEST
 git commit -m "Added github submodule"
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push
+git push --set-upstream origin $BRANCH_NAME
 
 echo "***** awaiting set commit into $BRANCH_NAME *****"
 wait_set_commit $REPO_ADDR $BRANCH_NAME

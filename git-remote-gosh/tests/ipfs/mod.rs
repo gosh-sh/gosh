@@ -1,4 +1,7 @@
-use git_remote_gosh::ipfs::{IpfsLoad, IpfsSave, IpfsService};
+use git_remote_gosh::ipfs::{
+    build_ipfs,
+    service::{FileLoad, FileSave},
+};
 use std::env;
 use tokio::fs::{remove_file, OpenOptions};
 
@@ -7,7 +10,7 @@ const IPFS_HTTP_ENDPOINT_FOR_TESTS: &str = "https://ipfs.network.gosh.sh";
 #[test_log::test(tokio::test)]
 async fn save_blob_test() {
     let blob = "fӅoAٲ";
-    let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
+    let ipfs = build_ipfs(IPFS_HTTP_ENDPOINT_FOR_TESTS)
         .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
     let cid = ipfs
         .save_blob(blob.as_bytes())
@@ -35,7 +38,7 @@ async fn save_file() {
         .await
         .unwrap_or_else(|e| panic!("Can't prepare test file: {e}"));
 
-    let ipfs = IpfsService::build(IPFS_HTTP_ENDPOINT_FOR_TESTS)
+    let ipfs = build_ipfs(IPFS_HTTP_ENDPOINT_FOR_TESTS)
         .unwrap_or_else(|e| panic!("Can't build IPFS client: {e}"));
     let cid = ipfs
         .save_file(&path)

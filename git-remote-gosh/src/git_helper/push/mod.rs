@@ -23,6 +23,8 @@ use std::{
 use tokio::task::JoinError;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod push_tree;
+use push_tree::push_tree;
 mod utilities;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 
@@ -324,10 +326,14 @@ where
         let cmd = Command::new("git")
             .args(cmd_args)
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .expect("git rev-list failed");
 
         let cmd_out = cmd.wait_with_output()?;
+        if !cmd_out.status.success() {
+            return Ok(format!("error {remote_ref} fetch first\n"));
+        }
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
 
@@ -465,7 +471,7 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            blockchain::push_tree(self, &object_id, &mut visited_trees).await?
+                            push_tree(self, &object_id, &mut visited_trees).await?
                         }
                     }
                 }

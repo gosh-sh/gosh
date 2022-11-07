@@ -1,7 +1,7 @@
 use super::{
     branch::DeployBranch, commit::save::BlockchainCommitPusher, contract::ContractRead,
-    user_wallet::BlockchainUserWalletService, BlockchainContractAddress, EverClient, Everscale,
-    GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
+    tree::DeployTree, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
+    EverClient, Everscale, GetAddrBranchResult, GetBoolResult, GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -40,6 +40,7 @@ pub trait BlockchainService:
     + BlockchainBranchesService
     // TODO: fix naming later
     + DeployBranch
+    + DeployTree
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
@@ -120,8 +121,13 @@ impl BlockchainService for Everscale {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::{blockchain::contract::ContractInfo, config::UserWalletConfig, utilities::Remote};
+    use crate::{
+        blockchain::{contract::ContractInfo, tree::TreeNode},
+        config::UserWalletConfig,
+        utilities::Remote,
+    };
     use git_hash::ObjectId;
+    use std::collections::HashMap;
 
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
@@ -138,6 +144,19 @@ pub mod tests {
                 repo_name: &str,
                 new_name: &str,
                 from_commit: &str,
+            ) -> anyhow::Result<()>
+            where
+                W: ContractInfo + Sync + 'static;
+        }
+
+        #[async_trait]
+        impl DeployTree for Everscale {
+            async fn deploy_tree<W>(
+                &self,
+                wallet: &W,
+                sha: &str,
+                repo_name: &str,
+                nodes: HashMap<String, TreeNode>,
             ) -> anyhow::Result<()>
             where
                 W: ContractInfo + Sync + 'static;

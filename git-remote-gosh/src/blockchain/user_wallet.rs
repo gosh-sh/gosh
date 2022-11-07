@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use cached::once_cell::sync::Lazy;
 use cached::{proc_macro::cached, SizedCache};
 use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
@@ -42,9 +43,7 @@ thread_local! {
 }
 
 static INIT_USER_WALLET_MIRRORS: Once = Once::new();
-lazy_static! {
-    static ref _USER_WALLET: RwLock<Option<GoshContract>> = RwLock::new(None);
-}
+static _USER_WALLET: Lazy<RwLock<Option<GoshContract>>> = Lazy::new(|| RwLock::new(None));
 
 async fn get_user_wallet(
     blockchain: &impl BlockchainService,
@@ -163,7 +162,7 @@ impl BlockchainUserWalletService for Everscale {
                     &es_client,
                     &zero_wallet,
                     max_number_of_user_wallets,
-                ));
+                )); // Result is unused. MB add '?'
             });
         });
 

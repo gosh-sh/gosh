@@ -12,8 +12,7 @@
 # 10. clone repo in repo8-clone3
 # 11. comparing repositories repo8-clone1 and repo8-clone3 (similar)
 
-set -e 
-set -o pipefail
+set -e
 . ./util.sh
 
 #1
@@ -98,7 +97,7 @@ git add .
 git commit -m "added-$FILE2-now-$CHANGE"
 
 echo "***** push $FILE2 into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+git push -u origin $BRANCH_NAME 2>&1 | grep 'fetch first'
 
 sleep 30
 
