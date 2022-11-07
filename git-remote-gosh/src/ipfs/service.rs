@@ -15,11 +15,11 @@ pub trait FileSave {
 }
 
 #[async_trait]
-pub trait FileService:
+pub trait FileStorage:
 Debug
 + FileSave
 + FileLoad
 {}
 
-impl FileService for IpfsService {}
+impl FileStorage for IpfsService {}
 
