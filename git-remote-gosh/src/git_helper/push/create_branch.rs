@@ -9,7 +9,7 @@ use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 
-use super::{BlockchainService, ZERO_SHA};
+use super::{push_diff::push_new_branch_snapshot, BlockchainService, ZERO_SHA};
 
 #[derive(Debug)]
 pub struct CreateBranchOperation<'a, Blockchain> {
@@ -79,7 +79,7 @@ where
             .as_blob()
             .expect("It must be a blob object")
             .data;
-        blockchain::snapshot::push_new_branch_snapshot(
+        push_new_branch_snapshot(
             self.context,
             &self.ancestor_commit,
             &self.new_branch,

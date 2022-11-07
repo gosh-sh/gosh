@@ -1,5 +1,6 @@
 use crate::blockchain::BlockchainService;
 use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
+use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -68,7 +69,7 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn push_dangling(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
         for (
             diff_coordinates,
@@ -84,7 +85,7 @@ impl ParallelDiffsUploadSupport {
         ) in self.dangling_diffs.values()
         {
             self.pushed_blobs.push(
-                blockchain::snapshot::push_diff(
+                push_diff(
                     context,
                     commit_id,
                     branch_name,
@@ -100,7 +101,7 @@ impl ParallelDiffsUploadSupport {
                 .await?,
             );
             let mut repo_contract = context.blockchain.repo_contract().clone();
-            let diff_contract_address = blockchain::snapshot::diff_address(
+            let diff_contract_address = diff_address(
                 &context.blockchain.client(),
                 &mut repo_contract,
                 &self.last_commit_id,
@@ -151,12 +152,7 @@ impl ParallelDiffsUploadSupport {
                 .expecting_deployed_contacts_addresses
                 .get(index)
                 .unwrap();
-            if blockchain::snapshot::is_diff_deployed(
-                &context.blockchain.client(),
-                expecting_address,
-            )
-            .await?
-            {
+            if is_diff_deployed(&context.blockchain.client(), expecting_address).await? {
                 index += 1;
                 attempt = 0;
             } else {
@@ -175,7 +171,7 @@ impl ParallelDiffsUploadSupport {
 
     pub async fn push(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
         diff: ParallelDiff,
     ) -> anyhow::Result<()> {
         match self.dangling_diffs.get(&diff.file_path) {
@@ -193,7 +189,7 @@ impl ParallelDiffsUploadSupport {
                 },
             )) => {
                 self.pushed_blobs.push(
-                    blockchain::snapshot::push_diff(
+                    push_diff(
                         context,
                         commit_id,
                         branch_name,
