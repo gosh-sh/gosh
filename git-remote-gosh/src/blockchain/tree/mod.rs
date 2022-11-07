@@ -15,7 +15,8 @@ use std::{
 };
 
 pub use load::Tree;
-pub use save::push_tree;
+pub use save::DeployTree;
+pub use save::TreeNode;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
