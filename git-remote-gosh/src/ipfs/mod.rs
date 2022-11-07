@@ -1,17 +1,14 @@
 mod load;
-pub mod service;
 mod save;
+pub mod service;
 
 use reqwest::multipart;
 use reqwest_tracing::TracingMiddleware;
 use serde::Deserialize;
-use std::{
-    path::Path,
-    time::Duration,
-};
 use std::fmt::Debug;
+use std::{path::Path, time::Duration};
 use tokio::fs::File;
-use tokio_retry::{strategy::ExponentialBackoff};
+use tokio_retry::strategy::ExponentialBackoff;
 
 type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 
@@ -25,7 +22,7 @@ struct SaveRes {
 }
 
 #[derive(Builder, Debug)]
-pub struct IpfsService <HttpClient = MiddlewareHttpClient> {
+pub struct IpfsService<HttpClient = MiddlewareHttpClient> {
     ipfs_endpoint_address: String,
     http_client: HttpClient,
 }
@@ -48,11 +45,9 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
     let mut ipfs_builder = IpfsServiceBuilder::default();
     ipfs_builder.ipfs_endpoint_address(endpoint.to_owned());
 
-    let http_client = reqwest_middleware::ClientBuilder::new(
-        reqwest::Client::builder().build()?
-    ).with(
-        TracingMiddleware::default()
-    ).build();
+    let http_client = reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
+        .with(TracingMiddleware::default())
+        .build();
 
     ipfs_builder.http_client(http_client);
 
@@ -130,7 +125,6 @@ impl IpfsService<MiddlewareHttpClient> {
         Ok(Vec::from(&response_body[..]))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

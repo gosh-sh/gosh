@@ -11,10 +11,7 @@ use crate::{
     },
     config::Config,
     git_helper::ever_client::create_client,
-    ipfs::{
-        service::FileStorage,
-        build_ipfs
-    },
+    ipfs::{build_ipfs, service::FileStorage},
     logger::GitHelperLogger as Logger,
     utilities::Remote,
 };
@@ -27,7 +24,7 @@ static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
 pub struct GitHelper<
     Blockchain = crate::blockchain::Everscale,
-    FileProvider = crate::ipfs::IpfsService
+    FileProvider = crate::ipfs::IpfsService,
 > {
     pub config: Config,
     pub file_provider: FileProvider,
@@ -157,7 +154,10 @@ where
     }
 }
 
-async fn build_blockchain(config: &Config, url: &str) -> anyhow::Result<crate::blockchain::Everscale> {
+async fn build_blockchain(
+    config: &Config,
+    url: &str,
+) -> anyhow::Result<crate::blockchain::Everscale> {
     // concrete implementation for Ever in this case
     let mut blockchain_builder = EverscaleBuilder::default();
     let remote = Remote::new(url, &config)?;

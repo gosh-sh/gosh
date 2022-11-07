@@ -4,7 +4,7 @@ use crate::{
         self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{EverClient, GoshContract},
-    ipfs::{ service::FileLoad, IpfsService},
+    ipfs::{service::FileLoad, IpfsService},
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::ObjectId;

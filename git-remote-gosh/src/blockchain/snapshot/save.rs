@@ -334,7 +334,7 @@ pub async fn push_new_branch_snapshot(
     let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
-            save_data_to_ipfs(&context.ipfs_client, original_content)
+            save_data_to_ipfs(&context.file_provider, original_content)
                 .await
                 .map_err(|e| {
                     log::debug!("save_data_to_ipfs error: {}", e);

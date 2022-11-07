@@ -1,8 +1,8 @@
 use super::IpfsService;
 use crate::ipfs::service::FileSave;
 use async_trait::async_trait;
-use tokio_retry::Retry;
 use std::path::Path;
+use tokio_retry::Retry;
 
 #[async_trait]
 impl FileSave for IpfsService {
@@ -17,7 +17,7 @@ impl FileSave for IpfsService {
         Retry::spawn(self.retry_strategy(), || {
             IpfsService::save_blob_retriable(&self.http_client, &url, blob)
         })
-            .await
+        .await
     }
 
     async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String> {
@@ -34,6 +34,6 @@ impl FileSave for IpfsService {
         Retry::spawn(self.retry_strategy(), || {
             IpfsService::save_file_retriable(&self.http_client, &url, &path)
         })
-            .await
+        .await
     }
 }

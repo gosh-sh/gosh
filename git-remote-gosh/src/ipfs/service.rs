@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use super::IpfsService;
+use async_trait::async_trait;
 use std::fmt::Debug;
 use std::path::Path;
 
@@ -15,11 +15,6 @@ pub trait FileSave {
 }
 
 #[async_trait]
-pub trait FileStorage:
-Debug
-+ FileSave
-+ FileLoad
-{}
+pub trait FileStorage: Debug + FileSave + FileLoad {}
 
 impl FileStorage for IpfsService {}
-

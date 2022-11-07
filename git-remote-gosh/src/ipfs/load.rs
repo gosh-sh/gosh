@@ -1,7 +1,7 @@
 use super::IpfsService;
-use tokio_retry::Retry;
-use async_trait::async_trait;
 use crate::ipfs::service::FileLoad;
+use async_trait::async_trait;
+use tokio_retry::Retry;
 
 #[async_trait]
 impl FileLoad for IpfsService {
@@ -11,6 +11,6 @@ impl FileLoad for IpfsService {
         Retry::spawn(self.retry_strategy(), || {
             IpfsService::load_retriable(&self.http_client, &url)
         })
-            .await
+        .await
     }
 }
