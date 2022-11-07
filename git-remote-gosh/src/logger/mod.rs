@@ -1,3 +1,4 @@
+use cached::once_cell::sync::Lazy;
 use log::LevelFilter;
 use log4rs::{
     append::console::{ConsoleAppender, Target},
@@ -9,15 +10,13 @@ use std::{env, fmt, str::FromStr, sync::Arc};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
-lazy_static! {
-    static ref LOG_HANDLER: Arc<Handle> = {
-        // make empty log4rs handler
-        let root = Root::builder().build(LevelFilter::Off);
-        let config = Config::builder().build(root).unwrap();
-        let handler = init_config(config).unwrap();
-        Arc::new(handler)
-    };
-}
+static LOG_HANDLER: Lazy<Arc<Handle>> = Lazy::new(|| {
+    // make empty log4rs handler
+    let root = Root::builder().build(LevelFilter::Off);
+    let config = Config::builder().build(root).unwrap();
+    let handler = init_config(config).unwrap();
+    Arc::new(handler)
+});
 
 pub fn global_log_handler() -> Arc<Handle> {
     LOG_HANDLER.clone()
