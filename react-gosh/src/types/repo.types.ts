@@ -87,6 +87,11 @@ type TUpgradeData = {
     }[]
 }
 
+type TBranchCompareProgress = {
+    trees?: boolean
+    blobs?: { count?: number; total?: number }
+}
+
 interface IPushCallback {
     (params: TPushCallbackParams): void
 }
@@ -101,6 +106,7 @@ export {
     TTag,
     TDiff,
     TUpgradeData,
+    TBranchCompareProgress,
     IPushCallback,
     TPushCallbackParams,
 }

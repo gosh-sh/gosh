@@ -10,6 +10,7 @@ import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '.
 import { TAddress, TDao } from '../types'
 import {
     TBranch,
+    TBranchCompareProgress,
     TCommit,
     TPushCallbackParams,
     TRepositoryListItem,
@@ -691,13 +692,14 @@ function _useMergeRequest(
     const [dstBranch, setDstBranch] = useState<TBranch>()
     const [progress, setProgress] = useState<{
         isFetching: boolean
+        details: TBranchCompareProgress
         items: {
             treepath: string
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
         }[]
-    }>({ isFetching: false, items: [] })
+    }>({ isFetching: false, details: {}, items: [] })
 
     const _getRepository = async (version: string) => {
         if (repo.getVersion() === version) return repo
@@ -717,7 +719,7 @@ function _useMergeRequest(
         }))
 
     const build = async (src: string, dst: string) => {
-        setProgress({ isFetching: true, items: [] })
+        setProgress({ isFetching: true, details: {}, items: [] })
 
         // Get branches details
         const [srcBranch, dstBranch] = await Promise.all([
@@ -725,7 +727,7 @@ function _useMergeRequest(
             (async () => await repo.getBranch(dst))(),
         ])
         if (srcBranch.commit.name === dstBranch.commit.name) {
-            setProgress({ isFetching: false, items: [] })
+            setProgress({ isFetching: false, details: {}, items: [] })
             return
         }
 
@@ -740,6 +742,7 @@ function _useMergeRequest(
             (async () => (await srcRepo.getTree(srcBranch.commit.name)).items)(),
             (async () => (await dstRepo.getTree(dstBranch.commit.name)).items)(),
         ])
+        setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
         // Compare trees and get added/updated treepath
         const treeDiff: { treepath: string; exists: boolean }[] = []
@@ -758,6 +761,16 @@ function _useMergeRequest(
                 if (dstItem && srcItem.sha1 === dstItem.sha1) return
                 treeDiff.push({ treepath, exists: !!dstItem })
             })
+        setProgress((state) => {
+            const { blobs = {} } = state.details
+            return {
+                ...state,
+                details: {
+                    ...state.details,
+                    blobs: { ...blobs, count: 0, total: treeDiff.length },
+                },
+            }
+        })
 
         // Read blobs content from built tree diff
         const blobDiff = await executeByChunk(
@@ -772,6 +785,18 @@ function _useMergeRequest(
                     ? (await dstRepo.getBlob({ fullpath: dstFullPath })).content
                     : ''
 
+                setProgress((state) => {
+                    const { blobs = {} } = state.details
+                    const { count = 0 } = blobs
+                    return {
+                        ...state,
+                        details: {
+                            ...state.details,
+                            blobs: { ...blobs, count: count + 1 },
+                        },
+                    }
+                })
+
                 return {
                     treepath,
                     original: dstBlob,
@@ -783,7 +808,7 @@ function _useMergeRequest(
 
         setSrcBranch(srcBranch)
         setDstBranch(dstBranch)
-        setProgress({ isFetching: false, items: blobDiff })
+        setProgress((state) => ({ ...state, isFetching: false, items: blobDiff }))
     }
 
     return {
@@ -793,6 +818,7 @@ function _useMergeRequest(
         progress: {
             isFetching: progress.isFetching,
             isEmpty: !progress.isFetching && !progress.items.length,
+            details: progress.details,
             items: progress.items,
             getDiff,
         },
