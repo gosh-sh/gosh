@@ -140,7 +140,6 @@ pub mod tests {
 
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
-        #[derive(Clone)]
         #[derive(Debug)]
         pub Everscale {
             // empty
