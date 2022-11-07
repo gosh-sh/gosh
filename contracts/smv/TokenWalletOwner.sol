@@ -8,12 +8,15 @@ import "External/tip3/interfaces/ITokenWallet.sol";
 import "External/tip3/interfaces/IAcceptTokensTransferCallback.sol";
 import "External/tip3/interfaces/IAcceptTokensMintCallback.sol";
 import "External/tip3/interfaces/IBounceTokensTransferCallback.sol";
+import "External/tip3/interfaces/IBounceTokensBurnCallback.sol";
+
 
 import "External/tip3/TokenWallet.sol";
 
 contract TokenWalletOwner is IAcceptTokensTransferCallback,
                                      IAcceptTokensMintCallback,
-                                     IBounceTokensTransferCallback  {
+                                     IBounceTokensTransferCallback,
+                                     IBounceTokensBurnCallback  {
 
 address public m_tokenRoot;
 address public m_tokenWallet;
@@ -64,6 +67,13 @@ function onAcceptTokensMint (address /* tokenRoot */,
     gasTo.transfer(0, true, 64);
 }
 
+function onBounceTokensBurn(
+        address /* tokenRoot */,
+        uint128 amount
+    ) external override check_wallet
+{
+    m_tokenBalance += amount;
+}
 
 function onBounceTokensTransfer(address /* root */, uint128 amount, address /* wallet_to */) external override check_wallet
 {
@@ -80,6 +90,8 @@ function onAcceptTokensTransfer (address /* tokenRoot */,
     m_tokenBalance += amount;
     gasTo.transfer(0, true, 64);
 }
+
+
 
 function updateTokenBalance() external view check_owner
 {

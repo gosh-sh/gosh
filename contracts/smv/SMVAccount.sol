@@ -25,7 +25,9 @@ import "External/tip3/interfaces/IBounceTokensTransferCallback.sol";
 import "SMVTokenLocker.sol";
 import "TokenWalletOwner.sol";
 
-contract SMVAccount is Modifiers, ISMVAccount , TokenWalletOwner {
+
+
+contract SMVAccount is Modifiers, ISMVAccount /* , TokenWalletOwner */ {
 
     address _pubaddr; //from goshwallet
     address static _goshdao;  //from goshwallet
@@ -33,6 +35,10 @@ contract SMVAccount is Modifiers, ISMVAccount , TokenWalletOwner {
 
 
 uint256 /* static */ nonce;
+
+uint128 public m_pseudoDAOBalance;
+address m_tokenRoot;
+TvmCell m_tokenWalletCode;
 
 address public lockerTip3Wallet;
 bool    public initialized;
@@ -55,9 +61,16 @@ TvmCell m_lockerCode;
 
 optional(uint256) _access;
 
-modifier check_owner override {
+modifier check_owner  {
   require ( msg.pubkey () != 0, SMVErrors.error_not_external_message );
   require ( tvm.pubkey () == msg.pubkey (), SMVErrors.error_not_my_pubkey );
+  _ ;
+}
+
+uint16 constant error_not_my_root = 1003;
+
+modifier check_token_root {
+  require ( msg.sender == m_tokenRoot, error_not_my_root) ;
   _ ;
 }
 
@@ -65,6 +78,9 @@ modifier check_locker {
   require ( msg.sender == tip3VotingLocker, SMVErrors.error_not_my_locker) ;
   _ ;
 }
+
+uint128 constant DEFAULT_DAO_BALANCE = 100;
+uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
@@ -83,10 +99,10 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
     _pubaddr = pubaddr; /* from goshWallet */
     m_tokenRoot = _tip3Root;
     m_tokenWalletCode = tokenWalletCode;
-    ITokenRoot(m_tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
+    /* ITokenRoot(m_tokenRoot).deployWallet {value: SMVConstants.TIP3_WALLET_DEPLOY_VALUE + SMVConstants.TIP3_WALLET_INIT_VALUE,
                                           flag: 1,
                                           callback: SMVAccount.onTokenWalletDeployed} (address(this), SMVConstants.TIP3_WALLET_INIT_VALUE);
-
+ */
     TvmCell _dataInitCell = tvm.buildDataInit ( {contr: SMVTokenLocker,
                                                  varInit: { smvAccount : address(this) } } );
     TvmCell _stateInit = tvm.buildStateInit(lockerCode, _dataInitCell);
@@ -103,21 +119,25 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
     lockerCodeHash = tvm.hash(lockerCode);
     lockerCodeDepth = lockerCode.depth();
 
-    m_tokenWallet = address.makeAddrStd(0,tvm.hash(_buildWalletInitData()));
+    //m_tokenWallet = address.makeAddrStd(0,tvm.hash(_buildWalletInitData()));
 
     tip3VotingLocker = new SMVTokenLocker { value: SMVConstants.LOCKER_INIT_VALUE +
                                                    SMVConstants.ACTION_FEE,
                                             stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot);
+    //GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, DEFAULT_DAO_BALANCE, _index);
+    if (_index == 0)
+        m_pseudoDAOBalance = DEFAULT_DAO_BALANCE;
+    else
+        m_pseudoDAOBalance = 0;
 }
 
-function onTokenWalletDeployed(address wallet) external view check_token_root
+/* function onTokenWalletDeployed(address wallet) external view check_token_root
 {
   require (wallet == m_tokenWallet);
   require(_index == 0);
   tvm.accept();
   GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, 100, _index);
-
-}
+} */
 
 function proposalIsCompleted(address proposal) external onlyOwnerPubkey(_access.get()) {
     tvm.accept();
@@ -149,6 +169,7 @@ function onLockerDeployed() external override check_locker()
 function onLockerTokenWalletDeployed (address wallet) external check_token_root
 {
       lockerTip3Wallet = wallet;
+      lockVoting(0);
 }
 
 /*
@@ -172,26 +193,47 @@ function onTokenBalanceUpdateWhileLockVoting (uint128 balance) external check_wa
 uint128 lockingAmount;
  */
 
-function lockVoting (uint128 amount) external onlyOwnerPubkey(_access.get())
+function lockVoting (uint128 amount) public /* onlyOwnerPubkey(_access.get()) */
 {
-    require(initialized, SMVErrors.error_not_initialized);
-    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
-                                    4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    tvm.accept();
-    _saveMsg();
+    if (msg.value == 0) {
+        require(msg.pubkey() == _access.get(), ERR_NOT_OWNER);
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    2*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+        tvm.accept();
+        _saveMsg();
+    }
+    else{
+        if (!initialized) return;
+        if (!(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                      2*SMVConstants.ACTION_FEE)) return;
+        tvm.accept();
+    }
 
-    if (amount == 0) {amount = m_tokenBalance;}
+    if (amount == 0) {amount = m_pseudoDAOBalance;}
 
-    if ((amount > 0) && (amount <= m_tokenBalance))
+    if ((amount > 0) && (amount <= m_pseudoDAOBalance))
     {
-        TvmCell empty;
-        ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
-                                          (amount, tip3VotingLocker, 0, address(this), true, empty) ;
-        m_tokenBalance = m_tokenBalance - amount;
+        /* TvmCell empty; */
+        /* ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
+                                             (amount, tip3VotingLocker, 0, address(this), true, empty) ; */
+        //ISMVTokenLocker(tip3VotingLocker).lockVoting{value: 2*SMVConstants.ACTION_FEE, flag: 1} (amount);
+        GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
+        m_pseudoDAOBalance = m_pseudoDAOBalance - amount;
     }
 }
 
-function unlockVoting (uint128 amount) external  onlyOwnerPubkey(_access.get())
+function returnDAOBalance (uint128 amount) external override check_locker
+{
+    m_pseudoDAOBalance += amount;
+}
+
+function acceptUnlock (uint128 amount) external override check_locker
+{   
+    GoshDao(_goshdao).requestBurn {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
+}
+
+function unlockVoting (uint128 amount) external onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -285,7 +327,7 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
     t.store(startTime, finishTime, address(this), m_tokenRoot);
     inputBuilder.storeRef(t.toCell());
 
-    uint128 amount = 20; //get from Config
+    uint128 amount = DEFAULT_PROPOSAL_VALUE; //get from Config
 
     ISMVTokenLocker(tip3VotingLocker).startPlatform
                     {value:  SMVConstants.PROPOSAL_INIT_VALUE + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -354,7 +396,7 @@ function killAccount (address address_to, address /* tokens_to */) external only
     selfdestruct(address_to);
 }
 
-function withdrawTokens (address address_to, uint128 amount) public onlyOwnerPubkey(_access.get())
+/* function withdrawTokens (address address_to, uint128 amount) public onlyOwnerPubkey(_access.get())
 {
      require(initialized, SMVErrors.error_not_initialized);
      require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
@@ -364,7 +406,7 @@ function withdrawTokens (address address_to, uint128 amount) public onlyOwnerPub
      TvmCell empty;
      ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
                                           (amount, address_to, 0, address(this), true, empty) ;
-}
+} */
 
 function updateHead() public onlyOwnerPubkey(_access.get())
 {

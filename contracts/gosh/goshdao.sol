@@ -93,7 +93,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_contentSignature] = contentSignature;
         getMoney();
         ///////////////////////////////////////
-        _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, true, address.makeAddrStd(0,0), now);
+        _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, false, address.makeAddrStd(0,0), now);
         if (previous.hasValue()) { 
             _previous = previous; 
             GoshDao(_previous.get()).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
@@ -216,6 +216,27 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
         getMoney();
+    }
+
+    /* burnTokens(
+        uint128 amount,
+        address walletOwner,
+        address remainingGasTo,
+        address callbackTo,
+        TvmCell payload
+    ) */
+
+    function requestBurn(address recipient, address pubaddr, uint128 burn_amount, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index))
+    {
+        tvm.accept();
+        TvmCell empty;
+        IBurnableByRootTokenRoot(_rootTokenRoot).burnTokens {value: 2 ton}(
+            burn_amount,
+            recipient,
+            this,
+            recipient,
+            empty
+        );
     }
 
     function requestMint (address recipient, address pubaddr, uint128 mint_amount, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index))

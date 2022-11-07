@@ -13,11 +13,13 @@ import "Interfaces/ISMVClient.sol";
 import "External/tip3/interfaces/ITokenRoot.sol";
 import "External/tip3/interfaces/ITokenWallet.sol";
 import "External/tip3/interfaces/IAcceptTokensTransferCallback.sol";
+import "External/tip3/interfaces/IAcceptTokensBurnCallback.sol";
+
 
 import "SMVClient.sol";
 import "TokenWalletOwner.sol";
 
-contract SMVTokenLocker is ISMVTokenLocker , TokenWalletOwner {
+contract SMVTokenLocker is ISMVTokenLocker , TokenWalletOwner , IAcceptTokensBurnCallback {
 
 address public static smvAccount;
 
@@ -136,6 +138,17 @@ function _returnAllButInitBalance() internal view
     }
 }
 
+/* function lockVoting (uint128 amount) external override check_account
+{
+    require(address(this).balance >= SMVConstants.LOCKER_MIN_BALANCE +
+                                     3*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    require(!lockerBusy, SMVErrors.error_locker_busy);
+    //require(amount + votes_locked <= m_tokenBalance, SMVErrors.error_not_enough_votes);
+    tvm.accept();
+
+    GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, DEFAULT_DAO_BALANCE, _index);
+} */
+
 function unlockVoting (uint128 amount) external override check_account
 {
     require(address(this).balance >= SMVConstants.LOCKER_MIN_BALANCE +
@@ -144,16 +157,29 @@ function unlockVoting (uint128 amount) external override check_account
     require(amount + votes_locked <= m_tokenBalance, SMVErrors.error_not_enough_votes);
     tvm.accept();
 
-    TvmCell empty;
+    /* TvmCell empty; */
     if (amount == 0) { amount = m_tokenBalance - votes_locked; }
 
     m_tokenBalance -= amount;
     //(amount, tip3VotingLocker, 0, address(this), true, empty)
     if (amount > 0)
-        ITokenWallet(m_tokenWallet).transfer {value: 0, flag: 64}
-                                             (amount, msg.sender, 0, msg.sender, true, empty);
+        /* ITokenWallet(m_tokenWallet).transfer {value: 0, flag: 64}
+                                             (amount, msg.sender, 0, msg.sender, true, empty); */
+        ISMVAccount(msg.sender).acceptUnlock {value: 0, flag: 64} (amount);
     else
         _returnAllButInitBalance();
+}
+
+function onAcceptTokensBurn(
+        uint128 amount,
+        address /* walletOwner */,
+        address /* wallet */,
+        address remainingGasTo,
+        TvmCell /* payload */
+    ) external override  check_token_root
+{
+    ISMVAccount(smvAccount).returnDAOBalance {value: SMVConstants.ACTION_FEE} (amount);
+    remainingGasTo.transfer(0, true, 64);
 }
 
 function onHeadUpdated (uint256 _platform_id,
@@ -238,6 +264,47 @@ function returnAllButInitBalance() external override check_account
 {
     _returnAllButInitBalance();
 }
+
+function upgradeCode(TvmCell code) external check_account
+{
+   tvm.setcode(code);
+   tvm.setCurrentCode(code);
+
+   /* address public m_tokenRoot;
+address public m_tokenWallet;
+uint128 public m_tokenBalance;
+TvmCell public m_tokenWalletCode; */
+
+    TvmBuilder b;
+    TvmBuilder b1;
+
+    b1.store(m_tokenRoot, m_tokenWallet, m_tokenBalance);
+    b1.storeRef(m_tokenWalletCode);
+
+/* address public static smvAccount;
+
+bool public lockerBusy;
+bool public platformPerformActionFailed;
+bool public platformConstructorFailed;
+
+
+optional (address) public clientHead;
+uint128 public votes_locked;
+
+uint256 platformCodeHash;
+uint16 platformCodeDepth;
+uint32 public m_num_clients; */
+    TvmBuilder b2;
+    b2.store(smvAccount, lockerBusy, platformPerformActionFailed, platformConstructorFailed, clientHead, votes_locked, platformCodeHash, platformCodeDepth, m_num_clients );
+
+    b.storeRef(b1);
+    b.storeRef(b2);
+
+    onCodeUpgrade(b.toCell());
+}
+
+function onCodeUpgrade (TvmCell ) private
+{}
 
 onBounce(TvmSlice body) external  {
     uint32 functionId = body.decode(uint32);
