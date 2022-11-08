@@ -198,7 +198,7 @@ pipeline {
                         def tests = [failFast: true]
                         for (f in files) {
                             tests["${f}"] = {
-                                docker.image('jenkins-docker-agent:1').inside('-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker') {
+                                node {
                                     stage("Test ${tests[f]}") {                              
                                         sh """
                                             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
