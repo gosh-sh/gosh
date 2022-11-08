@@ -180,8 +180,9 @@ pipeline {
                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                 ./set-vars.sh
                             """
+                            def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
                             tests = [:]
-                            for (f in findFiles(glob: '*.test.sh')) {
+                            for (f in files) {
                                 tests["${f}"] = {
                                     node {
                                         stage("Test ${tests[f]}") {
