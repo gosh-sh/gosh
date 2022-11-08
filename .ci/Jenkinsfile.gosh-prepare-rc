@@ -175,27 +175,26 @@ pipeline {
                 script {
                     if (!params.ONLYWEB) {
                         dir('tests') {
-                            sh 'mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh'
-                            def tests = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
                             sh """
+                                mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                 ./set-vars.sh
                             """
-                            def parallelStages = [:]                            
-                            tests.each { i ->
-                                parallelStages[i] = {
+                            tests = [:]
+                            for (f in findFiles(glob: '*.test.sh')) {
+                                tests["${f}"] = {
                                     node {
-                                        stage("${tests[i]}") {
+                                        stage("Test ${tests[f]}") {
                                             sh """
                                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                                 . ./env.env
-                                                ./${tests[i]}
+                                                ./${tests[f]}
                                             """
                                         }
                                     }
-                                } 
+                                }
                             }
-                            parallel parallelStages
+                            parallel tests
                         }
                     }
                 }
