@@ -193,7 +193,9 @@ pipeline {
                                         }
                                 }
                             }
-                            parallel tests
+                            node() {
+                                parallel tests
+                            }
                         }
                     }
                 }
