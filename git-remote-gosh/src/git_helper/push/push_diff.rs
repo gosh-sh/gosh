@@ -210,7 +210,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
     is_going_to_ipfs
 }
 
-#[instrument(level = "debug")]
+// #[instrument(level = "debug")]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     log::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
