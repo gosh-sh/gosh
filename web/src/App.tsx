@@ -61,7 +61,7 @@ const App = () => {
                     queries_protocol:
                         process.env.REACT_APP_ISDOCKEREXT === 'true'
                             ? NetworkQueriesProtocol.HTTP
-                            : NetworkQueriesProtocol.WS,
+                            : NetworkQueriesProtocol.HTTP,
                     sending_endpoint_count: endpoints?.length,
                 },
             },
