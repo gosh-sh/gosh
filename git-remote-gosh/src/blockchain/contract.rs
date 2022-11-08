@@ -113,6 +113,7 @@ impl GoshContract {
     }
 
     #[instrument(level = "debug", skip(context))]
+    #[deprecated = "use read_state() instead"]
     pub async fn run_local<T>(
         &self,
         context: &EverClient,

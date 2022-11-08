@@ -9,7 +9,7 @@ const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
 
 static FILEMODE: Lazy<HashMap<u32, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
-    map.insert(0, "000000");     // 0000000000000000 (040000): No
+    map.insert(0, "000000"); // 0000000000000000 (040000): No
     map.insert(16384, "040000"); // 0100000000000000 (040000): Directory
     map.insert(33188, "100644"); // 1000000110100100 (100644): Regular non-executable file
     map.insert(33204, "100664"); // 1000000110110100 (100664): Regular non-executable group-writeable file
