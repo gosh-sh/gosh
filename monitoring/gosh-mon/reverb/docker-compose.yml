@@ -1,0 +1,99 @@
+version: '2.2'
+
+services:
+
+# git-remote-gosh
+  gm-reverb-rem-sm-rd: &service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: gm-reverb-rem-sm-rd
+    init: true
+    restart: "unless-stopped"
+    environment: ["GM_MODE=rem-small-read", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rev-sm-rd-data:/home/node/app/data"
+    networks:
+      gosh-monitoring: { }
+    mem_limit: 512M
+    memswap_limit: 512M   
+
+  gm-reverb-rem-sm-wr:
+    <<: *service
+    container_name: gm-reverb-rem-sm-wr
+    environment: ["GM_MODE=rem-small-write", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rev-sm-wr-data:/home/node/app/data"
+
+  gm-reverb-rem-la-rd:
+    <<: *service
+    container_name: gm-reverb-rem-la-rd
+    environment: ["GM_MODE=rem-large-read", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rev-la-rd-data:/home/node/app/data"
+
+  gm-reverb-rem-la-wr:
+    <<: *service
+    container_name: gm-reverb-rem-la-wr
+    environment: ["GM_MODE=rem-large-write", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-rev-la-wr-data:/home/node/app/data"
+
+  gm-reverb-next-rem-sm-rd:
+    <<: *service
+    container_name: gm-reverb-next-rem-sm-rd
+    environment: ["GM_MODE=rem-small-read-next", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rev-sm-rd-data:/home/node/app/data"
+
+  gm-reverb-next-rem-sm-wr:
+    <<: *service
+    container_name: gm-reverb-next-rem-sm-wr
+    environment: ["GM_MODE=rem-small-write-next", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rev-sm-wr-data:/home/node/app/data"
+
+  gm-reverb-next-rem-la-rd:
+    <<: *service
+    container_name: gm-reverb-next-rem-la-rd
+    environment: ["GM_MODE=rem-large-read-next", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rev-la-rd-data:/home/node/app/data"
+
+  gm-reverb-next-rem-la-wr:
+    <<: *service
+    container_name: gm-reverb-next-rem-la-wr
+    environment: ["GM_MODE=rem-large-write-next", "REVQ_MODE=consumer"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-next-rev-la-wr-data:/home/node/app/data"
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+
+volumes:
+  gm-rev-sm-rd-data:
+  gm-rev-sm-wr-data:
+  gm-rev-la-rd-data:
+  gm-rev-la-wr-data:
+  gm-next-rev-sm-rd-data:
+  gm-next-rev-sm-wr-data:
+  gm-next-rev-la-rd-data:
+  gm-next-rev-la-wr-data:

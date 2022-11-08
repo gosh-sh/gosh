@@ -35,12 +35,21 @@ global:
   push_verbosity: 1
   pull_verbosity: 1
 
+  reverb__push_verbosity: 4
+  reverb__pull_verbosity: 4
+
   redis_host: gosh-mon-redis
   do_lock:    false
 
   redlock_retry_delay_ms: 100
   redlock_retry_jitter_ms: 10
   redlock_autoextend_ms: 1000
+
+  # should be reasonably short, it may be useless to retry after significant period of time
+  reverb_ttl_s: 10
+
+  # clean logs older than 1 hour
+  reverb_clean_old_s: 3600
 
 
 includes:
@@ -54,8 +63,8 @@ includes:
     gosh_branch: "release:latest-prerelease"
     use_envs: require
     # separate org-repo for next
-    organization: next-mon-org
-    repository: next-mon-repo
+    organization: next-mon-org-2
+    repository: next-mon-repo-2
     redis_pref: next_
     include: creds-next
 
@@ -65,6 +74,12 @@ includes:
     cron:         true
     interval:     600
     lock_retry_s: 1800
+
+  use_log_counter_for_remote: &use_log_counter_for_remote
+    log_counter:
+      sha_incorrect: It is a sequence of changes. Sha must be correct. Fail otherwise
+      none_unwrap: thread 'tokio-runtime-worker' panicked at 'called `Option::unwrap()` on a `None` value'
+      exec_timeout: Exited with code null
 
 
 modes:
@@ -106,7 +121,7 @@ modes:
       - app-small
       - app-large
       - remote-small
-      - remote-large-2
+      - remote-large-7
     cron: true
     interval: 900
     do_lock: true
@@ -159,12 +174,14 @@ modes:
 
 # git-remote-gosh
   rem-small-read: &rem-small-read
+    <<: *use_log_counter_for_remote
     branch:     remote-small
     handler:    remote-read
     large:      false
     timeout_ms: 50
 
   rem-small-write: &rem-small-write
+    <<: *use_log_counter_for_remote
     branch:     remote-small
     handler:    remote-write
     large:      false
@@ -173,13 +190,15 @@ modes:
     do_lock: true
 
   rem-large-read: &rem-large-read
-    branch:     remote-large-2
+    <<: *use_log_counter_for_remote
+    branch:     remote-large-7
     handler:    remote-read
     large:      true
     timeout_ms: 50
 
   rem-large-write: &rem-large-write
-    branch:  remote-large-2
+    <<: *use_log_counter_for_remote
+    branch:  remote-large-7
     handler: remote-write
     large:   true
     interval: 450
@@ -213,7 +232,7 @@ modes:
 
   cron-rem-rotate-large: &cron-rem-rotate-large
     <<: *cron-rotate
-    branch:  remote-large-2
+    branch:  remote-large-7
     large:   true
 
   cron-rem-rotate-small-next:
@@ -223,3 +242,7 @@ modes:
   cron-rem-rotate-large-next:
     <<: *cron-rem-rotate-large
     <<: *next
+
+  rsmq-monitor:
+    handler: rsmq-monitor
+    cron:    true

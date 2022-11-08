@@ -1,12 +1,9 @@
 import {MetricsMap} from "./PrometheusFormatter";
-import {Metrics} from "puppeteer";
 import {now} from "./Utils";
 import Application from "./Application";
-import fs from "fs";
 import Client from "ioredis";
-import Redlock, {Lock} from "redlock";
-import {RedisClient} from "ioredis/built/connectors/SentinelConnector/types";
-import {resolveObjectURL} from "buffer";
+import Redlock from "redlock";
+import fs from "fs";
 
 export default abstract class Handler {
     abstract describe(): string;
@@ -30,6 +27,8 @@ export default abstract class Handler {
 
     protected do_lock = false;
 
+    protected config: any = {};
+
     setApplication(app: Application): Handler {
         this.app = app;
         return this;
@@ -46,6 +45,7 @@ export default abstract class Handler {
     }
 
     applyConfiguration(c: any): Handler {
+        this.config = c;
         if (c.branch)
             this.lock_branch = c.branch;
         this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock',
@@ -85,6 +85,13 @@ export default abstract class Handler {
         const inner = async () => {
             this.app.lastFetched = n;
             const nextMetrics = await this.handle(false);
+            if (nextMetrics.get('result') !== 100) {
+                try {
+                    await this.app.maybeProduce(this.config);
+                } catch (e) {
+                    console.error('Failed producing reverb message', e);
+                }
+            }
             if (nextMetrics && !nextMetrics.has('value') && (this.app.lastMetrics !== undefined) && this.app.lastMetrics.has('value'))
                 nextMetrics.set('value', this.app.lastMetrics.get('value')!);
             this.app.lastMetrics = nextMetrics;
@@ -114,10 +121,16 @@ export default abstract class Handler {
         try {
             if (this.redis) {
                 this.redis?.quit();
-                if (this.redlock) {
-                    this.redlock.quit().then().catch();
-                }
             }
         } catch (e) {}
     }
+
+    mkdirs(...dirs: string[]): Handler {
+        for (let dir of dirs)
+            if (!fs.existsSync(dir))
+                fs.mkdirSync(dir);
+        return this;
+    }
+
+    logToFile(path: string): Handler { return this; }
 }

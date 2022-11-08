@@ -129,7 +129,7 @@ class ScriptHandler extends AppHandler_1.default {
                 all.set("started", this.started);
                 all.set("duration", (0, Utils_1.now)() - this.started);
                 try {
-                    await this.mkdirs(`errors/${mode}`);
+                    this.mkdirs(`errors/${mode}`);
                     await this.dumpToFile(`errors/${mode}/script-error.log`, '', true);
                 }
                 catch (e) { }

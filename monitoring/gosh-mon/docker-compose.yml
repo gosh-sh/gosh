@@ -11,6 +11,15 @@ services:
     networks:
       gosh-monitoring: { }
 
+  gosh-mon-redis-exporter:
+    image: oliver006/redis_exporter:v1.45.0
+    container_name: gosh-mon-redis-exporter
+    restart: "unless-stopped"
+    expose: ["9121"]
+    networks:
+      gosh-monitoring: { }
+    entrypoint: ["/redis_exporter", "-redis.addr", "gosh-mon-redis"]
+
 # app.gosh.sh
   gosh-mon-app-sm-rd: &service
     build:
@@ -70,7 +79,7 @@ services:
   gosh-mon-rem-sm-rd:
     <<: *service
     container_name: gosh-mon-rem-sm-rd
-    environment: ["GM_MODE=rem-small-read"]
+    environment: ["GM_MODE=rem-small-read", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -79,7 +88,7 @@ services:
   gosh-mon-rem-sm-wr:
     <<: *service
     container_name: gosh-mon-rem-sm-wr
-    environment: ["GM_MODE=rem-small-write"]
+    environment: ["GM_MODE=rem-small-write", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -88,7 +97,7 @@ services:
   gosh-mon-rem-la-rd:
     <<: *service
     container_name: gosh-mon-rem-la-rd
-    environment: ["GM_MODE=rem-large-read"]
+    environment: ["GM_MODE=rem-large-read", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -97,7 +106,7 @@ services:
   gosh-mon-rem-la-wr:
     <<: *service
     container_name: gosh-mon-rem-la-wr
-    environment: ["GM_MODE=rem-large-write"]
+    environment: ["GM_MODE=rem-large-write", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -106,7 +115,7 @@ services:
   gosh-mon-next-rem-sm-rd:
     <<: *service
     container_name: gosh-mon-next-rem-sm-rd
-    environment: ["GM_MODE=rem-small-read-next"]
+    environment: ["GM_MODE=rem-small-read-next", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -115,7 +124,7 @@ services:
   gosh-mon-next-rem-sm-wr:
     <<: *service
     container_name: gosh-mon-next-rem-sm-wr
-    environment: ["GM_MODE=rem-small-write-next"]
+    environment: ["GM_MODE=rem-small-write-next", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -124,7 +133,7 @@ services:
   gosh-mon-next-rem-la-rd:
     <<: *service
     container_name: gosh-mon-next-rem-la-rd
-    environment: ["GM_MODE=rem-large-read-next"]
+    environment: ["GM_MODE=rem-large-read-next", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -133,7 +142,7 @@ services:
   gosh-mon-next-rem-la-wr:
     <<: *service
     container_name: gosh-mon-next-rem-la-wr
-    environment: ["GM_MODE=rem-large-write-next"]
+    environment: ["GM_MODE=rem-large-write-next", "REVQ_MODE=producer"]
     volumes:
       - "./config:/home/node/app/config:ro"
       - "./errors:/home/node/app/errors"
@@ -162,6 +171,7 @@ services:
     expose: ["80"]
     volumes:
       - ./errors:/usr/share/nginx/html
+      - ./reverb/errors:/usr/share/nginx/html/_reverb
     networks:
       gosh-monitoring: {}
 

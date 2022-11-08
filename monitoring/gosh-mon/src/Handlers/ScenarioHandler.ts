@@ -1,7 +1,7 @@
 import Handler from "../Handler";
 import {
     Browser, BrowserContext, Page,
-    BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent, puppeteerErrors
+    BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent
 } from "puppeteer";
 import {MetricsMap} from "../PrometheusFormatter";
 import {ifdef, iftrue, limstr, niso, now, nowms} from "../Utils";
@@ -11,6 +11,7 @@ import fs from "fs";
 import glob from "glob-promise";
 import path from "path";
 import {performance} from "perf_hooks";
+import Dict = NodeJS.Dict;
 
 const puppeteer = require('puppeteer');
 
@@ -41,9 +42,21 @@ export default abstract class ScenarioHandler extends Handler {
     protected log_ws_req: number = 0;
     protected log_ws_res: number = 0;
 
+    protected log_counter: Dict<string> = {};
+
+    protected _lc_entries: [string, string?][] = [];
+    protected log_counts: Dict<number> = {};
+
+    protected logger_file: number = 0;
+
     applyConfiguration(c: any): ScenarioHandler {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms']);
+        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms', 'log_counter']);
+        this.log_counts = {};
+        for (let k of Object.keys(this.log_counter)) {
+            this.log_counts[k] = 0;
+        }
+        this._lc_entries = Object.entries(this.log_counter);
         return this;
     }
 
@@ -269,11 +282,7 @@ export default abstract class ScenarioHandler extends Handler {
         return null; // Do not count waiting as step
     }
 
-    protected async mkdirs(...dirs: string[]) {
-        for (let dir of dirs)
-            if (!fs.existsSync(dir))
-                await fs.mkdirSync(dir);
-    }
+    // mkdirs moved to Handler, now returns this and is unprotected
 
     protected async removeFiles(fileglob: string) {
         const files = await glob(fileglob);
@@ -289,6 +298,7 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async dumpToFile(fname: string, add: string, final: boolean = true) {
+        this.maybeFlush();
         if (this.log.length > 1) {
             if (final)
                 this.log.push(niso() + ' End');
@@ -306,9 +316,11 @@ export default abstract class ScenarioHandler extends Handler {
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
         let perf: Map<string, number> = new Map();
-        const addperf = (map: Map<string, number>): Map<string, number> => {
+        const add_auxiliary = (map: Map<string, number>): Map<string, number> => {
             for (let [k, v] of perf.entries())
                 map.set(k, v);
+            for (let [k, v] of Object.entries(this.log_counts))
+                map.set(`log_count{item="${k}"}`, v!);
             return map;
         };
         try {
@@ -318,11 +330,13 @@ export default abstract class ScenarioHandler extends Handler {
                     continue;
                 }
                 this.say(`${this.sub ? `<${this.sub}> ` : ''}********* Running step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''}`);
+                this.maybeFlush();
                 const sta = performance.now();
                 const res: StepResult = await f(stepName);
                 const end = performance.now();
                 perf.set(`perf{step="${this.stepsDone}",descr="${stepName.replaceAll('"', '\'')}"}`, end - sta);
                 this.say(`${this.sub ? `<${this.sub}> ` : ''}  * * * * Step #${this.stepsDone} ${stepName ? ` (${stepName})` : ''} done in ${end - sta} ms`);
+                this.maybeFlush();
                 if (res !== null)
                     this.stepsDone++;
                 if (this.stepsDone === 100)
@@ -332,10 +346,10 @@ export default abstract class ScenarioHandler extends Handler {
                 let slow = this.app.interval; // in msec, short timeout for web
                 if (this.timeout_ms < 1000 && this.timeout_ms > slow)
                     slow = this.timeout_ms; // in seconds, for remote
-                if (now() - this.started > slow) {
+                if ((now() - this.started > slow) && !this.logger_file) {
                     if (!isslow) {
                         try {
-                            await this.mkdirs('errors/slow', `errors/slow/${mode}`, `errors/slow/${mode}/old`);
+                            this.mkdirs('errors/slow', `errors/slow/${mode}`, `errors/slow/${mode}/old`);
                             await this.removeFiles(`errors/slow/${mode}/old/*`);
                             await this.moveAway(`errors/slow/${mode}/*.*`, `errors/slow/${mode}/old/`);
                         } catch (e) {}
@@ -350,7 +364,7 @@ export default abstract class ScenarioHandler extends Handler {
                     try {
                         await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', true);
                     } catch (e) {}
-                    return addperf(new Map<string, number>([
+                    return add_auxiliary(new Map<string, number>([
                         ["result",    100],
                         ["value",     res],
                         ["timestamp", now()],
@@ -363,19 +377,20 @@ export default abstract class ScenarioHandler extends Handler {
             }
         } catch (e: any) {
             console.error(e);
-            try {
-                await this.mkdirs(`errors/${mode}`, `errors/${mode}/old`);
-                await this.moveAway(`errors/${mode}/*.*`, `errors/${mode}/old/`);
-                await this.dumpToFile(`errors/${mode}/${this.stepsDone}${afterstep}`, e.toString());
-                await this.removeFiles(`errors/${mode}/step * is *`);
-                writeFileSync(`errors/${mode}/step ${this.stepsDone}${afterstep} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
-            } catch (er: any) {
-                console.error('Failed to write error file', er);
-            }
+            if (!this.logger_file)
+                try {
+                    this.mkdirs(`errors/${mode}`, `errors/${mode}/old`);
+                    await this.moveAway(`errors/${mode}/*.*`, `errors/${mode}/old/`);
+                    await this.dumpToFile(`errors/${mode}/${this.stepsDone}${afterstep}`, e.toString());
+                    await this.removeFiles(`errors/${mode}/step * is *`);
+                    writeFileSync(`errors/${mode}/step ${this.stepsDone}${afterstep} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
+                } catch (er: any) {
+                    console.error('Failed to write error file', er);
+                }
         } finally {
             await this.finally();
         }
-        return addperf(new Map<string, number>([
+        return add_auxiliary(new Map<string, number>([
             ["result",    this.stepsDone],
             ["timestamp", now()],
             ["started",   this.started],
@@ -437,6 +452,9 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     protected async finally(): Promise<void> {
+        if (this.logger_file) {
+            fs.closeSync(this.logger_file);
+        }
         if (this.browser) {
             await this.page.close();
             await this.browser.close();
@@ -450,12 +468,34 @@ export default abstract class ScenarioHandler extends Handler {
         return this;
     }
 
+    logToFile(path: string): ScenarioHandler {
+        console.log(`Logging to file ${path}`);
+        if (this.logger_file)
+            fs.closeSync(this.logger_file);
+        this.logger_file = fs.openSync(path, 'w');
+        return this;
+    }
+
+    protected maybeFlush() {
+        if (this.logger_file)
+            fs.fsyncSync(this.logger_file);
+    }
+
     protected say(msg: string, loud: boolean = false, logonly: boolean = false) {
-        this.log.push(niso() + ' ' + msg);
-        if (this.plog)
-            this.plog.push(niso() + ' ' + msg);
+        if (this.logger_file) {
+            fs.writeSync(this.logger_file, niso() + ' ' + msg + '\n', null, 'utf-8');
+        } else {
+            this.log.push(niso() + ' ' + msg);
+            if (this.plog)
+                this.plog.push(niso() + ' ' + msg);
+            if (this._lc_entries.length) {
+                for (let [k, v] of this._lc_entries) {
+                    if (msg.includes(v!))
+                        this.log_counts[k]!++;
+                }
+            }
+        }
         if ((loud || this.debug || process.env.RUN_NOW) && !logonly)
             console.log(niso() + ' ' + msg);
     }
-
 }

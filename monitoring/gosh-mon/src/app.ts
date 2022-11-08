@@ -20,6 +20,7 @@ try {
 ScriptHandler.Config = clone(conf);
 
 const mode = process.env['GM_MODE'] ?? process.argv[2];
+const revq = process.env['REVQ_MODE'] ?? '';
 
 // @ts-ignore original lock entry contents value generator
 const redlock_orig_random = Redlock.prototype._random;
@@ -51,10 +52,22 @@ if (c.include) {
 }
 
 const app: Application = new Application();
-app.handlerFactory = (silent?: boolean) => selectHandler(c.handler, silent).applyConfiguration(c);
+app.baseHandlerFactory = (silent?: boolean) => selectHandler(c.handler, silent);
+app.handlerFactory = (silent?: boolean) => app.baseHandlerFactory(silent).applyConfiguration(c);
 app.setInterval(c['interval'] - c['subinterval']);
 app.promformatter.prefix = c['prefix'];
 app.promformatter.tagpfx = `mode="${mode}"`;
+
+app.mode = mode;
+app.rq_prod = (revq === 'producer');
+app.rq_cons = (revq === 'consumer');
+if (c['redis_host'])         app.rq_host = c['redis_host'];
+if (c['reverb_ttl_s'])       app.rev_msg_ttl = c['reverb_ttl_s'] * 1000;
+if (c['reverb_clean_old_s']) app.rev_clr_logs = c['reverb_clean_old_s'] * 1000;
+if (app.rq_cons && app.interval < 3600)
+    app.interval = 3600;
+
+if (app.rq_cons) app.steps = true;
 
 console.log('Configured mode: ' + mode.replaceAll('-', ' '));
 
@@ -76,6 +89,7 @@ if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
             process.exit(99);
         });
 } else {
-    app.prepare();
-    app.run();
+    app.prepare().then(value => {
+        app.run().catch(reason => console.error('Run failed:', reason));
+    }).catch(reason => console.error('Prepare failed:', reason));
 }

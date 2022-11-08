@@ -1,6 +1,6 @@
 import AppHandler from "./AppHandler";
 import {MetricsMap} from "../PrometheusFormatter";
-import {ac_hrefs, hrefs} from "../Utils";
+import {ac_hrefs} from "../Utils";
 
 export default class SeedReadHandler extends AppHandler {
 
