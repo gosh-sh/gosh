@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import BranchSelect from '../../components/BranchSelect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faClockRotateLeft,
@@ -21,6 +20,7 @@ import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
+import { BranchSelect } from '../../components/Branches'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''

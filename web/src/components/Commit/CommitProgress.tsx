@@ -1,7 +1,7 @@
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import { UILog, UILogItem } from '../../components/UILog'
 
-const CommitProgress = (props: TPushCallbackParams) => {
+const CommitProgress = (props: TPushProgress) => {
     const {
         treesBuild,
         treesDeploy,

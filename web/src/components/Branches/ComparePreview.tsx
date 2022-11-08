@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames, getCodeLanguageFromFilename } from 'react-gosh'
 import { TBranch, TBranchCompareProgress } from 'react-gosh/dist/types/repo.types'
 import BlobDiffPreview from '../Blob/DiffPreview'
-import { BranchCompareProgress } from './Progress'
+import { BranchCompareProgress } from './CompareProgress'
 
 type TBranchComparePreviewProps = {
     className?: string

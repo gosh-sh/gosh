@@ -42,6 +42,7 @@ import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
 import {
     IPushCallback,
+    ITBranchOperateCallback,
     TBranch,
     TCommit,
     TDiff,
@@ -911,8 +912,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    async deployBranch(name: string, from: string): Promise<void> {
+    async createBranch(
+        name: string,
+        from: string,
+        callback?: ITBranchOperateCallback,
+    ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const cb: ITBranchOperateCallback = (params) => callback && callback(params)
 
         // Get branch details and check name
         const fromBranch = await this.getBranch(from)
@@ -921,8 +928,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get `from` branch tree items and collect all blobs
         const { items } = await this.getTree(fromBranch.commit.name)
         const blobs = await this._getTreeBlobs(items, fromBranch.name)
+        cb({
+            snapshotsRead: true,
+            snapshotsWrite: { count: 0, total: blobs.length },
+        })
 
         // Deploy snapshots
+        let counter = 0
         await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
             await this._deploySnapshot(
                 name,
@@ -931,6 +943,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 content,
                 wallet,
             )
+            cb({ snapshotsWrite: { count: ++counter } })
         })
 
         // Deploy new branch
@@ -944,10 +957,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return branchname === name
         })
         if (!wait) throw new GoshError('Deploy branch timeout reached')
+        cb({ completed: true })
     }
 
-    async deleteBranch(name: string): Promise<void> {
+    async deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const cb: ITBranchOperateCallback = (params) => callback && callback(params)
 
         if (['main', 'master'].indexOf(name) >= 0) {
             throw new GoshError(`Can not delete branch '${name}' `)
@@ -966,10 +982,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const accounts = await getAllAccounts({
             filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
         })
+        cb({
+            snapshotsRead: true,
+            snapshotsWrite: { count: 0, total: accounts.length },
+        })
+
+        let counter = 0
         await this._runMultiwallet(
             accounts.map((account) => account.id),
             async (wallet, address) => {
                 await wallet.run('deleteSnapshot', { snap: address })
+                cb({ snapshotsWrite: { count: ++counter } })
             },
         )
 
@@ -983,6 +1006,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return !branchname
         })
         if (!wait) throw new GoshError('Delete branch timeout reached')
+        cb({ completed: true })
     }
 
     async lockBranch(name: string): Promise<void> {

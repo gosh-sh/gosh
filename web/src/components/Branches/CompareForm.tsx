@@ -4,7 +4,7 @@ import { Form, Formik } from 'formik'
 import { classNames, useBranches } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 import * as Yup from 'yup'
-import BranchSelect from '../BranchSelect'
+import { BranchSelect } from './Dropdown'
 
 type TBranchCompareFormProps = {
     className?: string

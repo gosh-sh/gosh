@@ -2,7 +2,7 @@ import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import { Tab } from '@headlessui/react'
 import { classNames, getCodeLanguageFromFilename, splitByPath } from 'react-gosh'
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import CommitFields from './CommitFileds'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { TextField } from '../Formik'
@@ -34,7 +34,7 @@ type TBlobCommitFormProps = {
     isDisabled?: boolean
     extraButtons?: any
     urlBack?: string
-    progress?: TPushCallbackParams
+    progress?: TPushProgress
     onSubmit(values: TBlobCommitFormValues): Promise<void>
 }
 

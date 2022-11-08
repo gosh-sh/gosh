@@ -14,6 +14,7 @@ import {
 } from '../types'
 import {
     IPushCallback,
+    ITBranchOperateCallback,
     TBranch,
     TCommit,
     TRepository,
@@ -132,8 +133,12 @@ interface IGoshRepositoryAdapter {
         label: string,
     ): Promise<string>
 
-    deployBranch(name: string, from: string): Promise<void>
-    deleteBranch(name: string): Promise<void>
+    createBranch(
+        name: string,
+        from: string,
+        callback?: ITBranchOperateCallback,
+    ): Promise<void>
+    deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void>
     lockBranch(name: string): Promise<void>
     unlockBranch(name: string): Promise<void>
 

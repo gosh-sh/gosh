@@ -68,7 +68,7 @@ type TDiff = {
     sha256: string
 }
 
-type TPushCallbackParams = {
+type TPushProgress = {
     treesBuild?: boolean
     treesDeploy?: { count?: number; total?: number }
     snapsDeploy?: { count?: number; total?: number }
@@ -92,8 +92,18 @@ type TBranchCompareProgress = {
     blobs?: { count?: number; total?: number }
 }
 
+type TBranchOperateProgress = {
+    snapshotsRead?: boolean
+    snapshotsWrite?: { count?: number; total?: number }
+    completed?: boolean
+}
+
 interface IPushCallback {
-    (params: TPushCallbackParams): void
+    (params: TPushProgress): void
+}
+
+interface ITBranchOperateCallback {
+    (params: TBranchOperateProgress): void
 }
 
 export {
@@ -106,7 +116,9 @@ export {
     TTag,
     TDiff,
     TUpgradeData,
+    TPushProgress,
     TBranchCompareProgress,
+    TBranchOperateProgress,
     IPushCallback,
-    TPushCallbackParams,
+    ITBranchOperateCallback,
 }

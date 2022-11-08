@@ -5,7 +5,7 @@ import { SwitchField } from '../../components/Formik'
 import { useMergeRequest } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
-import { BranchCompareForm, BranchComparePreview } from '../../components/BranchCompare'
+import { BranchCompareForm, BranchComparePreview } from '../../components/Branches'
 import BranchCommitForm from '../../components/Commit/BranchCommitForm'
 
 const MergeCreatePage = () => {

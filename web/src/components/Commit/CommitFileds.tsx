@@ -1,5 +1,5 @@
 import { Field } from 'formik'
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import { useNavigate } from 'react-router-dom'
 import { TextareaField, TextField } from '../Formik'
 import Spinner from '../Spinner'
@@ -10,7 +10,7 @@ type TCommitFieldsProps = {
     isDisabled?: boolean
     urlBack?: string
     extraButtons?: any
-    progress?: TPushCallbackParams
+    progress?: TPushProgress
 }
 
 const CommitFields = (props: TCommitFieldsProps) => {

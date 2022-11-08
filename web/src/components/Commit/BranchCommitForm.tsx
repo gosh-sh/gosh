@@ -1,7 +1,7 @@
 import { Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import { classNames } from 'react-gosh'
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import CommitFields from './CommitFileds'
 
 type TCommitFormValues = {
@@ -16,7 +16,7 @@ type TCommitFormProps = {
     initialValues: TCommitFormValues
     validationSchema?: object
     extraButtons?: any
-    progress?: TPushCallbackParams
+    progress?: TPushProgress
     onSubmit(values: TCommitFormValues): Promise<void>
 }
 
