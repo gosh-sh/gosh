@@ -199,13 +199,13 @@ pipeline {
                         for (f in files) {
                             tests["${f}"] = {
                                 docker.image('jenkins-docker-agent:1').inside('-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker') {
-                                    //stage("Test ${tests[f]}") {                              
+                                    stage("Test ${tests[f]}") {                              
                                         sh """
                                             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                             . ./env.env
                                             ./${tests[f]}
                                         """
-                                    //}
+                                    }
                                 }
                             }   
                         }
