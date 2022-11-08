@@ -184,12 +184,14 @@ pipeline {
                             tests = [:]
                             for (f in files) {
                                 tests["${f}"] = {
-                                    stage("Test ${tests[f]}") {
-                                        sh """
-                                            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-                                            . ./env.env
-                                            ./${tests[f]}
-                                        """
+                                    node {
+                                        stage("Test ${tests[f]}") {
+                                            sh """
+                                                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                                                . ./env.env
+                                                ./${tests[f]}
+                                            """
+                                        }
                                     }
                                 }
                             }
