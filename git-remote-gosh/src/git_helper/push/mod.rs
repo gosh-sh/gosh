@@ -265,7 +265,7 @@ where
 
         let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
-        let mut ancestor_commit_id = if parsed_remote_ref.is_none() {
+        let ancestor_commit_id = if parsed_remote_ref.is_none() {
             // prev_commit_id is not filled up here. It's Ok.
             // this means a branch is created and all initial states are filled there
             "".to_owned()
@@ -354,10 +354,11 @@ where
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            if ancestor_commit_id.is_empty() {
-                ancestor_commit_id = out.lines().next().unwrap().to_string();
-            }
-            let originating_commit = git_hash::ObjectId::from_str(&ancestor_commit_id)?;
+            let originating_commit = if !ancestor_commit_id.is_empty() {
+                git_hash::ObjectId::from_str(&ancestor_commit_id)?
+            } else {
+                git_hash::ObjectId::from_str(out.lines().next().unwrap())?
+            };
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, branch_name, self);
@@ -371,7 +372,10 @@ where
             };
         }
 
-        let mut number_of_commits = 0u64;
+        let mut parents_of_commits: HashMap<&str, Vec<String>> = HashMap::from([
+            (ZERO_SHA, vec![]),
+            ("", vec![]),
+        ]);
         for line in out.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
@@ -393,6 +397,11 @@ where
                             let tree_id = commit_iter.tree_id()?;
                             let parent_ids: Vec<String> =
                                 commit_iter.parent_ids().map(|e| e.to_string()).collect();
+                            if !parent_ids.is_empty() {
+                                parents_of_commits.insert(oid, parent_ids.clone());
+                            } else {
+                                parents_of_commits.insert(oid, vec![ZERO_SHA.to_owned()]);
+                            }
                             let mut parents: Vec<BlockchainContractAddress> = vec![];
                             let mut repo_contract = self.blockchain.repo_contract().clone();
 
@@ -461,7 +470,6 @@ where
 
                             commit_id = Some(object_id);
                             prev_commit_id = commit_id;
-                            number_of_commits += 1;
                         }
                         git_object::Kind::Blob => {
                             // Note: handled in the Commit section
@@ -494,7 +502,13 @@ where
                 Ok(Ok(_)) => {}
             }
         }
+
         // 9. Set commit (move HEAD)
+        let number_of_commits = calculate_left_distance(
+            parents_of_commits,
+            &latest_commit_id.clone().to_string(),
+            &ancestor_commit_id,
+        );
         self.blockchain
             .notify_commit(
                 &latest_commit_id,
@@ -529,6 +543,33 @@ async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
+#[instrument(level = "debug")]
+fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
+    if from == till {
+        return 1u64;
+    }
+
+    let mut distance = 0u64;
+    let mut commit = from;
+
+    loop {
+        if !m.contains_key(commit) {
+            break 0;
+        }
+        let parents = m.get(commit).unwrap();
+        if let Some(parent) = parents.get(0) {
+            distance += 1;
+
+            if parent == till {
+                break distance;
+            }
+            commit = &parent.as_str();
+        } else {
+            break distance;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -544,6 +585,53 @@ mod tests {
     use async_trait::async_trait;
     use log4rs::encode::json;
     use std::fs;
+
+    #[test]
+    fn ensure_calc_left_dist_correctly() {
+        let m = HashMap::from([
+            ("7986a9690ed067dc1a917b6df10342a5b9129e0b", vec![ZERO_SHA.to_owned()]),
+            (ZERO_SHA, vec![]),
+        ]);
+        let dist = calculate_left_distance(m, "7986a9690ed067dc1a917b6df10342a5b9129e0b", "");
+        assert_eq!(dist, 1);
+
+        let m = HashMap::from([
+            ("5c39d86543b994882f83689fbfa79b952fa8e711", vec!["d043874c7e470206ddf62f21b7c7d23a6792a8f5".to_owned()]),
+            ("d043874c7e470206ddf62f21b7c7d23a6792a8f5", vec!["16798be2e82bc8ec3d64c27352b05d0c6552c83c".to_owned()]),
+            ("16798be2e82bc8ec3d64c27352b05d0c6552c83c", vec![ZERO_SHA.to_owned()]),
+            (ZERO_SHA, vec![]),
+        ]);
+        let dist = calculate_left_distance(m, "5c39d86543b994882f83689fbfa79b952fa8e711", "");
+        assert_eq!(dist, 3);
+
+        let m = HashMap::from([
+            ("fc99c36ef31c6e5c6fef6e45acbc91018f73eef8", vec!["f7ccf77b87907612d3c03d21eea2d63f5345f4e4".to_owned()]),
+            ("f7ccf77b87907612d3c03d21eea2d63f5345f4e4", vec![ZERO_SHA.to_owned()]),
+            (ZERO_SHA, vec![]),
+        ]);
+        let dist = calculate_left_distance(m, "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8", "");
+        assert_eq!(dist, 2);
+
+
+        let m = HashMap::from([
+            ("d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1", vec!["eb452a9deefbf63574af0b375488029dd2c4342a".to_owned(), "eb7cb820baae9165838fec6c99a6b58d8dcfd57c".to_owned()]),
+            ("eb7cb820baae9165838fec6c99a6b58d8dcfd57c", vec!["8b9d412c468ea82d45384edb695f388db7a9aaee".to_owned()]),
+            ("8b9d412c468ea82d45384edb695f388db7a9aaee", vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()]),
+            ("eb452a9deefbf63574af0b375488029dd2c4342a", vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()]),
+            ("8512ab02f932cb1735e360356632c4daebec8c22", vec!["98efe1b538f0b43593cca2c23f4f7f5141ae93df".to_owned()]),
+            ("98efe1b538f0b43593cca2c23f4f7f5141ae93df", vec![ZERO_SHA.to_owned()]),
+            (ZERO_SHA, vec![]),
+        ]);
+        let dist = calculate_left_distance(m, "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1", "");
+        assert_eq!(dist, 4);
+
+        let m = HashMap::from([
+            ("a3888f56db3b43dedd32991b49842b16965041af", vec!["44699fc8627c1d78191f48d336e4d07d1325e38d".to_owned()]),
+            ("", vec![]),
+        ]);
+        let dist = calculate_left_distance(m, "a3888f56db3b43dedd32991b49842b16965041af", "44699fc8627c1d78191f48d336e4d07d1325e38d");
+        assert_eq!(dist, 1);
+    }
 
     #[tokio::test]
     async fn test_push_parotected_ref() {
