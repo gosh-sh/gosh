@@ -844,6 +844,10 @@ function useMergeRequest(
     showDiffNum: number = 5,
 ) {
     const { updateBranches } = useBranches(repo)
+    const { destroy: deleteBranch, progress: branchProgress } = useBranchManagement(
+        dao,
+        repo,
+    )
     const {
         srcBranch,
         dstBranch,
@@ -860,7 +864,7 @@ function useMergeRequest(
     ) => {
         await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
-            await repo.deleteBranch(srcBranch!.name)
+            await deleteBranch(srcBranch!.name)
             await updateBranches()
         }
     }
@@ -872,6 +876,7 @@ function useMergeRequest(
         buildProgress,
         push,
         pushProgress,
+        branchProgress,
     }
 }
 

@@ -5,17 +5,26 @@ import { SwitchField } from '../../components/Formik'
 import { useMergeRequest } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
-import { BranchCompareForm, BranchComparePreview } from '../../components/Branches'
+import {
+    BranchCompareForm,
+    BranchComparePreview,
+    BranchOperateProgress,
+} from '../../components/Branches'
 import BranchCommitForm from '../../components/Commit/BranchCommitForm'
 
 const MergeCreatePage = () => {
     const navigate = useNavigate()
     const { daoName, repoName } = useParams()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { srcBranch, dstBranch, build, buildProgress, push, pushProgress } =
-        useMergeRequest(dao.details, repo)
-
-    const { isFetching, isEmpty } = buildProgress
+    const {
+        srcBranch,
+        dstBranch,
+        build,
+        buildProgress,
+        push,
+        pushProgress,
+        branchProgress,
+    } = useMergeRequest(dao.details, repo)
 
     const onBuild = async (values: any) => {
         try {
@@ -54,7 +63,7 @@ const MergeCreatePage = () => {
                 progress={buildProgress}
             />
 
-            {!isFetching && !isEmpty && (
+            {!buildProgress.isFetching && !buildProgress.isEmpty && (
                 <BranchCommitForm
                     className="mt-5"
                     initialValues={{
@@ -74,6 +83,16 @@ const MergeCreatePage = () => {
                     progress={pushProgress}
                     onSubmit={onPush}
                 />
+            )}
+
+            {branchProgress.isFetching && (
+                <div className="border rounded px-4 py-3 mt-5">
+                    <h3 className="text-lg font-semibold mb-2">Delete source branch</h3>
+                    <BranchOperateProgress
+                        operation="Delete"
+                        progress={branchProgress.details}
+                    />
+                </div>
             )}
         </div>
     )

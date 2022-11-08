@@ -215,6 +215,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                         </div>
 
                         <CommitFields
+                            className="mt-4"
                             isSubmitting={isSubmitting}
                             isDisabled={!monaco || isDisabled}
                             urlBack={urlBack}
