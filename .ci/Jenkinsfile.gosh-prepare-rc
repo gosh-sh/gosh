@@ -193,22 +193,24 @@ pipeline {
             }
             steps {
                 script {
-                    def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-                    def tests = [failFast: true]
-                    for (f in files) {
-                        tests["${f}"] = {
-                            node {
-                                stage("Test ${tests[f]}") {                              
-                                    sh """
-                                        export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-                                        . ./env.env
-                                        ./${tests[f]}
-                                    """
+                    dir('tests') {
+                        def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+                        def tests = [failFast: true]
+                        for (f in files) {
+                            tests["${f}"] = {
+                                node {
+                                    stage("Test ${tests[f]}") {                              
+                                        sh """
+                                            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                                            . ./env.env
+                                            ./${tests[f]}
+                                        """
+                                    }
                                 }
-                            }
-                        }   
+                            }   
+                        }
+                        parallel tests
                     }
-                    parallel tests
                 }
             }
         }
