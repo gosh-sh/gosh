@@ -181,10 +181,9 @@ pipeline {
                                 #./set-vars.sh
                             """
                             def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-                            tests = [:]
+                            def tests = [failFast: true]
                             for (f in files) {
                                 tests["${f}"] = {
-                                    node {
                                         stage("Test ${tests[f]}") {
                                             sh """
                                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
@@ -192,7 +191,6 @@ pipeline {
                                                 ./${tests[f]}
                                             """
                                         }
-                                    }
                                 }
                             }
                             parallel tests
