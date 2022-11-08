@@ -184,6 +184,7 @@ pipeline {
                             def tests = [failFast: true]
                             for (f in files) {
                                 tests["${f}"] = {
+                                    node('jenkins-main') {
                                         stage("Test ${tests[f]}") {
                                             sh """
                                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
@@ -191,10 +192,8 @@ pipeline {
                                                 ./${tests[f]}
                                             """
                                         }
+                                    }
                                 }
-                            }
-                            node() {
-                                parallel tests
                             }
                         }
                     }
