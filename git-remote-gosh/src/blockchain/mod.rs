@@ -306,54 +306,6 @@ async fn default_callback(pe: ProcessingEvent) {
     log::debug!("cb: {:#?}", pe);
 }
 
-#[instrument(level = "debug", skip(context, contract))]
-#[deprecated(note = "use blockchain.call() instead")]
-async fn call(
-    context: &EverClient,
-    contract: &impl ContractInfo,
-    function_name: &str,
-    args: Option<serde_json::Value>,
-) -> anyhow::Result<CallResult> {
-    let call_set = match args {
-        Some(value) => CallSet::some_with_function_and_input(function_name, value),
-        None => CallSet::some_with_function(function_name),
-    };
-    let signer = match contract.get_keys() {
-        Some(key_pair) => Signer::Keys {
-            keys: key_pair.to_owned(),
-        },
-        None => Signer::None,
-    };
-
-    let message_encode_params = ParamsOfEncodeMessage {
-        abi: contract.get_abi().to_owned(),
-        address: Some(String::from(contract.get_address().clone())),
-        call_set,
-        signer,
-        deploy_set: None,
-        processing_try_index: None,
-    };
-
-    let ResultOfProcessMessage {
-        transaction, /* decoded, */
-        ..
-    } = ton_client::processing::process_message(
-        context.clone(),
-        ParamsOfProcessMessage {
-            send_events: false,
-            message_encode_params,
-        },
-        default_callback,
-    )
-    .await?;
-
-    let call_result: CallResult = serde_json::from_value(transaction)?;
-
-    log::debug!("trx id: {}", call_result.trx_id);
-
-    Ok(call_result)
-}
-
 #[instrument(level = "debug", skip(context))]
 pub async fn get_repo_address(
     context: &EverClient,
@@ -379,20 +331,6 @@ pub async fn branch_list(
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
     Ok(result)
-}
-
-pub async fn set_head(
-    context: &EverClient,
-    wallet_addr: &BlockchainContractAddress,
-    repo_name: &str,
-    new_head: &str,
-    keys: KeyPair,
-) -> anyhow::Result<()> {
-    let contract = GoshContract::new_with_keys(wallet_addr, gosh_abi::WALLET, keys);
-    let args = serde_json::json!({ "repoName": repo_name, "branchName": new_head });
-    let result = call(context, &contract, "setHEAD", Some(args)).await?;
-
-    Ok(())
 }
 
 #[instrument(level = "debug", skip(context))]

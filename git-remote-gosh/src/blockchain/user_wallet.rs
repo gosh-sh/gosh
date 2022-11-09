@@ -1,3 +1,4 @@
+use super::call::BlockchainCall;
 use async_trait::async_trait;
 use cached::once_cell::sync::Lazy;
 use cached::{proc_macro::cached, SizedCache};
@@ -155,11 +156,11 @@ impl BlockchainUserWalletService for Everscale {
         };
 
         INIT_USER_WALLET_MIRRORS.call_once(|| {
-            let es_client = client.clone();
+            let blockchain = self.clone();
             let zero_wallet = zero_wallet.clone();
             task::block_in_place(move || {
                 Handle::current().block_on(init_user_wallet_mirrors(
-                    &es_client,
+                    &blockchain,
                     &zero_wallet,
                     max_number_of_user_wallets,
                 )); // Result is unused. MB add '?'
@@ -177,20 +178,21 @@ impl BlockchainUserWalletService for Everscale {
     }
 }
 
-async fn init_user_wallet_mirrors<C>(
-    client: &EverClient,
-    user_wallet_contract: &C,
+async fn init_user_wallet_mirrors<B, C>(
+    blockchain: &B,
+    wallet: &C,
     max_number_of_mirrors: u64,
 ) -> anyhow::Result<()>
 where
-    C: ContractRead + ContractInfo,
+    B: BlockchainService + BlockchainCall,
+    C: ContractRead + ContractInfo + Sync,
 {
-    let n = user_wallet_config_max_number_of_mirrors(client, user_wallet_contract).await?;
-    let result: GetWalletMirrorsCountResult = user_wallet_contract
-        .read_state(client, "getWalletsCount", None)
+    let n = user_wallet_config_max_number_of_mirrors(blockchain.client(), wallet).await?;
+    let result: GetWalletMirrorsCountResult = wallet
+        .read_state(blockchain.client(), "getWalletsCount", None)
         .await?;
     for _ in result.number_of_mirrors.into()..n {
-        call(client, user_wallet_contract, "deployWallet", None).await?;
+        blockchain.call(wallet, "deployWallet", None).await?;
     }
     Ok(())
 }

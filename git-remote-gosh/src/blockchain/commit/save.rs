@@ -97,7 +97,7 @@ impl BlockchainCommitPusher for Everscale {
             "numberChangedFiles": number_of_files_changed,
             "numberCommits": number_of_commits,
         });
-        let result = call(&self.client(), &wallet, "setCommit", Some(params)).await?;
+        let result = self.call(&wallet, "setCommit", Some(params)).await?;
         log::debug!("setCommit result: {:?}", result);
         Ok(())
     }
