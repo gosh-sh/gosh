@@ -124,6 +124,17 @@
 			]
 		},
 		{
+			"name": "requestBurn",
+			"inputs": [
+				{"name":"recipient","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"burn_amount","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "requestMint",
 			"inputs": [
 				{"name":"recipient","type":"address"},

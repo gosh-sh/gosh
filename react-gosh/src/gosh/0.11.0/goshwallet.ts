@@ -46,8 +46,8 @@ class GoshWallet extends BaseContract implements IGoshWallet {
     }
 
     async getSmvTokenBalance(): Promise<number> {
-        const result = await this.account.runLocal('m_tokenBalance', {})
-        return +result.decoded?.output.m_tokenBalance
+        const result = await this.account.runLocal('m_pseudoDAOBalance', {})
+        return +result.decoded?.output.m_pseudoDAOBalance
     }
 
     async lockVoting(amount: number): Promise<void> {
