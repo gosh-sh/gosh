@@ -580,7 +580,7 @@ mod tests {
             test_utils::{self, setup_repo},
             tests::setup_test_helper,
         },
-        logger::GitHelperLogger,
+        // logger::GitHelperLogger,
     };
     use async_trait::async_trait;
     use log4rs::encode::json;

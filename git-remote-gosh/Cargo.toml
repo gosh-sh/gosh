@@ -58,6 +58,10 @@ test-log = '^0'
 tokio-retry = '^0'
 tracing-log = '^0.1.3'
 derive_builder = '^0.11'
+tracing-subscriber = "0.3.16"
+tracing-opentelemetry = "0.18.0"
+opentelemetry = { version = "*", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "*", features = ["grpc-tonic"] }
 
 [dependencies.data-contract-macro-derive]
 path = 'crates/data-contract-macro-derive'
