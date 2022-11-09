@@ -18,9 +18,8 @@ pub use service::*;
 use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
-    crypto::KeyPair,
     net::{query_collection, ParamsOfQueryCollection},
-    processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
+    processing::{ProcessingEvent},
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
@@ -44,7 +43,7 @@ pub use crate::{
 };
 
 pub use self::contract::GoshContract;
-use self::contract::{ContractInfo, ContractRead, ContractStatic};
+use self::contract::{ContractRead, ContractStatic};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;

@@ -6,7 +6,7 @@ use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
 
-use crate::{abi, blockchain::call, config::UserWalletConfig};
+use crate::{abi, config::UserWalletConfig};
 
 use super::{
     contract::{ContractInfo, ContractRead},
