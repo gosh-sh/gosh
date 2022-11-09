@@ -45,7 +45,7 @@ pub async fn run() -> anyhow::Result<()> {
         Some(logger::GitHelperLogger::init()?)
     };
     {
-        let root = span!(tracing::Level::ERROR, "git-remote-helper");
+        let root = span!(tracing::Level::TRACE, "git-remote-helper");
         let _enter = root.enter();
         let config = config::Config::init()?;
         let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
