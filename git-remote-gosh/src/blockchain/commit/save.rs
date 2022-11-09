@@ -1,7 +1,7 @@
 use crate::{
     blockchain::{
-        call, call::BlockchainCall, user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, BlockchainService, Everscale,
+        call::BlockchainCall, user_wallet::BlockchainUserWalletService,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };

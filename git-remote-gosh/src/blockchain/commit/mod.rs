@@ -6,7 +6,7 @@ pub mod save;
 
 use crate::blockchain::serde_number::NumberU64;
 
-use super::GoshContract;
+use super::contract::GoshContract;
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "commit.abi.json"]

@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use crate::{
     abi as gosh_abi,
-    blockchain::{EverClient, GoshContract},
+    blockchain::{contract::ContractRead, EverClient, GoshContract},
 };
 
 use crate::blockchain::BlockchainContractAddress;
@@ -77,7 +77,7 @@ impl Snapshot {
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<String> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
-        let result: GetSnapshotFilePath = snapshot.run_local(context, "getName", None).await?;
+        let result: GetSnapshotFilePath = snapshot.read_state(context, "getName", None).await?;
         log::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;

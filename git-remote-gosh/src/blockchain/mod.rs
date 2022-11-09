@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 pub mod branch;
 mod call;
-mod contract;
+pub mod contract;
 mod error;
 use error::RunLocalError;
 pub mod service;
@@ -18,9 +18,8 @@ pub use service::*;
 use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
-    crypto::KeyPair,
     net::{query_collection, ParamsOfQueryCollection},
-    processing::{ParamsOfProcessMessage, ProcessingEvent, ResultOfProcessMessage},
+    processing::ProcessingEvent,
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
@@ -43,8 +42,7 @@ pub use crate::{
     config::{self, UserWalletConfig},
 };
 
-pub use self::contract::GoshContract;
-use self::contract::{ContractInfo, ContractRead, ContractStatic};
+use self::contract::{ContractRead, ContractStatic, GoshContract};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
@@ -363,7 +361,7 @@ pub async fn get_head(
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
-    let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
+    let result: GetHeadResult = contract.read_state(context, "getHEAD", None).await?;
     Ok(result.head)
 }
 
@@ -466,7 +464,7 @@ pub mod tests {
             test_secret
         ).await.ok().unwrap();
         let result: GetHashResult = contract
-            .run_local(&te.client, "getHash", Some(args))
+            .read_state(&te.client, "getHash", Some(args))
             .await
             .expect("ok");
         assert_eq!(result.hash, format!("0x{}", hash));
