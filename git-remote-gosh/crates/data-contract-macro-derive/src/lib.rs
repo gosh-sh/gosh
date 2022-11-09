@@ -46,8 +46,8 @@ fn impl_data_contract(ast: &syn::DeriveInput) -> quote::Tokens {
             ) -> anyhow::Result<#name>
             {
                 let abi = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/", #abi));
-                let contract = crate::blockchain::GoshContract::new(address, (#abi, abi));
-                let content = crate::blockchain::ContractRead::read_state(
+                let contract = crate::blockchain::contract::GoshContract::new(address, (#abi, abi));
+                let content = crate::blockchain::contract::ContractRead::read_state(
                     &contract,
                     context,
                     #abi_data_fn,

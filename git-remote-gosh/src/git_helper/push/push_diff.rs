@@ -1,12 +1,12 @@
 use crate::{
     blockchain::{
-        contract::{ContractInfo, ContractRead},
+        contract::{ContractInfo, ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
             save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
             PushDiffCoordinate,
         },
-        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Snapshot,
+        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
     },
     config,
     git_helper::GitHelper,

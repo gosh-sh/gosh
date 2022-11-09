@@ -19,7 +19,7 @@ use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
     net::{query_collection, ParamsOfQueryCollection},
-    processing::{ProcessingEvent},
+    processing::ProcessingEvent,
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
@@ -42,8 +42,7 @@ pub use crate::{
     config::{self, UserWalletConfig},
 };
 
-pub use self::contract::GoshContract;
-use self::contract::{ContractRead, ContractStatic};
+use self::contract::{ContractRead, ContractStatic, GoshContract};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;

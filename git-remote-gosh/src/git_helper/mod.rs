@@ -6,8 +6,8 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use crate::{
     abi as gosh_abi,
     blockchain::{
-        get_head, get_repo_address, BlockchainContractAddress, BlockchainService, EverClient,
-        EverscaleBuilder, GoshContract, Tree,
+        contract::GoshContract, get_head, get_repo_address, BlockchainContractAddress,
+        BlockchainService, EverClient, EverscaleBuilder, Tree,
     },
     config::Config,
     git_helper::ever_client::create_client,
