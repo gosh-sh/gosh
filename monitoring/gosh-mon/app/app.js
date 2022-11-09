@@ -46,6 +46,7 @@ catch (e) {
 }
 ScriptHandler_1.default.Config = (0, Utils_1.clone)(conf);
 const mode = process.env['GM_MODE'] ?? process.argv[2];
+const revq = process.env['REVQ_MODE'] ?? '';
 // @ts-ignore original lock entry contents value generator
 const redlock_orig_random = redlock_1.default.prototype._random;
 // @ts-ignore append mode to tail to see in redis ui who locked what
@@ -70,10 +71,28 @@ if (c.include) {
     console.log('Loaded included file ' + c.include);
 }
 const app = new Application_1.default();
-app.handlerFactory = (silent) => (0, selectHandler_1.default)(c.handler, silent).applyConfiguration(c);
+app.baseHandlerFactory = (silent) => (0, selectHandler_1.default)(c.handler, silent);
+app.handlerFactory = (silent) => app.baseHandlerFactory(silent).applyConfiguration(c);
 app.setInterval(c['interval'] - c['subinterval']);
 app.promformatter.prefix = c['prefix'];
 app.promformatter.tagpfx = `mode="${mode}"`;
+app.mode = mode;
+app.rq_prod = (revq === 'producer');
+app.rq_cons = (revq === 'consumer');
+if (c['redis_host'])
+    app.rq_host = c['redis_host'];
+if (c['reverb_ttl_s'])
+    app.rev_msg_ttl = c['reverb_ttl_s'] * 1000;
+if (c['reverb_clean_old_s'])
+    app.rev_clr_old_logs = c['reverb_clean_old_s'] * 1000;
+if (c['reverb_clean_total_mb'])
+    app.rev_clr_total_mb = c['reverb_clean_total_mb'];
+if (c['reverb_clean_file_cnt'])
+    app.rev_clr_file_cnt = c['reverb_clean_file_cnt'];
+if (app.rq_cons && app.interval < 3600)
+    app.interval = 3600;
+if (app.rq_cons)
+    app.steps = true;
 console.log('Configured mode: ' + mode.replaceAll('-', ' '));
 if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
     let level = Number.parseInt(process.env.ONESHOT_DEBUG ?? '0');
@@ -94,6 +113,7 @@ if (process.env.ONESHOT_DEBUG || process.env.RUN_NOW || c['cron']) {
     });
 }
 else {
-    app.prepare();
-    app.run();
+    app.prepare().then(value => {
+        app.run().catch(reason => console.error('Run failed:', reason));
+    }).catch(reason => console.error('Prepare failed:', reason));
 }

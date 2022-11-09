@@ -9,10 +9,9 @@ import SeedReadHandler from "./Handlers/SeedReadHandler";
 import RootCheckHandler from "./Handlers/RootCheckHandler";
 import AppSetupHandler from "./Handlers/AppSetupHandler";
 import ScriptHandler from "./Handlers/ScriptHandler";
+import RMonitorHandler from "./Handlers/RMonitorHandler";
 
-export type HandlerType = 'app-read' | 'extui-read' | 'remote-read'
-    | 'app-write' | 'extui-write' | 'remote-write' | 'app-rotate'
-    | 'seed-read' | 'root-check' | 'app-setup' | 'script';
+export type HandlerType = string;
 
 export default function selectHandler(type: HandlerType, silent?: boolean): GoshHandler {
     if (silent !== true)
@@ -29,6 +28,7 @@ export default function selectHandler(type: HandlerType, silent?: boolean): Gosh
         case   'root-check': return new RootCheckHandler();
         case    'app-setup': return new AppSetupHandler();
         case       'script': return new ScriptHandler();
+        case 'rsmq-monitor': return new RMonitorHandler();
     }
     throw new TypeError('Invalid type');
 }

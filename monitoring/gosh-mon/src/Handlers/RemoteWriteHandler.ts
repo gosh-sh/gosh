@@ -1,7 +1,7 @@
 import RemoteHandler from "./RemoteHandler";
 import {MetricsMap} from "../PrometheusFormatter";
 import * as fs from "fs";
-import {niso, nls} from "../Utils";
+import {niso} from "../Utils";
 
 export default class RemoteWriteHandler extends RemoteHandler {
 

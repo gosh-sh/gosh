@@ -1,0 +1,25 @@
+version: '2.2'
+
+services:
+
+  gosh-mon-redis-smq-monitor:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: gosh-mon-redis-smq-monitor
+    init: true
+    restart: "unless-stopped"
+    expose: ["7210"]
+    ports: ["127.0.0.1:7210:7210"]
+    environment: ["GM_MODE=rsmq-monitor"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+    networks:
+      gosh-monitoring: { }
+    mem_limit: 512M
+    memswap_limit: 512M   
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring

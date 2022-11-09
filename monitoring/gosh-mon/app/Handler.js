@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Utils_1 = require("./Utils");
 const ioredis_1 = __importDefault(require("ioredis"));
 const redlock_1 = __importDefault(require("redlock"));
+const fs_1 = __importDefault(require("fs"));
 class Handler {
     constructor() {
         this.debug = false;
@@ -17,6 +18,7 @@ class Handler {
         this.redlock_retry_jitter_ms = 10;
         this.redlock_autoextend_ms = 1000;
         this.do_lock = false;
+        this.config = {};
     }
     setApplication(app) {
         this.app = app;
@@ -31,6 +33,7 @@ class Handler {
         return this;
     }
     applyConfiguration(c) {
+        this.config = c;
         if (c.branch)
             this.lock_branch = c.branch;
         this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock',
@@ -68,6 +71,14 @@ class Handler {
         const inner = async () => {
             this.app.lastFetched = n;
             const nextMetrics = await this.handle(false);
+            if (nextMetrics.get('result') !== 100) {
+                try {
+                    await this.app.maybeProduce(this.config);
+                }
+                catch (e) {
+                    console.error('Failed producing reverb message', e);
+                }
+            }
             if (nextMetrics && !nextMetrics.has('value') && (this.app.lastMetrics !== undefined) && this.app.lastMetrics.has('value'))
                 nextMetrics.set('value', this.app.lastMetrics.get('value'));
             this.app.lastMetrics = nextMetrics;
@@ -98,12 +109,16 @@ class Handler {
         try {
             if (this.redis) {
                 this.redis?.quit();
-                if (this.redlock) {
-                    this.redlock.quit().then().catch();
-                }
             }
         }
         catch (e) { }
     }
+    mkdirs(...dirs) {
+        for (let dir of dirs)
+            if (!fs_1.default.existsSync(dir))
+                fs_1.default.mkdirSync(dir);
+        return this;
+    }
+    logToFile(path) { return this; }
 }
 exports.default = Handler;

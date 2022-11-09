@@ -71,6 +71,11 @@ scrape_configs:
           - 'gosh-mon-root-check:9600'
           - 'gosh-mon-seed-read:9600'
 
+  - job_name: 'gosh-mon-redis'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['gosh-mon-redis-exporter:9121']
+
 alerting:
   alertmanagers:
   - scheme: http

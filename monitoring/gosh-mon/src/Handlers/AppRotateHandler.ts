@@ -1,7 +1,6 @@
 import AppHandler from "./AppHandler";
 import {MetricsMap} from "../PrometheusFormatter";
-import {niso, now, or_hrefs} from "../Utils";
-import fs from "fs";
+import {niso, or_hrefs} from "../Utils";
 
 export default class AppRotateHandler extends AppHandler {
 

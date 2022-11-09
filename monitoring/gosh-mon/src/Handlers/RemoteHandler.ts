@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as util from "util";
 import * as child_process from "child_process";
 import {StepEntry} from "./ScenarioHandler";
-import {nls, now} from "../Utils";
+import {now} from "../Utils";
 const exec = util.promisify(child_process.exec);
 import fetch, {Headers} from 'node-fetch';
 import {pipeline} from 'stream';
