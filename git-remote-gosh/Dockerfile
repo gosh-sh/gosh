@@ -18,6 +18,7 @@ RUN \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -yq \
     build-essential \
+    protobuf-compiler \
     cmake \
     g++-x86-64-linux-gnu libc6-dev-amd64-cross \
     g++-aarch64-linux-gnu libc6-dev-arm64-cross
