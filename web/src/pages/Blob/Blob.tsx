@@ -1,5 +1,4 @@
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
 import { getCodeLanguageFromFilename, useBlob, useBranches } from 'react-gosh'
@@ -15,6 +14,7 @@ import Spinner from '../../components/Spinner'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
+import { BranchSelect } from '../../components/Branches'
 
 const BlobPage = () => {
     const treepath = useParams()['*']

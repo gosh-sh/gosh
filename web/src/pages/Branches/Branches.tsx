@@ -8,7 +8,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import BranchSelect from '../../components/BranchSelect'
 import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import { useBranchManagement, useBranches } from 'react-gosh'
@@ -18,6 +17,7 @@ import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
+import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
 
 type TCreateBranchFormValues = {
     newName: string
@@ -35,7 +35,7 @@ export const BranchesPage = () => {
         destroy: deleteBranch,
         lock: lockBranch,
         unlock: unlockBranch,
-        status,
+        progress: branchProgress,
     } = useBranchManagement(dao.details, repo)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
@@ -188,11 +188,20 @@ export const BranchesPage = () => {
                 </div>
             </div>
 
+            {branchProgress.isFetching && branchProgress.type === 'create' && (
+                <div className="mt-4">
+                    <BranchOperateProgress
+                        operation="Deploy"
+                        progress={branchProgress.details}
+                    />
+                </div>
+            )}
+
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {filtered.map((branch, index) => (
                     <div
                         key={index}
-                        className="flex gap-4 items-center px-3 py-2 text-sm"
+                        className="flex flex-wrap gap-x-4 gap-y-2 items-center px-3 py-2 text-sm"
                     >
                         <div className="grow">
                             <Link
@@ -213,9 +222,11 @@ export const BranchesPage = () => {
                                                 ? onBranchUnlock(branch.name)
                                                 : onBranchLock(branch.name)
                                         }}
-                                        disabled={status[branch.name]?.isBusy}
+                                        disabled={branchProgress.isFetching}
                                     >
-                                        {status[branch.name]?.isLock ? (
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === '(un)lock' &&
+                                        branchProgress.name === branch.name ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon
@@ -238,11 +249,13 @@ export const BranchesPage = () => {
                                         onClick={() => onBranchDelete(branch.name)}
                                         disabled={
                                             branch.isProtected ||
-                                            status[branch.name]?.isBusy ||
+                                            branchProgress.isFetching ||
                                             ['main', 'master'].indexOf(branch.name) >= 0
                                         }
                                     >
-                                        {status[branch.name]?.isDestroy ? (
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === 'destroy' &&
+                                        branchProgress.name === branch.name ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon icon={faTrash} size="sm" />
@@ -252,6 +265,17 @@ export const BranchesPage = () => {
                                 </>
                             )}
                         </div>
+
+                        {branchProgress.isFetching &&
+                            branchProgress.type === 'destroy' &&
+                            branchProgress.name === branch.name && (
+                                <div className="basis-full">
+                                    <BranchOperateProgress
+                                        operation="Delete"
+                                        progress={branchProgress.details}
+                                    />
+                                </div>
+                            )}
                     </div>
                 ))}
             </div>

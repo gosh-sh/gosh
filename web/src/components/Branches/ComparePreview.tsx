@@ -2,9 +2,9 @@ import { useMonaco } from '@monaco-editor/react'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames, getCodeLanguageFromFilename } from 'react-gosh'
-import { TBranch } from 'react-gosh/dist/types/repo.types'
+import { TBranch, TBranchCompareProgress } from 'react-gosh/dist/types/repo.types'
 import BlobDiffPreview from '../Blob/DiffPreview'
-import Spinner from '../Spinner'
+import { BranchCompareProgress } from './CompareProgress'
 
 type TBranchComparePreviewProps = {
     className?: string
@@ -13,6 +13,7 @@ type TBranchComparePreviewProps = {
     progress: {
         isFetching: boolean
         isEmpty: boolean
+        details: TBranchCompareProgress
         items: {
             treepath: string
             original: string | Buffer
@@ -25,18 +26,13 @@ type TBranchComparePreviewProps = {
 
 const BranchComparePreview = (props: TBranchComparePreviewProps) => {
     const { className, srcBranch, dstBranch, progress } = props
-    const { isEmpty, isFetching, items, getDiff } = progress
+    const { isEmpty, isFetching, details, items, getDiff } = progress
 
     const monaco = useMonaco()
 
     return (
         <div className={classNames(className)}>
-            {isFetching && (
-                <div className="text-sm text-gray-606060">
-                    <Spinner className="mr-3" />
-                    Loading diff...
-                </div>
-            )}
+            {isFetching && <BranchCompareProgress {...details} />}
 
             {isEmpty && (
                 <div className="text-sm text-gray-606060 text-center">

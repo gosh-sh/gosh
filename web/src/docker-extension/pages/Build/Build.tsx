@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../../../pages/RepoLayout'
-import BranchSelect from '../../../components/BranchSelect'
 import * as Yup from 'yup'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useBranches, AppConfig } from 'react-gosh'
 import { TextField } from '../../../components/Formik'
+import { BranchSelect } from '../../../components/Branches'
 
 type TBuildFormValues = {
     tag: string

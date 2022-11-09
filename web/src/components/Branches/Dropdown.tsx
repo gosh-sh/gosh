@@ -97,4 +97,4 @@ const BranchSelect = (props: TBranchSelectProps) => {
     )
 }
 
-export default BranchSelect
+export { BranchSelect }

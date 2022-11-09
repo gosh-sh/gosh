@@ -1,11 +1,11 @@
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import BranchSelect from '../../components/BranchSelect'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
 import { getCommitTime, useBranches, useCommitList } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import Committer from '../../components/Commit/Committer'
+import { BranchSelect } from '../../components/Branches'
 
 const CommitsPage = () => {
     const navigate = useNavigate()

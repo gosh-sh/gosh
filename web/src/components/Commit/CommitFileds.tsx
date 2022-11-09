@@ -1,24 +1,26 @@
 import { Field } from 'formik'
-import { TPushCallbackParams } from 'react-gosh/dist/types/repo.types'
+import { classNames } from 'react-gosh'
+import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import { useNavigate } from 'react-router-dom'
 import { TextareaField, TextField } from '../Formik'
 import Spinner from '../Spinner'
 import CommitProgress from './CommitProgress'
 
 type TCommitFieldsProps = {
+    className?: string
     isSubmitting: boolean
     isDisabled?: boolean
     urlBack?: string
     extraButtons?: any
-    progress?: TPushCallbackParams
+    progress?: TPushProgress
 }
 
 const CommitFields = (props: TCommitFieldsProps) => {
-    const { isSubmitting, isDisabled, urlBack, extraButtons, progress } = props
+    const { className, isSubmitting, isDisabled, urlBack, extraButtons, progress } = props
     const navigate = useNavigate()
 
     return (
-        <>
+        <div className={classNames(className)}>
             <h3 className="text-lg font-semibold mb-2">Commit data</h3>
             <div>
                 <Field
@@ -87,7 +89,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                     <CommitProgress {...progress} />
                 </div>
             )}
-        </>
+        </div>
     )
 }
 

@@ -10,8 +10,10 @@ import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '.
 import { TAddress, TDao } from '../types'
 import {
     TBranch,
+    TBranchCompareProgress,
+    TBranchOperateProgress,
     TCommit,
-    TPushCallbackParams,
+    TPushProgress,
     TRepositoryListItem,
     TTree,
     TTreeItem,
@@ -251,70 +253,82 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const { updateBranches } = useBranches(repo)
     const { pushUpgrade } = _usePush(dao, repo)
-    const [status, setStatus] = useState<{
-        [name: string]: { isBusy?: boolean; isDestroy?: boolean; isLock?: boolean }
-    }>({})
+    const [progress, setProgress] = useState<{
+        name?: string
+        type?: 'create' | 'destroy' | '(un)lock'
+        isFetching: boolean
+        details: TBranchOperateProgress
+    }>({ isFetching: false, details: {} })
 
     const create = async (name: string, from: string) => {
-        const branch = await repo.getBranch(from)
-        await pushUpgrade(branch.name, branch.commit.name, branch.commit.version)
-        await repo.deployBranch(name.toLowerCase(), from.toLowerCase())
-        await updateBranches()
-    }
-
-    const destroy = async (name: string) => {
         try {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: true, isDestroy: true },
-            }))
-            await repo.deleteBranch(name.toLowerCase())
+            setProgress({ type: 'create', isFetching: true, details: {} })
+
+            const branch = await repo.getBranch(from)
+            await pushUpgrade(branch.name, branch.commit.name, branch.commit.version)
+            await repo.createBranch(
+                name.toLowerCase(),
+                from.toLowerCase(),
+                _branchOperateCallback,
+            )
             await updateBranches()
         } catch (e) {
             throw e
         } finally {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: false, isDestroy: false },
-            }))
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
+        }
+    }
+
+    const destroy = async (name: string) => {
+        try {
+            setProgress({ name, type: 'destroy', isFetching: true, details: {} })
+            await repo.deleteBranch(name.toLowerCase(), _branchOperateCallback)
+            await updateBranches()
+        } catch (e) {
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
         }
     }
 
     const lock = async (name: string) => {
         try {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: true, isLock: true },
-            }))
+            setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
             await repo.lockBranch(name.toLowerCase())
         } catch (e) {
             throw e
         } finally {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: false, isLock: false },
-            }))
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
         }
     }
 
     const unlock = async (name: string) => {
         try {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: true, isLock: true },
-            }))
+            setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
             await repo.unlockBranch(name.toLowerCase())
         } catch (e) {
             throw e
         } finally {
-            setStatus((state) => ({
-                ...state,
-                [name]: { ...state[name], isBusy: false, isLock: false },
-            }))
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
         }
     }
 
-    return { status, create, destroy, lock, unlock }
+    const _branchOperateCallback = (params: TBranchOperateProgress) => {
+        setProgress((currVal) => {
+            const { details } = currVal
+            const { snapshotsWrite } = params
+            return {
+                ...currVal,
+                details: {
+                    ...details,
+                    ...params,
+                    snapshotsWrite: { ...details.snapshotsWrite, ...snapshotsWrite },
+                },
+            }
+        })
+    }
+
+    return { create, destroy, lock, unlock, progress }
 }
 
 function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
@@ -600,7 +614,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
 
 function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
     const { branch: branchData, updateBranch } = useBranches(repo, branch)
-    const [progress, setProgress] = useState<TPushCallbackParams>({})
+    const [progress, setProgress] = useState<TPushProgress>({})
 
     const push = async (
         title: string,
@@ -645,7 +659,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         }
     }
 
-    const pushCallback = (params: TPushCallbackParams) => {
+    const pushCallback = (params: TPushProgress) => {
         setProgress((currVal) => {
             const { treesDeploy, snapsDeploy, diffsDeploy, tagsDeploy } = params
 
@@ -691,13 +705,14 @@ function _useMergeRequest(
     const [dstBranch, setDstBranch] = useState<TBranch>()
     const [progress, setProgress] = useState<{
         isFetching: boolean
+        details: TBranchCompareProgress
         items: {
             treepath: string
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
         }[]
-    }>({ isFetching: false, items: [] })
+    }>({ isFetching: false, details: {}, items: [] })
 
     const _getRepository = async (version: string) => {
         if (repo.getVersion() === version) return repo
@@ -717,7 +732,7 @@ function _useMergeRequest(
         }))
 
     const build = async (src: string, dst: string) => {
-        setProgress({ isFetching: true, items: [] })
+        setProgress({ isFetching: true, details: {}, items: [] })
 
         // Get branches details
         const [srcBranch, dstBranch] = await Promise.all([
@@ -725,7 +740,7 @@ function _useMergeRequest(
             (async () => await repo.getBranch(dst))(),
         ])
         if (srcBranch.commit.name === dstBranch.commit.name) {
-            setProgress({ isFetching: false, items: [] })
+            setProgress({ isFetching: false, details: {}, items: [] })
             return
         }
 
@@ -740,6 +755,7 @@ function _useMergeRequest(
             (async () => (await srcRepo.getTree(srcBranch.commit.name)).items)(),
             (async () => (await dstRepo.getTree(dstBranch.commit.name)).items)(),
         ])
+        setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
         // Compare trees and get added/updated treepath
         const treeDiff: { treepath: string; exists: boolean }[] = []
@@ -758,6 +774,16 @@ function _useMergeRequest(
                 if (dstItem && srcItem.sha1 === dstItem.sha1) return
                 treeDiff.push({ treepath, exists: !!dstItem })
             })
+        setProgress((state) => {
+            const { blobs = {} } = state.details
+            return {
+                ...state,
+                details: {
+                    ...state.details,
+                    blobs: { ...blobs, count: 0, total: treeDiff.length },
+                },
+            }
+        })
 
         // Read blobs content from built tree diff
         const blobDiff = await executeByChunk(
@@ -772,6 +798,18 @@ function _useMergeRequest(
                     ? (await dstRepo.getBlob({ fullpath: dstFullPath })).content
                     : ''
 
+                setProgress((state) => {
+                    const { blobs = {} } = state.details
+                    const { count = 0 } = blobs
+                    return {
+                        ...state,
+                        details: {
+                            ...state.details,
+                            blobs: { ...blobs, count: count + 1 },
+                        },
+                    }
+                })
+
                 return {
                     treepath,
                     original: dstBlob,
@@ -783,7 +821,7 @@ function _useMergeRequest(
 
         setSrcBranch(srcBranch)
         setDstBranch(dstBranch)
-        setProgress({ isFetching: false, items: blobDiff })
+        setProgress((state) => ({ ...state, isFetching: false, items: blobDiff }))
     }
 
     return {
@@ -793,6 +831,7 @@ function _useMergeRequest(
         progress: {
             isFetching: progress.isFetching,
             isEmpty: !progress.isFetching && !progress.items.length,
+            details: progress.details,
             items: progress.items,
             getDiff,
         },
@@ -805,6 +844,10 @@ function useMergeRequest(
     showDiffNum: number = 5,
 ) {
     const { updateBranches } = useBranches(repo)
+    const { destroy: deleteBranch, progress: branchProgress } = useBranchManagement(
+        dao,
+        repo,
+    )
     const {
         srcBranch,
         dstBranch,
@@ -821,7 +864,7 @@ function useMergeRequest(
     ) => {
         await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
         if (deleteSrcBranch) {
-            await repo.deleteBranch(srcBranch!.name)
+            await deleteBranch(srcBranch!.name)
             await updateBranches()
         }
     }
@@ -833,6 +876,7 @@ function useMergeRequest(
         buildProgress,
         push,
         pushProgress,
+        branchProgress,
     }
 }
 
