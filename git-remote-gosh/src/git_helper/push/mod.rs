@@ -372,10 +372,8 @@ where
             };
         }
 
-        let mut parents_of_commits: HashMap<&str, Vec<String>> = HashMap::from([
-            (ZERO_SHA, vec![]),
-            ("", vec![]),
-        ]);
+        let mut parents_of_commits: HashMap<&str, Vec<String>> =
+            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
         for line in out.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
@@ -589,47 +587,92 @@ mod tests {
     #[test]
     fn ensure_calc_left_dist_correctly() {
         let m = HashMap::from([
-            ("7986a9690ed067dc1a917b6df10342a5b9129e0b", vec![ZERO_SHA.to_owned()]),
+            (
+                "7986a9690ed067dc1a917b6df10342a5b9129e0b",
+                vec![ZERO_SHA.to_owned()],
+            ),
             (ZERO_SHA, vec![]),
         ]);
         let dist = calculate_left_distance(m, "7986a9690ed067dc1a917b6df10342a5b9129e0b", "");
         assert_eq!(dist, 1);
 
         let m = HashMap::from([
-            ("5c39d86543b994882f83689fbfa79b952fa8e711", vec!["d043874c7e470206ddf62f21b7c7d23a6792a8f5".to_owned()]),
-            ("d043874c7e470206ddf62f21b7c7d23a6792a8f5", vec!["16798be2e82bc8ec3d64c27352b05d0c6552c83c".to_owned()]),
-            ("16798be2e82bc8ec3d64c27352b05d0c6552c83c", vec![ZERO_SHA.to_owned()]),
+            (
+                "5c39d86543b994882f83689fbfa79b952fa8e711",
+                vec!["d043874c7e470206ddf62f21b7c7d23a6792a8f5".to_owned()],
+            ),
+            (
+                "d043874c7e470206ddf62f21b7c7d23a6792a8f5",
+                vec!["16798be2e82bc8ec3d64c27352b05d0c6552c83c".to_owned()],
+            ),
+            (
+                "16798be2e82bc8ec3d64c27352b05d0c6552c83c",
+                vec![ZERO_SHA.to_owned()],
+            ),
             (ZERO_SHA, vec![]),
         ]);
         let dist = calculate_left_distance(m, "5c39d86543b994882f83689fbfa79b952fa8e711", "");
         assert_eq!(dist, 3);
 
         let m = HashMap::from([
-            ("fc99c36ef31c6e5c6fef6e45acbc91018f73eef8", vec!["f7ccf77b87907612d3c03d21eea2d63f5345f4e4".to_owned()]),
-            ("f7ccf77b87907612d3c03d21eea2d63f5345f4e4", vec![ZERO_SHA.to_owned()]),
+            (
+                "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8",
+                vec!["f7ccf77b87907612d3c03d21eea2d63f5345f4e4".to_owned()],
+            ),
+            (
+                "f7ccf77b87907612d3c03d21eea2d63f5345f4e4",
+                vec![ZERO_SHA.to_owned()],
+            ),
             (ZERO_SHA, vec![]),
         ]);
         let dist = calculate_left_distance(m, "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8", "");
         assert_eq!(dist, 2);
 
-
         let m = HashMap::from([
-            ("d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1", vec!["eb452a9deefbf63574af0b375488029dd2c4342a".to_owned(), "eb7cb820baae9165838fec6c99a6b58d8dcfd57c".to_owned()]),
-            ("eb7cb820baae9165838fec6c99a6b58d8dcfd57c", vec!["8b9d412c468ea82d45384edb695f388db7a9aaee".to_owned()]),
-            ("8b9d412c468ea82d45384edb695f388db7a9aaee", vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()]),
-            ("eb452a9deefbf63574af0b375488029dd2c4342a", vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()]),
-            ("8512ab02f932cb1735e360356632c4daebec8c22", vec!["98efe1b538f0b43593cca2c23f4f7f5141ae93df".to_owned()]),
-            ("98efe1b538f0b43593cca2c23f4f7f5141ae93df", vec![ZERO_SHA.to_owned()]),
+            (
+                "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1",
+                vec![
+                    "eb452a9deefbf63574af0b375488029dd2c4342a".to_owned(),
+                    "eb7cb820baae9165838fec6c99a6b58d8dcfd57c".to_owned(),
+                ],
+            ),
+            (
+                "eb7cb820baae9165838fec6c99a6b58d8dcfd57c",
+                vec!["8b9d412c468ea82d45384edb695f388db7a9aaee".to_owned()],
+            ),
+            (
+                "8b9d412c468ea82d45384edb695f388db7a9aaee",
+                vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()],
+            ),
+            (
+                "eb452a9deefbf63574af0b375488029dd2c4342a",
+                vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()],
+            ),
+            (
+                "8512ab02f932cb1735e360356632c4daebec8c22",
+                vec!["98efe1b538f0b43593cca2c23f4f7f5141ae93df".to_owned()],
+            ),
+            (
+                "98efe1b538f0b43593cca2c23f4f7f5141ae93df",
+                vec![ZERO_SHA.to_owned()],
+            ),
             (ZERO_SHA, vec![]),
         ]);
         let dist = calculate_left_distance(m, "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1", "");
         assert_eq!(dist, 4);
 
         let m = HashMap::from([
-            ("a3888f56db3b43dedd32991b49842b16965041af", vec!["44699fc8627c1d78191f48d336e4d07d1325e38d".to_owned()]),
+            (
+                "a3888f56db3b43dedd32991b49842b16965041af",
+                vec!["44699fc8627c1d78191f48d336e4d07d1325e38d".to_owned()],
+            ),
             ("", vec![]),
         ]);
-        let dist = calculate_left_distance(m, "a3888f56db3b43dedd32991b49842b16965041af", "44699fc8627c1d78191f48d336e4d07d1325e38d");
+        let dist = calculate_left_distance(
+            m,
+            "a3888f56db3b43dedd32991b49842b16965041af",
+            "44699fc8627c1d78191f48d336e4d07d1325e38d",
+        );
         assert_eq!(dist, 1);
     }
 
