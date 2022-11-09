@@ -2,11 +2,17 @@ version: '2.2'
 
 services:
 
-# app.gosh.sh
-  gosh-cron-rem-rotate-small: &service
+  _goshmon_image_build:
+    image: goshmon_image
+    command: [ 'echo', 'build completed' ]
     build:
       context: ..
       dockerfile: Dockerfile
+
+# app.gosh.sh
+  gosh-cron-rem-rotate-small: &service
+    image: goshmon_image
+    depends_on: ["_goshmon_image_build"]
     container_name: gosh-cron-rem-rotate-small
     init: true
     restart: "on-failure"

@@ -48,8 +48,10 @@ global:
   # should be reasonably short, it may be useless to retry after significant period of time
   reverb_ttl_s: 10
 
-  # clean logs older than 1 hour
-  reverb_clean_old_s: 3600
+  # clean logs older than 1 month or if total size > 100 MB or if count > 500
+  reverb_clean_old_s: 2678400
+  reverb_clean_total_mb: 100
+  reverb_clean_file_cnt: 500
 
 
 includes:

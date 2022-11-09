@@ -33,7 +33,9 @@ export default class Application {
     consumer?: Consumer;
 
     rev_msg_ttl: number = 10_000;
-    rev_clr_logs: number = 3600_000;
+    rev_clr_old_logs: number = 0;
+    rev_clr_total_mb: number = 0;
+    rev_clr_file_cnt: number = 0;
     busy: boolean = false;
 
     setInterval(interval: number) {
@@ -170,7 +172,7 @@ export default class Application {
                     c[k.slice(8)] = c[k];
             }
             cb();
-            this.cleanupOldLogs();
+            this.cleanupLogs();
             console.log('Start processing incoming message');
             this.baseHandlerFactory().applyConfiguration(c).setApplication(this).setDebug(false).mkdirs(`errors/${this.mode}`)
                 .logToFile(`errors/${this.mode}/${niso()}.log`).handle(false).finally(() => this.busy = false)
@@ -186,7 +188,8 @@ export default class Application {
     }
 
     async runConsumer() {
-        console.log(`Old logs are deleted after ${this.rev_clr_logs/1000} seconds`);
+        if (this.rev_clr_old_logs > 0)
+            console.log(`Old logs are deleted after ${this.rev_clr_old_logs/1000} seconds`);
         await new Promise((resolve, reject) => {
             this.consumer!.run((err, status) => {
                 if (err) reject(err); else { if (status) resolve(0); else reject(status); }
@@ -194,14 +197,39 @@ export default class Application {
         })
     }
 
-    cleanupOldLogs() {
+    cleanupLogs() {
         const dir = `errors/${this.mode}`;
         if (!fs.existsSync(dir)) return;
-        fs.readdirSync(dir).forEach(file => {
-            // @ts-ignore using ctime as a number, whatever!
-            if (fs.statSync(`${dir}/${file}`).ctime < nowms() - this.rev_clr_logs)
-                fs.unlinkSync(`${dir}/${file}`);
-        });
+        const files: any[] = [];
+        if (this.rev_clr_old_logs > 0)
+            fs.readdirSync(dir).forEach(file => {
+                const stat = fs.statSync(`${dir}/${file}`);
+                // @ts-ignore using ctime as a number, whatever!
+                if (stat.ctime < nowms() - this.rev_clr_old_logs)
+                    fs.unlinkSync(`${dir}/${file}`);
+                else {
+                    files.push({
+                        name: file,
+                        size: stat.size,
+                        ctime: stat.ctime
+                    });
+                }
+            });
+        files.sort((a, b) => a.ctime - b.ctime);
+        if (this.rev_clr_file_cnt > 0) {
+            while (files.length > this.rev_clr_file_cnt) {
+                fs.unlinkSync(files.shift().name);
+            }
+        }
+        if (this.rev_clr_total_mb > 0) {
+            const max_total = this.rev_clr_total_mb * 1024 * 1024;
+            let total = files.reduce((previousValue, currentValue) => previousValue + currentValue.size, 0);
+            while (total > max_total) {
+                const first = files.shift();
+                fs.unlinkSync(first.name);
+                total -= first.size;
+            }
+        }
     }
 
 }

@@ -22,7 +22,9 @@ class Application {
         this.rq_prod = false;
         this.rq_cons = false;
         this.rev_msg_ttl = 10000;
-        this.rev_clr_logs = 3600000;
+        this.rev_clr_old_logs = 0;
+        this.rev_clr_total_mb = 0;
+        this.rev_clr_file_cnt = 0;
         this.busy = false;
         this.app = (0, express_1.default)();
         this.baseHandlerFactory = this.handlerFactory = (silent) => new DummyHandler_1.default();
@@ -154,7 +156,7 @@ class Application {
                     c[k.slice(8)] = c[k];
             }
             cb();
-            this.cleanupOldLogs();
+            this.cleanupLogs();
             console.log('Start processing incoming message');
             this.baseHandlerFactory().applyConfiguration(c).setApplication(this).setDebug(false).mkdirs(`errors/${this.mode}`)
                 .logToFile(`errors/${this.mode}/${(0, Utils_1.niso)()}.log`).handle(false).finally(() => this.busy = false)
@@ -171,7 +173,8 @@ class Application {
         });
     }
     async runConsumer() {
-        console.log(`Old logs are deleted after ${this.rev_clr_logs / 1000} seconds`);
+        if (this.rev_clr_old_logs > 0)
+            console.log(`Old logs are deleted after ${this.rev_clr_old_logs / 1000} seconds`);
         await new Promise((resolve, reject) => {
             this.consumer.run((err, status) => {
                 if (err)
@@ -185,15 +188,40 @@ class Application {
             });
         });
     }
-    cleanupOldLogs() {
+    cleanupLogs() {
         const dir = `errors/${this.mode}`;
         if (!fs_1.default.existsSync(dir))
             return;
-        fs_1.default.readdirSync(dir).forEach(file => {
-            // @ts-ignore using ctime as a number, whatever!
-            if (fs_1.default.statSync(`${dir}/${file}`).ctime < (0, Utils_1.nowms)() - this.rev_clr_logs)
-                fs_1.default.unlinkSync(`${dir}/${file}`);
-        });
+        const files = [];
+        if (this.rev_clr_old_logs > 0)
+            fs_1.default.readdirSync(dir).forEach(file => {
+                const stat = fs_1.default.statSync(`${dir}/${file}`);
+                // @ts-ignore using ctime as a number, whatever!
+                if (stat.ctime < (0, Utils_1.nowms)() - this.rev_clr_old_logs)
+                    fs_1.default.unlinkSync(`${dir}/${file}`);
+                else {
+                    files.push({
+                        name: file,
+                        size: stat.size,
+                        ctime: stat.ctime
+                    });
+                }
+            });
+        files.sort((a, b) => a.ctime - b.ctime);
+        if (this.rev_clr_file_cnt > 0) {
+            while (files.length > this.rev_clr_file_cnt) {
+                fs_1.default.unlinkSync(files.shift().name);
+            }
+        }
+        if (this.rev_clr_total_mb > 0) {
+            const max_total = this.rev_clr_total_mb * 1024 * 1024;
+            let total = files.reduce((previousValue, currentValue) => previousValue + currentValue.size, 0);
+            while (total > max_total) {
+                const first = files.shift();
+                fs_1.default.unlinkSync(first.name);
+                total -= first.size;
+            }
+        }
     }
 }
 exports.default = Application;

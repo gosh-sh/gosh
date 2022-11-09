@@ -2,11 +2,17 @@ version: '2.2'
 
 services:
 
-# git-remote-gosh
-  gm-reverb-rem-sm-rd: &service
+  _goshmon_image_build:
+    image: goshmon_image
+    command: [ 'echo', 'build completed' ]
     build:
       context: ..
       dockerfile: Dockerfile
+
+# git-remote-gosh
+  gm-reverb-rem-sm-rd: &service
+    image: goshmon_image
+    depends_on: ["_goshmon_image_build"]
     container_name: gm-reverb-rem-sm-rd
     init: true
     restart: "unless-stopped"

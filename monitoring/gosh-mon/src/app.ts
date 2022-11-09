@@ -61,9 +61,11 @@ app.promformatter.tagpfx = `mode="${mode}"`;
 app.mode = mode;
 app.rq_prod = (revq === 'producer');
 app.rq_cons = (revq === 'consumer');
-if (c['redis_host'])         app.rq_host = c['redis_host'];
-if (c['reverb_ttl_s'])       app.rev_msg_ttl = c['reverb_ttl_s'] * 1000;
-if (c['reverb_clean_old_s']) app.rev_clr_logs = c['reverb_clean_old_s'] * 1000;
+if (c['redis_host'])            app.rq_host = c['redis_host'];
+if (c['reverb_ttl_s'])          app.rev_msg_ttl = c['reverb_ttl_s'] * 1000;
+if (c['reverb_clean_old_s'])    app.rev_clr_old_logs = c['reverb_clean_old_s'] * 1000;
+if (c['reverb_clean_total_mb']) app.rev_clr_total_mb = c['reverb_clean_total_mb'];
+if (c['reverb_clean_file_cnt']) app.rev_clr_file_cnt = c['reverb_clean_file_cnt'];
 if (app.rq_cons && app.interval < 3600)
     app.interval = 3600;
 
