@@ -144,25 +144,6 @@ pub async fn inner_push_diff(
                         .contains("Contract execution was terminated with error: invalid opcode");
                 }
             }
-
-            // let apply_patch_result: Result<GetDiffResultResult> = wallet
-            //     .read_state(&es_client, "getDiffResult", Some(data))
-            //     .await;
-
-            // if apply_patch_result.is_ok() {
-            //     if apply_patch_result
-            //         .unwrap()
-            //         .hex_encoded_compressed_content
-            //         .is_none()
-            //     {
-            //         is_going_to_ipfs = true;
-            //     }
-            // } else {
-            //     let apply_patch_result_error = apply_patch_result.unwrap_err();
-            //     let message = apply_patch_result_error.to_string();
-            //     is_going_to_ipfs = message
-            //         .contains("Contract execution was terminated with error: invalid opcode");
-            // }
         }
         if is_going_to_ipfs {
             log::debug!("inner_push_diff->save_data_to_ipfs");
