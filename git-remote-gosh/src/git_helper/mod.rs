@@ -33,7 +33,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
-    logger: Logger,
+    logger: Option<Logger>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,7 +78,7 @@ where
     async fn build(
         config: Config,
         url: &str,
-        logger: Logger,
+        logger: Option<Logger>,
         blockchain: Blockchain,
         file_provider: FileProvider,
     ) -> anyhow::Result<Self> {
@@ -150,7 +150,9 @@ where
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        self.logger.set_verbosity(verbosity).ok();
+        if self.logger.is_some() {
+            self.logger.as_mut().unwrap().set_verbosity(verbosity).ok();
+        }
     }
 }
 
@@ -191,7 +193,7 @@ async fn build_blockchain(
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: Logger) -> anyhow::Result<()> {
+pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::Result<()> {
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
@@ -297,7 +299,7 @@ pub mod tests {
             remote,
             dao_addr,
             repo_addr,
-            logger,
+            logger: Some(logger),
             local_git_repository: repo,
         }
     }
