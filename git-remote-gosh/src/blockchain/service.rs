@@ -68,7 +68,7 @@ impl BlockchainBranchesService for Everscale {
 
         let params = serde_json::json!({ "branch": branch_name });
         let result: GetBoolResult = contract
-            .run_local(self.client(), "isBranchProtected", Some(params))
+            .read_state(self.client(), "isBranchProtected", Some(params))
             .await?;
         Ok(result.is_ok)
     }

@@ -1,5 +1,6 @@
 use crate::{
     blockchain::{
+        contract::{ContractInfo, ContractRead},
         gosh_abi,
         snapshot::{
             save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
@@ -99,7 +100,7 @@ pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
     snapshot_addr: BlockchainContractAddress,
-    wallet: GoshContract,
+    wallet: impl ContractRead + ContractInfo + Sync + 'static,
     ipfs_endpoint: &str,
     es_client: EverClient,
     commit_id: &git_hash::ObjectId,
@@ -127,24 +128,41 @@ pub async fn inner_push_diff(
                 "state": hex::encode(original_snapshot_content),
                 "diff": hex::encode(&diff)
             });
-            let apply_patch_result = wallet
-                .run_local::<GetDiffResultResult>(&es_client, "getDiffResult", Some(data))
-                .await;
 
-            if apply_patch_result.is_ok() {
-                if apply_patch_result
-                    .unwrap()
-                    .hex_encoded_compressed_content
-                    .is_none()
-                {
-                    is_going_to_ipfs = true;
+            match wallet
+                .read_state::<GetDiffResultResult>(&es_client, "getDiffResult", Some(data))
+                .await
+            {
+                Ok(apply_patch_result) => {
+                    if apply_patch_result.hex_encoded_compressed_content.is_none() {
+                        is_going_to_ipfs = true;
+                    }
                 }
-            } else {
-                let apply_patch_result_error = apply_patch_result.unwrap_err();
-                let message = apply_patch_result_error.to_string();
-                is_going_to_ipfs = message
-                    .contains("Contract execution was terminated with error: invalid opcode");
+                Err(apply_patch_result_error) => {
+                    is_going_to_ipfs = apply_patch_result_error
+                        .to_string()
+                        .contains("Contract execution was terminated with error: invalid opcode");
+                }
             }
+
+            // let apply_patch_result: Result<GetDiffResultResult> = wallet
+            //     .read_state(&es_client, "getDiffResult", Some(data))
+            //     .await;
+
+            // if apply_patch_result.is_ok() {
+            //     if apply_patch_result
+            //         .unwrap()
+            //         .hex_encoded_compressed_content
+            //         .is_none()
+            //     {
+            //         is_going_to_ipfs = true;
+            //     }
+            // } else {
+            //     let apply_patch_result_error = apply_patch_result.unwrap_err();
+            //     let message = apply_patch_result_error.to_string();
+            //     is_going_to_ipfs = message
+            //         .contains("Contract execution was terminated with error: invalid opcode");
+            // }
         }
         if is_going_to_ipfs {
             log::debug!("inner_push_diff->save_data_to_ipfs");
@@ -227,7 +245,7 @@ pub async fn is_diff_deployed(
 ) -> anyhow::Result<bool> {
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: anyhow::Result<GetVersionResult> =
-        diff_contract.run_local(context, "getVersion", None).await;
+        diff_contract.read_state(context, "getVersion", None).await;
     Ok(result.is_ok())
 }
 

@@ -63,7 +63,7 @@ async fn get_user_wallet(
         .ok_or_else(|| anyhow::anyhow!("Wallet config expected"))?;
 
     let result: GetProfileAddrResult = gosh_root
-        .run_local(
+        .read_state(
             blockchain.client(),
             "getProfileAddr",
             Some(serde_json::json!({ "name": profile })),
@@ -76,7 +76,7 @@ async fn get_user_wallet(
         "index": user_wallet_index
     });
     let result: GetAddrWalletResult = dao_contract
-        .run_local(blockchain.client(), "getAddrWallet", Some(params))
+        .read_state(blockchain.client(), "getAddrWallet", Some(params))
         .await?;
     let user_wallet_address = result.address;
     log::trace!("user_wallet address: {:?}", user_wallet_address);

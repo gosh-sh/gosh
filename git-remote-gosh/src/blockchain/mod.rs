@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 pub mod branch;
 mod call;
-mod contract;
+pub mod contract;
 mod error;
 use error::RunLocalError;
 pub mod service;
@@ -363,7 +363,7 @@ pub async fn get_head(
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
-    let result: GetHeadResult = contract.run_local(context, "getHEAD", None).await?;
+    let result: GetHeadResult = contract.read_state(context, "getHEAD", None).await?;
     Ok(result.head)
 }
 
@@ -466,7 +466,7 @@ pub mod tests {
             test_secret
         ).await.ok().unwrap();
         let result: GetHashResult = contract
-            .run_local(&te.client, "getHash", Some(args))
+            .read_state(&te.client, "getHash", Some(args))
             .await
             .expect("ok");
         assert_eq!(result.hash, format!("0x{}", hash));

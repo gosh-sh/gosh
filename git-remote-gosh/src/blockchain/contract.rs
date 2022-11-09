@@ -113,22 +113,6 @@ impl GoshContract {
     }
 
     #[instrument(level = "debug", skip(context))]
-    #[deprecated = "use read_state() instead"]
-    pub async fn run_local<T>(
-        &self,
-        context: &EverClient,
-        function_name: &str,
-        args: Option<serde_json::Value>,
-    ) -> anyhow::Result<T>
-    where
-        T: de::DeserializeOwned,
-    {
-        let result = run_local(context, self, function_name, args).await?;
-        log::trace!("run_local result: {:?}", result);
-        Ok(serde_json::from_value::<T>(result)?)
-    }
-
-    #[instrument(level = "debug", skip(context))]
     pub async fn run_static<T>(
         &mut self,
         context: &EverClient,
@@ -144,7 +128,7 @@ impl GoshContract {
     }
 
     pub async fn get_version(&self, context: &EverClient) -> anyhow::Result<String> {
-        let result: GetVersionResult = self.run_local(context, "getVersion", None).await?;
+        let result: GetVersionResult = self.read_state(context, "getVersion", None).await?;
         Ok(result.version)
     }
 }
