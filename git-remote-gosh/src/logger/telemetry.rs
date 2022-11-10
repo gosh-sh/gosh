@@ -1,6 +1,6 @@
 use opentelemetry::sdk::Resource;
 use opentelemetry::KeyValue;
-use opentelemetry_otlp::WithExportConfig;
+
 use std::str::FromStr;
 
 use tracing_subscriber::layer::SubscriberExt;
@@ -34,10 +34,7 @@ fn get_log_level() -> String {
 pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
-        .with_exporter(
-            opentelemetry_otlp::new_exporter()
-                .tonic(),
-        )
+        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
         .with_trace_config(
             opentelemetry::sdk::trace::config().with_resource(Resource::new(vec![KeyValue::new(
                 opentelemetry_semantic_conventions::resource::SERVICE_NAME,
@@ -53,8 +50,13 @@ pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
 
     let env_filter = EnvFilter::new(get_log_level());
 
+    let fmt_layer = tracing_subscriber::fmt::layer()
+        .compact()
+        .with_writer(std::io::stderr);
+
     tracing_subscriber::registry()
         .with(env_filter)
+        .with(fmt_layer)
         .with(telemetry)
         .try_init()?;
 
