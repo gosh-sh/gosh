@@ -195,8 +195,8 @@ contract Snapshot is Modifiers {
         _applying = false;
     }
 
-    function approve(uint128 index1, uint128 index2, string commit) public {
-        commit;
+    function approve(uint128 index1, uint128 index2, Diff diff) public {
+        diff;
         require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_baseCommit.empty()) { 
