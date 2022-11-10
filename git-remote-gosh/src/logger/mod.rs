@@ -1,3 +1,5 @@
+pub mod telemetry;
+
 use cached::once_cell::sync::Lazy;
 use log::LevelFilter;
 use log4rs::{
