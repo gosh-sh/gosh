@@ -7,9 +7,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 
-const OPENTELEMETRY_FLAG: &str = "GOSH_OPENTELEMETRY_ENABLED";
-const OPENTELEMETRY_ENDPOINT_VAR: &str = "GOSH_OPENTELEMETRY_ENDPOINT";
-const LOCAL_OPENTELEMETRY_ENDPOINT: &str = "http://0.0.0.0:4317";
+const OPENTELEMETRY_FLAG: &str = "GOSH_OPENTELEMETRY";
 const OPENTELEMETRY_SERVICE_NAME: &str = "git-remote-helper";
 const OPENTELEMETRY_FILTER_LEVEL: &str = "GOSH_OPENTELEMETRY_FILTER_LEVEL";
 
@@ -34,15 +32,11 @@ fn get_log_level() -> String {
 }
 
 pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
-    let endpoint = std::env::var(OPENTELEMETRY_ENDPOINT_VAR)
-        .unwrap_or(LOCAL_OPENTELEMETRY_ENDPOINT.to_string());
-
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(
             opentelemetry_otlp::new_exporter()
-                .tonic()
-                .with_endpoint(&endpoint),
+                .tonic(),
         )
         .with_trace_config(
             opentelemetry::sdk::trace::config().with_resource(Resource::new(vec![KeyValue::new(
