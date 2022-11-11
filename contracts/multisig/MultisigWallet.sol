@@ -943,15 +943,9 @@ contract MultisigWallet is IAccept {
         delete m_updateRequests[updateId];
     }
 
-    /*
-     * Fallback function to receive simple transfers
-     */
     function TheBigBang(address returnMoney) public  {
         require(m_custodians.exists(msg.pubkey()), 100);
+        tvm.accept();
         selfdestruct(returnMoney);
     }
-    
-    fallback () external {}
-
-    receive () external {}
 }
