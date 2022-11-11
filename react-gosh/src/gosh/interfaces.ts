@@ -8,8 +8,10 @@ import {
 import {
     TAddress,
     TDao,
-    TGoshEventDetails,
     TProfileDetails,
+    TSmvDetails,
+    TSmvEvent,
+    TSmvEventMinimal,
     TValidationResult,
 } from '../types'
 import {
@@ -76,9 +78,7 @@ interface IGoshDaoAdapter {
         index?: number
     }): Promise<IGoshWallet>
 
-    getSmvPlatformCode(): Promise<string>
-    getSmvProposalCodeHash(): Promise<string>
-    getSmvClientCode(): Promise<string>
+    getSmv(): Promise<IGoshSmvAdapter>
 
     deployRepository(
         name: string,
@@ -89,11 +89,6 @@ interface IGoshDaoAdapter {
     deleteMember(username: string[]): Promise<void>
 
     upgrade(version: string, description?: string): Promise<void>
-
-    // TODO: Remove from interface and make private after useWallet hook removal
-    _isAuthMember(): Promise<boolean>
-    _getOwner(): Promise<string>
-    _getWallet(index: number, keys?: KeyPair): Promise<IGoshWallet>
 }
 
 interface IGoshRepositoryAdapter {
@@ -164,6 +159,26 @@ interface IGoshRepositoryAdapter {
         label: string,
         content: string,
     ): Promise<void>
+}
+
+interface IGoshSmvAdapter {
+    getTotalSupply(): Promise<number>
+    getDetails(): Promise<TSmvDetails>
+    getClientsCount(): Promise<number>
+    getEventCodeHash(): Promise<string>
+    getEvent(
+        address: TAddress,
+        isDetailed?: boolean,
+    ): Promise<TSmvEventMinimal | TSmvEvent>
+    getWalletBalance(wallet: IGoshWallet): Promise<number>
+
+    validateProposalStart(): Promise<void>
+
+    transferToSmv(amount: number): Promise<void>
+    transferToWallet(amount: number): Promise<void>
+    releaseAll(): Promise<void>
+
+    vote(event: TAddress, choice: boolean, amount: number): Promise<void>
 }
 
 interface IContract {
@@ -245,20 +260,6 @@ interface IGoshRepository extends IContract {
 
 interface IGoshWallet extends IContract {
     address: TAddress
-    profile?: IGoshProfile
-
-    /** Old interface */
-    getAccess(): Promise<string | null>
-
-    getSmvLocker(): Promise<IGoshSmvLocker>
-    getSmvLockerAddr(): Promise<string>
-    getSmvTokenBalance(): Promise<number>
-    getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>
-    lockVoting(amount: number): Promise<void>
-    unlockVoting(amount: number): Promise<void>
-    voteFor(proposalAddr: string, choice: boolean, amount: number): Promise<void>
-    tryProposalResult(proposalAddr: string): Promise<void>
-    updateHead(): Promise<void>
 }
 
 interface IGoshCommit extends IContract {
@@ -285,73 +286,29 @@ interface IGoshTag extends IContract {
 
 interface IGoshContentSignature extends IContract {
     address: TAddress
-
-    /** Old interface */
-    getContent(): Promise<string>
 }
 
 interface IGoshSmvProposal extends IContract {
-    /** Old interface */
     address: TAddress
-    meta?: {
-        id: string
-        votes: { yes: number; no: number }
-        time: { start: Date; finish: Date }
-        isCompleted: boolean | null
-        commit: {
-            kind: string
-            repoName: string
-            branchName: string
-            commitName: string
-        }
-    }
-
-    load(): Promise<void>
-    getDetails(n: number, walletAddress?: string): Promise<TGoshEventDetails>
-    getId(): Promise<string>
-    getVotes(): Promise<{ yes: number; no: number }>
-    getTime(): Promise<{ start: Date; finish: Date }>
-    getTotalSupply(): Promise<number>
-    getClientAddress(walletAddress?: string): Promise<string>
-    getYourVotes(walletAddress?: string): Promise<number>
-    getPlatformId(): Promise<number>
-    getGoshSetCommitProposalParams(): Promise<any>
-    getGoshAddProtectedBranchProposalParams(): Promise<any>
-    getGoshDeleteProtectedBranchProposalParams(): Promise<any>
-    getLockerAddr(): Promise<string>
-    isCompleted(): Promise<boolean | null>
 }
 
 interface IGoshSmvLocker extends IContract {
     address: TAddress
-
-    validateProposalStart(): Promise<void>
-
-    /** Old interface */
-    getDetails(): Promise<any>
-    getVotes(): Promise<{ total: number; locked: number }>
-    getIsBusy(): Promise<boolean>
-    getNumClients(): Promise<number>
 }
 
 interface IGoshSmvClient extends IContract {
-    /** Old interface */
     address: TAddress
-
-    getLockedAmount(): Promise<number>
 }
 
 interface IGoshSmvTokenRoot extends IContract {
-    /** Old interface */
     address: TAddress
-
-    getTotalSupply(): Promise<number>
 }
 
 export {
     IGoshAdapter,
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
+    IGoshSmvAdapter,
     IContract,
     IGoshRoot,
     IGoshProfile,

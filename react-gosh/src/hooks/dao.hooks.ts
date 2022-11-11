@@ -264,9 +264,10 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
             }),
         }))
 
+        const smv = await dao.getSmv()
         const wallet = await dao.getMemberWallet({ address: item.wallet })
         const details = {
-            smvBalance: await wallet.getSmvTokenBalance(),
+            smvBalance: await smv.getWalletBalance(wallet),
         }
 
         setMembers((state) => ({
@@ -374,48 +375,6 @@ function useDaoMemberDelete(dao: IGoshDaoAdapter) {
     return { remove, isFetching }
 }
 
-function useWallet(dao?: IGoshDaoAdapter, isFetching?: boolean) {
-    const [details, setDetails] = useRecoilState(walletAtom)
-    const [wallet, setWallet] = useState<IGoshWallet>()
-    const user = useRecoilValue(userAtom)
-
-    useEffect(() => {
-        const _getWallet = async () => {
-            if (!user.profile || !user.keys || !dao || isFetching) return
-            if (!details?.address || details?.daoAddress !== dao.getAddress()) {
-                console.debug('Get wallet hook (blockchain)')
-
-                const instance = await dao._getWallet(0, user.keys)
-                setWallet(instance)
-                setDetails({
-                    address: instance.address,
-                    version: instance.version,
-                    keys: user.keys,
-                    daoAddress: dao.getAddress(),
-                    isDaoOwner: user.profile === (await dao._getOwner()),
-                    isDaoMember: await dao._isAuthMember(),
-                })
-            } else {
-                console.debug('Get wallet hook (state)')
-                const instance = await dao._getWallet(0, user.keys)
-                setWallet(instance)
-            }
-        }
-
-        _getWallet()
-    }, [
-        dao,
-        user.username,
-        user.keys,
-        isFetching,
-        details?.address,
-        details?.daoAddress,
-        setDetails,
-    ])
-
-    return { instance: wallet, details }
-}
-
 export {
     useDaoList,
     useDao,
@@ -424,5 +383,4 @@ export {
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,
-    useWallet,
 }

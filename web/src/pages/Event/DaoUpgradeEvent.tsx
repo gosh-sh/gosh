@@ -1,13 +1,13 @@
-import { TGoshEventDetails } from 'react-gosh'
+import { TSmvEvent } from 'react-gosh'
 
 type TDaoUpgradeEventProps = {
     daoName?: string
-    details: TGoshEventDetails
+    event: TSmvEvent
 }
 
 const DaoUpgradeEvent = (props: TDaoUpgradeEventProps) => {
-    const { daoName, details } = props
-    const { params, status } = details
+    const { event } = props
+    const { data, status } = event
 
     return (
         <div>
@@ -20,9 +20,9 @@ const DaoUpgradeEvent = (props: TDaoUpgradeEventProps) => {
             <h4 className="mt-10 mb-3 text-lg font-semibold">Event details</h4>
             <div>
                 <div className="font-semibold">
-                    Upgrade DAO to version {params.newversion}
+                    Upgrade DAO to version {data.newversion}
                 </div>
-                <div className="text-sm text-gray-606060">{params.description}</div>
+                <div className="text-sm text-gray-606060">{data.description}</div>
             </div>
         </div>
     )

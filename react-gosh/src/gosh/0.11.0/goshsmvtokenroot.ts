@@ -12,11 +12,6 @@ class GoshSmvTokenRoot extends BaseContract implements IGoshSmvTokenRoot {
             version: GoshSmvTokenRoot.version,
         })
     }
-
-    async getTotalSupply(): Promise<number> {
-        const result = await this.account.runLocal('totalSupply_', {})
-        return +result.decoded?.output.totalSupply_
-    }
 }
 
 export { GoshSmvTokenRoot }

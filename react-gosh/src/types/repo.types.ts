@@ -1,6 +1,12 @@
 import { IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { TAddress } from './types'
 
+enum EBlobFlag {
+    BINARY = 1,
+    COMPRESSED = 2,
+    IPFS = 4,
+}
+
 type TRepository = {
     address: TAddress
     name: string
@@ -107,6 +113,7 @@ interface ITBranchOperateCallback {
 }
 
 export {
+    EBlobFlag,
     TRepository,
     TRepositoryListItem,
     TTree,

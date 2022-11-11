@@ -2,7 +2,26 @@ import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
-import { EBlobFlag, TAddress, TDao, TValidationResult } from '../../types'
+import {
+    TAddress,
+    TDao,
+    TSmvDetails,
+    ESmvEventType,
+    TValidationResult,
+    EBlobFlag,
+    IPushCallback,
+    ITBranchOperateCallback,
+    TBranch,
+    TCommit,
+    TDiff,
+    TRepository,
+    TTag,
+    TTree,
+    TTreeItem,
+    TUpgradeData,
+    TSmvEvent,
+    TSmvEventMinimal,
+} from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
     IGoshAdapter,
@@ -18,6 +37,9 @@ import {
     IGoshTree,
     IGoshDiff,
     IGoshDaoAdapter,
+    IGoshSmvAdapter,
+    IGoshSmvLocker,
+    IGoshSmvProposal,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -40,18 +62,6 @@ import {
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
-import {
-    IPushCallback,
-    ITBranchOperateCallback,
-    TBranch,
-    TCommit,
-    TDiff,
-    TRepository,
-    TTag,
-    TTree,
-    TTreeItem,
-    TUpgradeData,
-} from '../../types/repo.types'
 import { GoshTag } from './goshtag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
@@ -59,11 +69,15 @@ import {
     MAX_ONCHAIN_SIZE,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
+    SmvEventTypes,
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { validateUsername } from '../../validators'
 import { GoshContentSignature } from './goshcontentsignature'
+import { GoshSmvLocker } from './goshsmvlocker'
+import { GoshSmvProposal } from './goshsmvproposal'
+import { GoshSmvClient } from './goshsmvclient'
 
 class GoshAdapter_0_11_0 implements IGoshAdapter {
     private static instance: GoshAdapter_0_11_0
@@ -251,15 +265,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async getDetails(): Promise<TDao> {
-        const smvTokenRootAddr = await this._getSmvRootTokenAddr()
-        const smvTokenRoot = new GoshSmvTokenRoot(this.client, smvTokenRootAddr)
+        const smv = await this.getSmv()
         const owner = await this._getOwner()
         return {
             address: this.dao.address,
             name: await this.getName(),
             version: this.dao.version,
             members: await this._getProfiles(),
-            supply: await smvTokenRoot.getTotalSupply(),
+            supply: await smv.getTotalSupply(),
             owner,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
@@ -322,20 +335,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, addr)
     }
 
-    async getSmvPlatformCode(): Promise<string> {
-        const { value0 } = await this.gosh.gosh.runLocal('getSMVPlatformCode', {})
-        return value0
-    }
-
-    async getSmvProposalCodeHash(): Promise<string> {
-        const { value0 } = await this.dao.runLocal('getProposalCode', {})
-        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
-        return hash
-    }
-
-    async getSmvClientCode(): Promise<string> {
-        const { value0 } = await this.dao.runLocal('getClientCode', {})
-        return value0
+    async getSmv(): Promise<IGoshSmvAdapter> {
+        return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
 
     async deployRepository(
@@ -363,12 +364,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         const profiles = await this.gosh.isValidProfile(username)
 
-        const locker = await this.wallet.getSmvLocker()
-        await locker.validateProposalStart()
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
 
         await this.wallet.run('startProposalForDeployWalletDao', {
             pubaddr: profiles,
-            num_clients: await locker.getNumClients(),
+            num_clients: await smv.getClientsCount(),
         })
     }
 
@@ -384,29 +385,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
         )
 
-        const locker = await this.wallet.getSmvLocker()
-        await locker.validateProposalStart()
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
 
         await this.wallet.run('startProposalForDeleteWalletDao', {
             pubaddr: profiles,
-            num_clients: await locker.getNumClients(),
+            num_clients: await smv.getClientsCount(),
         })
     }
 
     async upgrade(version: string, description?: string | undefined): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const locker = await this.wallet.getSmvLocker()
-        await locker.validateProposalStart()
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
 
         await this.wallet.run('startProposalForUpgradeDao', {
             newversion: version,
             description: description ?? `Upgrade DAO to version ${version}`,
-            num_clients: await locker.getNumClients(),
+            num_clients: await smv.getClientsCount(),
         })
     }
 
-    async _isAuthMember(): Promise<boolean> {
+    private async _isAuthMember(): Promise<boolean> {
         if (!this.profile) return false
 
         const { value0 } = await this.dao.runLocal('isMember', {
@@ -423,16 +424,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return value0
     }
 
-    async _getWallet(index: number, keys?: KeyPair): Promise<IGoshWallet> {
+    private async _getWallet(index: number, keys?: KeyPair): Promise<IGoshWallet> {
         if (!this.profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const address = await this._getWalletAddress(this.profile.address, index)
-        return new GoshWallet(this.client, address, { keys, profile: this.profile })
-    }
-
-    private async _getSmvRootTokenAddr(): Promise<string> {
-        const { _rootTokenRoot } = await this.dao.runLocal('_rootTokenRoot', {})
-        return _rootTokenRoot
+        return new GoshWallet(this.client, address, { keys })
     }
 
     private async _getProfiles(): Promise<{ profile: TAddress; wallet: TAddress }[]> {
@@ -445,7 +441,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return profiles
     }
 
-    async _getOwner(): Promise<TAddress> {
+    private async _getOwner(): Promise<TAddress> {
         const { value0 } = await this.dao.runLocal('getOwner', {})
         return value0
     }
@@ -1015,13 +1011,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Branch is already protected')
         }
 
-        const locker = await this.auth.wallet.getSmvLocker()
-        await locker.validateProposalStart()
-
+        const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
-            num_clients: await locker.getNumClients(),
+            num_clients: smvClientsCount,
         })
     }
 
@@ -1031,13 +1025,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Branch is not protected')
         }
 
-        const locker = await this.auth.wallet.getSmvLocker()
-        await locker.validateProposalStart()
-
+        const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
-            num_clients: await locker.getNumClients(),
+            num_clients: smvClientsCount,
         })
     }
 
@@ -1076,10 +1068,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!isPullRequest && branchTo.isProtected) {
             throw new GoshError(EGoshError.PR_BRANCH)
         }
-        if (isPullRequest) {
-            const locker = await this.auth.wallet.getSmvLocker()
-            await locker.validateProposalStart()
-        }
+        if (isPullRequest) await this._validateProposalStart()
 
         // Generate blobs meta object
         const blobsMeta = await executeByChunk(
@@ -1605,16 +1594,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const locker = await this.auth.wallet.getSmvLocker()
-        await locker.validateProposalStart()
-
+        const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
-            num_clients: await locker.getNumClients(),
+            num_clients: smvClientsCount,
         })
     }
 
@@ -1854,6 +1841,238 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         return parsedDiff
+    }
+
+    /**
+     * TODO
+     * This method is duplicating from GoshSmvAdapter
+     * Change class architecture and remove this...
+     * */
+    private async _validateProposalStart(): Promise<number> {
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const address = await this.auth.wallet.runLocal('tip3VotingLocker', {})
+        const locker = new GoshSmvLocker(this.client, address.tip3VotingLocker)
+
+        const { lockerBusy } = await locker.runLocal('lockerBusy', {})
+        if (lockerBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+
+        const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
+        if (+m_tokenBalance < 20) {
+            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+        }
+
+        const { m_num_clients } = await locker.runLocal('m_num_clients', {})
+        return +m_num_clients
+    }
+}
+
+class GoshSmvAdapter implements IGoshSmvAdapter {
+    private dao: IGoshDao
+    private client: TonClient
+    private wallet?: IGoshWallet
+    private locker?: IGoshSmvLocker
+
+    constructor(gosh: IGoshAdapter, dao: IGoshDao, wallet?: IGoshWallet) {
+        this.client = gosh.client
+        this.dao = dao
+        this.wallet = wallet
+    }
+
+    async getTotalSupply(): Promise<number> {
+        const { _rootTokenRoot } = await this.dao.runLocal('_rootTokenRoot', {})
+        const tokenRoot = new GoshSmvTokenRoot(this.client, _rootTokenRoot)
+
+        const { totalSupply_ } = await tokenRoot.runLocal('totalSupply_', {})
+        return +totalSupply_
+    }
+
+    async getDetails(): Promise<TSmvDetails> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const { m_pseudoDAOBalance } = await this.wallet.runLocal(
+            'm_pseudoDAOBalance',
+            {},
+        )
+        const smvBalance = await this._getLockerBalance()
+
+        return {
+            balance: +m_pseudoDAOBalance,
+            smvAvailable: smvBalance.total,
+            smvLocked: smvBalance.locked,
+            isLockerBusy: await this._isLockerBusy(),
+        }
+    }
+
+    async getClientsCount(): Promise<number> {
+        const locker = await this._getLocker()
+        const { m_num_clients } = await locker.runLocal('m_num_clients', {})
+        return +m_num_clients
+    }
+
+    async getEventCodeHash(): Promise<string> {
+        const { value0 } = await this.dao.runLocal('getProposalCode', {})
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getEvent(
+        address: string,
+        isDetailed?: boolean,
+    ): Promise<TSmvEventMinimal | TSmvEvent> {
+        const event = await this._getEvent(address)
+
+        // Event type
+        const { proposalKind } = await event.runLocal('getGoshProposalKind', {})
+        const type = { kind: +proposalKind, name: SmvEventTypes[+proposalKind] }
+
+        // Event status
+        const { value0: isCompleted } = await event.runLocal('_isCompleted', {})
+        const status = {
+            completed: isCompleted !== null,
+            accepted: !!isCompleted,
+        }
+
+        const minimal = { address, type, status }
+        if (!isDetailed) return minimal
+
+        // Event period
+        const { startTime } = await event.runLocal('startTime', {})
+        const { finishTime } = await event.runLocal('finishTime', {})
+        const { realFinishTime } = await event.runLocal('realFinishTime', {})
+        const time = {
+            start: +startTime * 1000,
+            finish: +finishTime * 1000,
+            finishReal: +realFinishTime * 1000,
+        }
+
+        // Event data
+        const data = await this._getEventData(event, type.kind)
+
+        // Event votes
+        const { votesYes } = await event.runLocal('votesYes', {})
+        const { votesNo } = await event.runLocal('votesNo', {})
+        const { totalSupply } = await event.runLocal('totalSupply', {})
+        const votes = {
+            yes: +votesYes,
+            no: +votesNo,
+            yours: await this._getEventUserVotes(event),
+            total: +totalSupply,
+        }
+
+        return { ...minimal, time, data, votes }
+    }
+
+    async getWalletBalance(wallet: IGoshWallet): Promise<number> {
+        const { m_pseudoDAOBalance } = await wallet.runLocal('m_pseudoDAOBalance', {})
+        return +m_pseudoDAOBalance
+    }
+
+    async validateProposalStart(): Promise<void> {
+        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+
+        const { total } = await this._getLockerBalance()
+        if (total < 20) throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+    }
+
+    async transferToSmv(amount: number): Promise<void> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        await this.wallet.run('lockVoting', { amount })
+    }
+
+    async transferToWallet(amount: number): Promise<void> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        await this.wallet.run('unlockVoting', { amount })
+    }
+
+    async releaseAll(): Promise<void> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        await this.wallet.run('updateHead', {})
+    }
+
+    async vote(event: TAddress, choice: boolean, amount: number): Promise<void> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+
+        const instance = await this._getEvent(event)
+        const { platform_id } = await instance.runLocal('platform_id', {})
+        await this.wallet.run('voteFor', {
+            platform_id,
+            choice,
+            amount,
+            num_clients: await this.getClientsCount(),
+        })
+    }
+
+    private async _isLockerBusy(): Promise<boolean> {
+        const locker = await this._getLocker()
+        const { lockerBusy } = await locker.runLocal('lockerBusy', {})
+        return lockerBusy
+    }
+
+    private async _getLockerAddress(): Promise<TAddress> {
+        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        const { tip3VotingLocker } = await this.wallet.runLocal('tip3VotingLocker', {})
+        return tip3VotingLocker
+    }
+
+    private async _getLocker(): Promise<IGoshSmvLocker> {
+        const address = await this._getLockerAddress()
+        if (!this.locker) this.locker = new GoshSmvLocker(this.client, address)
+        return this.locker
+    }
+
+    private async _getLockerBalance(): Promise<{ total: number; locked: number }> {
+        const locker = await this._getLocker()
+        const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
+        const { votes_locked } = await locker.runLocal('votes_locked', {})
+        return { total: +m_tokenBalance, locked: +votes_locked }
+    }
+
+    private async _getEvent(address: TAddress): Promise<IGoshSmvProposal> {
+        return new GoshSmvProposal(this.client, address)
+    }
+
+    private async _getEventData(event: IGoshSmvProposal, type: number): Promise<any> {
+        let fn: string = ''
+        if (type === ESmvEventType.DAO_UPGRADE) {
+            fn = 'getGoshUpgradeDaoProposalParams'
+        } else if (type === ESmvEventType.DAO_MEMBER_ADD) {
+            fn = 'getGoshDeployWalletDaoProposalParams'
+        } else if (type === ESmvEventType.DAO_MEMBER_DELETE) {
+            fn = 'getGoshDeleteWalletDaoProposalParams'
+        } else if (type === ESmvEventType.BRANCH_LOCK) {
+            fn = 'getGoshAddProtectedBranchProposalParams'
+        } else if (type === ESmvEventType.BRANCH_UNLOCK) {
+            fn = 'getGoshDeleteProtectedBranchProposalParams'
+        } else if (type === ESmvEventType.PR) {
+            fn = 'getGoshSetCommitProposalParams'
+        } else {
+            throw new GoshError(`Event type "${type}" is unknown`)
+        }
+
+        const decoded = await event.runLocal(fn, {})
+        delete decoded.proposalKind
+        return decoded
+    }
+
+    private async _getEventUserVotes(event: IGoshSmvProposal): Promise<number> {
+        if (!this.wallet) return 0
+        if (!(await this.wallet.isDeployed())) return 0
+
+        const { platform_id } = await event.runLocal('platform_id', {})
+        const { value0 } = await this.wallet.runLocal('clientAddressForProposal', {
+            _tip3VotingLocker: await this._getLockerAddress(),
+            _platform_id: platform_id,
+        })
+        const client = new GoshSmvClient(this.client, value0)
+        if (!(await client.isDeployed())) return 0
+
+        const { value0: locked } = await client.runLocal('amount_locked', {})
+        return +locked
     }
 }
 

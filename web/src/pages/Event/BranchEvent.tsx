@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
-import { EEventType, TGoshEventDetails } from 'react-gosh'
+import { ESmvEventType, TSmvEvent } from 'react-gosh'
 
 type TBranchEventProps = {
     daoName?: string
-    details: TGoshEventDetails
+    event: TSmvEvent
 }
 
 const BranchEvent = (props: TBranchEventProps) => {
-    const { daoName, details } = props
-    const { params, status } = details
+    const { daoName, event } = props
+    const { data, status, type } = event
 
     return (
         <div>
@@ -17,7 +17,7 @@ const BranchEvent = (props: TBranchEventProps) => {
                     <p>
                         Branch
                         <span className="font-semibold mx-1">
-                            {params.repoName}:{params.branchName}
+                            {data.repoName}:{data.branchName}
                         </span>
                         proposal was accepted by SMV
                     </p>
@@ -25,7 +25,7 @@ const BranchEvent = (props: TBranchEventProps) => {
                         Check repository
                         <Link
                             className="mx-1 underline"
-                            to={`/o/${daoName}/r/${params.repoName}/branches`}
+                            to={`/o/${daoName}/r/${data.repoName}/branches`}
                         >
                             branches
                         </Link>
@@ -35,11 +35,11 @@ const BranchEvent = (props: TBranchEventProps) => {
 
             <h4 className="mt-10 mb-3 text-lg font-semibold">Event details</h4>
             <div>
-                {params.proposalKind === EEventType.BRANCH_LOCK && 'Add'}
-                {params.proposalKind === EEventType.BRANCH_UNLOCK && 'Remove'}
+                {type.kind === ESmvEventType.BRANCH_LOCK && 'Add'}
+                {type.kind === ESmvEventType.BRANCH_UNLOCK && 'Remove'}
                 <span className="mx-1">SMV branch protection for</span>
                 <span className="font-semibold mx-1">
-                    {params.repoName}:{params.branchName}
+                    {data.repoName}:{data.branchName}
                 </span>
             </div>
         </div>

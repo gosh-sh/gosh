@@ -1,29 +1,29 @@
 import { Link } from 'react-router-dom'
 import {
-    EEventType,
+    ESmvEventType,
     GoshAdapterFactory,
     shortString,
     TAddress,
-    TGoshEventDetails,
+    TSmvEvent,
 } from 'react-gosh'
 import { useEffect, useState } from 'react'
 import CopyClipboard from '../../components/CopyClipboard'
 
 type TMemberEventProps = {
     daoName?: string
-    details: TGoshEventDetails
+    event: TSmvEvent
 }
 
 const MemberEvent = (props: TMemberEventProps) => {
-    const { daoName, details } = props
-    const { params, status } = details
+    const { daoName, event } = props
+    const { data, status, type } = event
     const [members, setMembers] = useState<{ username: string; profile: TAddress }[]>([])
 
     useEffect(() => {
         const _getProfileNames = async () => {
             const gosh = GoshAdapterFactory.createLatest()
             const items = await Promise.all(
-                params.pubaddr.map(async (profile: string) => {
+                data.pubaddr.map(async (profile: string) => {
                     const instance = await gosh.getProfile({ address: profile })
                     return { username: await instance.getName(), profile }
                 }),
@@ -32,7 +32,7 @@ const MemberEvent = (props: TMemberEventProps) => {
         }
 
         _getProfileNames()
-    }, [params.pubaddr])
+    }, [data.pubaddr])
 
     return (
         <div>
@@ -53,8 +53,8 @@ const MemberEvent = (props: TMemberEventProps) => {
 
             <h4 className="mt-10 mb-3 text-lg font-semibold">Event details</h4>
             <div>
-                {params.proposalKind === EEventType.DAO_MEMBER_ADD && 'Add'}
-                {params.proposalKind === EEventType.DAO_MEMBER_DELETE && 'Remove'}
+                {type.kind === ESmvEventType.DAO_MEMBER_ADD && 'Add'}
+                {type.kind === ESmvEventType.DAO_MEMBER_DELETE && 'Remove'}
 
                 <span className="mx-1">DAO member(s)</span>
                 <div className="divide-y divide-gray-c4c4c4">

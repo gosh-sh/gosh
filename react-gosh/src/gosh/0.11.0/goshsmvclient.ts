@@ -10,11 +10,6 @@ class GoshSmvClient extends BaseContract implements IGoshSmvClient {
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvClient.key, address, { version: GoshSmvClient.version })
     }
-
-    async getLockedAmount(): Promise<number> {
-        const result = await this.account.runLocal('_getLockedAmount', {})
-        return +result.decoded?.output.value0
-    }
 }
 
 export { GoshSmvClient }

@@ -7,7 +7,7 @@ const DropdownMenu = () => {
     const user = useUser()
     const items = [
         { to: '/a/orgs', title: 'Organizations', className: 'text-gray-050a15' },
-        { to: '/a/repos', title: 'Repositories', className: 'text-gray-050a15' },
+        // { to: '/a/repos', title: 'Repositories', className: 'text-gray-050a15' },
         { to: '/a/settings', title: 'Settings', className: 'text-gray-050a15' },
         {
             to: '',
