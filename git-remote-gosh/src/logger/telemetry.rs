@@ -3,6 +3,7 @@ use opentelemetry::KeyValue;
 
 use std::str::FromStr;
 
+use crate::logger::id_generator::FixedIdGenerator;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
@@ -36,10 +37,12 @@ pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
         .tracing()
         .with_exporter(opentelemetry_otlp::new_exporter().tonic())
         .with_trace_config(
-            opentelemetry::sdk::trace::config().with_resource(Resource::new(vec![KeyValue::new(
-                opentelemetry_semantic_conventions::resource::SERVICE_NAME,
-                OPENTELEMETRY_SERVICE_NAME,
-            )])),
+            opentelemetry::sdk::trace::config()
+                .with_resource(Resource::new(vec![KeyValue::new(
+                    opentelemetry_semantic_conventions::resource::SERVICE_NAME,
+                    OPENTELEMETRY_SERVICE_NAME,
+                )]))
+                .with_id_generator(FixedIdGenerator::new()),
         )
         .install_batch(opentelemetry::runtime::Tokio)?;
 
@@ -52,6 +55,7 @@ pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
 
     let fmt_layer = tracing_subscriber::fmt::layer()
         .compact()
+        .with_thread_ids(true)
         .with_writer(std::io::stderr);
 
     tracing_subscriber::registry()
