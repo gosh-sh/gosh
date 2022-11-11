@@ -33,13 +33,14 @@ build-contracts-docker:
 deploy-docker:
 	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
-		-v ${KEYS_PATH}:/tmp/giver.keys.json \
-		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
+		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
+		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
+		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
-		-e NETWORK=${NETWORK} \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
 
+# TODO: Update with giver
 upgrade-docker:
 	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
