@@ -22,9 +22,9 @@ class Application {
         this.rq_prod = false;
         this.rq_cons = false;
         this.rev_msg_ttl = 10000;
-        this.rev_clr_old_logs = 0;
-        this.rev_clr_total_mb = 0;
-        this.rev_clr_file_cnt = 0;
+        this.reverb_clean_old_s = 0;
+        this.reverb_clean_total_mb = 0;
+        this.reverb_clean_file_cnt = 0;
         this.busy = false;
         this.app = (0, express_1.default)();
         this.baseHandlerFactory = this.handlerFactory = (silent) => new DummyHandler_1.default();
@@ -156,11 +156,11 @@ class Application {
                     c[k.slice(8)] = c[k];
             }
             cb();
-            this.cleanupLogs();
+            this.cleanupLogs(`errors/${this.mode}`, this.reverb_clean_old_s, this.reverb_clean_file_cnt, this.reverb_clean_total_mb);
             console.log('Start processing incoming message');
             this.baseHandlerFactory().applyConfiguration(c).setApplication(this).setDebug(false).mkdirs(`errors/${this.mode}`)
-                .logToFile(`errors/${this.mode}/${(0, Utils_1.niso)()}.log`).handle(false).finally(() => this.busy = false)
-                .then(() => console.log('Done processing incoming message'))
+                .logToFile(`errors/${this.mode}/${(0, Utils_1.niso)()}{}.log`).handle(false).finally(() => this.busy = false)
+                .then((value) => console.log('Done processing incoming message'))
                 .catch((reason) => console.warn('Fail processing incoming message:', reason));
         };
         await new Promise((resolve, reject) => {
@@ -173,8 +173,7 @@ class Application {
         });
     }
     async runConsumer() {
-        if (this.rev_clr_old_logs > 0)
-            console.log(`Old logs are deleted after ${this.rev_clr_old_logs / 1000} seconds`);
+        console.log(`Old logs are deleted after ${this.reverb_clean_old_s} seconds, ${this.reverb_clean_total_mb} total MB or ${this.reverb_clean_file_cnt} total file count`);
         await new Promise((resolve, reject) => {
             this.consumer.run((err, status) => {
                 if (err)
@@ -188,16 +187,16 @@ class Application {
             });
         });
     }
-    cleanupLogs() {
-        const dir = `errors/${this.mode}`;
+    cleanupLogs(dir, clr_old_logs_s = 0, clr_file_cnt = 0, clr_total_mb = 0) {
         if (!fs_1.default.existsSync(dir))
             return;
         const files = [];
-        if (this.rev_clr_old_logs > 0)
+        const clr_old_logs = clr_old_logs_s * 1000;
+        if (clr_old_logs > 0)
             fs_1.default.readdirSync(dir).forEach(file => {
                 const stat = fs_1.default.statSync(`${dir}/${file}`);
                 // @ts-ignore using ctime as a number, whatever!
-                if (stat.ctime < (0, Utils_1.nowms)() - this.rev_clr_old_logs)
+                if (stat.ctime < (0, Utils_1.nowms)() - clr_old_logs)
                     fs_1.default.unlinkSync(`${dir}/${file}`);
                 else {
                     files.push({
@@ -208,13 +207,13 @@ class Application {
                 }
             });
         files.sort((a, b) => a.ctime - b.ctime);
-        if (this.rev_clr_file_cnt > 0) {
-            while (files.length > this.rev_clr_file_cnt) {
+        if (clr_file_cnt > 0) {
+            while (files.length > clr_file_cnt) {
                 fs_1.default.unlinkSync(files.shift().name);
             }
         }
-        if (this.rev_clr_total_mb > 0) {
-            const max_total = this.rev_clr_total_mb * 1024 * 1024;
+        if (clr_total_mb > 0) {
+            const max_total = clr_total_mb * 1024 * 1024;
             let total = files.reduce((previousValue, currentValue) => previousValue + currentValue.size, 0);
             while (total > max_total) {
                 const first = files.shift();

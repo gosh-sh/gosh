@@ -33,9 +33,15 @@ export default abstract class GoshHandler extends ScenarioHandler {
             try {
                 const res = await fetch(this.appurl + '/envs.json');
                 const jr = await res.json();
+                let gosh = jr.gosh;
+                if (gosh && gosh.startsWith('{')) {
+                    gosh = JSON.parse(gosh);
+                    const gk = Object.keys(gosh);
+                    gosh = gosh[gk[gk.length - 1]];
+                }
                 const p = (eset === 'require') || (eset === 'priority');
                 this.ipfs_address = !p ? (this.ipfs_address ?? jr.ipfs) : (jr.ipfs ?? this.ipfs_address);
-                this.root = !p ? (this.root ?? jr.gosh) : (jr.gosh ?? this.root);
+                this.root = !p ? (this.root ?? gosh) : (gosh ?? this.root);
                 this.conf_endpoint = !p ? (this.conf_endpoint ?? jr.network) : (jr.network ?? this.conf_endpoint);
                 this.say(`resolved ipfs ${this.ipfs_address}, root ${this.root}, endpoint ${this.conf_endpoint}`);
             } catch (e) {
