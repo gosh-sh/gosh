@@ -50,13 +50,13 @@ abstract contract ReplayProtection is Errors {
         body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
         // check expireAt
         uint32 expireAt = body.decode(uint32);
-        require(expireAt > now, 101);   // Check whether the message is not expired.
-        require(expireAt < now + 5 minutes, 102); // Check whether expireAt is not too huge.
+        require(expireAt > now, ERR_MESSAGE_EXPIRED);   // Check whether the message is not expired.
+        require(expireAt < now + 5 minutes, ERR_MESSAGE_WITH_HUGE_EXPIREAT); // Check whether expireAt is not too huge.
 
         // Check whether the message is not expired and then save (messageHash, expireAt) in the state variable
         uint messageHash = tvm.hash(message);
         optional(mapping(uint256 => bool)) m = messages.fetch(expireAt);
-        require(!m.hasValue() || !m.get()[messageHash], 103);
+        require(!m.hasValue() || !m.get()[messageHash], ERR_MESSAGE_IS_EXIST);
         lastMessage = MessageInfo({messageHash: messageHash, expireAt: expireAt});
 
         // After reading message headers this function must return the rest of the body slice.
