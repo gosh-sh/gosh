@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{tree::TreeNode, tvm_hash, BlockchainService},
+    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -7,6 +7,7 @@ use git_object::tree::EntryRef;
 use git_odb::{Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
+use tokio::task::JoinHandle;
 
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(
@@ -59,10 +60,11 @@ async fn construct_tree_node(
 
 #[instrument(level = "debug", skip(context))]
 pub async fn push_tree(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Vec<JoinHandle<anyhow::Result<()>>>> {
+    let mut handlers = Vec::new();
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
     while let Some(tree_id) = to_deploy.pop_front() {
@@ -90,19 +92,38 @@ pub async fn push_tree(
             tree_nodes.insert(hash, tree_node);
         }
 
-        let wallet = context
-            .blockchain
-            .user_wallet(&context.dao_addr, &context.remote.network)
-            .await?;
-        context
-            .blockchain
-            .deploy_tree(
-                &wallet,
-                &tree_id.to_hex().to_string(),
-                &context.remote.repo,
-                tree_nodes,
-            )
-            .await?
+        let blockchain = context.blockchain.clone();
+        let dao_addr = context.dao_addr.clone();
+        let remote_network = context.remote.network.clone();
+        let remote_repo = context.remote.repo.clone();
+
+        handlers.push(tokio::spawn(inner_deploy_tree(
+            blockchain,
+            tree_id,
+            remote_repo,
+            tree_nodes,
+            dao_addr,
+            remote_network,
+        )));
     }
-    Ok(())
+    Ok(handlers)
+}
+
+async fn inner_deploy_tree(
+    blockchain: impl BlockchainService,
+    tree_id: ObjectId,
+    remote_repo: String,
+    tree_nodes: HashMap<String, TreeNode>,
+    dao_addr: BlockchainContractAddress,
+    remote_network: String,
+) -> anyhow::Result<()> {
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
+    blockchain
+        .deploy_tree(
+            &wallet,
+            &tree_id.to_hex().to_string(),
+            &remote_repo,
+            tree_nodes,
+        )
+        .await
 }

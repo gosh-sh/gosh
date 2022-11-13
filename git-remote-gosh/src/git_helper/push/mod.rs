@@ -246,7 +246,8 @@ where
         log::info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit('/');
-            iter.next().unwrap()
+            iter.next()
+                .ok_or(anyhow::anyhow!("wrong local_ref format '{}'", &local_ref))?
         };
 
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
@@ -374,6 +375,9 @@ where
 
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+
+        let mut push_handlers = Vec::new();
+
         for line in out.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
@@ -423,17 +427,28 @@ where
                             }
                             let tree_addr = self.calculate_tree_address(tree_id).await?;
 
-                            self.blockchain
-                                .push_commit(
-                                    &object_id,
-                                    branch_name,
-                                    &tree_addr,
-                                    &self.remote,
-                                    &self.dao_addr,
-                                    raw_commit,
-                                    parents,
-                                )
-                                .await?;
+                            {
+                                let blockchain = self.blockchain.clone();
+                                let remote = self.remote.clone();
+                                let dao_addr = self.dao_addr.clone();
+                                let object_id = object_id.clone();
+                                let tree_addr = tree_addr.clone();
+                                let branch_name = branch_name.to_owned().clone();
+
+                                push_handlers.push(tokio::spawn(async move {
+                                    blockchain
+                                        .push_commit(
+                                            &object_id,
+                                            &branch_name,
+                                            &tree_addr,
+                                            &remote,
+                                            &dao_addr,
+                                            raw_commit,
+                                            parents,
+                                        )
+                                        .await
+                                }));
+                            }
 
                             let tree_diff = utilities::build_tree_diff_from_commits(
                                 self.local_repository(),
@@ -479,13 +494,20 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            push_tree(self, &object_id, &mut visited_trees).await?
+                            push_handlers.append(
+                                &mut push_tree(self, &object_id, &mut visited_trees).await?,
+                            );
                         }
                     }
                 }
                 None => break,
             }
         }
+
+        for handler in push_handlers {
+            handler.await??;
+        }
+
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support.wait_all_diffs(self).await?;
         while let Some(finished_task) = parallel_snapshot_uploads.next().await {
