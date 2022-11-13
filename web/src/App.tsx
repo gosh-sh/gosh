@@ -36,6 +36,7 @@ import MergeCreatePage from './pages/MergeCreate'
 import GotoPage from './pages/Goto'
 import EventsPage from './pages/Events'
 import EventPage from './pages/Event'
+import NotFoundPage from './pages/404'
 
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
@@ -194,7 +195,7 @@ const App = () => {
                             <Route path="upgrade" element={<RepoUpgradePage />} />
                         </Route>
                     </Route>
-                    <Route path="*" element={<p className="text-lg">No match (404)</p>} />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
             <footer className="footer">
