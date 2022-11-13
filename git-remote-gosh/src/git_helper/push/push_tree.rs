@@ -92,18 +92,13 @@ pub async fn push_tree(
             tree_nodes.insert(hash, tree_node);
         }
 
-        let blockchain = context.blockchain.clone();
-        let dao_addr = context.dao_addr.clone();
-        let remote_network = context.remote.network.clone();
-        let remote_repo = context.remote.repo.clone();
-
         handlers.push(tokio::spawn(inner_deploy_tree(
-            blockchain,
+            context.blockchain.clone(),
+            context.remote.network.clone(),
+            context.dao_addr.clone(),
+            context.remote.repo.clone(),
             tree_id,
-            remote_repo,
             tree_nodes,
-            dao_addr,
-            remote_network,
         )));
     }
     Ok(handlers)
@@ -111,11 +106,11 @@ pub async fn push_tree(
 
 async fn inner_deploy_tree(
     blockchain: impl BlockchainService,
-    tree_id: ObjectId,
-    remote_repo: String,
-    tree_nodes: HashMap<String, TreeNode>,
-    dao_addr: BlockchainContractAddress,
     remote_network: String,
+    dao_addr: BlockchainContractAddress,
+    remote_repo: String,
+    tree_id: ObjectId,
+    tree_nodes: HashMap<String, TreeNode>,
 ) -> anyhow::Result<()> {
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     blockchain
