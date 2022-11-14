@@ -134,7 +134,7 @@ where
                     let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
-                            trace!("Tree entry: tree {}->{}", id, oid);
+                            log::trace!("Tree entry: tree {}->{}", id, oid);
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}/{}", path_to_node, entry.filename),
                                 oid,
@@ -144,7 +144,7 @@ where
                         git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
-                            trace!("Tree entry: blob {}->{}", id, oid);
+                            log::trace!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
                             let mut repo_contract = self.blockchain.repo_contract().clone();

@@ -133,7 +133,7 @@ where
                 ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()));
             }
         }
-        trace!("list: {:?}", ref_list);
+        log::trace!("list: {:?}", ref_list);
         ref_list.push("".to_owned());
         Ok(ref_list)
     }

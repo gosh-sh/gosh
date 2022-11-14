@@ -180,7 +180,7 @@ pub async fn inner_push_diff(
     if diff.ipfs.is_some() {
         log::debug!("push_diff: {:?}", diff);
     } else {
-        trace!("push_diff: {:?}", diff);
+        log::trace!("push_diff: {:?}", diff);
     }
     let diffs: Vec<Diff> = vec![diff];
 
