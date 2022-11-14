@@ -3,18 +3,16 @@ use self::push_diff::push_initial_snapshot;
 use super::GitHelper;
 use crate::{
     blockchain::{
-        self, get_commit_address, tree::into_tree_contract_complient_path,
-        BlockchainContractAddress, BlockchainService, ZERO_SHA,
+        get_commit_address, tree::into_tree_contract_complient_path, BlockchainContractAddress,
+        BlockchainService, ZERO_SHA,
     },
     git_helper::push::create_branch::CreateBranchOperation,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::{self, ObjectId};
-use git_odb::{Find, Write};
+use git_odb::Find;
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    env::current_dir,
-    error::Error,
+    collections::{HashMap, HashSet},
     path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
@@ -593,12 +591,9 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 mod tests {
     use super::*;
     use crate::{
-        blockchain::service::tests::MockEverscale,
+        blockchain::{self, service::tests::MockEverscale},
         git_helper::{test_utils::setup_repo, tests::setup_test_helper},
-        logger::telemetry::set_log_verbosity,
     };
-    use async_trait::async_trait;
-    use std::fs;
 
     #[test]
     fn ensure_calc_left_dist_correctly() {

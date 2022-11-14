@@ -12,6 +12,7 @@ use crate::{
     config::Config,
     git_helper::ever_client::create_client,
     ipfs::{build_ipfs, service::FileStorage},
+    logger::telemetry::set_log_verbosity,
     utilities::Remote,
 };
 use tracing::log;
@@ -147,7 +148,7 @@ where
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        crate::logger::telemetry::set_log_verbosity(verbosity)
+        set_log_verbosity(verbosity)
     }
 }
 

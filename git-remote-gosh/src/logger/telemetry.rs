@@ -1,12 +1,12 @@
 use cached::once_cell::sync::Lazy;
 use opentelemetry::sdk::Resource;
 use opentelemetry::KeyValue;
-use std::io::{self, Stderr};
+
 use std::sync::Arc;
 use tracing::metadata::LevelFilter;
-use tracing_subscriber::filter::Filtered;
-use tracing_subscriber::fmt::format::{Compact, DefaultFields, Format, Writer};
-use tracing_subscriber::fmt::{Layer, MakeWriter};
+
+
+
 use tracing_subscriber::reload::Handle;
 use tracing_subscriber::{prelude::*, reload, Registry};
 
