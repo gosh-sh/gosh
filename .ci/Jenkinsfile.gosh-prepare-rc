@@ -59,7 +59,7 @@ pipeline {
                 }
             }
         }
-        stage('Build: Git Helper') {
+        /*stage('Build: Git Helper') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -81,7 +81,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Build: Docker Extension') {
             agent {
                 docker {
