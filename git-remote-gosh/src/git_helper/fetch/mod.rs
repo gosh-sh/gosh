@@ -43,7 +43,7 @@ where
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj).map_err(|e| {
-            error!("Write git object failed  with: {}", e);
+            log::error!("Write git object failed  with: {}", e);
             e
         })?;
         log::info!("Writing git object - success, {}", object_id);
