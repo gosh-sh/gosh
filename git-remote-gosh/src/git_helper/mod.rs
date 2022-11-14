@@ -14,6 +14,7 @@ use crate::{
     ipfs::{build_ipfs, service::FileStorage},
     utilities::Remote,
 };
+use tracing::log;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -99,7 +100,7 @@ where
 
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
-        info!("Opening repo at {}", local_git_dir);
+        log::info!("Opening repo at {}", local_git_dir);
 
         Ok(Self {
             config,
@@ -176,9 +177,9 @@ async fn build_blockchain(
 
     let local_git_dir = env::var("GIT_DIR")?;
     let local_git_repository = git_repository::open(&local_git_dir)?;
-    info!("Opening repo at {}", local_git_dir);
+    log::info!("Opening repo at {}", local_git_dir);
 
-    debug!("Searching for a wallet at {}", &remote.network);
+    log::debug!("Searching for a wallet at {}", &remote.network);
     blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
     Ok(blockchain_builder.build()?)
@@ -205,10 +206,10 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             if is_batching_operation_in_progress {
                 is_batching_operation_in_progress = false;
                 for line in batch_response.clone() {
-                    debug!("[batched] < {line}");
+                    log::debug!("[batched] < {line}");
                     stdout.write_all(format!("{line}\n").as_bytes()).await?;
                 }
-                debug!("[batched] < {line}");
+                log::debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
                 continue;
             } else {
@@ -221,8 +222,8 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        debug!("Line: {line}");
-        debug!(
+        log::debug!("Line: {line}");
+        log::debug!(
             "> {} {} {}",
             cmd.unwrap(),
             arg1.unwrap_or(""),
@@ -249,7 +250,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
         for line in response {
-            debug!("[{msg}] < {line}");
+            log::debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
     }

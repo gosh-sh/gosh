@@ -12,8 +12,8 @@ use crate::{
     git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
-use std::sync::Arc;
 use ton_client::utils::compress_zstd;
+use tracing::log;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
@@ -84,7 +84,7 @@ pub async fn push_diff<'a>(
             if result.is_ok() || attempt > PUSH_DIFF_MAX_TRIES {
                 break result;
             } else {
-                debug!(
+                log::debug!(
                     "inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}",
                     diff_coordinate,
                     result.unwrap_err()
@@ -116,7 +116,7 @@ pub async fn inner_push_diff(
     new_snapshot_content: &Vec<u8>,
 ) -> anyhow::Result<()> {
     let diff = compress_zstd(diff, None)?;
-    debug!("compressed to {} size", diff.len());
+    log::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
     let (patch, ipfs) = {
@@ -146,12 +146,12 @@ pub async fn inner_push_diff(
             }
         }
         if is_going_to_ipfs {
-            debug!("inner_push_diff->save_data_to_ipfs");
+            log::debug!("inner_push_diff->save_data_to_ipfs");
             let ipfs = Some(
                 save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                     .await
                     .map_err(|e| {
-                        debug!("save_data_to_ipfs error: {}", e);
+                        log::debug!("save_data_to_ipfs error: {}", e);
                         e
                     })?,
             );
@@ -178,7 +178,7 @@ pub async fn inner_push_diff(
     };
 
     if diff.ipfs.is_some() {
-        debug!("push_diff: {:?}", diff);
+        log::debug!("push_diff: {:?}", diff);
     } else {
         trace!("push_diff: {:?}", diff);
     }
@@ -211,7 +211,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
 
 // #[instrument(level = "debug")]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
-    debug!("Uploading blob to IPFS");
+    log::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
     let content = base64::encode(&content);
     let content = content.as_bytes().to_vec();
@@ -257,15 +257,15 @@ pub async fn push_new_branch_snapshot(
     original_content: &[u8],
 ) -> anyhow::Result<()> {
     let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
-    debug!("compressed to {} size", content.len());
+    log::debug!("compressed to {} size", content.len());
 
     let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
-        debug!("push_new_branch_snapshot->save_data_to_ipfs");
+        log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&context.file_provider, original_content)
                 .await
                 .map_err(|e| {
-                    debug!("save_data_to_ipfs error: {}", e);
+                    log::debug!("save_data_to_ipfs error: {}", e);
                     e
                 })?,
         );
@@ -292,7 +292,7 @@ pub async fn push_new_branch_snapshot(
         )
         .await?;
 
-    // debug!("deployNewSnapshot result: {:?}", result);
+    // log::debug!("deployNewSnapshot result: {:?}", result);
     Ok(())
 }
 
@@ -332,11 +332,11 @@ pub async fn push_initial_snapshot(
             if result.is_ok() || attempt > PUSH_SNAPSHOT_MAX_TRIES {
                 break result;
             } else {
-                debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
+                log::debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
                 std::thread::sleep(std::time::Duration::from_secs(5));
             }
         };
-        debug!(
+        log::debug!(
             "deployNewSnapshot <branch: {branch_name}, path: {file_path}> result: {:?}",
             result
         );

@@ -17,6 +17,7 @@ use std::{
     sync::{Arc, Mutex},
     vec::Vec,
 };
+use tracing::log;
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -40,12 +41,12 @@ async fn write_git_data<'a>(
     repo: &mut git_repository::Repository,
     obj: git_object::Data<'a>,
 ) -> anyhow::Result<git_hash::ObjectId> {
-    info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
+    log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
     let store = &mut repo.objects;
     // It should refresh once even if the refresh mode is never, just to initialize the index
     //store.refresh_never();
     let object_id = store.write_buf(obj.kind, obj.data)?;
-    info!("Writing git data - success");
+    log::info!("Writing git data - success");
     Ok(object_id)
 }
 
@@ -53,7 +54,7 @@ async fn write_git_object(
     repo: &mut git_repository::Repository,
     obj: impl git_object::WriteTo,
 ) -> anyhow::Result<git_hash::ObjectId> {
-    info!("Writing git object");
+    log::info!("Writing git object");
     let store = &mut repo.objects;
     // It should refresh once even if the refresh mode is never, just to initialize the index
     //store.refresh_never();
@@ -61,7 +62,7 @@ async fn write_git_object(
         error!("Write git object failed  with: {}", e);
         e
     })?;
-    info!("Writing git object - success, {}", object_id);
+    log::info!("Writing git object - success, {}", object_id);
     Ok(object_id)
 }
 
@@ -74,12 +75,12 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     blobs: &mut HashSet<git_hash::ObjectId>,
     visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
 ) -> anyhow::Result<()> {
-    info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
+    log::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
         let visited = visited.lock().unwrap();
         blobs.retain(|e| !visited.contains(e));
     }
-    info!("remaining: {:?}", blobs);
+    log::info!("remaining: {:?}", blobs);
     if blobs.is_empty() {
         return Ok(());
     }
@@ -96,7 +97,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
     )
     .await?;
-    // debug!("restored_snapshots: {:#?}", current_snapshot_state);
+    // log::debug!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
@@ -116,9 +117,10 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         blobs.remove(&blob_id);
     }
 
-    info!(
+    log::info!(
         "Expecting to restore blobs: {:?} from {}",
-        blobs, snapshot_address
+        blobs,
+        snapshot_address
     );
 
     // TODO: convert to async iterator
@@ -130,7 +132,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut preserved_message: Option<DiffMessage> = None;
 
     while !blobs.is_empty() {
-        info!("Still expecting to restore blobs: {:?}", blobs);
+        log::info!("Still expecting to restore blobs: {:?}", blobs);
         // take next a chunk of messages and reverse it on a snapshot
         // remove matching blob ids
         //
@@ -142,7 +144,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .await?
                 .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.")
         };
-        debug!("got message: {:?}", message);
+        log::debug!("got message: {:?}", message);
 
         let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
             walked_through_ipfs = true;
@@ -189,7 +191,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
         let blob_id = write_git_data(repo, blob).await?;
-        info!("Restored blob {}", blob_id);
+        log::info!("Restored blob {}", blob_id);
         last_restored_snapshots.put(blob_id, blob_data);
         {
             let mut visited = visited.lock().unwrap();
@@ -216,7 +218,7 @@ async fn convert_snapshot_into_blob(
         Some(_) => ipfs_data,
     };
 
-    // info!("got: {:?}", raw_data);
+    // log::info!("got: {:?}", raw_data);
 
     let data = git_object::Data::new(git_object::Kind::Blob, &raw_data);
     let obj = git_object::Object::from(data.decode()?);
@@ -239,9 +241,10 @@ impl BlobsRebuildingPlan {
         appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
-        info!(
+        log::info!(
             "Mark blob: {} -> {}",
-            blob_sha1, appeared_at_snapshot_address
+            blob_sha1,
+            appeared_at_snapshot_address
         );
         self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
@@ -253,7 +256,7 @@ impl BlobsRebuildingPlan {
                 blobs.insert(blob_sha1);
                 blobs
             });
-        info!("new state: {:?}", self.snapshot_address_to_blob_sha);
+        log::info!("new state: {:?}", self.snapshot_address_to_blob_sha);
     }
 
     async fn restore_snapshot_blob(
@@ -264,7 +267,7 @@ impl BlobsRebuildingPlan {
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
         let ipfs_client = IpfsService::new(ipfs_endpoint);
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
-        info!("Loaded a snapshot: {:?}", snapshot);
+        log::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
         let snapshot_next = if snapshot_next_commit_sha.is_ok() {
@@ -319,7 +322,7 @@ impl BlobsRebuildingPlan {
         // TODO: fix this
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
-        info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
+        log::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
         let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> =
             FuturesUnordered::new();
@@ -348,7 +351,7 @@ impl BlobsRebuildingPlan {
                     if result.is_ok() || attempt > FETCH_MAX_TRIES {
                         break result;
                     } else {
-                        debug!(
+                        log::debug!(
                             "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
                             result.unwrap_err()
                         );

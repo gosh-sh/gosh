@@ -35,6 +35,7 @@ pub mod utilities;
 use logger::telemetry::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::env::args;
+use tracing::log;
 
 #[instrument(level = "debug")]
 pub async fn run() -> anyhow::Result<()> {
@@ -46,7 +47,7 @@ pub async fn run() -> anyhow::Result<()> {
         let _enter = root.enter();
         let config = config::Config::init()?;
         let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-        info!("git-remote-gosh v{version}");
+        log::info!("git-remote-gosh v{version}");
         eprintln!("git-remote-gosh v{version}");
         let url = args().nth(2).ok_or(anyhow::anyhow!(
             "Wrong args for git-remote call\nRequired: <name> <url>"
