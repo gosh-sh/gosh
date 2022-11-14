@@ -2,17 +2,21 @@ use cached::once_cell::sync::Lazy;
 use opentelemetry::sdk::Resource;
 use opentelemetry::KeyValue;
 
+use std::env;
 use std::sync::Arc;
 use tracing::metadata::LevelFilter;
 
-
-
-use tracing_subscriber::reload::Handle;
-use tracing_subscriber::{prelude::*, reload, Registry};
+use std::str::FromStr;
+use tracing_subscriber::{
+    reload::{self, Handle},
+    Registry,
+};
 
 use crate::logger::id_generator::FixedIdGenerator;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+
+use super::GIT_HELPER_ENV_TRACE_VERBOSITY;
 
 const OPENTELEMETRY_FLAG: &str = "GOSH_OPENTELEMETRY";
 const OPENTELEMETRY_SERVICE_NAME: &str = "git-remote-helper";
@@ -21,7 +25,13 @@ const OPENTELEMETRY_FILTER_LEVEL: &str = "GOSH_OPENTELEMETRY_FILTER_LEVEL";
 static TRACING_HANDLE: Lazy<Arc<Handle<LevelFilter, Registry>>> =
     Lazy::new(|| Arc::new(init_tracing()));
 
-pub fn set_log_verbosity(verbosity_level: u8) {
+pub fn set_log_verbosity(verbosity: u8) {
+    let mut verbosity_level = verbosity;
+    if let Ok(trace_verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
+        if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
+            verbosity_level = 5;
+        }
+    }
     TRACING_HANDLE
         .modify(|filter| {
             *filter = match verbosity_level {

@@ -39,8 +39,7 @@ use tracing::log;
 
 #[instrument(level = "debug")]
 pub async fn run() -> anyhow::Result<()> {
-    // TODO read from env
-    set_log_verbosity(0);
+    set_log_verbosity(1);
 
     {
         let root = span!(tracing::Level::TRACE, "git-remote-helper");
