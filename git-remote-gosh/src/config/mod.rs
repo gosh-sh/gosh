@@ -5,6 +5,7 @@ use std::{
     io::{BufReader, Read},
     path::Path,
 };
+use tracing::log;
 
 mod defaults;
 

@@ -5,6 +5,7 @@ use cached::{proc_macro::cached, SizedCache};
 use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
+use tracing::log;
 
 use crate::{abi, config::UserWalletConfig};
 

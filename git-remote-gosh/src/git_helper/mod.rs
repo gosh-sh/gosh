@@ -12,7 +12,6 @@ use crate::{
     config::Config,
     git_helper::ever_client::create_client,
     ipfs::{build_ipfs, service::FileStorage},
-    logger::GitHelperLogger as Logger,
     utilities::Remote,
 };
 
@@ -33,7 +32,6 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
-    logger: Option<Logger>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,7 +76,6 @@ where
     async fn build(
         config: Config,
         url: &str,
-        logger: Option<Logger>,
         blockchain: Blockchain,
         file_provider: FileProvider,
     ) -> anyhow::Result<Self> {
@@ -102,7 +99,7 @@ where
 
         let local_git_dir = env::var("GIT_DIR")?;
         let local_git_repository = git_repository::open(&local_git_dir)?;
-        log::info!("Opening repo at {}", local_git_dir);
+        info!("Opening repo at {}", local_git_dir);
 
         Ok(Self {
             config,
@@ -112,7 +109,6 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_git_repository,
-            logger,
         })
     }
 
@@ -136,7 +132,7 @@ where
                 ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()));
             }
         }
-        log::trace!("list: {:?}", ref_list);
+        trace!("list: {:?}", ref_list);
         ref_list.push("".to_owned());
         Ok(ref_list)
     }
@@ -150,9 +146,7 @@ where
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        if self.logger.is_some() {
-            self.logger.as_mut().unwrap().set_verbosity(verbosity).ok();
-        }
+        crate::logger::telemetry::set_log_verbosity(verbosity)
     }
 }
 
@@ -182,9 +176,9 @@ async fn build_blockchain(
 
     let local_git_dir = env::var("GIT_DIR")?;
     let local_git_repository = git_repository::open(&local_git_dir)?;
-    log::info!("Opening repo at {}", local_git_dir);
+    info!("Opening repo at {}", local_git_dir);
 
-    log::debug!("Searching for a wallet at {}", &remote.network);
+    debug!("Searching for a wallet at {}", &remote.network);
     blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
     Ok(blockchain_builder.build()?)
@@ -193,11 +187,11 @@ async fn build_blockchain(
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::Result<()> {
+pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
-    let mut helper = GitHelper::build(config, url, logger, blockchain, file_provider).await?;
+    let mut helper = GitHelper::build(config, url, blockchain, file_provider).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -211,10 +205,10 @@ pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::R
             if is_batching_operation_in_progress {
                 is_batching_operation_in_progress = false;
                 for line in batch_response.clone() {
-                    log::debug!("[batched] < {line}");
+                    debug!("[batched] < {line}");
                     stdout.write_all(format!("{line}\n").as_bytes()).await?;
                 }
-                log::debug!("[batched] < {line}");
+                debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
                 continue;
             } else {
@@ -227,8 +221,8 @@ pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::R
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        log::debug!("Line: {line}");
-        log::debug!(
+        debug!("Line: {line}");
+        debug!(
             "> {} {} {}",
             cmd.unwrap(),
             arg1.unwrap_or(""),
@@ -255,7 +249,7 @@ pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::R
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
         for line in response {
-            log::debug!("[{msg}] < {line}");
+            debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
     }
@@ -266,7 +260,7 @@ pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::R
 pub mod tests {
     use git_repository::Repository;
 
-    use crate::{blockchain::BlockchainService, config::tests::load_from, logger::GitHelperLogger};
+    use crate::{blockchain::BlockchainService, config::tests::load_from};
 
     use super::*;
 
@@ -280,7 +274,6 @@ pub mod tests {
         B: BlockchainService,
     {
         let config = load_from(&value.to_string());
-        let logger = GitHelperLogger::init().expect("logger init error");
 
         let remote = Remote::new(url, &config).unwrap();
 
@@ -299,7 +292,6 @@ pub mod tests {
             remote,
             dao_addr,
             repo_addr,
-            logger: Some(logger),
             local_git_repository: repo,
         }
     }

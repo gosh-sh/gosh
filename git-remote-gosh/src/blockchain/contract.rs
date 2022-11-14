@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use serde::{de, Deserialize};
 use std::fmt::Debug;
 use ton_client::{abi::Abi, crypto::KeyPair};
+use tracing::log;
 
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;

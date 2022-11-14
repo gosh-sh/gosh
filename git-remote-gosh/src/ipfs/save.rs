@@ -3,6 +3,7 @@ use crate::ipfs::service::FileSave;
 use async_trait::async_trait;
 use std::path::Path;
 use tokio_retry::Retry;
+use tracing::log;
 
 #[async_trait]
 impl FileSave for IpfsService {

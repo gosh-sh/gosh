@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::iter::Iterator;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
+use tracing::log;
 
 #[derive(Debug, Clone)]
 pub struct DiffMessage {

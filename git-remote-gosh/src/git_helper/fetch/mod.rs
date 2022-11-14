@@ -20,10 +20,9 @@ where
         commit_id: &git_hash::ObjectId,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let commit_id = format!("{}", commit_id);
-        log::info!(
+        info!(
             "Calculating commit address for repository {} and commit id <{}>",
-            self.repo_addr,
-            commit_id
+            self.repo_addr, commit_id
         );
         let repo_contract = &mut self.blockchain.repo_contract().clone();
         blockchain::get_commit_address(&self.blockchain.client(), repo_contract, &commit_id).await
@@ -37,15 +36,15 @@ where
         &mut self,
         obj: impl git_object::WriteTo,
     ) -> anyhow::Result<git_hash::ObjectId> {
-        log::info!("Writing git object");
+        info!("Writing git object");
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj).map_err(|e| {
-            log::error!("Write git object failed  with: {}", e);
+            error!("Write git object failed  with: {}", e);
             e
         })?;
-        log::info!("Writing git object - success, {}", object_id);
+        info!("Writing git object - success, {}", object_id);
         Ok(object_id)
     }
 
@@ -53,12 +52,12 @@ where
         &mut self,
         obj: git_object::Data<'a>,
     ) -> anyhow::Result<git_hash::ObjectId> {
-        log::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
+        info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write_buf(obj.kind, obj.data)?;
-        log::info!("Writing git data - success");
+        info!("Writing git data - success");
         Ok(object_id)
     }
 
@@ -68,13 +67,13 @@ where
         if !name.starts_with(REFS_HEAD_PREFIX) {
             anyhow::bail!("Error. Can not fetch an object without refs/heads/ prefix");
         }
-        log::info!("Fetching sha: {} name: {}", sha, name);
+        info!("Fetching sha: {} name: {}", sha, name);
         let branch: &str = {
             let mut iter = name.chars();
             iter.by_ref().nth(REFS_HEAD_PREFIX.len() - 1);
             iter.as_str()
         };
-        log::info!("Calculate branch: {}", branch);
+        info!("Calculate branch: {}", branch);
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -104,16 +103,16 @@ where
         let mut dangling_commits = vec![];
         loop {
             if blobs_restore_plan.is_available() {
-                log::info!("Restoring blobs");
+                info!("Restoring blobs");
                 blobs_restore_plan.restore(self).await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
             if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
                 let id = tree_node_to_load.oid;
-                log::info!("Loading tree: {}", id);
+                info!("Loading tree: {}", id);
                 guard!(id);
-                log::info!("Ok. Guard passed. Loading tree: {}", id);
+                info!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -128,12 +127,12 @@ where
                     blockchain::Tree::load(&self.blockchain.client(), &address).await?;
                 let tree_object: git_object::Tree = onchain_tree_object.into();
 
-                log::info!("Tree obj parsed {}", id);
+                info!("Tree obj parsed {}", id);
                 for entry in &tree_object.entries {
                     let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
-                            log::trace!("Tree entry: tree {}->{}", id, oid);
+                            trace!("Tree entry: tree {}->{}", id, oid);
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}/{}", path_to_node, entry.filename),
                                 oid,
@@ -143,7 +142,7 @@ where
                         git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
-                            log::trace!("Tree entry: blob {}->{}", id, oid);
+                            trace!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
                             let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -156,16 +155,14 @@ where
                                 &file_path[1..],
                             )
                             .await?;
-                            log::info!(
+                            info!(
                                 "Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                file_path,
-                                oid,
-                                snapshot_address
+                                file_path, oid, snapshot_address
                             );
                             blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                         }
                         _ => {
-                            log::info!("IT MUST BE NOTED!");
+                            info!("IT MUST BE NOTED!");
                             panic!();
                         }
                     }
@@ -185,18 +182,18 @@ where
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
                     blockchain::GoshCommit::load(&self.blockchain.client(), address).await?;
-                log::info!("loaded onchain commit {}", id);
+                info!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
                     onchain_commit.content.as_bytes(),
                 );
                 let obj = git_object::Object::from(data.decode()?).into_commit();
-                log::info!("Received commit {}", id);
+                info!("Received commit {}", id);
                 let to_load = TreeObjectsQueueItem {
                     path: "".to_owned(),
                     oid: obj.tree,
                 };
-                log::info!("New tree root: {}", &to_load.oid);
+                info!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 for parent_id in &obj.parents {
                     commits_queue.push_back(*parent_id);

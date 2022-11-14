@@ -36,23 +36,23 @@ pub fn open_repo() -> anyhow::Result<Repository> {
 
 //     match object_type {
 //         ObjectType::Any => {
-//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             debug!("unsupported type: {} (sha: {})", object_type, sha);
 //             None
 //         }
 //         ObjectType::Commit => {
-//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             debug!("unsupported type: {} (sha: {})", object_type, sha);
 //             None
 //         }
 //         ObjectType::Tree => {
-//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             debug!("unsupported type: {} (sha: {})", object_type, sha);
 //             None
 //         }
 //         ObjectType::Blob => {
-//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             debug!("unsupported type: {} (sha: {})", object_type, sha);
 //             None
 //         }
 //         ObjectType::Tag => {
-//             log::debug!("unsupported type: {} (sha: {})", object_type, sha);
+//             debug!("unsupported type: {} (sha: {})", object_type, sha);
 //             None
 //         }
 //     }

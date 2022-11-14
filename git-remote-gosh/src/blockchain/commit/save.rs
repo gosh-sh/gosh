@@ -7,6 +7,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use git_hash::ObjectId;
+use tracing::log;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {

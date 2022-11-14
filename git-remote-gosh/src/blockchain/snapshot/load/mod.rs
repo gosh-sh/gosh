@@ -8,6 +8,7 @@ use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::{fmt, option::Option};
+use tracing::log;
 pub mod diffs;
 
 #[derive(Deserialize, Debug, DataContract)]

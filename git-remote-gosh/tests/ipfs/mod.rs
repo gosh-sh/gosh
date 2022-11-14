@@ -7,7 +7,7 @@ use tokio::fs::{remove_file, OpenOptions};
 
 const IPFS_HTTP_ENDPOINT_FOR_TESTS: &str = "https://ipfs.network.gosh.sh";
 
-#[test_log::test(tokio::test)]
+#[tokio::test]
 async fn save_blob_test() {
     let blob = "fӅoAٲ";
     let ipfs = build_ipfs(IPFS_HTTP_ENDPOINT_FOR_TESTS)
@@ -26,7 +26,7 @@ async fn save_blob_test() {
     assert_eq!(data, blob.as_bytes());
 }
 
-#[test_log::test(tokio::test)]
+#[tokio::test]
 async fn save_file() {
     let mut path = env::temp_dir();
     path.push("test");

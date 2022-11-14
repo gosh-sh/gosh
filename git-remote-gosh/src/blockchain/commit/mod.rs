@@ -3,6 +3,7 @@ use crate::blockchain::EverClient;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 pub mod save;
+use tracing::log;
 
 use crate::blockchain::serde_number::NumberU64;
 
