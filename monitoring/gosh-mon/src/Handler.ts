@@ -128,7 +128,7 @@ export default abstract class Handler {
     mkdirs(...dirs: string[]): Handler {
         for (let dir of dirs)
             if (!fs.existsSync(dir))
-                fs.mkdirSync(dir);
+                fs.mkdirSync(dir, {recursive: true});
         return this;
     }
 

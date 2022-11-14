@@ -116,7 +116,7 @@ class Handler {
     mkdirs(...dirs) {
         for (let dir of dirs)
             if (!fs_1.default.existsSync(dir))
-                fs_1.default.mkdirSync(dir);
+                fs_1.default.mkdirSync(dir, { recursive: true });
         return this;
     }
     logToFile(path) { return this; }

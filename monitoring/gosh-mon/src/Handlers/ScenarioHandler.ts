@@ -48,10 +48,17 @@ export default abstract class ScenarioHandler extends Handler {
     protected log_counts: Dict<number> = {};
 
     protected logger_file: number = 0;
+    protected log_path_templ: string = "";
+
+    protected do_archive_logs: boolean = true;
+    protected arch_clean_old_s: number = 0;
+    protected arch_clean_total_mb: number = 0;
+    protected arch_clean_file_cnt: number = 0;
 
     applyConfiguration(c: any): ScenarioHandler {
         super.applyConfiguration(c);
-        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms', 'log_counter']);
+        this.useFields(c, [], ['pupextraflags', 'timeout_ms', 'log_ws_req', 'log_ws_res', 'longtimeout_ms', 'log_counter',
+            'do_archive_logs', 'arch_clean_old_s', 'arch_clean_total_mb', 'arch_clean_file_cnt']);
         this.log_counts = {};
         for (let k of Object.keys(this.log_counter)) {
             this.log_counts[k] = 0;
@@ -308,6 +315,15 @@ export default abstract class ScenarioHandler extends Handler {
             await this.page.screenshot({ path: fname + '.png' });
     }
 
+    protected archiveLog(fname: string, archpath: string, archfname: string) {
+        this.mkdirs(archpath);
+        this.app.cleanupLogs(archpath, this.arch_clean_old_s, this.arch_clean_file_cnt, this.arch_clean_total_mb);
+        if (fs.existsSync(`${fname}.log`))
+            fs.copyFileSync(`${fname}.log`, `${archpath}/${archfname}.log`);
+        if (fs.existsSync(`${fname}.png`))
+            fs.copyFileSync(`${fname}.png`, `${archpath}/${archfname}.png`);
+    }
+
     protected async doSteps(...steps: StepEntry[]): Promise<MetricsMap> {
         this.say(`::: short timeout ${this.timeout_ms}, long timeout ${this.longtimeout_ms}`);
         const mode = (process.env.GM_MODE ?? 'error');
@@ -315,6 +331,7 @@ export default abstract class ScenarioHandler extends Handler {
         let stepName = '';
         this.startedms = nowms();
         this.started = Math.trunc(this.startedms / 1000);
+        const start_niso = niso();
         let perf: Map<string, number> = new Map();
         const add_auxiliary = (map: Map<string, number>): Map<string, number> => {
             for (let [k, v] of perf.entries())
@@ -360,6 +377,7 @@ export default abstract class ScenarioHandler extends Handler {
                     } catch (e) {}
                 }
                 if (res !== undefined && res !== null) {
+                    this.stepsDone = 100; // for finally block (fn)
                     if (isslow)
                     try {
                         await this.dumpToFile(`errors/slow/${mode}/${step}${afterstep}`, '', true);
@@ -379,11 +397,15 @@ export default abstract class ScenarioHandler extends Handler {
             console.error(e);
             if (!this.logger_file)
                 try {
+                    const fname = `errors/${mode}/${this.stepsDone}${afterstep}`;
+                    const ares = (this.stepsDone === 100) ? 'OK' : this.stepsDone.toString();
                     this.mkdirs(`errors/${mode}`, `errors/${mode}/old`);
                     await this.moveAway(`errors/${mode}/*.*`, `errors/${mode}/old/`);
-                    await this.dumpToFile(`errors/${mode}/${this.stepsDone}${afterstep}`, e.toString());
+                    await this.dumpToFile(fname, e.toString());
                     await this.removeFiles(`errors/${mode}/step * is *`);
                     writeFileSync(`errors/${mode}/step ${this.stepsDone}${afterstep} is ${stepName.replaceAll('>', '')}`, stepName, 'utf-8');
+                    if (this.do_archive_logs)
+                        this.archiveLog(fname, `errors/_archive/${mode}`, `${start_niso}-${ares}${afterstep}`);
                 } catch (er: any) {
                     console.error('Failed to write error file', er);
                 }
@@ -454,6 +476,9 @@ export default abstract class ScenarioHandler extends Handler {
     protected async finally(): Promise<void> {
         if (this.logger_file) {
             fs.closeSync(this.logger_file);
+            const res = (this.stepsDone === 100) ? 'OK' : this.stepsDone.toString();
+            fs.renameSync(this.log_path_templ.replace('{}', '-busy'),
+                          this.log_path_templ.replace('{}', `-res${res}`));
         }
         if (this.browser) {
             await this.page.close();
@@ -469,10 +494,11 @@ export default abstract class ScenarioHandler extends Handler {
     }
 
     logToFile(path: string): ScenarioHandler {
+        this.log_path_templ = path;
         console.log(`Logging to file ${path}`);
         if (this.logger_file)
             fs.closeSync(this.logger_file);
-        this.logger_file = fs.openSync(path, 'w');
+        this.logger_file = fs.openSync(path.replace('{}', '-busy'), 'w');
         return this;
     }
 

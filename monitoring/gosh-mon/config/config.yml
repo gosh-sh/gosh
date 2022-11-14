@@ -53,20 +53,25 @@ global:
   reverb_clean_total_mb: 100
   reverb_clean_file_cnt: 500
 
+  do_archive_logs: true
+  arch_clean_old_s: 2678400
+  arch_clean_total_mb: 100
+  arch_clean_file_cnt: 500
+
 
 includes:
 
   next: &next
     # for app.gosh.sh
     appurl: https://next-app.monitoring.gosh.sh/
-    prim_network: vps23.ton.dev
-    conf_endpoint: https://vps23.ton.dev
+    prim_network: fld.dapp.tonlabs.io
+    conf_endpoint: https://n01.fld.dapp.tonlabs.io
     # for remote
     gosh_branch: "release:latest-prerelease"
     use_envs: require
     # separate org-repo for next
-    organization: next-mon-org-2
-    repository: next-mon-repo-2
+    organization: next-mon-org
+    repository: next-mon-repo
     redis_pref: next_
     include: creds-next
 
