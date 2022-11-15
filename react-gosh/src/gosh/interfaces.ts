@@ -101,7 +101,10 @@ interface IGoshRepositoryAdapter {
     getHead(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TRepository>
-    getTree(commit: string, search?: string): Promise<{ tree: TTree; items: TTreeItem[] }>
+    getTree(
+        commit: string | TCommit,
+        search?: string,
+    ): Promise<{ tree: TTree; items: TTreeItem[] }>
     getBlob(options: { fullpath?: string; address?: TAddress }): Promise<{
         onchain: { commit: string; content: string }
         content: string | Buffer
@@ -110,14 +113,16 @@ interface IGoshRepositoryAdapter {
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     getCommitBlob(
         treepath: string,
-        commit: string,
+        commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }>
-    getCommitBlobs(name: string): Promise<string[]>
+    getCommitBlobs(commit: string | TCommit): Promise<string[]>
     getPullRequestBlob(
         item: { treepath: string; index: number },
-        commit: string,
+        commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }>
-    getPullRequestBlobs(commit: string): Promise<{ treepath: string; index: number }[]>
+    getPullRequestBlobs(
+        commit: string | TCommit,
+    ): Promise<{ treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>

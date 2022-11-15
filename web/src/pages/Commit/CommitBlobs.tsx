@@ -1,5 +1,6 @@
 import Spinner from '../../components/Spinner'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
+import { TCommit } from 'react-gosh'
 
 type TCommitBlobsType = {
     className?: string
@@ -7,7 +8,7 @@ type TCommitBlobsType = {
         isFetching: boolean
         items: {
             treepath: string
-            commit: string
+            commit: TCommit
             current: string | Buffer
             previous: string | Buffer
             showDiff: boolean
