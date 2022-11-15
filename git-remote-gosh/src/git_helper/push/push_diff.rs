@@ -13,6 +13,7 @@ use crate::{
     ipfs::{service::FileSave, IpfsService},
 };
 use ton_client::utils::compress_zstd;
+use ton_sdk::Block;
 use tracing::log;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
@@ -250,7 +251,11 @@ pub async fn diff_address(
 
 #[instrument(level = "debug")]
 pub async fn push_new_branch_snapshot(
-    context: &mut GitHelper<impl BlockchainService>,
+    blockchain: &impl BlockchainService,
+    file_provider: &IpfsService,
+    remote_network: &str,
+    dao_addr: &BlockchainContractAddress,
+    repo_addr: &BlockchainContractAddress,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
@@ -262,7 +267,7 @@ pub async fn push_new_branch_snapshot(
     let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
         log::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
-            save_data_to_ipfs(&context.file_provider, original_content)
+            save_data_to_ipfs(&file_provider, original_content)
                 .await
                 .map_err(|e| {
                     log::debug!("save_data_to_ipfs error: {}", e);
@@ -275,16 +280,12 @@ pub async fn push_new_branch_snapshot(
         (content, None)
     };
 
-    let wallet = context
-        .blockchain
-        .user_wallet(&context.dao_addr, &context.remote.network)
-        .await?;
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
 
-    context
-        .blockchain
+    blockchain
         .deploy_new_snapshot(
             &wallet,
-            context.repo_addr.clone(),
+            repo_addr.to_owned(),
             branch_name.to_string(),
             commit_id.to_string(),
             file_path.to_string(),
