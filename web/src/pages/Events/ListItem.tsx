@@ -1,14 +1,12 @@
-import { faCalendarDays, faHashtag } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
-import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { EventTypes, TGoshEventDetails } from 'react-gosh'
-import { shortString } from 'react-gosh'
+import { TSmvEventListItem } from 'react-gosh'
 
 type TEventListItemProps = {
     daoName: string
-    event: TGoshEventDetails
+    event: TSmvEventListItem
 }
 
 const EventListItem = (props: TEventListItemProps) => {
@@ -22,33 +20,16 @@ const EventListItem = (props: TEventListItemProps) => {
                         to={`/o/${daoName}/events/${event.address}`}
                         className="text-lg font-semibold hover:underline"
                     >
-                        {EventTypes[event.params.proposalKind]}
+                        {event.type.name}
                     </Link>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <CopyClipboard
-                        className="text-gray-606060 text-sm"
-                        label={
-                            <>
-                                <FontAwesomeIcon
-                                    icon={faHashtag}
-                                    size="sm"
-                                    className="mr-2"
-                                />
-                                {shortString(event.id || '')}
-                            </>
-                        }
-                        componentProps={{
-                            text: event.id || '',
-                        }}
-                    />
-
                     {event.time && (
                         <div className="text-sm text-gray-606060">
                             <FontAwesomeIcon icon={faCalendarDays} className="mr-2" />
-                            {event.time.start.toLocaleString()}
+                            {new Date(event.time.start).toLocaleString()}
                             <span className="mx-1">-</span>
-                            {event.time.finish.toLocaleString()}
+                            {new Date(event.time.finish).toLocaleString()}
                         </div>
                     )}
                 </div>

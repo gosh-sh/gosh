@@ -37,7 +37,7 @@ export enum EGoshError {
 
     SMV_LOCKER_BUSY = 'SMV locker busy',
     SMV_NO_PROPOSAL = 'SMV proposal undefined',
-    SMV_NO_START = 'SMV voting for proposal is not started yet',
+    SMV_NO_START = 'Voting for event is not started yet',
     SMV_NO_BALANCE = 'SMV not enough balance',
 }
 

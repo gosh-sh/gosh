@@ -12,11 +12,6 @@ class GoshContentSignature extends BaseContract implements IGoshContentSignature
             version: GoshContentSignature.version,
         })
     }
-
-    async getContent(): Promise<string> {
-        const result = await this.account.runLocal('getContent', {})
-        return result.decoded?.output.value0
-    }
 }
 
 export { GoshContentSignature }

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import { TBranch, TRepository, TTag } from 'react-gosh/dist/types/repo.types'
+import { TRepository, TTag } from 'react-gosh/dist/types/repo.types'
 
 type TRepositoryListItemProps = {
     daoName: string

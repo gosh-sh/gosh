@@ -1,5 +1,5 @@
 import Spinner from '../../components/Spinner'
-import { getCommitTime, usePullRequestCommit } from 'react-gosh'
+import { getCommitTime, TSmvEvent, usePullRequestCommit } from 'react-gosh'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
@@ -7,19 +7,17 @@ import Committer from '../../components/Commit/Committer'
 
 type TCommitBlobsType = {
     className?: string
-    daoName?: string
-    repoName: string
-    branchName: string
-    commitName: string
-    status: { completed: boolean; accepted: boolean }
+    daoName: string
+    event: TSmvEvent
 }
 
 const PREvent = (props: TCommitBlobsType) => {
-    const { className, daoName, repoName, branchName, commitName, status } = props
+    const { className, daoName, event } = props
+    const { data, status } = event
     const { isFetching, commit, blobs } = usePullRequestCommit(
         daoName!,
-        repoName,
-        commitName,
+        data.repoName,
+        data.commit,
     )
 
     return (
@@ -46,7 +44,7 @@ const PREvent = (props: TCommitBlobsType) => {
                     </pre>
                     <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
                         <div>
-                            {repoName}:{branchName}
+                            {data.repoName}:{data.branchName}
                         </div>
                         <div className="flex items-center">
                             <span className="mr-2 text-gray-050a15/65">Commit by</span>
@@ -59,7 +57,7 @@ const PREvent = (props: TCommitBlobsType) => {
                         <div className="grow flex items-center justify-start sm:justify-end">
                             <span className="mr-2 text-gray-050a15/65">commit</span>
                             <CopyClipboard
-                                label={shortString(commitName, 10, 10)}
+                                label={shortString(data.commit, 10, 10)}
                                 componentProps={{
                                     text: commit.name,
                                 }}
