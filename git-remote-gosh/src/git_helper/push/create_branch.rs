@@ -87,7 +87,7 @@ where
             })
             .collect();
 
-        let mut push_handlers = Vec::new();
+        let mut snapshot_handlers = Vec::new();
 
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
@@ -112,7 +112,7 @@ where
             let new_branch = self.new_branch.clone();
             let full_path = entry.filepath.to_string();
 
-            push_handlers.push(tokio::spawn(async move {
+            snapshot_handlers.push(tokio::spawn(async move {
                 push_new_branch_snapshot(
                     &blockchain,
                     &file_provider,
@@ -127,7 +127,7 @@ where
                 .await
             }));
         }
-        for handler in push_handlers {
+        for handler in snapshot_handlers {
             handler.await??;
         }
         Ok(())
