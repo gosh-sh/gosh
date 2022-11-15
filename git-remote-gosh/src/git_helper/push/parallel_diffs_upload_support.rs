@@ -6,7 +6,6 @@ use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::vec::Vec;
-use tracing::log;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -109,7 +108,7 @@ impl ParallelDiffsUploadSupport {
                 diff_coordinates,
             )
             .await?;
-            log::debug!(
+            tracing::debug!(
                 "diff_contract_address <commit: {}, coord: {:?}>: {}",
                 self.last_commit_id,
                 diff_coordinates,
@@ -129,7 +128,7 @@ impl ParallelDiffsUploadSupport {
         // - Let user know if we reached it
         // - Make it configurable
         let mut index = 0;
-        log::debug!(
+        tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
             self.expecting_deployed_contacts_addresses
         );

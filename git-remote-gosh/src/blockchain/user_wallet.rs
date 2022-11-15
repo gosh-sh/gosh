@@ -5,7 +5,6 @@ use cached::{proc_macro::cached, SizedCache};
 use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
-use tracing::log;
 
 use crate::{abi, config::UserWalletConfig};
 
@@ -80,7 +79,7 @@ async fn get_user_wallet(
         .read_state(blockchain.client(), "getAddrWallet", Some(params))
         .await?;
     let user_wallet_address = result.address;
-    log::trace!("user_wallet address: {:?}", user_wallet_address);
+    tracing::trace!("user_wallet address: {:?}", user_wallet_address);
     let secrets = KeyPair::new(pubkey.into(), secret.into());
 
     let contract = GoshContract::new_with_keys(&user_wallet_address, abi::WALLET, secrets);
@@ -145,7 +144,7 @@ impl BlockchainUserWalletService for Everscale {
         let (user_wallet_index, max_number_of_user_wallets) = {
             match user_wallet_config_max_number_of_mirrors(&client, &zero_wallet).await {
                 Err(e) => {
-                    log::warn!("user_wallet_config_max_number_of_mirrors error: {}", e);
+                    tracing::warn!("user_wallet_config_max_number_of_mirrors error: {}", e);
                     return Ok(zero_wallet);
                 }
                 Ok(max_number_of_user_wallets) => {

@@ -5,7 +5,6 @@ use crate::{
     blockchain::call::BlockchainCall,
     blockchain::{contract::ContractInfo, BlockchainContractAddress, Everscale},
 };
-use tracing::log;
 
 #[derive(Deserialize, Debug)]
 pub struct GetDiffAddrResult {
@@ -127,7 +126,7 @@ impl DeployDiff for Everscale {
         let result = self
             .call(wallet, "deployDiff", Some(serde_json::to_value(args)?))
             .await?;
-        log::debug!("deployDiff result: {:?}", result);
+        tracing::debug!("deployDiff result: {:?}", result);
         Ok(())
     }
 }
