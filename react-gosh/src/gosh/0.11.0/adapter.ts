@@ -734,7 +734,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             .map(({ decoded }) => decoded.value.value0.snap)
 
         return await executeByChunk<TAddress, TAddress>(
-            addresses,
+            Array.from(new Set(addresses)),
             MAX_PARALLEL_READ,
             async (address) => {
                 const snapshot = await this._getSnapshot({ address })
