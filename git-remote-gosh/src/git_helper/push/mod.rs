@@ -19,7 +19,7 @@ use std::{
     vec::Vec,
 };
 use tokio::task::JoinError;
-use tracing::log;
+
 pub mod create_branch;
 mod parallel_diffs_upload_support;
 mod push_diff;
@@ -240,7 +240,7 @@ where
         // This led to a problem that some files were copied from one place to another
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
-        log::info!("push_ref {} : {}", local_ref, remote_ref);
+        info!("push_ref {} : {}", local_ref, remote_ref);
         let branch_name: &str = {
             let mut iter = local_ref.rsplit('/');
             iter.next()
@@ -304,7 +304,7 @@ where
             .object()?
             .id;
 
-        log::debug!("latest commit id {latest_commit_id}");
+        debug!("latest commit id {latest_commit_id}");
 
         // TODO: git rev-list?
         let mut cmd_args: Vec<&str> = vec![
@@ -551,7 +551,7 @@ where
             [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
-        log::debug!("push ref result: {result}");
+        debug!("push ref result: {result}");
         Ok(result)
     }
 }

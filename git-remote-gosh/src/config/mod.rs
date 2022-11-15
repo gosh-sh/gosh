@@ -5,7 +5,6 @@ use std::{
     io::{BufReader, Read},
     path::Path,
 };
-use tracing::log;
 
 mod defaults;
 
@@ -116,7 +115,7 @@ impl Config {
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        log::debug!("Networks: {:?}", self.networks);
+        debug!("Networks: {:?}", self.networks);
         self.networks
             .get(network)
             .and_then(|network_config| network_config.user_wallet.as_ref())

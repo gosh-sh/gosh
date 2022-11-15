@@ -9,7 +9,6 @@ use std::fmt::Debug;
 use std::{path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::strategy::ExponentialBackoff;
-use tracing::log;
 
 type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 
@@ -77,7 +76,7 @@ impl IpfsService<MiddlewareHttpClient> {
             .factor(3)
             .max_delay(MAX_RETRY_DURATION)
             .map(|d| {
-                log::info!("Retry in {d:?} ...");
+                info!("Retry in {d:?} ...");
                 d
             })
             .take(MAX_RETRIES)
@@ -119,9 +118,9 @@ impl IpfsService<MiddlewareHttpClient> {
     }
 
     async fn load_retriable(cli: &MiddlewareHttpClient, url: &str) -> anyhow::Result<Vec<u8>> {
-        log::info!("loading from: {}", url);
+        info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
-        log::info!("Got response: {:?}", response);
+        info!("Got response: {:?}", response);
         let response_body = response.bytes().await?;
         Ok(Vec::from(&response_body[..]))
     }

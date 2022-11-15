@@ -3,7 +3,6 @@ use crate::blockchain::EverClient;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 pub mod save;
-use tracing::log;
 
 use crate::blockchain::serde_number::NumberU64;
 
@@ -113,7 +112,7 @@ pub async fn get_set_commit_created_at_time(
             None
         };
 
-        log::debug!(
+        debug!(
             "Loaded {} message(s) to repo contract {}",
             messages.edges.len(),
             repo_contract.address
@@ -127,7 +126,7 @@ pub async fn get_set_commit_created_at_time(
             if raw_msg.status != 5 || raw_msg.bounced || raw_msg.src != expected_src {
                 continue;
             }
-            log::debug!("Decoding message {:?}", raw_msg.id);
+            debug!("Decoding message {:?}", raw_msg.id);
             let decoded = decode_message_body(
                 context.clone(),
                 ParamsOfDecodeMessageBody {
@@ -139,11 +138,11 @@ pub async fn get_set_commit_created_at_time(
             )
             .await?;
 
-            log::debug!("Decoded message `{}`", decoded.name);
+            debug!("Decoded message `{}`", decoded.name);
             if decoded.name == "setCommit" {
                 let value = decoded.value.unwrap();
                 let args: SetCommitArgs = serde_json::from_value(value)?;
-                log::debug!("branch name: {}", args.branch);
+                debug!("branch name: {}", args.branch);
                 if args.branch == branch_name && args.commit_id == commit_id {
                     created_at = raw_msg.created_at;
                     break;
@@ -154,7 +153,7 @@ pub async fn get_set_commit_created_at_time(
             break;
         }
     }
-    log::debug!("set_commit' created_at: {created_at}");
+    debug!("set_commit' created_at: {created_at}");
     Ok(created_at)
 }
 

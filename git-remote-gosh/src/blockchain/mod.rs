@@ -23,7 +23,7 @@ use ton_client::{
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
-use tracing::log;
+
 mod blockchain_contract_address;
 pub use blockchain_contract_address::BlockchainContractAddress;
 pub mod commit;
@@ -222,10 +222,10 @@ async fn run_static(
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
     let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
-        log::trace!("run_static: use cached boc ref");
+        trace!("run_static: use cached boc ref");
         (boc_ref, Some(BocCacheType::Unpinned))
     } else {
-        log::trace!("run_static: load account' boc");
+        trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
             "id": { "eq": contract.address }
         }));
@@ -302,7 +302,7 @@ async fn run_static(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    log::debug!("cb: {:#?}", pe);
+    debug!("cb: {:#?}", pe);
 }
 
 #[instrument(level = "debug", skip(context))]

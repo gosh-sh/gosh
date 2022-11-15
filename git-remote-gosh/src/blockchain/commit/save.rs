@@ -7,7 +7,6 @@ use crate::{
 };
 use async_trait::async_trait;
 use git_hash::ObjectId;
-use tracing::log;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -71,12 +70,12 @@ impl BlockchainCommitPusher for Everscale {
             tree_addr: tree_addr.clone(),
             upgrade: false,
         };
-        log::debug!("deployCommit params: {:?}", args);
+        debug!("deployCommit params: {:?}", args);
 
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::to_value(args)?;
         let result = self.call(&wallet, "deployCommit", Some(params)).await?;
-        log::debug!("deployCommit result: {:?}", result);
+        debug!("deployCommit result: {:?}", result);
         Ok(())
     }
 
@@ -99,7 +98,7 @@ impl BlockchainCommitPusher for Everscale {
             "numberCommits": number_of_commits,
         });
         let result = self.call(&wallet, "setCommit", Some(params)).await?;
-        log::debug!("setCommit result: {:?}", result);
+        debug!("setCommit result: {:?}", result);
         Ok(())
     }
 }

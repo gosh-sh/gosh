@@ -1,14 +1,14 @@
 // #[tokio::test]
 // #[ignore = "this test is obsolite and randomly passes rn"]
 // async fn test_push() -> anyhow::Result<()> {
-//     log::info!("Preparing repository for tests");
+//     info!("Preparing repository for tests");
 //     // TODO: rewrite from libgit2 to gitoxide
 //     let dir = std::env::temp_dir().join("test_push");
 
 //     fs::remove_dir_all(&dir).unwrap_or(());
 //     fs::create_dir_all(&dir)?;
 //     fs::write(dir.join("readme.txt").to_owned(), "test")?;
-//     log::info!("Initializing git repo");
+//     info!("Initializing git repo");
 //     println!("Testing push {:?}", dir);
 
 //     let repo = Repository::init(dir).expect("repository init successfuly");

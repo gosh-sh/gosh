@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use std::iter::Iterator;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use tracing::log;
 
 #[derive(Debug, Clone)]
 pub struct DiffMessage {
@@ -142,7 +141,7 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
-                log::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
+                info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
                 // generate filter
                 let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
                     client,
@@ -161,17 +160,16 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug", skip(client))]
     async fn try_load_next_chunk(&mut self, client: &EverClient) -> anyhow::Result<()> {
-        log::info!("loading next chunk -> {:?}", self.next);
+        info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
             Some(NextChunk::JumpToAnotherBranchSnapshot(
                 snapshot_address,
                 ignore_commits_created_after,
             )) => {
-                log::info!(
+                info!(
                     "Jumping to another branch: {} - commit {}",
-                    snapshot_address,
-                    ignore_commits_created_after
+                    snapshot_address, ignore_commits_created_after
                 );
                 let address = snapshot_address;
                 // Now we will be loading page by page till
@@ -182,10 +180,10 @@ impl DiffMessagesIterator {
                 let mut next_page_info = None;
                 let mut skip_series = false;
                 while index.is_none() {
-                    log::info!("loading messages");
+                    info!("loading messages");
                     let (buffer, page) =
                         load_messages_to(client, &address, &cursor, None, false).await?;
-                    log::info!("messages: {:?}", buffer);
+                    info!("messages: {:?}", buffer);
                     for (i, item) in buffer.iter().enumerate() {
                         if &item.created_at <= ignore_commits_created_after {
                             index = Some(i);
@@ -194,14 +192,14 @@ impl DiffMessagesIterator {
                     }
                     self.buffer = buffer;
                     if index.is_none() {
-                        log::info!("Expected commit was not found");
+                        info!("Expected commit was not found");
                         if page.cursor.is_some() {
                             cursor = page.cursor;
                         } else {
                             panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
                         }
                     } else {
-                        log::info!("Commit found at {}", index.unwrap());
+                        info!("Commit found at {}", index.unwrap());
                         next_page_info = page.cursor;
                     }
                     skip_series = page.skip_series;
@@ -241,7 +239,7 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "debug")]
     fn try_take_next_item(&mut self) -> Option<DiffMessage> {
-        log::debug!("try_take_next_item = {:?}", self);
+        debug!("try_take_next_item = {:?}", self);
         if self.buffer_cursor >= self.buffer.len() {
             return None;
         }
@@ -296,13 +294,13 @@ pub async fn load_messages_to(
 
     let mut messages: Vec<DiffMessage> = Vec::new();
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
-    log::trace!("trying to decode: {:?}", nodes);
+    trace!("trying to decode: {:?}", nodes);
     let edges: Messages = serde_json::from_value(nodes.clone())?;
     if edges.page_info.has_previous_page {
         subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
-    log::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
     let mut passed_msgs: Vec<Message> = Vec::new();
     for elem in edges.edges.iter().rev() {
         let raw_msg = &elem.message;
@@ -331,7 +329,7 @@ pub async fn load_messages_to(
         .collect();
 
     for raw_msg in msgs {
-        log::debug!("Decoding message {:?}", raw_msg.id);
+        debug!("Decoding message {:?}", raw_msg.id);
         let decoded = decode_message_body(
             context.clone(),
             ParamsOfDecodeMessageBody {
@@ -343,7 +341,7 @@ pub async fn load_messages_to(
         )
         .await?;
 
-        log::debug!("Decoded message `{}`", decoded.name);
+        debug!("Decoded message `{}`", decoded.name);
         if decoded.name == "applyDiff" {
             if skip {
                 continue;
@@ -374,7 +372,7 @@ pub async fn load_messages_to(
         }
     }
 
-    log::debug!("Passed {} message(s)", messages.len());
+    debug!("Passed {} message(s)", messages.len());
     let oldest_timestamp = match messages.len() {
         0 => None,
         n => Some(messages[n - 1].created_at),
