@@ -722,8 +722,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_normal_ref() {
-        crate::logger::set_log_verbosity(0);
-
         let span = trace_span!("test_push_normal_ref");
         let _guard = span.enter();
 
