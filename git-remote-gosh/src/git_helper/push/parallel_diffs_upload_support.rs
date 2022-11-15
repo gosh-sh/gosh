@@ -1,11 +1,12 @@
 use crate::blockchain::BlockchainService;
-use crate::blockchain::{self, snapshot::PushDiffCoordinate, BlockchainContractAddress};
+use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::vec::Vec;
+use tracing::log;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 

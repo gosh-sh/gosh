@@ -12,8 +12,8 @@ use crate::{
     git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
-use std::sync::Arc;
 use ton_client::utils::compress_zstd;
+use tracing::log;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;

@@ -1,68 +1,109 @@
+use cached::once_cell::sync::Lazy;
 use opentelemetry::sdk::Resource;
 use opentelemetry::KeyValue;
 
+use std::env;
+use std::sync::Arc;
+use tracing::metadata::LevelFilter;
+
 use std::str::FromStr;
+use tracing_subscriber::{
+    reload::{self, Handle},
+    Registry,
+};
 
 use crate::logger::id_generator::FixedIdGenerator;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::EnvFilter;
+
+use super::GIT_HELPER_ENV_TRACE_VERBOSITY;
 
 const OPENTELEMETRY_FLAG: &str = "GOSH_OPENTELEMETRY";
 const OPENTELEMETRY_SERVICE_NAME: &str = "git-remote-helper";
 const OPENTELEMETRY_FILTER_LEVEL: &str = "GOSH_OPENTELEMETRY_FILTER_LEVEL";
 
+static TRACING_HANDLE: Lazy<Arc<Handle<LevelFilter, Registry>>> =
+    Lazy::new(|| Arc::new(init_tracing()));
+
+pub fn set_log_verbosity(verbosity: u8) {
+    let mut verbosity_level = verbosity;
+    if let Ok(trace_verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
+        if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
+            verbosity_level = 5;
+        }
+    }
+    TRACING_HANDLE
+        .modify(|filter| {
+            *filter = match verbosity_level {
+                0 => LevelFilter::OFF,
+                1 => LevelFilter::ERROR,
+                2 => LevelFilter::WARN,
+                3 => LevelFilter::INFO,
+                4 => LevelFilter::DEBUG,
+                _ => LevelFilter::TRACE,
+            };
+        })
+        .expect("unable to set verbosity level");
+}
+
 pub fn do_init_opentelemetry() -> bool {
     std::env::var(OPENTELEMETRY_FLAG).is_ok()
 }
 
-fn get_log_level() -> String {
-    let level = match std::env::var(OPENTELEMETRY_FILTER_LEVEL) {
-        Ok(level) => u8::from_str(&level).unwrap_or(5),
-        _ => 5,
-    };
-    match level {
-        0 => "OFF",
-        1 => "ERROR",
-        2 => "WARN",
-        3 => "INFO",
-        4 => "DEBUG",
-        _ => "TRACE",
-    }
-    .to_string()
-}
+// fn get_log_level() -> String {
+//     let level = match std::env::var(OPENTELEMETRY_FILTER_LEVEL) {
+//         Ok(level) => u8::from_str(&level).unwrap_or(5),
+//         _ => 5,
+//     };
+//     match level {
+//         0 => "OFF",
+//         1 => "ERROR",
+//         2 => "WARN",
+//         3 => "INFO",
+//         4 => "DEBUG",
+//         _ => "TRACE",
+//     }
+//     .to_string()
+// }
 
-pub fn init_opentelemetry_tracing() -> anyhow::Result<()> {
-    let tracer = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
-        .with_trace_config(
-            opentelemetry::sdk::trace::config()
-                .with_resource(Resource::new(vec![KeyValue::new(
-                    opentelemetry_semantic_conventions::resource::SERVICE_NAME,
-                    OPENTELEMETRY_SERVICE_NAME,
-                )]))
-                .with_id_generator(FixedIdGenerator::new()),
-        )
-        .install_batch(opentelemetry::runtime::Tokio)?;
-
-    let telemetry = tracing_opentelemetry::layer()
-        .with_location(true)
-        .with_threads(true)
-        .with_tracer(tracer);
-
-    let env_filter = EnvFilter::new(get_log_level());
+fn init_tracing() -> Handle<LevelFilter, Registry> {
+    // NOTE: for some reason it should always be initialized with TRACE level
+    let (reloadable_filter, reload_handle) = reload::Layer::new(LevelFilter::TRACE);
 
     let fmt_layer = tracing_subscriber::fmt::layer()
         .compact()
         .with_thread_ids(true)
         .with_writer(std::io::stderr);
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(fmt_layer)
-        .with(telemetry)
-        .try_init()?;
+    let layered_sub = tracing_subscriber::registry()
+        .with(reloadable_filter)
+        .with(fmt_layer);
 
-    Ok(())
+    // TODO: add #[cfg(feature=..)] support
+    if do_init_opentelemetry() {
+        let otel_tracer = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(opentelemetry_otlp::new_exporter().tonic())
+            .with_trace_config(
+                opentelemetry::sdk::trace::config()
+                    .with_resource(Resource::new(vec![KeyValue::new(
+                        opentelemetry_semantic_conventions::resource::SERVICE_NAME,
+                        OPENTELEMETRY_SERVICE_NAME,
+                    )]))
+                    .with_id_generator(FixedIdGenerator::new()),
+            )
+            .install_batch(opentelemetry::runtime::Tokio)
+            .expect("can't install open telemetry");
+
+        let otel_layer = tracing_opentelemetry::layer()
+            .with_location(true)
+            .with_threads(true)
+            .with_tracer(otel_tracer);
+
+        layered_sub.with(otel_layer).init();
+    } else {
+        layered_sub.init();
+    }
+
+    reload_handle
 }

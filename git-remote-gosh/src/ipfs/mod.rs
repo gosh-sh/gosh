@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use std::{path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::strategy::ExponentialBackoff;
+use tracing::log;
 
 type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 

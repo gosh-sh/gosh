@@ -1,9 +1,6 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{
-    blockchain::{self, branch::DeployBranch},
-    git_helper::GitHelper,
-};
+use crate::{blockchain::branch::DeployBranch, git_helper::GitHelper};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;

@@ -32,18 +32,15 @@ pub mod ipfs;
 pub(crate) mod logger;
 pub mod utilities;
 
-use crate::logger::telemetry::{do_init_opentelemetry, init_opentelemetry_tracing};
+use logger::telemetry::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::env::args;
+use tracing::log;
 
 #[instrument(level = "debug")]
 pub async fn run() -> anyhow::Result<()> {
-    let logger = if do_init_opentelemetry() {
-        init_opentelemetry_tracing()?;
-        None
-    } else {
-        Some(logger::GitHelperLogger::init()?)
-    };
+    set_log_verbosity(1);
+
     {
         let root = span!(tracing::Level::TRACE, "git-remote-helper");
         let _enter = root.enter();
@@ -54,7 +51,7 @@ pub async fn run() -> anyhow::Result<()> {
         let url = args().nth(2).ok_or(anyhow::anyhow!(
             "Wrong args for git-remote call\nRequired: <name> <url>"
         ))?;
-        crate::git_helper::run(config, &url, logger).await?;
+        crate::git_helper::run(config, &url).await?;
     }
 
     shutdown_tracer_provider();

@@ -17,6 +17,7 @@ use std::{
     sync::{Arc, Mutex},
     vec::Vec,
 };
+use tracing::log;
 
 const FETCH_MAX_TRIES: i32 = 3;
 

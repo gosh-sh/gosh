@@ -4,6 +4,7 @@ use crate::{
     blockchain::{BlockchainContractAddress, BlockchainService},
 };
 use git_odb::{Find, Write};
+use tracing::log;
 
 use std::{
     collections::{HashSet, VecDeque},

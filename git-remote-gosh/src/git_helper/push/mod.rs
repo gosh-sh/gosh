@@ -1,28 +1,25 @@
-#![allow(unused_variables)]
-#![allow(unused_imports)]
 use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
     blockchain::{
-        self, get_commit_address, tree::into_tree_contract_complient_path,
-        BlockchainContractAddress, BlockchainService, ZERO_SHA,
+        get_commit_address, tree::into_tree_contract_complient_path, BlockchainContractAddress,
+        BlockchainService, ZERO_SHA,
     },
     git_helper::push::create_branch::CreateBranchOperation,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::{self, ObjectId};
-use git_odb::{Find, Write};
+use git_odb::Find;
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    env::current_dir,
-    error::Error,
+    collections::{HashMap, HashSet},
     path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
     vec::Vec,
 };
 use tokio::task::JoinError;
+use tracing::log;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
 mod push_diff;
@@ -594,17 +591,9 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 mod tests {
     use super::*;
     use crate::{
-        blockchain::{service::tests::MockEverscale, BlockchainService, EverClient, GoshCommit},
-        config::{Config, UserWalletConfig},
-        git_helper::{
-            test_utils::{self, setup_repo},
-            tests::setup_test_helper,
-        },
-        logger::GitHelperLogger,
+        blockchain::{self, service::tests::MockEverscale},
+        git_helper::{test_utils::setup_repo, tests::setup_test_helper},
     };
-    use async_trait::async_trait;
-    use log4rs::encode::json;
-    use std::fs;
 
     #[test]
     fn ensure_calc_left_dist_correctly() {
@@ -700,6 +689,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_parotected_ref() {
+        let span = trace_span!("test_push_parotected_ref");
+        let _guard = span.enter();
+
         let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
         let mut mock_blockchain = MockEverscale::new();
@@ -730,6 +722,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_normal_ref() {
+        let span = trace_span!("test_push_normal_ref");
+        let _guard = span.enter();
+
         // TODO: need more smart test
         let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 

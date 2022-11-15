@@ -23,6 +23,7 @@ use ton_client::{
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
+use tracing::log;
 mod blockchain_contract_address;
 pub use blockchain_contract_address::BlockchainContractAddress;
 pub mod commit;

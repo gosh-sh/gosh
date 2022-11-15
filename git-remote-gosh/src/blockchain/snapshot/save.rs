@@ -5,6 +5,7 @@ use crate::{
     blockchain::call::BlockchainCall,
     blockchain::{contract::ContractInfo, BlockchainContractAddress, Everscale},
 };
+use tracing::log;
 
 #[derive(Deserialize, Debug)]
 pub struct GetDiffAddrResult {

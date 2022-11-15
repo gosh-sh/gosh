@@ -12,9 +12,10 @@ use crate::{
     config::Config,
     git_helper::ever_client::create_client,
     ipfs::{build_ipfs, service::FileStorage},
-    logger::GitHelperLogger as Logger,
+    logger::telemetry::set_log_verbosity,
     utilities::Remote,
 };
+use tracing::log;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -33,7 +34,6 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_git_repository: git_repository::Repository,
-    logger: Option<Logger>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,7 +78,6 @@ where
     async fn build(
         config: Config,
         url: &str,
-        logger: Option<Logger>,
         blockchain: Blockchain,
         file_provider: FileProvider,
     ) -> anyhow::Result<Self> {
@@ -112,7 +111,6 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_git_repository,
-            logger,
         })
     }
 
@@ -150,9 +148,7 @@ where
     }
 
     fn set_verbosity(&mut self, verbosity: u8) {
-        if self.logger.is_some() {
-            self.logger.as_mut().unwrap().set_verbosity(verbosity).ok();
-        }
+        set_log_verbosity(verbosity)
     }
 }
 
@@ -193,11 +189,11 @@ async fn build_blockchain(
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "debug")]
-pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::Result<()> {
+pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
-    let mut helper = GitHelper::build(config, url, logger, blockchain, file_provider).await?;
+    let mut helper = GitHelper::build(config, url, blockchain, file_provider).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -266,7 +262,7 @@ pub async fn run(config: Config, url: &str, logger: Option<Logger>) -> anyhow::R
 pub mod tests {
     use git_repository::Repository;
 
-    use crate::{blockchain::BlockchainService, config::tests::load_from, logger::GitHelperLogger};
+    use crate::{blockchain::BlockchainService, config::tests::load_from};
 
     use super::*;
 
@@ -280,7 +276,6 @@ pub mod tests {
         B: BlockchainService,
     {
         let config = load_from(&value.to_string());
-        let logger = GitHelperLogger::init().expect("logger init error");
 
         let remote = Remote::new(url, &config).unwrap();
 
@@ -299,7 +294,6 @@ pub mod tests {
             remote,
             dao_addr,
             repo_addr,
-            logger: Some(logger),
             local_git_repository: repo,
         }
     }

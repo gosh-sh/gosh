@@ -5,6 +5,7 @@ use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
 };
+use tracing::log;
 
 #[async_trait]
 pub(super) trait BlockchainCall {
