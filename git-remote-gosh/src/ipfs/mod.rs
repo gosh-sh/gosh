@@ -22,7 +22,7 @@ struct SaveRes {
     hash: String,
 }
 
-#[derive(Builder, Debug)]
+#[derive(Builder, Debug, Clone)]
 pub struct IpfsService<HttpClient = MiddlewareHttpClient> {
     ipfs_endpoint_address: String,
     http_client: HttpClient,

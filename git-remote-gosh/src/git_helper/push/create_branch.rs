@@ -17,7 +17,7 @@ pub struct CreateBranchOperation<'a, Blockchain> {
 
 impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
 where
-    Blockchain: BlockchainService,
+    Blockchain: BlockchainService + 'static,
 {
     pub fn new(
         ancestor_commit: ObjectId,
@@ -64,30 +64,6 @@ where
     }
 
     #[instrument(level = "debug")]
-    async fn deploy_snapshot(&mut self, file_path: &str, id: &ObjectId) -> anyhow::Result<()> {
-        let mut buffer: Vec<u8> = Vec::new();
-        let content = self
-            .context
-            .local_repository()
-            .objects
-            .try_find(id, &mut buffer)?
-            .expect("blob must be in the local repository")
-            .decode()?
-            .as_blob()
-            .expect("It must be a blob object")
-            .data;
-        push_new_branch_snapshot(
-            self.context,
-            &self.ancestor_commit,
-            &self.new_branch,
-            file_path,
-            content,
-        )
-        .await?;
-        Ok(())
-    }
-
-    #[instrument(level = "debug")]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let all_files: Vec<recorder::Entry> = {
             self.context
@@ -111,9 +87,48 @@ where
             })
             .collect();
 
+        let mut futures = Vec::new();
+
         for entry in snapshots_to_deploy {
+            let mut buffer: Vec<u8> = Vec::new();
+            let content = self
+                .context
+                .local_repository()
+                .objects
+                .try_find(entry.oid, &mut buffer)?
+                .expect("blob must be in the local repository")
+                .decode()?
+                .as_blob()
+                .expect("It must be a blob object")
+                .data
+                .to_owned();
+
+            let blockchain = self.context.blockchain.clone();
+            let remote_network = self.context.remote.network.clone();
+            let dao_addr = self.context.dao_addr.clone();
+            let repo_addr = self.context.repo_addr.clone();
+            let file_provider = self.context.file_provider.clone();
+            let ancestor_commit = self.ancestor_commit.clone();
+            let new_branch = self.new_branch.clone();
             let full_path = entry.filepath.to_string();
-            self.deploy_snapshot(&full_path, &entry.oid).await?;
+
+            futures.push(tokio::spawn(async move {
+                push_new_branch_snapshot(
+                    &blockchain,
+                    &file_provider,
+                    &remote_network,
+                    &dao_addr,
+                    &repo_addr,
+                    &ancestor_commit,
+                    &new_branch,
+                    &full_path,
+                    &content,
+                )
+                .await
+            }));
+        }
+        for f in futures {
+            f.await??
         }
         Ok(())
     }
