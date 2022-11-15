@@ -32,7 +32,7 @@ pub mod ipfs;
 pub(crate) mod logger;
 pub mod utilities;
 
-use logger::telemetry::set_log_verbosity;
+use logger::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::env::args;
 use tracing::log;
