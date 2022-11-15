@@ -145,4 +145,4 @@ echo "========== Run SystemContract setFlag (false)"
 everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"false\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Destroy giver
-everdev contract run $GIVER_ABI TheBigBang -i "{\"returnMoney\": \"-1:7777777777777777777777777777777777777777777777777777777777777777\"}" -a $GIVER_ADDR -s $GIVER_SIGNER -n $NETWORK > /dev/null || exit 1
+everdev contract run $GIVER_ABI TheBigBang -i "{\"returnMoney\": \"$SYSTEMCONTRACT_ADDR\"}" -a $GIVER_ADDR -s $GIVER_SIGNER -n $NETWORK > /dev/null || exit 1
