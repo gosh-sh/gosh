@@ -8,7 +8,7 @@ use crate::blockchain::BlockchainContractAddress;
 use data_contract_macro_derive::DataContract;
 use serde::de;
 use std::{fmt, option::Option};
-use tracing::log;
+
 pub mod diffs;
 
 #[derive(Deserialize, Debug, DataContract)]
@@ -79,7 +79,7 @@ impl Snapshot {
     ) -> anyhow::Result<String> {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.read_state(context, "getName", None).await?;
-        log::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
+        tracing::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;
         path = path

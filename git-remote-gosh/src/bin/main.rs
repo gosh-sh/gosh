@@ -1,6 +1,5 @@
 use git_remote_gosh::run;
 use std::process::ExitCode;
-use tracing::log;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 200)]
 async fn main() -> ExitCode {
@@ -8,7 +7,7 @@ async fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("Error: {e}");
-            log::error!("{e:?}");
+            tracing::error!("{e:?}");
             ExitCode::FAILURE
         }
     }

@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use serde::{de, Deserialize};
 use std::fmt::Debug;
 use ton_client::{abi::Abi, crypto::KeyPair};
-use tracing::log;
 
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;
@@ -63,7 +62,7 @@ impl ContractStatic for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_static(client, self, function_name, args).await?;
-        log::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_statuc result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
@@ -124,7 +123,7 @@ impl GoshContract {
         T: de::DeserializeOwned,
     {
         let result = run_static(context, self, function_name, args).await?;
-        log::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_statuc result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
 
@@ -158,7 +157,7 @@ impl ContractRead for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_local(client, self, function_name, args).await?;
-        log::trace!("run_local result: {:?}", result);
+        tracing::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }

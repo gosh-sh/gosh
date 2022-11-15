@@ -3,12 +3,11 @@ use crate::ipfs::service::FileSave;
 use async_trait::async_trait;
 use std::path::Path;
 use tokio_retry::Retry;
-use tracing::log;
 
 #[async_trait]
 impl FileSave for IpfsService {
     async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String> {
-        log::debug!("Uploading blob to IPFS");
+        tracing::debug!("Uploading blob to IPFS");
 
         let url = format!(
             "{}/api/v0/add?pin=true&quiet=true",
@@ -22,7 +21,7 @@ impl FileSave for IpfsService {
     }
 
     async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String> {
-        log::debug!(
+        tracing::debug!(
             "Uploading file to IPFS: {}",
             path.as_ref().to_string_lossy()
         );
