@@ -8,7 +8,7 @@ import Committer from '../../components/Commit/Committer'
 
 const CommitPage = () => {
     const { daoName, repoName, commitName } = useParams()
-    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!, 5)
+    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!)
 
     return (
         <div className="bordered-block px-7 py-8">
