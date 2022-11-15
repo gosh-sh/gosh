@@ -1,4 +1,80 @@
 mod id_generator;
-pub mod telemetry;
+mod telemetry;
+use cached::once_cell::sync::Lazy;
+use std::{env, str::FromStr, sync::Arc};
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, Layer};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
+
+static GLOBAL_LOG_MANAGER: Lazy<LogService> = Lazy::new(LogService::new);
+
+/// We have to create this weird combination because we need closure on
+/// [`reload::Layer::new()`](tracing_subscriber::reload::Layer)'s [`Handle`](reload::Handle).
+///
+/// Due to the multi-layer tracing_subscriber registry, it has various types
+/// that even grow with each layer: e.g. Layer1<...<Layer2<...<core registry>>>>
+/// Also, it has very inconvenient unsized trait types inside.
+struct LogService {
+    pub set_console_verbosity: Arc<dyn Fn(LevelFilter) + Send + Sync + 'static>,
+}
+
+impl LogService {
+    fn new() -> Self {
+        // config console layer
+        let (console_layer, console_layer_handle) = reload::Layer::new(
+            tracing_subscriber::fmt::layer()
+                .compact()
+                .with_thread_ids(true)
+                .with_writer(std::io::stderr)
+                .with_filter(LevelFilter::ERROR),
+        );
+
+        let layered_subscriber = tracing_subscriber::registry().with(console_layer);
+
+        // config otel layer
+        // TODO: add #[cfg(feature=..)] support
+        if telemetry::do_init_opentelemetry() {
+            let otel_layer = tracing_opentelemetry::layer()
+                .with_location(true)
+                .with_threads(true)
+                .with_tracer(telemetry::opentelemetry_tracer())
+                // TODO: for now let it be always ON/OFF and ON means TRACE for OTEL
+                .with_filter(LevelFilter::TRACE);
+
+            layered_subscriber.with(otel_layer).init();
+        } else {
+            layered_subscriber.init();
+        }
+
+        Self {
+            set_console_verbosity: Arc::new(move |level_filter| {
+                console_layer_handle
+                    .modify(|layer| {
+                        *layer.filter_mut() = level_filter;
+                    })
+                    .expect("can't change verbosity");
+            }),
+        }
+    }
+}
+
+pub fn set_log_verbosity(verbosity: u8) {
+    let mut verbosity_level = verbosity;
+    if let Ok(trace_verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
+        if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
+            verbosity_level = 5;
+        }
+    }
+
+    let level_filter = match verbosity_level {
+        0 => LevelFilter::OFF,
+        1 => LevelFilter::ERROR,
+        2 => LevelFilter::WARN,
+        3 => LevelFilter::INFO,
+        4 => LevelFilter::DEBUG,
+        _ => LevelFilter::TRACE,
+    };
+
+    (GLOBAL_LOG_MANAGER.set_console_verbosity)(level_filter);
+}

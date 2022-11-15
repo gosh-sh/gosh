@@ -12,7 +12,7 @@ use crate::{
     config::Config,
     git_helper::ever_client::create_client,
     ipfs::{build_ipfs, service::FileStorage},
-    logger::telemetry::set_log_verbosity,
+    logger::set_log_verbosity,
     utilities::Remote,
 };
 use tracing::log;
