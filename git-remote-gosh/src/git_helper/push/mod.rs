@@ -6,7 +6,9 @@ use crate::{
         get_commit_address, tree::into_tree_contract_complient_path, BlockchainContractAddress,
         BlockchainService, ZERO_SHA,
     },
-    git_helper::push::create_branch::CreateBranchOperation,
+    git_helper::push::{
+        create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
+    },
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::{self, ObjectId};
@@ -19,6 +21,7 @@ use std::{
     vec::Vec,
 };
 use tokio::task::JoinError;
+use tokio_retry::Retry;
 
 pub mod create_branch;
 mod parallel_diffs_upload_support;
@@ -433,17 +436,20 @@ where
                                 let branch_name = branch_name.to_owned().clone();
 
                                 push_handlers.push(tokio::spawn(async move {
-                                    blockchain
-                                        .push_commit(
-                                            &object_id,
-                                            &branch_name,
-                                            &tree_addr,
-                                            &remote,
-                                            &dao_addr,
-                                            raw_commit,
-                                            parents,
-                                        )
-                                        .await
+                                    Retry::spawn(default_retry_strategy(), || async {
+                                        blockchain
+                                            .push_commit(
+                                                &object_id,
+                                                &branch_name,
+                                                &tree_addr,
+                                                &remote,
+                                                &dao_addr,
+                                                &raw_commit,
+                                                &*parents,
+                                            )
+                                            .await
+                                    })
+                                    .await
                                 }));
                             }
 

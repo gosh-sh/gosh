@@ -11,3 +11,5 @@ provide!(try_find_tree_leaf);
 provide!(generate_blob_diff);
 provide!(build_tree_diff);
 pub use build_tree_diff::build_tree_diff_from_commits;
+
+pub mod retry;
