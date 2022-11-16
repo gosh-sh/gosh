@@ -18,6 +18,7 @@ Cargo.lock
 *.seed
 *.keys.json
 *.addr
+*.network
 SafeMultisigWallet.abi.json
 contracts/gosh/updatever.sh
 

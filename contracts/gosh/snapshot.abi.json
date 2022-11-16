@@ -70,7 +70,7 @@
 			"inputs": [
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
-				{"name":"commit","type":"string"}
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
 			],
 			"outputs": [
 			]

@@ -665,27 +665,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             true,
         )
 
-        // Filter only approved diff messages
-        const approved: string[] = []
-        for (const { decoded } of messages) {
-            if (['approve', 'constructor'].indexOf(decoded.name) < 0) continue
-            const { value } = decoded
-            if (value.commit) approved.push(value.commit)
-        }
-
-        // Filter applied diff messages by approved and get diffs
-        const applied = messages
+        // Collect approved diff messages
+        const approved = messages
             .filter(({ decoded }) => {
-                const { name, value } = decoded
-                const key = name === 'applyDiff' ? 'namecommit' : 'commit'
-                return (
-                    ['applyDiff', 'constructor'].indexOf(name) >= 0 &&
-                    approved.indexOf(value[key]) >= 0
-                )
+                return ['approve', 'constructor'].indexOf(decoded.name) >= 0
             })
             .map(({ decoded }) => {
                 const { name, value } = decoded
-                if (name === 'applyDiff') return decoded.value.diff
+                if (name === 'approve') return value.diff
                 return {
                     commit: value.commit,
                     patch: !!value.data,
@@ -697,8 +684,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { onchain, content } = await this.getBlob({ fullpath })
         let current = content
         let prevIndex: number | undefined
-        for (const [i, diff] of applied.entries()) {
-            const prev = i > 0 && applied[i - 1]
+        for (const [i, diff] of approved.entries()) {
+            const prev = i > 0 && approved[i - 1]
 
             if (prevIndex !== undefined) break
             if (diff.ipfs && diff.sha1 !== sha1) continue
@@ -712,9 +699,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Restore blob state on commit before current
         let previous = current
-        if (prevIndex !== undefined && applied[prevIndex]) {
-            const diff = applied[prevIndex]
-            const prev = prevIndex > 0 && applied[prevIndex - 1]
+        if (prevIndex !== undefined && approved[prevIndex]) {
+            const diff = approved[prevIndex]
+            const prev = prevIndex > 0 && approved[prevIndex - 1]
 
             if (prev?.ipfs && diff.patch) previous = onchain.content
             if (
@@ -743,7 +730,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             .map(({ decoded }) => decoded.value.value0.snap)
 
         return await executeByChunk<TAddress, TAddress>(
-            addresses,
+            Array.from(new Set(addresses)),
             MAX_PARALLEL_READ,
             async (address) => {
                 const snapshot = await this._getSnapshot({ address })
