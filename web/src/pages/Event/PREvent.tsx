@@ -77,22 +77,15 @@ const PREvent = (props: TCommitBlobsType) => {
 
             {blobs.items.map(
                 ({ item, current, previous, showDiff, isFetching }, index) => (
-                    <div key={index} className="my-5 border rounded overflow-hidden">
-                        <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                            {item.treepath}
-                        </div>
-                        {showDiff ? (
-                            <BlobDiffPreview modified={current} original={previous} />
-                        ) : (
-                            <button
-                                className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
-                                disabled={isFetching}
-                                onClick={() => blobs.getDiff(index)}
-                            >
-                                {isFetching && <Spinner className="mr-2" size="sm" />}
-                                Load diff
-                            </button>
-                        )}
+                    <div key={index} className="my-5">
+                        <BlobDiffPreview
+                            filename={item.treepath}
+                            modified={current}
+                            original={previous}
+                            isDiffLoaded={showDiff}
+                            isDiffFetching={isFetching}
+                            getDiff={() => blobs.getDiff(index)}
+                        />
                     </div>
                 ),
             )}

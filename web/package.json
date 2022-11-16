@@ -55,6 +55,7 @@
         "classnames": "^2.3.1",
         "crypto-js": "^4.1.1",
         "diff": "^5.0.0",
+        "diff2html": "^3.4.22",
         "file-saver": "^2.0.5",
         "formik": "^2.2.9",
         "github-markdown-css": "^5.1.0",
