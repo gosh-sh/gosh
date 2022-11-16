@@ -169,7 +169,7 @@ pub mod tests {
                 wallet: &W,
                 sha: &str,
                 repo_name: &str,
-                nodes: HashMap<String, TreeNode>,
+                nodes: &HashMap<String, TreeNode>,
             ) -> anyhow::Result<()>
             where
                 W: ContractInfo + Sync + 'static;
@@ -216,8 +216,8 @@ pub mod tests {
                 tree_addr: &BlockchainContractAddress,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
-                raw_commit: String,
-                parents: Vec<BlockchainContractAddress>,
+                raw_commit: &str,
+                parents: &[BlockchainContractAddress],
             ) -> anyhow::Result<()>;
             async fn notify_commit(
                 &self,

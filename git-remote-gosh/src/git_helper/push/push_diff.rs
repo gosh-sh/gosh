@@ -12,7 +12,10 @@ use crate::{
     git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
+use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
+
+use super::utilities::retry::default_retry_strategy;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
@@ -49,7 +52,6 @@ pub async fn push_diff<'a>(
     let diff = diff.to_owned();
     let new_snapshot_content = new_snapshot_content.clone();
     let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-    let es_client = context.blockchain.client().clone();
     let repo_name = context.remote.repo.clone();
     let commit_id = *commit_id;
     let branch_name = branch_name.to_owned();
@@ -57,17 +59,15 @@ pub async fn push_diff<'a>(
     let file_path = file_path.to_owned();
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = *last_commit_id;
+
     Ok(tokio::spawn(async move {
-        let mut attempt = 0;
-        let result = loop {
-            attempt += 1;
-            let result = inner_push_diff(
+        Retry::spawn(default_retry_strategy(), || async {
+            inner_push_diff(
                 &blockchain,
                 repo_name.clone(),
                 snapshot_addr.clone(),
                 wallet.clone(),
                 &ipfs_endpoint,
-                es_client.clone(),
                 &commit_id,
                 &branch_name,
                 &blob_id,
@@ -79,19 +79,9 @@ pub async fn push_diff<'a>(
                 &diff,
                 &new_snapshot_content,
             )
-            .await;
-            if result.is_ok() || attempt > PUSH_DIFF_MAX_TRIES {
-                break result;
-            } else {
-                tracing::debug!(
-                    "inner_push_diff error <path: {file_path}, commit: {commit_id}, coord: {:?}>: {:?}",
-                    diff_coordinate,
-                    result.unwrap_err()
-                );
-                std::thread::sleep(std::time::Duration::from_secs(5));
-            }
-        };
-        result.map_err(|e| anyhow::Error::from(e))
+            .await
+        })
+        .await
     }))
 }
 
@@ -101,7 +91,6 @@ pub async fn inner_push_diff(
     snapshot_addr: BlockchainContractAddress,
     wallet: impl ContractRead + ContractInfo + Sync + 'static,
     ipfs_endpoint: &str,
-    es_client: EverClient,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     blob_id: &git_hash::ObjectId,
@@ -129,7 +118,11 @@ pub async fn inner_push_diff(
             });
 
             match wallet
-                .read_state::<GetDiffResultResult>(&es_client, "getDiffResult", Some(data))
+                .read_state::<GetDiffResultResult>(
+                    &blockchain.client(),
+                    "getDiffResult",
+                    Some(data),
+                )
                 .await
             {
                 Ok(apply_patch_result) => {
@@ -163,7 +156,10 @@ pub async fn inner_push_diff(
         if ipfs.is_some() {
             format!("0x{}", sha256::digest(&**new_snapshot_content))
         } else {
-            format!("0x{}", tvm_hash(&es_client, new_snapshot_content).await?)
+            format!(
+                "0x{}",
+                tvm_hash(&blockchain.client(), new_snapshot_content).await?
+            )
         }
     };
 

@@ -6,7 +6,7 @@ use git_object;
 use git_object::tree;
 use std::collections::HashMap;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
     flags: String,
     mode: String,
@@ -35,7 +35,7 @@ pub trait DeployTree {
         wallet: &W,
         sha: &str,
         repo_name: &str,
-        nodes: HashMap<String, TreeNode>,
+        nodes: &HashMap<String, TreeNode>,
     ) -> anyhow::Result<()>
     where
         W: ContractInfo + Sync + 'static;
@@ -48,7 +48,7 @@ impl DeployTree for Everscale {
         wallet: &W,
         sha: &str,
         repo_name: &str,
-        nodes: HashMap<String, TreeNode>,
+        nodes: &HashMap<String, TreeNode>,
     ) -> anyhow::Result<()>
     where
         W: ContractInfo + Sync + 'static,
@@ -56,7 +56,7 @@ impl DeployTree for Everscale {
         let params = DeployTreeArgs {
             sha: sha.to_owned(),
             repo_name: repo_name.to_owned(),
-            nodes,
+            nodes: nodes.to_owned(),
             ipfs: None, // !!!
         };
 

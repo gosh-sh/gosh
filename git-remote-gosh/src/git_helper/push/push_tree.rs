@@ -8,6 +8,9 @@ use git_odb::{Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
 use tokio::task::JoinHandle;
+use tokio_retry::Retry;
+
+use super::utilities::retry::default_retry_strategy;
 
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(
@@ -92,25 +95,36 @@ pub async fn push_tree(
             tree_nodes.insert(hash, tree_node);
         }
 
-        handlers.push(tokio::spawn(inner_deploy_tree(
-            context.blockchain.clone(),
-            context.remote.network.clone(),
-            context.dao_addr.clone(),
-            context.remote.repo.clone(),
-            tree_id,
-            tree_nodes,
-        )));
+        let blockchain = context.blockchain.clone();
+        let network = context.remote.network.clone();
+        let dao_addr = context.dao_addr.clone();
+        let repo = context.remote.repo.clone();
+
+        handlers.push(tokio::spawn(async move {
+            Retry::spawn(default_retry_strategy(), || async {
+                inner_deploy_tree(
+                    &blockchain,
+                    &network,
+                    &dao_addr,
+                    &repo,
+                    &tree_id,
+                    &tree_nodes,
+                )
+                .await
+            })
+            .await
+        }));
     }
     Ok(handlers)
 }
 
 async fn inner_deploy_tree(
-    blockchain: impl BlockchainService,
-    remote_network: String,
-    dao_addr: BlockchainContractAddress,
-    remote_repo: String,
-    tree_id: ObjectId,
-    tree_nodes: HashMap<String, TreeNode>,
+    blockchain: &impl BlockchainService,
+    remote_network: &str,
+    dao_addr: &BlockchainContractAddress,
+    remote_repo: &str,
+    tree_id: &ObjectId,
+    tree_nodes: &HashMap<String, TreeNode>,
 ) -> anyhow::Result<()> {
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     blockchain

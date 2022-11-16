@@ -5,8 +5,12 @@ use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
+use tokio_retry::Retry;
 
-use super::{push_diff::push_new_branch_snapshot, BlockchainService, ZERO_SHA};
+use super::{
+    push_diff::push_new_branch_snapshot, utilities::retry::default_retry_strategy,
+    BlockchainService, ZERO_SHA,
+};
 
 #[derive(Debug)]
 pub struct CreateBranchOperation<'a, Blockchain> {
@@ -113,17 +117,20 @@ where
             let full_path = entry.filepath.to_string();
 
             snapshot_handlers.push(tokio::spawn(async move {
-                push_new_branch_snapshot(
-                    &blockchain,
-                    &file_provider,
-                    &remote_network,
-                    &dao_addr,
-                    &repo_addr,
-                    &ancestor_commit,
-                    &new_branch,
-                    &full_path,
-                    &content,
-                )
+                Retry::spawn(default_retry_strategy(), || async {
+                    push_new_branch_snapshot(
+                        &blockchain,
+                        &file_provider,
+                        &remote_network,
+                        &dao_addr,
+                        &repo_addr,
+                        &ancestor_commit,
+                        &new_branch,
+                        &full_path,
+                        &content,
+                    )
+                    .await
+                })
                 .await
             }));
         }
