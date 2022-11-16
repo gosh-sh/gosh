@@ -9,6 +9,7 @@
 @import 'react-toastify/scss/main';
 @import 'github-markdown-css/github-markdown-light.css';
 // @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
+@import 'highlight.js/scss/github.scss';
 
 html,
 body,
@@ -305,4 +306,23 @@ for those elements which require gradient border color
             @apply bg-gray-050a15 translate-x-10;
         }
     }
+}
+
+/** Line numbers for highlight.js */
+.line-number {
+    @apply text-xs;
+    text-align: right;
+    padding-right: 20px;
+    padding-left: 10px;
+    display: inline-block;
+    color: rgba(0, 0, 0, 0.2);
+    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+/* Technique to disable line numbers from being selected and copied.
+   Checkout this post for more details http://codepen.io/danoc/pen/ByGKZv */
+[data-pseudo-content]::before,
+[data-pseudo-content--before]::before,
+[data-pseudo-content--after]::after {
+    content: attr(data-pseudo-content);
 }
