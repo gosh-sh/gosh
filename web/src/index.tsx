@@ -5,7 +5,6 @@ import { TonClient, BinaryLibrary } from '@eversdk/core'
 import { libWeb, libWebSetup } from '@eversdk/lib-web'
 import App from './App'
 import { RecoilRoot } from 'recoil'
-import { QueryClient, QueryClientProvider } from 'react-query'
 
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
@@ -16,24 +15,13 @@ if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
     })
 }
 
-// Create React QueryClient
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            refetchOnWindowFocus: false,
-        },
-    },
-})
-
 const container = document.getElementById('root')
 const root = createRoot(container!)
 root.render(
     <RecoilRoot>
-        <QueryClientProvider client={queryClient}>
-            <ConditionedRouter>
-                <App />
-            </ConditionedRouter>
-        </QueryClientProvider>
+        <ConditionedRouter>
+            <App />
+        </ConditionedRouter>
     </RecoilRoot>,
 )
 
