@@ -88,7 +88,7 @@ pub async fn push_diff<'a>(
                     diff_coordinate,
                     result.unwrap_err()
                 );
-                std::thread::sleep(std::time::Duration::from_secs(5));
+                tokio::time::sleep(std::time::Duration::from_secs(5));
             }
         };
         result.map_err(|e| anyhow::Error::from(e))
@@ -334,7 +334,7 @@ pub async fn push_initial_snapshot(
                 tracing::debug!(
                     "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
                 );
-                std::thread::sleep(std::time::Duration::from_secs(5));
+                tokio::time::sleep(std::time::Duration::from_secs(5));
             }
         };
         tracing::debug!(

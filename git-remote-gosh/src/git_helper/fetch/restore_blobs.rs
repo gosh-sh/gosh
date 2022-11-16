@@ -354,7 +354,7 @@ impl BlobsRebuildingPlan {
                             "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
                             result.unwrap_err()
                         );
-                        std::thread::sleep(std::time::Duration::from_secs(5));
+                        tokio::time::sleep(std::time::Duration::from_secs(5));
                     }
                 };
                 result.map_err(|e| anyhow::Error::from(e))
