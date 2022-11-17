@@ -1,7 +1,6 @@
-import { useMonaco } from '@monaco-editor/react'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { classNames, getCodeLanguageFromFilename } from 'react-gosh'
+import { classNames } from 'react-gosh'
 import { TBranch, TBranchCompareProgress } from 'react-gosh/dist/types/repo.types'
 import BlobDiffPreview from '../Blob/DiffPreview'
 import { BranchCompareProgress } from './CompareProgress'
@@ -28,8 +27,6 @@ const BranchComparePreview = (props: TBranchComparePreviewProps) => {
     const { className, srcBranch, dstBranch, progress } = props
     const { isEmpty, isFetching, details, items, getDiff } = progress
 
-    const monaco = useMonaco()
-
     return (
         <div className={classNames(className)}>
             {isFetching && <BranchCompareProgress {...details} />}
@@ -50,29 +47,15 @@ const BranchComparePreview = (props: TBranchComparePreviewProps) => {
                     </div>
 
                     {items.map(({ treepath, original, modified, showDiff }, index) => {
-                        const language = getCodeLanguageFromFilename(monaco, treepath)
                         return (
-                            <div
-                                key={index}
-                                className="my-5 border rounded overflow-hidden"
-                            >
-                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                    {treepath}
-                                </div>
-                                {showDiff ? (
-                                    <BlobDiffPreview
-                                        original={original}
-                                        modified={modified}
-                                        modifiedLanguage={language}
-                                    />
-                                ) : (
-                                    <button
-                                        className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-2"
-                                        onClick={() => getDiff(index)}
-                                    >
-                                        Load diff
-                                    </button>
-                                )}
+                            <div key={index} className="my-5">
+                                <BlobDiffPreview
+                                    filename={treepath}
+                                    original={original}
+                                    modified={modified}
+                                    isDiffLoaded={showDiff}
+                                    getDiff={() => getDiff(index)}
+                                />
                             </div>
                         )
                     })}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import ReactTooltip from 'react-tooltip'
-import { AppConfig, useNotificationMessages } from 'react-gosh'
+import { AppConfig } from 'react-gosh'
 
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
@@ -49,7 +49,6 @@ import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
 
 const App = () => {
-    useNotificationMessages()
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
     useEffect(() => {

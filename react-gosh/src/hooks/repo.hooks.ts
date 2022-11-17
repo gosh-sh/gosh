@@ -352,7 +352,7 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
             setTree(undefined)
             const gosh = GoshAdapterFactory.create(commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            newtree = await adapter.getTree(commit.name, filterPath)
+            newtree = await adapter.getTree(commit, filterPath)
             setTree(newtree)
         }
 
@@ -543,7 +543,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         isFetching: boolean
         items: {
             treepath: string
-            commit: string
+            commit: TCommit
             current: string | Buffer
             previous: string | Buffer
             showDiff: boolean
@@ -576,19 +576,19 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
 
     useEffect(() => {
         const _getBlobs = async () => {
-            if (!repository) return
+            if (!repository || !details.commit) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await repository.getCommitBlobs(commit)
+            const blobs = await repository.getCommitBlobs(details.commit)
             const state = await Promise.all(
                 blobs.sort().map(async (treepath, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await repository.getCommitBlob(treepath, commit)
+                            ? await repository.getCommitBlob(treepath, details.commit!)
                             : { previous: '', current: '' }
                     return {
                         treepath,
-                        commit,
+                        commit: details.commit!,
                         ...diff,
                         showDiff: i < showDiffNum,
                         isFetching: false,
@@ -599,7 +599,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }
 
         _getBlobs()
-    }, [repository])
+    }, [repository, details.commit])
 
     return {
         isFetching: details.isFetching,
@@ -752,8 +752,8 @@ function _useMergeRequest(
 
         // Get tree items for each branch
         const [srcTreeItems, dstTreeItems] = await Promise.all([
-            (async () => (await srcRepo.getTree(srcBranch.commit.name)).items)(),
-            (async () => (await dstRepo.getTree(dstBranch.commit.name)).items)(),
+            (async () => (await srcRepo.getTree(srcBranch.commit)).items)(),
+            (async () => (await dstRepo.getTree(dstBranch.commit)).items)(),
         ])
         setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
@@ -956,7 +956,7 @@ function usePullRequestCommit(
         }))
 
         const { item } = blobs.items[index]
-        const diff = await repository.getPullRequestBlob(item, commit)
+        const diff = await repository.getPullRequestBlob(item, details.commit!)
 
         setBlobs((state) => ({
             ...state,
@@ -970,15 +970,15 @@ function usePullRequestCommit(
 
     useEffect(() => {
         const _getBlobs = async () => {
-            if (!repository) return
+            if (!repository || !details.commit) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await repository.getPullRequestBlobs(commit)
+            const blobs = await repository.getPullRequestBlobs(details.commit)
             const state = await Promise.all(
                 blobs.map(async (item, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await repository.getPullRequestBlob(item, commit)
+                            ? await repository.getPullRequestBlob(item, details.commit!)
                             : { previous: '', current: '' }
                     return {
                         item,
@@ -992,7 +992,7 @@ function usePullRequestCommit(
         }
 
         _getBlobs()
-    }, [repository])
+    }, [repository, details.commit])
 
     return {
         isFetching: details.isFetching,

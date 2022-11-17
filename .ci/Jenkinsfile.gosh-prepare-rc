@@ -1,13 +1,13 @@
 pipeline {
     agent none
     triggers {
-        cron('30 23 * * *') //run at 23:30:00 
+        cron('30 23 * * *') //run at 23:31:00 
     }
     options {
         timestamps ()
     }
     parameters {
-        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'BRANCH', type: 'PT_BRANCH', quickFilterEnabled: true
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
         booleanParam name: 'ONLYWEB', defaultValue: false, description: 'If enabled, will ONLY deploy contracts and web. Skipping helper and extension build steps.'
     }
@@ -21,7 +21,15 @@ pipeline {
                 }
             }
             steps {
-                git branch: "${params.BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
+                script {
+                    if (env.ghprbPullLink) {
+                        env.BRANCH = env.ghprbSourceBranch
+                    } else {
+                        env.BRANCH = params.sha1
+                    }
+                }
+                echo "${BRANCH}"
+                git branch: "${BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
@@ -108,11 +116,22 @@ pipeline {
             }
             steps {
                 script {
+                    dir('contracts/multisig') {
+                        // Deploy msig giver for GOSH deployment
+                        sh 'make build-contracts-docker'
+                        sh 'make generate-docker NETWORK=vps23.ton.dev' // TODO Parametrize
+                        sh '''everdev network add vps23.ton.dev vps23.ton.dev 
+                            everdev signer add giver7 /opt/giver7.keys.json
+                            everdev contract run ../gosh/scripts/SafeMultisigWallet.abi.json submitTransaction -n vps23.ton.dev -s giver7 -a -1:7777777777777777777777777777777777777777777777777777777777777777 -i "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 1000000000000000, \\"bounce\\": false, \\"allBalance\\": false, \\"payload\\": \\"\\"}"
+                            sleep 30
+                            '''
+                        sh 'make deploy-docker'
+                    }
                     dir('contracts/gosh') {
-                        sh 'make prepare-docker && make deploy-docker KEYS_PATH=/opt/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                        sh 'make prepare-docker && make deploy-docker'
                     }
                 }
-                archiveArtifacts artifacts: 'contracts/gosh/gosh.seed'
+                archiveArtifacts artifacts: 'contracts/gosh/*.seed'
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
             }
         }
