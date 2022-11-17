@@ -22,6 +22,7 @@ use std::{
 };
 use tokio::task::JoinError;
 use tokio_retry::Retry;
+use tracing::Instrument;
 
 pub mod create_branch;
 mod parallel_diffs_upload_support;
@@ -435,22 +436,27 @@ where
                                 let tree_addr = tree_addr.clone();
                                 let branch_name = branch_name.to_owned().clone();
 
-                                push_handlers.push(tokio::spawn(async move {
-                                    Retry::spawn(default_retry_strategy(), || async {
-                                        blockchain
-                                            .push_commit(
-                                                &object_id,
-                                                &branch_name,
-                                                &tree_addr,
-                                                &remote,
-                                                &dao_addr,
-                                                &raw_commit,
-                                                &*parents,
-                                            )
-                                            .await
-                                    })
-                                    .await
-                                }));
+                                push_handlers.push(tokio::spawn(
+                                    async move {
+                                        Retry::spawn(default_retry_strategy(), || async {
+                                            blockchain
+                                                .push_commit(
+                                                    &object_id,
+                                                    &branch_name,
+                                                    &tree_addr,
+                                                    &remote,
+                                                    &dao_addr,
+                                                    &raw_commit,
+                                                    &*parents,
+                                                )
+                                                .await
+                                        })
+                                        .await
+                                    }
+                                    .instrument(
+                                        debug_span!("tokio::spawn::push_commit").or_current(),
+                                    ),
+                                ));
                             }
 
                             let tree_diff = utilities::build_tree_diff_from_commits(

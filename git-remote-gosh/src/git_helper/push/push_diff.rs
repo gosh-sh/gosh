@@ -14,6 +14,7 @@ use crate::{
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
+use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -60,29 +61,32 @@ pub async fn push_diff<'a>(
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = *last_commit_id;
 
-    Ok(tokio::spawn(async move {
-        Retry::spawn(default_retry_strategy(), || async {
-            inner_push_diff(
-                &blockchain,
-                repo_name.clone(),
-                snapshot_addr.clone(),
-                wallet.clone(),
-                &ipfs_endpoint,
-                &commit_id,
-                &branch_name,
-                &blob_id,
-                &file_path,
-                &diff_coordinate,
-                &last_commit_id,
-                is_last,
-                &original_snapshot_content,
-                &diff,
-                &new_snapshot_content,
-            )
+    Ok(tokio::spawn(
+        async move {
+            Retry::spawn(default_retry_strategy(), || async {
+                inner_push_diff(
+                    &blockchain,
+                    repo_name.clone(),
+                    snapshot_addr.clone(),
+                    wallet.clone(),
+                    &ipfs_endpoint,
+                    &commit_id,
+                    &branch_name,
+                    &blob_id,
+                    &file_path,
+                    &diff_coordinate,
+                    &last_commit_id,
+                    is_last,
+                    &original_snapshot_content,
+                    &diff,
+                    &new_snapshot_content,
+                )
+                .await
+            })
             .await
-        })
-        .await
-    }))
+        }
+        .instrument(debug_span!("tokio::spawn::inner_push_diff").or_current()),
+    ))
 }
 
 pub async fn inner_push_diff(
@@ -307,25 +311,28 @@ pub async fn push_initial_snapshot(
 
     let blockchain = context.blockchain.clone();
 
-    Ok(tokio::spawn(async move {
-        Retry::spawn(default_retry_strategy(), || async {
-            blockchain
-                .deploy_new_snapshot(
-                    &wallet,
-                    repo_addr.clone(),
-                    branch_name.to_string(),
-                    "".to_string(),
-                    file_path.to_string(),
-                    "".to_string(),
-                )
-                .await
-                .map_err(|e| {
-                    tracing::debug!(
-                        "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                    );
-                    e
-                })
-        })
-        .await
-    }))
+    Ok(tokio::spawn(
+        async move {
+            Retry::spawn(default_retry_strategy(), || async {
+                blockchain
+                    .deploy_new_snapshot(
+                        &wallet,
+                        repo_addr.clone(),
+                        branch_name.to_string(),
+                        "".to_string(),
+                        file_path.to_string(),
+                        "".to_string(),
+                    )
+                    .await
+                    .map_err(|e| {
+                        tracing::debug!(
+                            "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
+                        );
+                        e
+                    })
+            })
+            .await
+        }
+        .instrument(debug_span!("tokio::spawn::deploy_new_snapshot").or_current()),
+    ))
 }
