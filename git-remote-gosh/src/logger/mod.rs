@@ -26,6 +26,7 @@ impl LogService {
             tracing_subscriber::fmt::layer()
                 .compact()
                 .with_thread_ids(true)
+                .with_ansi(false)
                 .with_writer(std::io::stderr)
                 .with_filter(LevelFilter::ERROR),
         );

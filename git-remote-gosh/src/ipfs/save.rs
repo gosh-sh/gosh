@@ -14,8 +14,8 @@ impl FileSave for IpfsService {
             self.ipfs_endpoint_address,
         );
 
-        Retry::spawn(self.retry_strategy(), || {
-            IpfsService::save_blob_retriable(&self.http_client, &url, blob)
+        Retry::spawn(self.retry_strategy(), || async {
+            IpfsService::save_blob_retriable(&self.http_client, &url, blob).await
         })
         .await
     }
@@ -31,8 +31,8 @@ impl FileSave for IpfsService {
             self.ipfs_endpoint_address
         );
 
-        Retry::spawn(self.retry_strategy(), || {
-            IpfsService::save_file_retriable(&self.http_client, &url, &path)
+        Retry::spawn(self.retry_strategy(), || async {
+            IpfsService::save_file_retriable(&self.http_client, &url, &path).await
         })
         .await
     }
