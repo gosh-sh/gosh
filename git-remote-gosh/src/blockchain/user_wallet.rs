@@ -96,17 +96,18 @@ async fn zero_user_wallet(
     tracing::debug!("zero_user_wallet start");
     if _USER_WALLET.read().await.is_none() {
         tracing::debug!("zero_user_wallet lock read taken");
+        // TODO: fix this madness
+        let wallet_config = blockchain.wallet_config();
+        if wallet_config.is_none() {
+            anyhow::bail!("User wallet config must be set");
+        }
+        let config = wallet_config.as_ref().expect("Guarded");
+        let local_user_wallet =
+            get_user_wallet(blockchain, &root_contract, &dao_addr, &config, 0).await?;
         let mut user_wallet = _USER_WALLET.write().await;
         tracing::debug!("zero_user_wallet lock write taken");
         if user_wallet.is_none() {
-            // TODO: fix this madness
-            let wallet_config = blockchain.wallet_config();
-            if wallet_config.is_none() {
-                anyhow::bail!("User wallet config must be set");
-            }
-            let config = wallet_config.as_ref().expect("Guarded");
-            *user_wallet =
-                Some(get_user_wallet(blockchain, &root_contract, &dao_addr, &config, 0).await?);
+            *user_wallet = Some(local_user_wallet);
         }
     };
 
