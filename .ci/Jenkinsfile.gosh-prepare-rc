@@ -21,6 +21,7 @@ pipeline {
                 }
             }
             steps {
+                echo "${sha1}"
                 git branch: "${sha1}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
