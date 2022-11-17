@@ -157,7 +157,7 @@ impl ParallelDiffsUploadSupport {
                 attempt = 0;
             } else {
                 //TODO: replace with web-socket listen
-                std::thread::sleep(std::time::Duration::from_secs(3));
+                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 attempt += 1;
                 if attempt == MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
                     panic!(

@@ -291,7 +291,7 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-// #[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug", skip(context))]
 pub async fn push_initial_snapshot(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     branch_name: &str,
@@ -308,11 +308,8 @@ pub async fn push_initial_snapshot(
     let blockchain = context.blockchain.clone();
 
     Ok(tokio::spawn(async move {
-        let mut attempt = 0;
-        let result = loop {
-            attempt += 1;
-
-            let result = blockchain
+        Retry::spawn(default_retry_strategy(), || async {
+            blockchain
                 .deploy_new_snapshot(
                     &wallet,
                     repo_addr.clone(),
@@ -322,21 +319,13 @@ pub async fn push_initial_snapshot(
                     "".to_string(),
                 )
                 .await
-                .map(|_| ());
-
-            if result.is_ok() || attempt > PUSH_SNAPSHOT_MAX_TRIES {
-                break result;
-            } else {
-                tracing::debug!(
-                    "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                );
-                std::thread::sleep(std::time::Duration::from_secs(5));
-            }
-        };
-        tracing::debug!(
-            "deployNewSnapshot <branch: {branch_name}, path: {file_path}> result: {:?}",
-            result
-        );
-        result
+                .map_err(|e| {
+                    tracing::debug!(
+                        "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
+                    );
+                    e
+                })
+        })
+        .await
     }))
 }
