@@ -596,6 +596,7 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::git_helper::test_utils::{init_logger, shutdown_logger};
     use crate::{
         blockchain::{self, service::tests::MockEverscale},
         git_helper::{test_utils::setup_repo, tests::setup_test_helper},
@@ -695,87 +696,97 @@ mod tests {
 
     #[tokio::test]
     async fn test_push_parotected_ref() {
-        let span = trace_span!("test_push_parotected_ref");
-        let _guard = span.enter();
+        init_logger().await;
+        {
+            let span = trace_span!("test_push_parotected_ref");
+            let _guard = span.enter();
 
-        let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
+            let repo =
+                setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        let mut mock_blockchain = MockEverscale::new();
-        mock_blockchain
-            .expect_is_branch_protected()
-            .returning(|_, _| Ok(true));
-        mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
-            Ok(Some((
-                blockchain::BlockchainContractAddress::new("test"),
-                "test".to_owned(),
-            )))
-        });
+            let mut mock_blockchain = MockEverscale::new();
+            mock_blockchain
+                .expect_is_branch_protected()
+                .returning(|_, _| Ok(true));
+            mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
+                Ok(Some((
+                    blockchain::BlockchainContractAddress::new("test"),
+                    "test".to_owned(),
+                )))
+            });
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            mock_blockchain,
-        );
+            let mut helper = setup_test_helper(
+                json!({
+                    "ipfs": "foo.endpoint"
+                }),
+                "gosh://1/2/3",
+                repo,
+                mock_blockchain,
+            );
 
-        match helper.push("main:main").await {
-            Err(e) => assert!(e.to_string().contains("protected")),
-            _ => panic!("Protected branch push should panic"),
+            match helper.push("main:main").await {
+                Err(e) => assert!(e.to_string().contains("protected")),
+                _ => panic!("Protected branch push should panic"),
+            }
         }
+        shutdown_logger().await;
     }
 
     #[tokio::test]
     async fn test_push_normal_ref() {
-        let span = trace_span!("test_push_normal_ref");
-        let _guard = span.enter();
+        init_logger().await;
+        {
+            let span = trace_span!("test_push_normal_ref");
+            let _guard = span.enter();
 
-        // TODO: need more smart test
-        let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
+            // TODO: need more smart test
+            let repo =
+                setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 
-        let mut mock_blockchain = MockEverscale::new();
-        mock_blockchain
-            .expect_is_branch_protected()
-            .returning(|_, _| Ok(false));
+            let mut mock_blockchain = MockEverscale::new();
+            mock_blockchain
+                .expect_is_branch_protected()
+                .returning(|_, _| Ok(false));
 
-        mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
-            Ok(Some((
-                blockchain::BlockchainContractAddress::new("test"),
-                "test".to_owned(),
-            )))
-        });
-
-        // TODO: fix bad object stderr from git command
-        let sha = repo.head_commit().unwrap().id.to_string();
-        mock_blockchain
-            .expect_get_commit_by_addr()
-            .returning(move |_| {
-                Ok(Some(
-                    serde_json::from_value(json! ({
-                        "repo": "",
-                        "branch": "main",
-                        "sha": sha,
-                        "parents": [],
-                        "content": "",
-                    }))
-                    .unwrap(),
-                ))
+            mock_blockchain.expect_remote_rev_parse().returning(|_, _| {
+                Ok(Some((
+                    blockchain::BlockchainContractAddress::new("test"),
+                    "test".to_owned(),
+                )))
             });
 
-        mock_blockchain
-            .expect_notify_commit()
-            .returning(|_, _, _, _, _, _| Ok(()));
+            // TODO: fix bad object stderr from git command
+            let sha = repo.head_commit().unwrap().id.to_string();
+            mock_blockchain
+                .expect_get_commit_by_addr()
+                .returning(move |_| {
+                    Ok(Some(
+                        serde_json::from_value(json!({
+                            "repo": "",
+                            "branch": "main",
+                            "sha": sha,
+                            "parents": [],
+                            "content": "",
+                        }))
+                        .unwrap(),
+                    ))
+                });
 
-        let mut helper = setup_test_helper(
-            json!({
-                "ipfs": "foo.endpoint"
-            }),
-            "gosh://1/2/3",
-            repo,
-            mock_blockchain,
-        );
+            mock_blockchain
+                .expect_notify_commit()
+                .returning(|_, _, _, _, _, _| Ok(()));
 
-        let res = helper.push("main:main").await.unwrap();
+            let mut helper = setup_test_helper(
+                json!({
+                    "ipfs": "foo.endpoint"
+                }),
+                "gosh://1/2/3",
+                repo,
+                mock_blockchain,
+            );
+
+            let res = helper.push("main:main").await.unwrap();
+        }
+        shutdown_logger().await;
     }
 }
