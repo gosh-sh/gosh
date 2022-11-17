@@ -2,6 +2,8 @@ use super::call::BlockchainCall;
 use async_trait::async_trait;
 use cached::once_cell::sync::Lazy;
 use cached::{proc_macro::cached, SizedCache};
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering::SeqCst;
 use std::{cell::RefCell, sync::Once};
 use tokio::{runtime::Handle, sync::RwLock, task};
 use ton_client::crypto::KeyPair;
@@ -111,7 +113,10 @@ async fn zero_user_wallet(
         }
     };
 
-    Ok(_USER_WALLET.read().await.as_ref().unwrap().clone())
+    let res = _USER_WALLET.read().await.as_ref().unwrap().clone();
+    tracing::debug!("zero_user_wallet lock read2 taken");
+
+    Ok(res)
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -161,15 +166,17 @@ impl BlockchainUserWalletService for Everscale {
             }
         };
 
+        tracing::debug!("about to lock on INIT_USER_WALLET_MIRRORS call_once");
         INIT_USER_WALLET_MIRRORS.call_once(|| {
             let blockchain = self.clone();
             let zero_wallet = zero_wallet.clone();
+            tracing::debug!("about to lock on init_user_wallet");
             task::block_in_place(move || {
                 Handle::current().block_on(init_user_wallet_mirrors(
                     &blockchain,
                     &zero_wallet,
                     max_number_of_user_wallets,
-                )); // Result is unused. MB add '?'
+                ));
             });
         });
 
@@ -184,6 +191,7 @@ impl BlockchainUserWalletService for Everscale {
     }
 }
 
+#[instrument(level = "debug", skip(blockchain))]
 async fn init_user_wallet_mirrors<B, C>(
     blockchain: &B,
     wallet: &C,
@@ -193,29 +201,31 @@ where
     B: BlockchainService + BlockchainCall,
     C: ContractRead + ContractInfo + Sync,
 {
-    let n = user_wallet_config_max_number_of_mirrors(blockchain.client(), wallet).await?;
+    tracing::debug!("init_user_wallet_mirrors start");
     let result: GetWalletMirrorsCountResult = wallet
         .read_state(blockchain.client(), "getWalletsCount", None)
         .await?;
-    for _ in result.number_of_mirrors.into()..n {
+    for _ in result.number_of_mirrors.into()..max_number_of_mirrors {
         blockchain.call(wallet, "deployWallet", None).await?;
     }
     Ok(())
 }
 
-// Note: explicitly removing caching keys so it becomes RO global
-#[cached(
-    result = true,
-    type = "SizedCache<String, u64>",
-    create = "{ SizedCache::with_size(1) }",
-    convert = r#"{ "user_wallet_config_max_number_of_mirrors".to_string() }"#
-)]
+static MAX_NUMBER_OF_MIRRORS: AtomicU64 = AtomicU64::new(0);
+
 async fn user_wallet_config_max_number_of_mirrors(
     client: &EverClient,
     user_wallet_contract: &impl ContractRead,
 ) -> anyhow::Result<u64> {
-    let result: GetConfigResult = user_wallet_contract
-        .read_state(client, "getConfig", None)
-        .await?;
-    Ok(result.max_number_of_mirror_wallets.into())
+    let mut number = MAX_NUMBER_OF_MIRRORS.load(SeqCst);
+    if number == 0u64 {
+        tracing::debug!("user_wallet_config_max_number_of_mirrors");
+        let result: GetConfigResult = user_wallet_contract
+            .read_state(client, "getConfig", None)
+            .await?;
+        number = result.max_number_of_mirror_wallets.into();
+        MAX_NUMBER_OF_MIRRORS.swap(number, SeqCst);
+    }
+    tracing::debug!("number of mirrors {}", number);
+    Ok(number)
 }

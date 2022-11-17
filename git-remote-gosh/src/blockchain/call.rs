@@ -31,6 +31,7 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
+        tracing::debug!("blockchain call start");
         let call_set = match args {
             Some(value) => CallSet::some_with_function_and_input(function_name, value),
             None => CallSet::some_with_function(function_name),
