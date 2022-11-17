@@ -114,9 +114,12 @@ pipeline {
                         sh 'make generate-docker NETWORK=vps23.ton.dev' // TODO Parametrize
                         sh '''everdev network add vps23.ton.dev vps23.ton.dev 
                             everdev signer add giver7 /opt/giver7.keys.json
-                            everdev contract run ../gosh/scripts/SafeMultisigWallet.abi.json submitTransaction -n vps23.ton.dev -s giver7 -a -1:7777777777777777777777777777777777777777777777777777777777777777 -i "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 1000000000000000, \\"bounce\\": false, \\"allBalance\\": false, \\"payload\\": \\"\\"}"'''
-                        }
+                            pwd
+                            ls ../gosh/scripts/SafeMultisigWallet.abi.json
+                            everdev contract run ../gosh/scripts/SafeMultisigWallet.abi.json submitTransaction -n vps23.ton.dev -s giver7 -a -1:7777777777777777777777777777777777777777777777777777777777777777 -i "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 1000000000000000, \\"bounce\\": false, \\"allBalance\\": false, \\"payload\\": \\"\\"}"
+                            '''
                         sh 'make deploy-docker'
+                    }
                     dir('contracts/gosh') {
                         sh 'make prepare-docker && make deploy-docker'
                     }
