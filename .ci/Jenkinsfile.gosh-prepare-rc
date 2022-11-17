@@ -21,12 +21,19 @@ pipeline {
                 }
             }
             steps {
-                echo "${ghprbSourceBranch}"
-                git branch: "${ghprbSourceBranch}", url: 'https://github.com/gosh-sh/gosh.git'
+                script {
+                    if (!env.ghprbPullLink) {
+                        env.BRANCH = param.ghprbSourceBranch
+                    } else {
+                        env.BRANCH = env.ghprbSourceBranch
+                    }
+                }
+                echo "${BRANCH}"
+                git branch: "${BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
-                    currentBuild.displayName = "${BUILD_NUMBER}_${ghprbSourceBranch}_${VERSION}"
+                    currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
                 }
             }
         }
@@ -276,7 +283,7 @@ pipeline {
                         if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('.ci/scripts') {
                                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                                    sh './create-github-release.sh $TOKEN ${VERSION} ${ghprbSourceBranch}'
+                                    sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
                                 }
