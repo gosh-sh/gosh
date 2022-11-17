@@ -21,7 +21,7 @@ pipeline {
                 }
             }
             steps {
-                git branch: "${params.sha1}", url: 'https://github.com/gosh-sh/gosh.git'
+                git branch: "${sha1}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
