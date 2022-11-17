@@ -108,11 +108,16 @@ pipeline {
             }
             steps {
                 script {
+                    dir('contracts/multisig') {
+                        sh 'make build-contracts-docker'
+                        sh 'make generate-docker NETWORK=vps23.ton.dev' // Parametrize
+                        sh 'CALL GIVER'
+                    }
                     dir('contracts/gosh') {
-                        sh 'make prepare-docker && make deploy-docker KEYS_PATH=/opt/giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391'
+                        sh 'make prepare-docker && make deploy-docker'
                     }
                 }
-                archiveArtifacts artifacts: 'contracts/gosh/gosh.seed'
+                archiveArtifacts artifacts: 'contracts/gosh/*.seed'
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
             }
         }
