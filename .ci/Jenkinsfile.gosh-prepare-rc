@@ -23,12 +23,12 @@ pipeline {
             steps {
                 echo "${env.ghprbPullLink}"
                 echo "${env.ghprbSourceBranch}"
-                echo "${param.branch}"
+                echo "${params.branch}"
                 script {
                     if (env.ghprbPullLink) {
                         env.BRANCH = env.ghprbSourceBranch
                     } else {
-                        env.BRANCH = param.branch
+                        env.BRANCH = params.branch
                     }
                 }
                 echo "${BRANCH}"
