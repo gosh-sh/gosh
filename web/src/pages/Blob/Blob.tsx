@@ -1,7 +1,6 @@
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename, useBlob, useBranches } from 'react-gosh'
+import { useBlob, useBranches } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -22,7 +21,6 @@ const BlobPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const monaco = useMonaco()
     const { branches, branch } = useBranches(repo, branchName)
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
@@ -68,9 +66,9 @@ const BlobPage = () => {
                     Loading file...
                 </div>
             )}
-            {monaco && blob.path && !blob.isFetching && (
+            {blob.path && !blob.isFetching && (
                 <div className="border rounded overflow-hidden">
-                    <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
+                    <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
                         {!Buffer.isBuffer(blob.content) ? (
                             <>
                                 <CopyClipboard
@@ -99,10 +97,7 @@ const BlobPage = () => {
                             />
                         )}
                     </div>
-                    <BlobPreview
-                        language={getCodeLanguageFromFilename(monaco, blob.path)}
-                        value={blob.content}
-                    />
+                    <BlobPreview filename={blob.path} value={blob.content} />
                 </div>
             )}
         </div>

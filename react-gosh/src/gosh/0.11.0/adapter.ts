@@ -505,7 +505,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getTree(
-        commit: string,
+        commit: string | TCommit,
         search?: string,
     ): Promise<{ tree: TTree; items: TTreeItem[] }> {
         /** Recursive walker through tree blobs */
@@ -539,10 +539,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get root tree items and recursively get subtrees
+        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
         let items: TTreeItem[] = []
-        if (commit !== ZERO_COMMIT) {
-            const root = (await this.getCommit({ name: commit })).tree
-            items = await this._getTreeItems({ name: root })
+        if (commit.name !== ZERO_COMMIT) {
+            items = await this._getTreeItems({ name: commit.tree })
         }
         if (search !== '') await recursive('', items)
 
@@ -645,8 +645,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getCommitBlob(
         treepath: string,
-        commit: string,
+        commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+
         // Get commit tree items filtered by blob tree path,
         // find resulting blob sha1 after commit was applied
         const tree = (await this.getTree(commit, treepath)).items
@@ -656,8 +658,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get snapshot and read all incoming internal messages
-        const target = await this.getCommit({ name: commit })
-        const fullpath = `${target.branch}/${treepath}`
+        const fullpath = `${commit.branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
         const { messages } = await snapshot.getMessages(
             { msgType: ['IntIn'] },
@@ -716,16 +717,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return { previous, current }
     }
 
-    async getCommitBlobs(name: string): Promise<string[]> {
-        const commit = await this._getCommit({ name })
-        const branch = await commit.runLocal('getNameBranch', {})
-        const { messages } = await commit.getMessages({ msgType: ['IntIn'] }, true, true)
+    async getCommitBlobs(commit: string | TCommit): Promise<string[]> {
+        const isTCommit = typeof commit !== 'string'
+        const object = !isTCommit
+            ? await this._getCommit({ name: commit })
+            : await this._getCommit({ address: commit.address })
+        const branch: string = !isTCommit
+            ? (await object.runLocal('getNameBranch', {})).value0
+            : commit.branch
+
+        const { messages } = await object.getMessages({ msgType: ['IntIn'] }, true, true)
         const addresses = messages
             .filter(({ decoded }) => {
                 if (!decoded) return false
 
                 const { name, value } = decoded
-                return name === 'getAcceptedDiff' && value.branch === branch.value0
+                return name === 'getAcceptedDiff' && value.branch === branch
             })
             .map(({ decoded }) => decoded.value.value0.snap)
 
@@ -742,16 +749,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getPullRequestBlob(
         item: { treepath: string; index: number },
-        commit: string,
+        commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+
         // If commit was accepted, return blob state at commit
         if (item.index === -1) {
             return await this.getCommitBlob(item.treepath, commit)
         }
 
         // Get blob state at parent commit, get diffs and apply
-        const details = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: details.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0] })
 
         let previous: string | Buffer
         let current: string | Buffer
@@ -762,7 +770,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             previous = current = ''
         }
 
-        const diff = await this._getDiff(commit, item.index, 0)
+        const diff = await this._getDiff(commit.name, item.index, 0)
         const subdiffs = await this._getDiffs(diff)
         for (const subdiff of subdiffs) {
             current = await this._applyBlobDiffPatch(current, subdiff)
@@ -771,13 +779,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getPullRequestBlobs(
-        commit: string,
+        commit: string | TCommit,
     ): Promise<{ treepath: string; index: number }[]> {
+        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+
         // Get IGoshDiff instance list for commit
         const diffs: IGoshDiff[] = []
         let index1 = 0
         while (true) {
-            const diff = await this._getDiff(commit, index1, 0)
+            const diff = await this._getDiff(commit.name, index1, 0)
             if (!(await diff.isDeployed())) break
 
             diffs.push(diff)
@@ -854,13 +864,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getUpgrade(commit: string): Promise<TUpgradeData> {
-        const commitData = await this.getCommit({ name: commit })
-        if (commitData.name === ZERO_COMMIT) {
+        const object = await this.getCommit({ name: commit })
+        if (object.name === ZERO_COMMIT) {
             return {
                 commit: {
-                    ...commitData,
+                    ...object,
                     tree: ZERO_COMMIT,
-                    parents: [commitData.address],
+                    parents: [object.address],
                 },
                 tree: {},
                 blobs: [],
@@ -868,10 +878,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get non-zero commit data
-        const { tree, items } = await this.getTree(commit)
-        const blobs = await this._getTreeBlobs(items, commitData.branch)
+        const { tree, items } = await this.getTree(object)
+        const blobs = await this._getTreeBlobs(items, object.branch)
         return {
-            commit: { ...commitData, parents: [commitData.address] },
+            commit: { ...object, parents: [object.address] },
             tree,
             blobs,
         }
@@ -909,7 +919,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (fromBranch.name === name) return
 
         // Get `from` branch tree items and collect all blobs
-        const { items } = await this.getTree(fromBranch.commit.name)
+        const { items } = await this.getTree(fromBranch.commit)
         const blobs = await this._getTreeBlobs(items, fromBranch.name)
         cb({
             snapshotsRead: true,
@@ -1049,7 +1059,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get branch info and get branch tree
         const branchTo = await this.getBranch(branch)
-        const { items } = await this.getTree(branchTo.commit.name)
+        const { items } = await this.getTree(branchTo.commit)
 
         // Validation
         if (!isPullRequest && branchTo.isProtected) {

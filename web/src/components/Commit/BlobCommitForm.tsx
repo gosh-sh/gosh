@@ -206,7 +206,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                     </Tab.Panel>
                                     <Tab.Panel>
                                         <BlobPreview
-                                            language={codeLanguage}
+                                            filename={values.name}
                                             value={values.content}
                                         />
                                     </Tab.Panel>
