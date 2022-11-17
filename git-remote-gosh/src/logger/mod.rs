@@ -3,7 +3,7 @@ mod telemetry;
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
 use tracing::metadata::LevelFilter;
-use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, Layer};
+use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
@@ -31,7 +31,11 @@ impl LogService {
                 .with_filter(LevelFilter::ERROR),
         );
 
-        let layered_subscriber = tracing_subscriber::registry().with(console_layer);
+        let filter = EnvFilter::try_new("git_remote_gosh=trace").unwrap();
+
+        let layered_subscriber = tracing_subscriber::registry()
+            .with(filter)
+            .with(console_layer);
 
         // config otel layer
         // TODO: add #[cfg(feature=..)] support

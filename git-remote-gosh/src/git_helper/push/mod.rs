@@ -596,11 +596,11 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::git_helper::test_utils::{init_logger, shutdown_logger};
     use crate::{
         blockchain::{self, service::tests::MockEverscale},
         git_helper::{test_utils::setup_repo, tests::setup_test_helper},
     };
-    use crate::git_helper::test_utils::{init_logger, shutdown_logger};
 
     #[test]
     fn ensure_calc_left_dist_correctly() {
@@ -701,7 +701,8 @@ mod tests {
             let span = trace_span!("test_push_parotected_ref");
             let _guard = span.enter();
 
-            let repo = setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
+            let repo =
+                setup_repo("test_push_protected", "tests/fixtures/make_remote_repo.sh").unwrap();
 
             let mut mock_blockchain = MockEverscale::new();
             mock_blockchain
@@ -723,7 +724,6 @@ mod tests {
                 mock_blockchain,
             );
 
-
             match helper.push("main:main").await {
                 Err(e) => assert!(e.to_string().contains("protected")),
                 _ => panic!("Protected branch push should panic"),
@@ -740,7 +740,8 @@ mod tests {
             let _guard = span.enter();
 
             // TODO: need more smart test
-            let repo = setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
+            let repo =
+                setup_repo("test_push_normal", "tests/fixtures/make_remote_repo.sh").unwrap();
 
             let mut mock_blockchain = MockEverscale::new();
             mock_blockchain
@@ -761,13 +762,13 @@ mod tests {
                 .returning(move |_| {
                     Ok(Some(
                         serde_json::from_value(json!({
-                    "repo": "",
-                    "branch": "main",
-                    "sha": sha,
-                    "parents": [],
-                    "content": "",
-                }))
-                            .unwrap(),
+                            "repo": "",
+                            "branch": "main",
+                            "sha": sha,
+                            "parents": [],
+                            "content": "",
+                        }))
+                        .unwrap(),
                     ))
                 });
 
@@ -777,8 +778,8 @@ mod tests {
 
             let mut helper = setup_test_helper(
                 json!({
-            "ipfs": "foo.endpoint"
-        }),
+                    "ipfs": "foo.endpoint"
+                }),
                 "gosh://1/2/3",
                 repo,
                 mock_blockchain,

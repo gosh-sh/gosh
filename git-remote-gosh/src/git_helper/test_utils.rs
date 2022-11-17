@@ -1,12 +1,12 @@
+use crate::logger::set_log_verbosity;
 use git_object::bstr::ByteSlice;
 use git_repository::Repository;
-use std::{env, fs};
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Once;
 use std::time::Duration;
-use opentelemetry::global::shutdown_tracer_provider;
+use std::{env, fs};
 use tokio::time::sleep;
-use crate::logger::set_log_verbosity;
 
 static TEST_LOGGER: Once = Once::new();
 static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);

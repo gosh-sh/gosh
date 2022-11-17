@@ -1,8 +1,8 @@
-use std::process::ExitCode;
+use git_remote_gosh::anyhow;
 use git_remote_gosh::logger::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::env::args;
-use git_remote_gosh::anyhow;
+use std::process::ExitCode;
 
 fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     let exit_code = match result {
