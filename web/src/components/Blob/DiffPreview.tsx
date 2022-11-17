@@ -33,7 +33,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     const getDiffButton = (
         <button
             id={`${uniqueId}get-diff`}
-            className="!block text-sm mx-auto px-3 py-1.5 my-4 text-black font-medium underline underline-offset-4"
+            className="!block text-sm mx-auto px-3 py-1.5 my-4 text-black font-medium underline underline-offset-4 decoration-dashed"
             disabled={isDiffFetching}
         >
             {isDiffFetching && <Spinner className="mr-2" size="sm" />}
@@ -51,10 +51,19 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     )
 
     const createDiffCodeBlock = () => {
+        const isBuffer = Buffer.isBuffer(original) || Buffer.isBuffer(modified)
+
+        const _original = isBuffer || !isDiffLoaded ? '' : original
+        const _modified = isBuffer || !isDiffLoaded ? '' : modified
+
+        let genericEmptyDiff = 'File without changes'
+        if (!isDiffLoaded) genericEmptyDiff = renderToString(getDiffButton)
+        else if (isBuffer) genericEmptyDiff = 'Binary data not shown'
+
         const patch = Diff.createPatch(
             filename,
-            isDiffLoaded ? (original as string) : '',
-            isDiffLoaded ? (modified as string) : '',
+            _original,
+            _modified,
             undefined,
             undefined,
             {
@@ -80,11 +89,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                 <tr>
                     <td class="{{CSSLineClass.INFO}}">
                         <div class="{{contentClass}}">
-                            ${
-                                !isDiffLoaded
-                                    ? renderToString(getDiffButton)
-                                    : 'File without changes'
-                            }
+                            ${genericEmptyDiff}
                         </div>
                     </td>
                 </tr>
@@ -110,9 +115,6 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
         }
     }, [getDiff, uniqueId, isDiffShort])
 
-    if (Buffer.isBuffer(modified) || Buffer.isBuffer(original)) {
-        return <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>
-    }
     return (
         <div
             className={classNames('text-sm', className)}
