@@ -50,7 +50,7 @@ pub trait BlockchainCommitPusher {
 
 #[async_trait]
 impl BlockchainCommitPusher for Everscale {
-    // #[instrument(level = "debug")]
+    #[instrument(level = "debug")]
     async fn push_commit(
         &self,
         commit_id: &ObjectId,

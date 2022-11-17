@@ -86,15 +86,18 @@ async fn get_user_wallet(
     Ok(contract)
 }
 
-// #[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug", skip(blockchain))]
 async fn zero_user_wallet(
     blockchain: &impl BlockchainService,
     remote_network: &str,
     root_contract: &GoshContract,
     dao_addr: &BlockchainContractAddress,
 ) -> anyhow::Result<GoshContract> {
+    tracing::debug!("zero_user_wallet start");
     if _USER_WALLET.read().await.is_none() {
+        tracing::debug!("zero_user_wallet lock read taken");
         let mut user_wallet = _USER_WALLET.write().await;
+        tracing::debug!("zero_user_wallet lock write taken");
         if user_wallet.is_none() {
             // TODO: fix this madness
             let wallet_config = blockchain.wallet_config();
@@ -126,18 +129,20 @@ impl BlockchainUserWalletService for Everscale {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }
-    // #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "debug", skip(self))]
     async fn user_wallet(
         &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
     ) -> anyhow::Result<GoshContract> {
+        tracing::debug!("wallet_config start");
         let client = self.client();
         let wallet_config = self.wallet_config();
         if wallet_config.is_none() {
             anyhow::bail!("User wallet config must be set");
         }
         let wallet_config = wallet_config.clone().expect("Guarded");
+        tracing::debug!("wallet_config before zero_user_wallet");
         let zero_wallet =
             zero_user_wallet(self, &remote_network, self.root_contract(), &dao_address).await?;
 
