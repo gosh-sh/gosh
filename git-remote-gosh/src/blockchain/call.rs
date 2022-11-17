@@ -5,6 +5,7 @@ use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
 };
+use tracing::Instrument;
 
 #[async_trait]
 pub(super) trait BlockchainCall {
@@ -61,6 +62,7 @@ impl BlockchainCall for Everscale {
             },
             default_callback,
         )
+        .instrument(debug_span!("blockchain_client::process_message").or_current())
         .await?;
 
         let call_result: CallResult = serde_json::from_value(transaction)?;

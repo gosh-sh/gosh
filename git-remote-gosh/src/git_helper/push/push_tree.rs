@@ -9,6 +9,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
 use tokio::task::JoinHandle;
 use tokio_retry::Retry;
+use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -100,24 +101,28 @@ pub async fn push_tree(
         let dao_addr = context.dao_addr.clone();
         let repo = context.remote.repo.clone();
 
-        handlers.push(tokio::spawn(async move {
-            Retry::spawn(default_retry_strategy(), || async {
-                inner_deploy_tree(
-                    &blockchain,
-                    &network,
-                    &dao_addr,
-                    &repo,
-                    &tree_id,
-                    &tree_nodes,
-                )
+        handlers.push(tokio::spawn(
+            async move {
+                Retry::spawn(default_retry_strategy(), || async {
+                    inner_deploy_tree(
+                        &blockchain,
+                        &network,
+                        &dao_addr,
+                        &repo,
+                        &tree_id,
+                        &tree_nodes,
+                    )
+                    .await
+                })
                 .await
-            })
-            .await
-        }));
+            }
+            .instrument(debug_span!("tokio::spawn::inner_deploy_tree").or_current()),
+        ));
     }
     Ok(handlers)
 }
 
+#[instrument(level = "debug", skip(blockchain, tree_nodes))]
 async fn inner_deploy_tree(
     blockchain: &impl BlockchainService,
     remote_network: &str,
