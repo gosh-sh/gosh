@@ -7,7 +7,7 @@ pipeline {
         timestamps ()
     }
     parameters {
-        //gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
         booleanParam name: 'ONLYWEB', defaultValue: false, description: 'If enabled, will ONLY deploy contracts and web. Skipping helper and extension build steps.'
     }
