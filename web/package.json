@@ -15,7 +15,7 @@
         "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | postcss.config.js | tailwind.config.json | .env.docker.production | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run build && cd ../web && rm -rf ./node_modules/react-gosh || true && rm -rf ./node_modules/.cache || true && npm update react-gosh"
+        "update-react-gosh": "cd ../react-gosh && rm -rf dist && npm run build && cd - && rm -rf ./node_modules/react-gosh || true && rm -rf ./node_modules/.cache || true && npm update react-gosh"
     },
     "eslintConfig": {
         "extends": [

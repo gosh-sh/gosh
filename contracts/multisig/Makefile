@@ -19,7 +19,7 @@ prepare-docker:
 	docker build -t everdev:latest ../../.ci/
 
 build-contracts-docker:
-	docker run -it --rm \
+	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/multisig && make build-contracts'
