@@ -7,6 +7,7 @@ use futures::StreamExt;
 use std::collections::HashMap;
 use std::vec::Vec;
 use tracing::Instrument;
+use tokio::task::JoinSet;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -17,9 +18,10 @@ pub struct ParallelDiffsUploadSupport {
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
     expecting_deployed_contacts_addresses: Vec<BlockchainContractAddress>,
-    pushed_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>>,
+    pushed_blobs: JoinSet<anyhow::Result<()>>
 }
 
+#[derive(Clone)]
 pub struct ParallelDiff {
     commit_id: git_hash::ObjectId,
     branch_name: String,
@@ -64,7 +66,7 @@ impl ParallelDiffsUploadSupport {
             next_parallel_index: 0,
             last_commit_id: *last_commit_id,
             expecting_deployed_contacts_addresses: vec![],
-            pushed_blobs: FuturesUnordered::new(),
+            pushed_blobs: JoinSet::new(),
         }
     }
 
@@ -72,35 +74,38 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        for (
-            diff_coordinates,
-            ParallelDiff {
-                commit_id,
-                branch_name,
-                blob_id,
-                file_path,
-                original_snapshot_content,
-                diff,
-                new_snapshot_content,
-            },
-        ) in self.dangling_diffs.values()
+        for (diff_coordinates, parallel_diff) in self.dangling_diffs.values()
         {
-            self.pushed_blobs.push(
-                push_diff(
-                    context,
-                    commit_id,
-                    branch_name,
-                    blob_id,
-                    file_path,
-                    diff_coordinates,
-                    &self.last_commit_id,
-                    true, // <- It is known now
-                    original_snapshot_content,
-                    diff,
-                    new_snapshot_content,
-                )
-                .await?,
-            );
+            {
+                    let blockchain = context.blockchain.clone();
+                    let dao_address: BlockchainContractAddress = context.dao_addr.clone();
+                    let remote_network: String = context.remote.network.clone();
+                    let diff_coordinates = diff_coordinates.clone();
+                    let parallel_diff = parallel_diff.clone();
+                    let last_commit_id = self.last_commit_id.clone();
+                    let repo_name: String = context.remote.repo.clone();
+                    let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
+                    self.pushed_blobs.spawn(async move {
+                        push_diff(
+                            &blockchain,
+                                &repo_name,
+                                &dao_address,
+                                &remote_network,
+                                &ipfs_http_endpoint,
+                                &parallel_diff.commit_id,
+                                &parallel_diff.branch_name,
+                                &parallel_diff.blob_id,
+                                &parallel_diff.file_path,
+                                &diff_coordinates,
+                                &last_commit_id,
+                            true, // <- It is known now
+                            &parallel_diff.original_snapshot_content,
+                            &parallel_diff.diff,
+                            &parallel_diff.new_snapshot_content,
+                        )
+                        .await
+                    }.instrument(debug_span!("tokio::spawn::push_diff").or_current()));
+            }
             let mut repo_contract = context.blockchain.repo_contract().clone();
             let diff_contract_address = diff_address(
                 &context.blockchain.client(),
@@ -135,7 +140,7 @@ impl ParallelDiffsUploadSupport {
             "Expecting the following diff contracts to be deployed: {:?}",
             self.expecting_deployed_contacts_addresses
         );
-        while let Some(finished_task) = self.pushed_blobs.next().await {
+        while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
                     panic!("diffs joih-handler: {}", e);
@@ -158,11 +163,11 @@ impl ParallelDiffsUploadSupport {
     where
         B: BlockchainService + 'static,
     {
-        let mut deploymend_results: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
+        let mut deploymend_results: JoinSet<anyhow::Result<()>> = JoinSet::new();
         for address in addresses {
             let b = blockchain.clone();
             let expected_address = address.clone();
-            deploymend_results.push(tokio::spawn(
+            deploymend_results.spawn(
                 async move {
                     ParallelDiffsUploadSupport::wait_diff_deployed(
                         &b,
@@ -171,10 +176,10 @@ impl ParallelDiffsUploadSupport {
                 }.instrument(
                     debug_span!("tokio::spawn::wait_diff_deployed").or_current(),
                 )
-            ));
+            );
         }
-        for handler in deploymend_results {
-            handler.await??;
+        while let Some(res) = deploymend_results.join_next().await {
+            res?;
         }
         Ok(())
     }
@@ -204,41 +209,46 @@ impl ParallelDiffsUploadSupport {
         context: &mut GitHelper<impl BlockchainService + 'static>,
         diff: ParallelDiff,
     ) -> anyhow::Result<()> {
-        match self.dangling_diffs.get(&diff.file_path) {
+        let diff_coordinates = self.next_diff(&diff.file_path);
+        let prev_value = self.dangling_diffs
+            .insert(diff.file_path.clone(), (diff_coordinates, diff));
+
+        match prev_value {
             None => {}
             Some((
                 diff_coordinates,
-                ParallelDiff {
-                    commit_id,
-                    branch_name,
-                    blob_id,
-                    file_path,
-                    original_snapshot_content,
-                    diff,
-                    new_snapshot_content,
-                },
+                parallel_diff,
             )) => {
-                self.pushed_blobs.push(
+                let blockchain = context.blockchain.clone();
+                let dao_address: BlockchainContractAddress = context.dao_addr.clone();
+                let remote_network: String = context.remote.network.clone();
+                let diff_coordinates = diff_coordinates.clone();
+                let parallel_diff = parallel_diff.clone();
+                let last_commit_id = self.last_commit_id.clone();
+                let repo_name: String = context.remote.repo.clone();
+                let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
+                self.pushed_blobs.spawn(async move {
                     push_diff(
-                        context,
-                        commit_id,
-                        branch_name,
-                        blob_id,
-                        file_path,
-                        diff_coordinates,
-                        &self.last_commit_id,
+                        &blockchain,
+                        &repo_name,
+                        &dao_address,
+                        &remote_network,
+                        &ipfs_http_endpoint,
+                        &parallel_diff.commit_id,
+                        &parallel_diff.branch_name,
+                        &parallel_diff.blob_id,
+                        &parallel_diff.file_path,
+                        &diff_coordinates,
+                        &last_commit_id,
                         false, // <- It is known now
-                        original_snapshot_content,
-                        diff,
-                        new_snapshot_content,
+                        &parallel_diff.original_snapshot_content,
+                        &parallel_diff.diff,
+                        &parallel_diff.new_snapshot_content,
                     )
-                    .await?,
-                );
+                    .await
+                }.instrument(debug_span!("tokio::spawn::push_diff").or_current()));
             }
         }
-        let diff_coordinates = self.next_diff(&diff.file_path);
-        self.dangling_diffs
-            .insert(diff.file_path.clone(), (diff_coordinates, diff));
         Ok(())
     }
 

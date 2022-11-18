@@ -91,8 +91,8 @@ git = 'https://github.com/TrueLayer/reqwest-middleware'
 package = 'reqwest-tracing'
 
 [dependencies.tokio]
-features = ['full']
-version = '1.20.1'
+features = ['full', 'rt']
+version = '1.21.2'
 
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
@@ -110,4 +110,4 @@ version = '^0.11.0'
 
 [patch.crates-io.tokio]
 git = 'https://github.com/tokio-rs/tokio'
-tag = 'tokio-1.20.1'
+tag = 'tokio-1.21.2'

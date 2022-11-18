@@ -22,8 +22,12 @@ const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
 #[instrument(level = "debug", skip(diff, new_snapshot_content))]
-pub async fn push_diff<'a>(
-    context: &mut GitHelper<impl BlockchainService + 'a + 'static>,
+pub async fn push_diff<'a, B>(
+    blockchain: &B,
+    repo_name: &str,
+    dao_address: &BlockchainContractAddress,
+    remote_network: &str,
+    ipfs_endpoint: &str,
     commit_id: &'a git_hash::ObjectId,
     branch_name: &'a str,
     blob_id: &'a git_hash::ObjectId,
@@ -34,26 +38,26 @@ pub async fn push_diff<'a>(
     original_snapshot_content: &'a Vec<u8>,
     diff: &'a [u8],
     new_snapshot_content: &'a Vec<u8>,
-) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
-    let wallet = context
-        .blockchain
-        .user_wallet(&context.dao_addr, &context.remote.network)
+) -> anyhow::Result<()>
+where
+    B: BlockchainService
+{
+    let wallet = blockchain
+        .user_wallet(dao_address, remote_network)
         .await?;
-    let mut repo_contract = context.blockchain.repo_contract().clone();
+    let mut repo_contract = blockchain.repo_contract().clone();
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
-        &context.blockchain.client(),
+        &blockchain.client(),
         &mut repo_contract,
         branch_name,
         file_path,
     ))
     .await?;
 
-    let blockchain = context.blockchain.clone();
+    let blockchain = blockchain.clone();
     let original_snapshot_content = original_snapshot_content.clone();
     let diff = diff.to_owned();
     let new_snapshot_content = new_snapshot_content.clone();
-    let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-    let repo_name = context.remote.repo.clone();
     let commit_id = *commit_id;
     let branch_name = branch_name.to_owned();
     let blob_id = *blob_id;
@@ -61,32 +65,27 @@ pub async fn push_diff<'a>(
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = *last_commit_id;
 
-    Ok(tokio::spawn(
-        async move {
-            Retry::spawn(default_retry_strategy(), || async {
-                inner_push_diff(
-                    &blockchain,
-                    repo_name.clone(),
-                    snapshot_addr.clone(),
-                    wallet.clone(),
-                    &ipfs_endpoint,
-                    &commit_id,
-                    &branch_name,
-                    &blob_id,
-                    &file_path,
-                    &diff_coordinate,
-                    &last_commit_id,
-                    is_last,
-                    &original_snapshot_content,
-                    &diff,
-                    &new_snapshot_content,
-                )
-                .await
-            })
-            .await
-        }
-        .instrument(debug_span!("tokio::spawn::inner_push_diff").or_current()),
-    ))
+    Retry::spawn(default_retry_strategy(), || async {
+        inner_push_diff(
+            &blockchain,
+            repo_name.to_string(),
+            snapshot_addr.clone(),
+            wallet.clone(),
+            &ipfs_endpoint,
+            &commit_id,
+            &branch_name,
+            &blob_id,
+            &file_path,
+            &diff_coordinate,
+            &last_commit_id,
+            is_last,
+            &original_snapshot_content,
+            &diff,
+            &new_snapshot_content,
+        )
+        .await
+    }).await?;
+    Ok(())
 }
 
 pub async fn inner_push_diff(
