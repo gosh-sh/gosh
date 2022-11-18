@@ -86,6 +86,10 @@ where
             &new_snapshot_content,
         )
         .await
+        .map_err(|e| {
+            tracing::warn!("Attempt failed with {:#?}", e);
+            e
+        })
     })
     .await?;
     Ok(())

@@ -15,7 +15,12 @@ impl FileSave for IpfsService {
         );
 
         Retry::spawn(self.retry_strategy(), || async {
-            IpfsService::save_blob_retriable(&self.http_client, &url, blob).await
+            IpfsService::save_blob_retriable(&self.http_client, &url, blob)
+                .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
         })
         .await
     }
@@ -32,7 +37,12 @@ impl FileSave for IpfsService {
         );
 
         Retry::spawn(self.retry_strategy(), || async {
-            IpfsService::save_file_retriable(&self.http_client, &url, &path).await
+            IpfsService::save_file_retriable(&self.http_client, &url, &path)
+                .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
         })
         .await
     }
