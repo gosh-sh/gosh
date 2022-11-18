@@ -150,6 +150,7 @@ pub trait DeployNewSnapshot {
 
 #[async_trait]
 impl DeployNewSnapshot for Everscale {
+    #[instrument(level = "debug", skip(self, wallet, content))]
     async fn deploy_new_snapshot<W>(
         &self,
         wallet: &W,
