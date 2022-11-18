@@ -11,6 +11,11 @@ pub trait ContractInfo: Debug {
     fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair>;
 }
 
+pub trait MirroredContractsPool: Debug {
+    type Output;
+    fn take_one(&self) -> Self::Output;
+}
+
 #[async_trait]
 pub trait ContractStatic: Debug {
     async fn static_method<T>(

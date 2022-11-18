@@ -7,14 +7,17 @@ use crate::blockchain::{
 };
 use crate::config::UserWalletConfig;
 
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::vec::Vec;
-use tokio::sync::Mutex;
-use tokio::sync::RwLock;
 
-use tokio::sync::OnceCell;
+use tokio::sync::Mutex;
+use tokio::sync::{Semaphore, SemaphorePermit};
+
+use std::future::Future;
 
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {
@@ -22,12 +25,87 @@ struct GetConfigResult {
     pub max_number_of_mirror_wallets: NumberU64,
 }
 
-#[derive(Clone)]
-struct UserWalletMirrors {
-    mirrors: HashMap<u64, GoshContract>,
-    initialized_mirrors: Vec<u64>,
-    max_possible_number_of_wallets: u64,
-    deployments_in_flight: u64,
+pub struct UserWalletsMirrorsInnerState {
+    wallets: HashMap<u64, GoshContract>,
+    gosh_root: GoshContract,
+    dao_address: BlockchainContractAddress,
+    wallet_config: UserWalletConfig,
+}
+impl UserWalletsMirrorsInnerState {
+    pub fn new(
+        zero_wallet: GoshContract,
+        gosh_root: GoshContract,
+        dao_address: BlockchainContractAddress,
+        wallet_config: UserWalletConfig,
+    ) -> Self {
+        let mut wallets = HashMap::new();
+        wallets.insert(0, zero_wallet);
+        Self {
+            wallets,
+            gosh_root,
+            dao_address,
+            wallet_config,
+        }
+    }
+    fn empty() -> Self {
+        let no_address = BlockchainContractAddress::new("");
+        let no_contract = GoshContract::new(no_address.clone(), ("", ""));
+        Self::new(
+            no_contract.clone(),
+            no_contract,
+            no_address,
+            UserWalletConfig {
+                pubkey: "".to_string(),
+                secret: "".to_string(),
+                profile: "".to_string(),
+            },
+        )
+    }
+}
+
+pub struct UserWalletMirrors {
+    pool: Arc<Mutex<Vec<GoshContract>>>,
+    max_possible_number_of_wallets: AtomicU64,
+    pool_size: AtomicU64,
+    deployments_in_flight: AtomicU64,
+    semaphore: Arc<Semaphore>,
+    max_number_of_aquires_per_mirror: u32,
+    inner_mirrors_lock: Arc<Mutex<UserWalletsMirrorsInnerState>>,
+}
+
+pub struct UserWalletContractRef<'a> {
+    mirrors: &'a UserWalletMirrors,
+    contract: GoshContract,
+    permit: SemaphorePermit<'a>,
+}
+impl<'a> Deref for UserWalletContractRef<'a> {
+    type Target = GoshContract;
+
+    fn deref(&self) -> &Self::Target {
+        &self.contract
+    }
+}
+
+impl<'a> Drop for UserWalletContractRef<'a> {
+    fn drop(&mut self) {
+        tokio::task::block_in_place(move || {
+            let mut pool = self.mirrors.pool.blocking_lock();
+            pool.push(self.contract.clone());
+        });
+    }
+}
+impl<'a> UserWalletContractRef<'a> {
+    fn new(
+        mirrors: &'a UserWalletMirrors,
+        permit: SemaphorePermit<'a>,
+        contract: GoshContract,
+    ) -> Self {
+        return Self {
+            mirrors,
+            contract,
+            permit,
+        };
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,176 +114,144 @@ struct GetWalletMirrorsCountResult {
     pub number_of_mirrors: NumberU64,
 }
 
-static NEXT_WALLET_INDEX: AtomicU64 = AtomicU64::new(0);
-static MIRRORS: Lazy<RwLock<UserWalletMirrors>> =
-    Lazy::new(|| RwLock::new(UserWalletMirrors::empty()));
-static USER_WALLET_MIRRORS_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
-static INIT_MIRRORS: OnceCell<u32> = OnceCell::const_new();
-
-#[instrument(level = "debug", skip(blockchain, wallet_config))]
-pub(super) async fn take_next_wallet<B>(
-    blockchain: &B,
-    zero_wallet: GoshContract,
-    gosh_root: &GoshContract,
-    dao_address: &BlockchainContractAddress,
-    wallet_config: &UserWalletConfig,
-) -> GoshContract
-where
-    B: BlockchainService + BlockchainCall,
-{
-    let current_index = NEXT_WALLET_INDEX.fetch_add(1, Ordering::SeqCst);
-    INIT_MIRRORS
-        .get_or_init(|| async {
-            let initialization_result = UserWalletMirrors::try_initialize(
-                &MIRRORS,
-                blockchain,
-                &zero_wallet,
-                gosh_root,
-                dao_address,
-                wallet_config,
-            )
-            .await;
-            if let Err(e) = initialization_result {
-                tracing::debug!(
-                    "Error while initializing user wallet mirrors occured: {}",
-                    e
-                );
-            }
-            1
-        })
-        .await;
-    let is_initialized = { MIRRORS.read().await.is_initialized() };
-    if !is_initialized {
-        let initialization_result = UserWalletMirrors::try_initialize(
-            &MIRRORS,
-            blockchain,
-            &zero_wallet,
-            gosh_root,
-            dao_address,
-            wallet_config,
-        )
-        .await;
-        if let Err(e) = initialization_result {
-            tracing::debug!(
-                "Error while initializing user wallet mirrors occured: {}",
-                e
-            );
-        }
-    }
-    // Retry read state
-    // Note: It may still be uninitialized, yet should continue with zero wallet.
-    let state = MIRRORS.read().await;
-    let n = current_index % (state.get_available_mirrors_count() + 1);
-    if n == 0 {
-        return zero_wallet;
-    } else {
-        return state.get_mirror_by_index(n);
-    }
-}
-
 impl UserWalletMirrors {
-    pub fn empty() -> Self {
+    pub fn empty(max_number_of_aquires_per_mirror: u32) -> Self {
         return Self {
-            mirrors: HashMap::new(),
-            initialized_mirrors: Vec::new(),
-            max_possible_number_of_wallets: 0u64,
-            deployments_in_flight: 0u64,
+            pool: Arc::new(Mutex::new(Vec::<GoshContract>::new())),
+            max_possible_number_of_wallets: AtomicU64::new(0),
+            pool_size: AtomicU64::new(0),
+            deployments_in_flight: AtomicU64::new(0),
+            semaphore: Arc::new(Semaphore::new(0)),
+            max_number_of_aquires_per_mirror,
+            inner_mirrors_lock: Arc::new(Mutex::new(UserWalletsMirrorsInnerState::empty())),
         };
     }
-    pub fn is_initialized(&self) -> bool {
-        return self.max_possible_number_of_wallets > 0
-            && self.get_available_mirrors_count() + 1 < self.max_possible_number_of_wallets;
+    pub async fn take_one(&self) -> anyhow::Result<UserWalletContractRef> {
+        let permit = self.semaphore.acquire().await?;
+        let mut pool = self.pool.lock().await;
+        let contract: GoshContract = pool.pop().unwrap();
+        return Ok(UserWalletContractRef::new(self, permit, contract));
     }
-    pub fn get_mirror_by_index(&self, index: u64) -> GoshContract {
-        // Note: index is shifted due to the zero wallet.
-        let mirror_id = self.initialized_mirrors[(index - 1) as usize];
-        self.mirrors
-            .get(&mirror_id)
-            .expect("mirror struct must be consistent")
-            .clone()
+
+    pub fn is_ready(&self) -> bool {
+        return self.pool_size.load(Ordering::SeqCst) > 0;
     }
-    pub fn get_available_mirrors_count(&self) -> u64 {
-        self.initialized_mirrors.len() as u64
+
+    pub fn is_mirrors_ready(&self) -> bool {
+        if !self.is_ready() {
+            return false;
+        }
+        let max_number_of_wallets = self.max_possible_number_of_wallets.load(Ordering::SeqCst);
+        if max_number_of_wallets == 0 {
+            return false;
+        }
+        let pool_size = self.pool_size.load(Ordering::SeqCst);
+        return pool_size >= max_number_of_wallets * (self.max_number_of_aquires_per_mirror as u64);
     }
-    pub async fn try_initialize<B>(
-        mirrors: &RwLock<UserWalletMirrors>,
-        blockchain: &B,
-        zero_wallet: &GoshContract,
-        gosh_root: &GoshContract,
-        dao_address: &BlockchainContractAddress,
-        wallet_config: &UserWalletConfig,
-    ) -> anyhow::Result<()>
+
+    #[instrument(level = "debug", skip(self, blockchain))]
+    pub(super) async fn try_init_mirrors<B>(&self, blockchain: &B) -> anyhow::Result<()>
     where
         B: BlockchainService + BlockchainCall,
     {
-        // Trying to aquire lock to update max number of wallets
-        // Ignore this run if it's been taken already.
-        // Some other task is in the process of updating that global.
-        if let Ok(guard) = USER_WALLET_MIRRORS_LOCK.try_lock() {
-            let mut current_state: UserWalletMirrors = { mirrors.read().await.clone() };
-            if current_state.max_possible_number_of_wallets == 0 {
-                let max_number_of_mirrors =
-                    get_user_wallet_config_max_number_of_mirrors(blockchain, zero_wallet).await?;
-                current_state.max_possible_number_of_wallets = 1 + max_number_of_mirrors;
-                // Checkpoint in case some other failure down the line
-                {
-                    let mut mirrors_state = mirrors.write().await;
-                    *mirrors_state = current_state.clone();
+        if self.is_mirrors_ready() {
+            return Ok(());
+        }
+        if let Ok(mut inner_state) = self.inner_mirrors_lock.try_lock() {
+            if self.is_mirrors_ready() {
+                return Ok(());
+            }
+            let state: &mut UserWalletsMirrorsInnerState = inner_state.deref_mut();
+            let mirrors: &mut HashMap<u64, GoshContract> = &mut state.wallets;
+            let zero_wallet = mirrors.get(&0u64).unwrap().clone();
+            let mut max_number_of_mirrors =
+                (self.max_possible_number_of_wallets.load(Ordering::SeqCst) as i32) - 1;
+            if max_number_of_mirrors < 0 {
+                max_number_of_mirrors =
+                    get_user_wallet_config_max_number_of_mirrors(blockchain, &zero_wallet).await?
+                        as i32;
+                self.max_possible_number_of_wallets
+                    .store((max_number_of_mirrors + 1) as u64, Ordering::SeqCst);
+            }
+            let max_number_of_mirrors = max_number_of_mirrors;
+            let mirrors_deployed =
+                get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
+            for wallet_index in 1..mirrors_deployed + 1 {
+                if mirrors.get(&wallet_index).is_none() {
+                    let get_mirror_result = get_user_wallet(
+                        blockchain,
+                        &state.gosh_root,
+                        &state.dao_address,
+                        &state.wallet_config,
+                        wallet_index,
+                    )
+                    .await;
+                    if let Ok(mirror) = get_mirror_result {
+                        let mut pool_guard = self.pool.lock().await;
+                        let pool: &mut Vec<GoshContract> = pool_guard.deref_mut();
+                        UserWalletMirrors::add_mirror_instance(
+                            wallet_index,
+                            mirror,
+                            pool,
+                            self.max_number_of_aquires_per_mirror,
+                            Arc::clone(&self.semaphore),
+                            &self.pool_size,
+                            mirrors,
+                        );
+                    }
                 }
             }
-            if current_state.get_available_mirrors_count() + 1
-                < current_state.max_possible_number_of_wallets
-            {
-                // Read blockchain state regarding the number of onchain mirrors
-                let mirrors_deployed =
-                    get_number_of_user_wallet_mirrors_deployed(blockchain, zero_wallet).await?;
-                for index in 0..mirrors_deployed {
-                    let wallet_index = 1 + index;
-                    if current_state.mirrors.get(&wallet_index).is_none() {
-                        let user_wallet_mirror_result = get_user_wallet(
-                            blockchain,
-                            gosh_root,
-                            dao_address,
-                            wallet_config,
-                            wallet_index,
-                        )
-                        .await;
-                        match user_wallet_mirror_result {
-                            Ok(user_wallet_mirror) => {
-                                current_state
-                                    .mirrors
-                                    .insert(wallet_index, user_wallet_mirror);
-                                current_state.initialized_mirrors.push(wallet_index);
-                                // Checkpoint
-                                {
-                                    let mut mirrors_state = mirrors.write().await;
-                                    *mirrors_state = current_state.clone();
-                                }
-                            }
-                            Err(e) => {
-                                tracing::debug!("Error while getting mirror wallet occured: {}", e);
-                            }
-                        }
-                    }
-                }
-
-                let missing_mirrors = current_state.max_possible_number_of_wallets
-                    - 1
-                    - mirrors_deployed
-                    - current_state.deployments_in_flight;
-                for _ in 0..missing_mirrors {
-                    if let Ok(_) = blockchain.call(zero_wallet, "deployWallet", None).await {
-                        current_state.deployments_in_flight += 1;
-                        // Checkpoint
-                        {
-                            let mut mirrors_state = mirrors.write().await;
-                            *mirrors_state = current_state.clone();
-                        }
-                    }
-                }
+            let missing_mirrors = max_number_of_mirrors - (mirrors_deployed as i32);
+            for _ in 0..missing_mirrors {
+                let _ = blockchain.call(&zero_wallet, "deployWallet", None).await;
             }
         }
         Ok(())
+    }
+
+    #[instrument(level = "debug", skip(self, f))]
+    pub async fn init_zero_wallet<F, Fut>(&self, f: F) -> anyhow::Result<()>
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = anyhow::Result<UserWalletsMirrorsInnerState>>,
+    {
+        if self.is_ready() {
+            return Ok(());
+        }
+        let mut mirrors = self.inner_mirrors_lock.lock().await;
+        let mut pool = self.pool.lock().await;
+        if self.is_ready() {
+            return Ok(());
+        }
+        let zero_state = f().await?;
+        *mirrors = zero_state;
+        UserWalletMirrors::add_mirror_instance(
+            0u64,
+            mirrors.wallets.get(&0u64).unwrap().clone(),
+            pool.deref_mut(),
+            self.max_number_of_aquires_per_mirror,
+            Arc::clone(&self.semaphore),
+            &self.pool_size,
+            &mut mirrors.wallets,
+        );
+        Ok(())
+    }
+
+    fn add_mirror_instance(
+        wallet_index: u64,
+        wallet: GoshContract,
+        pool: &mut Vec<GoshContract>,
+        max_number_of_aquires_per_mirror: u32,
+        semaphore: Arc<Semaphore>,
+        pool_size: &AtomicU64,
+        mirrors: &mut HashMap<u64, GoshContract>,
+    ) {
+        for _ in 0..max_number_of_aquires_per_mirror {
+            pool.push(wallet.clone());
+        }
+        semaphore.add_permits(max_number_of_aquires_per_mirror as usize);
+        pool_size.fetch_add(max_number_of_aquires_per_mirror as u64, Ordering::SeqCst);
+        mirrors.insert(wallet_index, wallet);
     }
 }
 

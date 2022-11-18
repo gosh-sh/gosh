@@ -1,6 +1,7 @@
+use crate::blockchain::user_wallet::UserWallet;
 use crate::{
     blockchain::{
-        contract::{ContractInfo, ContractRead, GoshContract},
+        contract::{ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
             save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
@@ -92,13 +93,19 @@ where
 
 #[instrument(
     level = "debug",
-    skip(blockchain, original_snapshot_content, diff, new_snapshot_content)
+    skip(
+        blockchain,
+        original_snapshot_content,
+        diff,
+        new_snapshot_content,
+        wallet
+    )
 )]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
     snapshot_addr: BlockchainContractAddress,
-    wallet: impl ContractRead + ContractInfo + Sync + 'static,
+    wallet: UserWallet,
     ipfs_endpoint: &str,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
@@ -125,15 +132,17 @@ pub async fn inner_push_diff(
                 "state": hex::encode(original_snapshot_content),
                 "diff": hex::encode(&diff)
             });
-
-            match wallet
-                .read_state::<GetDiffResultResult>(
-                    &blockchain.client(),
-                    "getDiffResult",
-                    Some(data),
-                )
-                .await
-            {
+            let get_diff_result = {
+                let wallet_contract = wallet.take_one().await?;
+                wallet_contract
+                    .read_state::<GetDiffResultResult>(
+                        &blockchain.client(),
+                        "getDiffResult",
+                        Some(data),
+                    )
+                    .await
+            };
+            match get_diff_result {
                 Ok(apply_patch_result) => {
                     if apply_patch_result.hex_encoded_compressed_content.is_none() {
                         is_going_to_ipfs = true;
