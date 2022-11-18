@@ -122,9 +122,9 @@ class BaseContract implements IContract {
         const page = edges
             .map((edge: any) => ({ message: edge.node, decoded: null }))
             .sort((a: any, b: any) => {
-                const a_lt = parseInt(a.created_lt, 16)
-                const b_lt = parseInt(b.created_lt, 16)
-                return a_lt < b_lt ? 1 : -1
+                const a_lt = parseInt(a.message.created_lt, 16)
+                const b_lt = parseInt(b.message.created_lt, 16)
+                return b_lt - a_lt
             })
         if (decode) {
             await Promise.all(
