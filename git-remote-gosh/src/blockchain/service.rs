@@ -183,7 +183,7 @@ pub mod tests {
                 repo_name: String,
                 branch_name: String,
                 commit_id: String,
-                diffs: Vec<Diff>,
+                diffs: Diff,
                 index1: u32,
                 index2: u32,
                 last: bool,

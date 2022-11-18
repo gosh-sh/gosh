@@ -88,7 +88,7 @@ pub trait DeployDiff {
         repo_name: String,
         branch_name: String,
         commit_id: String,
-        diffs: Vec<Diff>,
+        diffs: Diff,
         index1: u32,
         index2: u32,
         last: bool,
@@ -99,13 +99,14 @@ pub trait DeployDiff {
 
 #[async_trait]
 impl DeployDiff for Everscale {
+    #[instrument(level = "debug", skip(self, wallet, diff))]
     async fn deploy_diff<W>(
         &self,
         wallet: &W,
         repo_name: String,
         branch_name: String,
         commit_id: String,
-        diffs: Vec<Diff>,
+        diff: Diff,
         index1: u32,
         index2: u32,
         last: bool,
@@ -113,6 +114,7 @@ impl DeployDiff for Everscale {
     where
         W: ContractInfo + Sync + 'static,
     {
+        let diffs = vec![diff];
         let args = DeployDiffParams {
             repo_name,
             branch_name,

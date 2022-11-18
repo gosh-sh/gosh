@@ -148,12 +148,14 @@ pub struct Everscale {
     repo_contract: GoshContract,
 }
 
+#[instrument(level = "debug", skip(context, contract))]
 async fn run_local(
     context: &EverClient,
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
+    tracing::debug!("internal run_local start");
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));

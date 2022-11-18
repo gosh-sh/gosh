@@ -147,6 +147,7 @@ impl ContractInfo for GoshContract {
 
 #[async_trait]
 impl ContractRead for GoshContract {
+    #[instrument(level = "debug", skip(self, client))]
     async fn read_state<T>(
         &self,
         client: &EverClient,

@@ -31,6 +31,7 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
+        tracing::debug!("blockchain call start");
         let call_set = match args {
             Some(value) => CallSet::some_with_function_and_input(function_name, value),
             None => CallSet::some_with_function(function_name),
@@ -51,10 +52,7 @@ impl BlockchainCall for Everscale {
             processing_try_index: None,
         };
 
-        let ResultOfProcessMessage {
-            transaction, /* decoded, */
-            ..
-        } = ton_client::processing::process_message(
+        let sdk_result = ton_client::processing::process_message(
             self.client().clone(),
             ParamsOfProcessMessage {
                 send_events: false,
@@ -63,8 +61,14 @@ impl BlockchainCall for Everscale {
             default_callback,
         )
         .instrument(debug_span!("blockchain_client::process_message").or_current())
-        .await?;
-
+        .await;
+        if let Err(ref e) = sdk_result {
+            tracing::debug!("process_message error: {:#?}", e);
+        }
+        let ResultOfProcessMessage {
+            transaction, /* decoded, */
+            ..
+        } = sdk_result?;
         let call_result: CallResult = serde_json::from_value(transaction)?;
 
         tracing::debug!("trx id: {}", call_result.trx_id);
