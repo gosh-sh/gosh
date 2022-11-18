@@ -4,6 +4,7 @@ use base64_serde::base64_serde_type;
 
 use serde::Deserialize;
 use serde_json;
+use tracing_futures::Instrument;
 
 use std::sync::Arc;
 
@@ -169,6 +170,7 @@ async fn run_local(
             order: None,
         },
     )
+    .instrument(debug_span!("run_local sdk::query_collection").or_current())
     .await
     .map(|r| r.result)?;
 
@@ -196,6 +198,7 @@ async fn run_local(
             processing_try_index: None,
         },
     )
+    .instrument(debug_span!("run_local sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
 
@@ -210,6 +213,7 @@ async fn run_local(
             return_updated_account: None,
         },
     )
+    .instrument(debug_span!("run_local sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;
@@ -217,6 +221,7 @@ async fn run_local(
     Ok(result)
 }
 
+#[instrument(level = "debug", skip(context, contract))]
 async fn run_static(
     context: &EverClient,
     contract: &mut GoshContract,
@@ -241,6 +246,7 @@ async fn run_static(
                 order: None,
             },
         )
+        .instrument(debug_span!("run_static sdk::query_collection").or_current())
         .await
         .map(|r| r.result)?;
 
@@ -282,6 +288,7 @@ async fn run_static(
             processing_try_index: None,
         },
     )
+    .instrument(debug_span!("run_static sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
@@ -296,6 +303,7 @@ async fn run_static(
             return_updated_account: None,
         },
     )
+    .instrument(debug_span!("run_static sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;

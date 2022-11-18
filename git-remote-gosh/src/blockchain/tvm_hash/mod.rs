@@ -7,6 +7,7 @@ use ton_client::{
     boc::{get_boc_hash, ParamsOfGetBocHash, ResultOfGetBocHash},
 };
 
+#[instrument(level = "debug", skip(context, data))]
 pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<String> {
     let params = ParamsOfAbiEncodeBoc {
         params: vec![AbiParam {
