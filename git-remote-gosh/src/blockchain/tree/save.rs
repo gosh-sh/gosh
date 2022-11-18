@@ -5,6 +5,7 @@ use git_object;
 use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
+use crate::blockchain::contract::ContractInfo;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
@@ -55,6 +56,7 @@ impl DeployTree for Everscale {
             ipfs: None, // !!!
         };
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),

@@ -195,16 +195,25 @@ impl ParallelDiffsUploadSupport {
         B: BlockchainService,
     {
         for _ in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
-            if !is_diff_deployed(blockchain.client(), expecting_address).await? {
+            let is_diff_deployed_result = is_diff_deployed(
+                blockchain.client(),
+                expecting_address
+            ).await;
+            if let Ok(_) = is_diff_deployed_result {
+                return Ok(());
+            } else {
                 //TODO: replace with web-socket listen
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                anyhow::bail!(
-                    "Some contracts didn't appear in time: {}",
-                    expecting_address
+                tracing::debug!(
+                    "Is diff deployed failed with: {}",
+                    is_diff_deployed_result.err().unwrap()
                 );
             }
         }
-        Ok(())
+        anyhow::bail!(
+            "Some contracts didn't appear in time: {}",
+            expecting_address
+        );
     }
 
     #[instrument(level = "debug", skip(self, context, diff))]

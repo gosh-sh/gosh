@@ -2,6 +2,7 @@
 use crate::blockchain::user_wallet::UserWallet;
 use async_trait::async_trait;
 use std::ops::Deref;
+use crate::blockchain::contract::ContractInfo;
 
 use crate::{
     blockchain::call::BlockchainCall,
@@ -123,6 +124,7 @@ impl DeployDiff for Everscale {
         };
 
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),
@@ -170,6 +172,7 @@ impl DeployNewSnapshot for Everscale {
             ipfs: None,
         };
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),

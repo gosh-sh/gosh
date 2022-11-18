@@ -2,6 +2,7 @@ use super::call::BlockchainCall;
 
 use super::Everscale;
 use crate::blockchain::user_wallet::UserWallet;
+use crate::blockchain::contract::ContractInfo;
 
 use async_trait::async_trait;
 use std::ops::Deref;
@@ -32,6 +33,7 @@ impl DeployBranch for Everscale {
             "fromCommit": from_commit,
         });
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(wallet_contract.deref(), "deployBranch", Some(params))
             .await
