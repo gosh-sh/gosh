@@ -107,6 +107,7 @@ modes:
 
   script: &script
     handler: script
+    redis_host: ""
 
   app-script:
     <<: *script
@@ -128,10 +129,11 @@ modes:
       - app-small
       - app-large
       - remote-small
-      - remote-large-7
+      - remote-large-8
     cron: true
     interval: 900
     do_lock: true
+    redis_host: ""
 
   app-small-read: &app-small-read
     branch:  app-small
@@ -198,14 +200,14 @@ modes:
 
   rem-large-read: &rem-large-read
     <<: *use_log_counter_for_remote
-    branch:     remote-large-7
+    branch:     remote-large-8
     handler:    remote-read
     large:      true
     timeout_ms: 50
 
   rem-large-write: &rem-large-write
     <<: *use_log_counter_for_remote
-    branch:  remote-large-7
+    branch:  remote-large-8
     handler: remote-write
     large:   true
     interval: 450
@@ -239,7 +241,7 @@ modes:
 
   cron-rem-rotate-large: &cron-rem-rotate-large
     <<: *cron-rotate
-    branch:  remote-large-7
+    branch:  remote-large-8
     large:   true
 
   cron-rem-rotate-small-next:
