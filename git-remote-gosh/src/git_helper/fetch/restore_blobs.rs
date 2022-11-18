@@ -17,6 +17,7 @@ use std::{
     sync::{Arc, Mutex},
     vec::Vec,
 };
+use tracing::Instrument;
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -334,31 +335,37 @@ impl BlobsRebuildingPlan {
             let snapshot_address_clone = snapshot_address.clone();
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
-            fetched_blobs.push(tokio::spawn(async move {
-                let attempt = 0;
-                let result = loop {
-                    let result = restore_a_set_of_blobs_from_a_known_snapshot(
-                        &es_client,
-                        &ipfs_http_endpoint,
-                        &mut repo,
-                        &mut repo_contract,
-                        &snapshot_address_clone,
-                        &mut blobs_to_restore,
-                        &visited_ref,
-                    )
-                    .await;
-                    if result.is_ok() || attempt > FETCH_MAX_TRIES {
-                        break result;
-                    } else {
-                        tracing::debug!(
-                            "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
-                            result.unwrap_err()
-                        );
-                        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-                    }
-                };
-                result.map_err(|e| anyhow::Error::from(e))
-            }));
+            fetched_blobs.push(tokio::spawn(
+                async move {
+                    let attempt = 0;
+                    let result = loop {
+                        let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                            &es_client,
+                            &ipfs_http_endpoint,
+                            &mut repo,
+                            &mut repo_contract,
+                            &snapshot_address_clone,
+                            &mut blobs_to_restore,
+                            &visited_ref,
+                        )
+                        .await;
+                        if result.is_ok() || attempt > FETCH_MAX_TRIES {
+                            break result;
+                        } else {
+                            tracing::debug!(
+                                "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
+                                result.unwrap_err()
+                            );
+                            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                        }
+                    };
+                    result.map_err(|e| anyhow::Error::from(e))
+                }
+                .instrument(
+                    debug_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
+                        .or_current(),
+                ),
+            ));
             blobs.clear();
         }
         self.snapshot_address_to_blob_sha.clear();
