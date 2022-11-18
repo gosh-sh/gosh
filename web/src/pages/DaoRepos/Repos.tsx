@@ -29,6 +29,7 @@ const DaoRepositoriesPage = () => {
                         placeholder="Search repository..."
                         className="element !py-1.5"
                         value={search}
+                        disabled={isFetching}
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
