@@ -195,10 +195,8 @@ impl ParallelDiffsUploadSupport {
         B: BlockchainService,
     {
         for _ in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
-            let is_diff_deployed_result = is_diff_deployed(
-                blockchain.client(),
-                expecting_address
-            ).await;
+            let is_diff_deployed_result =
+                is_diff_deployed(blockchain.client(), expecting_address).await;
             if let Ok(_) = is_diff_deployed_result {
                 return Ok(());
             } else {

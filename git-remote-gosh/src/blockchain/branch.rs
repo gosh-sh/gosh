@@ -1,8 +1,8 @@
 use super::call::BlockchainCall;
 
 use super::Everscale;
-use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::contract::ContractInfo;
+use crate::blockchain::user_wallet::UserWallet;
 
 use async_trait::async_trait;
 use std::ops::Deref;

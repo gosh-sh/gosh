@@ -1,3 +1,4 @@
+use crate::blockchain::contract::ContractInfo;
 use crate::{
     blockchain::{
         call::BlockchainCall, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
@@ -5,7 +6,6 @@ use crate::{
     },
     utilities::Remote,
 };
-use crate::blockchain::contract::ContractInfo;
 use async_trait::async_trait;
 use git_hash::ObjectId;
 use std::ops::Deref;

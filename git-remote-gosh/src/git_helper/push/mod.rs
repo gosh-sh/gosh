@@ -2,10 +2,7 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{
-        get_commit_address, tree::into_tree_contract_complient_path, BlockchainContractAddress,
-        BlockchainService, ZERO_SHA,
-    },
+    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA},
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
@@ -15,7 +12,6 @@ use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
     collections::{HashMap, HashSet},
-    path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
     vec::Vec,

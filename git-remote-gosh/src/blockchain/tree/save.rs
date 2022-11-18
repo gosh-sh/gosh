@@ -1,3 +1,4 @@
+use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{call::BlockchainCall, Everscale, GoshBlobBitFlags};
 use async_trait::async_trait;
@@ -5,7 +6,6 @@ use git_object;
 use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
-use crate::blockchain::contract::ContractInfo;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
