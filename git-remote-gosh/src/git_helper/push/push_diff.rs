@@ -1,7 +1,7 @@
 use crate::blockchain::user_wallet::UserWallet;
 use crate::{
     blockchain::{
-        contract::{ContractInfo, ContractRead, GoshContract},
+        contract::{ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
             save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},

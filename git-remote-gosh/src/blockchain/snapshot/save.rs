@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use crate::{
     blockchain::call::BlockchainCall,
-    blockchain::{contract::ContractInfo, BlockchainContractAddress, Everscale},
+    blockchain::{BlockchainContractAddress, Everscale},
 };
 
 #[derive(Deserialize, Debug)]

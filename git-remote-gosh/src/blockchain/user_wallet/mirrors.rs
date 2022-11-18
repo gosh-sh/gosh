@@ -7,20 +7,17 @@ use crate::blockchain::{
 };
 use crate::config::UserWalletConfig;
 
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::vec::Vec;
-use tokio::sync::RwLock;
-use tokio::sync::{Mutex, MutexGuard};
+
+use tokio::sync::Mutex;
 use tokio::sync::{Semaphore, SemaphorePermit};
 
 use std::future::Future;
-
-use tokio::sync::OnceCell;
 
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {

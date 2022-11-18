@@ -1,7 +1,5 @@
 use crate::blockchain::user_wallet::UserWallet;
-use crate::blockchain::{
-    call::BlockchainCall, contract::ContractInfo, Everscale, GoshBlobBitFlags,
-};
+use crate::blockchain::{call::BlockchainCall, Everscale, GoshBlobBitFlags};
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;

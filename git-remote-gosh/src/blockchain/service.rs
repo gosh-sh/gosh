@@ -132,7 +132,7 @@ impl BlockchainService for Everscale {
 pub mod tests {
     use super::*;
     use crate::{
-        blockchain::{contract::ContractInfo, snapshot::save::Diff, tree::TreeNode},
+        blockchain::{snapshot::save::Diff, tree::TreeNode},
         config::UserWalletConfig,
         utilities::Remote,
     };

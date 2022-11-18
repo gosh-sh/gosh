@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use once_cell::sync::Lazy;
 
 use std::sync::Arc;
-use tokio::sync::RwLock;
+
 use ton_client::crypto::KeyPair;
 
 use crate::{abi, config::UserWalletConfig};
