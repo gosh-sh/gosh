@@ -49,19 +49,6 @@ where
         Ok(object_id)
     }
 
-    async fn write_git_data<'a>(
-        &mut self,
-        obj: git_object::Data<'a>,
-    ) -> anyhow::Result<git_hash::ObjectId> {
-        tracing::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
-        let store = &mut self.local_repository().objects;
-        // It should refresh once even if the refresh mode is never, just to initialize the index
-        //store.refresh_never();
-        let object_id = store.write_buf(obj.kind, obj.data)?;
-        tracing::info!("Writing git data - success");
-        Ok(object_id)
-    }
-
     #[instrument(level = "debug")]
     pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
