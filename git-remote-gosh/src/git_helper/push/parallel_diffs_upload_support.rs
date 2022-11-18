@@ -33,6 +33,10 @@ pub struct ParallelDiff {
 }
 
 impl ParallelDiff {
+    #[instrument(
+        level = "debug",
+        skip(original_snapshot_content, diff, new_snapshot_content)
+    )]
     pub fn new(
         commit_id: git_hash::ObjectId,
         branch_name: String,
@@ -70,6 +74,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
+    #[instrument(level = "debug", skip(self, context))]
     pub async fn push_dangling(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
