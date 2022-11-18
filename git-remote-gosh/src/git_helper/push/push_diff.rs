@@ -179,7 +179,6 @@ pub async fn inner_push_diff(
     } else {
         tracing::trace!("push_diff: {:?}", diff);
     }
-    let diffs: Vec<Diff> = vec![diff];
 
     blockchain
         .deploy_diff(
@@ -187,7 +186,7 @@ pub async fn inner_push_diff(
             repo_name,
             branch_name.to_string(),
             last_commit_id.to_string(),
-            diffs,
+            diff,
             diff_coordinate.index_of_parallel_thread,
             diff_coordinate.order_of_diff_in_the_parallel_thread,
             is_last,

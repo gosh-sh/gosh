@@ -236,5 +236,5 @@ where
     let result: GetWalletMirrorsCountResult = wallet
         .read_state(blockchain.client(), "getWalletsCount", None)
         .await?;
-    Ok(result.number_of_mirrors.into())
+    Ok(Into::<u64>::into(result.number_of_mirrors) - 1)
 }
