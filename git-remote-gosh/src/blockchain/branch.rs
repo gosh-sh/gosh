@@ -1,9 +1,9 @@
 use super::call::BlockchainCall;
 use super::contract::ContractInfo;
 use super::Everscale;
-use async_trait::async_trait;
 use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::GoshContract;
+use async_trait::async_trait;
 use std::ops::Deref;
 
 #[async_trait]
@@ -25,15 +25,15 @@ impl DeployBranch for Everscale {
         repo_name: &str,
         new_name: &str,
         from_commit: &str,
-    ) -> anyhow::Result<()>
-    {
+    ) -> anyhow::Result<()> {
         let params = serde_json::json!({
             "repoName": repo_name,
             "newName": new_name,
             "fromCommit": from_commit,
         });
         let wallet_contract = wallet.take_one().await?;
-        let result = self.call(wallet_contract.deref(), "deployBranch", Some(params))
+        let result = self
+            .call(wallet_contract.deref(), "deployBranch", Some(params))
             .await
             .map(|_| ());
         drop(wallet_contract);

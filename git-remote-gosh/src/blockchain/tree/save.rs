@@ -1,10 +1,10 @@
+use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{
     call::BlockchainCall, contract::ContractInfo, Everscale, GoshBlobBitFlags,
 };
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;
-use crate::blockchain::user_wallet::UserWallet;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -49,8 +49,7 @@ impl DeployTree for Everscale {
         sha: &str,
         repo_name: &str,
         nodes: &HashMap<String, TreeNode>,
-    ) -> anyhow::Result<()>
-    {
+    ) -> anyhow::Result<()> {
         let params = DeployTreeArgs {
             sha: sha.to_owned(),
             repo_name: repo_name.to_owned(),
@@ -58,7 +57,12 @@ impl DeployTree for Everscale {
             ipfs: None, // !!!
         };
         let wallet_contract = wallet.take_one().await?;
-        let result = self.call(wallet_contract.deref(), "deployTree", Some(serde_json::to_value(params)?))
+        let result = self
+            .call(
+                wallet_contract.deref(),
+                "deployTree",
+                Some(serde_json::to_value(params)?),
+            )
             .await
             .map(|_| ());
         drop(wallet_contract);

@@ -9,9 +9,9 @@ use super::{
     GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
+use crate::blockchain::user_wallet::UserWallet;
 use async_trait::async_trait;
 use std::fmt::Debug;
-use crate::blockchain::user_wallet::UserWallet;
 
 #[async_trait]
 pub trait BlockchainBranchesService {

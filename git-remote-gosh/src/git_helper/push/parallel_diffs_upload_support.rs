@@ -162,7 +162,6 @@ impl ParallelDiffsUploadSupport {
         .await
     }
 
-
     #[instrument(level = "debug", skip(blockchain))]
     async fn wait_contracts_deployed<B>(
         blockchain: &B,

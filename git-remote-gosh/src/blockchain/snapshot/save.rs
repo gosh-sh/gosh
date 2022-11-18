@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
+use crate::blockchain::user_wallet::UserWallet;
 use async_trait::async_trait;
 use std::ops::Deref;
-use crate::blockchain::user_wallet::UserWallet;
 
 use crate::{
     blockchain::call::BlockchainCall,
@@ -110,8 +110,7 @@ impl DeployDiff for Everscale {
         index1: u32,
         index2: u32,
         last: bool,
-    ) -> anyhow::Result<()>
-    {
+    ) -> anyhow::Result<()> {
         let diffs = vec![diff];
         let args = DeployDiffParams {
             repo_name,
@@ -125,7 +124,11 @@ impl DeployDiff for Everscale {
 
         let wallet_contract = wallet.take_one().await?;
         let result = self
-            .call(wallet_contract.deref(), "deployDiff", Some(serde_json::to_value(args)?))
+            .call(
+                wallet_contract.deref(),
+                "deployDiff",
+                Some(serde_json::to_value(args)?),
+            )
             .await?;
         drop(wallet_contract);
         tracing::debug!("deployDiff result: {:?}", result);
@@ -157,8 +160,7 @@ impl DeployNewSnapshot for Everscale {
         commit_id: String,
         file_path: String,
         content: String,
-    ) -> anyhow::Result<()>
-    {
+    ) -> anyhow::Result<()> {
         let args = DeploySnapshotParams {
             repo_address,
             branch_name,
@@ -168,13 +170,14 @@ impl DeployNewSnapshot for Everscale {
             ipfs: None,
         };
         let wallet_contract = wallet.take_one().await?;
-        let result = self.call(
-            wallet_contract.deref(),
-            "deployNewSnapshot",
-            Some(serde_json::to_value(args)?),
-        )
-        .await
-        .map(|_| ());
+        let result = self
+            .call(
+                wallet_contract.deref(),
+                "deployNewSnapshot",
+                Some(serde_json::to_value(args)?),
+            )
+            .await
+            .map(|_| ());
         drop(wallet_contract);
         if let Err(ref e) = result {
             tracing::debug!("deploy_branch_error: {}", e);

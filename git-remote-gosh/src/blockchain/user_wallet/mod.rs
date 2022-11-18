@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use ton_client::crypto::KeyPair;
-use std::sync::Arc;
 
 use crate::{abi, config::UserWalletConfig};
 
@@ -28,7 +28,8 @@ struct GetAddrWalletResult {
     pub address: BlockchainContractAddress,
 }
 
-static _USER_WALLET: Lazy<UserWallet> = Lazy::new(|| Arc::new(UserWalletMirrors::empty(WALLET_CONTRACTS_PARALLELISM)));
+static _USER_WALLET: Lazy<UserWallet> =
+    Lazy::new(|| Arc::new(UserWalletMirrors::empty(WALLET_CONTRACTS_PARALLELISM)));
 
 #[instrument(level = "debug", skip(blockchain))]
 async fn get_user_wallet(
@@ -95,29 +96,31 @@ impl BlockchainUserWalletService for Everscale {
     ) -> anyhow::Result<UserWallet> {
         tracing::debug!("wallet_config start");
         if !_USER_WALLET.is_ready() {
-            let config = self.wallet_config().clone()
-                .ok_or(
-                    anyhow::anyhow!("user wallet config does not exist or invalid")
-                )?;
+            let config = self.wallet_config().clone().ok_or(anyhow::anyhow!(
+                "user wallet config does not exist or invalid"
+            ))?;
             let gosh_root = self.root_contract().clone();
-            _USER_WALLET.init_zero_wallet(|| async {
-                let client = self.client();
-                let wallet_config = config.clone();
-                tracing::debug!("wallet_config before zero_user_wallet");
-                let zero_contract: GoshContract = get_user_wallet(
-                    self,
-                    self.root_contract(),
-                    &dao_address,
-                    &wallet_config,
-                    0
-                ).await?;
-                Ok(UserWalletsMirrorsInnerState::new(
-                    zero_contract,
-                    gosh_root,
-                    dao_address.clone(),
-                    config.clone()
-                ))
-            }).await?;
+            _USER_WALLET
+                .init_zero_wallet(|| async {
+                    let client = self.client();
+                    let wallet_config = config.clone();
+                    tracing::debug!("wallet_config before zero_user_wallet");
+                    let zero_contract: GoshContract = get_user_wallet(
+                        self,
+                        self.root_contract(),
+                        &dao_address,
+                        &wallet_config,
+                        0,
+                    )
+                    .await?;
+                    Ok(UserWalletsMirrorsInnerState::new(
+                        zero_contract,
+                        gosh_root,
+                        dao_address.clone(),
+                        config.clone(),
+                    ))
+                })
+                .await?;
         }
         if !_USER_WALLET.is_mirrors_ready() {
             let init_mirrors_result = _USER_WALLET.try_init_mirrors(self).await;
@@ -127,5 +130,5 @@ impl BlockchainUserWalletService for Everscale {
         }
         let wallet: UserWallet = _USER_WALLET.clone();
         return Ok(wallet);
-            }
+    }
 }

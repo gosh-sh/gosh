@@ -5,9 +5,9 @@ use crate::{
     },
     utilities::Remote,
 };
-use std::ops::Deref;
 use async_trait::async_trait;
 use git_hash::ObjectId;
+use std::ops::Deref;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -76,7 +76,9 @@ impl BlockchainCommitPusher for Everscale {
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::to_value(args)?;
         let wallet_contract = wallet.take_one().await?;
-        let result = self.call(wallet_contract.deref(), "deployCommit", Some(params)).await?;
+        let result = self
+            .call(wallet_contract.deref(), "deployCommit", Some(params))
+            .await?;
         drop(wallet_contract);
         tracing::debug!("deployCommit result: {:?}", result);
         Ok(())
@@ -101,7 +103,9 @@ impl BlockchainCommitPusher for Everscale {
             "numberCommits": number_of_commits,
         });
         let wallet_contract = wallet.take_one().await?;
-        let result = self.call(wallet_contract.deref(), "setCommit", Some(params)).await?;
+        let result = self
+            .call(wallet_contract.deref(), "setCommit", Some(params))
+            .await?;
         drop(wallet_contract);
         tracing::debug!("setCommit result: {:?}", result);
         Ok(())

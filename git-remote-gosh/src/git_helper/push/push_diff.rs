@@ -1,3 +1,4 @@
+use crate::blockchain::user_wallet::UserWallet;
 use crate::{
     blockchain::{
         contract::{ContractInfo, ContractRead, GoshContract},
@@ -14,7 +15,6 @@ use crate::{
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
-use crate::blockchain::user_wallet::UserWallet;
 use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
@@ -93,7 +93,13 @@ where
 
 #[instrument(
     level = "debug",
-    skip(blockchain, original_snapshot_content, diff, new_snapshot_content, wallet)
+    skip(
+        blockchain,
+        original_snapshot_content,
+        diff,
+        new_snapshot_content,
+        wallet
+    )
 )]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
