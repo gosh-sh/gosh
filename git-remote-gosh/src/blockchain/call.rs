@@ -52,7 +52,6 @@ impl BlockchainCall for Everscale {
             processing_try_index: None,
         };
 
-
         let sdk_result = ton_client::processing::process_message(
             self.client().clone(),
             ParamsOfProcessMessage {

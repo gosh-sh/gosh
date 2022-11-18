@@ -5,9 +5,9 @@ use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
+use tokio::task::{JoinError, JoinSet};
 use tokio_retry::Retry;
 use tracing::Instrument;
-use tokio::task::{JoinSet, JoinError};
 
 use super::{
     push_diff::push_new_branch_snapshot, utilities::retry::default_retry_strategy,
