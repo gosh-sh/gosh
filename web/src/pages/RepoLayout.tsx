@@ -84,7 +84,7 @@ const RepoLayout = () => {
 
     return (
         <div className="container container--full my-10">
-            <h1 className="flex items-center mb-6 px-5 sm:px-0">
+            <h1 className="flex flex-wrap items-center mb-6 px-5 sm:px-0">
                 <Link
                     to={`/o/${daoName}`}
                     className="font-semibold text-xl hover:underline"
@@ -117,7 +117,7 @@ const RepoLayout = () => {
 
             {isReady && (
                 <>
-                    <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
+                    <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
                         {tabs
                             .filter((item) =>
                                 !dao.details?.isAuthMember ? item.public : item,
@@ -130,6 +130,7 @@ const RepoLayout = () => {
                                     className={({ isActive }) =>
                                         classNames(
                                             'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
+                                            'whitespace-nowrap',
                                             isActive
                                                 ? '!text-gray-050a15 border-b border-b-gray-050a15'
                                                 : null,
