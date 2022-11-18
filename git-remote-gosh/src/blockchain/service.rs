@@ -11,6 +11,7 @@ use super::{
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
 use std::fmt::Debug;
+use crate::blockchain::user_wallet::UserWallet;
 
 #[async_trait]
 pub trait BlockchainBranchesService {
@@ -151,35 +152,31 @@ pub mod tests {
 
         #[async_trait]
         impl DeployBranch for Everscale {
-            async fn deploy_branch<W>(
+            async fn deploy_branch(
                 &self,
-                wallet: &W,
+                wallet: &UserWallet,
                 repo_name: &str,
                 new_name: &str,
                 from_commit: &str,
-            ) -> anyhow::Result<()>
-            where
-                W: ContractInfo + Sync + 'static;
+            ) -> anyhow::Result<()>;
         }
 
         #[async_trait]
         impl DeployTree for Everscale {
-            async fn deploy_tree<W>(
+            async fn deploy_tree(
                 &self,
-                wallet: &W,
+                wallet: &UserWallet,
                 sha: &str,
                 repo_name: &str,
                 nodes: &HashMap<String, TreeNode>,
-            ) -> anyhow::Result<()>
-            where
-                W: ContractInfo + Sync + 'static;
+            ) -> anyhow::Result<()>;
         }
 
         #[async_trait]
         impl DeployDiff for Everscale {
-            async fn deploy_diff<W>(
+            async fn deploy_diff(
                 &self,
-                wallet: &W,
+                wallet: &UserWallet,
                 repo_name: String,
                 branch_name: String,
                 commit_id: String,
@@ -187,24 +184,20 @@ pub mod tests {
                 index1: u32,
                 index2: u32,
                 last: bool,
-            ) -> anyhow::Result<()>
-            where
-                W: ContractInfo + Sync + 'static;
+            ) -> anyhow::Result<()>;
         }
 
         #[async_trait]
         impl DeployNewSnapshot for Everscale {
-            async fn deploy_new_snapshot<W>(
+            async fn deploy_new_snapshot(
                 &self,
-                wallet: &W,
+                wallet: &UserWallet,
                 repo_address: BlockchainContractAddress,
                 branch_name: String,
                 commit_id: String,
                 file_path: String,
                 content: String,
-            ) -> anyhow::Result<()>
-            where
-                W: ContractInfo + Sync + 'static;
+            ) -> anyhow::Result<()>;
         }
 
         #[async_trait]
@@ -237,7 +230,7 @@ pub mod tests {
                 &self,
                 dao_address: &BlockchainContractAddress,
                 remote_network: &str,
-            ) -> anyhow::Result<GoshContract>;
+            ) -> anyhow::Result<UserWallet>;
 
         }
 

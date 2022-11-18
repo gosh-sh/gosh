@@ -1,5 +1,7 @@
 #![allow(unused_variables)]
 use async_trait::async_trait;
+use std::ops::Deref;
+use crate::blockchain::user_wallet::UserWallet;
 
 use crate::{
     blockchain::call::BlockchainCall,
@@ -82,9 +84,9 @@ pub struct PushDiffCoordinate {
 
 #[async_trait]
 pub trait DeployDiff {
-    async fn deploy_diff<W>(
+    async fn deploy_diff(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_name: String,
         branch_name: String,
         commit_id: String,
@@ -92,17 +94,15 @@ pub trait DeployDiff {
         index1: u32,
         index2: u32,
         last: bool,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static;
+    ) -> anyhow::Result<()>;
 }
 
 #[async_trait]
 impl DeployDiff for Everscale {
     #[instrument(level = "debug", skip(self, wallet, diff))]
-    async fn deploy_diff<W>(
+    async fn deploy_diff(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_name: String,
         branch_name: String,
         commit_id: String,
@@ -111,8 +111,6 @@ impl DeployDiff for Everscale {
         index2: u32,
         last: bool,
     ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static,
     {
         let diffs = vec![diff];
         let args = DeployDiffParams {
@@ -125,8 +123,9 @@ impl DeployDiff for Everscale {
             last,
         };
 
+        let wallet_contract = wallet.take_one().await?;
         let result = self
-            .call(wallet, "deployDiff", Some(serde_json::to_value(args)?))
+            .call(wallet_contract.deref(), "deployDiff", Some(serde_json::to_value(args)?))
             .await?;
         tracing::debug!("deployDiff result: {:?}", result);
         Ok(())
@@ -135,32 +134,28 @@ impl DeployDiff for Everscale {
 
 #[async_trait]
 pub trait DeployNewSnapshot {
-    async fn deploy_new_snapshot<W>(
+    async fn deploy_new_snapshot(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
         branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static;
+    ) -> anyhow::Result<()>;
 }
 
 #[async_trait]
 impl DeployNewSnapshot for Everscale {
-    async fn deploy_new_snapshot<W>(
+    async fn deploy_new_snapshot(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
         branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
     ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static,
     {
         let args = DeploySnapshotParams {
             repo_address,
@@ -170,9 +165,9 @@ impl DeployNewSnapshot for Everscale {
             content,
             ipfs: None,
         };
-
+        let wallet_contract = wallet.take_one().await?;
         self.call(
-            wallet,
+            wallet_contract.deref(),
             "deployNewSnapshot",
             Some(serde_json::to_value(args)?),
         )

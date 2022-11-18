@@ -4,7 +4,9 @@ use crate::blockchain::{
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;
+use crate::blockchain::user_wallet::UserWallet;
 use std::collections::HashMap;
+use std::ops::Deref;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
@@ -30,28 +32,24 @@ pub struct DeployTreeArgs {
 
 #[async_trait]
 pub trait DeployTree {
-    async fn deploy_tree<W>(
+    async fn deploy_tree(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         sha: &str,
         repo_name: &str,
         nodes: &HashMap<String, TreeNode>,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static;
+    ) -> anyhow::Result<()>;
 }
 
 #[async_trait]
 impl DeployTree for Everscale {
-    async fn deploy_tree<W>(
+    async fn deploy_tree(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         sha: &str,
         repo_name: &str,
         nodes: &HashMap<String, TreeNode>,
     ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static,
     {
         let params = DeployTreeArgs {
             sha: sha.to_owned(),
@@ -59,8 +57,8 @@ impl DeployTree for Everscale {
             nodes: nodes.to_owned(),
             ipfs: None, // !!!
         };
-
-        self.call(wallet, "deployTree", Some(serde_json::to_value(params)?))
+        let wallet_contract = wallet.take_one().await?;
+        self.call(wallet_contract.deref(), "deployTree", Some(serde_json::to_value(params)?))
             .await
             .map(|_| ())
     }
