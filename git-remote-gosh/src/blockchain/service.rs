@@ -9,7 +9,6 @@ use super::{
     GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
-use crate::blockchain::user_wallet::UserWallet;
 use async_trait::async_trait;
 use std::fmt::Debug;
 
@@ -132,7 +131,7 @@ impl BlockchainService for Everscale {
 pub mod tests {
     use super::*;
     use crate::{
-        blockchain::{snapshot::save::Diff, tree::TreeNode},
+        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet},
         config::UserWalletConfig,
         utilities::Remote,
     };
