@@ -115,6 +115,10 @@ pub async fn push_tree(
                     .await
                 })
                 .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
             }
             .instrument(debug_span!("tokio::spawn::inner_deploy_tree").or_current()),
         ));

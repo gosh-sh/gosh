@@ -458,6 +458,10 @@ where
                                                     &*parents,
                                                 )
                                                 .await
+                                                .map_err(|e| {
+                                                    tracing::warn!("Attempt failed with {:#?}", e);
+                                                    e
+                                                })
                                         })
                                         .await
                                     }
