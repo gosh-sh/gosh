@@ -13,7 +13,6 @@ import {
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
 import { AppConfig, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
@@ -28,8 +27,7 @@ const RepoPage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useBranches(repo, branchName)
-    const tree = useTree(daoName!, repoName!, branch?.commit, treepath)
-    const subtree = useRecoilValue(tree.getSubtree(treepath))
+    const { subtree } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 

@@ -331,11 +331,10 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     return { create, destroy, lock, unlock, progress }
 }
 
-function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
+function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string) {
     const [tree, setTree] = useRecoilState(treeAtom)
-
-    const getSubtree = (path?: string) => treeSelector({ type: 'tree', path })
-    const getTreeItems = (path?: string) => treeSelector({ type: 'items', path })
+    const subtree = useRecoilValue(treeSelector({ type: 'tree', path: treepath }))
+    const blobs = useRecoilValue(treeSelector({ type: 'blobs', path: treepath }))
 
     useEffect(() => {
         const _getTree = async () => {
@@ -352,14 +351,14 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
             setTree(undefined)
             const gosh = GoshAdapterFactory.create(commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            newtree = await adapter.getTree(commit, filterPath)
+            newtree = await adapter.getTree(commit, treepath)
             setTree(newtree)
         }
 
         _getTree()
-    }, [dao, repo, commit?.name, commit?.version, filterPath, setTree])
+    }, [dao, repo, commit?.name, commit?.version, treepath, setTree])
 
-    return { tree, getSubtree, getTreeItems }
+    return { tree, subtree, blobs }
 }
 
 function useBlob(dao: string, repo: string, branch?: string, path?: string) {
