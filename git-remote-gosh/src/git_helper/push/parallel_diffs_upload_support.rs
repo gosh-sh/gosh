@@ -6,6 +6,7 @@ use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::vec::Vec;
+use tracing::Instrument;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -120,14 +121,16 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    pub async fn wait_all_diffs(
+    pub async fn wait_all_diffs<B>(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService>,
-    ) -> anyhow::Result<()> {
+        blockchain: B
+    ) -> anyhow::Result<()>
+    where
+        B: BlockchainService + 'static,
+    {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
-        let mut index = 0;
         tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
             self.expecting_deployed_contacts_addresses
@@ -143,30 +146,57 @@ impl ParallelDiffsUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        let mut attempt = 0;
-        loop {
-            if index >= self.expecting_deployed_contacts_addresses.len() {
-                return Ok(());
-            }
-            let expecting_address = self
-                .expecting_deployed_contacts_addresses
-                .get(index)
-                .unwrap();
-            if is_diff_deployed(&context.blockchain.client(), expecting_address).await? {
-                index += 1;
-                attempt = 0;
-            } else {
+        ParallelDiffsUploadSupport::wait_contracts_deployed(
+            &self.expecting_deployed_contacts_addresses,
+            &blockchain
+        ).await
+    }
+    async fn wait_contracts_deployed<B>(
+        addresses: &[BlockchainContractAddress],
+        blockchain: &B
+    )->anyhow::Result<()>
+    where
+        B: BlockchainService + 'static,
+    {
+        let mut deploymend_results: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> = FuturesUnordered::new();
+        for address in addresses {
+            let b = blockchain.clone();
+            let expected_address = address.clone();
+            deploymend_results.push(tokio::spawn(
+                async move {
+                    ParallelDiffsUploadSupport::wait_diff_deployed(
+                        &b,
+                        &expected_address
+                    ).await
+                }.instrument(
+                    debug_span!("tokio::spawn::wait_diff_deployed").or_current(),
+                )
+            ));
+        }
+        for handler in deploymend_results {
+            handler.await??;
+        }
+        Ok(())
+    }
+
+    async fn wait_diff_deployed<B>(
+        blockchain: &B,
+        expecting_address: &BlockchainContractAddress
+    ) -> anyhow::Result<()>
+    where
+        B: BlockchainService
+    {
+        for _ in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
+            if !is_diff_deployed(blockchain.client(), expecting_address).await? {
                 //TODO: replace with web-socket listen
                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                attempt += 1;
-                if attempt == MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
-                    panic!(
-                        "Some contracts didn't appear in time: {}",
-                        expecting_address
-                    );
-                }
+                anyhow::bail!(
+                    "Some contracts didn't appear in time: {}",
+                    expecting_address
+                );
             }
         }
+        Ok(())
     }
 
     pub async fn push(

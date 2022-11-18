@@ -17,7 +17,7 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     return exit_code;
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 200)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 20)]
 async fn main() -> ExitCode {
     set_log_verbosity(1);
 
