@@ -56,7 +56,7 @@ impl<Blockchain> GitHelper<Blockchain>
 where
     Blockchain: BlockchainService + 'static,
 {
-    // #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
+    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
         &mut self,
         file_path: &str,
@@ -87,7 +87,15 @@ where
         Ok(())
     }
 
-    // #[instrument(level = "debug", skip(statistics, parallel_diffs_upload_support))]
+    #[instrument(
+        level = "debug",
+        skip(
+            self,
+            statistics,
+            parallel_diffs_upload_support,
+            parallel_snapshot_uploads
+        )
+    )]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
