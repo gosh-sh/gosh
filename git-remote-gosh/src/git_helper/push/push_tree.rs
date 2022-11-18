@@ -62,7 +62,7 @@ async fn construct_tree_node(
     Ok((format!("0x{}", key), tree_node))
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "debug", skip(context, visited))]
 pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
