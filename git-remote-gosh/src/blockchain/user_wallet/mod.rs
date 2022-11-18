@@ -1,6 +1,7 @@
 use async_trait::async_trait;
-use cached::once_cell::sync::Lazy;
+use once_cell::sync::Lazy;
 
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use ton_client::crypto::KeyPair;
 
@@ -10,6 +11,10 @@ use super::{
     contract::ContractRead, BlockchainContractAddress, BlockchainService, Everscale, GoshContract,
 };
 mod mirrors;
+pub use mirrors::{UserWalletMirrors, UserWalletsMirrorsInnerState};
+pub type UserWallet = Arc<UserWalletMirrors>;
+
+const WALLET_CONTRACTS_PARALLELISM: u32 = 100u32;
 
 #[derive(Deserialize, Debug)]
 struct GetProfileAddrResult {
@@ -23,8 +28,10 @@ struct GetAddrWalletResult {
     pub address: BlockchainContractAddress,
 }
 
-static ZERO_USER_WALLET: Lazy<RwLock<Option<GoshContract>>> = Lazy::new(|| RwLock::new(None));
+static _USER_WALLET: Lazy<UserWallet> =
+    Lazy::new(|| Arc::new(UserWalletMirrors::empty(WALLET_CONTRACTS_PARALLELISM)));
 
+#[instrument(level = "debug", skip(blockchain))]
 async fn get_user_wallet(
     blockchain: &impl BlockchainService,
     gosh_root: &GoshContract,
@@ -65,34 +72,6 @@ async fn get_user_wallet(
     Ok(contract)
 }
 
-#[instrument(level = "debug", skip(blockchain))]
-async fn zero_user_wallet(
-    blockchain: &impl BlockchainService,
-    remote_network: &str,
-    root_contract: &GoshContract,
-    dao_addr: &BlockchainContractAddress,
-) -> anyhow::Result<GoshContract> {
-    tracing::debug!("zero_user_wallet start");
-    if ZERO_USER_WALLET.read().await.is_none() {
-        let mut user_wallet = ZERO_USER_WALLET.write().await;
-        if user_wallet.is_none() {
-            tracing::debug!("zero_user_wallet lock taken");
-            let wallet_config = blockchain.wallet_config();
-            if wallet_config.is_none() {
-                anyhow::bail!("User wallet config must be set");
-            }
-            let config = wallet_config.as_ref().expect("Guarded");
-            *user_wallet =
-                Some(get_user_wallet(blockchain, &root_contract, &dao_addr, &config, 0).await?);
-        }
-    };
-
-    let res = ZERO_USER_WALLET.read().await.as_ref().unwrap().clone();
-    tracing::debug!("zero_user_wallet lock read2 taken");
-
-    Ok(res)
-}
-
 #[cfg_attr(test, mockall::automock)]
 #[async_trait]
 pub trait BlockchainUserWalletService {
@@ -101,7 +80,7 @@ pub trait BlockchainUserWalletService {
         &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
-    ) -> anyhow::Result<GoshContract>;
+    ) -> anyhow::Result<UserWallet>;
 }
 
 #[async_trait]
@@ -114,24 +93,42 @@ impl BlockchainUserWalletService for Everscale {
         &self,
         dao_address: &BlockchainContractAddress,
         remote_network: &str,
-    ) -> anyhow::Result<GoshContract> {
+    ) -> anyhow::Result<UserWallet> {
         tracing::debug!("wallet_config start");
-        let client = self.client();
-        let wallet_config = self.wallet_config();
-        if wallet_config.is_none() {
-            anyhow::bail!("User wallet config must be set");
+        if !_USER_WALLET.is_ready() {
+            let config = self.wallet_config().clone().ok_or(anyhow::anyhow!(
+                "user wallet config does not exist or invalid"
+            ))?;
+            let gosh_root = self.root_contract().clone();
+            _USER_WALLET
+                .init_zero_wallet(|| async {
+                    let client = self.client();
+                    let wallet_config = config.clone();
+                    tracing::debug!("wallet_config before zero_user_wallet");
+                    let zero_contract: GoshContract = get_user_wallet(
+                        self,
+                        self.root_contract(),
+                        &dao_address,
+                        &wallet_config,
+                        0,
+                    )
+                    .await?;
+                    Ok(UserWalletsMirrorsInnerState::new(
+                        zero_contract,
+                        gosh_root,
+                        dao_address.clone(),
+                        config.clone(),
+                    ))
+                })
+                .await?;
         }
-        let wallet_config = wallet_config.clone().expect("Guarded");
-        tracing::debug!("wallet_config before zero_user_wallet");
-        let zero_wallet =
-            zero_user_wallet(self, &remote_network, self.root_contract(), &dao_address).await?;
-        return Ok(mirrors::take_next_wallet(
-            self,
-            zero_wallet,
-            self.root_contract(),
-            &dao_address,
-            &wallet_config,
-        )
-        .await);
+        if !_USER_WALLET.is_mirrors_ready() {
+            let init_mirrors_result = _USER_WALLET.try_init_mirrors(self).await;
+            if let Err(e) = init_mirrors_result {
+                tracing::debug!("init mirrors error: {}", e);
+            }
+        }
+        let wallet: UserWallet = _USER_WALLET.clone();
+        return Ok(wallet);
     }
 }
