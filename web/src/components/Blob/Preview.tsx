@@ -34,15 +34,14 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         const contentTable = adaptedHighlightedContent
             .split(/\r?\n/)
             .map((lineContent) => {
-                return `
-                    <tr>
-                        <td class='line-number' data-pseudo-content=${++lineNumber}></td>
-                        <td>${lineContent}</td>
-                    </tr>
-                `
+                return [
+                    '<tr>',
+                    `<td class='line-number' data-pseudo-content=${++lineNumber}></td>`,
+                    `<td>${lineContent}</td>`,
+                    '</tr>',
+                ].join('')
             })
             .join('')
-            .replace(/>\s+</g, '><')
 
         return `<pre><code><table class='code-table'>${contentTable}</table></code></pre>`
     }
