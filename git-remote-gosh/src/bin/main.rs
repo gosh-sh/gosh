@@ -21,31 +21,24 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
 async fn main() -> ExitCode {
     set_log_verbosity(1);
 
-    let result = {
-        let root = tracing::span!(tracing::Level::TRACE, "git-remote-helper");
-        let _enter = root.enter();
-        let config = match git_remote_gosh::config::Config::init() {
-            Ok(r) => r,
-            Err(e) => {
-                return shutdown(Err(e));
-            }
-        };
-        let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-        tracing::info!("git-remote-gosh v{version}");
-        eprintln!("git-remote-gosh v{version}");
-        let url = {
-            let url_result = args().nth(2).ok_or(anyhow::anyhow!(
-                "Wrong args for git-remote call\nRequired: <name> <url>"
-            ));
-            match url_result {
-                Ok(r) => r,
-                Err(e) => {
-                    return shutdown(Err(e));
-                }
-            }
-        };
-        git_remote_gosh::git_helper::run(config, &url).await
-    };
+    let mut result = Ok(());
+    tokio::select! {
+        res = main_internal() => { result = res; },
+        _ = tokio::signal::ctrl_c() => {},
+    }
+    shutdown(result)
+}
 
-    return shutdown(result);
+async fn main_internal() -> anyhow::Result<()> {
+    let root = tracing::span!(tracing::Level::TRACE, "git-remote-helper");
+    let _enter = root.enter();
+    let config = git_remote_gosh::config::Config::init()?;
+    let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+    tracing::info!("git-remote-gosh v{version}");
+    eprintln!("git-remote-gosh v{version}");
+    let url = args().nth(2).ok_or(anyhow::anyhow!(
+        "Wrong args for git-remote call\nRequired: <name> <url>"
+    ))?;
+    git_remote_gosh::git_helper::run(config, &url).await?;
+    Ok(())
 }
