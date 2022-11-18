@@ -22,7 +22,10 @@ use super::utilities::retry::default_retry_strategy;
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
-#[instrument(level = "debug", skip(diff, new_snapshot_content))]
+#[instrument(
+    level = "debug",
+    skip(blockchain, diff, original_snapshot_content, new_snapshot_content)
+)]
 pub async fn push_diff<'a, B>(
     blockchain: &B,
     repo_name: &str,
@@ -88,6 +91,10 @@ where
     Ok(())
 }
 
+#[instrument(
+    level = "debug",
+    skip(blockchain, original_snapshot_content, diff, new_snapshot_content, wallet)
+)]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
@@ -148,7 +155,7 @@ pub async fn inner_push_diff(
                 save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                     .await
                     .map_err(|e| {
-                        tracing::debug!("save_data_to_ipfs error: {}", e);
+                        tracing::debug!("save_data_to_ipfs error: {:#?}", e);
                         e
                     })?,
             );
@@ -208,7 +215,7 @@ pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
     is_going_to_ipfs
 }
 
-// #[instrument(level = "debug")]
+#[instrument(level = "debug", skip(ipfs_client, content))]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     tracing::debug!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
@@ -247,7 +254,7 @@ pub async fn diff_address(
     Ok(result.address)
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(blockchain, file_provider, original_content))]
 pub async fn push_new_branch_snapshot(
     blockchain: &impl BlockchainService,
     file_provider: &IpfsService,

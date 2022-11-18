@@ -25,6 +25,7 @@ const DaosPage = () => {
                         placeholder="Search orgranization..."
                         autoComplete="off"
                         value={search}
+                        disabled={isFetching}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>

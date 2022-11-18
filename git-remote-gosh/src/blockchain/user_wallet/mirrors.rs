@@ -117,6 +117,7 @@ struct GetWalletMirrorsCountResult {
     #[serde(rename = "value0")]
     pub number_of_mirrors: NumberU64,
 }
+
 impl UserWalletMirrors {
     pub fn empty(max_number_of_aquires_per_mirror: u32) -> Self {
         return Self {

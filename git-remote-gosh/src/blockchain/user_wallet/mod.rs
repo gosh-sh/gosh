@@ -127,5 +127,5 @@ impl BlockchainUserWalletService for Everscale {
         }
         let wallet: UserWallet = _USER_WALLET.clone();
         return Ok(wallet);
-    }
+            }
 }

@@ -33,6 +33,10 @@ pub struct ParallelDiff {
 }
 
 impl ParallelDiff {
+    #[instrument(
+        level = "debug",
+        skip(original_snapshot_content, diff, new_snapshot_content)
+    )]
     pub fn new(
         commit_id: git_hash::ObjectId,
         branch_name: String,
@@ -70,6 +74,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
+    #[instrument(level = "debug", skip(self, context))]
     pub async fn push_dangling(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -151,14 +156,17 @@ impl ParallelDiffsUploadSupport {
             }
         }
         ParallelDiffsUploadSupport::wait_contracts_deployed(
-            &self.expecting_deployed_contacts_addresses,
             &blockchain,
+            &self.expecting_deployed_contacts_addresses,
         )
         .await
     }
+
+
+    #[instrument(level = "debug", skip(blockchain))]
     async fn wait_contracts_deployed<B>(
-        addresses: &[BlockchainContractAddress],
         blockchain: &B,
+        addresses: &[BlockchainContractAddress],
     ) -> anyhow::Result<()>
     where
         B: BlockchainService + 'static,
@@ -180,6 +188,7 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
+    #[instrument(level = "debug", skip(blockchain))]
     async fn wait_diff_deployed<B>(
         blockchain: &B,
         expecting_address: &BlockchainContractAddress,
@@ -200,6 +209,7 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
+    #[instrument(level = "debug", skip(self, context, diff))]
     pub async fn push(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -249,6 +259,7 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
+    #[instrument(level = "debug", skip(self))]
     fn next_diff(&mut self, file_path: &str) -> PushDiffCoordinate {
         if !self.parallels.contains_key(file_path) {
             self.parallels
