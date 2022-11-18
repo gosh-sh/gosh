@@ -3,18 +3,17 @@ use crate::blockchain::call::BlockchainCall;
 use crate::blockchain::{
     contract::{ContractInfo, ContractRead},
     serde_number::NumberU64,
-    BlockchainContractAddress, BlockchainService, EverClient, Everscale, GoshContract,
+    BlockchainContractAddress, BlockchainService, GoshContract,
 };
-use crate::{abi, config::UserWalletConfig};
-use async_trait::async_trait;
-use cached::{proc_macro::cached, SizedCache};
+use crate::config::UserWalletConfig;
+
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::vec::Vec;
 use tokio::sync::Mutex;
-use tokio::{runtime::Handle, sync::RwLock, task};
-use ton_client::crypto::KeyPair;
+use tokio::sync::RwLock;
+
 use tokio::sync::OnceCell;
 
 #[derive(Deserialize, Debug)]
@@ -38,7 +37,8 @@ struct GetWalletMirrorsCountResult {
 }
 
 static NEXT_WALLET_INDEX: AtomicU64 = AtomicU64::new(0);
-static MIRRORS: Lazy<RwLock<UserWalletMirrors>> = Lazy::new(|| RwLock::new(UserWalletMirrors::empty()));
+static MIRRORS: Lazy<RwLock<UserWalletMirrors>> =
+    Lazy::new(|| RwLock::new(UserWalletMirrors::empty()));
 static USER_WALLET_MIRRORS_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 static INIT_MIRRORS: OnceCell<u32> = OnceCell::const_new();
 
@@ -53,23 +53,26 @@ where
     B: BlockchainService + BlockchainCall,
 {
     let current_index = NEXT_WALLET_INDEX.fetch_add(1, Ordering::SeqCst);
-    INIT_MIRRORS.get_or_init(|| async {
-        let initialization_result = UserWalletMirrors::try_initialize(
-            &MIRRORS,
-            blockchain,
-            &zero_wallet,
-            gosh_root,
-            dao_address,
-            wallet_config
-        ).await;
-        if let Err(e) = initialization_result {
-            tracing::debug!(
-                "Error while initializing user wallet mirrors occured: {}",
-                e
-            );
-        }
-        1
-    }).await;
+    INIT_MIRRORS
+        .get_or_init(|| async {
+            let initialization_result = UserWalletMirrors::try_initialize(
+                &MIRRORS,
+                blockchain,
+                &zero_wallet,
+                gosh_root,
+                dao_address,
+                wallet_config,
+            )
+            .await;
+            if let Err(e) = initialization_result {
+                tracing::debug!(
+                    "Error while initializing user wallet mirrors occured: {}",
+                    e
+                );
+            }
+            1
+        })
+        .await;
     let is_initialized = { MIRRORS.read().await.is_initialized() };
     if !is_initialized {
         let initialization_result = UserWalletMirrors::try_initialize(

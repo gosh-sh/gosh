@@ -518,7 +518,9 @@ where
         }
 
         parallel_diffs_upload_support.push_dangling(self).await?;
-        parallel_diffs_upload_support.wait_all_diffs(self.blockchain.clone()).await?;
+        parallel_diffs_upload_support
+            .wait_all_diffs(self.blockchain.clone())
+            .await?;
         while let Some(finished_task) = parallel_snapshot_uploads.next().await {
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {

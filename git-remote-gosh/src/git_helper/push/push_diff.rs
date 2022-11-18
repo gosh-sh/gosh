@@ -40,11 +40,9 @@ pub async fn push_diff<'a, B>(
     new_snapshot_content: &'a Vec<u8>,
 ) -> anyhow::Result<()>
 where
-    B: BlockchainService
+    B: BlockchainService,
 {
-    let wallet = blockchain
-        .user_wallet(dao_address, remote_network)
-        .await?;
+    let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
     let mut repo_contract = blockchain.repo_contract().clone();
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &blockchain.client(),
@@ -84,7 +82,8 @@ where
             &new_snapshot_content,
         )
         .await
-    }).await?;
+    })
+    .await?;
     Ok(())
 }
 

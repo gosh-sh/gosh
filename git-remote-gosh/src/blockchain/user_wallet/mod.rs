@@ -1,19 +1,13 @@
-use super::call::BlockchainCall;
 use async_trait::async_trait;
 use cached::once_cell::sync::Lazy;
-use cached::{proc_macro::cached, SizedCache};
-use std::sync::atomic::AtomicU64;
-use std::sync::atomic::Ordering::SeqCst;
-use std::{cell::RefCell, sync::Once};
-use tokio::{runtime::Handle, sync::RwLock, task};
+
+use tokio::sync::RwLock;
 use ton_client::crypto::KeyPair;
 
 use crate::{abi, config::UserWalletConfig};
 
 use super::{
-    contract::{ContractInfo, ContractRead},
-    serde_number::NumberU64,
-    BlockchainContractAddress, BlockchainService, EverClient, Everscale, GoshContract,
+    contract::ContractRead, BlockchainContractAddress, BlockchainService, Everscale, GoshContract,
 };
 mod mirrors;
 
