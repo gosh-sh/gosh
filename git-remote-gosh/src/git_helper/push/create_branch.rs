@@ -121,7 +121,8 @@ where
             snapshot_handlers.spawn(
                 async move {
                     Retry::spawn(default_retry_strategy(), || async {
-                        push_new_branch_snapshot(
+                        tracing::debug!("attempt to push a new snapshot");
+                        let push_branch_result = push_new_branch_snapshot(
                             &blockchain,
                             &file_provider,
                             &remote_network,
@@ -132,7 +133,11 @@ where
                             &full_path,
                             &content,
                         )
-                        .await
+                        .await;
+                        if let Err(ref e) = push_branch_result {
+                            tracing::debug!("Attempt failed with {}", e);
+                        }
+                        push_branch_result
                     })
                     .await
                 }
