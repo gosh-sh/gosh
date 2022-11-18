@@ -58,9 +58,14 @@ impl DeployTree for Everscale {
             ipfs: None, // !!!
         };
         let wallet_contract = wallet.take_one().await?;
-        self.call(wallet_contract.deref(), "deployTree", Some(serde_json::to_value(params)?))
+        let result = self.call(wallet_contract.deref(), "deployTree", Some(serde_json::to_value(params)?))
             .await
-            .map(|_| ())
+            .map(|_| ());
+        drop(wallet_contract);
+        if let Err(ref e) = result {
+            tracing::debug!("deploy_tree_error: {}", e);
+        }
+        result
     }
 }
 

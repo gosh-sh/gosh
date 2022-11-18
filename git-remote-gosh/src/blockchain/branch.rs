@@ -33,8 +33,13 @@ impl DeployBranch for Everscale {
             "fromCommit": from_commit,
         });
         let wallet_contract = wallet.take_one().await?;
-        self.call(wallet_contract.deref(), "deployBranch", Some(params))
+        let result = self.call(wallet_contract.deref(), "deployBranch", Some(params))
             .await
-            .map(|_| ())
+            .map(|_| ());
+        drop(wallet_contract);
+        if let Err(ref e) = result {
+            tracing::debug!("deploy_branch_error: {}", e);
+        }
+        result
     }
 }

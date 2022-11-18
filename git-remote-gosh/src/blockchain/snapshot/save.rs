@@ -127,6 +127,7 @@ impl DeployDiff for Everscale {
         let result = self
             .call(wallet_contract.deref(), "deployDiff", Some(serde_json::to_value(args)?))
             .await?;
+        drop(wallet_contract);
         tracing::debug!("deployDiff result: {:?}", result);
         Ok(())
     }
@@ -166,12 +167,17 @@ impl DeployNewSnapshot for Everscale {
             ipfs: None,
         };
         let wallet_contract = wallet.take_one().await?;
-        self.call(
+        let result = self.call(
             wallet_contract.deref(),
             "deployNewSnapshot",
             Some(serde_json::to_value(args)?),
         )
         .await
-        .map(|_| ())
+        .map(|_| ());
+        drop(wallet_contract);
+        if let Err(ref e) = result {
+            tracing::debug!("deploy_branch_error: {}", e);
+        }
+        result
     }
 }

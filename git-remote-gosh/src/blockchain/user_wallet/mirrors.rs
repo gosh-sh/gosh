@@ -205,7 +205,7 @@ impl UserWalletMirrors {
                             mirror,
                             pool,
                             self.max_number_of_aquires_per_mirror,
-                            self.semaphore.clone(),
+                            Arc::clone(&self.semaphore),
                             &self.pool_size,
                             mirrors
                         );
@@ -241,7 +241,7 @@ impl UserWalletMirrors {
             mirrors.wallets.get(&0u64).unwrap().clone(),
             pool.deref_mut(),
             self.max_number_of_aquires_per_mirror,
-            self.semaphore.clone(),
+            Arc::clone(&self.semaphore),
             &self.pool_size,
             &mut mirrors.wallets
         );

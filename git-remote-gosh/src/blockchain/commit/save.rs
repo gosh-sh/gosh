@@ -77,6 +77,7 @@ impl BlockchainCommitPusher for Everscale {
         let params = serde_json::to_value(args)?;
         let wallet_contract = wallet.take_one().await?;
         let result = self.call(wallet_contract.deref(), "deployCommit", Some(params)).await?;
+        drop(wallet_contract);
         tracing::debug!("deployCommit result: {:?}", result);
         Ok(())
     }
@@ -101,6 +102,7 @@ impl BlockchainCommitPusher for Everscale {
         });
         let wallet_contract = wallet.take_one().await?;
         let result = self.call(wallet_contract.deref(), "setCommit", Some(params)).await?;
+        drop(wallet_contract);
         tracing::debug!("setCommit result: {:?}", result);
         Ok(())
     }
