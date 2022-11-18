@@ -210,6 +210,17 @@ export const BranchesPage = () => {
                             >
                                 {branch.name}
                             </Link>
+
+                            {branch.isProtected && (
+                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 ml-2">
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        size="sm"
+                                        icon={faLock}
+                                    />
+                                    Locked
+                                </div>
+                            )}
                         </div>
                         <div>
                             {dao.details.isAuthMember && (
