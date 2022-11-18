@@ -2,6 +2,8 @@ import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
 import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 type TBlobPreviewProps = {
     filename?: string
@@ -11,9 +13,10 @@ type TBlobPreviewProps = {
 
 const BlobPreview = (props: TBlobPreviewProps) => {
     const { filename = '', value = '', className } = props
+    const location = useLocation()
+    const [selectedLine, setSelectedLine] = useState<number>()
 
     const createHighlightedCodeBlock = (content: string, language?: string[]) => {
-        let lineNumber = 0
         const highlightedContent = hljs.highlightAuto(content, language).value
 
         /* Highlight.js wraps comment blocks inside <span class="hljs-comment"></span>.
@@ -33,18 +36,35 @@ const BlobPreview = (props: TBlobPreviewProps) => {
 
         const contentTable = adaptedHighlightedContent
             .split(/\r?\n/)
-            .map((lineContent) => {
+            .map((lineContent, index) => {
+                const number = index + 1
+                const trClass = number === selectedLine ? 'code-line--selected' : ''
+
                 return [
-                    '<tr>',
-                    `<td class='line-number' data-pseudo-content=${++lineNumber}></td>`,
+                    `<tr id="code-line-${number}" class="code-line ${trClass}">`,
+                    `<td class="code-line__number">`,
+                    `<a href="#L${number}" data-pseudo-content="${number}"/>`,
+                    '</td>',
                     `<td>${lineContent}</td>`,
                     '</tr>',
                 ].join('')
             })
             .join('')
 
-        return `<pre><code><table class='code-table'>${contentTable}</table></code></pre>`
+        return `<pre><code><table class="code-table w-full">${contentTable}</table></code></pre>`
     }
+
+    useEffect(() => {
+        const number = +location.hash.replace('#L', '')
+        document.querySelector(`#code-line-${number}`)?.scrollIntoView({
+            block: 'center',
+            behavior: 'smooth',
+        })
+    }, [])
+
+    useEffect(() => {
+        setSelectedLine(+location.hash.replace('#L', '') || undefined)
+    }, [location.hash])
 
     if (Buffer.isBuffer(value)) {
         return <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>

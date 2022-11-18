@@ -310,14 +310,28 @@ for those elements which require gradient border color
 }
 
 /** Line numbers for highlight.js */
-.line-number {
-    @apply text-xs;
-    text-align: right;
-    padding-right: 20px;
-    padding-left: 10px;
-    display: inline-block;
-    color: rgba(0, 0, 0, 0.2);
-    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+.code-line {
+    &__number {
+        @apply w-px;
+    }
+
+    &__number a {
+        @apply block
+            text-xs
+            text-right
+            pr-5
+            pl-3.5
+            text-black/20 hover:text-black/80;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    }
+
+    &--selected {
+        @apply bg-black/5;
+    }
+
+    &--selected &__number > a {
+        @apply text-black;
+    }
 }
 
 /* Technique to disable line numbers from being selected and copied.
