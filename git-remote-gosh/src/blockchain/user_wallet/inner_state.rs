@@ -44,16 +44,18 @@ impl UserWalletsMirrorsInnerState {
     pub(super) fn empty() -> Self {
         let no_address = BlockchainContractAddress::new("");
         let no_contract = GoshContract::new(no_address.clone(), ("", ""));
-        Self::new(
-            no_contract.clone(),
-            no_contract,
-            no_address,
-            UserWalletConfig {
-                pubkey: "".to_string(),
-                secret: "".to_string(),
-                profile: "".to_string(),
-            },
-        )
+        let wallet_config = UserWalletConfig {
+            pubkey: "".to_string(),
+            secret: "".to_string(),
+            profile: "".to_string(),
+        };
+        Self {
+            wallets: HashMap::new(),
+            gosh_root: no_contract,
+            dao_address: no_address,
+            wallet_config,
+            max_number_of_wallets: None,
+        }
     }
     pub fn add(&mut self, index: TWalletMirrorIndex, wallet: GoshContract) {
         self.wallets.insert(index, wallet);

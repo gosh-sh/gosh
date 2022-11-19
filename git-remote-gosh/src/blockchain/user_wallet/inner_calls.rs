@@ -32,6 +32,7 @@ struct GetWalletMirrorsCountResult {
     pub number_of_mirrors: NumberU64,
 }
 
+#[instrument(level = "debug", skip(blockchain))]
 pub(super) async fn get_number_of_user_wallet_mirrors_deployed<B, C>(
     blockchain: &B,
     wallet: &C,
@@ -45,6 +46,7 @@ where
         .await?;
     Ok(Into::<u64>::into(result.number_of_mirrors) - 1)
 }
+
 #[instrument(level = "debug", skip(blockchain))]
 pub(super) async fn get_user_wallet(
     blockchain: &impl BlockchainService,
