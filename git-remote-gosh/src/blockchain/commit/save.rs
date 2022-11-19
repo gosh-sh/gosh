@@ -1,3 +1,4 @@
+use crate::blockchain::contract::ContractInfo;
 use crate::{
     blockchain::{
         call::BlockchainCall, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
@@ -76,6 +77,7 @@ impl BlockchainCommitPusher for Everscale {
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::to_value(args)?;
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(wallet_contract.deref(), "deployCommit", Some(params))
             .await?;
@@ -103,6 +105,7 @@ impl BlockchainCommitPusher for Everscale {
             "numberCommits": number_of_commits,
         });
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(wallet_contract.deref(), "setCommit", Some(params))
             .await?;

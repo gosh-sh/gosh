@@ -10,12 +10,10 @@ use crate::{
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
     },
     config,
-    git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
-use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -312,44 +310,36 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-#[instrument(level = "debug", skip(context))]
-pub async fn push_initial_snapshot(
-    context: &mut GitHelper<impl BlockchainService + 'static>,
-    branch_name: &str,
-    file_path: &str,
-) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
-    let repo_addr = context.repo_addr.clone();
-    let branch_name = branch_name.to_string();
-    let file_path = file_path.to_string();
-    let wallet = context
-        .blockchain
-        .user_wallet(&context.dao_addr, &context.remote.network)
-        .await?;
-
-    let blockchain = context.blockchain.clone();
-
-    Ok(tokio::spawn(
-        async move {
-            Retry::spawn(default_retry_strategy(), || async {
-                blockchain
-                    .deploy_new_snapshot(
-                        &wallet,
-                        repo_addr.clone(),
-                        branch_name.to_string(),
-                        "".to_string(),
-                        file_path.to_string(),
-                        "".to_string(),
-                    )
-                    .await
-                    .map_err(|e| {
-                        tracing::debug!(
-                            "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                        );
-                        e
-                    })
-            })
+#[instrument(level = "debug", skip(blockchain))]
+pub async fn push_initial_snapshot<B>(
+    blockchain: B,
+    repo_addr: BlockchainContractAddress,
+    dao_addr: BlockchainContractAddress,
+    remote_network: String,
+    branch_name: String,
+    file_path: String,
+) -> anyhow::Result<()>
+where
+    B: BlockchainService,
+{
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
+    Retry::spawn(default_retry_strategy(), || async {
+        blockchain
+            .deploy_new_snapshot(
+                &wallet,
+                repo_addr.clone(),
+                branch_name.clone(),
+                "".to_string(),
+                file_path.clone(),
+                "".to_string(),
+            )
             .await
-        }
-        .instrument(debug_span!("tokio::spawn::deploy_new_snapshot").or_current()),
-    ))
+            .map_err(|e| {
+                tracing::debug!(
+                    "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
+                );
+                e
+            })
+    })
+    .await
 }

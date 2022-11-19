@@ -7,9 +7,11 @@ use git_object::tree::EntryRef;
 use git_odb::{Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
-use tokio::task::JoinHandle;
+
 use tokio_retry::Retry;
 use tracing::Instrument;
+
+use tokio::task::JoinSet;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -67,8 +69,8 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
-) -> anyhow::Result<Vec<JoinHandle<anyhow::Result<()>>>> {
-    let mut handlers = Vec::new();
+    handlers: &mut JoinSet<anyhow::Result<()>>,
+) -> anyhow::Result<()> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
     while let Some(tree_id) = to_deploy.pop_front() {
@@ -101,7 +103,7 @@ pub async fn push_tree(
         let dao_addr = context.dao_addr.clone();
         let repo = context.remote.repo.clone();
 
-        handlers.push(tokio::spawn(
+        handlers.spawn(
             async move {
                 Retry::spawn(default_retry_strategy(), || async {
                     inner_deploy_tree(
@@ -121,9 +123,9 @@ pub async fn push_tree(
                 })
             }
             .instrument(debug_span!("tokio::spawn::inner_deploy_tree").or_current()),
-        ));
+        );
     }
-    Ok(handlers)
+    Ok(())
 }
 
 #[instrument(level = "debug", skip(blockchain, tree_nodes))]

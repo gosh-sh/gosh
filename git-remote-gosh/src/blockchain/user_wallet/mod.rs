@@ -54,7 +54,11 @@ async fn get_user_wallet(
             "getProfileAddr",
             Some(serde_json::json!({ "name": profile })),
         )
-        .await?;
+        .await
+        .map_err(|e| {
+            tracing::debug!("getProfileAddr error: {}", e);
+            e
+        })?;
     let dao_contract = GoshContract::new(dao_address, abi::DAO);
 
     let params = serde_json::json!({
@@ -63,7 +67,11 @@ async fn get_user_wallet(
     });
     let result: GetAddrWalletResult = dao_contract
         .read_state(blockchain.client(), "getAddrWallet", Some(params))
-        .await?;
+        .await
+        .map_err(|e| {
+            tracing::debug!("getAddrWallet error: {}", e);
+            e
+        })?;
     let user_wallet_address = result.address;
     tracing::trace!("user_wallet address: {:?}", user_wallet_address);
     let secrets = KeyPair::new(pubkey.into(), secret.into());

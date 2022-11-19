@@ -1,3 +1,4 @@
+use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{call::BlockchainCall, Everscale, GoshBlobBitFlags};
 use async_trait::async_trait;
@@ -55,6 +56,7 @@ impl DeployTree for Everscale {
             ipfs: None, // !!!
         };
         let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),

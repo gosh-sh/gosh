@@ -66,7 +66,7 @@ impl UserWalletsMirrorsInnerState {
 pub struct UserWalletMirrors {
     pool: Arc<Mutex<Vec<GoshContract>>>,
     max_possible_number_of_wallets: AtomicU64,
-    pool_size: AtomicU64,
+    initialized_wallets: AtomicU64,
     deployments_in_flight: AtomicU64,
     semaphore: Arc<Semaphore>,
     max_number_of_aquires_per_mirror: u32,
@@ -119,7 +119,7 @@ impl UserWalletMirrors {
         return Self {
             pool: Arc::new(Mutex::new(Vec::<GoshContract>::new())),
             max_possible_number_of_wallets: AtomicU64::new(0),
-            pool_size: AtomicU64::new(0),
+            initialized_wallets: AtomicU64::new(0),
             deployments_in_flight: AtomicU64::new(0),
             semaphore: Arc::new(Semaphore::new(0)),
             max_number_of_aquires_per_mirror,
@@ -134,7 +134,7 @@ impl UserWalletMirrors {
     }
 
     pub fn is_ready(&self) -> bool {
-        return self.pool_size.load(Ordering::SeqCst) > 0;
+        return self.initialized_wallets.load(Ordering::SeqCst) > 0;
     }
 
     pub fn is_mirrors_ready(&self) -> bool {
@@ -142,11 +142,8 @@ impl UserWalletMirrors {
             return false;
         }
         let max_number_of_wallets = self.max_possible_number_of_wallets.load(Ordering::SeqCst);
-        if max_number_of_wallets == 0 {
-            return false;
-        }
-        let pool_size = self.pool_size.load(Ordering::SeqCst);
-        return pool_size >= max_number_of_wallets * (self.max_number_of_aquires_per_mirror as u64);
+        let initialized_wallets = self.initialized_wallets.load(Ordering::SeqCst);
+        return max_number_of_wallets == initialized_wallets;
     }
 
     #[instrument(level = "debug", skip(self, blockchain))]
@@ -195,9 +192,10 @@ impl UserWalletMirrors {
                             pool,
                             self.max_number_of_aquires_per_mirror,
                             Arc::clone(&self.semaphore),
-                            &self.pool_size,
                             mirrors,
                         );
+
+                        self.initialized_wallets.fetch_add(1u64, Ordering::SeqCst);
                     }
                 }
             }
@@ -225,13 +223,13 @@ impl UserWalletMirrors {
         }
         let zero_state = f().await?;
         *mirrors = zero_state;
+        self.initialized_wallets.store(1, Ordering::SeqCst);
         UserWalletMirrors::add_mirror_instance(
             0u64,
             mirrors.wallets.get(&0u64).unwrap().clone(),
             pool.deref_mut(),
             self.max_number_of_aquires_per_mirror,
             Arc::clone(&self.semaphore),
-            &self.pool_size,
             &mut mirrors.wallets,
         );
         Ok(())
@@ -243,14 +241,12 @@ impl UserWalletMirrors {
         pool: &mut Vec<GoshContract>,
         max_number_of_aquires_per_mirror: u32,
         semaphore: Arc<Semaphore>,
-        pool_size: &AtomicU64,
         mirrors: &mut HashMap<u64, GoshContract>,
     ) {
         for _ in 0..max_number_of_aquires_per_mirror {
             pool.push(wallet.clone());
         }
         semaphore.add_permits(max_number_of_aquires_per_mirror as usize);
-        pool_size.fetch_add(max_number_of_aquires_per_mirror as u64, Ordering::SeqCst);
         mirrors.insert(wallet_index, wallet);
     }
 }
