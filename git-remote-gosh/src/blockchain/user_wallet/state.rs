@@ -1,5 +1,6 @@
 use crate::blockchain::call::BlockchainCall;
-use crate::blockchain::{BlockchainService, GoshContract};
+use crate::blockchain::user_wallet::inner_calls;
+use crate::blockchain::{BlockchainContractAddress, BlockchainService, GoshContract};
 
 use std::ops::Deref;
 
@@ -85,19 +86,25 @@ impl UserWalletMirrors {
             .wallets()
             .contains_key(&UserWalletMirrors::ZERO_WALLET_INDEX)
     }
+
     pub async fn is_mirrors_ready(&self) -> bool {
         self.inner.read().await.is_full()
     }
-    pub async fn init_zero_wallet<F, Fut>(&self, f: F) -> anyhow::Result<()>
-    where
-        F: FnOnce() -> Fut,
-        Fut: Future<Output = anyhow::Result<UserWalletsMirrorsInnerState>>,
-    {
+
+    pub async fn init_zero_wallet(
+        &self,
+        blockchain: &impl BlockchainService,
+        dao_address: &BlockchainContractAddress,
+        remote_network: &str,
+    ) -> anyhow::Result<()> {
+        // read lock
         {
             if self.is_zero_wallet_ready().await {
                 return Ok(());
             }
         }
+
+        // write lock
         {
             let mut inner_state = self.inner.write().await;
             if inner_state
@@ -106,8 +113,26 @@ impl UserWalletMirrors {
             {
                 return Ok(());
             }
-            let zero_state = f().await?;
-            *inner_state = zero_state;
+
+            let wallet_config = blockchain.wallet_config().clone().ok_or(anyhow::anyhow!(
+                "user wallet config does not exist or invalid"
+            ))?;
+
+            tracing::debug!("init_zero_wallet before zero_user_wallet");
+            let zero_contract: GoshContract = inner_calls::get_user_wallet(
+                blockchain,
+                blockchain.root_contract(),
+                &dao_address,
+                &wallet_config,
+                0,
+            )
+            .await?;
+            *inner_state = UserWalletsMirrorsInnerState::new(
+                zero_contract,
+                blockchain.root_contract().to_owned(),
+                dao_address.to_owned(),
+                wallet_config.to_owned(),
+            );
         }
         Ok(())
     }
@@ -123,8 +148,8 @@ impl UserWalletMirrors {
             get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
         let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> =
             { inner_state.wallets().keys().cloned().collect() };
-        for i in 1..1 + available_mirrors_count {
-            let wallet_index = i as TWalletMirrorIndex;
+        for i in 0..available_mirrors_count {
+            let wallet_index = (i + 1) as TWalletMirrorIndex;
             if !already_initialized_wallet_indexes.contains(&wallet_index) {
                 let get_mirror_result = get_user_wallet(
                     blockchain,

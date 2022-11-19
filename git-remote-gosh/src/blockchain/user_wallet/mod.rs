@@ -39,30 +39,8 @@ impl BlockchainUserWalletService for Everscale {
     ) -> anyhow::Result<UserWallet> {
         tracing::debug!("wallet_config start");
         if !_USER_WALLET.is_zero_wallet_ready().await {
-            let config = self.wallet_config().clone().ok_or(anyhow::anyhow!(
-                "user wallet config does not exist or invalid"
-            ))?;
-            let gosh_root = self.root_contract().clone();
             _USER_WALLET
-                .init_zero_wallet(|| async {
-                    let client = self.client();
-                    let wallet_config = config.clone();
-                    tracing::debug!("wallet_config before zero_user_wallet");
-                    let zero_contract: GoshContract = inner_calls::get_user_wallet(
-                        self,
-                        self.root_contract(),
-                        &dao_address,
-                        &wallet_config,
-                        0,
-                    )
-                    .await?;
-                    Ok(UserWalletsMirrorsInnerState::new(
-                        zero_contract,
-                        gosh_root,
-                        dao_address.clone(),
-                        config.clone(),
-                    ))
-                })
+                .init_zero_wallet(self, dao_address, remote_network)
                 .await?;
         }
         if !_USER_WALLET.is_mirrors_ready().await {

@@ -141,7 +141,13 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
-                tracing::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
+                tracing::info!(
+                    "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
+                    file_path,
+                    original_commit,
+                    original_branch,
+                    original_snapshot
+                );
                 // generate filter
                 let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
                     client,
@@ -197,7 +203,9 @@ impl DiffMessagesIterator {
                         if page.cursor.is_some() {
                             cursor = page.cursor;
                         } else {
-                            panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
+                            panic!(
+                                "We reached the end of the messages queue to a snapshot and were not able to find original commit there."
+                            )
                         }
                     } else {
                         tracing::info!("Commit found at {}", index.unwrap());
