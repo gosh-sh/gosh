@@ -1,0 +1,212 @@
+use crate::blockchain::call::BlockchainCall;
+use crate::blockchain::{
+    contract::{ContractInfo, ContractRead},
+    serde_number::NumberU64,
+    BlockchainContractAddress, BlockchainService, GoshContract,
+};
+use crate::config::UserWalletConfig;
+
+use std::collections::{HashMap};
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::vec::Vec;
+
+use tokio::sync::RwLock;
+use tokio::sync::Mutex;
+use tokio::sync::{Semaphore, SemaphorePermit};
+
+use std::future::Future;
+use super::inner_state::{
+    TWalletMirrorIndex,
+    UserWalletsMirrorsInnerState
+};
+use super::inner_calls::{
+    get_user_wallet,
+    get_number_of_user_wallet_mirrors_deployed,
+    get_user_wallet_config_max_number_of_mirrors
+};
+
+const WALLET_CONTRACTS_PARALLELISM: usize = 100usize;
+
+pub struct UserWalletContractRef<'a> {
+    mirrors: &'a UserWalletMirrors,
+    permit: SemaphorePermit<'a>,
+    mirror_index: TWalletMirrorIndex,
+    contract: GoshContract,
+}
+
+impl<'a> Deref for UserWalletContractRef<'a> {
+    type Target = GoshContract;
+
+    fn deref(&self) -> &Self::Target {
+        &self.contract
+    }
+}
+
+impl<'a> Drop for UserWalletContractRef<'a> {
+    fn drop(&mut self) {
+        self.mirrors.release_wallet(self.mirror_index);
+    }
+}
+
+impl<'a> UserWalletContractRef<'a> {
+    fn new(
+        mirrors: &'a UserWalletMirrors,
+        permit: SemaphorePermit<'a>,
+        mirror_index: TWalletMirrorIndex,
+        contract: GoshContract,
+    ) -> Self {
+        return Self {
+            mirrors,
+            permit,
+            mirror_index,
+            contract,
+        };
+    }
+}
+
+pub struct UserWalletMirrors {
+    inner: RwLock<UserWalletsMirrorsInnerState>,
+    acquisitions: [AtomicU64; TWalletMirrorIndex::MAX as usize],
+    semaphore: Semaphore,
+    mirror_updates_lock: Mutex<()>
+}
+
+impl UserWalletMirrors {
+    const zero_wallet_index: TWalletMirrorIndex = 0 as TWalletMirrorIndex;
+
+    pub fn new() -> Self {
+        const n: usize = TWalletMirrorIndex::MAX as usize;
+        let acquisitions: [AtomicU64; n] = [(); n].map(|_| AtomicU64::new(0));
+        Self {
+            inner: RwLock::new(UserWalletsMirrorsInnerState::empty()),
+            acquisitions,
+            semaphore: Semaphore::new(0),
+            mirror_updates_lock: Mutex::new(())
+        }
+    }
+
+    pub async fn is_zero_wallet_ready(&self) -> bool {
+        return self.inner
+            .read()
+            .await
+            .wallets()
+            .contains_key(&UserWalletMirrors::zero_wallet_index);
+    }
+    pub async fn is_mirrors_ready(&self) -> bool {
+        self.inner.read().await.is_full()
+    }
+    pub async fn init_zero_wallet<F, Fut>(&self, f: F) -> anyhow::Result<()>
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = anyhow::Result<UserWalletsMirrorsInnerState>>,
+    {
+        {
+            if self.is_zero_wallet_ready().await {
+                return Ok(());
+            }
+        }
+        {
+            let mut inner_state = self.inner.write().await;
+            if inner_state.wallets().contains_key(&UserWalletMirrors::zero_wallet_index) {
+                return Ok(());
+            }
+            let zero_state = f().await?;
+            *inner_state = zero_state;
+        }
+        Ok(())
+    }
+
+    pub(super) async fn try_init_mirrors<B>(
+        &self,
+        blockchain: &B
+    ) -> anyhow::Result<()>
+    where
+        B: BlockchainService + BlockchainCall
+    {
+        let lock = self.mirror_updates_lock.lock().await;
+        let inner_state = {
+            self.inner.read().await.clone()
+        };
+        let zero_wallet = {
+            inner_state.wallets()[&UserWalletMirrors::zero_wallet_index].clone()
+        };
+        let available_mirrors_count = get_number_of_user_wallet_mirrors_deployed(
+            blockchain,
+            &zero_wallet
+        ).await?;
+        let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> = {
+            inner_state.wallets().keys().cloned().collect()
+        };
+        for i in 1 .. 1 + available_mirrors_count {
+            let wallet_index = i as TWalletMirrorIndex;
+            if !already_initialized_wallet_indexes.contains(&wallet_index) {
+                let get_mirror_result = get_user_wallet(
+                    blockchain,
+                    &inner_state.gosh_root,
+                    &inner_state.dao_address,
+                    &inner_state.wallet_config,
+                    wallet_index as u64,
+                ).await;
+                if let Ok(mirror) = get_mirror_result {
+                    self.inner.write().await.add(wallet_index, mirror);
+                    self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
+                }
+            }
+        }
+
+        let max_number_of_wallets = {
+            let max_number_of_wallets = {
+                self.inner.read().await.max_number_of_wallets
+            };
+            match max_number_of_wallets {
+                Some(w) => w,
+                None => {
+                    let n = get_user_wallet_config_max_number_of_mirrors(
+                        blockchain,
+                        &zero_wallet
+                    ).await?;
+                    let mut inner_state = self.inner.write().await;
+                    let w: TWalletMirrorIndex = (n + 1) as TWalletMirrorIndex;
+                    inner_state.max_number_of_wallets = Some(w);
+                    w
+                }
+            }
+        };
+        for _ in available_mirrors_count + 1 .. max_number_of_wallets as u64 {
+            let _ = blockchain.call(&zero_wallet, "deployWallet", None).await;
+        }
+        drop(lock);
+        Ok(())
+    }
+
+    pub async fn take_one(&self) -> anyhow::Result<UserWalletContractRef> {
+        let permit = self.semaphore.acquire().await?;
+        let inner_state = {
+            self.inner.read().await.clone()
+        };
+        let available_wallet_indexes: Vec<TWalletMirrorIndex> = inner_state
+            .wallets()
+            .keys()
+            .cloned()
+            .collect();
+        let mut min_used_wallet_index: TWalletMirrorIndex = available_wallet_indexes[0];
+        let mut min_used_wallet_usage = self.acquisitions[min_used_wallet_index as usize]
+            .load(Ordering::SeqCst);
+        for i in available_wallet_indexes {
+            let usage = self.acquisitions[i as usize].load(Ordering::SeqCst);
+            if usage < min_used_wallet_usage {
+                min_used_wallet_index = i;
+                min_used_wallet_usage = usage;
+            }
+        }
+        let contract = inner_state.wallets()[&min_used_wallet_index].clone();
+        self.acquisitions[min_used_wallet_index as usize].fetch_add(1, Ordering::SeqCst);
+        return Ok(UserWalletContractRef::new(self, permit, min_used_wallet_index, contract))
+    }
+    fn release_wallet(&self, wallet_index: TWalletMirrorIndex) {
+        self.acquisitions[wallet_index as usize].fetch_sub(1, Ordering::SeqCst);
+    }
+}
