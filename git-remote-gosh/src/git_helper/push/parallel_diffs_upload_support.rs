@@ -194,18 +194,30 @@ impl ParallelDiffsUploadSupport {
     where
         B: BlockchainService,
     {
-        for _ in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
+        for iteration in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
             let is_diff_deployed_result =
                 is_diff_deployed(blockchain.client(), expecting_address).await;
-            if let Ok(_) = is_diff_deployed_result {
-                return Ok(());
-            } else {
-                //TODO: replace with web-socket listen
-                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                tracing::debug!(
-                    "Is diff deployed failed with: {}",
-                    is_diff_deployed_result.err().unwrap()
-                );
+            match is_diff_deployed_result {
+                Ok(true) => {
+                    return Ok(());
+                }
+                Ok(false) => {
+                    //TODO: replace with web-socket listen
+                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                    tracing::debug!(
+                        "diff {} is not ready yet. iteration {}",
+                        expecting_address,
+                        iteration
+                    );
+                }
+                Err(ref e) => {
+                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                    tracing::debug!(
+                        "Is diff deployed failed with: {}. iteration {}",
+                        e,
+                        iteration
+                    );
+                }
             }
         }
         anyhow::bail!(
