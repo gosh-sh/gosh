@@ -23,7 +23,7 @@ const WALLET_CONTRACTS_PARALLELISM: usize = 100usize;
 
 pub struct UserWalletContractRef<'a> {
     mirrors: &'a UserWalletMirrors,
-    permit: SemaphorePermit<'a>,
+    pub permit: SemaphorePermit<'a>,
     mirror_index: TWalletMirrorIndex,
     contract: GoshContract,
 }
@@ -113,7 +113,6 @@ impl UserWalletMirrors {
             {
                 return Ok(());
             }
-
             let wallet_config = blockchain.wallet_config().clone().ok_or(anyhow::anyhow!(
                 "user wallet config does not exist or invalid"
             ))?;
@@ -143,11 +142,17 @@ impl UserWalletMirrors {
     {
         let lock = self.mirror_updates_lock.lock().await;
         let inner_state = { self.inner.read().await.clone() };
+        let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> =
+            { inner_state.wallets().keys().cloned().collect() };
+        if let Some(max_number_of_wallets) = inner_state.max_number_of_wallets {
+            if usize::from(max_number_of_wallets) <= already_initialized_wallet_indexes.len() {
+                return Ok(());
+            }
+        }
+
         let zero_wallet = { inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone() };
         let available_mirrors_count =
             get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
-        let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> =
-            { inner_state.wallets().keys().cloned().collect() };
         for i in 0..available_mirrors_count {
             let wallet_index = (i + 1) as TWalletMirrorIndex;
             if !already_initialized_wallet_indexes.contains(&wallet_index) {
@@ -167,7 +172,7 @@ impl UserWalletMirrors {
         }
 
         let max_number_of_wallets = {
-            let max_number_of_wallets = { self.inner.read().await.max_number_of_wallets };
+            let max_number_of_wallets = { inner_state.max_number_of_wallets };
             match max_number_of_wallets {
                 Some(w) => w,
                 None => {
