@@ -7,7 +7,7 @@ use crate::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
-use futures::{stream::FuturesUnordered, StreamExt};
+use futures::StreamExt;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
@@ -117,8 +117,9 @@ where
                     dao_addr,
                     remote_network,
                     branch_name,
-                    file_path
-                ).await
+                    file_path,
+                )
+                .await
             });
         }
 
@@ -448,11 +449,9 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            let _ = push_tree(
-                                self,
-                                &object_id, &mut visited_trees,
-                                &mut push_handlers
-                            ).await?;
+                            let _ =
+                                push_tree(self, &object_id, &mut visited_trees, &mut push_handlers)
+                                    .await?;
                         }
                     }
                 }

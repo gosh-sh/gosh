@@ -10,12 +10,10 @@ use crate::{
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
     },
     config,
-    git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
-use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -322,11 +320,9 @@ pub async fn push_initial_snapshot<B>(
     file_path: String,
 ) -> anyhow::Result<()>
 where
-    B: BlockchainService
+    B: BlockchainService,
 {
-    let wallet = blockchain
-        .user_wallet(&dao_addr, &remote_network)
-        .await?;
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     Retry::spawn(default_retry_strategy(), || async {
         blockchain
             .deploy_new_snapshot(

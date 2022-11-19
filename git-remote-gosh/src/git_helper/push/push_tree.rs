@@ -7,7 +7,7 @@ use git_object::tree::EntryRef;
 use git_odb::{Find, FindExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
-use tokio::task::JoinHandle;
+
 use tokio_retry::Retry;
 use tracing::Instrument;
 
@@ -69,7 +69,7 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
-    handlers: &mut JoinSet<anyhow::Result<()>>
+    handlers: &mut JoinSet<anyhow::Result<()>>,
 ) -> anyhow::Result<()> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
