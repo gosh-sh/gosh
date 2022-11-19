@@ -318,7 +318,7 @@ where
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
 
-        let mut push_handlers = Vec::new();
+        let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
 
         for line in out.lines() {
             match line.split_ascii_whitespace().next() {
@@ -377,7 +377,7 @@ where
                                 let tree_addr = tree_addr.clone();
                                 let branch_name = branch_name.to_owned().clone();
 
-                                push_handlers.push(tokio::spawn(
+                                push_handlers.spawn(
                                     async move {
                                         Retry::spawn(default_retry_strategy(), || async {
                                             blockchain
@@ -401,7 +401,7 @@ where
                                     .instrument(
                                         debug_span!("tokio::spawn::push_commit").or_current(),
                                     ),
-                                ));
+                                );
                             }
 
                             let tree_diff = utilities::build_tree_diff_from_commits(
@@ -448,24 +448,34 @@ where
                         // Not supported yet
                         git_object::Kind::Tag => unimplemented!(),
                         git_object::Kind::Tree => {
-                            push_handlers.append(
-                                &mut push_tree(self, &object_id, &mut visited_trees).await?,
-                            );
+                            let _ = push_tree(
+                                self,
+                                &object_id, &mut visited_trees,
+                                &mut push_handlers
+                            ).await?;
                         }
                     }
                 }
                 None => break,
             }
         }
-
-        for handler in push_handlers {
-            handler.await??;
-        }
-
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support
             .wait_all_diffs(self.blockchain.clone())
             .await?;
+        while let Some(finished_task) = push_handlers.join_next().await {
+            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
+            match finished_task {
+                Err(e) => {
+                    panic!("obj join-hanlder: {}", e);
+                }
+                Ok(Err(e)) => {
+                    panic!("obj inner: {}", e)
+                }
+                Ok(Ok(_)) => {}
+            }
+        }
+
         while let Some(finished_task) = parallel_snapshot_uploads.join_next().await {
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
