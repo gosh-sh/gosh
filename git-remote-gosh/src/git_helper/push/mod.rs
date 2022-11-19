@@ -16,7 +16,7 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
-use tokio::task::JoinError;
+use tokio::task::{JoinError, JoinSet};
 use tokio_retry::Retry;
 use tracing::Instrument;
 
@@ -100,12 +100,27 @@ where
         branch_name: &str,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
-        parallel_snapshot_uploads: &mut FuturesUnordered<
-            tokio::task::JoinHandle<anyhow::Result<()>>,
-        >,
+        parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
-        let join_handler = push_initial_snapshot(self, branch_name, file_path).await?;
-        parallel_snapshot_uploads.push(join_handler);
+        {
+            let blockchain = self.blockchain.clone();
+            let repo_address = self.repo_addr.clone();
+            let dao_addr = self.dao_addr.clone();
+            let remote_network = self.remote.network.clone();
+            let branch_name = branch_name.to_string();
+            let file_path = file_path.to_string();
+
+            parallel_snapshot_uploads.spawn(async move {
+                push_initial_snapshot(
+                    blockchain,
+                    repo_address,
+                    dao_addr,
+                    remote_network,
+                    branch_name,
+                    file_path
+                ).await
+            });
+        }
 
         let file_diff =
             utilities::generate_blob_diff(&self.local_repository().objects, None, blob_id).await?;
@@ -180,9 +195,7 @@ where
         };
 
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
-        let mut parallel_snapshot_uploads: FuturesUnordered<
-            tokio::task::JoinHandle<anyhow::Result<()>>,
-        > = FuturesUnordered::new();
+        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
             let mut iter = remote_ref.rsplit('/');
@@ -453,7 +466,7 @@ where
         parallel_diffs_upload_support
             .wait_all_diffs(self.blockchain.clone())
             .await?;
-        while let Some(finished_task) = parallel_snapshot_uploads.next().await {
+        while let Some(finished_task) = parallel_snapshot_uploads.join_next().await {
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
