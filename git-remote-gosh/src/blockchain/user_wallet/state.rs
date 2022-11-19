@@ -132,6 +132,7 @@ impl UserWalletMirrors {
                 dao_address.to_owned(),
                 wallet_config.to_owned(),
             );
+            self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
         }
         Ok(())
     }
@@ -140,55 +141,63 @@ impl UserWalletMirrors {
     where
         B: BlockchainService + BlockchainCall,
     {
-        let lock = self.mirror_updates_lock.lock().await;
-        let inner_state = { self.inner.read().await.clone() };
-        let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> =
-            { inner_state.wallets().keys().cloned().collect() };
-        if let Some(max_number_of_wallets) = inner_state.max_number_of_wallets {
-            if usize::from(max_number_of_wallets) <= already_initialized_wallet_indexes.len() {
-                return Ok(());
-            }
-        }
+        if let Ok(lock) = self.mirror_updates_lock.try_lock() {
 
-        let zero_wallet = { inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone() };
-        let available_mirrors_count =
-            get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
-        for i in 0..available_mirrors_count {
-            let wallet_index = (i + 1) as TWalletMirrorIndex;
-            if !already_initialized_wallet_indexes.contains(&wallet_index) {
-                let get_mirror_result = get_user_wallet(
-                    blockchain,
-                    &inner_state.gosh_root,
-                    &inner_state.dao_address,
-                    &inner_state.wallet_config,
-                    wallet_index as u64,
-                )
-                .await;
-                if let Ok(mirror) = get_mirror_result {
-                    self.inner.write().await.add(wallet_index, mirror);
-                    self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
+                let inner_state = { self.inner.read().await.clone() };
+                let already_initialized_wallet_indexes: Vec<TWalletMirrorIndex> =
+                    { inner_state.wallets().keys().cloned().collect() };
+                if let Some(max_number_of_wallets) = inner_state.max_number_of_wallets {
+                    if usize::from(max_number_of_wallets) <= already_initialized_wallet_indexes.len() {
+                        return Ok(());
+                    }
                 }
-            }
-        }
+                tracing::debug!("inner wallets state {:#?}", inner_state.wallets());
 
-        let max_number_of_wallets = {
-            let max_number_of_wallets = { inner_state.max_number_of_wallets };
-            match max_number_of_wallets {
-                Some(w) => w,
-                None => {
-                    let n = get_user_wallet_config_max_number_of_mirrors(blockchain, &zero_wallet)
-                        .await?;
-                    let mut inner_state = self.inner.write().await;
-                    let w: TWalletMirrorIndex = (n + 1) as TWalletMirrorIndex;
-                    inner_state.max_number_of_wallets = Some(w);
-                    w
+                let zero_wallet = { inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone() };
+                let available_mirrors_count =
+                    get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
+                for i in 0..available_mirrors_count {
+                    let wallet_index = (i + 1) as TWalletMirrorIndex;
+                    if !already_initialized_wallet_indexes.contains(&wallet_index) {
+                        let get_mirror_result = get_user_wallet(
+                            blockchain,
+                            &inner_state.gosh_root,
+                            &inner_state.dao_address,
+                            &inner_state.wallet_config,
+                            wallet_index as u64,
+                        )
+                        .await;
+                        match get_mirror_result {
+                            Err(e) => {
+                                tracing::debug!("Error in get_user_wallet: {}", e);
+                            },
+                            Ok(mirror) => {
+                                self.inner.write().await.add(wallet_index, mirror);
+                                self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
+                            }
+                        }
+                    }
                 }
-            }
-        };
-        for _ in available_mirrors_count + 1..max_number_of_wallets as u64 {
-            let _ = blockchain.call(&zero_wallet, "deployWallet", None).await;
+
+                let max_number_of_wallets = {
+                    let max_number_of_wallets = { inner_state.max_number_of_wallets };
+                    match max_number_of_wallets {
+                        Some(w) => w,
+                        None => {
+                            let n = get_user_wallet_config_max_number_of_mirrors(blockchain, &zero_wallet)
+                                .await?;
+                            let mut inner_state = self.inner.write().await;
+                            let w: TWalletMirrorIndex = (n + 1) as TWalletMirrorIndex;
+                            inner_state.max_number_of_wallets = Some(w);
+                            w
+                        }
+                    }
+                };
+                for _ in available_mirrors_count + 1..max_number_of_wallets as u64 {
+                    let _ = blockchain.call(&zero_wallet, "deployWallet", None).await;
+                }
+                drop(lock);
         }
-        drop(lock);
         Ok(())
     }
 

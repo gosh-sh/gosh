@@ -29,7 +29,7 @@ struct GetAddrWalletResult {
 #[derive(Deserialize, Debug)]
 struct GetWalletMirrorsCountResult {
     #[serde(rename = "value0")]
-    pub number_of_mirrors: NumberU64,
+    pub number_of_wallets: NumberU64,
 }
 
 #[instrument(level = "debug", skip(blockchain))]
@@ -43,8 +43,12 @@ where
 {
     let result: GetWalletMirrorsCountResult = wallet
         .read_state(blockchain.client(), "getWalletsCount", None)
-        .await?;
-    Ok(Into::<u64>::into(result.number_of_mirrors) - 1)
+        .await
+        .map_err(|e| {
+            tracing::debug!("get_number_of_user_wallet_mirrors_deployed error: {}", e);
+            e
+        })?;
+    Ok(Into::<u64>::into(result.number_of_wallets) - 1)
 }
 
 #[instrument(level = "debug", skip(blockchain))]
