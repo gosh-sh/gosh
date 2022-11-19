@@ -1,26 +1,7 @@
-use crate::blockchain::call::BlockchainCall;
-use crate::blockchain::{
-    contract::{ContractInfo, ContractRead},
-    serde_number::NumberU64,
-    BlockchainContractAddress, BlockchainService, GoshContract,
-};
+use crate::blockchain::{BlockchainContractAddress, GoshContract};
 use crate::config::UserWalletConfig;
 
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
-use std::vec::Vec;
-
-use tokio::sync::Mutex;
-use tokio::sync::{Semaphore, SemaphorePermit};
-
-use std::future::Future;
-
-use super::inner_calls::{
-    get_user_wallet
-};
 
 pub type TWalletMirrorIndex = u8;
 
@@ -30,7 +11,7 @@ pub struct UserWalletsMirrorsInnerState {
     pub gosh_root: GoshContract,
     pub dao_address: BlockchainContractAddress,
     pub wallet_config: UserWalletConfig,
-    pub max_number_of_wallets: Option<TWalletMirrorIndex>
+    pub max_number_of_wallets: Option<TWalletMirrorIndex>,
 }
 
 impl UserWalletsMirrorsInnerState {
@@ -40,9 +21,7 @@ impl UserWalletsMirrorsInnerState {
     pub fn is_full(&self) -> bool {
         match self.max_number_of_wallets {
             None => false,
-            Some(capacity) => {
-                self.wallets.len() >= (capacity as usize)
-            }
+            Some(capacity) => self.wallets.len() >= (capacity as usize),
         }
     }
     pub(crate) fn new(
@@ -58,7 +37,7 @@ impl UserWalletsMirrorsInnerState {
             gosh_root,
             dao_address,
             wallet_config,
-            max_number_of_wallets: None
+            max_number_of_wallets: None,
         }
     }
 
@@ -80,4 +59,3 @@ impl UserWalletsMirrorsInnerState {
         self.wallets.insert(index, wallet);
     }
 }
-

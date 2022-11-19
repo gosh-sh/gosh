@@ -1,3 +1,4 @@
+use crate::abi;
 use crate::blockchain::call::BlockchainCall;
 use crate::blockchain::{
     contract::{ContractInfo, ContractRead},
@@ -5,24 +6,7 @@ use crate::blockchain::{
     BlockchainContractAddress, BlockchainService, GoshContract,
 };
 use crate::config::UserWalletConfig;
-
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::sync::atomic::{AtomicU64, Ordering};
-use async_trait::async_trait;
-use once_cell::sync::Lazy;
-use serde;
-use std::sync::Arc;
-
 use ton_client::crypto::KeyPair;
-
-use crate::{abi};
-
-use crate::blockchain::{
-    Everscale,
-};
-
 
 #[derive(Deserialize, Debug)]
 struct GetConfigResult {

@@ -3,22 +3,17 @@ use once_cell::sync::Lazy;
 
 use std::sync::Arc;
 
-use ton_client::crypto::KeyPair;
+use crate::config::UserWalletConfig;
 
-use crate::{abi, config::UserWalletConfig};
-
-use super::{
-    contract::ContractRead, BlockchainContractAddress, BlockchainService, Everscale, GoshContract,
-};
-mod inner_state;
+use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract};
 pub mod inner_calls;
+mod inner_state;
 mod state;
 pub use inner_state::UserWalletsMirrorsInnerState;
 pub use state::UserWalletMirrors;
 pub type UserWallet = Arc<UserWalletMirrors>;
 
-static _USER_WALLET: Lazy<UserWallet> =
-    Lazy::new(|| Arc::new(UserWalletMirrors::new()));
+static _USER_WALLET: Lazy<UserWallet> = Lazy::new(|| Arc::new(UserWalletMirrors::new()));
 
 #[cfg_attr(test, mockall::automock)]
 #[async_trait]
