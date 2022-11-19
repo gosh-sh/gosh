@@ -17,7 +17,6 @@ const RepoReadme = (props: TRepoReadmeProps) => {
         return item ? getTreeItemFullPath(item) : undefined
     }, [blobs])
     const { isFetching, path, content } = useBlob(dao, repo, branch, readmePath)
-    console.debug(readmePath)
 
     if (!isFetching && !content) return null
     return (

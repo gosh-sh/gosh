@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
 import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
 type TBlobPreviewProps = {
@@ -16,8 +16,16 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     const location = useLocation()
     const [selectedLine, setSelectedLine] = useState<number>()
 
-    const createHighlightedCodeBlock = (content: string, language?: string[]) => {
-        const highlightedContent = hljs.highlightAuto(content, language).value
+    const fileext = useMemo(() => {
+        const splitted = filename.split('.')
+        return splitted.length === 1 ? undefined : splitted.splice(-1)[0]
+    }, [filename])
+
+    const highlighted = useMemo(() => {
+        if (Buffer.isBuffer(value)) return []
+
+        const aliases = fileext ? [fileext] : undefined
+        const content = hljs.highlightAuto(value, aliases).value
 
         /* Highlight.js wraps comment blocks inside <span class="hljs-comment"></span>.
            However, when the multi-line comment block is broken down into diffirent
@@ -25,33 +33,38 @@ const BlobPreview = (props: TBlobPreviewProps) => {
            highlighted. The following code fixes it by appending <span> to each line
            of the comment block. */
         const commentPattern = /<span class="hljs-comment">(.|\n)*?<\/span>/g
-        const adaptedHighlightedContent = highlightedContent.replace(
-            commentPattern,
-            (data) => {
-                return data.replace(/\r?\n/g, () => {
-                    return '\n<span class="hljs-comment">'
-                })
-            },
-        )
+        const adaptedContent = content.replace(commentPattern, (data) => {
+            return data.replace(/\r?\n/g, () => {
+                return '\n<span class="hljs-comment">'
+            })
+        })
 
-        const contentTable = adaptedHighlightedContent
-            .split(/\r?\n/)
-            .map((lineContent, index) => {
+        return adaptedContent.split(/\r?\n/)
+    }, [value, fileext])
+
+    const getHighlightedCodeBlock = () => {
+        const contentTable = highlighted
+            .map((line, index) => {
                 const number = index + 1
                 const trClass = number === selectedLine ? 'code-line--selected' : ''
+                const tdContent = !line || line === '</span>' ? '&nbsp;' : line
 
                 return [
                     `<tr id="code-line-${number}" class="code-line ${trClass}">`,
                     `<td class="code-line__number">`,
                     `<a href="#L${number}" data-pseudo-content="${number}"/>`,
                     '</td>',
-                    `<td>${lineContent}</td>`,
+                    `<td class="code-line__content">${tdContent}</td>`,
                     '</tr>',
                 ].join('')
             })
             .join('')
 
-        return `<pre><code><table class="code-table w-full">${contentTable}</table></code></pre>`
+        return [
+            '<pre class="overflow-y-hidden">',
+            `<code><table class="code-table w-full">${contentTable}</table></code>`,
+            '</pre>',
+        ].join('')
     }
 
     useEffect(() => {
@@ -79,7 +92,9 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     return (
         <div
             className={classNames('text-sm', className)}
-            dangerouslySetInnerHTML={{ __html: createHighlightedCodeBlock(value) }}
+            dangerouslySetInnerHTML={{
+                __html: getHighlightedCodeBlock(),
+            }}
         />
     )
 }

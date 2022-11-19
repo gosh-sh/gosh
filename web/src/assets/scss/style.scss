@@ -312,25 +312,31 @@ for those elements which require gradient border color
 /** Line numbers for highlight.js */
 .code-line {
     &__number {
-        @apply w-px;
+        @apply block absolute p-0 w-11;
     }
 
     &__number a {
         @apply block
-            text-xs
+            leading-5
             text-right
-            pr-5
-            pl-3.5
+            px-2
+            py-px
+            bg-white
             text-black/20 hover:text-black/80;
         font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-size: 0.8125rem;
+    }
+
+    &__content {
+        @apply pl-14;
     }
 
     &--selected {
-        @apply bg-black/5;
+        @apply bg-gray-e5e5f9;
     }
 
     &--selected &__number > a {
-        @apply text-black;
+        @apply text-black bg-gray-e5e5f9;
     }
 }
 
