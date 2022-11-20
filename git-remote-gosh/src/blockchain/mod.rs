@@ -38,7 +38,9 @@ use serde_number::Number;
 pub use snapshot::Snapshot;
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
-
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
+use tokio::sync::RwLock;
 pub use crate::{
     abi as gosh_abi,
     config::{self, UserWalletConfig},
@@ -48,7 +50,10 @@ use self::contract::{ContractRead, ContractStatic, GoshContract};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
-const CACHE_PIN_STATIC: &str = "static";
+
+static PINNED_CONTRACT_BOCREFS: Lazy<Arc<RwLock<HashMap<BlockchainContractAddress, String>>>> = Lazy::new(|| {
+    Arc::new(RwLock::new(HashMap::new()))
+});
 
 #[repr(u8)]
 pub enum GoshBlobBitFlags {
@@ -161,7 +166,7 @@ async fn run_local(
         "id": { "eq": contract.address }
     }));
     let query = query_collection(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfQueryCollection {
             collection: "accounts".to_owned(),
             filter,
@@ -188,7 +193,7 @@ async fn run_local(
     };
 
     let encoded = encode_message(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
@@ -203,7 +208,7 @@ async fn run_local(
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
 
     let result = run_tvm(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfRunTvm {
             message: encoded.message,
             account: account_boc.unwrap().to_string(),
@@ -228,16 +233,24 @@ async fn run_static(
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
-    let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
-        tracing::trace!("run_static: use cached boc ref");
-        (boc_ref, Some(BocCacheType::Unpinned))
+    // Read lock
+    let boc_ref = {
+        PINNED_CONTRACT_BOCREFS.read()
+            .await
+            .get(&contract.address)
+            .map(|e|e.to_owned())
+    };
+    let pin = contract.address.to_string();
+    let (account, boc_cache) = if let Some(boc_ref) = boc_ref {
+        tracing::trace!("run_static: use cached boc ref: {} -> {}", &contract.address, boc_ref);
+        (boc_ref, Some(BocCacheType::Pinned { pin: pin }))
     } else {
         tracing::trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
             "id": { "eq": contract.address }
         }));
         let query = query_collection(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfQueryCollection {
                 collection: "accounts".to_owned(),
                 filter,
@@ -259,16 +272,20 @@ async fn run_static(
         }
         let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
         let ResultOfBocCacheSet { boc_ref } = cache_set(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfBocCacheSet {
                 boc,
                 cache_type: BocCacheType::Pinned {
-                    pin: CACHE_PIN_STATIC.to_string(),
+                    pin: pin,
                 },
             },
         )
         .await?;
-        contract.boc_ref = Some(boc_ref.clone());
+        // write lock
+        {
+            let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
+            refs.insert(contract.address.clone(), boc_ref.clone());
+        }
         (boc_ref, None)
     };
     // ---------
@@ -278,7 +295,7 @@ async fn run_static(
     };
 
     let encoded = encode_message(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
@@ -293,7 +310,7 @@ async fn run_static(
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
     let result = run_tvm(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfRunTvm {
             message: encoded.message,
             account: account.clone(),

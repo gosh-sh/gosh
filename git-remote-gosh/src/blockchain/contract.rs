@@ -78,7 +78,6 @@ pub struct GoshContract {
     pub pretty_name: String,
     pub abi: Abi,
     pub keys: Option<KeyPair>,
-    pub boc_ref: Option<String>,
 }
 
 impl std::fmt::Debug for GoshContract {
@@ -100,7 +99,6 @@ impl GoshContract {
             address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: None,
-            boc_ref: None,
         }
     }
 
@@ -113,7 +111,6 @@ impl GoshContract {
             address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
-            boc_ref: None,
         }
     }
 
