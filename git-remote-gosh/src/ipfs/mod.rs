@@ -82,6 +82,7 @@ impl IpfsService<MiddlewareHttpClient> {
             .take(MAX_RETRIES)
     }
 
+    #[instrument(level = "debug", skip(cli, url, body))]
     async fn save_body<U, B>(cli: &MiddlewareHttpClient, url: U, body: B) -> anyhow::Result<String>
     where
         U: reqwest::IntoUrl,
@@ -94,6 +95,7 @@ impl IpfsService<MiddlewareHttpClient> {
         Ok(response_body.hash)
     }
 
+    #[instrument(level = "debug", skip(cli, blob))]
     async fn save_blob_retriable(
         cli: &MiddlewareHttpClient,
         url: &str,
@@ -104,6 +106,7 @@ impl IpfsService<MiddlewareHttpClient> {
         IpfsService::save_body(cli, url, blob.to_owned()).await
     }
 
+    #[instrument(level = "debug", skip(cli, path))]
     async fn save_file_retriable(
         cli: &MiddlewareHttpClient,
         url: &str,
@@ -117,6 +120,7 @@ impl IpfsService<MiddlewareHttpClient> {
         IpfsService::save_body(cli, url, body).await
     }
 
+    #[instrument(level = "debug", skip(cli))]
     async fn load_retriable(cli: &MiddlewareHttpClient, url: &str) -> anyhow::Result<Vec<u8>> {
         tracing::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
