@@ -240,7 +240,7 @@ async fn run_local(
 #[instrument(level = "debug", skip(context, contract))]
 async fn run_static(
     context: &EverClient,
-    contract: &mut GoshContract,
+    contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
@@ -541,7 +541,7 @@ pub mod tests {
             .unwrap();
         let address = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
         let address = BlockchainContractAddress::new(address);
-        let mut contract = GoshContract::new(address, gosh_abi::REPO);
+        let contract = GoshContract::new(address, gosh_abi::REPO);
         let list: GetAllAddressResult = contract
             .run_static(&te.client, "getAllAddress", None)
             .await
