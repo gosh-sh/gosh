@@ -30,8 +30,8 @@ where
         blockchain::get_commit_address(&self.blockchain.client(), repo_contract, &commit_id).await
     }
 
-    pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
-        return self.local_repository().objects.contains(object_id);
+    pub fn is_commit_in_local_cache(&self, object_id: &git_hash::ObjectId) -> bool {
+        self.local_repository().objects.contains(object_id)
     }
 
     async fn write_git_object(
@@ -39,7 +39,7 @@ where
         obj: impl git_object::WriteTo,
     ) -> anyhow::Result<git_hash::ObjectId> {
         tracing::info!("Writing git object");
-        let store = &mut self.local_repository().objects;
+        let store = &self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj).map_err(|e| {

@@ -57,7 +57,11 @@ where
     Blockchain: BlockchainService,
     FileProvider: FileStorage,
 {
-    pub fn local_repository(&mut self) -> &mut git_repository::Repository {
+    pub fn local_repository(&self) -> &git_repository::Repository {
+        &self.local_git_repository
+    }
+
+    pub fn local_repository_mut(&mut self) -> &mut git_repository::Repository {
         &mut self.local_git_repository
     }
 
