@@ -33,27 +33,27 @@ pub mod snapshot;
 pub mod tree;
 mod tvm_hash;
 pub mod user_wallet;
-pub use commit::GoshCommit;
-use serde_number::Number;
-pub use snapshot::Snapshot;
-pub use tree::Tree;
-pub use tvm_hash::tvm_hash;
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
-use tokio::sync::RwLock;
 pub use crate::{
     abi as gosh_abi,
     config::{self, UserWalletConfig},
 };
+pub use commit::GoshCommit;
+use once_cell::sync::Lazy;
+use serde_number::Number;
+pub use snapshot::Snapshot;
+use std::collections::HashMap;
+use tokio::sync::RwLock;
+pub use tree::Tree;
+pub use tvm_hash::tvm_hash;
 
 use self::contract::{ContractRead, ContractStatic, GoshContract};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
 
-static PINNED_CONTRACT_BOCREFS: Lazy<Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>> = Lazy::new(|| {
-    Arc::new(RwLock::new(HashMap::new()))
-});
+static PINNED_CONTRACT_BOCREFS: Lazy<
+    Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>,
+> = Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 
 #[repr(u8)]
 pub enum GoshBlobBitFlags {
@@ -160,7 +160,7 @@ impl Clone for Everscale {
             wallet_config: self.wallet_config.clone(),
             ever_client: Arc::clone(&self.ever_client),
             root_contract: self.root_contract.clone(),
-            repo_contract: self.repo_contract.clone()
+            repo_contract: self.repo_contract.clone(),
         }
     }
 }
@@ -246,15 +246,20 @@ async fn run_static(
 ) -> anyhow::Result<serde_json::Value> {
     // Read lock
     let boc_ref = {
-        PINNED_CONTRACT_BOCREFS.read()
+        PINNED_CONTRACT_BOCREFS
+            .read()
             .await
             .get(&contract.address)
-            .map(|(r, c)|(r.to_owned(),Arc::clone(c)))
+            .map(|(r, c)| (r.to_owned(), Arc::clone(c)))
     };
     let pin = contract.address.to_string();
     let (account, boc_cache, client) = if let Some(boc_ref) = boc_ref {
         let (boc_ref, client) = boc_ref;
-        tracing::trace!("run_static: use cached boc ref: {} -> {}", &contract.address, boc_ref);
+        tracing::trace!(
+            "run_static: use cached boc ref: {} -> {}",
+            &contract.address,
+            boc_ref
+        );
         (boc_ref, Some(BocCacheType::Pinned { pin: pin }), client)
     } else {
         tracing::trace!("run_static: load account' boc");
@@ -287,16 +292,17 @@ async fn run_static(
             Arc::clone(context),
             ParamsOfBocCacheSet {
                 boc,
-                cache_type: BocCacheType::Pinned {
-                    pin: pin,
-                },
+                cache_type: BocCacheType::Pinned { pin: pin },
             },
         )
         .await?;
         // write lock
         {
             let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
-            refs.insert(contract.address.clone(), (boc_ref.clone(), Arc::clone(context)));
+            refs.insert(
+                contract.address.clone(),
+                (boc_ref.clone(), Arc::clone(context)),
+            );
         }
         (boc_ref, None, Arc::clone(context))
     };

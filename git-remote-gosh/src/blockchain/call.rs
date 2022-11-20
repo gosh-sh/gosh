@@ -1,11 +1,11 @@
 use super::{contract::ContractInfo, CallResult, Everscale};
 use crate::blockchain::{default_callback, BlockchainService};
 use async_trait::async_trait;
+use std::sync::Arc;
 use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
 };
-use std::sync::Arc;
 use tracing::Instrument;
 
 #[async_trait]

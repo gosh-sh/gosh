@@ -6,9 +6,9 @@ use crate::blockchain::{
 };
 use std::collections::HashMap;
 use std::iter::Iterator;
+use std::sync::Arc;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct DiffMessage {

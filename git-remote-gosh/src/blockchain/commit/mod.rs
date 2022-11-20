@@ -4,8 +4,8 @@ use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 pub mod save;
 
-use std::sync::Arc;
 use crate::blockchain::serde_number::NumberU64;
+use std::sync::Arc;
 
 use super::contract::GoshContract;
 

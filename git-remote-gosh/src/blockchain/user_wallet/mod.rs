@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::config::UserWalletConfig;
 
-use super::{BlockchainContractAddress, BlockchainService, Everscale, GoshContract};
+use super::{BlockchainContractAddress, Everscale};
 pub mod inner_calls;
 mod inner_state;
 mod state;
