@@ -27,6 +27,9 @@ contract SystemContract is Modifiers {
     bool _flag = true;
     mapping(uint8 => TvmCell) _code;
 
+    //Limits
+    uint128 _limit_wallets = 64;
+
     //SMV
     TvmCell m_TokenLockerCode;
     TvmCell m_SMVPlatformCode;
@@ -98,6 +101,7 @@ contract SystemContract is Modifiers {
             msg.sender,
             name,
             pubmem,
+            _limit_wallets,
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -192,6 +196,10 @@ contract SystemContract is Modifiers {
     function setFlag(bool flag) public onlyOwner accept saveMsg {
         _flag = flag;
     }
+   
+    function setLimitWallets(uint128 limit_wallets) public onlyOwner accept saveMsg {
+        _limit_wallets = limit_wallets;
+    }      
     
     //SMV
 

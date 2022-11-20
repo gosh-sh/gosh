@@ -10,6 +10,7 @@
 				{"name":"profiledao","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"pubmem","type":"address[]"},
+				{"name":"limit_wallets","type":"uint128"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},

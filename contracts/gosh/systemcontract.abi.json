@@ -100,6 +100,14 @@
 			]
 		},
 		{
+			"name": "setLimitWallets",
+			"inputs": [
+				{"name":"limit_wallets","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTokenRoot",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -392,6 +400,7 @@
 		{"name":"_versionController","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
