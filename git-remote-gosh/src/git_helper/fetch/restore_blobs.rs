@@ -328,7 +328,7 @@ impl BlobsRebuildingPlan {
             FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.blockchain.client().clone();
+            let es_client = Arc::clone(git_helper.blockchain.client());
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
             let mut repo_contract = git_helper.blockchain.repo_contract().clone();

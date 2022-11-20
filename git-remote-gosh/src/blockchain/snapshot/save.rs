@@ -124,7 +124,7 @@ impl DeployDiff for Everscale {
         };
 
         let wallet_contract = wallet.take_one().await?;
-        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
+        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),
@@ -172,7 +172,7 @@ impl DeployNewSnapshot for Everscale {
             ipfs: None,
         };
         let wallet_contract = wallet.take_one().await?;
-        tracing::debug!("Aqured wallet: {}", wallet_contract.get_address());
+        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),

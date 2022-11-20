@@ -8,6 +8,7 @@ use git_odb::{Find, Write};
 use std::{
     collections::{HashSet, VecDeque},
     str::FromStr,
+    sync::Arc,
 };
 mod restore_blobs;
 
@@ -105,7 +106,7 @@ where
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let mut repo_contract = self.blockchain.repo_contract().clone();
                 let address = blockchain::Tree::calculate_address(
-                    &self.blockchain.client().clone(),
+                    &Arc::clone(self.blockchain.client()),
                     &mut repo_contract,
                     &tree_object_id,
                 )
@@ -135,7 +136,7 @@ where
 
                             let mut repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = blockchain::Snapshot::calculate_address(
-                                &self.blockchain.client().clone(),
+                                &Arc::clone(self.blockchain.client()),
                                 &mut repo_contract,
                                 branch,
                                 // Note:

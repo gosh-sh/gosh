@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 use std::env;
 
+use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::{
@@ -66,7 +67,7 @@ where
     ) -> anyhow::Result<BlockchainContractAddress> {
         let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
-            &self.blockchain.client().clone(),
+            &Arc::clone(self.blockchain.client()),
             &mut repo_contract,
             &tree_id.to_string(),
         )
@@ -159,7 +160,7 @@ async fn build_blockchain(
     let mut blockchain_builder = EverscaleBuilder::default();
     let remote = Remote::new(url, &config)?;
     let ever_client = create_client(&config, &remote.network)?;
-    blockchain_builder.ever_client(ever_client.clone());
+    blockchain_builder.ever_client(Arc::clone(&ever_client));
 
     let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
     let dao: GetAddrDaoResult = gosh_root_contract
