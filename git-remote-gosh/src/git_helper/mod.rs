@@ -85,7 +85,7 @@ where
         let remote = Remote::new(url, &config)?;
         let ever_client = create_client(&config, &remote.network)?;
 
-        let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+        let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
         let dao: GetAddrDaoResult = gosh_root_contract
             .run_static(
@@ -162,7 +162,7 @@ async fn build_blockchain(
     let ever_client = create_client(&config, &remote.network)?;
     blockchain_builder.ever_client(Arc::clone(&ever_client));
 
-    let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+    let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
     let dao: GetAddrDaoResult = gosh_root_contract
         .run_static(
             &ever_client,
