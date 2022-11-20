@@ -5,6 +5,7 @@ use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
 };
+use std::sync::Arc;
 use tracing::Instrument;
 
 #[async_trait]
@@ -53,7 +54,7 @@ impl BlockchainCall for Everscale {
         };
 
         let sdk_result = ton_client::processing::process_message(
-            self.client().clone(),
+            Arc::clone(self.client()),
             ParamsOfProcessMessage {
                 send_events: false,
                 message_encode_params,

@@ -51,7 +51,7 @@ use self::contract::{ContractRead, ContractStatic, GoshContract};
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
 
-static PINNED_CONTRACT_BOCREFS: Lazy<Arc<RwLock<HashMap<BlockchainContractAddress, String>>>> = Lazy::new(|| {
+static PINNED_CONTRACT_BOCREFS: Lazy<Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>> = Lazy::new(|| {
     Arc::new(RwLock::new(HashMap::new()))
 });
 
@@ -146,12 +146,23 @@ struct GetVersionResult {
 
 pub type EverClient = Arc<ClientContext>;
 
-#[derive(Builder, Clone)]
+#[derive(Builder)]
 pub struct Everscale {
     wallet_config: Option<UserWalletConfig>,
     ever_client: EverClient,
     root_contract: GoshContract,
     repo_contract: GoshContract,
+}
+
+impl Clone for Everscale {
+    fn clone(&self) -> Self {
+        Self {
+            wallet_config: self.wallet_config.clone(),
+            ever_client: Arc::clone(&self.ever_client),
+            root_contract: self.root_contract.clone(),
+            repo_contract: self.repo_contract.clone()
+        }
+    }
 }
 
 #[instrument(level = "debug", skip(context, contract))]
@@ -238,12 +249,13 @@ async fn run_static(
         PINNED_CONTRACT_BOCREFS.read()
             .await
             .get(&contract.address)
-            .map(|e|e.to_owned())
+            .map(|(r, c)|(r.to_owned(),Arc::clone(c)))
     };
     let pin = contract.address.to_string();
-    let (account, boc_cache) = if let Some(boc_ref) = boc_ref {
+    let (account, boc_cache, client) = if let Some(boc_ref) = boc_ref {
+        let (boc_ref, client) = boc_ref;
         tracing::trace!("run_static: use cached boc ref: {} -> {}", &contract.address, boc_ref);
-        (boc_ref, Some(BocCacheType::Pinned { pin: pin }))
+        (boc_ref, Some(BocCacheType::Pinned { pin: pin }), client)
     } else {
         tracing::trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
@@ -284,9 +296,9 @@ async fn run_static(
         // write lock
         {
             let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
-            refs.insert(contract.address.clone(), boc_ref.clone());
+            refs.insert(contract.address.clone(), (boc_ref.clone(), Arc::clone(context)));
         }
-        (boc_ref, None)
+        (boc_ref, None, Arc::clone(context))
     };
     // ---------
     let call_set = match args {
@@ -295,7 +307,7 @@ async fn run_static(
     };
 
     let encoded = encode_message(
-        Arc::clone(context),
+        Arc::clone(&client),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
@@ -310,7 +322,7 @@ async fn run_static(
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
     let result = run_tvm(
-        Arc::clone(context),
+        Arc::clone(&client),
         ParamsOfRunTvm {
             message: encoded.message,
             account: account.clone(),
