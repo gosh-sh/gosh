@@ -240,7 +240,7 @@ async fn run_local(
 #[instrument(level = "debug", skip(context, contract))]
 async fn run_static(
     context: &EverClient,
-    contract: &mut GoshContract,
+    contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {

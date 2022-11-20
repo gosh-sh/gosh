@@ -69,7 +69,7 @@ pub(super) async fn get_user_wallet(
         .ok_or_else(|| anyhow::anyhow!("Wallet config expected"))?;
 
     let result: GetProfileAddrResult = gosh_root
-        .read_state(
+        .run_static(
             blockchain.client(),
             "getProfileAddr",
             Some(serde_json::json!({ "name": profile })),
@@ -86,7 +86,7 @@ pub(super) async fn get_user_wallet(
         "index": user_wallet_index
     });
     let result: GetAddrWalletResult = dao_contract
-        .read_state(blockchain.client(), "getAddrWallet", Some(params))
+        .run_static(blockchain.client(), "getAddrWallet", Some(params))
         .await
         .map_err(|e| {
             tracing::debug!("getAddrWallet error: {}", e);

@@ -116,7 +116,7 @@ impl GoshContract {
 
     #[instrument(level = "debug", skip(context))]
     pub async fn run_static<T>(
-        &mut self,
+        &self,
         context: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
