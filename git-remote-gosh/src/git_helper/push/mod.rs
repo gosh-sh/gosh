@@ -7,9 +7,11 @@ use crate::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
+use anyhow::Context;
 use futures::StreamExt;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
+use git_repository::prelude::ObjectIdExt;
 use std::{
     collections::{HashMap, HashSet},
     process::{Command, Stdio},
@@ -54,7 +56,7 @@ where
 {
     #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
     async fn push_blob_update(
-        &mut self,
+        &self,
         file_path: &str,
         original_blob_id: &ObjectId,
         next_state_blob_id: &ObjectId,
@@ -93,7 +95,7 @@ where
         )
     )]
     async fn push_new_blob(
-        &mut self,
+        &self,
         file_path: &str,
         blob_id: &ObjectId,
         commit_id: &ObjectId,
@@ -321,141 +323,180 @@ where
 
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
 
-        for line in out.lines() {
-            match line.split_ascii_whitespace().next() {
+        let repo = self.local_repository();
+        let id = repo
+            .rev_parse_single(local_ref)
+            .context("Only single revisions are currently supported")?;
+
+        let new_commit_id = id
+            .object()?
+            .peel_to_kind(git_object::Kind::Commit)
+            .context("Need commitish as starting point")?
+            .id
+            .attach(&repo);
+
+        let mut oids = Vec::new();
+        for commit in new_commit_id.ancestors().all()? {
+            let oid = commit?.object()?.id.to_string();
+            let object_id = git_hash::ObjectId::from_str(&oid)?;
+            let object_kind = self.local_repository().find_object(object_id)?.kind;
+            match object_kind {
+                git_object::Kind::Commit | git_object::Kind::Tree => {
+                    oids.push(oid);
+                }
+                _ => (),
+            }
+        }
+
+        let mut oids2 = Vec::new();
+        for o in out.lines() {
+            match o.split_ascii_whitespace().next() {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;
                     let object_kind = self.local_repository().find_object(object_id)?.kind;
                     match object_kind {
-                        git_object::Kind::Commit => {
-                            // TODO: consider extract to a function
-                            let mut buffer: Vec<u8> = Vec::new();
-                            let commit = self
-                                .local_repository()
-                                .objects
-                                .try_find(object_id, &mut buffer)?
-                                .expect("Commit should exists");
-
-                            let raw_commit = String::from_utf8(commit.data.to_vec())?;
-
-                            let mut commit_iter = commit.try_into_commit_iter().unwrap();
-                            let tree_id = commit_iter.tree_id()?;
-                            let parent_ids: Vec<String> =
-                                commit_iter.parent_ids().map(|e| e.to_string()).collect();
-                            if !parent_ids.is_empty() {
-                                parents_of_commits.insert(oid, parent_ids.clone());
-                            } else {
-                                parents_of_commits.insert(oid, vec![ZERO_SHA.to_owned()]);
-                            }
-                            let mut parents: Vec<BlockchainContractAddress> = vec![];
-                            let mut repo_contract = self.blockchain.repo_contract().clone();
-
-                            for id in parent_ids {
-                                let parent = get_commit_address(
-                                    &self.blockchain.client(),
-                                    &mut repo_contract,
-                                    &id.to_string(),
-                                )
-                                .await?;
-                                parents.push(parent);
-                            }
-                            if parents.is_empty() {
-                                let bogus_parent = get_commit_address(
-                                    &self.blockchain.client(),
-                                    &mut repo_contract,
-                                    ZERO_SHA,
-                                )
-                                .await?;
-                                parents.push(bogus_parent);
-                            }
-                            let tree_addr = self.calculate_tree_address(tree_id).await?;
-
-                            {
-                                let blockchain = self.blockchain.clone();
-                                let remote = self.remote.clone();
-                                let dao_addr = self.dao_addr.clone();
-                                let object_id = object_id.clone();
-                                let tree_addr = tree_addr.clone();
-                                let branch_name = branch_name.to_owned().clone();
-
-                                push_handlers.spawn(
-                                    async move {
-                                        Retry::spawn(default_retry_strategy(), || async {
-                                            blockchain
-                                                .push_commit(
-                                                    &object_id,
-                                                    &branch_name,
-                                                    &tree_addr,
-                                                    &remote,
-                                                    &dao_addr,
-                                                    &raw_commit,
-                                                    &*parents,
-                                                )
-                                                .await
-                                                .map_err(|e| {
-                                                    tracing::warn!("Attempt failed with {:#?}", e);
-                                                    e
-                                                })
-                                        })
-                                        .await
-                                    }
-                                    .instrument(
-                                        debug_span!("tokio::spawn::push_commit").or_current(),
-                                    ),
-                                );
-                            }
-
-                            let tree_diff = utilities::build_tree_diff_from_commits(
-                                self.local_repository(),
-                                prev_commit_id,
-                                object_id,
-                            )?;
-                            for added in tree_diff.added {
-                                self.push_new_blob(
-                                    &added.filepath.to_string(),
-                                    &added.oid,
-                                    &object_id,
-                                    branch_name,
-                                    &mut statistics,
-                                    &mut parallel_diffs_upload_support,
-                                    &mut parallel_snapshot_uploads,
-                                )
-                                .await?;
-                            }
-
-                            for update in tree_diff.updated {
-                                self.push_blob_update(
-                                    &update.1.filepath.to_string(),
-                                    &update.0.oid,
-                                    &update.1.oid,
-                                    commit_id.as_ref().unwrap(),
-                                    branch_name,
-                                    &mut statistics,
-                                    &mut parallel_diffs_upload_support,
-                                )
-                                .await?;
-                            }
-
-                            commit_id = Some(object_id);
-                            prev_commit_id = commit_id;
+                        git_object::Kind::Commit | git_object::Kind::Tree => {
+                            oids2.push(oid.to_owned())
                         }
-                        git_object::Kind::Blob => {
-                            // Note: handled in the Commit section
-                            // branch
-                            // commit_id
-                            // commit_data
-                            // Vec<diff>
-                        }
-                        // Not supported yet
-                        git_object::Kind::Tag => unimplemented!(),
-                        git_object::Kind::Tree => {
-                            let _ =
-                                push_tree(self, &object_id, &mut visited_trees, &mut push_handlers)
-                                    .await?;
-                        }
+                        _ => (),
                     }
                 }
-                None => break,
+                _ => break,
+            }
+        }
+
+        tracing::info!("oids1: {:?}", oids);
+        tracing::info!("oids2: {:?}", oids2);
+
+        assert_eq!(oids, oids2);
+
+        for oid in &oids {
+            let object_id = git_hash::ObjectId::from_str(oid)?;
+            let object_kind = self.local_repository().find_object(object_id)?.kind;
+            match object_kind {
+                git_object::Kind::Commit => {
+                    // TODO: consider extract to a function
+                    let mut buffer: Vec<u8> = Vec::new();
+                    let commit = self
+                        .local_repository()
+                        .objects
+                        .try_find(object_id, &mut buffer)?
+                        .expect("Commit should exists");
+
+                    let raw_commit = String::from_utf8(commit.data.to_vec())?;
+
+                    let mut commit_iter = commit.try_into_commit_iter().unwrap();
+                    let tree_id = commit_iter.tree_id()?;
+                    let parent_ids: Vec<String> =
+                        commit_iter.parent_ids().map(|e| e.to_string()).collect();
+                    if !parent_ids.is_empty() {
+                        parents_of_commits.insert(oid, parent_ids.clone());
+                    } else {
+                        parents_of_commits.insert(oid, vec![ZERO_SHA.to_owned()]);
+                    }
+                    let mut parents: Vec<BlockchainContractAddress> = vec![];
+                    let mut repo_contract = self.blockchain.repo_contract().clone();
+
+                    for id in parent_ids {
+                        let parent = get_commit_address(
+                            &self.blockchain.client(),
+                            &mut repo_contract,
+                            &id.to_string(),
+                        )
+                        .await?;
+                        parents.push(parent);
+                    }
+                    if parents.is_empty() {
+                        let bogus_parent = get_commit_address(
+                            &self.blockchain.client(),
+                            &mut repo_contract,
+                            ZERO_SHA,
+                        )
+                        .await?;
+                        parents.push(bogus_parent);
+                    }
+                    let tree_addr = self.calculate_tree_address(tree_id).await?;
+
+                    {
+                        let blockchain = self.blockchain.clone();
+                        let remote = self.remote.clone();
+                        let dao_addr = self.dao_addr.clone();
+                        let object_id = object_id.clone();
+                        let tree_addr = tree_addr.clone();
+                        let branch_name = branch_name.to_owned().clone();
+
+                        push_handlers.spawn(
+                            async move {
+                                Retry::spawn(default_retry_strategy(), || async {
+                                    blockchain
+                                        .push_commit(
+                                            &object_id,
+                                            &branch_name,
+                                            &tree_addr,
+                                            &remote,
+                                            &dao_addr,
+                                            &raw_commit,
+                                            &*parents,
+                                        )
+                                        .await
+                                        .map_err(|e| {
+                                            tracing::warn!("Attempt failed with {:#?}", e);
+                                            e
+                                        })
+                                })
+                                .await
+                            }
+                            .instrument(debug_span!("tokio::spawn::push_commit").or_current()),
+                        );
+                    }
+
+                    let tree_diff = utilities::build_tree_diff_from_commits(
+                        self.local_repository(),
+                        prev_commit_id,
+                        object_id,
+                    )?;
+                    for added in tree_diff.added {
+                        self.push_new_blob(
+                            &added.filepath.to_string(),
+                            &added.oid,
+                            &object_id,
+                            branch_name,
+                            &mut statistics,
+                            &mut parallel_diffs_upload_support,
+                            &mut parallel_snapshot_uploads,
+                        )
+                        .await?;
+                    }
+
+                    for update in tree_diff.updated {
+                        self.push_blob_update(
+                            &update.1.filepath.to_string(),
+                            &update.0.oid,
+                            &update.1.oid,
+                            commit_id.as_ref().unwrap(),
+                            branch_name,
+                            &mut statistics,
+                            &mut parallel_diffs_upload_support,
+                        )
+                        .await?;
+                    }
+
+                    commit_id = Some(object_id);
+                    prev_commit_id = commit_id;
+                }
+                git_object::Kind::Blob => {
+                    // Note: handled in the Commit section
+                    // branch
+                    // commit_id
+                    // commit_data
+                    // Vec<diff>
+                }
+                // Not supported yet
+                git_object::Kind::Tag => unimplemented!(),
+                git_object::Kind::Tree => {
+                    let _ =
+                        push_tree(self, &object_id, &mut visited_trees, &mut push_handlers).await?;
+                }
             }
         }
         parallel_diffs_upload_support.push_dangling(self).await?;

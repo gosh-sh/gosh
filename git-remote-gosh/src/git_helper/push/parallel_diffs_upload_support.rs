@@ -229,7 +229,7 @@ impl ParallelDiffsUploadSupport {
     #[instrument(level = "debug", skip(self, context, diff))]
     pub async fn push(
         &mut self,
-        context: &mut GitHelper<impl BlockchainService + 'static>,
+        context: &GitHelper<impl BlockchainService + 'static>,
         diff: ParallelDiff,
     ) -> anyhow::Result<()> {
         let diff_coordinates = self.next_diff(&diff.file_path);

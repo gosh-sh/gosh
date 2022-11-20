@@ -17,7 +17,7 @@ use super::utilities::retry::default_retry_strategy;
 
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(
-    context: &mut GitHelper<impl BlockchainService>,
+    context: &GitHelper<impl BlockchainService>,
     e: &EntryRef<'_>,
 ) -> anyhow::Result<(String, TreeNode)> {
     let mut buffer = vec![];
@@ -66,7 +66,7 @@ async fn construct_tree_node(
 
 #[instrument(level = "debug", skip(context, visited))]
 pub async fn push_tree(
-    context: &mut GitHelper<impl BlockchainService + 'static>,
+    context: &GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
     handlers: &mut JoinSet<anyhow::Result<()>>,

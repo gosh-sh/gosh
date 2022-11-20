@@ -66,7 +66,7 @@ where
     }
 
     pub async fn calculate_tree_address(
-        &mut self,
+        &self,
         tree_id: git_hash::ObjectId,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let mut repo_contract = self.blockchain.repo_contract().clone();
