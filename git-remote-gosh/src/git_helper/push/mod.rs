@@ -110,17 +110,20 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
 
-            parallel_snapshot_uploads.spawn(async move {
-                push_initial_snapshot(
-                    blockchain,
-                    repo_address,
-                    dao_addr,
-                    remote_network,
-                    branch_name,
-                    file_path,
-                )
-                .await
-            });
+            parallel_snapshot_uploads.spawn(
+                async move {
+                    push_initial_snapshot(
+                        blockchain,
+                        repo_address,
+                        dao_addr,
+                        remote_network,
+                        branch_name,
+                        file_path,
+                    )
+                    .await
+                }
+                .instrument(debug_span!("tokio::spawn::push_initial_snapshot").or_current()),
+            );
         }
 
         let file_diff =
