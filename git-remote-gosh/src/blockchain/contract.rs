@@ -67,7 +67,7 @@ impl ContractStatic for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_static(client, self, function_name, args).await?;
-        tracing::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_static result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
@@ -125,7 +125,7 @@ impl GoshContract {
         T: de::DeserializeOwned,
     {
         let result = run_static(context, self, function_name, args).await?;
-        tracing::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_static result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
 

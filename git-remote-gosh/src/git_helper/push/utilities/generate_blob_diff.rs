@@ -13,7 +13,7 @@ pub struct GenerageBlobDiffResult {
 pub async fn generate_blob_diff(
     odb: &OdbHandle,
     blob_id_from: Option<&ObjectId>,
-    blob_id_to: &ObjectId,
+    blob_id_to: Option<&ObjectId>,
 ) -> anyhow::Result<GenerageBlobDiffResult> {
     let mut blob_from_buffer: Vec<u8> = Vec::new();
     let mut blob_to_buffer: Vec<u8> = Vec::new();
@@ -21,7 +21,10 @@ pub async fn generate_blob_diff(
         None => &blob_from_buffer,
         Some(blob_id_from) => odb.find_blob(blob_id_from, &mut blob_from_buffer)?.data,
     };
-    let next_content: &[u8] = odb.find_blob(blob_id_to, &mut blob_to_buffer)?.data;
+    let next_content: &[u8] = match blob_id_to {
+        None => &blob_to_buffer,
+        Some(blob_id_to) => odb.find_blob(blob_id_to, &mut blob_to_buffer)?.data,
+    };
     let diff: Vec<u8> = create_patch_bytes(prev_content, next_content).to_bytes();
 
     Ok(GenerageBlobDiffResult {

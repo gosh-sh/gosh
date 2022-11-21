@@ -192,7 +192,7 @@ async fn build_blockchain(
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(config))]
 pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;

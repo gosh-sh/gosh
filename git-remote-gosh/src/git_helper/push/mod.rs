@@ -66,7 +66,7 @@ where
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
             Some(original_blob_id),
-            next_state_blob_id,
+            Some(next_state_blob_id),
         )
         .await?;
         let diff = ParallelDiff::new(
@@ -127,7 +127,7 @@ where
         }
 
         let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, blob_id).await?;
+            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id)).await?;
         let diff = ParallelDiff::new(
             *commit_id,
             branch_name.to_string(),
@@ -139,6 +139,36 @@ where
         );
         parallel_diffs_upload_support.push(self, diff).await?;
         statistics.new_snapshots += 1;
+        statistics.diffs += 1;
+        Ok(())
+    }
+
+    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
+    async fn push_blob_remove(
+        &mut self,
+        file_path: &str,
+        blob_id: &ObjectId,
+        commit_id: &ObjectId,
+        branch_name: &str,
+        statistics: &mut PushBlobStatistics,
+        parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
+    ) -> anyhow::Result<()> {
+        let file_diff = utilities::generate_blob_diff(
+            &self.local_repository().objects,
+            Some(blob_id),
+            None,
+        )
+        .await?;
+        let diff = ParallelDiff::new(
+            *commit_id,
+            branch_name.to_string(),
+            *blob_id,
+            file_path.to_string(),
+            file_diff.original.clone(),
+            file_diff.patch.clone(),
+            file_diff.after_patch.clone(),
+        );
+        parallel_diffs_upload_support.push(self, diff).await?;
         statistics.diffs += 1;
         Ok(())
     }
@@ -223,7 +253,7 @@ where
                 .await?;
             if is_protected {
                 anyhow::bail!(
-                    "This branch '{branch_name}' is protected. \
+                    "This branch '{remote_branch_name}' is protected. \
                     Go to app.gosh.sh and create a proposal to apply this branch change."
                 );
             }
@@ -308,7 +338,7 @@ where
             };
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
-                CreateBranchOperation::new(branching_point, branch_name, self);
+                CreateBranchOperation::new(branching_point, remote_branch_name, self);
             let is_first_ever_branch = create_branch_op.run().await?;
             prev_commit_id = {
                 if is_first_ever_branch {
@@ -379,7 +409,7 @@ where
                                 let dao_addr = self.dao_addr.clone();
                                 let object_id = object_id.clone();
                                 let tree_addr = tree_addr.clone();
-                                let branch_name = branch_name.to_owned().clone();
+                                let branch_name = remote_branch_name.to_owned().clone();
 
                                 push_handlers.spawn(
                                     async move {
@@ -431,7 +461,19 @@ where
                                     &update.1.filepath.to_string(),
                                     &update.0.oid,
                                     &update.1.oid,
-                                    commit_id.as_ref().unwrap(),
+                                    &object_id, // commit_id.as_ref().unwrap(),
+                                    branch_name,
+                                    &mut statistics,
+                                    &mut parallel_diffs_upload_support,
+                                )
+                                .await?;
+                            }
+
+                            for deleted in tree_diff.deleted {
+                                self.push_blob_remove(
+                                    &deleted.filepath.to_string(),
+                                    &deleted.oid,
+                                    &object_id,
                                     branch_name,
                                     &mut statistics,
                                     &mut parallel_diffs_upload_support,
