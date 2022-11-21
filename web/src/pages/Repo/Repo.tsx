@@ -13,7 +13,6 @@ import {
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
 import { AppConfig, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
@@ -21,6 +20,7 @@ import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
+import RepoReadme from './Readme'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
@@ -28,8 +28,7 @@ const RepoPage = () => {
     const navigate = useNavigate()
     const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
     const { branches, branch, updateBranch } = useBranches(repo, branchName)
-    const tree = useTree(daoName!, repoName!, branch?.commit, treepath)
-    const subtree = useRecoilValue(tree.getSubtree(treepath))
+    const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 
@@ -215,6 +214,14 @@ const RepoPage = () => {
                         )
                     })}
                 </div>
+
+                <RepoReadme
+                    className="border rounded overflow-hidden mt-6"
+                    dao={daoName!}
+                    repo={repoName!}
+                    branch={branch!.name}
+                    blobs={blobs || []}
+                />
             </div>
         </div>
     )

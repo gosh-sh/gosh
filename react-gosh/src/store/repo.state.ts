@@ -1,4 +1,5 @@
 import { atom, selectorFamily } from 'recoil'
+import { getTreeItemFullPath } from '../helpers'
 import { TBranch, TTree, TTreeItem } from '../types/repo.types'
 
 const branchesAtom = atom<TBranch[]>({
@@ -24,7 +25,7 @@ const treeAtom = atom<{ tree: TTree; items: TTreeItem[] } | undefined>({
 const treeSelector = selectorFamily({
     key: 'GoshRepoTreeSelector',
     get:
-        (params: { type: 'tree' | 'items'; path?: string }) =>
+        (params: { type: 'tree' | 'blobs'; path?: string }) =>
         ({ get }) => {
             const treeObject = get(treeAtom)
             if (!treeObject) return undefined
@@ -38,14 +39,16 @@ const treeSelector = selectorFamily({
                         .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
                         .sort((a, b) => (a.type > b.type ? -1 : 1))
                 )
-            } else if (params.type === 'items') {
+            } else if (params.type === 'blobs') {
                 const filtered = [...items]
                 return filtered
                     .filter((item) => item.type === 'blob')
-                    .filter((item) => `${item.path}/${item.name}`.search(path) >= 0)
-                    .sort((a, b) =>
-                        `${a.path}/${a.name}` < `${b.path}/${b.name}` ? -1 : 1,
-                    )
+                    .filter((item) => getTreeItemFullPath(item).search(path) >= 0)
+                    .sort((a, b) => {
+                        const aPath = getTreeItemFullPath(a)
+                        const bPath = getTreeItemFullPath(b)
+                        return aPath < bPath ? -1 : 1
+                    })
             } else return undefined
         },
 })
