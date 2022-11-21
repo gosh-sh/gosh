@@ -222,7 +222,7 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::info!("push_ref {} : {}", local_ref, remote_ref);
-        let branch_name: &str = {
+        let local_branch_name: &str = {
             let mut iter = local_ref.rsplit('/');
             iter.next()
                 .ok_or(anyhow::anyhow!("wrong local_ref format '{}'", &local_ref))?
@@ -233,7 +233,8 @@ where
         // 1. Check if branch exists and ready in the blockchain
         let remote_branch_name: &str = {
             let mut iter = remote_ref.rsplit('/');
-            iter.next().unwrap()
+            iter.next()
+                .ok_or(anyhow::anyhow!("wrong remote_ref format '{}'", &local_ref))?
         };
         let parsed_remote_ref = self
             .blockchain
@@ -247,6 +248,7 @@ where
             // this means a branch is created and all initial states are filled there
             "".to_owned()
         } else {
+            // TODO: exclude to a separate function
             let is_protected = self
                 .blockchain
                 .is_branch_protected(&self.repo_addr, remote_branch_name)
@@ -285,6 +287,7 @@ where
 
         tracing::debug!("latest commit id {latest_commit_id}");
 
+        // TODO: exclude to a separate func
         // TODO: git rev-list?
         let mut cmd_args: Vec<&str> = vec![
             "rev-list",
@@ -329,11 +332,7 @@ where
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            let originating_commit = if !ancestor_commit_id.is_empty() {
-                git_hash::ObjectId::from_str(&ancestor_commit_id)?
-            } else {
-                git_hash::ObjectId::from_str(out.lines().next().unwrap())?
-            };
+            let originating_commit = git_hash::ObjectId::from_str(out.lines().next().unwrap())?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -371,12 +370,14 @@ where
 
                             let mut commit_iter = commit.try_into_commit_iter().unwrap();
                             let tree_id = commit_iter.tree_id()?;
-                            let parent_ids: Vec<String> =
+                            let mut parent_ids: Vec<String> =
                                 commit_iter.parent_ids().map(|e| e.to_string()).collect();
                             if !parent_ids.is_empty() {
                                 parents_of_commits.insert(oid, parent_ids.clone());
                             } else {
                                 parents_of_commits.insert(oid, vec![ZERO_SHA.to_owned()]);
+                                // if parent_ids is empty, add bogus parent
+                                parent_ids.push(ZERO_SHA.to_string());
                             }
                             let mut parents: Vec<BlockchainContractAddress> = vec![];
                             let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -390,18 +391,10 @@ where
                                 .await?;
                                 parents.push(parent);
                             }
-                            if parents.is_empty() {
-                                let bogus_parent = get_commit_address(
-                                    &self.blockchain.client(),
-                                    &mut repo_contract,
-                                    ZERO_SHA,
-                                )
-                                .await?;
-                                parents.push(bogus_parent);
-                            }
                             let tree_addr = self.calculate_tree_address(tree_id).await?;
 
                             {
+                                // TODO: mb unite to struct
                                 let blockchain = self.blockchain.clone();
                                 let remote = self.remote.clone();
                                 let dao_addr = self.dao_addr.clone();
@@ -446,7 +439,7 @@ where
                                     &added.filepath.to_string(),
                                     &added.oid,
                                     &object_id,
-                                    branch_name,
+                                    local_branch_name,
                                     &mut statistics,
                                     &mut parallel_diffs_upload_support,
                                     &mut parallel_snapshot_uploads,
@@ -460,7 +453,7 @@ where
                                     &update.0.oid,
                                     &update.1.oid,
                                     &object_id, // commit_id.as_ref().unwrap(),
-                                    branch_name,
+                                    local_branch_name,
                                     &mut statistics,
                                     &mut parallel_diffs_upload_support,
                                 )
@@ -472,14 +465,14 @@ where
                                     &deleted.filepath.to_string(),
                                     &deleted.oid,
                                     &object_id,
-                                    branch_name,
+                                    local_branch_name,
                                     &mut statistics,
                                     &mut parallel_diffs_upload_support,
                                 )
                                 .await?;
                             }
 
-                            commit_id = Some(object_id);
+                            commit_id = Some(object_id); // TODO: this values are equal?
                             prev_commit_id = commit_id;
                         }
                         git_object::Kind::Blob => {
@@ -540,7 +533,7 @@ where
         self.blockchain
             .notify_commit(
                 &latest_commit_id,
-                branch_name,
+                local_branch_name,
                 parallel_diffs_upload_support.get_parallels_number(),
                 number_of_commits,
                 &self.remote,
