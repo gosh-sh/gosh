@@ -70,6 +70,7 @@ import {
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
     SmvEventTypes,
+    ZERO_BLOB_SHA1,
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
@@ -666,10 +667,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get commit tree items filtered by blob tree path,
         // find resulting blob sha1 after commit was applied
         const tree = (await this.getTree(commit, treepath)).items
-        const sha1 = tree.find((item) => getTreeItemFullPath(item) === treepath)?.sha1
-        if (!sha1) {
-            throw new GoshError('Blob not found in commit tree', { commit, treepath })
-        }
+        const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
+        const sha1 = found?.sha1 || ZERO_BLOB_SHA1
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${commit.branch}/${treepath}`
