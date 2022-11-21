@@ -211,6 +211,42 @@ where
         Ok(parent_id)
     }
 
+    async fn find_ancestor_commit_in_local_repo(
+        &self,
+        remote_branch_name: &str,
+        remote_commit_addr: BlockchainContractAddress,
+    ) -> anyhow::Result<(String, Option<ObjectId>)> {
+        let is_protected = self
+            .blockchain
+            .is_branch_protected(&self.repo_addr, remote_branch_name)
+            .await?;
+        if is_protected {
+            anyhow::bail!(
+                    "This branch '{remote_branch_name}' is protected. \
+                    Go to app.gosh.sh and create a proposal to apply this branch change."
+                );
+        }
+        let remote_commit_addr =
+            BlockchainContractAddress::todo_investigate_unexpected_convertion(
+                remote_commit_addr,
+            );
+        let commit = self
+            .blockchain
+            .get_commit_by_addr(&remote_commit_addr)
+            .await?
+            .unwrap();
+        let prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
+
+        Ok((
+            if commit.sha != ZERO_SHA.to_owned() {
+                commit.sha
+            } else {
+                String::new()
+            },
+            prev_commit_id
+       ))
+    }
+
     // find ancestor commit
     #[instrument(level = "debug", skip(self))]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
@@ -222,60 +258,29 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::info!("push_ref {} : {}", local_ref, remote_ref);
-        let local_branch_name: &str = {
-            let mut iter = local_ref.rsplit('/');
+        fn get_branch_name (_ref: &str) -> anyhow::Result<&str> {
+            let mut iter = _ref.rsplit('/');
             iter.next()
-                .ok_or(anyhow::anyhow!("wrong local_ref format '{}'", &local_ref))?
-        };
+                .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
+        }
+        let local_branch_name: &str = get_branch_name(local_ref)?;
+        let remote_branch_name: &str = get_branch_name(remote_ref)?;
 
-        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
-        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         // 1. Check if branch exists and ready in the blockchain
-        let remote_branch_name: &str = {
-            let mut iter = remote_ref.rsplit('/');
-            iter.next()
-                .ok_or(anyhow::anyhow!("wrong remote_ref format '{}'", &local_ref))?
-        };
-        let parsed_remote_ref = self
+        let remote_commit_addr = self
             .blockchain
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
-            .await?;
+            .await?
+            .map(|pair| pair.0);
 
-        let mut prev_commit_id: Option<ObjectId> = None;
         // 2. Find ancestor commit in local repo
-        let ancestor_commit_id = if parsed_remote_ref.is_none() {
+        let (ancestor_commit_id, mut prev_commit_id) =
+            if let Some(remote_commit_addr) = remote_commit_addr {
+            self.find_ancestor_commit_in_local_repo(remote_branch_name, remote_commit_addr).await?
+        } else {
             // prev_commit_id is not filled up here. It's Ok.
             // this means a branch is created and all initial states are filled there
-            "".to_owned()
-        } else {
-            // TODO: exclude to a separate function
-            let is_protected = self
-                .blockchain
-                .is_branch_protected(&self.repo_addr, remote_branch_name)
-                .await?;
-            if is_protected {
-                anyhow::bail!(
-                    "This branch '{remote_branch_name}' is protected. \
-                    Go to app.gosh.sh and create a proposal to apply this branch change."
-                );
-            }
-            let (remote_commit_addr, ..) = parsed_remote_ref.clone().unwrap();
-            let remote_commit_addr =
-                BlockchainContractAddress::todo_investigate_unexpected_convertion(
-                    remote_commit_addr,
-                );
-            let commit = self
-                .blockchain
-                .get_commit_by_addr(&remote_commit_addr)
-                .await?
-                .unwrap();
-            prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
-
-            if commit.sha != ZERO_SHA.to_owned() {
-                commit.sha
-            } else {
-                String::new()
-            }
+            ("".to_owned(), None)
         };
 
         let latest_commit_id = self
@@ -287,52 +292,29 @@ where
 
         tracing::debug!("latest commit id {latest_commit_id}");
 
-        // TODO: exclude to a separate func
-        // TODO: git rev-list?
-        let mut cmd_args: Vec<&str> = vec![
-            "rev-list",
-            "--objects",
-            "--in-commit-order",
-            "--reverse",
-            local_ref,
-        ];
-
-        let exclude;
         let mut commit_id: Option<ObjectId> = None;
         if !ancestor_commit_id.is_empty() {
-            exclude = format!("^{}", ancestor_commit_id);
-            cmd_args.push(&exclude);
             commit_id = Some(ObjectId::from_str(&ancestor_commit_id)?);
         }
 
-        let cmd = Command::new("git")
-            .args(cmd_args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .expect("git rev-list failed");
-
-        let cmd_out = cmd.wait_with_output()?;
-        if !cmd_out.status.success() {
+        let commit_objects_list = get_list_of_commit_objects(
+            local_ref,
+            &ancestor_commit_id
+        )?;
+        if !commit_objects_list.status.success() {
             return Ok(format!("error {remote_ref} fetch first\n"));
         }
-        // 4. Do prepare commit for all commits
-        // 5. Deploy tree objects of all commits
 
-        // 6. Deploy all **new** snapshot
-        // 7. Deploy diff contracts
-        // 8. Deploy all commit objects
+        let commit_objects_list = String::from_utf8(commit_objects_list.stdout)?;
 
-        let mut statistics = PushBlobStatistics::new();
-        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
-        let out = String::from_utf8(cmd_out.stdout)?;
         // 3. If branch needs to be created do so
-        if parsed_remote_ref == None {
+        // prev_commit_id is Some only if remote branch exists
+        if prev_commit_id == None {
             //    ---
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            let originating_commit = git_hash::ObjectId::from_str(out.lines().next().unwrap())?;
+            let originating_commit = git_hash::ObjectId::from_str(commit_objects_list.lines().next().unwrap())?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -346,12 +328,23 @@ where
             };
         }
 
+        // 4. Do prepare commit for all commits
+        // 5. Deploy tree objects of all commits
+
+        // 6. Deploy all **new** snapshot
+        // 7. Deploy diff contracts
+        // 8. Deploy all commit objects
+
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
 
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
+        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut statistics = PushBlobStatistics::new();
+        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
-        for line in out.lines() {
+        for line in commit_objects_list.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
                     let object_id = git_hash::ObjectId::from_str(oid)?;
@@ -589,6 +582,32 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
             break distance;
         }
     }
+}
+
+fn get_list_of_commit_objects(_ref: &str, ancestor_commit_id: &str) -> std::io::Result<std::process::Output> {
+    // TODO: git rev-list?
+    let mut cmd_args: Vec<&str> = vec![
+        "rev-list",
+        "--objects",
+        "--in-commit-order",
+        "--reverse",
+        _ref,
+    ];
+
+    let start_from;
+    if !ancestor_commit_id.is_empty() {
+        start_from = format!("^{}", ancestor_commit_id);
+        cmd_args.push(&start_from);
+    }
+
+    let cmd = Command::new("git")
+        .args(cmd_args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("git rev-list failed");
+
+    cmd.wait_with_output()
 }
 
 #[cfg(test)]
