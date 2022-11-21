@@ -98,12 +98,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.37.2'
+tag = '1.38.1'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.37.2'
+tag = '1.38.1'
 
 [dependencies.zstd]
 default-features = false
