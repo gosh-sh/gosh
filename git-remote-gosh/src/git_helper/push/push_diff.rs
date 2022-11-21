@@ -184,16 +184,18 @@ pub async fn inner_push_diff(
         }
     };
 
+    let sha1 = if &content_sha256 == EMPTY_BLOB_SHA256 {
+        EMPTY_BLOB_SHA1.to_owned()
+    } else {
+        blob_id.to_string()
+    };
+
     let diff = Diff {
         snapshot_addr,
         commit_id: commit_id.to_string(),
         patch,
         ipfs,
-        sha1: if &content_sha256 == EMPTY_BLOB_SHA256 {
-            EMPTY_BLOB_SHA1.to_owned()
-        } else {
-            blob_id.to_string()
-        },
+        sha1,
         sha256: content_sha256,
     };
 
