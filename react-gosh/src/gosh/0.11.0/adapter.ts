@@ -1088,25 +1088,30 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const treeItem: TTreeItem | undefined = items.find((it) => {
                     return getTreeItemFullPath(it) === treepath
                 })
+                const flagsOriginal = treeItem?.flags || 0
+
                 if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
                 if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
                 if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
                 const compressed = await zstd.compress(modified)
                 let patch = null
-                let flags = EBlobFlag.COMPRESSED
+                let flagsModified = EBlobFlag.COMPRESSED
+                let isGoingOnchain = false
                 if (
-                    ((treeItem?.flags || 0) & EBlobFlag.IPFS) === EBlobFlag.IPFS ||
                     Buffer.isBuffer(original) ||
                     Buffer.isBuffer(modified) ||
                     Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
                 ) {
-                    flags |= EBlobFlag.IPFS
-                    if (Buffer.isBuffer(modified)) flags |= EBlobFlag.BINARY
+                    flagsModified |= EBlobFlag.IPFS
+                    if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
                 } else {
                     patch = this._generateBlobDiffPatch(treepath, modified, original)
-                    if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
-                        flags |= EBlobFlag.IPFS
+                    if ((flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS) {
+                        patch = Buffer.from(compressed, 'base64').toString('hex')
+                        isGoingOnchain = true
+                    } else if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
+                        flagsModified |= EBlobFlag.IPFS
                         patch = null
                     } else {
                         patch = await zstd.compress(patch)
@@ -1114,10 +1119,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     }
                 }
 
-                const isIpfs = (flags & EBlobFlag.IPFS) === EBlobFlag.IPFS
+                const isGoingIpfs = (flagsModified & EBlobFlag.IPFS) === EBlobFlag.IPFS
                 const hashes: { sha1: string; sha256: string } = {
                     sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
-                    sha256: isIpfs
+                    sha256: isGoingIpfs
                         ? sha256(modified, true)
                         : await this.gosh.getTvmHash(modified),
                 }
@@ -1128,9 +1133,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     treeItem,
                     compressed,
                     patch,
-                    isIpfs,
-                    flags,
+                    flags: flagsModified,
                     hashes,
+                    isGoingIpfs,
+                    isGoingOnchain,
                 }
             },
         )
@@ -1500,9 +1506,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             treeItem?: TTreeItem
             compressed: string
             patch: string | null
-            isIpfs: boolean
             flags: number
             hashes: { sha1: string; sha256: string }
+            isGoingOnchain: boolean
+            isGoingIpfs: boolean
         },
         index1: number,
         wallet?: IGoshWallet,
@@ -1514,14 +1521,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (await diffContract.isDeployed()) return
 
         // Deploy diff
-        const { isIpfs, compressed, snapshot, patch, hashes } = blobmeta
-        const ipfs = isIpfs ? await goshipfs.write(compressed) : null
+        const { isGoingOnchain, isGoingIpfs, compressed, snapshot, patch, hashes } =
+            blobmeta
+        const ipfs = isGoingIpfs ? await goshipfs.write(compressed) : null
         const diff = {
             snap: snapshot,
             commit,
             patch,
             ipfs,
             ...hashes,
+            removeIpfs: isGoingOnchain,
         }
 
         wallet = wallet || this.auth.wallet
