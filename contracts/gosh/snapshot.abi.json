@@ -48,7 +48,7 @@
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"}
 			],
@@ -70,7 +70,7 @@
 			"inputs": [
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
 			],
 			"outputs": [
 			]

@@ -35,6 +35,7 @@ struct Diff {
     string commit;
     optional(bytes) patch;
     optional(string) ipfs;
+    bool removeIpfs;
     string sha1;
     uint256 sha256;
 }
