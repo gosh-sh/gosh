@@ -42,6 +42,7 @@ static MIRRORS: Lazy<RwLock<UserWalletMirrors>> =
 static USER_WALLET_MIRRORS_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 static INIT_MIRRORS: OnceCell<u32> = OnceCell::const_new();
 
+#[instrument(level = "debug", skip(blockchain, wallet_config))]
 pub(super) async fn take_next_wallet<B>(
     blockchain: &B,
     zero_wallet: GoshContract,
