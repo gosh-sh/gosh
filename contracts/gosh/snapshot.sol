@@ -161,6 +161,7 @@ contract Snapshot is Modifiers {
             }            
             if (tvm.hash(gosh.unzip(diff.patch.get())) == diff.sha256) {
                        _snapshot = diff.patch.get();
+                       _ipfs = null;
                         DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
                         _applying = true;
             }
