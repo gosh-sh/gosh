@@ -307,19 +307,23 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter> {
         const { name, address } = options
-        const auth = this.profile &&
-            this.wallet && {
-                username: await this.profile.getName(),
-                wallet: this.wallet,
-            }
 
-        if (address) return new GoshRepositoryAdapter(this.gosh, address, auth)
+        const config = await this._getConfig()
+        const auth =
+            this.profile && this.wallet
+                ? {
+                      username: await this.profile.getName(),
+                      wallet: this.wallet,
+                  }
+                : undefined
+
+        if (address) return new GoshRepositoryAdapter(this.gosh, address, auth, config)
         if (!name) throw new GoshError('Repo name undefined')
 
         const { value0 } = await this.dao.runLocal('getAddrRepository', {
             name: name.toLowerCase(),
         })
-        return new GoshRepositoryAdapter(this.gosh, value0, auth)
+        return new GoshRepositoryAdapter(this.gosh, value0, auth, config)
     }
 
     async getMemberWallet(options: {
@@ -445,6 +449,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const { value0 } = await this.dao.runLocal('getOwner', {})
         return value0
     }
+
+    private async _getConfig(): Promise<any> {
+        const { value0 } = await this.dao.runLocal('getConfig', {})
+        return {
+            maxWalletsWrite: +value0,
+        }
+    }
 }
 
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
@@ -455,17 +466,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private subwallets: IGoshWallet[] = []
 
     auth?: { username: string; wallet: IGoshWallet }
+    config?: { maxWalletsWrite: number }
 
     constructor(
         gosh: IGoshAdapter,
         address: TAddress,
         auth?: { username: string; wallet: IGoshWallet },
+        config?: { maxWalletsWrite: number },
     ) {
-        console.debug('Repo auth', auth)
+        console.debug('Repo', auth, config)
         this.gosh = gosh
         this.client = gosh.client
         this.repo = new GoshRepository(this.client, address)
         this.auth = auth
+        this.config = config
     }
 
     async isDeployed(): Promise<boolean> {
@@ -1607,14 +1621,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         executor: (wallet: IGoshWallet, params: Input, index: number) => Promise<Output>,
     ): Promise<Output[]> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.config) throw new GoshError('Repository config is undefined')
 
         // Get/deploy wallets
-        if (this.subwallets.length !== 10) {
+        if (this.subwallets.length !== this.config.maxWalletsWrite) {
             this.subwallets = await Promise.all(
-                Array.from(new Array(10)).map(async (_, index) => {
-                    if (index === 0) return this.auth!.wallet
-                    return await this._getSubwallet(index)
-                }),
+                Array.from(new Array(this.config.maxWalletsWrite)).map(
+                    async (_, index) => {
+                        if (index === 0) return this.auth!.wallet
+                        return await this._getSubwallet(index)
+                    },
+                ),
             )
         }
 

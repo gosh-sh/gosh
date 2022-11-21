@@ -266,21 +266,6 @@
 			]
 		},
 		{
-			"name": "updateConfig",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setConfig",
-			"inputs": [
-				{"name":"limit_wallets","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},

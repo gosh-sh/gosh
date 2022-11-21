@@ -512,21 +512,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    //Config
-    function updateConfig() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).getConfigInfo{value: 0.15 ton, bounce: true, flag: 1}(_pubaddr, _index);
-    }
-
-    function setConfig(uint128 limit_wallets) public senderIs(_goshdao) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        tvm.accept();
-        _limit_wallets = limit_wallets;
-        getMoney();
-    }
-
-
     //Tree part
     function deployTree(
         string repoName,
