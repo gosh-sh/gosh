@@ -322,7 +322,6 @@ where
 
         let mut statistics = PushBlobStatistics::new();
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
-        // TODO: Handle deleted fules
         // Note: These files will NOT appear in the list here
         let out = String::from_utf8(cmd_out.stdout)?;
         // 3. If branch needs to be created do so
