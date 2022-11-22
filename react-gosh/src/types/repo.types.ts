@@ -72,6 +72,7 @@ type TDiff = {
     commit: string
     sha1: string
     sha256: string
+    removeIpfs: boolean
 }
 
 type TPushProgress = {

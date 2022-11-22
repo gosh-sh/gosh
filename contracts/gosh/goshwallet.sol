@@ -98,6 +98,26 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
         Profile(_pubaddr).deployedWallet(_systemcontract, _goshdao, _index, version);
+        this.deployWalletIn{value: 0.1 ton, flag: 1}();
+        getMoney();
+    }
+    
+    function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        if (_walletcounter >= _limit_wallets) { return; }
+        if (_index != 0) { return; }
+        _walletcounter += 1;
+        TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
+        new GoshWallet {
+            stateInit: s1, value: 5 ton, wid: 0
+        }(  _rootpubaddr, _pubaddr, _nameDao,
+            _code[m_CommitCode],
+            _code[m_RepositoryCode],
+            _code[m_WalletCode],
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, _access,
+            m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
+            m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
         getMoney();
     }
 
@@ -249,7 +269,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).deleteWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
     }
 
-    function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+    function deployWalletIn() public senderIs(address(this))  accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         if (_walletcounter >= _limit_wallets) { return; }
@@ -265,6 +285,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
+        this.deployWalletIn{value: 0.1 ton, flag: 1}();
         getMoney();
     }
 

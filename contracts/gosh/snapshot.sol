@@ -145,6 +145,7 @@ contract Snapshot is Modifiers {
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
         uint256 empty;
+        
         if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
@@ -152,6 +153,22 @@ contract Snapshot is Modifiers {
             require(_buildDiffAddr(namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
             _commits = namecommit;
+        }
+        if (diff.removeIpfs == true) {
+            if ((diff.ipfs.hasValue()) || (_ipfs.hasValue() == false) || (diff.patch.hasValue() == false)) { 
+            	DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); 
+            	return;
+            }            
+            if (tvm.hash(gosh.unzip(diff.patch.get())) == diff.sha256) {
+                       _snapshot = diff.patch.get();
+                       _ipfs = null;
+                        DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+                        _applying = true;
+            }
+            else {
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(gosh.unzip(diff.patch.get())));
+            }
+            return;
         }
         if (diff.ipfs.hasValue()) {
             _ipfs = diff.ipfs.get();
