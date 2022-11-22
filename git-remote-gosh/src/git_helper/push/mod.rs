@@ -208,7 +208,7 @@ where
         Ok(parent_id)
     }
 
-    async fn find_ancestor_commit_in_local_repo(
+    async fn find_ancestor_commit_in_remote_repo(
         &self,
         remote_branch_name: &str,
         remote_commit_addr: BlockchainContractAddress,
@@ -289,7 +289,6 @@ where
         let tree_addr = self.calculate_tree_address(tree_id).await?;
 
         {
-            // TODO: mb unite to struct
             let blockchain = self.blockchain.clone();
             let remote = self.remote.clone();
             let dao_addr = self.dao_addr.clone();
@@ -389,6 +388,7 @@ where
         let remote_branch_name: &str = get_branch_name(remote_ref)?;
 
         // 1. Check if branch exists and ready in the blockchain
+        
         let remote_commit_addr = self
             .blockchain
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
@@ -396,9 +396,11 @@ where
             .map(|pair| pair.0);
 
         // 2. Find ancestor commit in local repo
+
+        // find ancestor commit in remote repo, if the remote branch was found
         let (ancestor_commit_id, mut prev_commit_id) =
             if let Some(remote_commit_addr) = remote_commit_addr {
-                self.find_ancestor_commit_in_local_repo(remote_branch_name, remote_commit_addr)
+                self.find_ancestor_commit_in_remote_repo(remote_branch_name, remote_commit_addr)
                     .await?
             } else {
                 // prev_commit_id is not filled up here. It's Ok.
@@ -406,21 +408,12 @@ where
                 ("".to_owned(), None)
             };
 
-        let latest_commit_id = self
-            .local_repository()
-            .find_reference(local_ref)?
-            .into_fully_peeled_id()?
-            .object()?
-            .id;
-
-        tracing::debug!("latest commit id {latest_commit_id}");
-
-        let commit_objects_list = get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
-        if !commit_objects_list.status.success() {
+        // get list of git objects in local repo, excluding ancestor ones
+        let (commit_objects_list, status) = get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
+        if !status {
+            // TODO: Check if it is right to return Ok here
             return Ok(format!("error {remote_ref} fetch first\n"));
         }
-
-        let commit_objects_list = String::from_utf8(commit_objects_list.stdout)?;
 
         // 3. If branch needs to be created do so
         if prev_commit_id.is_none() {
@@ -445,19 +438,29 @@ where
 
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
-
         // 6. Deploy all **new** snapshot
         // 7. Deploy diff contracts
         // 8. Deploy all commit objects
 
-        let mut parents_of_commits: HashMap<&str, Vec<String>> =
-            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+        // create collections for spawned tasks and statistics
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
-        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut parents_of_commits: HashMap<&str, Vec<String>> =
+        HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
+
+        let latest_commit_id = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?
+            .object()?
+            .id;
+
+        tracing::debug!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
+        // iterate through the git objects list and push them
         for line in commit_objects_list.lines() {
             match line.split_ascii_whitespace().next() {
                 Some(oid) => {
@@ -498,6 +501,8 @@ where
                 None => break,
             }
         }
+
+        // wait for all spawned collections to finish
         parallel_diffs_upload_support.push_dangling(self).await?;
         parallel_diffs_upload_support
             .wait_all_diffs(self.blockchain.clone())
@@ -599,7 +604,7 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 fn get_list_of_commit_objects(
     _ref: &str,
     ancestor_commit_id: &str,
-) -> std::io::Result<std::process::Output> {
+) -> anyhow::Result<(String, bool)> {
     // TODO: git rev-list?
     let mut cmd_args: Vec<&str> = vec![
         "rev-list",
@@ -609,10 +614,10 @@ fn get_list_of_commit_objects(
         _ref,
     ];
 
-    let start_from;
+    let exclude;
     if !ancestor_commit_id.is_empty() {
-        start_from = format!("^{}", ancestor_commit_id);
-        cmd_args.push(&start_from);
+        exclude = format!("^{}", ancestor_commit_id);
+        cmd_args.push(&exclude);
     }
 
     let cmd = Command::new("git")
@@ -622,7 +627,12 @@ fn get_list_of_commit_objects(
         .spawn()
         .expect("git rev-list failed");
 
-    cmd.wait_with_output()
+    let out = cmd.wait_with_output()?;
+    if !out.status.success() {
+        Ok((String::new(), false))
+    } else {
+        Ok((String::from_utf8(out.stdout)?, true))
+    }
 }
 
 #[cfg(test)]
