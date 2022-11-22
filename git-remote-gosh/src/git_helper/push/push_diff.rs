@@ -235,9 +235,9 @@ pub async fn inner_push_diff(
 }
 
 pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
-    if diff.len() > crate::config::IPFS_DIFF_THRESHOLD {
+    /* if diff.len() > crate::config::IPFS_DIFF_THRESHOLD {
         panic!("not supported: diff is larger than threshold");
-    }
+    } */
     let mut is_going_to_ipfs = new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
         is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
