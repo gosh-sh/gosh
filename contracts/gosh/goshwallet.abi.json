@@ -30,6 +30,13 @@
 			]
 		},
 		{
+			"name": "deployWallet",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "turnOnPubkey",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
@@ -125,7 +132,7 @@
 			]
 		},
 		{
-			"name": "deployWallet",
+			"name": "deployWalletIn",
 			"inputs": [
 			],
 			"outputs": [
