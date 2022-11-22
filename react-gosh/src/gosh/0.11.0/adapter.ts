@@ -308,15 +308,15 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter> {
         const { name, address } = options
-
         const config = await this._getConfig()
-        const auth =
-            this.profile && this.wallet
-                ? {
-                      username: await this.profile.getName(),
-                      wallet: this.wallet,
-                  }
-                : undefined
+
+        let auth = undefined
+        if (this.profile && this.wallet) {
+            auth = {
+                username: await this.profile.getName(),
+                wallet0: this.wallet,
+            }
+        }
 
         if (address) return new GoshRepositoryAdapter(this.gosh, address, auth, config)
         if (!name) throw new GoshError('Repo name undefined')
@@ -466,13 +466,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private name?: string
     private subwallets: IGoshWallet[] = []
 
-    auth?: { username: string; wallet: IGoshWallet }
+    auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
     constructor(
         gosh: IGoshAdapter,
         address: TAddress,
-        auth?: { username: string; wallet: IGoshWallet },
+        auth?: { username: string; wallet0: IGoshWallet },
         config?: { maxWalletsWrite: number },
     ) {
         console.debug('Repo', auth, config)
@@ -879,11 +879,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const { value0: address } = await this.auth.wallet.runLocal('getContentAddress', {
-            repoName: repository,
-            commit,
-            label,
-        })
+        const { value0: address } = await this.auth.wallet0.runLocal(
+            'getContentAddress',
+            {
+                repoName: repository,
+                commit,
+                label,
+            },
+        )
 
         const instance = new GoshContentSignature(this.client, address)
         const { value0 } = await instance.runLocal('getContent', {})
@@ -925,7 +928,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Deploy new branch
-        await this.auth.wallet.run('deployBranch', {
+        await this.auth.wallet0.run('deployBranch', {
             repoName: await this.getName(),
             newName: name,
             fromCommit: fromBranch.commit.name,
@@ -975,7 +978,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
 
         // Delete branch and wait for it to be deleted
-        await this.auth.wallet.run('deleteBranch', {
+        await this.auth.wallet0.run('deleteBranch', {
             repoName: await this.getName(),
             Name: name,
         })
@@ -994,7 +997,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForAddProtectedBranch', {
+        await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
             num_clients: smvClientsCount,
@@ -1008,7 +1011,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForDeleteProtectedBranch', {
+        await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
             num_clients: smvClientsCount,
@@ -1018,7 +1021,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async setHead(branch: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('setHEAD', {
+        await this.auth.wallet0.run('setHEAD', {
             repoName: await this.repo.getName(),
             branchName: branch,
         })
@@ -1251,7 +1254,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('deployContent', {
+        await this.auth.wallet0.run('deployContent', {
             repoName: repository,
             commit,
             label,
@@ -1455,7 +1458,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployNewSnapshot', {
             branch,
             commit,
@@ -1469,17 +1472,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getSubwallet(index: number): Promise<IGoshWallet> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        if (this.auth.wallet.account.signer.type !== 'Keys') {
+        if (this.auth.wallet0.account.signer.type !== 'Keys') {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { value0 } = await this.auth.wallet.runLocal('getWalletAddr', { index })
+        const { value0 } = await this.auth.wallet0.runLocal('getWalletAddr', { index })
         const subwallet = new GoshWallet(this.client, value0, {
-            keys: this.auth.wallet.account.signer.keys,
+            keys: this.auth.wallet0.account.signer.keys,
         })
 
         if (!(await subwallet.isDeployed())) {
-            await this.auth.wallet.run('deployWallet', {})
+            throw new GoshError(`Wallet with index "${index}" is not deployed`)
         }
 
         return subwallet
@@ -1507,7 +1510,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployTree', {
             repoName: await this.repo.getName(),
             shaTree: hash,
@@ -1552,7 +1555,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             removeIpfs: isGoingOnchain,
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployDiff', {
             repoName: await this.getName(),
             branchName: branch,
@@ -1572,7 +1575,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const commitContract = await this._getCommit({ name: commit })
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployTag', {
             repoName: await this.getName(),
             nametag: sha1(content, 'tag', 'sha1'),
@@ -1598,7 +1601,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy commit
         const tree = await this._getTree({ name: treeHash })
-        await this.auth.wallet.run('deployCommit', {
+        await this.auth.wallet0.run('deployCommit', {
             repoName: await this.repo.getName(),
             branchName: branch,
             commitName: commit,
@@ -1616,7 +1619,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('setCommit', {
+        await this.auth.wallet0.run('setCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -1633,7 +1636,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForSetCommit', {
+        await this.auth.wallet0.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -1655,7 +1658,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             this.subwallets = await Promise.all(
                 Array.from(new Array(this.config.maxWalletsWrite)).map(
                     async (_, index) => {
-                        if (index === 0) return this.auth!.wallet
+                        if (index === 0) return this.auth!.wallet0
                         return await this._getSubwallet(index)
                     },
                 ),
@@ -1892,7 +1895,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _validateProposalStart(): Promise<number> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const address = await this.auth.wallet.runLocal('tip3VotingLocker', {})
+        const address = await this.auth.wallet0.runLocal('tip3VotingLocker', {})
         const locker = new GoshSmvLocker(this.client, address.tip3VotingLocker)
 
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
