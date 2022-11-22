@@ -126,7 +126,8 @@ where
         }
 
         let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id)).await?;
+            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                .await?;
         let diff = ParallelDiff::new(
             *commit_id,
             branch_name.to_string(),
@@ -152,12 +153,9 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> anyhow::Result<()> {
-        let file_diff = utilities::generate_blob_diff(
-            &self.local_repository().objects,
-            Some(blob_id),
-            None,
-        )
-        .await?;
+        let file_diff =
+            utilities::generate_blob_diff(&self.local_repository().objects, Some(blob_id), None)
+                .await?;
         let diff = ParallelDiff::new(
             *commit_id,
             branch_name.to_string(),
@@ -221,14 +219,12 @@ where
             .await?;
         if is_protected {
             anyhow::bail!(
-                    "This branch '{remote_branch_name}' is protected. \
+                "This branch '{remote_branch_name}' is protected. \
                     Go to app.gosh.sh and create a proposal to apply this branch change."
-                );
+            );
         }
         let remote_commit_addr =
-            BlockchainContractAddress::todo_investigate_unexpected_convertion(
-                remote_commit_addr,
-            );
+            BlockchainContractAddress::todo_investigate_unexpected_convertion(remote_commit_addr);
         let commit = self
             .blockchain
             .get_commit_by_addr(&remote_commit_addr)
@@ -242,10 +238,10 @@ where
             } else {
                 String::new()
             },
-            prev_commit_id
-       ))
+            prev_commit_id,
+        ))
     }
-    
+
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -259,7 +255,6 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
-
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -271,8 +266,7 @@ where
 
         let mut commit_iter = commit.try_into_commit_iter().unwrap();
         let tree_id = commit_iter.tree_id()?;
-        let mut parent_ids: Vec<String> =
-            commit_iter.parent_ids().map(|e| e.to_string()).collect();
+        let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
         if !parent_ids.is_empty() {
             parents_of_commits.insert(oid, parent_ids.clone());
         } else {
@@ -289,7 +283,7 @@ where
                 &mut repo_contract,
                 &id.to_string(),
             )
-                .await?;
+            .await?;
             parents.push(parent);
         }
         let tree_addr = self.calculate_tree_address(tree_id).await?;
@@ -322,11 +316,9 @@ where
                                 e
                             })
                     })
-                        .await
+                    .await
                 }
-                    .instrument(
-                        debug_span!("tokio::spawn::push_commit").or_current(),
-                    ),
+                .instrument(debug_span!("tokio::spawn::push_commit").or_current()),
             );
         }
 
@@ -345,7 +337,7 @@ where
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
             )
-                .await?;
+            .await?;
         }
 
         for update in tree_diff.updated {
@@ -358,7 +350,7 @@ where
                 statistics,
                 parallel_diffs_upload_support,
             )
-                .await?;
+            .await?;
         }
 
         for deleted in tree_diff.deleted {
@@ -370,7 +362,7 @@ where
                 statistics,
                 parallel_diffs_upload_support,
             )
-                .await?;
+            .await?;
         }
 
         *prev_commit_id = Some(object_id);
@@ -388,7 +380,7 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::info!("push_ref {} : {}", local_ref, remote_ref);
-        fn get_branch_name (_ref: &str) -> anyhow::Result<&str> {
+        fn get_branch_name(_ref: &str) -> anyhow::Result<&str> {
             let mut iter = _ref.rsplit('/');
             iter.next()
                 .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
@@ -406,12 +398,13 @@ where
         // 2. Find ancestor commit in local repo
         let (ancestor_commit_id, mut prev_commit_id) =
             if let Some(remote_commit_addr) = remote_commit_addr {
-            self.find_ancestor_commit_in_local_repo(remote_branch_name, remote_commit_addr).await?
-        } else {
-            // prev_commit_id is not filled up here. It's Ok.
-            // this means a branch is created and all initial states are filled there
-            ("".to_owned(), None)
-        };
+                self.find_ancestor_commit_in_local_repo(remote_branch_name, remote_commit_addr)
+                    .await?
+            } else {
+                // prev_commit_id is not filled up here. It's Ok.
+                // this means a branch is created and all initial states are filled there
+                ("".to_owned(), None)
+            };
 
         let latest_commit_id = self
             .local_repository()
@@ -422,10 +415,7 @@ where
 
         tracing::debug!("latest commit id {latest_commit_id}");
 
-        let commit_objects_list = get_list_of_commit_objects(
-            local_ref,
-            &ancestor_commit_id
-        )?;
+        let commit_objects_list = get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
         if !commit_objects_list.status.success() {
             return Ok(format!("error {remote_ref} fetch first\n"));
         }
@@ -438,7 +428,8 @@ where
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            let originating_commit = git_hash::ObjectId::from_str(commit_objects_list.lines().next().unwrap())?;
+            let originating_commit =
+                git_hash::ObjectId::from_str(commit_objects_list.lines().next().unwrap())?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -485,7 +476,8 @@ where
                                 &mut statistics,
                                 &mut parallel_diffs_upload_support,
                                 &mut parallel_snapshot_uploads,
-                            ).await?;
+                            )
+                            .await?;
                         }
                         git_object::Kind::Blob => {
                             // Note: handled in the Commit section
@@ -604,7 +596,10 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
     }
 }
 
-fn get_list_of_commit_objects(_ref: &str, ancestor_commit_id: &str) -> std::io::Result<std::process::Output> {
+fn get_list_of_commit_objects(
+    _ref: &str,
+    ancestor_commit_id: &str,
+) -> std::io::Result<std::process::Output> {
     // TODO: git rev-list?
     let mut cmd_args: Vec<&str> = vec![
         "rev-list",
