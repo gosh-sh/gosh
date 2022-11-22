@@ -463,43 +463,40 @@ where
 
         // iterate through the git objects list and push them
         for line in commit_objects_list.lines() {
-            match line.split_ascii_whitespace().next() {
-                Some(oid) => {
-                    let object_id = git_hash::ObjectId::from_str(oid)?;
-                    let object_kind = self.local_repository().find_object(object_id)?.kind;
-                    match object_kind {
-                        git_object::Kind::Commit => {
-                            self.push_commit_object(
-                                oid,
-                                object_id,
-                                remote_branch_name,
-                                local_branch_name,
-                                &mut parents_of_commits,
-                                &mut push_handlers,
-                                &mut prev_commit_id,
-                                &mut statistics,
-                                &mut parallel_diffs_upload_support,
-                                &mut parallel_snapshot_uploads,
-                            )
-                            .await?;
-                        }
-                        git_object::Kind::Blob => {
-                            // Note: handled in the Commit section
-                            // branch
-                            // commit_id
-                            // commit_data
-                            // Vec<diff>
-                        }
-                        // Not supported yet
-                        git_object::Kind::Tag => unimplemented!(),
-                        git_object::Kind::Tree => {
-                            let _ =
-                                push_tree(self, &object_id, &mut visited_trees, &mut push_handlers)
-                                    .await?;
-                        }
-                    }
+            let Some(oid) = line.split_ascii_whitespace().next() else {
+                break;
+            };
+            let object_id = git_hash::ObjectId::from_str(oid)?;
+            let object_kind = self.local_repository().find_object(object_id)?.kind;
+            match object_kind {
+                git_object::Kind::Commit => {
+                    self.push_commit_object(
+                        oid,
+                        object_id,
+                        remote_branch_name,
+                        local_branch_name,
+                        &mut parents_of_commits,
+                        &mut push_handlers,
+                        &mut prev_commit_id,
+                        &mut statistics,
+                        &mut parallel_diffs_upload_support,
+                        &mut parallel_snapshot_uploads,
+                    )
+                    .await?;
                 }
-                None => break,
+                git_object::Kind::Blob => {
+                    // Note: handled in the Commit section
+                    // branch
+                    // commit_id
+                    // commit_data
+                    // Vec<diff>
+                }
+                // Not supported yet
+                git_object::Kind::Tag => unimplemented!(),
+                git_object::Kind::Tree => {
+                    let _ =
+                        push_tree(self, &object_id, &mut visited_trees, &mut push_handlers).await?;
+                }
             }
         }
 
@@ -607,18 +604,18 @@ fn get_list_of_commit_objects(
     ancestor_commit_id: &str,
 ) -> anyhow::Result<(String, bool)> {
     // TODO: git rev-list?
-    let mut cmd_args: Vec<&str> = vec![
+    let mut cmd_args = [
         "rev-list",
         "--objects",
         "--in-commit-order",
         "--reverse",
         _ref,
-    ];
+    ]
+    .map(String::from)
+    .to_vec();
 
-    let exclude;
     if !ancestor_commit_id.is_empty() {
-        exclude = format!("^{}", ancestor_commit_id);
-        cmd_args.push(&exclude);
+        cmd_args.push(format!("^{}", ancestor_commit_id));
     }
 
     let cmd = Command::new("git")
