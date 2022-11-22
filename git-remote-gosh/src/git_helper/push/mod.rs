@@ -388,7 +388,7 @@ where
         let remote_branch_name: &str = get_branch_name(remote_ref)?;
 
         // 1. Check if branch exists and ready in the blockchain
-        
+
         let remote_commit_addr = self
             .blockchain
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
@@ -409,7 +409,8 @@ where
             };
 
         // get list of git objects in local repo, excluding ancestor ones
-        let (commit_objects_list, status) = get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
+        let (commit_objects_list, status) =
+            get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
         if !status {
             // TODO: Check if it is right to return Ok here
             return Ok(format!("error {remote_ref} fetch first\n"));
@@ -446,7 +447,7 @@ where
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
-        HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
