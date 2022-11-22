@@ -597,7 +597,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const compressed = Buffer.from(patched, 'hex').toString('base64')
             const content = await zstd.decompress(compressed, true)
             result.onchain = {
-                commit: value0 === value3 ? value0 : value3,
+                commit: value0 === commit.name ? value0 : value3,
                 content: content,
             }
             result.content = content
@@ -660,18 +660,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getCommitBlob(
         treepath: string,
+        branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-
-        // Get commit tree items filtered by blob tree path,
-        // find resulting blob sha1 after commit was applied
-        const tree = (await this.getTree(commit, treepath)).items
-        const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
-        const sha1 = found?.sha1 || ZERO_BLOB_SHA1
+        const parent = await this.getCommit({ address: commit.parents[0] })
 
         // Get snapshot and read all incoming internal messages
-        const fullpath = `${commit.branch}/${treepath}`
+        const fullpath = `${branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
         const { messages } = await snapshot.getMessages(
             { msgType: ['IntIn'] },
@@ -689,55 +685,27 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 if (name === 'approve') return value.diff
                 return {
                     commit: value.commit,
-                    patch: !!value.data,
+                    patch: value.data || false,
                     ipfs: value.ipfsdata,
                 }
             })
 
-        // Restore blob state on current commit
-        const { onchain, content } = await this.getBlob({ fullpath })
-        let current = content
-        let prevIndex: number | undefined
-        for (const [i, diff] of approved.entries()) {
-            const prev = i > 0 && approved[i - 1]
-
-            if (prevIndex !== undefined) break
-            if (diff.ipfs && diff.sha1 !== sha1) continue
-            if (prev?.ipfs && diff.patch) current = onchain.content
-            if (diff.sha1 === sha1) {
-                prevIndex = diff.ipfs ? i + 1 : i
-                if (diff.patch) break
-            }
-            current = await this._applyBlobDiffPatch(current, diff, true)
-        }
-
-        // Restore blob state on commit before current
-        let previous = current
-        if (prevIndex !== undefined && approved[prevIndex]) {
-            const diff = approved[prevIndex]
-            const prev = prevIndex > 0 && approved[prevIndex - 1]
-
-            if (prev?.ipfs && diff.patch) previous = onchain.content
-            if (
-                !prev?.ipfs ||
-                (prev?.ipfs && diff.ipfs) ||
-                (prev?.ipfs && prev.sha1 !== sha1)
-            ) {
-                previous = await this._applyBlobDiffPatch(previous, diff, true)
-            }
-        } else previous = ''
+        // Restore blob at commit and parent commit
+        const { content } = await this.getBlob({ fullpath })
+        const current = await this._getCommitBlob(commit, treepath, content, approved)
+        const previous =
+            parent.name === ZERO_COMMIT
+                ? ''
+                : await this._getCommitBlob(parent, treepath, content, approved)
 
         return { previous, current }
     }
 
-    async getCommitBlobs(commit: string | TCommit): Promise<string[]> {
+    async getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]> {
         const isTCommit = typeof commit !== 'string'
         const object = !isTCommit
             ? await this._getCommit({ name: commit })
             : await this._getCommit({ address: commit.address })
-        const branch: string = !isTCommit
-            ? (await object.runLocal('getNameBranch', {})).value0
-            : commit.branch
 
         const { messages } = await object.getMessages({ msgType: ['IntIn'] }, true, true)
         const addresses = messages
@@ -768,7 +736,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // If commit was accepted, return blob state at commit
         if (item.index === -1) {
-            return await this.getCommitBlob(item.treepath, commit)
+            return await this.getCommitBlob(item.treepath, commit.branch, commit)
         }
 
         // Get blob state at parent commit, get diffs and apply
@@ -777,7 +745,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         let previous: string | Buffer
         let current: string | Buffer
         try {
-            const state = await this.getCommitBlob(item.treepath, parent.name)
+            const state = await this.getCommitBlob(
+                item.treepath,
+                commit.branch,
+                parent.name,
+            )
             previous = current = state.current
         } catch {
             previous = current = ''
@@ -809,7 +781,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get blobs list from commit (if commit was accepted)
         if (!diffs.length) {
-            const blobs = await this.getCommitBlobs(commit)
+            const blobs = await this.getCommitBlobs(commit.branch, commit)
             return blobs.map((treepath) => ({ treepath, index: -1 }))
         }
 
@@ -1089,6 +1061,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     return getTreeItemFullPath(it) === treepath
                 })
                 const flagsOriginal = treeItem?.flags || 0
+                const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
 
                 if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
                 if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
@@ -1107,7 +1080,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
                 } else {
                     patch = this._generateBlobDiffPatch(treepath, modified, original)
-                    if ((flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS) {
+                    if (isOriginalIpfs) {
                         patch = Buffer.from(compressed, 'base64').toString('hex')
                         isGoingOnchain = true
                     } else if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
@@ -1125,6 +1098,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     sha256: isGoingIpfs
                         ? sha256(modified, true)
                         : await this.gosh.getTvmHash(modified),
+                }
+
+                if (isGoingIpfs && !isOriginalIpfs) {
+                    patch = await zstd.compress(original)
+                    patch = Buffer.from(patch, 'base64').toString('hex')
                 }
 
                 return {
@@ -1309,6 +1287,47 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const [branch, ...path] = fullpath.split('/')
         const addr = await this._getSnapshotAddress(branch, path.join('/'))
         return new GoshSnapshot(this.client, addr)
+    }
+
+    private async _getCommitBlob(
+        commit: TCommit,
+        treepath: string,
+        content: string | Buffer,
+        messages: any[],
+    ): Promise<string | Buffer> {
+        // Get commit tree items filtered by blob tree path,
+        // find resulting blob sha1 after commit was applied
+        const tree = (await this.getTree(commit, treepath)).items
+        const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
+        const sha1 = found?.sha1 || ZERO_BLOB_SHA1
+
+        let restored = content
+        let stop = false
+        for (const [i, diff] of messages.entries()) {
+            const prev = i > 0 && messages[i - 1]
+
+            if (stop) break
+            if (!diff.commit && !diff.patch && !diff.ipfs) {
+                restored = ''
+                break
+            }
+            if (diff.ipfs && diff.sha1 !== sha1) continue
+            if (diff.removeIpfs) {
+                const compressed = Buffer.from(diff.patch, 'hex').toString('base64')
+                restored = await zstd.decompress(compressed, true)
+            }
+            if (prev?.ipfs && !diff.ipfs && diff.patch) {
+                const compressed = Buffer.from(prev.patch, 'hex').toString('base64')
+                restored = await zstd.decompress(compressed, true)
+            }
+            if (diff.sha1 === sha1) {
+                if (!diff.ipfs && diff.patch) break
+                stop = true
+            }
+
+            restored = await this._applyBlobDiffPatch(restored, diff, true)
+        }
+        return restored
     }
 
     private async _getCommit(options: {
