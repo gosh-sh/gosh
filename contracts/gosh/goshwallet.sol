@@ -103,14 +103,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         if (_walletcounter >= _limit_wallets) { return; }
         if (_index != 0) { return; }
         _walletcounter += 1;
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
-            stateInit: s1, value: 60 ton, wid: 0
+            stateInit: s1, value: 5 ton, wid: 0
         }(  _rootpubaddr, _pubaddr, _nameDao,
             _code[m_CommitCode],
             _code[m_RepositoryCode],

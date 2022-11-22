@@ -82,7 +82,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
-    uint128 constant FEE_DEPLOY_WALLET = 60 ton;
+    uint128 constant FEE_DEPLOY_WALLET = 1000 ton;
     uint128 constant FEE_DEPLOY_PROFILE = 10000 ton;
     uint128 constant FEE_DEPLOY_SYSTEM_CONTRACT = 51 ton;
     uint128 constant FEE_DEPLOY_DAO_PROFILE = 101 ton;
