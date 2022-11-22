@@ -35,6 +35,8 @@ pub struct Diff {
     pub commit_id: String,
     pub patch: Option<String>,
     pub ipfs: Option<String>,
+    #[serde(rename = "removeIpfs")]
+    pub remove_ipfs: bool,
     pub sha1: String,
     pub sha256: String,
 }

@@ -21,6 +21,12 @@ use super::utilities::retry::default_retry_strategy;
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
+enum BlobDst {
+    Ipfs(String),
+    Patch(String),
+    SetContent(String),
+}
+
 #[instrument(
     level = "debug",
     skip(blockchain, diff, original_snapshot_content, new_snapshot_content)
@@ -98,6 +104,8 @@ where
     level = "debug",
     skip(
         blockchain,
+        repo_name,
+        ipfs_endpoint,
         original_snapshot_content,
         diff,
         new_snapshot_content,
@@ -126,55 +134,30 @@ pub async fn inner_push_diff(
     tracing::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
-    let (patch, ipfs) = {
-        let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
+    let is_previous_oversized = original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    let blob_dst = {
+        let is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
-            // Ensure contract can accept this patch
-            let original_snapshot_content = compress_zstd(original_snapshot_content, None)?;
-            let data = serde_json::json!({
-                "state": hex::encode(original_snapshot_content),
-                "diff": hex::encode(&diff)
-            });
-            let get_diff_result = {
-                let wallet_contract = wallet.take_one().await?;
-                wallet_contract
-                    .read_state::<GetDiffResultResult>(
-                        &blockchain.client(),
-                        "getDiffResult",
-                        Some(data),
-                    )
-                    .await
-            };
-            match get_diff_result {
-                Ok(apply_patch_result) => {
-                    if apply_patch_result.hex_encoded_compressed_content.is_none() {
-                        is_going_to_ipfs = true;
-                    }
-                }
-                Err(apply_patch_result_error) => {
-                    is_going_to_ipfs = apply_patch_result_error
-                        .to_string()
-                        .contains("Contract execution was terminated with error: invalid opcode");
-                }
+            if is_previous_oversized {
+                let compressed = compress_zstd(new_snapshot_content, None)?;
+                BlobDst::SetContent(hex::encode(compressed))
+            } else {
+                BlobDst::Patch(hex::encode(diff))
             }
-        }
-        if is_going_to_ipfs {
+        } else {
             tracing::debug!("inner_push_diff->save_data_to_ipfs");
-            let ipfs = Some(
+            let ipfs = 
                 save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                     .await
                     .map_err(|e| {
                         tracing::debug!("save_data_to_ipfs error: {:#?}", e);
                         e
-                    })?,
-            );
-            (None, ipfs)
-        } else {
-            (Some(hex::encode(diff)), None)
+                    })?;
+            BlobDst::Ipfs(ipfs)
         }
     };
     let content_sha256 = {
-        if ipfs.is_some() {
+        if let BlobDst::Ipfs(_) = blob_dst {
             format!("0x{}", sha256::digest(&**new_snapshot_content))
         } else {
             format!(
@@ -190,13 +173,43 @@ pub async fn inner_push_diff(
         blob_id.to_string()
     };
 
-    let diff = Diff {
-        snapshot_addr,
-        commit_id: commit_id.to_string(),
-        patch,
-        ipfs,
-        sha1,
-        sha256: content_sha256,
+    let commit_id = commit_id.to_string();
+    let diff = match blob_dst {
+        BlobDst::Ipfs(ipfs) => {
+            let patch = if is_previous_oversized {
+                None
+            } else {
+                let compressed = compress_zstd(original_snapshot_content, None)?;
+                Some(hex::encode(compressed))
+            };
+            Diff {
+                snapshot_addr,
+                commit_id,
+                patch,
+                ipfs: Some(ipfs),
+                remove_ipfs: false,
+                sha1,
+                sha256: content_sha256,
+            }
+        },
+        BlobDst::Patch(patch) => Diff {
+            snapshot_addr,
+            commit_id,
+            patch: Some(patch),
+            ipfs: None,
+            remove_ipfs: false,
+            sha1,
+            sha256: content_sha256,
+        },
+        BlobDst::SetContent(content) => Diff {
+            snapshot_addr,
+            commit_id,
+            patch: Some(content),
+            ipfs: None,
+            remove_ipfs: true,
+            sha1,
+            sha256: content_sha256,
+        },
     };
 
     if diff.ipfs.is_some() {
@@ -222,11 +235,14 @@ pub async fn inner_push_diff(
 }
 
 pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
-    let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
-        || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    if diff.len() > crate::config::IPFS_DIFF_THRESHOLD {
+        panic!("not supported: diff is larger than threshold");
+    }
+    let mut is_going_to_ipfs = new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
         is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
-    }
+    };
+
     is_going_to_ipfs
 }
 
