@@ -170,7 +170,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "debug", skip(self))]
     fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
         let mut buffer: Vec<u8> = Vec::new();
         return self
@@ -208,6 +208,7 @@ where
         Ok(parent_id)
     }
 
+    #[instrument(level = "debug", skip(self))]
     async fn find_ancestor_commit_in_remote_repo(
         &self,
         remote_branch_name: &str,
@@ -242,6 +243,17 @@ where
         ))
     }
 
+    #[instrument(
+        level = "debug",
+        skip(
+            self,
+            statistics,
+            parallel_diffs_upload_support,
+            parallel_snapshot_uploads,
+            push_handlers,
+            parents_of_commits
+        )
+    )]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -422,8 +434,12 @@ where
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            let originating_commit =
-                git_hash::ObjectId::from_str(commit_objects_list.lines().next().unwrap())?;
+            let originating_commit = git_hash::ObjectId::from_str(
+                commit_objects_list
+                    .lines()
+                    .next()
+                    .expect("git object list is empty"),
+            )?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -572,7 +588,7 @@ async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(m))]
 fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
     if from == till {
         return 1u64;
@@ -599,6 +615,7 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
     }
 }
 
+#[instrument(level = "trace")]
 fn get_list_of_commit_objects(
     _ref: &str,
     ancestor_commit_id: &str,
