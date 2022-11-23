@@ -5,13 +5,16 @@ use crate::{
 use git_hash::ObjectId;
 use git_object::tree::EntryRef;
 use git_odb::{Find, FindExt};
-use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::Iterator;
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    sync::Arc,
+};
 
 use tokio_retry::Retry;
 use tracing::Instrument;
 
-use tokio::task::JoinSet;
+use tokio::{sync::Semaphore, task::JoinSet};
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -64,12 +67,13 @@ async fn construct_tree_node(
     Ok((format!("0x{}", key), tree_node))
 }
 
-#[instrument(level = "debug", skip(context, visited))]
+#[instrument(level = "debug", skip(context, visited, push_semaphore))]
 pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
     handlers: &mut JoinSet<anyhow::Result<()>>,
+    push_semaphore: Arc<Semaphore>,
 ) -> anyhow::Result<()> {
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
@@ -103,9 +107,10 @@ pub async fn push_tree(
         let dao_addr = context.dao_addr.clone();
         let repo = context.remote.repo.clone();
 
+        let permit = push_semaphore.clone().acquire_owned().await?;
         handlers.spawn(
             async move {
-                Retry::spawn(default_retry_strategy(), || async {
+                let res = Retry::spawn(default_retry_strategy(), || async {
                     inner_deploy_tree(
                         &blockchain,
                         &network,
@@ -120,7 +125,9 @@ pub async fn push_tree(
                 .map_err(|e| {
                     tracing::warn!("Attempt failed with {:#?}", e);
                     e
-                })
+                });
+                drop(permit);
+                res
             }
             .instrument(debug_span!("tokio::spawn::inner_deploy_tree").or_current()),
         );

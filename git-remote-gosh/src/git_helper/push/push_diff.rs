@@ -134,7 +134,8 @@ pub async fn inner_push_diff(
     tracing::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
-    let is_previous_oversized = original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    let is_previous_oversized =
+        original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     let blob_dst = {
         let is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
@@ -146,13 +147,12 @@ pub async fn inner_push_diff(
             }
         } else {
             tracing::debug!("inner_push_diff->save_data_to_ipfs");
-            let ipfs = 
-                save_data_to_ipfs(&ipfs_client, new_snapshot_content)
-                    .await
-                    .map_err(|e| {
-                        tracing::debug!("save_data_to_ipfs error: {:#?}", e);
-                        e
-                    })?;
+            let ipfs = save_data_to_ipfs(&ipfs_client, new_snapshot_content)
+                .await
+                .map_err(|e| {
+                    tracing::debug!("save_data_to_ipfs error: {:#?}", e);
+                    e
+                })?;
             BlobDst::Ipfs(ipfs)
         }
     };
@@ -191,7 +191,7 @@ pub async fn inner_push_diff(
                 sha1,
                 sha256: content_sha256,
             }
-        },
+        }
         BlobDst::Patch(patch) => Diff {
             snapshot_addr,
             commit_id,
