@@ -1,6 +1,7 @@
 use super::{contract::ContractInfo, CallResult, Everscale};
 use crate::blockchain::{default_callback, BlockchainService};
 use async_trait::async_trait;
+use std::sync::Arc;
 use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
@@ -21,7 +22,7 @@ pub(super) trait BlockchainCall {
 
 #[async_trait]
 impl BlockchainCall for Everscale {
-    #[instrument(level = "debug", skip(self, contract))]
+    #[instrument(level = "debug", skip(self, contract, args))]
     async fn call<C>(
         &self,
         contract: &C,
@@ -53,7 +54,7 @@ impl BlockchainCall for Everscale {
         };
 
         let sdk_result = ton_client::processing::process_message(
-            self.client().clone(),
+            Arc::clone(self.client()),
             ParamsOfProcessMessage {
                 send_events: false,
                 message_encode_params,

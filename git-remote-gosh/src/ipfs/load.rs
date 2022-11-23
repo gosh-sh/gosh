@@ -10,7 +10,12 @@ impl FileLoad for IpfsService {
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
 
         Retry::spawn(self.retry_strategy(), || async {
-            IpfsService::load_retriable(&self.http_client, &url).await
+            IpfsService::load_retriable(&self.http_client, &url)
+                .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
         })
         .await
     }

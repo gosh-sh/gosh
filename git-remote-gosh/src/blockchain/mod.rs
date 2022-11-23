@@ -33,22 +33,30 @@ pub mod snapshot;
 pub mod tree;
 mod tvm_hash;
 pub mod user_wallet;
-pub use commit::GoshCommit;
-use serde_number::Number;
-pub use snapshot::Snapshot;
-pub use tree::Tree;
-pub use tvm_hash::tvm_hash;
-
 pub use crate::{
     abi as gosh_abi,
     config::{self, UserWalletConfig},
 };
+pub use commit::GoshCommit;
+use once_cell::sync::Lazy;
+use serde_number::Number;
+pub use snapshot::Snapshot;
+use std::collections::HashMap;
+use tokio::sync::RwLock;
+pub use tree::Tree;
+pub use tvm_hash::tvm_hash;
 
 use self::contract::{ContractRead, ContractStatic, GoshContract};
 
 pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
+pub const EMPTY_BLOB_SHA1: &str = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
+pub const EMPTY_BLOB_SHA256: &str =
+    "0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7";
 pub const MAX_ONCHAIN_FILE_SIZE: u32 = config::IPFS_CONTENT_THRESHOLD as u32;
-const CACHE_PIN_STATIC: &str = "static";
+
+static PINNED_CONTRACT_BOCREFS: Lazy<
+    Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>,
+> = Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 
 #[repr(u8)]
 pub enum GoshBlobBitFlags {
@@ -141,12 +149,23 @@ struct GetVersionResult {
 
 pub type EverClient = Arc<ClientContext>;
 
-#[derive(Builder, Clone)]
+#[derive(Builder)]
 pub struct Everscale {
     wallet_config: Option<UserWalletConfig>,
     ever_client: EverClient,
     root_contract: GoshContract,
     repo_contract: GoshContract,
+}
+
+impl Clone for Everscale {
+    fn clone(&self) -> Self {
+        Self {
+            wallet_config: self.wallet_config.clone(),
+            ever_client: Arc::clone(&self.ever_client),
+            root_contract: self.root_contract.clone(),
+            repo_contract: self.repo_contract.clone(),
+        }
+    }
 }
 
 #[instrument(level = "debug", skip(context, contract))]
@@ -161,7 +180,7 @@ async fn run_local(
         "id": { "eq": contract.address }
     }));
     let query = query_collection(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfQueryCollection {
             collection: "accounts".to_owned(),
             filter,
@@ -188,7 +207,7 @@ async fn run_local(
     };
 
     let encoded = encode_message(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
@@ -203,7 +222,7 @@ async fn run_local(
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
 
     let result = run_tvm(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfRunTvm {
             message: encoded.message,
             account: account_boc.unwrap().to_string(),
@@ -224,20 +243,34 @@ async fn run_local(
 #[instrument(level = "debug", skip(context, contract))]
 async fn run_static(
     context: &EverClient,
-    contract: &mut GoshContract,
+    contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
-    let (account, boc_cache) = if let Some(boc_ref) = contract.boc_ref.clone() {
-        tracing::trace!("run_static: use cached boc ref");
-        (boc_ref, Some(BocCacheType::Unpinned))
+    // Read lock
+    let boc_ref = {
+        PINNED_CONTRACT_BOCREFS
+            .read()
+            .await
+            .get(&contract.address)
+            .map(|(r, c)| (r.to_owned(), Arc::clone(c)))
+    };
+    let pin = contract.address.to_string();
+    let (account, boc_cache, client) = if let Some(boc_ref) = boc_ref {
+        let (boc_ref, client) = boc_ref;
+        tracing::trace!(
+            "run_static: use cached boc ref: {} -> {}",
+            &contract.address,
+            boc_ref
+        );
+        (boc_ref, Some(BocCacheType::Pinned { pin: pin }), client)
     } else {
         tracing::trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
             "id": { "eq": contract.address }
         }));
         let query = query_collection(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfQueryCollection {
                 collection: "accounts".to_owned(),
                 filter,
@@ -259,17 +292,22 @@ async fn run_static(
         }
         let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
         let ResultOfBocCacheSet { boc_ref } = cache_set(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfBocCacheSet {
                 boc,
-                cache_type: BocCacheType::Pinned {
-                    pin: CACHE_PIN_STATIC.to_string(),
-                },
+                cache_type: BocCacheType::Pinned { pin: pin },
             },
         )
         .await?;
-        contract.boc_ref = Some(boc_ref.clone());
-        (boc_ref, None)
+        // write lock
+        {
+            let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
+            refs.insert(
+                contract.address.clone(),
+                (boc_ref.clone(), Arc::clone(context)),
+            );
+        }
+        (boc_ref, None, Arc::clone(context))
     };
     // ---------
     let call_set = match args {
@@ -278,7 +316,7 @@ async fn run_static(
     };
 
     let encoded = encode_message(
-        context.clone(),
+        Arc::clone(&client),
         ParamsOfEncodeMessage {
             abi: contract.abi.clone(),
             address: Some(String::from(contract.address.clone())),
@@ -293,7 +331,7 @@ async fn run_static(
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
     let result = run_tvm(
-        context.clone(),
+        Arc::clone(&client),
         ParamsOfRunTvm {
             message: encoded.message,
             account: account.clone(),
@@ -506,7 +544,7 @@ pub mod tests {
             .unwrap();
         let address = "0:4de6a95c7dbfebef9bad6ef7f34f6a31f62953f989a169e81ef71493332ac4a6";
         let address = BlockchainContractAddress::new(address);
-        let mut contract = GoshContract::new(address, gosh_abi::REPO);
+        let contract = GoshContract::new(address, gosh_abi::REPO);
         let list: GetAllAddressResult = contract
             .run_static(&te.client, "getAllAddress", None)
             .await

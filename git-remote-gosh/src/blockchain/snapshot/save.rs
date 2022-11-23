@@ -1,9 +1,12 @@
 #![allow(unused_variables)]
+use crate::blockchain::contract::ContractInfo;
+use crate::blockchain::user_wallet::UserWallet;
 use async_trait::async_trait;
+use std::ops::Deref;
 
 use crate::{
     blockchain::call::BlockchainCall,
-    blockchain::{contract::ContractInfo, BlockchainContractAddress, Everscale},
+    blockchain::{BlockchainContractAddress, Everscale},
 };
 
 #[derive(Deserialize, Debug)]
@@ -32,6 +35,8 @@ pub struct Diff {
     pub commit_id: String,
     pub patch: Option<String>,
     pub ipfs: Option<String>,
+    #[serde(rename = "removeIpfs")]
+    pub remove_ipfs: bool,
     pub sha1: String,
     pub sha256: String,
 }
@@ -82,9 +87,9 @@ pub struct PushDiffCoordinate {
 
 #[async_trait]
 pub trait DeployDiff {
-    async fn deploy_diff<W>(
+    async fn deploy_diff(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_name: String,
         branch_name: String,
         commit_id: String,
@@ -92,17 +97,15 @@ pub trait DeployDiff {
         index1: u32,
         index2: u32,
         last: bool,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static;
+    ) -> anyhow::Result<()>;
 }
 
 #[async_trait]
 impl DeployDiff for Everscale {
     #[instrument(level = "debug", skip(self, wallet, diff))]
-    async fn deploy_diff<W>(
+    async fn deploy_diff(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_name: String,
         branch_name: String,
         commit_id: String,
@@ -110,10 +113,7 @@ impl DeployDiff for Everscale {
         index1: u32,
         index2: u32,
         last: bool,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static,
-    {
+    ) -> anyhow::Result<()> {
         let diffs = vec![diff];
         let args = DeployDiffParams {
             repo_name,
@@ -125,9 +125,16 @@ impl DeployDiff for Everscale {
             last,
         };
 
+        let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(wallet, "deployDiff", Some(serde_json::to_value(args)?))
+            .call(
+                wallet_contract.deref(),
+                "deployDiff",
+                Some(serde_json::to_value(args)?),
+            )
             .await?;
+        drop(wallet_contract);
         tracing::debug!("deployDiff result: {:?}", result);
         Ok(())
     }
@@ -135,34 +142,29 @@ impl DeployDiff for Everscale {
 
 #[async_trait]
 pub trait DeployNewSnapshot {
-    async fn deploy_new_snapshot<W>(
+    async fn deploy_new_snapshot(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
         branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static;
+    ) -> anyhow::Result<()>;
 }
 
 #[async_trait]
 impl DeployNewSnapshot for Everscale {
     #[instrument(level = "debug", skip(self, wallet, content))]
-    async fn deploy_new_snapshot<W>(
+    async fn deploy_new_snapshot(
         &self,
-        wallet: &W,
+        wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
         branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
-    ) -> anyhow::Result<()>
-    where
-        W: ContractInfo + Sync + 'static,
-    {
+    ) -> anyhow::Result<()> {
         let args = DeploySnapshotParams {
             repo_address,
             branch_name,
@@ -171,13 +173,20 @@ impl DeployNewSnapshot for Everscale {
             content,
             ipfs: None,
         };
-
-        self.call(
-            wallet,
-            "deployNewSnapshot",
-            Some(serde_json::to_value(args)?),
-        )
-        .await
-        .map(|_| ())
+        let wallet_contract = wallet.take_one().await?;
+        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
+        let result = self
+            .call(
+                wallet_contract.deref(),
+                "deployNewSnapshot",
+                Some(serde_json::to_value(args)?),
+            )
+            .await
+            .map(|_| ());
+        drop(wallet_contract);
+        if let Err(ref e) = result {
+            tracing::debug!("deploy_branch_error: {}", e);
+        }
+        result
     }
 }

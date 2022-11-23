@@ -6,6 +6,7 @@ use crate::blockchain::{
 };
 use std::collections::HashMap;
 use std::iter::Iterator;
+use std::sync::Arc;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
@@ -141,7 +142,13 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
-                tracing::info!("First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}", file_path, original_commit, original_branch, original_snapshot);
+                tracing::info!(
+                    "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
+                    file_path,
+                    original_commit,
+                    original_branch,
+                    original_snapshot
+                );
                 // generate filter
                 let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
                     client,
@@ -197,7 +204,9 @@ impl DiffMessagesIterator {
                         if page.cursor.is_some() {
                             cursor = page.cursor;
                         } else {
-                            panic!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.")
+                            panic!(
+                                "We reached the end of the messages queue to a snapshot and were not able to find original commit there."
+                            )
                         }
                     } else {
                         tracing::info!("Commit found at {}", index.unwrap());
@@ -280,7 +289,7 @@ pub async fn load_messages_to(
     };
 
     let result = ton_client::net::query(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfQuery {
             query,
             variables: Some(serde_json::json!({
@@ -321,7 +330,7 @@ pub async fn load_messages_to(
 
     let ids: Vec<String> = passed_msgs.iter().map(|x| x.id.clone()).collect();
     let passed_trx: HashMap<String, Vec<String>> =
-        load_transactions(&context.clone(), &ids).await?;
+        load_transactions(&Arc::clone(context), &ids).await?;
     let filter: Vec<&String> = passed_trx.keys().collect();
     let msgs: Vec<&Message> = passed_msgs
         .iter()
@@ -332,7 +341,7 @@ pub async fn load_messages_to(
     for raw_msg in msgs {
         tracing::debug!("Decoding message {:?}", raw_msg.id);
         let decoded = decode_message_body(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfDecodeMessageBody {
                 abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
                 body: raw_msg.body.clone(),
@@ -400,7 +409,7 @@ pub async fn load_transactions(
     .to_string();
 
     let result = ton_client::net::query(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfQuery {
             query,
             variables: Some(serde_json::json!({
@@ -437,7 +446,7 @@ pub async fn check_approve_result(
     .to_string();
 
     let result = ton_client::net::query(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfQuery {
             query,
             variables: Some(serde_json::json!({
@@ -452,7 +461,7 @@ pub async fn check_approve_result(
     let body: String = serde_json::from_value(result["data"]["messages"][0]["body"].clone())?;
 
     let decoded = decode_message_body(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfDecodeMessageBody {
             abi: Abi::Json(gosh_abi::DIFF.1.to_string()),
             body: body.clone(),

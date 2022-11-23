@@ -1,25 +1,31 @@
+use crate::blockchain::user_wallet::UserWallet;
 use crate::{
     blockchain::{
-        contract::{ContractInfo, ContractRead, GoshContract},
+        contract::{ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
             save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
             PushDiffCoordinate,
         },
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
+        EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
     },
     config,
-    git_helper::GitHelper,
     ipfs::{service::FileSave, IpfsService},
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
-use tracing::Instrument;
 
 use super::utilities::retry::default_retry_strategy;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
 const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
+
+enum BlobDst {
+    Ipfs(String),
+    Patch(String),
+    SetContent(String),
+}
 
 #[instrument(
     level = "debug",
@@ -85,6 +91,10 @@ where
             &new_snapshot_content,
         )
         .await
+        .map_err(|e| {
+            tracing::warn!("Attempt failed with {:#?}", e);
+            e
+        })
     })
     .await?;
     Ok(())
@@ -92,13 +102,21 @@ where
 
 #[instrument(
     level = "debug",
-    skip(blockchain, original_snapshot_content, diff, new_snapshot_content)
+    skip(
+        blockchain,
+        repo_name,
+        ipfs_endpoint,
+        original_snapshot_content,
+        diff,
+        new_snapshot_content,
+        wallet
+    )
 )]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
     snapshot_addr: BlockchainContractAddress,
-    wallet: impl ContractRead + ContractInfo + Sync + 'static,
+    wallet: UserWallet,
     ipfs_endpoint: &str,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
@@ -116,53 +134,30 @@ pub async fn inner_push_diff(
     tracing::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
-    let (patch, ipfs) = {
-        let mut is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
+    let is_previous_oversized =
+        original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    let blob_dst = {
+        let is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
         if !is_going_to_ipfs {
-            // Ensure contract can accept this patch
-            let original_snapshot_content = compress_zstd(original_snapshot_content, None)?;
-            let data = serde_json::json!({
-                "state": hex::encode(original_snapshot_content),
-                "diff": hex::encode(&diff)
-            });
-
-            match wallet
-                .read_state::<GetDiffResultResult>(
-                    &blockchain.client(),
-                    "getDiffResult",
-                    Some(data),
-                )
-                .await
-            {
-                Ok(apply_patch_result) => {
-                    if apply_patch_result.hex_encoded_compressed_content.is_none() {
-                        is_going_to_ipfs = true;
-                    }
-                }
-                Err(apply_patch_result_error) => {
-                    is_going_to_ipfs = apply_patch_result_error
-                        .to_string()
-                        .contains("Contract execution was terminated with error: invalid opcode");
-                }
+            if is_previous_oversized {
+                let compressed = compress_zstd(new_snapshot_content, None)?;
+                BlobDst::SetContent(hex::encode(compressed))
+            } else {
+                BlobDst::Patch(hex::encode(diff))
             }
-        }
-        if is_going_to_ipfs {
-            tracing::debug!("inner_push_diff->save_data_to_ipfs");
-            let ipfs = Some(
-                save_data_to_ipfs(&ipfs_client, new_snapshot_content)
-                    .await
-                    .map_err(|e| {
-                        tracing::debug!("save_data_to_ipfs error: {:#?}", e);
-                        e
-                    })?,
-            );
-            (None, ipfs)
         } else {
-            (Some(hex::encode(diff)), None)
+            tracing::debug!("inner_push_diff->save_data_to_ipfs");
+            let ipfs = save_data_to_ipfs(&ipfs_client, new_snapshot_content)
+                .await
+                .map_err(|e| {
+                    tracing::debug!("save_data_to_ipfs error: {:#?}", e);
+                    e
+                })?;
+            BlobDst::Ipfs(ipfs)
         }
     };
     let content_sha256 = {
-        if ipfs.is_some() {
+        if let BlobDst::Ipfs(_) = blob_dst {
             format!("0x{}", sha256::digest(&**new_snapshot_content))
         } else {
             format!(
@@ -172,13 +167,49 @@ pub async fn inner_push_diff(
         }
     };
 
-    let diff = Diff {
-        snapshot_addr,
-        commit_id: commit_id.to_string(),
-        patch,
-        ipfs,
-        sha1: blob_id.to_string(),
-        sha256: content_sha256,
+    let sha1 = if &content_sha256 == EMPTY_BLOB_SHA256 {
+        EMPTY_BLOB_SHA1.to_owned()
+    } else {
+        blob_id.to_string()
+    };
+
+    let commit_id = commit_id.to_string();
+    let diff = match blob_dst {
+        BlobDst::Ipfs(ipfs) => {
+            let patch = if is_previous_oversized {
+                None
+            } else {
+                let compressed = compress_zstd(original_snapshot_content, None)?;
+                Some(hex::encode(compressed))
+            };
+            Diff {
+                snapshot_addr,
+                commit_id,
+                patch,
+                ipfs: Some(ipfs),
+                remove_ipfs: false,
+                sha1,
+                sha256: content_sha256,
+            }
+        }
+        BlobDst::Patch(patch) => Diff {
+            snapshot_addr,
+            commit_id,
+            patch: Some(patch),
+            ipfs: None,
+            remove_ipfs: false,
+            sha1,
+            sha256: content_sha256,
+        },
+        BlobDst::SetContent(content) => Diff {
+            snapshot_addr,
+            commit_id,
+            patch: Some(content),
+            ipfs: None,
+            remove_ipfs: true,
+            sha1,
+            sha256: content_sha256,
+        },
     };
 
     if diff.ipfs.is_some() {
@@ -204,11 +235,14 @@ pub async fn inner_push_diff(
 }
 
 pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
-    let mut is_going_to_ipfs = diff.len() > crate::config::IPFS_DIFF_THRESHOLD
-        || new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    /* if diff.len() > crate::config::IPFS_DIFF_THRESHOLD {
+        panic!("not supported: diff is larger than threshold");
+    } */
+    let mut is_going_to_ipfs = new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {
         is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
-    }
+    };
+
     is_going_to_ipfs
 }
 
@@ -299,44 +333,36 @@ pub async fn push_new_branch_snapshot(
     Ok(())
 }
 
-#[instrument(level = "debug", skip(context))]
-pub async fn push_initial_snapshot(
-    context: &mut GitHelper<impl BlockchainService + 'static>,
-    branch_name: &str,
-    file_path: &str,
-) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
-    let repo_addr = context.repo_addr.clone();
-    let branch_name = branch_name.to_string();
-    let file_path = file_path.to_string();
-    let wallet = context
-        .blockchain
-        .user_wallet(&context.dao_addr, &context.remote.network)
-        .await?;
-
-    let blockchain = context.blockchain.clone();
-
-    Ok(tokio::spawn(
-        async move {
-            Retry::spawn(default_retry_strategy(), || async {
-                blockchain
-                    .deploy_new_snapshot(
-                        &wallet,
-                        repo_addr.clone(),
-                        branch_name.to_string(),
-                        "".to_string(),
-                        file_path.to_string(),
-                        "".to_string(),
-                    )
-                    .await
-                    .map_err(|e| {
-                        tracing::debug!(
-                            "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                        );
-                        e
-                    })
-            })
+#[instrument(level = "debug", skip(blockchain))]
+pub async fn push_initial_snapshot<B>(
+    blockchain: B,
+    repo_addr: BlockchainContractAddress,
+    dao_addr: BlockchainContractAddress,
+    remote_network: String,
+    branch_name: String,
+    file_path: String,
+) -> anyhow::Result<()>
+where
+    B: BlockchainService,
+{
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
+    Retry::spawn(default_retry_strategy(), || async {
+        blockchain
+            .deploy_new_snapshot(
+                &wallet,
+                repo_addr.clone(),
+                branch_name.clone(),
+                "".to_string(),
+                file_path.clone(),
+                "".to_string(),
+            )
             .await
-        }
-        .instrument(debug_span!("tokio::spawn::deploy_new_snapshot").or_current()),
-    ))
+            .map_err(|e| {
+                tracing::debug!(
+                    "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
+                );
+                e
+            })
+    })
+    .await
 }

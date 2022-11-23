@@ -12,6 +12,7 @@ edition = '2021'
 keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
+rust-version = "1.65"
 version = '3.0.0'
 
 [profile.profiling]
@@ -42,6 +43,7 @@ hex = '^0'
 indexmap = '^1'
 lru = '^0.8.1'
 mockall_double = '^0'
+object-pool = "0.5.4"
 once_cell = "^1.16.0"
 openssl = {version = '0.10', features = ['vendored']}
 opentelemetry = {version = "0.18.0", features = ["rt-tokio"]}
@@ -97,12 +99,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.37.2'
+rev = 'f4a16892fe4b2d7de26416cf482103aab45548c2'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.37.2'
+rev = 'f4a16892fe4b2d7de26416cf482103aab45548c2'
 
 [dependencies.zstd]
 default-features = false

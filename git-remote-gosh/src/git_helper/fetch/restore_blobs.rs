@@ -130,6 +130,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut walked_through_ipfs = false;
     let mut first_after_ipfs = false;
     let mut preserved_message: Option<DiffMessage> = None;
+    let mut transition_content: Option<Vec<u8>> = None;
 
     while !blobs.is_empty() {
         tracing::info!("Still expecting to restore blobs: {:?}", blobs);
@@ -146,8 +147,15 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         };
         tracing::debug!("got message: {:?}", message);
 
-        let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
+        let blob_data: Vec<u8> = if message.diff.remove_ipfs {
+            let data = match message.diff.get_patch_data() {
+                Some(content) => content,
+                None => panic!("Broken diff detected: content doesn't exist"),
+            };
+            data
+        } else if let Some(ipfs) = &message.diff.ipfs {
             walked_through_ipfs = true;
+            transition_content = message.diff.get_patch_data();
             load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
         } else if walked_through_ipfs {
             walked_through_ipfs = false;
@@ -156,8 +164,13 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             // we won't use the message, so we'll store it for the next iteration
             preserved_message = Some(message);
 
-            let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
-            snapshot.next_content
+            if let Some(content) = transition_content.clone() {
+                transition_content = None;
+                content
+            } else {
+                let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
+                snapshot.next_content
+            }
         } else {
             let patched_blob = if first_after_ipfs {
                 first_after_ipfs = false;
@@ -328,7 +341,7 @@ impl BlobsRebuildingPlan {
             FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.blockchain.client().clone();
+            let es_client = Arc::clone(git_helper.blockchain.client());
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
             let mut repo_contract = git_helper.blockchain.repo_contract().clone();
