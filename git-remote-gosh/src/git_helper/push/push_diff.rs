@@ -6,7 +6,7 @@ use crate::{
         contract::{ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
-            save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
+            save::{Diff, GetDiffAddrResult, GetVersionResult},
             PushDiffCoordinate,
         },
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
