@@ -5,7 +5,7 @@ import { IGoshDao } from '../interfaces'
 
 class GoshDao extends BaseContract implements IGoshDao {
     static key: string = 'goshdao'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshDao.key, address, { version: GoshDao.version })

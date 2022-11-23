@@ -5,7 +5,7 @@ import { TAddress } from '../../types'
 
 class GoshWallet extends BaseContract implements IGoshWallet {
     static key: string = 'goshwallet'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress, optional?: { keys?: KeyPair }) {
         super(client, GoshWallet.key, address, {

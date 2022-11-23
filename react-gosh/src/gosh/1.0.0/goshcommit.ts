@@ -5,7 +5,7 @@ import { IGoshCommit } from '../interfaces'
 
 class GoshCommit extends BaseContract implements IGoshCommit {
     static key: string = 'commit'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshCommit.key, address, { version: GoshCommit.version })
