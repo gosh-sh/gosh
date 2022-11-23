@@ -80,11 +80,11 @@ import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
 import { GoshSmvClient } from './goshsmvclient'
 
-class GoshAdapter_0_11_0 implements IGoshAdapter {
-    private static instance: GoshAdapter_0_11_0
+class GoshAdapter_1_0_0 implements IGoshAdapter {
+    private static instance: GoshAdapter_1_0_0
     private auth?: { username: string; keys: KeyPair }
 
-    static version: string = '0.11.0'
+    static version: string = '1.0.0'
 
     client: TonClient
     goshroot: IGoshRoot
@@ -96,11 +96,11 @@ class GoshAdapter_0_11_0 implements IGoshAdapter {
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_0_11_0 {
-        if (!GoshAdapter_0_11_0.instance) {
-            GoshAdapter_0_11_0.instance = new GoshAdapter_0_11_0(goshroot, goshaddr)
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_1_0_0 {
+        if (!GoshAdapter_1_0_0.instance) {
+            GoshAdapter_1_0_0.instance = new GoshAdapter_1_0_0(goshroot, goshaddr)
         }
-        return GoshAdapter_0_11_0.instance
+        return GoshAdapter_1_0_0.instance
     }
 
     isValidDaoName(name: string): TValidationResult {
@@ -2120,4 +2120,4 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 }
 
-export { GoshAdapter_0_11_0 }
+export { GoshAdapter_1_0_0 }

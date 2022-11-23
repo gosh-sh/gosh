@@ -5,7 +5,7 @@ import { IGoshSmvLocker } from '../interfaces'
 
 class GoshSmvLocker extends BaseContract implements IGoshSmvLocker {
     static key: string = 'smvtokenlocker'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvLocker.key, address, { version: GoshSmvLocker.version })

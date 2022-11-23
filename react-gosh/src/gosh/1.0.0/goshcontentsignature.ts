@@ -5,7 +5,7 @@ import { IGoshContentSignature } from '../interfaces'
 
 class GoshContentSignature extends BaseContract implements IGoshContentSignature {
     static key: string = 'content-signature'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshContentSignature.key, address, {
