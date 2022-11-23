@@ -6,6 +6,7 @@ import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
+import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
 import { AppConfig, useUser } from 'react-gosh'
@@ -70,6 +71,24 @@ const Header = () => {
                                     </button>
                                 </>
                             )}
+
+                            <a
+                                href="https://blog.gosh.sh/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-gray-050a15 sm:text-gray-53596d hover:underline"
+                                onClick={(e) => {
+                                    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+                                        e.preventDefault()
+                                        AppConfig.dockerclient?.host.openExternal(
+                                            'https://blog.gosh.sh/',
+                                        )
+                                    }
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faBlog} size="lg" />
+                                <span className="ml-3 hidden sm:inline">Our blog</span>
+                            </a>
 
                             <a
                                 href="https://t.me/gosh_sh"

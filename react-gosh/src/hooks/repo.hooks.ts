@@ -331,11 +331,10 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     return { create, destroy, lock, unlock, progress }
 }
 
-function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
+function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string) {
     const [tree, setTree] = useRecoilState(treeAtom)
-
-    const getSubtree = (path?: string) => treeSelector({ type: 'tree', path })
-    const getTreeItems = (path?: string) => treeSelector({ type: 'items', path })
+    const subtree = useRecoilValue(treeSelector({ type: 'tree', path: treepath }))
+    const blobs = useRecoilValue(treeSelector({ type: 'blobs', path: treepath }))
 
     useEffect(() => {
         const _getTree = async () => {
@@ -352,14 +351,14 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
             setTree(undefined)
             const gosh = GoshAdapterFactory.create(commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            newtree = await adapter.getTree(commit, filterPath)
+            newtree = await adapter.getTree(commit, treepath)
             setTree(newtree)
         }
 
         _getTree()
-    }, [dao, repo, commit?.name, commit?.version, filterPath, setTree])
+    }, [dao, repo, commit?.name, commit?.version, treepath, setTree])
 
-    return { tree, getSubtree, getTreeItems }
+    return { tree, subtree, blobs }
 }
 
 function useBlob(dao: string, repo: string, branch?: string, path?: string) {
@@ -537,7 +536,13 @@ function _useCommit(dao: string, repo: string, commit: string) {
     }
 }
 
-function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+function useCommit(
+    dao: string,
+    repo: string,
+    branch: string,
+    commit: string,
+    showDiffNum: number = 5,
+) {
     const { repository, commit: details } = _useCommit(dao, repo, commit)
     const [blobs, setBlobs] = useState<{
         isFetching: boolean
@@ -562,7 +567,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }))
 
         const { commit, treepath } = blobs.items[index]
-        const diff = await repository.getCommitBlob(treepath, commit)
+        const diff = await repository.getCommitBlob(treepath, branch, commit)
 
         setBlobs((state) => ({
             ...state,
@@ -579,12 +584,16 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
             if (!repository || !details.commit) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await repository.getCommitBlobs(details.commit)
+            const blobs = await repository.getCommitBlobs(branch, details.commit)
             const state = await Promise.all(
                 blobs.sort().map(async (treepath, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await repository.getCommitBlob(treepath, details.commit!)
+                            ? await repository.getCommitBlob(
+                                  treepath,
+                                  branch,
+                                  details.commit!,
+                              )
                             : { previous: '', current: '' }
                     return {
                         treepath,
@@ -599,7 +608,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }
 
         _getBlobs()
-    }, [repository, details.commit])
+    }, [repository, branch, details.commit])
 
     return {
         isFetching: details.isFetching,

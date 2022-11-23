@@ -113,9 +113,10 @@ interface IGoshRepositoryAdapter {
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     getCommitBlob(
         treepath: string,
+        branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }>
-    getCommitBlobs(commit: string | TCommit): Promise<string[]>
+    getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]>
     getPullRequestBlob(
         item: { treepath: string; index: number },
         commit: string | TCommit,

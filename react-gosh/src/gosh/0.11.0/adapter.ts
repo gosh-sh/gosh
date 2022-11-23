@@ -70,6 +70,7 @@ import {
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
     SmvEventTypes,
+    ZERO_BLOB_SHA1,
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
@@ -307,19 +308,23 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter> {
         const { name, address } = options
-        const auth = this.profile &&
-            this.wallet && {
-                username: await this.profile.getName(),
-                wallet: this.wallet,
-            }
+        const config = await this._getConfig()
 
-        if (address) return new GoshRepositoryAdapter(this.gosh, address, auth)
+        let auth = undefined
+        if (this.profile && this.wallet) {
+            auth = {
+                username: await this.profile.getName(),
+                wallet0: this.wallet,
+            }
+        }
+
+        if (address) return new GoshRepositoryAdapter(this.gosh, address, auth, config)
         if (!name) throw new GoshError('Repo name undefined')
 
         const { value0 } = await this.dao.runLocal('getAddrRepository', {
             name: name.toLowerCase(),
         })
-        return new GoshRepositoryAdapter(this.gosh, value0, auth)
+        return new GoshRepositoryAdapter(this.gosh, value0, auth, config)
     }
 
     async getMemberWallet(options: {
@@ -445,6 +450,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const { value0 } = await this.dao.runLocal('getOwner', {})
         return value0
     }
+
+    private async _getConfig(): Promise<any> {
+        const { value0 } = await this.dao.runLocal('getConfig', {})
+        return {
+            maxWalletsWrite: +value0,
+        }
+    }
 }
 
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
@@ -454,18 +466,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private name?: string
     private subwallets: IGoshWallet[] = []
 
-    auth?: { username: string; wallet: IGoshWallet }
+    auth?: { username: string; wallet0: IGoshWallet }
+    config?: { maxWalletsWrite: number }
 
     constructor(
         gosh: IGoshAdapter,
         address: TAddress,
-        auth?: { username: string; wallet: IGoshWallet },
+        auth?: { username: string; wallet0: IGoshWallet },
+        config?: { maxWalletsWrite: number },
     ) {
-        console.debug('Repo auth', auth)
+        console.debug('Repo', auth, config)
         this.gosh = gosh
         this.client = gosh.client
         this.repo = new GoshRepository(this.client, address)
         this.auth = auth
+        this.config = config
     }
 
     async isDeployed(): Promise<boolean> {
@@ -582,7 +597,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const compressed = Buffer.from(patched, 'hex').toString('base64')
             const content = await zstd.decompress(compressed, true)
             result.onchain = {
-                commit: value0 === value3 ? value0 : value3,
+                commit: value0 === commit.name ? value0 : value3,
                 content: content,
             }
             result.content = content
@@ -645,20 +660,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getCommitBlob(
         treepath: string,
+        branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-
-        // Get commit tree items filtered by blob tree path,
-        // find resulting blob sha1 after commit was applied
-        const tree = (await this.getTree(commit, treepath)).items
-        const sha1 = tree.find((item) => getTreeItemFullPath(item) === treepath)?.sha1
-        if (!sha1) {
-            throw new GoshError('Blob not found in commit tree', { commit, treepath })
-        }
+        const parent = await this.getCommit({ address: commit.parents[0] })
 
         // Get snapshot and read all incoming internal messages
-        const fullpath = `${commit.branch}/${treepath}`
+        const fullpath = `${branch}/${treepath}`
         const snapshot = await this._getSnapshot({ fullpath })
         const { messages } = await snapshot.getMessages(
             { msgType: ['IntIn'] },
@@ -676,55 +685,27 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 if (name === 'approve') return value.diff
                 return {
                     commit: value.commit,
-                    patch: !!value.data,
+                    patch: value.data || false,
                     ipfs: value.ipfsdata,
                 }
             })
 
-        // Restore blob state on current commit
-        const { onchain, content } = await this.getBlob({ fullpath })
-        let current = content
-        let prevIndex: number | undefined
-        for (const [i, diff] of approved.entries()) {
-            const prev = i > 0 && approved[i - 1]
-
-            if (prevIndex !== undefined) break
-            if (diff.ipfs && diff.sha1 !== sha1) continue
-            if (prev?.ipfs && diff.patch) current = onchain.content
-            if (diff.sha1 === sha1) {
-                prevIndex = diff.ipfs ? i + 1 : i
-                if (diff.patch) break
-            }
-            current = await this._applyBlobDiffPatch(current, diff, true)
-        }
-
-        // Restore blob state on commit before current
-        let previous = current
-        if (prevIndex !== undefined && approved[prevIndex]) {
-            const diff = approved[prevIndex]
-            const prev = prevIndex > 0 && approved[prevIndex - 1]
-
-            if (prev?.ipfs && diff.patch) previous = onchain.content
-            if (
-                !prev?.ipfs ||
-                (prev?.ipfs && diff.ipfs) ||
-                (prev?.ipfs && prev.sha1 !== sha1)
-            ) {
-                previous = await this._applyBlobDiffPatch(previous, diff, true)
-            }
-        } else previous = ''
+        // Restore blob at commit and parent commit
+        const { content } = await this.getBlob({ fullpath })
+        const current = await this._getCommitBlob(commit, treepath, content, approved)
+        const previous =
+            parent.name === ZERO_COMMIT
+                ? ''
+                : await this._getCommitBlob(parent, treepath, content, approved)
 
         return { previous, current }
     }
 
-    async getCommitBlobs(commit: string | TCommit): Promise<string[]> {
+    async getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]> {
         const isTCommit = typeof commit !== 'string'
         const object = !isTCommit
             ? await this._getCommit({ name: commit })
             : await this._getCommit({ address: commit.address })
-        const branch: string = !isTCommit
-            ? (await object.runLocal('getNameBranch', {})).value0
-            : commit.branch
 
         const { messages } = await object.getMessages({ msgType: ['IntIn'] }, true, true)
         const addresses = messages
@@ -755,7 +736,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // If commit was accepted, return blob state at commit
         if (item.index === -1) {
-            return await this.getCommitBlob(item.treepath, commit)
+            return await this.getCommitBlob(item.treepath, commit.branch, commit)
         }
 
         // Get blob state at parent commit, get diffs and apply
@@ -764,7 +745,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         let previous: string | Buffer
         let current: string | Buffer
         try {
-            const state = await this.getCommitBlob(item.treepath, parent.name)
+            const state = await this.getCommitBlob(
+                item.treepath,
+                commit.branch,
+                parent.name,
+            )
             previous = current = state.current
         } catch {
             previous = current = ''
@@ -796,7 +781,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get blobs list from commit (if commit was accepted)
         if (!diffs.length) {
-            const blobs = await this.getCommitBlobs(commit)
+            const blobs = await this.getCommitBlobs(commit.branch, commit)
             return blobs.map((treepath) => ({ treepath, index: -1 }))
         }
 
@@ -894,11 +879,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const { value0: address } = await this.auth.wallet.runLocal('getContentAddress', {
-            repoName: repository,
-            commit,
-            label,
-        })
+        const { value0: address } = await this.auth.wallet0.runLocal(
+            'getContentAddress',
+            {
+                repoName: repository,
+                commit,
+                label,
+            },
+        )
 
         const instance = new GoshContentSignature(this.client, address)
         const { value0 } = await instance.runLocal('getContent', {})
@@ -940,7 +928,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Deploy new branch
-        await this.auth.wallet.run('deployBranch', {
+        await this.auth.wallet0.run('deployBranch', {
             repoName: await this.getName(),
             newName: name,
             fromCommit: fromBranch.commit.name,
@@ -990,7 +978,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
 
         // Delete branch and wait for it to be deleted
-        await this.auth.wallet.run('deleteBranch', {
+        await this.auth.wallet0.run('deleteBranch', {
             repoName: await this.getName(),
             Name: name,
         })
@@ -1009,7 +997,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForAddProtectedBranch', {
+        await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
             num_clients: smvClientsCount,
@@ -1023,7 +1011,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForDeleteProtectedBranch', {
+        await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
             num_clients: smvClientsCount,
@@ -1033,7 +1021,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async setHead(branch: string): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('setHEAD', {
+        await this.auth.wallet0.run('setHEAD', {
             repoName: await this.repo.getName(),
             branchName: branch,
         })
@@ -1075,25 +1063,31 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const treeItem: TTreeItem | undefined = items.find((it) => {
                     return getTreeItemFullPath(it) === treepath
                 })
+                const flagsOriginal = treeItem?.flags || 0
+                const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
+
                 if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
                 if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
                 if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
                 const compressed = await zstd.compress(modified)
                 let patch = null
-                let flags = EBlobFlag.COMPRESSED
+                let flagsModified = EBlobFlag.COMPRESSED
+                let isGoingOnchain = false
                 if (
-                    ((treeItem?.flags || 0) & EBlobFlag.IPFS) === EBlobFlag.IPFS ||
                     Buffer.isBuffer(original) ||
                     Buffer.isBuffer(modified) ||
                     Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
                 ) {
-                    flags |= EBlobFlag.IPFS
-                    if (Buffer.isBuffer(modified)) flags |= EBlobFlag.BINARY
+                    flagsModified |= EBlobFlag.IPFS
+                    if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
                 } else {
                     patch = this._generateBlobDiffPatch(treepath, modified, original)
-                    if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
-                        flags |= EBlobFlag.IPFS
+                    if (isOriginalIpfs) {
+                        patch = Buffer.from(compressed, 'base64').toString('hex')
+                        isGoingOnchain = true
+                    } else if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
+                        flagsModified |= EBlobFlag.IPFS
                         patch = null
                     } else {
                         patch = await zstd.compress(patch)
@@ -1101,12 +1095,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     }
                 }
 
-                const isIpfs = (flags & EBlobFlag.IPFS) === EBlobFlag.IPFS
+                const isGoingIpfs = (flagsModified & EBlobFlag.IPFS) === EBlobFlag.IPFS
                 const hashes: { sha1: string; sha256: string } = {
                     sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
-                    sha256: isIpfs
+                    sha256: isGoingIpfs
                         ? sha256(modified, true)
                         : await this.gosh.getTvmHash(modified),
+                }
+
+                if (isGoingIpfs && !isOriginalIpfs) {
+                    patch = await zstd.compress(original)
+                    patch = Buffer.from(patch, 'base64').toString('hex')
                 }
 
                 return {
@@ -1115,9 +1114,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     treeItem,
                     compressed,
                     patch,
-                    isIpfs,
-                    flags,
+                    flags: flagsModified,
                     hashes,
+                    isGoingIpfs,
+                    isGoingOnchain,
                 }
             },
         )
@@ -1254,7 +1254,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('deployContent', {
+        await this.auth.wallet0.run('deployContent', {
             repoName: repository,
             commit,
             label,
@@ -1290,6 +1290,47 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const [branch, ...path] = fullpath.split('/')
         const addr = await this._getSnapshotAddress(branch, path.join('/'))
         return new GoshSnapshot(this.client, addr)
+    }
+
+    private async _getCommitBlob(
+        commit: TCommit,
+        treepath: string,
+        content: string | Buffer,
+        messages: any[],
+    ): Promise<string | Buffer> {
+        // Get commit tree items filtered by blob tree path,
+        // find resulting blob sha1 after commit was applied
+        const tree = (await this.getTree(commit, treepath)).items
+        const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
+        const sha1 = found?.sha1 || ZERO_BLOB_SHA1
+
+        let restored = content
+        let stop = false
+        for (const [i, diff] of messages.entries()) {
+            const prev = i > 0 && messages[i - 1]
+
+            if (stop) break
+            if (!diff.commit && !diff.patch && !diff.ipfs) {
+                restored = ''
+                break
+            }
+            if (diff.ipfs && diff.sha1 !== sha1) continue
+            if (diff.removeIpfs) {
+                const compressed = Buffer.from(diff.patch, 'hex').toString('base64')
+                restored = await zstd.decompress(compressed, true)
+            }
+            if (prev?.ipfs && !diff.ipfs && diff.patch) {
+                const compressed = Buffer.from(prev.patch, 'hex').toString('base64')
+                restored = await zstd.decompress(compressed, true)
+            }
+            if (diff.sha1 === sha1) {
+                if (!diff.ipfs && diff.patch) break
+                stop = true
+            }
+
+            restored = await this._applyBlobDiffPatch(restored, diff, true)
+        }
+        return restored
     }
 
     private async _getCommit(options: {
@@ -1417,7 +1458,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployNewSnapshot', {
             branch,
             commit,
@@ -1431,17 +1472,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getSubwallet(index: number): Promise<IGoshWallet> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        if (this.auth.wallet.account.signer.type !== 'Keys') {
+        if (this.auth.wallet0.account.signer.type !== 'Keys') {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { value0 } = await this.auth.wallet.runLocal('getWalletAddr', { index })
+        const { value0 } = await this.auth.wallet0.runLocal('getWalletAddr', { index })
         const subwallet = new GoshWallet(this.client, value0, {
-            keys: this.auth.wallet.account.signer.keys,
+            keys: this.auth.wallet0.account.signer.keys,
         })
 
         if (!(await subwallet.isDeployed())) {
-            await this.auth.wallet.run('deployWallet', {})
+            throw new GoshError(`Wallet with index "${index}" is not deployed`)
         }
 
         return subwallet
@@ -1469,7 +1510,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployTree', {
             repoName: await this.repo.getName(),
             shaTree: hash,
@@ -1487,9 +1528,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             treeItem?: TTreeItem
             compressed: string
             patch: string | null
-            isIpfs: boolean
             flags: number
             hashes: { sha1: string; sha256: string }
+            isGoingOnchain: boolean
+            isGoingIpfs: boolean
         },
         index1: number,
         wallet?: IGoshWallet,
@@ -1501,17 +1543,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (await diffContract.isDeployed()) return
 
         // Deploy diff
-        const { isIpfs, compressed, snapshot, patch, hashes } = blobmeta
-        const ipfs = isIpfs ? await goshipfs.write(compressed) : null
+        const { isGoingOnchain, isGoingIpfs, compressed, snapshot, patch, hashes } =
+            blobmeta
+        const ipfs = isGoingIpfs ? await goshipfs.write(compressed) : null
         const diff = {
             snap: snapshot,
             commit,
             patch,
             ipfs,
             ...hashes,
+            removeIpfs: isGoingOnchain,
         }
 
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployDiff', {
             repoName: await this.getName(),
             branchName: branch,
@@ -1531,7 +1575,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const commitContract = await this._getCommit({ name: commit })
-        wallet = wallet || this.auth.wallet
+        wallet = wallet || this.auth.wallet0
         await wallet.run('deployTag', {
             repoName: await this.getName(),
             nametag: sha1(content, 'tag', 'sha1'),
@@ -1557,7 +1601,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy commit
         const tree = await this._getTree({ name: treeHash })
-        await this.auth.wallet.run('deployCommit', {
+        await this.auth.wallet0.run('deployCommit', {
             repoName: await this.repo.getName(),
             branchName: branch,
             commitName: commit,
@@ -1575,7 +1619,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        await this.auth.wallet.run('setCommit', {
+        await this.auth.wallet0.run('setCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -1592,7 +1636,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
         const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet.run('startProposalForSetCommit', {
+        await this.auth.wallet0.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -1607,14 +1651,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         executor: (wallet: IGoshWallet, params: Input, index: number) => Promise<Output>,
     ): Promise<Output[]> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.config) throw new GoshError('Repository config is undefined')
 
         // Get/deploy wallets
-        if (this.subwallets.length !== 10) {
+        if (this.subwallets.length !== this.config.maxWalletsWrite) {
             this.subwallets = await Promise.all(
-                Array.from(new Array(10)).map(async (_, index) => {
-                    if (index === 0) return this.auth!.wallet
-                    return await this._getSubwallet(index)
-                }),
+                Array.from(new Array(this.config.maxWalletsWrite)).map(
+                    async (_, index) => {
+                        if (index === 0) return this.auth!.wallet0
+                        return await this._getSubwallet(index)
+                    },
+                ),
             )
         }
 
@@ -1848,7 +1895,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _validateProposalStart(): Promise<number> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const address = await this.auth.wallet.runLocal('tip3VotingLocker', {})
+        const address = await this.auth.wallet0.runLocal('tip3VotingLocker', {})
         const locker = new GoshSmvLocker(this.client, address.tip3VotingLocker)
 
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
