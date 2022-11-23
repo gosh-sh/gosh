@@ -97,14 +97,14 @@ features = ['full', 'rt']
 version = '1.21.2'
 
 [dependencies.ton_client]
+branch = '1.39.0-rc'
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.38.1'
 
 [dependencies.ton_sdk]
+branch = '1.39.0-rc'
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.38.1'
 
 [dependencies.zstd]
 default-features = false
