@@ -13,9 +13,13 @@ use std::{
     collections::{HashMap, HashSet},
     process::{Command, Stdio},
     str::FromStr,
+    sync::Arc,
     vec::Vec,
 };
-use tokio::task::{JoinError, JoinSet};
+use tokio::{
+    sync::Semaphore,
+    task::{JoinError, JoinSet},
+};
 use tokio_retry::Retry;
 use tracing::Instrument;
 
@@ -26,6 +30,8 @@ mod push_tree;
 use push_tree::push_tree;
 mod utilities;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
+
+static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
 #[derive(Default)]
 struct PushBlobStatistics {
@@ -250,6 +256,7 @@ where
             statistics,
             parallel_diffs_upload_support,
             parallel_snapshot_uploads,
+            push_semaphore,
             push_handlers,
             parents_of_commits
         )
@@ -262,6 +269,7 @@ where
         local_branch_name: &str,
         parents_of_commits: &mut HashMap<&'a str, Vec<String>>,
         push_handlers: &mut JoinSet<anyhow::Result<()>>,
+        push_semaphore: Arc<Semaphore>,
         prev_commit_id: &mut Option<ObjectId>,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
@@ -308,9 +316,10 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
+            let permit = push_semaphore.acquire_owned().await?;
             push_handlers.spawn(
                 async move {
-                    Retry::spawn(default_retry_strategy(), || async {
+                    let res = Retry::spawn(default_retry_strategy(), || async {
                         blockchain
                             .push_commit(
                                 &object_id,
@@ -327,7 +336,9 @@ where
                                 e
                             })
                     })
-                    .await
+                    .await;
+                    drop(permit);
+                    res
                 }
                 .instrument(debug_span!("tokio::spawn::push_commit").or_current()),
             );
@@ -461,6 +472,7 @@ where
 
         // create collections for spawned tasks and statistics
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
@@ -493,6 +505,7 @@ where
                         local_branch_name,
                         &mut parents_of_commits,
                         &mut push_handlers,
+                        push_semaphore.clone(),
                         &mut prev_commit_id,
                         &mut statistics,
                         &mut parallel_diffs_upload_support,
@@ -510,8 +523,14 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    let _ =
-                        push_tree(self, &object_id, &mut visited_trees, &mut push_handlers).await?;
+                    let _ = push_tree(
+                        self,
+                        &object_id,
+                        &mut visited_trees,
+                        &mut push_handlers,
+                        push_semaphore.clone(),
+                    )
+                    .await?;
                 }
             }
         }
