@@ -18,6 +18,7 @@ use std::{
     vec::Vec,
 };
 use tracing::Instrument;
+use crate::ipfs::build_ipfs;
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -156,7 +157,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         } else if let Some(ipfs) = &message.diff.ipfs {
             walked_through_ipfs = true;
             transition_content = message.diff.get_patch_data();
-            load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
+            load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
         } else if walked_through_ipfs {
             walked_through_ipfs = false;
             first_after_ipfs = true;
@@ -278,7 +279,7 @@ impl BlobsRebuildingPlan {
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
-        let ipfs_client = IpfsService::new(ipfs_endpoint);
+        let ipfs_client = build_ipfs(ipfs_endpoint)?;
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         tracing::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);

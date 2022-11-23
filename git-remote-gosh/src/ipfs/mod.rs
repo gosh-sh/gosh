@@ -3,7 +3,7 @@ mod save;
 pub mod service;
 
 use reqwest::multipart;
-use reqwest_tracing::TracingMiddleware;
+use reqwest_tracing::{OtelName, TracingMiddleware};
 use serde::Deserialize;
 use std::fmt::Debug;
 use std::{path::Path, time::Duration};
@@ -46,6 +46,7 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
     ipfs_builder.ipfs_endpoint_address(endpoint.to_owned());
 
     let http_client = reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
+        .with_init(reqwest_middleware::Extension(OtelName("gosh_reqwest".into())))
         .with(TracingMiddleware::default())
         .build();
 

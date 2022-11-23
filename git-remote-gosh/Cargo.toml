@@ -50,6 +50,8 @@ opentelemetry = {version = "0.18.0", features = ["rt-tokio"]}
 opentelemetry-otlp = {version = "0.11.0", features = ["grpc-tonic"]}
 opentelemetry-semantic-conventions = "0.10.0"
 primitive-types = '^0.12'
+reqwest-middleware = "0.2.0"
+reqwest-tracing = "0.4.0"
 serde_json = '^1.0'
 sha256 = '1.0.3'
 shellexpand = '^2.1.0'
@@ -76,21 +78,6 @@ version = '^0'
 [dependencies.reqwest]
 features = ['blocking', 'gzip', 'json', 'multipart', 'stream']
 version = '^0'
-
-[dependencies.reqwest-middleware]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-middleware'
-
-[dependencies.reqwest-retry]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-retry'
-
-[dependencies.reqwest-tracing]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-tracing'
 
 [dependencies.tokio]
 features = ['full', 'rt']

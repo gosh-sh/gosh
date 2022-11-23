@@ -15,6 +15,7 @@ use crate::{
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
+use crate::ipfs::build_ipfs;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -133,7 +134,7 @@ pub async fn inner_push_diff(
     let diff = compress_zstd(diff, None)?;
     tracing::debug!("compressed to {} size", diff.len());
 
-    let ipfs_client = IpfsService::new(ipfs_endpoint);
+    let ipfs_client = build_ipfs(ipfs_endpoint)?;
     let is_previous_oversized =
         original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     let blob_dst = {
