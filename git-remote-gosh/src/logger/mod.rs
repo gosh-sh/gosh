@@ -1,6 +1,6 @@
+pub mod helpers;
 mod id_generator;
 mod telemetry;
-pub mod helpers;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
@@ -33,7 +33,8 @@ impl LogService {
                 .with_filter(LevelFilter::ERROR),
         );
 
-        let filter = EnvFilter::try_new("[{otel.name=gosh_reqwest}]=trace,git_remote_gosh=trace").unwrap();
+        let filter =
+            EnvFilter::try_new("[{otel.name=gosh_reqwest}]=trace,git_remote_gosh=trace").unwrap();
 
         let layered_subscriber = tracing_subscriber::registry()
             .with(filter)

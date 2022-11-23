@@ -1,17 +1,16 @@
-use git_remote_gosh::{ipfs::{
-    build_ipfs,
-    service::{FileLoad, FileSave},
-},
-logger::helpers::{init_logger,shutdown_logger}
-}
-;
+use git_remote_gosh::{
+    ipfs::{
+        build_ipfs,
+        service::{FileLoad, FileSave},
+    },
+    logger::helpers::{init_logger, shutdown_logger},
+};
 
 use std::env;
 use tokio::fs::{remove_file, OpenOptions};
 use tracing::trace_span;
 
 const IPFS_HTTP_ENDPOINT_FOR_TESTS: &str = "https://ipfs.network.gosh.sh";
-
 
 #[tokio::test]
 async fn save_blob_test() {

@@ -1,4 +1,5 @@
 use crate::blockchain::user_wallet::UserWallet;
+use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
         contract::{ContractRead, GoshContract},
@@ -15,7 +16,6 @@ use crate::{
 };
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
-use crate::ipfs::build_ipfs;
 
 use super::utilities::retry::default_retry_strategy;
 

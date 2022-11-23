@@ -46,7 +46,9 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
     ipfs_builder.ipfs_endpoint_address(endpoint.to_owned());
 
     let http_client = reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
-        .with_init(reqwest_middleware::Extension(OtelName("gosh_reqwest".into())))
+        .with_init(reqwest_middleware::Extension(OtelName(
+            "gosh_reqwest".into(),
+        )))
         .with(TracingMiddleware::default())
         .build();
 

@@ -1,4 +1,5 @@
 use super::GitHelper;
+use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
         self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
@@ -18,7 +19,6 @@ use std::{
     vec::Vec,
 };
 use tracing::Instrument;
-use crate::ipfs::build_ipfs;
 
 const FETCH_MAX_TRIES: i32 = 3;
 

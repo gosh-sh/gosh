@@ -1,8 +1,8 @@
+use crate::logger::set_log_verbosity;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Once;
 use std::time::Duration;
 use tokio::time::sleep;
-use crate::logger::set_log_verbosity;
 
 static TEST_LOGGER: Once = Once::new();
 static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
