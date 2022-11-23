@@ -21,7 +21,7 @@ import "../smv/TokenRootOwner.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
     
     address static _systemcontract;
     address _pubaddr;
@@ -219,14 +219,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
         getMoney();
     }
-
-    /* burnTokens(
-        uint128 amount,
-        address walletOwner,
-        address remainingGasTo,
-        address callbackTo,
-        TvmCell payload
-    ) */
 
     function requestBurn(address recipient, address pubaddr, uint128 burn_amount, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index))
     {
