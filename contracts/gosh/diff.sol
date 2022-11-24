@@ -180,7 +180,7 @@ contract DiffC is Modifiers {
             }
             return; 
         }
-        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
+        Snapshot(_diff[index].snap).applyDiff{value : 0.5 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     

@@ -16,6 +16,7 @@ import "tree.sol";
 import "diff.sol";
 import "commit.sol";
 import "profiledao.sol";
+import "snapshot.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 
@@ -145,6 +146,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         addr.transfer(100 ton);
+        getMoney();
+    }
+    
+    function sendMoneySnap(string branch, address repo, string name) public senderIs(getSnapshotAddr(branch, repo, name)) {
+        tvm.accept();
+        msg.sender.transfer(1000 ton);
         getMoney();
     }
     
@@ -341,6 +348,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Getters    
+    function getSnapshotAddr(string branch, address repo, string name) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
+    
     function getAddrWallet(address pubaddr, uint128 index) external view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));

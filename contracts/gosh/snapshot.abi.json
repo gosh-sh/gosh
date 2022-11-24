@@ -168,6 +168,8 @@
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
 		{"name":"_branch","type":"string"},
-		{"name":"_ready","type":"bool"}
+		{"name":"_ready","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"name":"_flag","type":"bool"}
 	]
 }
