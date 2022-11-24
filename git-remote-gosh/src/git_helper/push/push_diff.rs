@@ -1,10 +1,12 @@
 use crate::blockchain::user_wallet::UserWallet;
+use crate::ipfs::build_ipfs;
+
 use crate::{
     blockchain::{
         contract::{ContractRead, GoshContract},
         gosh_abi,
         snapshot::{
-            save::{Diff, GetDiffAddrResult, GetDiffResultResult, GetVersionResult},
+            save::{Diff, GetDiffAddrResult, GetVersionResult},
             PushDiffCoordinate,
         },
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
@@ -134,8 +136,9 @@ pub async fn inner_push_diff(
     let diff = compress_zstd(diff, None)?;
     tracing::debug!("compressed to {} size", diff.len());
 
-    let ipfs_client = IpfsService::new(ipfs_endpoint);
-    let is_previous_oversized = is_going_to_ipfs(original_snapshot_content);
+    let ipfs_client = build_ipfs(ipfs_endpoint)?;
+    let is_previous_oversized =
+        original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     let blob_dst = {
         let is_going_to_ipfs = is_going_to_ipfs(new_snapshot_content);
         if !is_going_to_ipfs {
