@@ -1712,12 +1712,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.config) throw new GoshError('Repository config is undefined')
 
         // Get/deploy wallets
-        if (this.subwallets.length !== 1) {
+        if (this.subwallets.length !== this.config.maxWalletsWrite) {
             this.subwallets = await Promise.all(
-                Array.from(new Array(1)).map(async (_, index) => {
-                    if (index === 0) return this.auth!.wallet0
-                    return await this._getSubwallet(index)
-                }),
+                Array.from(new Array(this.config.maxWalletsWrite)).map(
+                    async (_, index) => {
+                        if (index === 0) return this.auth!.wallet0
+                        return await this._getSubwallet(index)
+                    },
+                ),
             )
         }
 
