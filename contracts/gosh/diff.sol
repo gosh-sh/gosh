@@ -225,7 +225,7 @@ contract DiffC is Modifiers {
                 _isCancel = true;
                 this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             }
-            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
             return; 
         }
         getMoney();
