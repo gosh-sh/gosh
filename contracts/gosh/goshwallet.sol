@@ -382,7 +382,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(diffs.length <= 100, ERR_TOO_MANY_DIFFS);
+        require(diffs.length <= 1, ERR_TOO_MANY_DIFFS);
         _deployDiff(repoName, branchName, commitName, diffs, index1, index2, last);
     }
 

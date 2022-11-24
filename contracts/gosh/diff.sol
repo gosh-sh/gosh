@@ -86,7 +86,7 @@ contract DiffC is Modifiers {
     function getMoney() private {
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
-        if (address(this).balance > 100 ton) { return; }
+        if (address(this).balance > 10 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }

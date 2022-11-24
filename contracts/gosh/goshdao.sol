@@ -145,7 +145,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        addr.transfer(100 ton);
+        addr.transfer(10 ton);
         getMoney();
     }
     
