@@ -1,4 +1,4 @@
-pub mod helpers;
+pub mod test_utils;
 mod id_generator;
 mod telemetry;
 
