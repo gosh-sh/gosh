@@ -37,6 +37,9 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
     bool _ready = false;
+    
+    uint128 timeMoney = 0; 
+    bool _flag = false;
 
     constructor(
         address pubaddr,
@@ -89,6 +92,15 @@ contract Snapshot is Modifiers {
             Commit(_buildCommitAddr(_oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
         }
+        getMoney();
+    }
+    
+    function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (_flag == true) { return; }
+        if (address(this).balance > 1000 ton) { return; }
+        _flag = true;
+        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton}(_branch, _rootRepo, _name);
     }
 
     function _buildCommitAddr(string commit) private view returns(address) {
@@ -144,6 +156,7 @@ contract Snapshot is Modifiers {
         require(_ready == true, ERR_SNAPSHOT_NOT_READY);
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
+        getMoney();
         uint256 empty;
         
         if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
@@ -242,6 +255,12 @@ contract Snapshot is Modifiers {
             varInit: {_nameCommit: commit, _index1: index1, _index2: index2}
         });
         return address(tvm.hash(state));
+    }
+    
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
     }
     
     onBounce(TvmSlice body) external {

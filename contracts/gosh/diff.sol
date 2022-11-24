@@ -86,7 +86,7 @@ contract DiffC is Modifiers {
     function getMoney() private {
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
-        if (address(this).balance > 100 ton) { return; }
+        if (address(this).balance > 10 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }
@@ -180,7 +180,7 @@ contract DiffC is Modifiers {
             }
             return; 
         }
-        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
+        Snapshot(_diff[index].snap).applyDiff{value : 0.5 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
@@ -225,7 +225,7 @@ contract DiffC is Modifiers {
                 _isCancel = true;
                 this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             }
-            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
             return; 
         }
         getMoney();
