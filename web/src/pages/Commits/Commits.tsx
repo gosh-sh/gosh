@@ -16,6 +16,7 @@ const CommitsPage = () => {
         daoName!,
         repo,
         branchName,
+        10,
     )
 
     return (
