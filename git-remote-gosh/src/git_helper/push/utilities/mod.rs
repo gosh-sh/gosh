@@ -11,3 +11,4 @@ provide!(build_tree_diff);
 pub use build_tree_diff::build_tree_diff_from_commits;
 
 pub mod retry;
+pub mod ipfs_content;
