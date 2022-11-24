@@ -28,6 +28,7 @@ import RepoUpgradePage from './pages/RepoUpgrade'
 import BranchesPage from './pages/Branches'
 import BlobCreatePage from './pages/BlobCreate'
 import BlobUpdatePage from './pages/BlobUpdate'
+import BlobDeletePage from './pages/BlobDelete'
 import BlobPage from './pages/Blob'
 import CommitsPage from './pages/Commits'
 import CommitPage from './pages/Commit'
@@ -177,6 +178,10 @@ const App = () => {
                                 <Route
                                     path="update/:branchName/*"
                                     element={<BlobUpdatePage />}
+                                />
+                                <Route
+                                    path="delete/:branchName/*"
+                                    element={<BlobDeletePage />}
                                 />
                                 <Route path="view/:branchName/*" element={<BlobPage />} />
                             </Route>

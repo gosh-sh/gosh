@@ -147,7 +147,7 @@ interface IGoshRepositoryAdapter {
     push(
         branch: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],

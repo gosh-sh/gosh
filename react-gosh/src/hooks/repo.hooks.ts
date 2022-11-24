@@ -628,7 +628,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -692,7 +692,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -716,7 +716,7 @@ function _useMergeRequest(
         isFetching: boolean
         details: TBranchCompareProgress
         items: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
@@ -820,7 +820,7 @@ function _useMergeRequest(
                 })
 
                 return {
-                    treepath,
+                    treepath: [treepath, treepath],
                     original: dstBlob,
                     modified: srcBlob.content,
                     showDiff: index < showDiffNum,

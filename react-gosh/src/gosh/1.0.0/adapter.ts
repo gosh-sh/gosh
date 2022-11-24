@@ -1027,10 +1027,125 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
+    private async _getBlobPushData(
+        tree: TTreeItem[],
+        branch: string,
+        blob: {
+            treepath: string[]
+            original: string | Buffer
+            modified: string | Buffer
+        },
+    ) {
+        const _getData = async (
+            path: string,
+            content: { original: string | Buffer; modified: string | Buffer },
+            treeitem?: TTreeItem,
+        ) => {
+            const { original, modified } = content
+            const flagsOriginal = treeitem?.flags || 0
+            const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
+
+            const compressed = await zstd.compress(modified)
+            let patch = null
+            let flagsModified = EBlobFlag.COMPRESSED
+            let isGoingOnchain = false
+            if (
+                Buffer.isBuffer(original) ||
+                Buffer.isBuffer(modified) ||
+                Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
+            ) {
+                flagsModified |= EBlobFlag.IPFS
+                if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
+            } else {
+                patch = this._generateBlobDiffPatch(path, modified, original)
+                if (isOriginalIpfs) {
+                    patch = Buffer.from(compressed, 'base64').toString('hex')
+                    isGoingOnchain = true
+                } else if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
+                    flagsModified |= EBlobFlag.IPFS
+                    patch = null
+                } else {
+                    patch = await zstd.compress(patch)
+                    patch = Buffer.from(patch, 'base64').toString('hex')
+                }
+            }
+
+            const isGoingIpfs = (flagsModified & EBlobFlag.IPFS) === EBlobFlag.IPFS
+            const hashes: { sha1: string; sha256: string } = {
+                sha1: sha1(modified, treeitem?.type || 'blob', 'sha1'),
+                sha256: isGoingIpfs
+                    ? sha256(modified, true)
+                    : await this.gosh.getTvmHash(modified),
+            }
+
+            if (isGoingIpfs && !isOriginalIpfs) {
+                patch = await zstd.compress(original)
+                patch = Buffer.from(patch, 'base64').toString('hex')
+            }
+
+            return {
+                snapshot: await this._getSnapshotAddress(branch, path),
+                treepath: path,
+                treeitem,
+                compressed,
+                patch,
+                flags: flagsModified,
+                hashes,
+                isGoingIpfs,
+                isGoingOnchain,
+            }
+        }
+
+        const { treepath, original, modified } = blob
+
+        const [aPath, bPath] = treepath
+        const aItem = tree.find((item) => {
+            return getTreeItemFullPath(item) === aPath
+        })
+        const bItem = tree.find((item) => {
+            return getTreeItemFullPath(item) === bPath
+        })
+
+        if (!aPath && !bPath) throw new GoshError('Blob has no tree path')
+        if (!aPath && bPath) {
+            if (bItem) throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
+            const data = await _getData(bPath, { original: '', modified }, bItem)
+            return [{ data, status: 0 }]
+        }
+        if (aPath && !bPath) {
+            if (!aItem) throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
+            const data = await _getData(aPath, { original, modified: '' }, aItem)
+            return [{ data, status: 2 }]
+        }
+        if (aPath === bPath) {
+            if (!aItem) throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
+            if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
+            const data = await _getData(aPath, { original, modified }, aItem)
+            return [{ data, status: 1 }]
+        }
+
+        return await Promise.all(
+            treepath.map(async (path) => {
+                const content = {
+                    original: path === bPath ? '' : original,
+                    modified: path === aPath ? '' : modified,
+                }
+                const item = path === aPath ? aItem : bItem
+                const data = await _getData(path, content, item)
+                return {
+                    data,
+                    status: path === aPath ? 2 : 0,
+                }
+            }),
+        )
+    }
+
+    private async _getBlobPushTree() {}
+
     async push(
         branch: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -1055,99 +1170,43 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
         if (isPullRequest) await this._validateProposalStart()
 
-        // Generate blobs meta object
-        const blobsMeta = await executeByChunk(
-            blobs,
-            MAX_PARALLEL_READ,
-            async ({ treepath, original, modified }) => {
-                const treeItem: TTreeItem | undefined = items.find((it) => {
-                    return getTreeItemFullPath(it) === treepath
-                })
-                const flagsOriginal = treeItem?.flags || 0
-                const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
-
-                if (treeItem && !original) throw new GoshError(EGoshError.FILE_EXISTS)
-                if (!modified) throw new GoshError(EGoshError.FILE_EMPTY)
-                if (original === modified) throw new GoshError(EGoshError.FILE_UNMODIFIED)
-
-                const compressed = await zstd.compress(modified)
-                let patch = null
-                let flagsModified = EBlobFlag.COMPRESSED
-                let isGoingOnchain = false
-                if (
-                    Buffer.isBuffer(original) ||
-                    Buffer.isBuffer(modified) ||
-                    Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
-                ) {
-                    flagsModified |= EBlobFlag.IPFS
-                    if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
-                } else {
-                    patch = this._generateBlobDiffPatch(treepath, modified, original)
-                    if (isOriginalIpfs) {
-                        patch = Buffer.from(compressed, 'base64').toString('hex')
-                        isGoingOnchain = true
-                    } else if (Buffer.from(patch).byteLength > MAX_ONCHAIN_SIZE) {
-                        flagsModified |= EBlobFlag.IPFS
-                        patch = null
-                    } else {
-                        patch = await zstd.compress(patch)
-                        patch = Buffer.from(patch, 'base64').toString('hex')
-                    }
-                }
-
-                const isGoingIpfs = (flagsModified & EBlobFlag.IPFS) === EBlobFlag.IPFS
-                const hashes: { sha1: string; sha256: string } = {
-                    sha1: sha1(modified, treeItem?.type || 'blob', 'sha1'),
-                    sha256: isGoingIpfs
-                        ? sha256(modified, true)
-                        : await this.gosh.getTvmHash(modified),
-                }
-
-                if (isGoingIpfs && !isOriginalIpfs) {
-                    patch = await zstd.compress(original)
-                    patch = Buffer.from(patch, 'base64').toString('hex')
-                }
-
-                return {
-                    snapshot: await this._getSnapshotAddress(branch, treepath),
-                    treepath,
-                    treeItem,
-                    compressed,
-                    patch,
-                    flags: flagsModified,
-                    hashes,
-                    isGoingIpfs,
-                    isGoingOnchain,
-                }
-            },
-        )
+        // Generate blobs push data array
+        const blobsData = (
+            await executeByChunk(blobs, MAX_PARALLEL_READ, async (blob) => {
+                return await this._getBlobPushData(items, branch, blob)
+            })
+        ).flat()
+        console.debug('Blobs data', blobsData)
 
         // Add/update tree items by incoming blobs
         const updatedTrees: string[] = []
-        blobs.forEach(({ treepath }) => {
-            const blobmeta = blobsMeta.find((data) => data.treepath === treepath)
-            const { hashes, flags, treeItem } = blobmeta!
-
-            this._getTreeItemsFromPath(treepath, hashes, flags, treeItem).forEach(
+        blobsData.forEach(({ data, status }) => {
+            const { hashes, flags, treepath, treeitem } = data
+            this._getTreeItemsFromPath(treepath, hashes, flags, treeitem).forEach(
                 (item) => {
+                    const path0 = getTreeItemFullPath(item)
                     const pathindex = updatedTrees.findIndex((p) => p === item.path)
                     if (pathindex < 0) updatedTrees.push(item.path)
 
                     const itemIndex = items.findIndex((itm) => {
-                        return item.path === itm.path && item.name === itm.name
+                        const path1 = getTreeItemFullPath(itm)
+                        return path0 === path1
                     })
-                    if (itemIndex >= 0) items[itemIndex] = item
-                    else items.push(item)
+                    if (itemIndex >= 0) {
+                        if (path0 === treepath && status === 2) items.splice(itemIndex, 1)
+                        else items[itemIndex] = item
+                    } else items.push(item)
                 },
             )
         })
         const updatedTree = this._updateSubtreesHash(this._getTreeFromItems(items))
         const updatedTreeHash = sha1Tree(updatedTree[''], 'sha1')
+        console.debug('Updated tree', updatedTree)
         cb({
             treesBuild: true,
             treesDeploy: { count: 0, total: updatedTrees.length },
-            snapsDeploy: { count: 0, total: blobsMeta.length },
-            diffsDeploy: { count: 0, total: blobsMeta.length },
+            snapsDeploy: { count: 0, total: blobsData.length },
+            diffsDeploy: { count: 0, total: blobsData.length },
             tagsDeploy: { count: 0, total: taglist.length },
         })
 
@@ -1157,8 +1216,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy snapshots
         let snapCounter = 0
-        await this._runMultiwallet(blobsMeta, async (wallet, { treepath }) => {
-            await this._deploySnapshot(branch, '', treepath, undefined, wallet)
+        await this._runMultiwallet(blobsData, async (wallet, { data }) => {
+            await this._deploySnapshot(branch, '', data.treepath, undefined, wallet)
             cb({ snapsDeploy: { count: ++snapCounter } })
         })
 
@@ -1171,8 +1230,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy diffs
         let diffCounter = 0
-        await this._runMultiwallet(blobsMeta, async (wallet, meta, index) => {
-            await this._deployDiff(branch, commitHash, meta, index, wallet)
+        await this._runMultiwallet(blobsData, async (wallet, { data }, index) => {
+            await this._deployDiff(branch, commitHash, data, index, wallet)
             cb({ diffsDeploy: { count: ++diffCounter } })
         })
 
@@ -1196,14 +1255,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
-            await this._setCommit(branch, commitHash, blobsMeta.length)
+            await this._setCommit(branch, commitHash, blobsData.length)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
             })
             if (!wait) throw new GoshError('Push timeout reached')
         } else {
-            await this._startProposalForSetCommit(branch, commitHash, blobsMeta.length)
+            await this._startProposalForSetCommit(branch, commitHash, blobsData.length)
         }
         cb({ completed: true })
     }
@@ -1522,7 +1581,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _deployDiff(
         branch: string,
         commit: string,
-        blobmeta: {
+        data: {
             snapshot: TAddress
             treepath: string
             treeItem?: TTreeItem
@@ -1543,8 +1602,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (await diffContract.isDeployed()) return
 
         // Deploy diff
-        const { isGoingOnchain, isGoingIpfs, compressed, snapshot, patch, hashes } =
-            blobmeta
+        const { isGoingOnchain, isGoingIpfs, compressed, snapshot, patch, hashes } = data
         const ipfs = isGoingIpfs ? await goshipfs.write(compressed) : null
         const diff = {
             snap: snapshot,
@@ -1654,14 +1712,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!this.config) throw new GoshError('Repository config is undefined')
 
         // Get/deploy wallets
-        if (this.subwallets.length !== this.config.maxWalletsWrite) {
+        if (this.subwallets.length !== 1) {
             this.subwallets = await Promise.all(
-                Array.from(new Array(this.config.maxWalletsWrite)).map(
-                    async (_, index) => {
-                        if (index === 0) return this.auth!.wallet0
-                        return await this._getSubwallet(index)
-                    },
-                ),
+                Array.from(new Array(1)).map(async (_, index) => {
+                    if (index === 0) return this.auth!.wallet0
+                    return await this._getSubwallet(index)
+                }),
             )
         }
 
@@ -1781,15 +1837,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         fullpath: string,
         hashes: { sha1: string; sha256: string },
         flags: number,
-        treeItem?: TTreeItem,
+        treeitem?: TTreeItem,
     ): TTreeItem[] {
         const items: TTreeItem[] = []
 
         let [path, name] = splitByPath(fullpath)
         items.push({
             flags,
-            mode: treeItem?.mode || '100644',
-            type: treeItem?.type || 'blob',
+            mode: treeitem?.mode || '100644',
+            type: treeitem?.type || 'blob',
             sha1: hashes.sha1,
             sha256: hashes.sha256,
             path,
