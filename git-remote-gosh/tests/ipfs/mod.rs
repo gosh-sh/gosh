@@ -3,7 +3,7 @@ use git_remote_gosh::{
         build_ipfs,
         service::{FileLoad, FileSave},
     },
-    logger::helpers::{init_logger, shutdown_logger},
+    logger::test_utils::{init_logger, shutdown_logger},
 };
 
 use std::env;
