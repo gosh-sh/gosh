@@ -15,6 +15,7 @@ use tokio_retry::Retry;
 use tracing::Instrument;
 
 use tokio::{sync::Semaphore, task::JoinSet};
+use super::is_going_to_ipfs;
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -39,7 +40,8 @@ async fn construct_tree_node(
                 .objects
                 .find_blob(e.oid, &mut buffer)?
                 .data;
-            if content.len() > crate::config::IPFS_CONTENT_THRESHOLD {
+
+            if is_going_to_ipfs(content) {
                 // NOTE:
                 // Here is a problem: we calculate if this blob is going to ipfs
                 // one way (blockchain::snapshot::save::is_going_to_ipfs)

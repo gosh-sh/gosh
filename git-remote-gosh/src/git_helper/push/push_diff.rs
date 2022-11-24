@@ -16,6 +16,7 @@ use crate::{
 use tokio_retry::Retry;
 use ton_client::utils::compress_zstd;
 
+use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
 
 const PUSH_DIFF_MAX_TRIES: i32 = 3;
@@ -134,10 +135,9 @@ pub async fn inner_push_diff(
     tracing::debug!("compressed to {} size", diff.len());
 
     let ipfs_client = IpfsService::new(ipfs_endpoint);
-    let is_previous_oversized =
-        original_snapshot_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
+    let is_previous_oversized = is_going_to_ipfs(original_snapshot_content);
     let blob_dst = {
-        let is_going_to_ipfs = is_going_to_ipfs(&diff, new_snapshot_content);
+        let is_going_to_ipfs = is_going_to_ipfs(new_snapshot_content);
         if !is_going_to_ipfs {
             if is_previous_oversized {
                 let compressed = compress_zstd(new_snapshot_content, None)?;
@@ -234,18 +234,6 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
-pub fn is_going_to_ipfs(diff: &[u8], new_content: &[u8]) -> bool {
-    /* if diff.len() > crate::config::IPFS_DIFF_THRESHOLD {
-        panic!("not supported: diff is larger than threshold");
-    } */
-    let mut is_going_to_ipfs = new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
-    if !is_going_to_ipfs {
-        is_going_to_ipfs = std::str::from_utf8(new_content).is_err();
-    };
-
-    is_going_to_ipfs
-}
-
 #[instrument(level = "debug", skip(ipfs_client, content))]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     tracing::debug!("Uploading blob to IPFS");
@@ -300,7 +288,7 @@ pub async fn push_new_branch_snapshot(
     let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
     tracing::debug!("compressed to {} size", content.len());
 
-    let (content, ipfs) = if content.len() > config::IPFS_CONTENT_THRESHOLD {
+    let (content, ipfs) = if is_going_to_ipfs(&content) {
         tracing::debug!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&file_provider, original_content)

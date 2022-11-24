@@ -8,7 +8,6 @@ use std::{
 
 mod defaults;
 
-pub const IPFS_DIFF_THRESHOLD: usize = 63 * 1024; //63kb (1kb buffer)
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
