@@ -672,7 +672,7 @@ fn get_list_of_commit_objects(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::git_helper::test_utils::{init_logger, shutdown_logger};
+    use crate::logger::helpers::{init_logger, shutdown_logger};
     use crate::{
         blockchain::{self, service::tests::MockEverscale},
         git_helper::{test_utils::setup_repo, tests::setup_test_helper},
