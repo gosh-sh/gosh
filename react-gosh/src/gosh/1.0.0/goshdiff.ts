@@ -5,7 +5,7 @@ import { IGoshDiff } from '../interfaces'
 
 class GoshDiff extends BaseContract implements IGoshDiff {
     static key: string = 'diff'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshDiff.key, address, { version: GoshDiff.version })

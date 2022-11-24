@@ -37,7 +37,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _ ;
     }
 
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
 
     address static _systemcontract;
     address _rootpubaddr;

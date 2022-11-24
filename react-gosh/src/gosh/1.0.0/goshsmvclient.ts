@@ -5,7 +5,7 @@ import { IGoshSmvClient } from '../interfaces'
 
 class GoshSmvClient extends BaseContract implements IGoshSmvClient {
     static key: string = 'smvclient'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvClient.key, address, { version: GoshSmvClient.version })

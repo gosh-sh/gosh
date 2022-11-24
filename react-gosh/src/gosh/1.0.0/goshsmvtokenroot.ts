@@ -5,7 +5,7 @@ import { IGoshSmvTokenRoot } from '../interfaces'
 
 class GoshSmvTokenRoot extends BaseContract implements IGoshSmvTokenRoot {
     static key: string = 'tokenroot'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshSmvTokenRoot.key, address, {

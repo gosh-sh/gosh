@@ -18,7 +18,7 @@ import "./modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
 
     bool _tombstone = false;
     optional(AddrVersion) _previousversion;
@@ -86,12 +86,6 @@ contract Repository is Modifiers{
         _head = head;
         _ready = true;
     }
-
-    /*function setTombstone(address pubaddr, uint128 index, string description) public {
-        description;
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        _tombstone = true;
-    }*/
 
     //Branch part
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {

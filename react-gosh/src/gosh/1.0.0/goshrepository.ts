@@ -5,7 +5,7 @@ import { IGoshRepository } from '../interfaces'
 
 class GoshRepository extends BaseContract implements IGoshRepository {
     static key: string = 'repository'
-    static version = '0.11.0'
+    static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
         super(client, GoshRepository.key, address, { version: GoshRepository.version })
