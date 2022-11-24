@@ -67,6 +67,16 @@
 			]
 		},
 		{
+			"name": "sendMoneySnap",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyCommit",
 			"inputs": [
 				{"name":"repo","type":"address"},

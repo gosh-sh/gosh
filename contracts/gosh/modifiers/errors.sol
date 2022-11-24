@@ -60,5 +60,6 @@ abstract contract Errors {
     uint constant ERR_FIRST_DAO = 249;
     uint constant ERR_MESSAGE_EXPIRED = 250;
     uint constant ERR_MESSAGE_WITH_HUGE_EXPIREAT = 251;
-    uint constant ERR_MESSAGE_IS_EXIST = 252;    
+    uint constant ERR_MESSAGE_IS_EXIST = 252;
+    uint constant ERR_TOO_MANY_DIFFS = 253;    
 }
