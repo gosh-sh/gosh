@@ -6,6 +6,7 @@ use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
+use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
@@ -43,12 +44,16 @@ impl LogService {
         // config otel layer
         // TODO: add #[cfg(feature=..)] support
         if telemetry::do_init_opentelemetry() {
+            let level = if let Ok(trace_verbosity) = env::var(OPENTELEMETRY_FILTER_LEVEL) {
+                u8::from_str(&trace_verbosity).unwrap_or(5)
+            } else {
+                5
+            };
             let otel_layer = tracing_opentelemetry::layer()
                 .with_location(true)
                 .with_threads(true)
                 .with_tracer(telemetry::opentelemetry_tracer())
-                // TODO: for now let it be always ON/OFF and ON means TRACE for OTEL
-                .with_filter(LevelFilter::TRACE);
+                .with_filter(decode_verbosity(level));
 
             layered_subscriber.with(otel_layer).init();
         } else {
@@ -75,14 +80,18 @@ pub fn set_log_verbosity(verbosity: u8) {
         }
     }
 
-    let level_filter = match verbosity_level {
+    let level_filter = decode_verbosity(verbosity_level);
+
+    (GLOBAL_LOG_MANAGER.set_console_verbosity)(level_filter);
+}
+
+fn decode_verbosity(level: u8) -> LevelFilter {
+    match level {
         0 => LevelFilter::OFF,
         1 => LevelFilter::ERROR,
         2 => LevelFilter::WARN,
         3 => LevelFilter::INFO,
         4 => LevelFilter::DEBUG,
         _ => LevelFilter::TRACE,
-    };
-
-    (GLOBAL_LOG_MANAGER.set_console_verbosity)(level_filter);
+    }
 }
