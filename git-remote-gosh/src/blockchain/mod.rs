@@ -365,6 +365,7 @@ pub async fn get_repo_address(
     let result: GetRepoAddrResult = contract
         .read_state(context, "getAddrRepository", Some(args))
         .await?;
+    tracing::trace!("get_repo_address result: {:?}", result);
     Ok(BlockchainContractAddress::new(result.address))
 }
 
@@ -376,6 +377,7 @@ pub async fn branch_list(
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
+    tracing::trace!("branch_list result: {:?}", result);
     Ok(result)
 }
 
@@ -410,6 +412,7 @@ pub async fn get_head(
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.read_state(context, "getHEAD", None).await?;
+    tracing::trace!("get_head result: {:?}", result);
     Ok(result.head)
 }
 

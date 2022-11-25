@@ -254,6 +254,7 @@ pub async fn is_diff_deployed(
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: anyhow::Result<GetVersionResult> =
         diff_contract.read_state(context, "getVersion", None).await;
+    tracing::trace!("is_diff_deployed result: {:?}", result);
     Ok(result.is_ok())
 }
 

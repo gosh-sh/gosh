@@ -48,6 +48,7 @@ where
             tracing::debug!("get_number_of_user_wallet_mirrors_deployed error: {}", e);
             e
         })?;
+    tracing::trace!("get_number_of_user_wallet_mirrors_deployed result: {:?}", result);
     Ok(Into::<u64>::into(result.number_of_wallets) - 1)
 }
 
@@ -112,6 +113,7 @@ where
     let result: GetConfigResult = user_wallet_contract
         .read_state(blockchain.client(), "getConfig", None)
         .await?;
+    tracing::trace!("get_user_wallet_config_max_number_of_mirrors result: {:?}", result);
     let number = result.max_number_of_mirror_wallets.into();
     Ok(number)
 }
