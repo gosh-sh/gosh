@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use std::{path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::strategy::ExponentialBackoff;
+use tracing::Instrument;
 
 type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 
@@ -47,7 +48,7 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
 
     let http_client = reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
         .with_init(reqwest_middleware::Extension(OtelName(
-            "gosh_reqwest".into(),
+            "ipfs_reqwest".into(),
         )))
         .with(TracingMiddleware::default())
         .build();
@@ -58,21 +59,6 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
 }
 
 impl IpfsService<MiddlewareHttpClient> {
-    /// Creates a new [`IpfsService`].
-    /// # Panics
-    ///
-    /// This method panics if a TLS backend cannot be initialized, or the resolver
-    /// cannot load the system configuration.
-    ///
-    /// Use [`build_ipfs()`] if you wish to handle the failure as an `Error`
-    /// instead of panicking.
-    pub fn new(ipfs_endpoint_address: &str) -> Self {
-        Self {
-            ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            http_client: reqwest_middleware::ClientBuilder::new(reqwest::Client::new()).build(),
-        }
-    }
-
     fn retry_strategy(&self) -> impl Iterator<Item = Duration> {
         // TODO: parametrize the retry strategy via builder and take from self
         ExponentialBackoff::from_millis(100)
@@ -128,7 +114,10 @@ impl IpfsService<MiddlewareHttpClient> {
         tracing::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
         tracing::info!("Got response: {:?}", response);
-        let response_body = response.bytes().await?;
+        let response_body = response.bytes().instrument(
+            debug_span!("decode_response")
+                .or_current(),
+        ).await?;
         Ok(Vec::from(&response_body[..]))
     }
 }

@@ -83,7 +83,7 @@ struct TrxInfo {
 }
 
 impl DiffMessagesIterator {
-    #[instrument(level = "debug", skip(snapshot_address))]
+    #[instrument(level = "debug", skip(snapshot_address), name = "new_DiffMessagesIterator")]
     pub fn new(
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
