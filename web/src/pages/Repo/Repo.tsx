@@ -149,17 +149,11 @@ const RepoPage = () => {
                 </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4">
                 {subtree === undefined && (
-                    <div className="text-gray-606060 text-sm">
+                    <div className="text-gray-606060 text-sm py-3">
                         <Spinner className="mr-3" />
                         Loading tree...
-                    </div>
-                )}
-
-                {subtree && !subtree?.length && (
-                    <div className="text-sm text-gray-606060 text-center">
-                        There are no files yet
                     </div>
                 )}
 
@@ -173,7 +167,7 @@ const RepoPage = () => {
                         ..
                     </Link>
                 )}
-                <div className="divide-y divide-gray-c4c4c4">
+                <div className="divide-y divide-gray-c4c4c4 mb-5">
                     {subtree?.map((item: any, index: number) => {
                         const path = [item.path, item.name]
                             .filter((part) => part !== '')
@@ -215,8 +209,14 @@ const RepoPage = () => {
                     })}
                 </div>
 
+                {subtree && !subtree?.length && (
+                    <div className="text-sm text-gray-606060 text-center py-3">
+                        There are no files yet
+                    </div>
+                )}
+
                 <RepoReadme
-                    className="border rounded overflow-hidden mt-6"
+                    className="border rounded overflow-hidden"
                     dao={daoName!}
                     repo={repoName!}
                     branch={branch!.name}
