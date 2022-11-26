@@ -118,6 +118,8 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
     
+    address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
+    
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
         require(msg.pubkey() == rootpubkey.get(), ERR_NOT_OWNER);

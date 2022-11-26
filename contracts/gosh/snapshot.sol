@@ -114,8 +114,8 @@ contract Snapshot is Modifiers {
     }
     
     function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
-        if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
-        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); return; }
+        if (value1.hasValue() == false) { selfdestruct(giver); return; }
+        if (value1.get().sha256 != value0.sha) { selfdestruct(giver); return; }
         _ready = true;
     }
     
@@ -265,17 +265,17 @@ contract Snapshot is Modifiers {
     
     onBounce(TvmSlice body) external {
         body;
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
     }
     
     fallback() external {
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
     }
 
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Getters
