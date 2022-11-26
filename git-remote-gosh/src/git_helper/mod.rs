@@ -23,6 +23,7 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
+#[derive(Clone)]
 pub struct GitHelper<
     Blockchain = crate::blockchain::Everscale,
     FileProvider = crate::ipfs::IpfsService,
@@ -33,7 +34,7 @@ pub struct GitHelper<
     pub remote: Remote,
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
-    local_git_repository: git_repository::Repository,
+    local_repository: Arc<git_repository::Repository>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -58,11 +59,7 @@ where
     FileProvider: FileStorage,
 {
     pub fn local_repository(&self) -> &git_repository::Repository {
-        &self.local_git_repository
-    }
-
-    pub fn local_repository_mut(&mut self) -> &mut git_repository::Repository {
-        &mut self.local_git_repository
+        &self.local_repository
     }
 
     pub async fn calculate_tree_address(
@@ -104,7 +101,7 @@ where
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
 
         let local_git_dir = env::var("GIT_DIR")?;
-        let local_git_repository = git_repository::open(&local_git_dir)?;
+        let local_repository = Arc::new(git_repository::open(&local_git_dir)?);
         tracing::info!("Opening repo at {}", local_git_dir);
 
         Ok(Self {
@@ -114,7 +111,7 @@ where
             remote,
             dao_addr: dao.address,
             repo_addr,
-            local_git_repository,
+            local_repository,
         })
     }
 
@@ -290,6 +287,7 @@ pub mod tests {
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
         let file_provider = build_ipfs(config.ipfs_http_endpoint()).unwrap();
         // let local_git_dir = env::var("GIT_DIR").unwrap();
+        let local_repository = Arc::new(repo);
 
         GitHelper {
             config,
@@ -298,7 +296,7 @@ pub mod tests {
             remote,
             dao_addr,
             repo_addr,
-            local_git_repository: repo,
+            local_repository,
         }
     }
 }
