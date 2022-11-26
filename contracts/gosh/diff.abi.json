@@ -85,7 +85,9 @@
 		{
 			"name": "approveDiffDiff",
 			"inputs": [
-				{"name":"res","type":"bool"}
+				{"name":"res","type":"bool"},
+				{"name":"index","type":"uint128"},
+				{"name":"last","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -172,6 +174,7 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"_index1","type":"uint128"},
 		{"name":"_index2","type":"uint128"},
+		{"name":"_index2max","type":"uint128"},
 		{"name":"_nameCommit","type":"string"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
