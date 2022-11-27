@@ -157,7 +157,7 @@ contract DiffC is Modifiers {
             Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1);
             return;
         }
-        if (_index2 == 0) { _index2max = 1e25; }
+        if ((_index2 == 0) && (_last != true)) { _index2max = 1e25; }
         else { _index2max = 0; }
         _entry = true;
         _branchcommit = branchcommit;
