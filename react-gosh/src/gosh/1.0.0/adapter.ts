@@ -679,6 +679,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Collect approved diff messages
         const approved = messages
             .filter(({ decoded }) => {
+                if (!decoded) return false
                 return ['approve', 'constructor'].indexOf(decoded.name) >= 0
             })
             .map(({ decoded }) => {

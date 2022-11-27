@@ -405,7 +405,7 @@ function useCommitList(
     dao: string,
     repo: IGoshRepositoryAdapter,
     branch: string,
-    perPage: number = 20,
+    perPage: number,
 ) {
     const { branch: branchData, updateBranch } = useBranches(repo, branch)
     const [isBranchUpdated, setIsBranchUpdated] = useState<boolean>(false)
