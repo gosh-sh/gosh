@@ -16,21 +16,20 @@ const BlobUpdatePage = () => {
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
     const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
 
-    const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}${
-        treepath && `/${treepath}`
-    }`
+    const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${treepath}`
 
     const onPush = async (values: any) => {
         try {
             const { name, title, message, tags, content } = values
             const [path] = splitByPath(treepath!)
+            const bPath = `${path ? `${path}/` : ''}${name}`
             const blobUpd = {
-                treepath: [treepath!, `${path ? `${path}/` : ''}${name}`],
+                treepath: [treepath!, bPath],
                 original: blob?.content ?? '',
                 modified: content,
             }
             await push(title, [blobUpd], message, tags)
-            navigate(urlBack)
+            navigate(urlBack.replace(treepath!, bPath))
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

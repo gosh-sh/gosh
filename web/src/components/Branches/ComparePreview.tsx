@@ -14,7 +14,7 @@ type TBranchComparePreviewProps = {
         isEmpty: boolean
         details: TBranchCompareProgress
         items: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
@@ -50,7 +50,7 @@ const BranchComparePreview = (props: TBranchComparePreviewProps) => {
                         return (
                             <div key={index} className="my-5">
                                 <BlobDiffPreview
-                                    filename={treepath}
+                                    filename={treepath.find((value) => !!value)}
                                     original={original}
                                     modified={modified}
                                     isDiffLoaded={showDiff}
