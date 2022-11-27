@@ -157,6 +157,8 @@ contract DiffC is Modifiers {
             Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1);
             return;
         }
+        if (_index2 == 0) { _index2max = 1e25; }
+        else { _index2max = 0; }
         _entry = true;
         _branchcommit = branchcommit;
         if (_diff.length != 0) { 
@@ -164,8 +166,6 @@ contract DiffC is Modifiers {
             getMoney();
             return;
         }
-        if (_index2 == 0) { _index2max = 1e25; }
-        else { _index2max = 0; }
         if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(branch, _branchcommit, _index1);  } 
         else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
         getMoney();
