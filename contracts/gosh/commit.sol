@@ -97,6 +97,7 @@ contract Commit is Modifiers {
     }
 
     function getMoney() private {
+        if (address(this).balance > 2000 ton) { giver.transfer(500 ton); return; }
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 1400 ton) { return; }
@@ -412,7 +413,7 @@ contract Commit is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Getters

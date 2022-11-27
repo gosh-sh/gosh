@@ -80,7 +80,7 @@ contract Repository is Modifiers{
     }
 
     function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
-        if (ans == false) { selfdestruct(_goshdao); }
+        if (ans == false) { selfdestruct(giver); }
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
@@ -173,7 +173,7 @@ contract Repository is Modifiers{
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Setters

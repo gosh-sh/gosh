@@ -60,7 +60,7 @@ contract ProfileDao is Modifiers {
 
     //Selfdestruct
     function destroy() public onlyOwnerAddress(_pubaddr) {
-        selfdestruct(_pubaddr);
+        selfdestruct(giver);
     }
     
     //Getters
