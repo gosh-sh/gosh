@@ -1,9 +1,11 @@
 - _: config
-  appurl: https://gosh-web-x-x-xx.gosh.sh/
-  organization: testxxx-monit-org
-  repository: testxxx-monit-repo
-  timeout: 60000
-  longtimeout: 3600000
+  # Need to set unique using environment or config
+  # appurl: https://gosh-web-x-x-xx.gosh.sh/
+  # organization: monitoring-org-test-xxx
+  # repository: monitoring-org-repo-xxx
+  timeout_ms: 60000
+  longtimeout_ms: 3600000
+  redis_host: ""
 - seed-read
 - root-check
 - app-setup
