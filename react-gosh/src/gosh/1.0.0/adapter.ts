@@ -566,7 +566,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return { tree, items }
     }
 
-    async getBlob(options: { fullpath?: string; address?: TAddress }): Promise<{
+    async getBlob(options: {
+        commit?: string
+        fullpath?: string
+        address?: TAddress
+    }): Promise<{
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -581,23 +585,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             ipfs: false,
         }
 
-        const snapshot = await this._getSnapshot(options)
+        const { commit, ...rest } = options
+        const snapshot = await this._getSnapshot(rest)
         const data = await snapshot.runLocal('getSnapshot', {})
         const { value0, value1, value2, value3, value4, value5, value6 } = data
 
         const name = options.fullpath || (await snapshot.getName())
         const branch = name.split('/')[0]
-        const { commit } = await this.getBranch(branch)
+        const commitName = commit || (await this.getBranch(branch)).commit.name
 
-        const patched = value0 === commit.name ? value1 : value4
-        const ipfscid = value0 === commit.name ? value2 : value5
+        const patched = value0 === commitName ? value1 : value4
+        const ipfscid = value0 === commitName ? value2 : value5
 
         // Read onchain snapshot content
         if (patched) {
             const compressed = Buffer.from(patched, 'hex').toString('base64')
             const content = await zstd.decompress(compressed, true)
             result.onchain = {
-                commit: value0 === commit.name ? value0 : value3,
+                commit: value0 === commitName ? value0 : value3,
                 content: content,
             }
             result.content = content
@@ -692,7 +697,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
 
         // Restore blob at commit and parent commit
-        const { content } = await this.getBlob({ fullpath })
+        const { content } = await this.getBlob({ commit: commit.name, fullpath })
         const current = await this._getCommitBlob(commit, treepath, content, approved)
         const previous =
             parent.name === ZERO_COMMIT
@@ -865,7 +870,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get non-zero commit data
         const { tree, items } = await this.getTree(object)
-        const blobs = await this._getTreeBlobs(items, object.branch)
+        const blobs = await this._getTreeBlobs(items, object.branch, commit)
         return {
             commit: { ...object, parents: [object.address] },
             tree,
@@ -909,7 +914,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get `from` branch tree items and collect all blobs
         const { items } = await this.getTree(fromBranch.commit)
-        const blobs = await this._getTreeBlobs(items, fromBranch.name)
+        const blobs = await this._getTreeBlobs(
+            items,
+            fromBranch.name,
+            fromBranch.commit.name,
+        )
         cb({
             snapshotsRead: true,
             snapshotsWrite: { count: 0, total: blobs.length },
@@ -1379,6 +1388,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _getTreeBlobs(
         items: TTreeItem[],
         branch: string,
+        commit?: string,
     ): Promise<{ treepath: string; content: string | Buffer }[]> {
         const filtered = items.filter(
             (item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0,
@@ -1386,7 +1396,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await executeByChunk(filtered, MAX_PARALLEL_READ, async (item) => {
             const treepath = getTreeItemFullPath(item)
             const fullpath = `${branch}/${treepath}`
-            const { content } = await this.getBlob({ fullpath })
+            const { content } = await this.getBlob({ commit, fullpath })
             return { treepath, content }
         })
     }
