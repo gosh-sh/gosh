@@ -227,6 +227,7 @@ pipeline {
                                         -e RUN_NOW=1 \
                                         -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
                                         -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
+                                        -e CONFIG_REDIS_HOST="" \
                                         -v \$(pwd)/config:/home/node/app/config:ro \
                                         -v \$(pwd)/test-errors:/home/node/app/errors \
                                         gosh-mon
