@@ -26,6 +26,8 @@ export default abstract class GoshHandler extends ScenarioHandler {
 
     protected use_envs = '';
 
+    protected large_sha1_cnt = 1111;
+
     protected async requestEnvs() {
         // require | priority | fallback | disabled
         const eset = this.use_envs;
@@ -55,7 +57,7 @@ export default abstract class GoshHandler extends ScenarioHandler {
         super.applyConfiguration(c);
         this.useFields(c,
             ['seed', 'organization', 'repository', 'branch', 'filename', 'large'],
-            ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs'])
+            ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs', 'large_sha1_cnt'])
         this.target = `${this.organization}/${this.repository}/${this.branch}/${this.filename}`;
         return this;
     }
@@ -79,16 +81,16 @@ export default abstract class GoshHandler extends ScenarioHandler {
 
     protected prepareFileContents(): string {
         const now_str = (Math.trunc(Date.now() / 1000)).toString();
-        return this.large ? (now_str + '\n\n' + GoshHandler.makeTail(now_str, true)) : now_str;
+        return this.large ? (now_str + '\n\n' + GoshHandler.makeTail(now_str, true, this.large_sha1_cnt)) : now_str;
     }
 
     protected static sha1(data: string) {
         return crypto.createHash("sha1").update(data, "binary").digest("hex");
     }
 
-    protected static makeTail(data: string, blocky: boolean = false): string {
+    protected static makeTail(data: string, blocky: boolean = false, hashes: number = 1111): string {
         let h = GoshHandler.sha1(data);
-        for (let i=0; i<1111; i++)
+        for (let i=0; i<hashes; i++)
             h += GoshHandler.sha1(h);
         const tail: string = Buffer.from(h, 'hex').toString('base64')
             .replaceAll('/','_').replaceAll('+','-').replaceAll('=','');

@@ -94,6 +94,24 @@ type TUpgradeData = {
     }[]
 }
 
+type TPushBlobData = {
+    data: {
+        snapshot: string
+        treepath: string
+        treeitem?: TTreeItem
+        compressed: string
+        patch: string | null
+        flags: EBlobFlag
+        hashes: {
+            sha1: string
+            sha256: string
+        }
+        isGoingIpfs: boolean
+        isGoingOnchain: boolean
+    }
+    status: number
+}
+
 type TBranchCompareProgress = {
     trees?: boolean
     blobs?: { count?: number; total?: number }
@@ -124,6 +142,7 @@ export {
     TTag,
     TDiff,
     TUpgradeData,
+    TPushBlobData,
     TPushProgress,
     TBranchCompareProgress,
     TBranchOperateProgress,

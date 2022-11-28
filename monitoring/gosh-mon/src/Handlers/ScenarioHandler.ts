@@ -254,8 +254,9 @@ export default abstract class ScenarioHandler extends Handler {
         }
     }
 
-    protected async erasePaste(elem: string, text: string, timeout?: number): Promise<void> {
-        this.say(`--- paste ${limstr(text, this.textlim)} into ${elem} with erase${ifdef(' and timeout ', timeout)}`);
+    protected async erasePaste(elem: string, text: string, timeout?: number, secure?: boolean): Promise<void> {
+        const saystr = secure === true ? '<SECRET>' : limstr(text, this.textlim);
+        this.say(`--- paste ${saystr} into ${elem} with erase${ifdef(' and timeout ', timeout)}`);
         const element = await this.find(elem, timeout);
         await element!.click();
         // await element!.focus();

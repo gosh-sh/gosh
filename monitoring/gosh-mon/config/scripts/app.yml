@@ -1,3 +1,5 @@
+- _: config
+  redis_host: ""
 - seed-read
 - root-check
 - app-setup

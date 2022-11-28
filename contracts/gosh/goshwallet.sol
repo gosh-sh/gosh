@@ -725,7 +725,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function destroyWalletAll() public senderIs(address(this)) {
         if (_walletcounter <= 1) { 
             GoshDao(_goshdao).requestBurn {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, DEFAULT_DAO_BALANCE - m_pseudoDAOBalance, _index);
-            selfdestruct(_goshdao); 
+            selfdestruct(giver); 
         }
         if (_index != 0) { return; }
          GoshWallet(_getWalletAddr(_walletcounter - 1)).askForDestroy{value : 0.2 ton, flag: 1}();
@@ -734,7 +734,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function askForDestroy() public senderIs(_getWalletAddr(0)) {
-        selfdestruct(_goshdao);
+        selfdestruct(giver);
     }
 
     //Getters

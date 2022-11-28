@@ -23,6 +23,7 @@ class GoshHandler extends ScenarioHandler_1.default {
         this.prim_network = '';
         this.conf_endpoint = '';
         this.use_envs = '';
+        this.large_sha1_cnt = 1111;
     }
     async requestEnvs() {
         // require | priority | fallback | disabled
@@ -51,7 +52,7 @@ class GoshHandler extends ScenarioHandler_1.default {
     }
     applyConfiguration(c) {
         super.applyConfiguration(c);
-        this.useFields(c, ['seed', 'organization', 'repository', 'branch', 'filename', 'large'], ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs']);
+        this.useFields(c, ['seed', 'organization', 'repository', 'branch', 'filename', 'large'], ['username', 'appurl', 'root', 'ipfs_address', 'prim_network', 'conf_endpoint', 'use_envs', 'large_sha1_cnt']);
         this.target = `${this.organization}/${this.repository}/${this.branch}/${this.filename}`;
         return this;
     }
@@ -73,14 +74,14 @@ class GoshHandler extends ScenarioHandler_1.default {
     }
     prepareFileContents() {
         const now_str = (Math.trunc(Date.now() / 1000)).toString();
-        return this.large ? (now_str + '\n\n' + GoshHandler.makeTail(now_str, true)) : now_str;
+        return this.large ? (now_str + '\n\n' + GoshHandler.makeTail(now_str, true, this.large_sha1_cnt)) : now_str;
     }
     static sha1(data) {
         return crypto_1.default.createHash("sha1").update(data, "binary").digest("hex");
     }
-    static makeTail(data, blocky = false) {
+    static makeTail(data, blocky = false, hashes = 1111) {
         let h = GoshHandler.sha1(data);
-        for (let i = 0; i < 1111; i++)
+        for (let i = 0; i < hashes; i++)
             h += GoshHandler.sha1(h);
         const tail = Buffer.from(h, 'hex').toString('base64')
             .replaceAll('/', '_').replaceAll('+', '-').replaceAll('=', '');
