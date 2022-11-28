@@ -629,7 +629,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -693,7 +693,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -717,7 +717,7 @@ function _useMergeRequest(
         isFetching: boolean
         details: TBranchCompareProgress
         items: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
@@ -768,21 +768,20 @@ function _useMergeRequest(
         setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
         // Compare trees and get added/updated treepath
-        const treeDiff: { treepath: string; exists: boolean }[] = []
+        const treeDiff: string[][] = []
         srcTreeItems
             .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
             .map((srcItem) => {
-                const treepath = getTreeItemFullPath(srcItem)
+                const srcPath = getTreeItemFullPath(srcItem)
                 const dstItem = dstTreeItems
                     .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
                     .find((dstItem) => {
-                        const srcPath = getTreeItemFullPath(srcItem)
                         const dstPath = getTreeItemFullPath(dstItem)
                         return srcPath === dstPath
                     })
 
                 if (dstItem && srcItem.sha1 === dstItem.sha1) return
-                treeDiff.push({ treepath, exists: !!dstItem })
+                treeDiff.push([srcPath, !!dstItem ? srcPath : ''])
             })
         setProgress((state) => {
             const { blobs = {} } = state.details
@@ -799,15 +798,16 @@ function _useMergeRequest(
         const blobDiff = await executeByChunk(
             treeDiff,
             MAX_PARALLEL_READ,
-            async ({ treepath, exists }, index) => {
-                const srcFullPath = `${srcBranch.name}/${treepath}`
+            async (treepath, index) => {
+                const [aPath, bPath] = treepath
+                const srcFullPath = `${srcBranch.name}/${aPath}`
                 const srcBlob = await srcRepo.getBlob({
                     commit: srcBranch.commit.name,
                     fullpath: srcFullPath,
                 })
 
-                const dstFullPath = `${dstBranch.name}/${treepath}`
-                const dstBlob = exists
+                const dstFullPath = `${dstBranch.name}/${bPath}`
+                const dstBlob = bPath
                     ? (
                           await dstRepo.getBlob({
                               commit: dstBranch.commit.name,
@@ -829,7 +829,7 @@ function _useMergeRequest(
                 })
 
                 return {
-                    treepath,
+                    treepath: [bPath, aPath],
                     original: dstBlob,
                     modified: srcBlob.content,
                     showDiff: index < showDiffNum,
