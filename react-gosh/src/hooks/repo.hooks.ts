@@ -385,6 +385,7 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
             const { content } = await adapter.getBlob({
+                commit: branchData.commit.name,
                 fullpath: `${branchData.name}/${path}`,
             })
             setBlob((state) => ({
@@ -800,11 +801,19 @@ function _useMergeRequest(
             async (treepath, index) => {
                 const [aPath, bPath] = treepath
                 const srcFullPath = `${srcBranch.name}/${aPath}`
-                const srcBlob = await srcRepo.getBlob({ fullpath: srcFullPath })
+                const srcBlob = await srcRepo.getBlob({
+                    commit: srcBranch.commit.name,
+                    fullpath: srcFullPath,
+                })
 
                 const dstFullPath = `${dstBranch.name}/${bPath}`
                 const dstBlob = bPath
-                    ? (await dstRepo.getBlob({ fullpath: dstFullPath })).content
+                    ? (
+                          await dstRepo.getBlob({
+                              commit: dstBranch.commit.name,
+                              fullpath: dstFullPath,
+                          })
+                      ).content
                     : ''
 
                 setProgress((state) => {
