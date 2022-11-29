@@ -1,8 +1,8 @@
 pipeline {
     agent none
-    triggers {
-        cron('30 23 * * *') //run at 23:31:00 
-    }
+    //triggers {
+    //    cron('30 23 * * *') //run at 23:31:00 
+    //}
     options {
         timestamps ()
     }
