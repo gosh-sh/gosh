@@ -11,7 +11,6 @@ use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
     collections::{HashMap, HashSet},
-    process::{Command, Stdio},
     str::FromStr,
     sync::Arc,
     vec::Vec,
@@ -23,14 +22,14 @@ use tokio::{
 use tokio_retry::Retry;
 use tracing::Instrument;
 
-mod utilities;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
 mod push_tree;
-use push_tree::push_tree;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
+use push_tree::push_tree;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
@@ -194,7 +193,7 @@ where
     }
 
     #[instrument(level = "debug", skip(self))]
-    fn get_parent_id(&mut self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
+    fn get_parent_id(&self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -432,13 +431,20 @@ where
                 ("".to_owned(), None)
             };
 
+        let latest_commit = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?;
+
+        let ancestor_commit_object = if ancestor_commit_id != "" {
+            Some(ObjectId::from_str(&ancestor_commit_id)?)
+        } else {
+            None
+        };
+
         // get list of git objects in local repo, excluding ancestor ones
-        let (commit_objects_list, status) =
-            get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
-        if !status {
-            // TODO: Check if it is right to return Ok here
-            return Ok(format!("error {remote_ref} fetch first\n"));
-        }
+        let commit_objects_list =
+            get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
         // 3. If branch needs to be created do so
         if prev_commit_id.is_none() {
@@ -448,8 +454,7 @@ where
             //    if it doesn't
             let originating_commit = git_hash::ObjectId::from_str(
                 commit_objects_list
-                    .lines()
-                    .next()
+                    .first()
                     .expect("git object list is empty"),
             )?;
             let branching_point = self.get_parent_id(&originating_commit)?;
@@ -480,25 +485,17 @@ where
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
-        let latest_commit_id = self
-            .local_repository()
-            .find_reference(local_ref)?
-            .into_fully_peeled_id()?
-            .object()?
-            .id;
-
+        let latest_commit_id = latest_commit.object()?.id;
         tracing::debug!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         // iterate through the git objects list and push them
-        for line in commit_objects_list.lines() {
-            let Some(oid) = line.split_ascii_whitespace().next() else {
-                break;
-            };
+        for oid in &commit_objects_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
+                    // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
                         object_id,
@@ -637,37 +634,49 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 
 #[instrument(level = "trace")]
 fn get_list_of_commit_objects(
-    _ref: &str,
-    ancestor_commit_id: &str,
-) -> anyhow::Result<(String, bool)> {
-    // TODO: git rev-list?
-    let mut cmd_args = [
-        "rev-list",
-        "--objects",
-        "--in-commit-order",
-        "--reverse",
-        _ref,
-    ]
-    .map(String::from)
-    .to_vec();
+    start: git_repository::Id,
+    till: Option<ObjectId>,
+) -> anyhow::Result<Vec<String>> {
+    let walk = start
+        .ancestors()
+        .all()?
+        .map(|e| e.expect("all entities should be present"))
+        .into_iter();
 
-    if !ancestor_commit_id.is_empty() {
-        cmd_args.push(format!("^{}", ancestor_commit_id));
+    let commits: Vec<git_repository::Id> = match till {
+        None => walk.into_iter().collect(),
+        Some(id) => walk
+            .take_while(|e| e.object().expect("object should exist").id != id)
+            .into_iter()
+            .collect(),
+    };
+
+    let mut res = Vec::new();
+    // observation from `git rev-list --reverse`
+    // 1) commits are going in reverse order (from old to new)
+    // 2) but for each commit tree elements are going in BFS order
+    //
+    // so if we just rev() commits we'll have topological order for free
+    for commit in commits.iter().rev() {
+        let commit = commit.object()?.into_commit();
+        res.push(commit.id.to_string());
+
+        let tree = commit.tree()?;
+        res.push(tree.id.to_string());
+
+        res.extend(
+            tree.traverse()
+                .breadthfirst
+                .files()?
+                .iter()
+                // IMPORTANT: ignore blobs because later logic skips blobs too
+                // but might change in the future refactorings
+                .filter(|e| !e.mode.is_blob())
+                .into_iter()
+                .map(|e| e.oid.to_string()),
+        );
     }
-
-    let cmd = Command::new("git")
-        .args(cmd_args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("git rev-list failed");
-
-    let out = cmd.wait_with_output()?;
-    if !out.status.success() {
-        Ok((String::new(), false))
-    } else {
-        Ok((String::from_utf8(out.stdout)?, true))
-    }
+    Ok(res)
 }
 
 #[cfg(test)]
