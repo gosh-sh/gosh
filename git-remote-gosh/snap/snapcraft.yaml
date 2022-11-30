@@ -5,7 +5,7 @@ summary: Git Open Source Hodler
 description: |
   A scalable solution reducing the risks and resources spent on protecting code, and moving open source up the value chain.
 grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: classic # use 'strict' once you have the right plugs and slots
+confinement: strict # use 'strict' once you have the right plugs and slots
   
 parts:
   git-remote-gosh:
