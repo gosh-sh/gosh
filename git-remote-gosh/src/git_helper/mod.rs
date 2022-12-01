@@ -124,6 +124,11 @@ where
         Ok(caps)
     }
 
+    async fn print_repo_version(&self) -> anyhow::Result<Vec<String>> {
+        let version = self.blockchain.repo_contract().get_version(self.blockchain.client()).await?;
+        Ok(vec![version, "".to_string()])
+    }
+
     #[instrument(level = "debug", skip(self))]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
         let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
@@ -251,6 +256,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
+            (Some("repo_version"), None, None) => helper.print_repo_version().await?,
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };

@@ -1,0 +1,11 @@
+[package]
+name = "git-remote-gosh"
+version = "3.0.0"
+edition = "2021"
+keywords = ['git-remote', 'git', 'gosh']
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "^1.0"
+tokio = { version = "1.21.2", features = ["full"] }
