@@ -1,8 +1,8 @@
 pipeline {
     agent none
-    triggers {
-        cron('30 23 * * *') //run at 23:31:00 
-    }
+    //triggers {
+    //    cron('30 23 * * *') //run at 23:31:00 
+    //}
     options {
         timestamps ()
     }
@@ -122,7 +122,7 @@ pipeline {
                         sh 'make generate-docker NETWORK=vps23.ton.dev' // TODO Parametrize
                         sh '''everdev network add vps23.ton.dev vps23.ton.dev 
                             everdev signer add giver7 /opt/giver7.keys.json
-                            everdev contract run ../gosh/scripts/SafeMultisigWallet.abi.json submitTransaction -n vps23.ton.dev -s giver7 -a -1:7777777777777777777777777777777777777777777777777777777777777777 -i "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 1000000000000000, \\"bounce\\": false, \\"allBalance\\": false, \\"payload\\": \\"\\"}"
+                            everdev contract run ../gosh/scripts/SafeMultisigWallet.abi.json submitTransaction -n vps23.ton.dev -s giver7 -a -1:7777777777777777777777777777777777777777777777777777777777777777 -i "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 2000000000000000, \\"bounce\\": false, \\"allBalance\\": false, \\"payload\\": \\"\\"}"
                             sleep 30
                             '''
                         sh 'make deploy-docker'
@@ -145,10 +145,12 @@ pipeline {
             steps {
                 script {
                     env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
                         touch ${DOCKER_WEB_CONTAINER_NAME}.gosh.sh
-                        sed -i '/REACT_APP_GOSH_ROOTADDR/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
+                        sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
+                        sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
                         mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
                     """
                     dir('web') {     
@@ -206,7 +208,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: Web') {
+        /*stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -218,7 +220,7 @@ pipeline {
                     dir('monitoring/gosh-mon') {   
                         sh "cp config/credentials.yml.template config/credentials.yml"
                         sh "docker build -t gosh-mon ."
-                        def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3- | tr -d "^M"', returnStdout: true).trim().split('\n')
+                        def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3- | tr -d \'^M\' | sed -n \'/:/!p\'', returnStdout: true).trim().split('\n')
                         for (int i = 0; i < tests.length; i++) {
                             stage("Test ${tests[i]}") {
                                 sh """
@@ -227,6 +229,7 @@ pipeline {
                                         -e RUN_NOW=1 \
                                         -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
                                         -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
+                                        -e CONFIG_REDIS_HOST="" \
                                         -v \$(pwd)/config:/home/node/app/config:ro \
                                         -v \$(pwd)/test-errors:/home/node/app/errors \
                                         gosh-mon
@@ -242,7 +245,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
         stage("Prerelease: Git Helper Snap"){
             agent {
                 node {

@@ -1,14 +1,12 @@
-import { useEffect } from 'react'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { EGoshError, splitByPath, useBlob, usePush } from 'react-gosh'
+import { useBlob, usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
-import { Buffer } from 'buffer'
 import ToastError from '../../components/Error/ToastError'
-import BlobCommitForm from '../../components/Commit/BlobCommitForm'
+import BlobDeleteForm from '../../components/Commit/BlobDeleteForm'
 
-const BlobUpdatePage = () => {
+const BlobDeletePage = () => {
     const treepath = useParams()['*']
     const navigate = useNavigate()
     const { daoName, repoName, branchName = 'main' } = useParams()
@@ -16,32 +14,25 @@ const BlobUpdatePage = () => {
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
     const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
 
-    const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${treepath}`
+    const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}${
+        treepath && `/${treepath}`
+    }`
 
     const onPush = async (values: any) => {
         try {
-            const { name, title, message, tags, content } = values
-            const [path] = splitByPath(treepath!)
-            const bPath = `${path ? `${path}/` : ''}${name}`
-            const blobUpd = {
-                treepath: [treepath!, bPath],
+            const { title, message, tags } = values
+            const blobDel = {
+                treepath: [treepath!, ''],
                 original: blob?.content ?? '',
-                modified: content,
+                modified: '',
             }
-            await push(title, [blobUpd], message, tags)
-            navigate(urlBack.replace(treepath!, bPath))
+            await push(title, [blobDel], message, tags)
+            navigate(`/o/${daoName}/r/${repoName}/tree/${branchName}`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
         }
     }
-
-    useEffect(() => {
-        if (Buffer.isBuffer(blob.content)) {
-            toast.error(EGoshError.FILE_BINARY)
-            navigate(urlBack)
-        }
-    }, [blob.content, navigate, urlBack])
 
     if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
     return (
@@ -59,17 +50,15 @@ const BlobUpdatePage = () => {
             </div>
 
             {blob.path && !blob.isFetching && (
-                <BlobCommitForm
+                <BlobDeleteForm
                     dao={daoName!}
                     repo={repoName!}
                     branch={branchName}
                     treepath={treepath!}
+                    content={blob.content}
                     initialValues={{
-                        name: splitByPath(blob.path)[1],
-                        content: blob.content ? blob.content.toString() : '',
-                        title: '',
+                        title: `Delete ${treepath}`,
                     }}
-                    isUpdate
                     urlBack={urlBack}
                     progress={pushProgress}
                     onSubmit={onPush}
@@ -79,4 +68,4 @@ const BlobUpdatePage = () => {
     )
 }
 
-export default BlobUpdatePage
+export default BlobDeletePage

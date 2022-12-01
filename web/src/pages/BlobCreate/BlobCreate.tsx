@@ -19,13 +19,12 @@ const BlobCreatePage = () => {
     const onPush = async (values: any) => {
         try {
             const { name, title, message, tags, content } = values
-            const treepathNew = `${treepath ? `${treepath}/` : ''}${name}`
-            await push(
-                title,
-                [{ treepath: treepathNew, original: '', modified: content }],
-                message,
-                tags,
-            )
+            const blobNew = {
+                treepath: ['', `${treepath ? `${treepath}/` : ''}${name}`],
+                original: '',
+                modified: content,
+            }
+            await push(title, [blobNew], message, tags)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)

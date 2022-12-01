@@ -41,7 +41,7 @@ pub struct PageIterator {
 #[derive(Deserialize, Debug, Clone)]
 struct Message {
     id: String,
-    body: String,
+    body: Option<String>,
     created_at: u64,
     #[serde(with = "ton_sdk::json_helper::uint")]
     created_lt: u64,
@@ -304,7 +304,7 @@ pub async fn load_messages_to(
 
     let mut messages: Vec<DiffMessage> = Vec::new();
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
-    tracing::trace!("trying to decode: {:?}", nodes);
+    // tracing::trace!("trying to decode: {:?}", nodes);
     let edges: Messages = serde_json::from_value(nodes.clone())?;
     if edges.page_info.has_previous_page {
         subsequent_page_info = Some(edges.page_info.start_cursor);
@@ -318,7 +318,7 @@ pub async fn load_messages_to(
             subsequent_page_info = None;
             break;
         }
-        if raw_msg.status != 5 || raw_msg.bounced {
+        if raw_msg.status != 5 || raw_msg.bounced || raw_msg.body.is_none() {
             continue;
         }
         let msg = Message {
@@ -344,7 +344,7 @@ pub async fn load_messages_to(
             Arc::clone(context),
             ParamsOfDecodeMessageBody {
                 abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
-                body: raw_msg.body.clone(),
+                body: raw_msg.body.clone().unwrap(),
                 is_internal: true,
                 ..Default::default()
             },

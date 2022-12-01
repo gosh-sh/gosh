@@ -122,7 +122,6 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                             autoComplete: 'off',
                                             placeholder: 'Name of new file',
                                             disabled:
-                                                isUpdate ||
                                                 isSubmitting ||
                                                 isDisabled ||
                                                 !monaco ||

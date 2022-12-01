@@ -22,7 +22,7 @@ pub(super) trait BlockchainCall {
 
 #[async_trait]
 impl BlockchainCall for Everscale {
-    #[instrument(level = "debug", skip(self, contract, args))]
+    #[instrument(level = "debug", skip(self, contract))]
     async fn call<C>(
         &self,
         contract: &C,
