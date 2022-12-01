@@ -23,14 +23,14 @@ use tokio::{
 use tokio_retry::Retry;
 use tracing::Instrument;
 
-mod utilities;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
 mod push_tree;
-use push_tree::push_tree;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
+use push_tree::push_tree;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 

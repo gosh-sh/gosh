@@ -1,6 +1,6 @@
-pub mod test_utils;
 mod id_generator;
 mod telemetry;
+pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};

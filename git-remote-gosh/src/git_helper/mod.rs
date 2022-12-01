@@ -125,7 +125,11 @@ where
     }
 
     async fn print_repo_version(&self) -> anyhow::Result<Vec<String>> {
-        let version = self.blockchain.repo_contract().get_version(self.blockchain.client()).await?;
+        let version = self
+            .blockchain
+            .repo_contract()
+            .get_version(self.blockchain.client())
+            .await?;
         Ok(vec![version, "".to_string()])
     }
 

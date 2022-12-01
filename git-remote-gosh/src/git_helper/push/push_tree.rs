@@ -14,8 +14,8 @@ use std::{
 use tokio_retry::Retry;
 use tracing::Instrument;
 
-use tokio::{sync::Semaphore, task::JoinSet};
 use super::is_going_to_ipfs;
+use tokio::{sync::Semaphore, task::JoinSet};
 
 use super::utilities::retry::default_retry_strategy;
 
