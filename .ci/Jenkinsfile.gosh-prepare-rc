@@ -1,8 +1,8 @@
 pipeline {
     agent none
-    triggers {
-        cron('30 23 * * *') //run at 23:31:00 
-    }
+    //triggers {
+    //    cron('30 23 * * *') //run at 23:31:00 
+    //}
     options {
         timestamps ()
     }
@@ -208,7 +208,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: Web') {
+        /*stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -245,7 +245,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
         stage("Prerelease: Git Helper Snap"){
             agent {
                 node {

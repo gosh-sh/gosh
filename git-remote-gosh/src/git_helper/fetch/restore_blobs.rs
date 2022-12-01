@@ -128,8 +128,6 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // This should download next messages seemless
     let mut messages =
         blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
-    let mut walked_through_ipfs = false;
-    let mut first_after_ipfs = false;
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
 
@@ -155,41 +153,24 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             };
             data
         } else if let Some(ipfs) = &message.diff.ipfs {
-            walked_through_ipfs = true;
             transition_content = message.diff.get_patch_data();
             load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
-        } else if walked_through_ipfs {
-            walked_through_ipfs = false;
-            first_after_ipfs = true;
-
+        } else if let Some(content) = transition_content.clone() {
             // we won't use the message, so we'll store it for the next iteration
             preserved_message = Some(message);
-
-            if let Some(content) = transition_content.clone() {
-                transition_content = None;
-                content
-            } else {
-                let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
-                snapshot.next_content
-            }
+            transition_content = None;
+            content
         } else {
-            let patched_blob = if first_after_ipfs {
-                first_after_ipfs = false;
-                let blockchain::Snapshot { next_content, .. } =
-                    blockchain::Snapshot::load(es_client, snapshot_address).await?;
-                next_content.clone()
-            } else {
-                let patched_blob_sha = &message
-                    .diff
-                    .modified_blob_sha1
-                    .as_ref()
-                    .expect("Option on this should be reverted. It must always be there");
-                let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                let content = last_restored_snapshots
-                    .get(&patched_blob_sha)
-                    .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
-                content.to_vec()
-            };
+            let patched_blob_sha = &message
+                .diff
+                .modified_blob_sha1
+                .as_ref()
+                .expect("Option on this should be reverted. It must always be there");
+            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+            let content = last_restored_snapshots
+                .get(&patched_blob_sha)
+                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+            let patched_blob = content.to_vec();
 
             message
                 .diff
@@ -367,10 +348,12 @@ impl BlobsRebuildingPlan {
                             break result;
                         } else {
                             tracing::debug!(
-                                "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
+                                "restore_a_set_of_blobs_from_a_known_snapshot <{:#?}> error {:?}",
+                                snapshot_address_clone,
                                 result.unwrap_err()
                             );
                             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                            panic!("stopped");
                         }
                     };
                     result.map_err(|e| anyhow::Error::from(e))

@@ -21,8 +21,8 @@ build:
 	  --platform linux/amd64 \
 	  --workdir "/workdir" \
 	  node:18.8.0-alpine \
-	  sh -c "chown -R 1000:1000 /root && npm run update-react-gosh && \
-	  cd - && npm install && npm run wasm && cd run-if-modified && npm link && \
+	  sh -c "chown -R 1000:1000 /root && cd /react-gosh && npm install && npm run build && cd /workdir && npm run update-react-gosh && \
+	  npm install && npm run wasm && cd run-if-modified && npm link && \
 	  cd - && npm link run-if-modified && npm run build:$(ENV)"
 	cp -r ./build/* $(TARGET_DIR)
 
@@ -38,8 +38,8 @@ run:
 	  --name ${DOCKER_WEB_CONTAINER_NAME} \
 	  ${DOCKER_RUN_ARGS} \
 	  node:18.8.0-alpine \
-	  sh -c "chown -R 1000:1000 /root && npm run update-react-gosh &&  \
-	  cd - && npm install && npm run wasm && cd run-if-modified && npm link && \
+	  sh -c "chown -R 1000:1000 /root && cd /react-gosh && npm install && npm run build && cd /workdir && npm run update-react-gosh && \
+	  npm install && npm run wasm && cd run-if-modified && npm link && \
 	  cd - && npm link run-if-modified && npm run start:$(ENV)"
 
 .PHONY: build
