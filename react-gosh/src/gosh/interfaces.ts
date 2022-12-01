@@ -197,6 +197,7 @@ interface IContract {
     version: string
 
     isDeployed(): Promise<boolean>
+    boc(): Promise<string>
     getMessages(
         variables: {
             msgType: string[]
@@ -218,7 +219,7 @@ interface IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        settings?: { logging?: boolean; retries?: number },
+        settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
