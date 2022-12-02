@@ -28,8 +28,10 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async getName(): Promise<string> {
-        const result = await this.runLocal('getName', {})
-        return result.value0
+        const { value0 } = await this.runLocal('getName', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return value0
     }
 
     async getDetails(): Promise<TProfileDetails> {
@@ -45,9 +47,14 @@ class GoshProfile extends BaseContract implements IGoshProfile {
     }
 
     async getProfileDao(name: string): Promise<IGoshProfileDao> {
-        const address = await this.runLocal('getProfileDaoAddr', {
-            name: name.toLowerCase(),
-        })
+        const address = await this.runLocal(
+            'getProfileDaoAddr',
+            {
+                name: name.toLowerCase(),
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshProfileDao(this.account.client, address.value0)
     }
 
