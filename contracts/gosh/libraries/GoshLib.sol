@@ -120,4 +120,16 @@ library GoshLib {
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
+    
+    function buildProfileIndexCode(
+        TvmCell originalCode,
+        uint256 pubkey
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(pubkey);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
 }

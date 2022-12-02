@@ -51,10 +51,27 @@
 			]
 		},
 		{
+			"name": "deployProfileIndexContract",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "updateCode",
 			"inputs": [
 				{"name":"newcode","type":"cell"},
 				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setProfileIndex",
+			"inputs": [
+				{"name":"code","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -73,6 +90,25 @@
 				{"name":"code","type":"cell"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getProfileIndexAddr",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProfileIndexCode",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
