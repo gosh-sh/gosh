@@ -225,6 +225,16 @@ interface IContract {
 
 interface IGoshRoot extends IContract {
     address: TAddress
+
+    getProfileIndex(options: {
+        address?: TAddress
+        pubkey?: string
+        username?: string
+    }): Promise<IGoshProfileIndex>
+    getProfileIndexes(
+        pubkey: string,
+    ): Promise<{ pubkey: string; name: string; profile: TAddress }[]>
+    createProfileIndex(username: string, pubkey: string): Promise<void>
 }
 
 interface IGoshProfile extends IContract {
@@ -255,6 +265,10 @@ interface IGoshProfileDao extends IContract {
 }
 
 interface IGosh extends IContract {
+    address: TAddress
+}
+
+interface IGoshProfileIndex extends IContract {
     address: TAddress
 }
 
@@ -324,6 +338,7 @@ export {
     IGoshProfile,
     IGoshProfileDao,
     IGosh,
+    IGoshProfileIndex,
     IGoshDao,
     IGoshRepository,
     IGoshWallet,

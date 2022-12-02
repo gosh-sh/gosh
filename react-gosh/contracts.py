@@ -14,6 +14,7 @@ CONTRACTS = [
     'gosh/systemcontract',
     'gosh/goshdao',
     'gosh/profile',
+    'gosh/profileindex',
     'gosh/profiledao',
     'gosh/goshwallet',
     'gosh/repository',

@@ -17,6 +17,14 @@ function useUser() {
         isFetching: false,
     })
 
+    const getProfiles = async (phrase: string) => {
+        await _validateCredentials({ phrase })
+        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
+            phrase,
+        })
+        return await AppConfig.goshroot.getProfileIndexes(derived.public)
+    }
+
     const setup = (
         persist: TUserPersist,
         decrypted: { phrase: string; keys: KeyPair },
@@ -52,6 +60,10 @@ function useUser() {
         if (!(await profile.isOwnerPubkey(derived.public))) {
             throw new GoshError(EGoshError.PROFILE_PUBKEY_INVALID)
         }
+
+        // TODO: This a temporary part (create profile index if not exists)
+        // But there is a mandatory check that profile exists and pubkey is valid
+        await AppConfig.goshroot.createProfileIndex(username, derived.public)
 
         resetUserPersist()
         setUserPersist((state) => ({ ...state, username, profile: profile.address }))
@@ -109,6 +121,7 @@ function useUser() {
     return {
         persist: userPersist,
         user,
+        getProfiles,
         setup,
         signin,
         signup,
