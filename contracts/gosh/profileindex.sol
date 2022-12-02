@@ -18,7 +18,6 @@ contract ProfileIndex is Modifiers {
     
     uint256 _pubkey;
     string static _name;
-    address static _versioncontroller;
     address _profile;
 
     constructor(address profile) public senderIs(_versioncontroller) {
