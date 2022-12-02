@@ -108,6 +108,16 @@ const SignupPage = () => {
                                     autoComplete: 'off',
                                     placeholder: 'Seed phrase',
                                 }}
+                                helpClassName="mt-1"
+                                help={
+                                    <>
+                                        <p>GOSH cannot reset this phrase.</p>
+                                        <p>
+                                            If you forget it, you might lose access to
+                                            your account
+                                        </p>
+                                    </>
+                                }
                             />
                         </div>
 
