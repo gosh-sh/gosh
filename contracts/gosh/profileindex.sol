@@ -18,14 +18,16 @@ contract ProfileIndex is Modifiers {
     
     uint256 _pubkey;
     string static _name;
+    address _versioncontroller;
     address _profile;
 
-    constructor(address profile) public senderIs(_versioncontroller) {
+    constructor(address profile) public  {
         tvm.accept();
         TvmCell myCode = tvm.code();
         TvmSlice s = tvm.codeSalt(myCode).get().toSlice();
         _profile = profile;
-        _pubkey = s.decode(uint256);
+        (_pubkey, _versioncontroller) = s.decode(uint256, address);
+        require(msg.sender == _versioncontroller, ERR_SENDER_NO_ALLOWED);
     }
     
     //Selfdestruct

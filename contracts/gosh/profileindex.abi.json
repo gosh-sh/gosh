@@ -38,8 +38,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_name","type":"string"},
-		{"key":2,"name":"_versioncontroller","type":"address"}
+		{"key":1,"name":"_name","type":"string"}
 	],
 	"events": [
 	],
