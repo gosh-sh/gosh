@@ -123,10 +123,12 @@ library GoshLib {
     
     function buildProfileIndexCode(
         TvmCell originalCode,
-        uint256 pubkey
+        uint256 pubkey,
+        address versioncontroller
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(pubkey);
+        b.store(versioncontroller);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);
