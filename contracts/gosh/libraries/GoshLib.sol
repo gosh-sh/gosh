@@ -129,9 +129,6 @@ library GoshLib {
         TvmBuilder b;
         b.store(pubkey);
         b.store(versioncontroller);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
 }
