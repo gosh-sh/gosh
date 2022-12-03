@@ -82,7 +82,7 @@ contract SystemContract is Modifiers {
             contr: Profile,
             varInit: {_name: name, _versioncontroller: _versionController}
         });
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], pubkey);
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey);
     }
 
     

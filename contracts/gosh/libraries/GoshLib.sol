@@ -124,11 +124,13 @@ library GoshLib {
     function buildProfileIndexCode(
         TvmCell originalCode,
         uint256 pubkey,
-        address versioncontroller
+        address versioncontroller,
+        string version
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(pubkey);
         b.store(versioncontroller);
+        b.store(version);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
 }

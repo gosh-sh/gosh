@@ -6,7 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"profile","type":"address"}
+				{"name":"profile","type":"address"},
+				{"name":"codeProfile","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -23,7 +24,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"address"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{
@@ -48,6 +50,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"_name","type":"string"},
 		{"name":"_versioncontroller","type":"address"},

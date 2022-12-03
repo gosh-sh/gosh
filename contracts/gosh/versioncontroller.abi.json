@@ -51,15 +51,6 @@
 			]
 		},
 		{
-			"name": "deployProfileIndexContract",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "updateCode",
 			"inputs": [
 				{"name":"newcode","type":"cell"},

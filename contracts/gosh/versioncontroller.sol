@@ -98,16 +98,6 @@ contract VersionController is Modifiers {
         SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
-    function deployProfileIndexContract(uint256 pubkey,  string name) public accept saveMsg {
-        TvmCell s1 = tvm.buildStateInit({
-            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this)),
-            contr: ProfileIndex,
-            pubkey: tvm.pubkey(),
-            varInit: { _name : name }
-        });
-        new ProfileIndex {stateInit: s1, value: FEE_DEPLOY_PROFILE_INDEX, wid: 0, flag: 1}(_getProfileAddr(name));
-    }
-    
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
@@ -133,7 +123,7 @@ contract VersionController is Modifiers {
     //Getters   
     function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
-            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this)),
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version),
             contr: ProfileIndex,
             pubkey: tvm.pubkey(),
             varInit: { _name : name }
@@ -146,7 +136,7 @@ contract VersionController is Modifiers {
     }
     
     function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
-        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this));
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version);
     }
     
     function _getProfileAddr(string name) private view returns(address) {
