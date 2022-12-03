@@ -60,14 +60,14 @@ contract Profile is Modifiers {
         TvmCell codeProfile,
         TvmCell codeIndex,
         uint256 pubkey
-    ) public {
+    ) public internalMsg {
         _systemcontract = msg.sender;
         _code[m_ProfileDaoCode] = codeProfileDao;
         _code[m_ProfileIndexCode] = codeIndex;
         _code[m_ProfileCode] = codeProfile;
         _owners[pubkey] = 0;
         _index[0] = pubkey;
-        this.deployProfileIndexContract{value: 3 ton, flag: 1}(pubkey);
+        this.deployProfileIndexContract{value: 0.3 ton, flag: 1}(pubkey);
         getMoney();
     }
     
