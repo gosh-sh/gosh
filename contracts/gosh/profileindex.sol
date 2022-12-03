@@ -56,7 +56,7 @@ contract ProfileIndex is Modifiers {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
-            varInit: {_name : name, _versioncontroller: address(this)}
+            varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
