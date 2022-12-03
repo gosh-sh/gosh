@@ -2,7 +2,7 @@ import { TonClient } from '@eversdk/core'
 import { GoshError } from '../errors'
 import { getAllAccounts } from '../helpers'
 import { TAddress } from '../types'
-import { GoshProfileIndex } from './1.0.0/goshprofileindex'
+import { GoshProfileIndex } from './goshprofileindex'
 import { BaseContract } from './base'
 import { IGoshProfileIndex, IGoshRoot } from './interfaces'
 
@@ -44,15 +44,6 @@ class GoshRoot extends BaseContract implements IGoshRoot {
                 return { pubkey: value0, name: value1, profile: value2 }
             }),
         )
-    }
-
-    async createProfileIndex(username: string, pubkey: string): Promise<void> {
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-
-        const index = await this.getProfileIndex({ pubkey, username })
-        if (!(await index.isDeployed())) {
-            await this.run('deployProfileIndexContract', { pubkey, name: username })
-        }
     }
 }
 

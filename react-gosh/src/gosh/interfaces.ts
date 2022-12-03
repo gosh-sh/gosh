@@ -234,7 +234,6 @@ interface IGoshRoot extends IContract {
     getProfileIndexes(
         pubkey: string,
     ): Promise<{ pubkey: string; name: string; profile: TAddress }[]>
-    createProfileIndex(username: string, pubkey: string): Promise<void>
 }
 
 interface IGoshProfile extends IContract {

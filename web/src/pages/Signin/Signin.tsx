@@ -11,7 +11,7 @@ import SigninProfileForm from './ProfileForm'
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const { persist, getProfiles, signin } = useUser()
+    const { persist, signinProfiles, signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [step, setStep] = useState<{ name: string; data: any }>()
     const [setupPin, setSetupPin] = useState<string>()
@@ -19,8 +19,8 @@ const SigninPage = () => {
     const onPhraseSubmit = async (values: { phrase: string }) => {
         try {
             const { phrase } = values
-            const profiles = await getProfiles(phrase)
-            if (!profiles.length || profiles.length > 1) {
+            const profiles = await signinProfiles(phrase)
+            if (profiles.length > 1) {
                 setStep({
                     name: 'ProfileRequired',
                     data: { profiles, phrase },
