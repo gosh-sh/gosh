@@ -37,6 +37,15 @@ contract ProfileIndex is Modifiers {
         require(ver == version, ERR_CONTRACT_BAD_VERSION);
     }
     
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
+    }
+    
     //Selfdestruct
     function destroy() public senderIs(_profile) {
         selfdestruct(giver);

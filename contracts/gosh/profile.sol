@@ -283,6 +283,15 @@ contract Profile is Modifiers {
         });
         new ProfileIndex {stateInit: s1, value: FEE_DEPLOY_PROFILE_INDEX, wid: 0, flag: 1}(address(this), _code[m_ProfileCode]);
     }
+    
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
+    }
 
     //Money part
     function getMoney() private {
