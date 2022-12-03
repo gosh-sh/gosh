@@ -1,46 +1,34 @@
-import { Form, Formik, Field, ErrorMessage } from 'formik'
-import * as Yup from 'yup'
-import { TextField, TextareaField } from '../../components/Formik'
 import { useSetRecoilState } from 'recoil'
 import { Navigate, useNavigate } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { useUser } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
-
-type TFormValues = {
-    username: string
-    phrase: string
-}
+import { useEffect, useState } from 'react'
+import SigninPhraseForm from './PhraseForm'
+import SigninProfileForm from './ProfileForm'
 
 const SigninPage = () => {
     const navigate = useNavigate()
-    const { persist, signin } = useUser()
+    const { persist, signinProfiles, signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
+    const [step, setStep] = useState<{ name: string; data: any }>()
+    const [setupPin, setSetupPin] = useState<string>()
 
-    const onFormSubmit = async (values: TFormValues) => {
+    const onPhraseSubmit = async (values: { phrase: string }) => {
         try {
-            await signin({
-                ...values,
-                username: (values.username.startsWith('@')
-                    ? values.username
-                    : `@${values.username}`
-                ).trim(),
-            })
-
-            // Create PIN-code
-            setModal({
-                static: true,
-                isOpen: true,
-                element: (
-                    <PinCodeModal
-                        phrase={values.phrase}
-                        onUnlock={() => navigate('/a/orgs', { replace: true })}
-                    />
-                ),
-            })
+            const { phrase } = values
+            const profiles = await signinProfiles(phrase)
+            if (profiles.length > 1) {
+                setStep({
+                    name: 'ProfileRequired',
+                    data: { profiles, phrase },
+                })
+            } else {
+                await signin({ username: profiles[0].name, phrase })
+                setSetupPin(phrase)
+            }
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -48,71 +36,48 @@ const SigninPage = () => {
         }
     }
 
-    if (persist.username) return <Navigate to="/a/orgs" />
+    const onProfileSubmit = async (values: { username: string }) => {
+        try {
+            const { username } = values
+            await signin({ username, phrase: step?.data.phrase })
+            setSetupPin(step?.data.phrase)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+            return
+        }
+    }
+
+    useEffect(() => {
+        // Create PIN-code for phrase
+        if (setupPin) {
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal
+                        phrase={setupPin}
+                        onUnlock={() => navigate('/a/orgs', { replace: true })}
+                    />
+                ),
+            })
+        }
+    }, [setupPin, setModal, navigate])
+
+    if (persist.pin) return <Navigate to="/a/orgs" />
     return (
         <div className="block-auth">
             <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-56px">
                 Sign in to Gosh
             </h1>
-            <div className="px-9 sm:px-2 mt-0 sm:mt-2 mb-10 text-center text-gray-606060 text-lg sm:text-xl leading-normal">
-                Please, write your seed phrase
-            </div>
 
-            <Formik
-                initialValues={{ username: '', phrase: '' }}
-                onSubmit={onFormSubmit}
-                validationSchema={Yup.object().shape({
-                    username: Yup.string()
-                        .max(64, 'Max length is 64 characters')
-                        .required('Username is required'),
-                    phrase: Yup.string().required('Phrase is required'),
-                })}
-            >
-                {({ isSubmitting, touched, errors }) => (
-                    <Form className="px-5 sm:px-124px">
-                        <div className="mb-3">
-                            <Field
-                                name="username"
-                                component={TextField}
-                                inputProps={{
-                                    autoComplete: 'off',
-                                    placeholder: 'Username',
-                                }}
-                            />
-                        </div>
-
-                        <div>
-                            <Field
-                                name="phrase"
-                                component={TextareaField}
-                                errorEnabled={false}
-                                inputProps={{
-                                    className: '!px-7 !py-6',
-                                    autoComplete: 'off',
-                                    placeholder: 'Seed phrase',
-                                }}
-                            />
-                        </div>
-
-                        <div className="mt-10 text-red-dd3a3a text-center text-base h-6">
-                            {touched.phrase && errors.phrase && (
-                                <ErrorMessage name={'phrase'} />
-                            )}
-                        </div>
-
-                        <div className="mt-2">
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="btn btn--body w-full py-3 text-xl leading-normal"
-                            >
-                                {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
-                                Sign in
-                            </button>
-                        </div>
-                    </Form>
-                )}
-            </Formik>
+            {!step && <SigninPhraseForm onSubmit={onPhraseSubmit} />}
+            {step?.name === 'ProfileRequired' && (
+                <SigninProfileForm
+                    profiles={step.data.profiles}
+                    onSubmit={onProfileSubmit}
+                />
+            )}
         </div>
     )
 }

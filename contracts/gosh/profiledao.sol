@@ -41,6 +41,15 @@ contract ProfileDao is Modifiers {
     function deployedDao(string name, string ver) public pure {
         name; ver;
     }
+    
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
+    }
 
     //Money part
     function getMoney() private {

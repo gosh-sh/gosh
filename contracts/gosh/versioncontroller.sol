@@ -10,8 +10,10 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
+import "./libraries/GoshLib.sol";
 import "systemcontract.sol";
 import "profiledao.sol";
+import "profileindex.sol";
 
 struct SystemContractV {
     string Key;
@@ -106,6 +108,10 @@ contract VersionController is Modifiers {
     }
     
     //Setters
+    function setProfileIndex(TvmCell code) public  onlyOwner accept {
+        _code[m_ProfileIndexCode] = code;
+    }
+    
     function setProfile(TvmCell code) public  onlyOwner accept {
         _code[m_ProfileCode] = code;
     }
@@ -115,13 +121,35 @@ contract VersionController is Modifiers {
     }
 
     //Getters   
-    function getProfileAddr(string name) external view returns(address) {
+    function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version),
+            contr: ProfileIndex,
+            pubkey: tvm.pubkey(),
+            varInit: { _name : name }
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }    
+    
+    function getProfileIndexAddr(uint256 pubkey, string name) external view returns(address) {
+        return _getProfileIndexAddr(pubkey, name);
+    }
+    
+    function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version);
+    }
+    
+    function _getProfileAddr(string name) private view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
             varInit: {_name : name, _versioncontroller: address(this)}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getProfileAddr(string name) external view returns(address) {
+        return _getProfileAddr(name);
     }
     
     function getProfileDaoAddr(string name) external view returns(address){

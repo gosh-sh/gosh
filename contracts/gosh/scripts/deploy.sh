@@ -58,6 +58,7 @@ TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/cod
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILE_CODE=$(everdev contract dt $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 
@@ -85,6 +86,8 @@ echo "     ====> Run setSystemContractCode"
 everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
 echo "     ====> Run setProfile"
 everdev contract run $VERSIONCONTROLLER_ABI setProfile --input "{\"code\": \"$PROFILE_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setProfileIndex"
+everdev contract run $VERSIONCONTROLLER_ABI setProfileIndex --input "{\"code\": \"$PROFILEINDEX_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileDao"
 everdev contract run $VERSIONCONTROLLER_ABI setProfileDao --input "{\"code\": \"$PROFILEDAO_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
