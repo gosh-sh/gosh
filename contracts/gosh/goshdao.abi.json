@@ -77,6 +77,24 @@
 			]
 		},
 		{
+			"name": "volunteersnap",
+			"inputs": [
+				{"name":"snap","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteerdiff",
+			"inputs": [
+				{"name":"diff","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyCommit",
 			"inputs": [
 				{"name":"repo","type":"address"},
@@ -409,6 +427,8 @@
 		{"name":"_rootpubkey","type":"uint256"},
 		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
 		{"name":"lastWalletDeployed","type":"address"},
+		{"name":"_volunteersnap","type":"address[]"},
+		{"name":"_volunteerdiff","type":"address[]"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_profiledao","type":"address"},

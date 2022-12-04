@@ -185,7 +185,7 @@ contract Snapshot is Modifiers {
         }
         if (diff.ipfs.hasValue()) {
             _ipfs = diff.ipfs.get();
-            DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, empty);
+            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, empty);
             _applying = true;
             return;
         } else {

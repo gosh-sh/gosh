@@ -20,10 +20,13 @@ import "snapshot.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 
+
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "1.0.0";
-    
+
+    address[] _volunteersnap;
+    address[] _volunteerdiff;
     address static _systemcontract;
     address _pubaddr;
     address _profiledao;
@@ -134,7 +137,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getMoney() private {
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
-        if (address(this).balance > 30000 ton) { return; }
+        if (address(this).balance > 50000 ton) { return; }
         tvm.accept();
         _flag = true;
         SystemContract(_systemcontract).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
@@ -145,13 +148,27 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = address.makeAddrStd(0, tvm.hash(s0));
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        if (address(this).balance < 20) { _volunteerdiff.push(msg.sender); getMoney(); return; }
         addr.transfer(10 ton);
         getMoney();
     }
     
     function sendMoneySnap(string branch, address repo, string name) public senderIs(getSnapshotAddr(branch, repo, name)) {
         tvm.accept();
+        if (address(this).balance < 2000) { _volunteersnap.push(msg.sender); getMoney(); return; }
         msg.sender.transfer(1000 ton);
+        getMoney();
+    }
+    
+    function volunteersnap(address[] snap, uint128 index) public senderIs(address(this)) accept {
+        snap[index].transfer(10 ton);
+        this.volunteersnap(snap, index + 1);
+        getMoney();       
+    }
+    
+    function volunteerdiff(address[] diff, uint128 index) public senderIs(address(this)) accept {
+        diff[index].transfer(10 ton);
+        this.volunteerdiff(diff, index + 1);
         getMoney();
     }
     
@@ -339,6 +356,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     receive() external {
         if (msg.sender == _systemcontract) {
             _flag = false;
+            if (_volunteersnap.length > 0) { this.volunteersnap{value: 0.1 ton, flag: 1}(_volunteersnap, 0); delete _volunteersnap; }
+            if (_volunteerdiff.length > 0) { this.volunteerdiff{value: 0.1 ton, flag: 1}(_volunteerdiff, 0); delete _volunteerdiff; }
             if ((saveaddr.hasValue() == true) && (saveind.hasValue() == true)) {
                 this.deployWallets{value: 0.1 ton, flag: 1}(saveaddr.get(), saveind.get());
                 saveaddr = null;
