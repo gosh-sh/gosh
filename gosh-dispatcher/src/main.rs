@@ -1,5 +1,5 @@
 use anyhow::format_err;
-use std::process::Stdio;
+use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
@@ -18,34 +18,11 @@ async fn main() -> anyhow::Result<()> {
     let mut returned_version = None;
     for ver in POSSIBLE_VERSIONS {
         let helper_path = format!("{}{}", REMOTE_NAME, ver);
-        let helper = Command::new(&helper_path)
-            .args(args.clone())
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn();
-        if helper.is_err() {
-            continue;
+        let (exec_res, version) = run_binary_with_command(&helper_path, args.clone(), "repo_version").await?;
+        if !version.is_empty() {
+            returned_version = Some(version);
         }
-        let mut helper = helper.unwrap();
-        let mut stdin = helper
-            .stdin
-            .take()
-            .ok_or(format_err!("Failed to take stdin of child process"))?;
-        let output = helper
-            .stdout
-            .take()
-            .ok_or(format_err!("Failed to take stdout of child process"))?;
-        stdin.write_all("repo_version\n\n".as_bytes()).await?;
-        let mut lines = BufReader::new(output).lines();
-        while let Some(line) = lines.next_line().await? {
-            if line.is_empty() {
-                break;
-            }
-            returned_version = Some(line.clone());
-            eprintln!("Discovered repo version: {returned_version:?}");
-        }
-        let exec_res = helper.wait().await;
+
         let exit_code = exec_res.unwrap().code().unwrap_or(-1);
         if (exit_code == 0)
             && returned_version.is_some()
@@ -67,6 +44,12 @@ async fn main() -> anyhow::Result<()> {
 
     if let Some(helper_path) = proper_start_version {
         eprintln!("Run version: {helper_path}");
+        eprintln!("Check for tombstone");
+        let (status, tombstone) = run_binary_with_command(&helper_path, args.clone(), "get_dao_tombstone").await?;
+        eprintln!("tombstone: {status:?}/{tombstone}");
+        if status.is_ok() && tombstone == "true" {
+            return Err(format_err!("Repository is tombstoned, you need to get the remote link to the new version of repository."));
+        }
         let res = Command::new(&helper_path)
             .args(args.clone())
             .status()
@@ -78,4 +61,35 @@ async fn main() -> anyhow::Result<()> {
         };
     }
     Err(format_err!("Failed to find proper git-remote-gosh version"))
+}
+
+async fn run_binary_with_command(helper_path: &str, args: Vec<String>, command: &str) -> anyhow::Result<(tokio::io::Result<ExitStatus>, String)> {
+    eprintln!("run {helper_path} with {args:?} and command {command}");
+    let mut helper = Command::new(helper_path)
+        .args(args.clone())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        // .stderr(Stdio::null())
+        .spawn()?;
+    let mut stdin = helper
+        .stdin
+        .take()
+        .ok_or(format_err!("Failed to take stdin of child process"))?;
+    let output = helper
+        .stdout
+        .take()
+        .ok_or(format_err!("Failed to take stdout of child process"))?;
+    eprintln!("pass command");
+    stdin.write_all(format!("{command}\n\n").as_bytes()).await?;
+    let mut lines = BufReader::new(output).lines();
+    let mut result = String::new();
+    while let Some(line) = lines.next_line().await? {
+        if line.is_empty() {
+            break;
+        }
+        result = line;
+        eprintln!("{command}: {result}");
+    }
+
+    Ok((helper.wait().await, result))
 }

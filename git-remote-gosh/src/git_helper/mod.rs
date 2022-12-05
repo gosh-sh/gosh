@@ -42,6 +42,12 @@ struct GetAddrDaoResult {
     pub address: BlockchainContractAddress,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetTombstoneResult {
+    #[serde(rename = "value0")]
+    pub tombstone: bool,
+}
+
 // Note: this module implements fetch method on GitHelper
 mod fetch;
 
@@ -131,6 +137,19 @@ where
             .get_version(self.blockchain.client())
             .await?;
         Ok(vec![version, "".to_string()])
+    }
+
+    async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {
+        let dao_address: GetAddrDaoResult = self
+            .blockchain
+            .root_contract()
+            .run_static(self.blockchain.client(), "getAddrDao", Some(serde_json::json!({ "name": self.remote.dao })))
+            .await?;
+
+        let dao_contract = GoshContract::new(dao_address.address, gosh_abi::DAO);
+
+        let tombstone: GetTombstoneResult = dao_contract.run_static(self.blockchain.client(), "getTombstone", None).await?;
+        Ok(vec![format!("{}", tombstone.tombstone), "".to_string()])
     }
 
     #[instrument(level = "debug", skip(self))]
@@ -261,6 +280,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (Some("repo_version"), None, None) => helper.print_repo_version().await?,
+            (Some("get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
