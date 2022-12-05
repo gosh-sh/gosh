@@ -4,9 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
+pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
@@ -14,20 +15,19 @@ import "goshwallet.sol";
 
 /* Root contract of tag */
 contract Tag is Modifiers{
-    string version = "0.5.3";
+    string constant version = "1.0.0";
     
     string static _nametag;
     string _nameCommit;
     string _content;
     address _commit;
-    uint256 _pubkey;
-    address _rootGosh;
+    address _pubaddr;
+    address _systemcontract;
     address _goshdao;
-    TvmCell m_WalletCode;
+    mapping(uint8 => TvmCell) _code;
     
     constructor(
-        uint256 pubkey, 
-        uint256 pubkeysender,
+        address pubaddr,
         string nameCommit, 
         address commit, 
         string content,
@@ -37,37 +37,36 @@ contract Tag is Modifiers{
         uint128 index) public onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
-        m_WalletCode = WalletCode;
-        _rootGosh = goshaddr;
+        _code[m_WalletCode] = WalletCode;
+        _systemcontract = goshaddr;
         _goshdao = goshdao;
-        _pubkey = pubkey;
-        require(checkAccess(pubkeysender, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _pubaddr = pubaddr;
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _nameCommit = nameCommit;
         _commit = commit;
         _content = content;
     }
     
-    function checkAccess(uint256 pubkey, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubkey, index);
+    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         return addr == sender;
     }
     
-    function _composeWalletStateInit(uint256 pubkey, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(m_WalletCode, pubkey, version);
-        TvmCell _contractflex = tvm.buildStateInit({
+    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
+        TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
-            pubkey: pubkey,
             contr: GoshWallet,
-            varInit: {_rootRepoPubkey: _pubkey, _rootgosh : _rootGosh, _goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
-        return _contractflex;
+        return _contract;
     }
     
     //Selfdestruct
-    function destroy(uint256 pubkey, uint128 index) public {
-        require(checkAccess(pubkey, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        selfdestruct(giver);
     }
     
     //Getters
@@ -79,7 +78,11 @@ contract Tag is Modifiers{
         return _content;
     }
 
-    function getVersion() external view returns(string) {
+    function getVersion() external pure returns(string) {
         return version;
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 }

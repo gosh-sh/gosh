@@ -1,57 +1,67 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks'
-import { userStatePersistAtom } from '../store/user.state'
-import { IGoshDao, IGoshWallet } from '../types/types'
-import { classNames } from '../utils'
+import { classNames, useDao, TDao } from 'react-gosh'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 export type TDaoLayoutOutletContext = {
-    dao: IGoshDao
-    wallet?: IGoshWallet
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
 }
 
 const DaoLayout = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName } = useParams()
-    const dao = useGoshDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName!)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
-        { to: `/${daoName}`, title: 'Overview', public: true },
-        { to: `/${daoName}/repos`, title: 'Repositories', public: true },
-        { to: `/${daoName}/events`, title: 'Events', public: true },
-        { to: `/${daoName}/settings`, title: 'Settings', public: false },
+        { to: `/o/${daoName}`, title: 'Overview', public: true },
+        { to: `/o/${daoName}/repos`, title: 'Repositories', public: true },
+        { to: `/o/${daoName}/events`, title: 'Events', public: true },
+        { to: `/o/${daoName}/settings`, title: 'Settings', public: false },
     ]
 
     useEffect(() => {
-        const walletAwaited =
-            !userStatePersist.phrase || (userStatePersist.phrase && wallet)
-        if (dao && walletAwaited) setIsReady(true)
-    }, [dao, userStatePersist.phrase, wallet])
+        if (!dao.isFetching) setIsReady(true)
+    }, [dao.isFetching])
 
     return (
         <div className="container container--full my-10">
             <h1 className="mb-6 px-5 sm:px-0">
-                <Link to={`/${daoName}`} className="font-semibold text-2xl">
+                <Link to={`/o/${daoName}`} className="font-semibold text-2xl">
                     {daoName}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {dao.details?.version}
+                </span>
             </h1>
 
-            {!isReady && (
+            {!dao.errors.length && !isReady && (
                 <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading organization...
                 </div>
             )}
 
-            {isReady && (
+            {!!dao.errors.length && (
+                <div className="p-3 bg-rose-600 text-white rounded">
+                    <ul>
+                        {dao.errors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {isReady && !dao.errors.length && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
                         {tabs
-                            .filter((item) => (!wallet ? item.public : item))
+                            .filter((item) =>
+                                !dao.details?.isAuthMember ? item.public : item,
+                            )
                             .map((item, index) => (
                                 <NavLink
                                     key={index}
@@ -71,7 +81,7 @@ const DaoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ dao, wallet }} />
+                    <Outlet context={{ dao }} />
                 </>
             )}
         </div>

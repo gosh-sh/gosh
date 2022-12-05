@@ -1,38 +1,28 @@
-use crate::blockchain::{
-    TonClient,
-    Result
-};
-use ton_client::boc::{
-    ParamsOfGetBocHash,
-    ResultOfGetBocHash,
-    get_boc_hash,
-};
-use ton_client::abi::{
-    AbiParam,
-    decode_boc,
-    encode_boc,
-    ParamsOfAbiEncodeBoc,
-    ResultOfAbiEncodeBoc,
-    ParamsOfDecodeBoc
+use crate::blockchain::EverClient;
+use std::sync::Arc;
+use ton_client::{
+    abi::{
+        decode_boc, encode_boc, AbiParam, ParamsOfAbiEncodeBoc, ParamsOfDecodeBoc,
+        ResultOfAbiEncodeBoc,
+    },
+    boc::{get_boc_hash, ParamsOfGetBocHash, ResultOfGetBocHash},
 };
 
-
-pub async fn tvm_hash(context: &TonClient, data: &[u8]) -> Result<String> {
+#[instrument(level = "debug", skip(context, data))]
+pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<String> {
     let params = ParamsOfAbiEncodeBoc {
         params: vec![AbiParam {
             name: "data".to_string(),
             param_type: "bytes".to_string(),
             ..Default::default()
         }],
-        data: serde_json::json!({
-            "data": hex::encode(data)
-        }),
-        boc_cache: None
+        data: serde_json::json!({ "data": hex::encode(data) }),
+        boc_cache: None,
     };
-    let ResultOfAbiEncodeBoc { boc } = encode_boc(context.clone(), params).await?;
+    let ResultOfAbiEncodeBoc { boc } = encode_boc(Arc::clone(context), params).await?;
 
     let mut decoded = decode_boc(
-        context.clone(),
+        Arc::clone(context),
         ParamsOfDecodeBoc {
             boc,
             params: vec![AbiParam {
@@ -41,16 +31,19 @@ pub async fn tvm_hash(context: &TonClient, data: &[u8]) -> Result<String> {
                 ..Default::default()
             }],
             allow_partial: false,
-        }
-    ).await?;
+        },
+    )
+    .await?;
     let boc = decoded.data["b"].take();
     let boc = boc.as_str().unwrap();
 
     let ResultOfGetBocHash { hash } = get_boc_hash(
-        context.clone(),
-        ParamsOfGetBocHash { boc: boc.to_owned() }
-    ).await?;
+        Arc::clone(context),
+        ParamsOfGetBocHash {
+            boc: boc.to_owned(),
+        },
+    )
+    .await?;
 
     Ok(hash)
 }
-

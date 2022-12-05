@@ -2,16 +2,16 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
+import { TRepository, TTag } from 'react-gosh/dist/types/repo.types'
 
 type TRepositoryListItemProps = {
     daoName: string
     daoLink?: boolean
-    item: Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
-        branches?: TGoshBranch[]
+    item: Omit<TRepository, 'branches' | 'head' | 'tags'> & {
+        branches?: number
         head?: string
-        tags?: TGoshTagDetails[]
+        tags?: TTag[]
     }
 }
 
@@ -25,7 +25,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     <>
                         <Link
                             className="text-xl font-semibold hover:underline"
-                            to={`/${daoName}`}
+                            to={`/o/${daoName}`}
                         >
                             {daoName}
                         </Link>
@@ -34,10 +34,13 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 )}
                 <Link
                     className="text-xl font-semibold hover:underline"
-                    to={`/${daoName}/${item.name}`}
+                    to={`/o/${daoName}/r/${item.name}`}
                 >
                     {item.name}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {item.version}
+                </span>
             </div>
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
@@ -64,7 +67,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches?.length}
+                        {item.branches}
                     </div>
                     {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />

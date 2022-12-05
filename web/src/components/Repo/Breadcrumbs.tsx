@@ -37,7 +37,7 @@ const RepoBreadcrumbs = (props: TRepoPathProps) => {
                 return (
                     <React.Fragment key={index}>
                         <Link
-                            to={`/${daoName}/${repoName}/tree/${branchName}${
+                            to={`/o/${daoName}/r/${repoName}/tree/${branchName}${
                                 part && `/${part}`
                             }`}
                             className="text-extblue font-medium hover:underline"

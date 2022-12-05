@@ -1,0 +1,27 @@
+version: '3'
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+
+
+services:
+
+  gosh-caddy:
+    image: caddy:2.5.2
+    container_name: gosh-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy:/etc/caddy
+      - /mnt/data/caddy:/data
+      - ./www:/var/www
+    environment:
+      - ADMIN_USER=${ADMIN_USER}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - HOST_NAME=${HOST_NAME:-monitoring}
+    restart: unless-stopped
+    networks:
+      - gosh-monitoring

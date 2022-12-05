@@ -1,26 +1,20 @@
 import { Disclosure } from '@headlessui/react'
 import { Link, useLocation } from 'react-router-dom'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
-import { userStatePersistAtom } from '../../store/user.state'
+import { useSetRecoilState } from 'recoil'
 import logoBlack from '../../assets/images/logo-black.svg'
 import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
+import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
-import { dockerClient } from '../../helpers'
+import { AppConfig, useUser } from 'react-gosh'
 
 const Header = () => {
-    const userStatePersist = useRecoilValue(userStatePersistAtom)
+    const user = useUser()
     const location = useLocation()
     const setModal = useSetRecoilState(appModalStateAtom)
-    // const navigateToV1UI = (_: any) => {
-    //     window.location.href = window.location.href.replace(
-    //         '/v2/index.html',
-    //         '/v1/index.html'
-    //     );
-    // };
 
     return (
         <header>
@@ -76,19 +70,25 @@ const Header = () => {
                                         </span>
                                     </button>
                                 </>
-                                // <a
-                                //     onClick={navigateToV1UI}
-                                //     rel="noreferrer"
-                                //     className="text-gray-050a15 sm:text-gray-53596d hover:underline"
-                                // >
-                                //     <FontAwesomeIcon
-                                //         icon={faBox}
-                                //         size="lg"
-                                //         className="mr-3"
-                                //     />
-                                //     Containers
-                                // </a>
                             )}
+
+                            <a
+                                href="https://blog.gosh.sh/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-gray-050a15 sm:text-gray-53596d hover:underline"
+                                onClick={(e) => {
+                                    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+                                        e.preventDefault()
+                                        AppConfig.dockerclient?.host.openExternal(
+                                            'https://blog.gosh.sh/',
+                                        )
+                                    }
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faBlog} size="lg" />
+                                <span className="ml-3 hidden sm:inline">Our blog</span>
+                            </a>
 
                             <a
                                 href="https://t.me/gosh_sh"
@@ -98,7 +98,7 @@ const Header = () => {
                                 onClick={(e) => {
                                     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
                                         e.preventDefault()
-                                        dockerClient?.host.openExternal(
+                                        AppConfig.dockerclient?.host.openExternal(
                                             'https://t.me/gosh_sh',
                                         )
                                     }
@@ -110,18 +110,18 @@ const Header = () => {
                                 </span>
                             </a>
 
-                            {!userStatePersist.phrase &&
+                            {!user.persist.phrase &&
                                 location.pathname.search(/signin|signup/) < 0 &&
                                 location.pathname !== '/' && (
                                     <>
                                         <Link
-                                            to={`/account/signup`}
+                                            to={`/a/signup`}
                                             className="btn btn--header icon-arrow"
                                         >
                                             Sign up
                                         </Link>
                                         <Link
-                                            to={`/account/signin`}
+                                            to={`/a/signin`}
                                             className="btn btn--header icon-arrow"
                                         >
                                             Sign in
@@ -134,7 +134,7 @@ const Header = () => {
                                         Don't have an account?
                                     </div> */}
                                     <Link
-                                        to={`/account/signup`}
+                                        to={`/a/signup`}
                                         className="btn btn--header icon-arrow"
                                     >
                                         Sign up
@@ -147,7 +147,7 @@ const Header = () => {
                                         Already have an account?
                                     </div> */}
                                     <Link
-                                        to={`/account/signin`}
+                                        to={`/a/signin`}
                                         className="btn btn--header icon-arrow"
                                     >
                                         Sign in
@@ -159,7 +159,7 @@ const Header = () => {
                             {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
 
                             {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
-                            {userStatePersist.phrase && <DropdownMenu />}
+                            {user.persist.phrase && <DropdownMenu />}
                         </div>
 
                         <Disclosure.Panel className="sm:hidden">

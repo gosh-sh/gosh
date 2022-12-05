@@ -1,13 +1,12 @@
 {
 	"ABI version": 2,
-	"version": "2.2",
+	"version": "2.3",
 	"header": ["pubkey", "time", "expire"],
 	"functions": [
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubkeysender","type":"uint256"},
-				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"rootgosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootrepo","type":"address"},
@@ -37,10 +36,19 @@
 			]
 		},
 		{
+			"name": "isReady",
+			"inputs": [
+				{"name":"sha1","type":"uint256"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"}
 			],
@@ -51,7 +59,8 @@
 			"name": "cancelDiff",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -60,7 +69,8 @@
 			"name": "approve",
 			"inputs": [
 				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
+				{"name":"index2","type":"uint128"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
 			],
 			"outputs": [
 			]
@@ -68,7 +78,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
-				{"name":"value","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -98,7 +108,7 @@
 			]
 		},
 		{
-			"name": "getRepoAdress",
+			"name": "getRepoAddress",
 			"inputs": [
 			],
 			"outputs": [
@@ -120,6 +130,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
 		}
 	],
 	"data": [
@@ -129,30 +147,29 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
-		{"name":"version","type":"string"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"_baseCommit","type":"string"},
 		{"name":"_basemaybe","type":"string"},
-		{"name":"_pubkey","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
-		{"name":"_rootgosh","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_oldcommits","type":"string"},
 		{"name":"_commits","type":"string"},
 		{"name":"_ipfs","type":"optional(string)"},
 		{"name":"_ipfsold","type":"optional(string)"},
-		{"name":"m_codeSnapshot","type":"cell"},
-		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_codeDiff","type":"cell"},
-		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_codeTree","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
 		{"name":"_branch","type":"string"},
-		{"name":"_ready","type":"bool"}
+		{"name":"_ready","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"name":"_flag","type":"bool"}
 	]
 }

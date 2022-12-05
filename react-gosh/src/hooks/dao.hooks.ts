@@ -1,0 +1,386 @@
+import { useEffect, useState } from 'react'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import { executeByChunk } from '../helpers'
+import { userAtom, daoAtom, walletAtom } from '../store'
+import { TDaoCreateProgress, TDaoListItem, TDaoMemberListItem } from '../types'
+import { EGoshError, GoshError } from '../errors'
+import { AppConfig } from '../appconfig'
+import { useProfile } from './user.hooks'
+import { IGoshDaoAdapter, IGoshWallet } from '../gosh/interfaces'
+import { GoshAdapterFactory } from '../gosh'
+import { MAX_PARALLEL_READ } from '../constants'
+
+function useDaoList(perPage: number) {
+    const profile = useProfile()
+    const [search, setSearch] = useState<string>('')
+    const [daos, setDaos] = useState<{
+        items: TDaoListItem[]
+        filtered: { search: string; items: string[] }
+        page: number
+        isFetching: boolean
+    }>({
+        items: [],
+        filtered: { search: '', items: [] },
+        page: 1,
+        isFetching: true,
+    })
+
+    /** Get next chunk of DAO list items */
+    const getMore = () => {
+        setDaos((state) => ({ ...state, page: state.page + 1 }))
+    }
+
+    /** Load item details and update corresponging list item */
+    const setItemDetails = async (item: TDaoListItem) => {
+        if (item.isLoadDetailsFired) return
+
+        setDaos((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+
+        const details = await item.adapter.getDetails()
+        setDaos((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) return { ...curr, ...details }
+                return curr
+            }),
+        }))
+    }
+
+    /** Get initial DAO list */
+    useEffect(() => {
+        const _getDaoList = async () => {
+            if (!profile) return
+
+            // Get DAO details (prepare DAO list items)
+            const adapters = await profile.getDaos()
+            const dirty = await executeByChunk(
+                adapters,
+                MAX_PARALLEL_READ,
+                async (adapter) => ({
+                    adapter,
+                    address: adapter.getAddress(),
+                    name: await adapter.getName(),
+                    version: adapter.getVersion(),
+                }),
+            )
+
+            const clean: TDaoListItem[] = []
+            dirty.forEach((item) => {
+                const { name, version } = item
+                const index = clean.findIndex((a) => a.name === name)
+
+                if (index < 0) clean.push(item)
+                else if (clean[index].version < version) clean[index] = item
+            })
+
+            setDaos((state) => {
+                const merged = [...state.items, ...clean]
+                return {
+                    items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
+                    filtered: { search: '', items: merged.map((item) => item.address) },
+                    page: 1,
+                    isFetching: false,
+                }
+            })
+        }
+
+        _getDaoList()
+    }, [profile])
+
+    /** Update filtered items and page depending on search */
+    useEffect(() => {
+        setDaos((state) => {
+            return {
+                ...state,
+                page: search ? 1 : state.page,
+                filtered: {
+                    search,
+                    items: state.items
+                        .filter((item) => _searchItem(search, item.name))
+                        .map((item) => item.address),
+                },
+            }
+        })
+    }, [search])
+
+    const _searchItem = (what: string, where: string): boolean => {
+        const pattern = new RegExp(`^${what}`, 'i')
+        return !what || where.search(pattern) >= 0
+    }
+
+    return {
+        isFetching: daos.isFetching,
+        isEmpty: !daos.isFetching && !daos.filtered.items.length,
+        items: daos.items
+            .filter((item) => daos.filtered.items.indexOf(item.address) >= 0)
+            .slice(0, daos.page * perPage),
+        hasNext: daos.page * perPage < daos.filtered.items.length,
+        search,
+        setSearch,
+        getMore,
+        getItemDetails: setItemDetails,
+    }
+}
+
+function useDao(name: string) {
+    const [details, setDetails] = useRecoilState(daoAtom)
+    const [adapter, setAdapter] = useState<IGoshDaoAdapter>()
+    const [isFetching, setIsFetching] = useState<boolean>(true)
+    const [errors, setErrors] = useState<string[]>([])
+
+    useEffect(() => {
+        const _getDao = async () => {
+            let instance: IGoshDaoAdapter | undefined
+            for (const version of Object.keys(AppConfig.versions).reverse()) {
+                const gosh = GoshAdapterFactory.create(version)
+                const check = await gosh.getDao({ name })
+                if (await check.isDeployed()) {
+                    instance = check
+                    break
+                }
+            }
+
+            if (instance) {
+                const details = await instance.getDetails()
+                setDetails(details)
+                setAdapter(instance)
+            } else {
+                setErrors((state) => [...state, 'DAO not found'])
+            }
+            setIsFetching(false)
+        }
+
+        _getDao()
+    }, [name])
+
+    return {
+        adapter,
+        details,
+        errors,
+        isFetching,
+    }
+}
+
+function useDaoCreate() {
+    const profile = useProfile()
+    const [progress, setProgress] = useState<TDaoCreateProgress>({
+        isFetching: false,
+    })
+
+    const create = async (name: string, username: string[]) => {
+        if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        // Set initial progress
+        setProgress((state) => ({
+            ...state,
+            isFetching: true,
+        }))
+
+        // Deploy dao
+        let isDaoDeployed: boolean
+        try {
+            const gosh = GoshAdapterFactory.createLatest()
+
+            username = username.filter((item) => !!item)
+            const profiles = await gosh.isValidProfile(username)
+            await profile.deployDao(gosh, name, [profile.address, ...profiles])
+            isDaoDeployed = true
+        } catch (e) {
+            isDaoDeployed = false
+            throw e
+        } finally {
+            setProgress((state) => ({
+                ...state,
+                isDaoDeployed,
+                isFetching: false,
+            }))
+        }
+    }
+
+    return { progress, create }
+}
+
+function useDaoUpgrade(dao: IGoshDaoAdapter) {
+    const [versions, setVersions] = useState<string[]>()
+
+    useEffect(() => {
+        const _getAvailableVersions = () => {
+            const all = Object.keys(AppConfig.versions)
+            const currIndex = all.findIndex((v) => v === dao.getVersion())
+            setVersions(all.slice(currIndex + 1))
+        }
+
+        _getAvailableVersions()
+    }, [dao])
+
+    const upgrade = async (version: string) => {
+        if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
+            throw new GoshError(`Gosh version ${version} is not supported`)
+        }
+        await dao.upgrade(version)
+    }
+
+    return { versions, upgrade }
+}
+
+function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
+    const [search, setSearch] = useState<string>('')
+    const [members, setMembers] = useState<{
+        items: TDaoMemberListItem[]
+        filtered: string[]
+        page: number
+        isFetching: boolean
+    }>({
+        items: [],
+        filtered: [],
+        page: 1,
+        isFetching: true,
+    })
+
+    /** Get next chunk of DAO member list items */
+    const getMore = () => {
+        setMembers((state) => ({ ...state, page: state.page + 1 }))
+    }
+
+    /** Load item details and update corresponging list item */
+    const setItemDetails = async (item: TDaoMemberListItem) => {
+        if (item.isLoadDetailsFired) return
+
+        setMembers((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.profile === item.profile) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+
+        const smv = await dao.getSmv()
+        const wallet = await dao.getMemberWallet({ address: item.wallet })
+        const details = {
+            smvBalance: await smv.getWalletBalance(wallet),
+        }
+
+        setMembers((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.profile === item.profile) return { ...curr, ...details }
+                return curr
+            }),
+        }))
+    }
+
+    /** Get initial DAO members list */
+    useEffect(() => {
+        const _getMemberList = async () => {
+            const gosh = GoshAdapterFactory.createLatest()
+            const details = await dao.getDetails()
+            const items = await executeByChunk(
+                details.members,
+                MAX_PARALLEL_READ,
+                async (member) => {
+                    const profile = await gosh.getProfile({ address: member.profile })
+                    const name = await profile.getName()
+                    return { ...member, name }
+                },
+            )
+
+            setMembers((state) => ({
+                ...state,
+                items: items.sort((a, b) => (a.name > b.name ? 1 : -1)),
+                filtered: items.map((item) => item.profile),
+                isFetching: false,
+            }))
+        }
+
+        _getMemberList()
+    }, [dao.getAddress()])
+
+    /** Update filtered items and page depending on search */
+    useEffect(() => {
+        setMembers((state) => {
+            return {
+                ...state,
+                page: search ? 1 : state.page,
+                filtered: state.items
+                    .filter((item) => {
+                        const pattern = new RegExp(search, 'i')
+                        return !search || !item.name || item.name.search(pattern) >= 0
+                    })
+                    .map((item) => item.profile),
+            }
+        })
+    }, [search])
+
+    /** Refresh members details (reset `isLoadDetailsFired` flag) */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (members.isFetching) return
+
+            setMembers((state) => ({
+                ...state,
+                items: state.items.map((item) => ({
+                    ...item,
+                    isLoadDetailsFired: false,
+                })),
+            }))
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [members.isFetching])
+
+    return {
+        isFetching: members.isFetching,
+        items: members.items
+            .filter((item) => members.filtered.indexOf(item.profile) >= 0)
+            .slice(0, perPage ? members.page * perPage : members.items.length),
+        hasNext: perPage ? members.page * perPage < members.filtered.length : false,
+        search,
+        setSearch,
+        getMore,
+        getItemDetails: setItemDetails,
+    }
+}
+
+function useDaoMemberCreate(dao: IGoshDaoAdapter) {
+    const create = async (username: string[]) => {
+        username = username.filter((item) => !!item)
+        await dao.createMember(username)
+    }
+    return create
+}
+
+function useDaoMemberDelete(dao: IGoshDaoAdapter) {
+    const [fetching, setFetching] = useState<string[]>([])
+
+    const isFetching = (username: string) => fetching.indexOf(username) >= 0
+
+    const remove = async (username: string[]) => {
+        setFetching((state) => [...state, ...username])
+        await dao.deleteMember(username)
+        setFetching((state) => state.filter((item) => username.indexOf(item) < 0))
+    }
+
+    return { remove, isFetching }
+}
+
+export {
+    useDaoList,
+    useDao,
+    useDaoCreate,
+    useDaoUpgrade,
+    useDaoMemberList,
+    useDaoMemberCreate,
+    useDaoMemberDelete,
+}
