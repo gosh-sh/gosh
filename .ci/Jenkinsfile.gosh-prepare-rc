@@ -246,7 +246,7 @@ pipeline {
                 }
             }
         }*/
-        stage("Prerelease: Git Helper Snap"){
+        /*stage("Prerelease: Git Helper Snap"){
             agent {
                 node {
                     label 'jenkins-main'
@@ -270,7 +270,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Prerelease: Git Helper - bin') {
             agent {
                 docker {
