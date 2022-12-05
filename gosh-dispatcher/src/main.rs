@@ -4,7 +4,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
 const REMOTE_NAME: &str = "git-remote-gosh_v";
-const POSSIBLE_VERSIONS: [&'static str; 2] = ["1_0_0", "0_11_0"];
+const POSSIBLE_VERSIONS: [&'static str; 3] = ["1_0_1", "1_0_0", "0_11_0"];
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -15,6 +15,7 @@ async fn main() -> anyhow::Result<()> {
     args.remove(0);
 
     let mut proper_start_version = None;
+    let mut returned_version = None;
     for ver in POSSIBLE_VERSIONS {
         let helper_path = format!("{}{}", REMOTE_NAME, ver);
         let helper = Command::new(&helper_path)
@@ -37,23 +38,28 @@ async fn main() -> anyhow::Result<()> {
             .ok_or(format_err!("Failed to take stdout of child process"))?;
         stdin.write_all("repo_version\n\n".as_bytes()).await?;
         let mut lines = BufReader::new(output).lines();
-        let mut returned_version = None;
         while let Some(line) = lines.next_line().await? {
             if line.is_empty() {
                 break;
             }
             returned_version = Some(line.clone());
+            eprintln!("Discovered repo version: {returned_version:?}");
         }
         let exec_res = helper.wait().await;
         let exit_code = exec_res.unwrap().code().unwrap_or(-1);
         if (exit_code == 0)
             && returned_version.is_some()
-            && returned_version.unwrap() == ver.replace("_", ".")
+            && returned_version.clone().unwrap() == ver.replace("_", ".")
         {
             proper_start_version = Some(helper_path);
+            break;
         }
     }
     if proper_start_version.is_none() {
+        if let Some(version) = returned_version {
+            eprintln!("Specified repo has such version: {version}\nPls obtain corresponding version {REMOTE_NAME} to work with it.");
+            return Err(format_err!("Failed to find proper git-remote-gosh version"));
+        }
         // 0_11_0 version doesn't support repo_version command, so choose to try it if no proper
         // helper was found
         proper_start_version = Some(format!("{}{}", REMOTE_NAME, "0_11_0"));
