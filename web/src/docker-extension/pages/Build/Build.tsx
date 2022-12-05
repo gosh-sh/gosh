@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../../../pages/RepoLayout'
-import BranchSelect from '../../../components/BranchSelect'
 import * as Yup from 'yup'
-import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
-import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../../store/user.state'
-import TextField from '../../../components/FormikForms/TextField'
-import { getCommit } from '../../../helpers'
+import { useBranches, AppConfig } from 'react-gosh'
+import { TextField } from '../../../components/Formik'
+import { BranchSelect } from '../../../components/Branches'
 
 type TBuildFormValues = {
     tag: string
@@ -17,17 +14,13 @@ type TBuildFormValues = {
 }
 
 const BuildPage = () => {
-    const userState = useRecoilValue(userStateAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
     const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
+    const { branches, branch, updateBranch } = useBranches(repo, branchName)
     const [output, setOutput] = useState('')
 
-    // const [dirUp] = splitByPath(treePath)
-
     const isDisabled = false
-    const rootContract = process.env.REACT_APP_GOSH_ADDR
 
     const appendLog = (...args: string[]) => {
         console.log('appendLog', args)
@@ -42,18 +35,15 @@ const BuildPage = () => {
 
     const onBuild = async (values: TBuildFormValues, { setSubmitting }: any) => {
         setOutput('')
-        console.log('onBuild', values)
         if (!!branch) {
-            const commit = await getCommit(repo, branch.commitAddr)
-            console.log('commit', commit)
+            const commit = await repo.getCommit({ address: branch.commit.address })
 
             await DockerClient.buildImage(
-                `gosh://${rootContract}/${daoName}/${repoName}`,
+                `gosh://${AppConfig.versions[repo.getVersion()]}/${daoName}/${repoName}`,
                 commit.name,
                 values.imageDockerfile,
                 values.tag,
                 appendLog,
-                userState,
             )
         } else {
             console.error(`Error: branch has no commit address`)
@@ -74,7 +64,9 @@ const BuildPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/build/${selected.name}`)
+                                navigate(
+                                    `/o/${daoName}/r/${repoName}/build/${selected.name}`,
+                                )
                             }
                         }}
                     />

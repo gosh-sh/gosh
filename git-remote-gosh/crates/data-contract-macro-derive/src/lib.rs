@@ -5,7 +5,6 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
-
 #[proc_macro_derive(DataContract, attributes(abi, abi_data_fn))]
 pub fn data_contract(input: TokenStream) -> TokenStream {
     // Construct a string representation of the type definition
@@ -22,7 +21,9 @@ pub fn data_contract(input: TokenStream) -> TokenStream {
 }
 
 fn require_attribute<'a>(ast: &'a syn::DeriveInput, name: &str) -> &'a syn::Lit {
-    let attribute = &ast.attrs.iter()
+    let attribute = &ast
+        .attrs
+        .iter()
         .find(|e| e.name() == name)
         .expect(&format!("Named attribute {} is required", name));
     if let syn::MetaItem::NameValue(_, attribute_value) = &attribute.value {
@@ -39,14 +40,21 @@ fn impl_data_contract(ast: &syn::DeriveInput) -> quote::Tokens {
 
     quote! {
         impl #name {
-
-            pub async fn load(context: &std::sync::Arc<::ton_client::ClientContext>, address: &str) -> std::result::Result<#name, Box<dyn std::error::Error>>
+            pub async fn load(
+                context: &std::sync::Arc<::ton_client::ClientContext>,
+                address: &crate::blockchain::BlockchainContractAddress,
+            ) -> anyhow::Result<#name>
             {
                 let abi = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/", #abi));
-                let contract = crate::blockchain::GoshContract::new(address, (#abi, abi));
-                let content = contract.run_local(context, #abi_data_fn, None).await?;
+                let contract = crate::blockchain::contract::GoshContract::new(address, (#abi, abi));
+                let content = crate::blockchain::contract::ContractRead::read_state(
+                    &contract,
+                    context,
+                    #abi_data_fn,
+                    None
+                ).await?;
                 let obj = ::serde_json::from_value::<#name>(content)
-                    .map_err(|e| e.into());
+                    .map_err(|e| anyhow::Error::from(e));
                 return obj;
             }
         }

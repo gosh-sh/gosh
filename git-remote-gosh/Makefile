@@ -21,6 +21,12 @@ IMAGE_TAG  ?= ${GIT_BRANCH}
 FULL_IMAGE_NAME ?= ${IMAGE_NAME}:${IMAGE_TAG}
 TAG_LATEST := ${IMAGE_NAME}:latest
 
+RELEASE_VERSION :=$(patsubst "%",%,$(strip $(subst "version":,,$(shell grep "version" "../version.json"))))
+
+.PHONY: rename_impl_to_semver
+rename_impl_to_semver:
+	-find ./target -name 'git-remote-gosh-impl*' -exec sh -c 'mv $$0 "$$(echo "$$0" | sed s/impl/v${RELEASE_VERSION}/ )" ' {}  \;
+
 .PHONY: clear_screen
 clear_screen:
 	-clear && printf '\e[3J'
@@ -36,7 +42,7 @@ copy_abi: clear_abi
 
 .PHONY: build
 build: copy_abi clear_screen
-	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
+	GOSH_BUILD_VERSION=`git describe --tags` cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
 
 .PHONY: install
 install: copy_abi clear_screen
@@ -46,6 +52,9 @@ install: copy_abi clear_screen
 test: copy_abi clear_screen
 	cargo test
 
+.PHONY: integration_test
+integration_test: copy_abi clear_screen
+	cargo test --test integration_test
 
 .PHONY: qemu
 qemu: ## may need to setup qemu

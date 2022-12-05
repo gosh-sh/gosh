@@ -17,30 +17,42 @@ import "LockableBase.sol";
 contract SMVClient is LockableBase, ISMVClient , IVotingResultRecipient {
 
 mapping (bool => uint128) votes;
-uint32 propFinishTime;
-
+uint32  propFinishTime;
 address smvProposal;
-bool currentChoice;
+bool    currentChoice;
 uint128 currentAmount;
+TvmCell currentCell;
+uint128 total_votes;
 
 modifier check_proposal {
   require ( msg.sender == smvProposal, SMVErrors.error_not_my_proposal) ;
   _ ;
 }
 
-function onCodeUpgrade (uint256 _platform_id, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell) internal override
+function onCodeUpgrade (uint256 _platform_id, 
+                        uint128 amountToLock,
+                        uint128 totalVotes, 
+                        TvmCell staticCell, 
+                        TvmCell inputCell) internal override
 {
-    amountToLock; inputCell;
     tvm.resetStorage();
 
     initialized = false;
     votes[true] = votes[false] = 0;
     leftBro.reset();
     rightBro.reset();
+    rightAmount.reset();
     currentHead.reset();
     platform_id = _platform_id;
+    total_votes = totalVotes;
+    currentAmount = amountToLock;
+    currentCell = inputCell;
+    inserted = true;
 
-    ( , tokenLocker , smvProposal, platformCodeHash, platformCodeDepth) = staticCell.toSlice().decode(uint8, address, address, uint256, uint16);
+    uint256 pid;
+
+    ( , tokenLocker , pid, platformCodeHash, platformCodeDepth) = staticCell.toSlice().decode(uint8, address, uint256, uint256, uint16);
+    smvProposal = address.makeAddrStd(0, calcClientAddress(pid));
 
     ISMVProposal(smvProposal).getInitialize {value: SMVConstants.PROP_INITIALIZE_FEE + SMVConstants.ACTION_FEE, flag: 1}
                                             (tokenLocker, platform_id);
@@ -55,82 +67,62 @@ function initialize (bool success, uint32 finishTime) external override check_pr
     {
         propFinishTime = finishTime;
         initialized = true;
-        ISMVTokenLocker(tokenLocker).onInitialized {value: SMVConstants.EPSILON_FEE, flag: 1} (platform_id);
+        _performAction();
     }
     else
     {
-        optional (address) empty;
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, empty); //destroy
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue;
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
     }
 }
 
-function amount_locked () internal view override  returns(uint128)
+function amount_locked () public view override  returns(uint128)
 {
     return (votes[false] + votes[true]);
 }
 
-function performAction (uint128 amountToLock, uint128 total_votes, TvmCell inputCell) external override check_locker
+function _performAction () internal
 {
-    /* require(initialized, SMVErrors.error_not_initialized);
-    require(now < propFinishTime, SMVErrors.error_proposal_ended);
-    require(address(this).balance >= SMVConstants.CLIENT_MIN_BALANCE +
+    bool allowed = initialized && 
+                   (now < propFinishTime)  && 
+                   (address(this).balance >= SMVConstants.CLIENT_MIN_BALANCE +
                                      SMVConstants.VOTING_FEE +
-                                     SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-    require(amountToLock + amount_locked() <= total_votes, SMVErrors.error_not_enough_votes);  */ 
-
-    bool allowed = initialized && (now < propFinishTime)  && (address(this).balance >= SMVConstants.CLIENT_MIN_BALANCE +
-                                     SMVConstants.VOTING_FEE +
-                                     SMVConstants.ACTION_FEE) && (amountToLock + amount_locked() <= total_votes);
-
-    optional (address) empty;
+                                     SMVConstants.ACTION_FEE) && 
+                   (currentAmount + amount_locked() <= total_votes) &&
+                   inserted;                               
     
-    if (!allowed) 
-        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, empty);
+    if (!allowed) {
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue; 
+        if (amount_locked() >0 ){
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 64 } (platform_id, false, emptyAddress, emptyValue, false);
+        } else
+        {
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
+        }
+    }
     else {
         tvm.accept();
 
-        TvmSlice s = inputCell.toSlice();
+        inserted = false;
+        TvmSlice s = currentCell.toSlice();
         TvmSlice s1 = s.loadRefAsSlice();
-        bool choice = s1.decode(bool);
+        currentChoice = s1.decode(bool);
         currentHead = s.decode (optional (address));
-
-        vote(choice, amountToLock);
+        delete_and_do_action();
     }
-}
+} 
 
-function continueLeftBro() private view
+function performAction (uint128 amountToLock, uint128 total_votes_, TvmCell inputCell) external override check_locker
 {
-    if (!isTail())
-    {
-        LockableBase(rightBro.get()).setLeftBro {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVClient.onSetLeftBro} (platform_id, leftBro);
-    }
-    else sendVote();
+    currentAmount = amountToLock;
+    total_votes = total_votes_;
+    currentCell = inputCell;
+    _performAction();
 }
 
-function onSetRightBro (uint256 _platform_id) external view check_client(_platform_id)
-{
-    continueLeftBro();
-}
-
-function onSetLeftBro (uint256 _platform_id) external view check_client(_platform_id)
-{
-    sendVote();
-}
-
-function vote (bool choice, uint128 amount) private
-{
-    currentChoice = choice;
-    currentAmount = amount;
-
-    if (!isHead())
-    {
-        LockableBase(leftBro.get()).setRightBro {value: SMVConstants.ACTION_FEE, flag: 1, callback: SMVClient.onSetRightBro} (platform_id, rightBro);
-    }
-    else continueLeftBro();
-
-}
-
-function sendVote () internal view
+function do_action () internal override
 {
     ISMVProposal(smvProposal).vote {value: SMVConstants.PROPOSAL_VOTING_FEE, flag: 1 }
                                    (tokenLocker, platform_id, currentChoice, currentAmount) ;
@@ -140,29 +132,40 @@ function onProposalVoted (bool success) external override check_proposal
 {
     tvm.accept();
 
+
+    leftBro.reset();
+    rightBro.reset();
+    rightAmount.reset();
     if (success) {
-
-      leftBro.reset();
-      rightBro.reset();
       votes[currentChoice] += currentAmount;
-
-      if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
+    }
+    if (amount_locked() > 0 ) {
+        if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
             LockableBase(currentHead.get()).insertClient {value:extra, flag:1} (platform_id, address(this), amount_locked());
-      }
-      else
-      {
-            currentHead.set(address(this));
+         }
+        else
+        {
+            inserted = true;
+            //currentHead.set(address(this));
             uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, address(this));
-      }
+            ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, true, address(this), amount_locked(), false);
+        }
     }
     else
     {
-      optional (address) empty;
-      uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-      ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, empty);
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue;
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
     }
+    
+/*     else {
+        inserted = true;
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue; 
+        uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:extra, flag:1} (platform_id, false, emptyAddress, emptyValue, false);
+ */    
 }
 
 function _getLockedAmount () public view returns(uint128)
@@ -178,31 +181,35 @@ function continueUpdateHead (uint256 _platform_id) external override check_clien
         ISMVProposal(smvProposal).isCompleted {value: extra, 
                                                flag: 1+2/* , callback: SMVClient.onProposalCompletedWhileUpdateHead */} ();
     else
-        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id, address(this));                                         
+        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id, address(this), amount_locked());                                         
 }
 
 
-function isCompletedCallback (uint256 /* _platform_id */, address /* _tokenLocker */, optional (bool) completed, TvmCell /* data */ ) external override check_proposal
+function isCompletedCallback (uint256 /* _platform_id */, 
+                              optional (bool) completed, 
+                              TvmCell /* data */ ) external  override  check_proposal
 {   
     if (completed.hasValue())
     {
+        ISMVTokenLocker(tokenLocker).onClientRemoved {value:SMVConstants.EPSILON_FEE, flag:1} (platform_id);
         if (rightBro.hasValue())
         {
-            uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-            LockableBase(rightBro.get()).continueUpdateHead {value: extra, flag: 1} (platform_id);
-            selfdestruct(tokenLocker);
+            //uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
+            LockableBase(rightBro.get()).continueUpdateHead {value: 0, flag: 128+32} (platform_id);
+            //selfdestruct(tokenLocker);
         }
         else
         {
             //uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-            optional (address) empty;
-            ISMVTokenLocker(tokenLocker).onHeadUpdated {value:0, flag:128+32} (platform_id, empty);
+            optional (address) emptyAddress;
+            optional (uint128) emptyValue;
+            ISMVTokenLocker(tokenLocker).onHeadUpdated {value:0, flag:128+32} (platform_id, emptyAddress, emptyValue);
         }
     }
     else
     {
         uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE, SMVConstants.ACTION_FEE);
-        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, address(this));
+        ISMVTokenLocker(tokenLocker).onHeadUpdated {value:extra, flag:1} (platform_id, address(this), amount_locked());
     }
 }
 
@@ -218,6 +225,14 @@ function updateHead() external override check_locker()
 
 }
 
-
+onBounce(TvmSlice body) external view {
+    uint32 functionId = body.decode(uint32);
+    if (functionId == tvm.functionId(ISMVProposal.getInitialize)) 
+    {
+        optional (address) emptyAddress;
+        optional (uint128) emptyValue;
+        ISMVTokenLocker(tokenLocker).onClientCompleted {value:0, flag: 128 + 32 } (platform_id, false, emptyAddress, emptyValue, true); //destroy
+    }
+}
 
 }

@@ -1,17 +1,18 @@
 import { Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom'
-import { classNames } from '../utils'
+import { classNames } from 'react-gosh'
 import { TDaoLayoutOutletContext } from './DaoLayout'
 
 const DaoSettingsLayout = () => {
     const { daoName } = useParams()
-    const daoContext = useOutletContext<TDaoLayoutOutletContext>()
+    const context = useOutletContext<TDaoLayoutOutletContext>()
 
     const tabs = [
-        { to: `/${daoName}/settings/wallet`, title: 'Wallet' },
-        { to: `/${daoName}/settings/participants`, title: 'Participants' },
+        { to: `/o/${daoName}/settings/wallet`, title: 'Wallet' },
+        { to: `/o/${daoName}/settings/members`, title: 'Members' },
+        { to: `/o/${daoName}/settings/upgrade`, title: 'Upgrade' },
     ]
 
-    if (!daoContext.wallet) return <Navigate to={`/${daoName}`} />
+    if (!context.dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block px-7 py-8">
@@ -35,7 +36,7 @@ const DaoSettingsLayout = () => {
                         ))}
                     </div>
                     <div className="basis-full md:basis-4/5 overflow-hidden">
-                        <Outlet context={daoContext} />
+                        <Outlet context={context} />
                     </div>
                 </div>
             </div>

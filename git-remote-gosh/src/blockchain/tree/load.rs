@@ -1,9 +1,7 @@
-use crate::abi as gosh_abi;
-use crate::blockchain::{GoshContract, Number, TonClient};
+use crate::blockchain::{BlockchainContractAddress, EverClient, GoshContract, Number};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
-use std::error::Error;
 
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
@@ -29,23 +27,20 @@ pub struct Tree {
 #[derive(Deserialize, Debug)]
 struct GetTreeResult {
     #[serde(rename = "value0")]
-    address: String,
+    address: BlockchainContractAddress,
 }
 
 impl Tree {
     pub async fn calculate_address(
-        context: &TonClient,
-        repository_address: &str,
+        context: &EverClient,
+        repo_contract: &mut GoshContract,
         tree_obj_sha1: &str,
-    ) -> Result<String, Box<dyn Error>> {
-        let repo_contract = GoshContract::new(repository_address, gosh_abi::REPO);
-        let params = serde_json::json!({
-            "treeName": tree_obj_sha1
-        });
+    ) -> anyhow::Result<BlockchainContractAddress> {
+        let params = serde_json::json!({ "treeName": tree_obj_sha1 });
         let result: GetTreeResult = repo_contract
-            .run_local(context, "getTreeAddr", Some(params))
+            .run_static(context, "getTreeAddr", Some(params))
             .await?;
-        return Ok(result.address);
+        Ok(result.address)
     }
 }
 
@@ -61,11 +56,11 @@ impl Into<git_object::tree::Entry> for TreeComponent {
         };
         let filename = self.name.into();
         let oid = git_hash::ObjectId::from_hex(self.sha1.as_bytes()).expect("SHA1 must be correct");
-        return git_object::tree::Entry {
+        git_object::tree::Entry {
             mode,
             filename,
             oid,
-        };
+        }
     }
 }
 
@@ -74,6 +69,6 @@ impl Into<git_object::Tree> for Tree {
         let mut entries: Vec<git_object::tree::Entry> =
             self.objects.into_values().map(|e| e.into()).collect();
         entries.sort();
-        return git_object::Tree { entries };
+        git_object::Tree { entries }
     }
 }

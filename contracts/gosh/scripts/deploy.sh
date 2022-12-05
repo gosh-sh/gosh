@@ -2,114 +2,150 @@
 set -e
 set -o pipefail
 
+### Set during docker run. See Makefile and README.
+## -- empty --
+
 # envs
+SIGNER="__gosh" # will be created automatically
+GIVER_SIGNER="__giver" # will be created automatically
 GOSH_PATH="../../gosh"
 SMV_PATH="../../smv"
-CREATOR_ABI="$GOSH_PATH/daocreator.abi.json"
-GOSH_ABI="$GOSH_PATH/gosh.abi.json"
+VERSIONCONTROLLER_ABI="$GOSH_PATH/versioncontroller.abi.json"
+SYSTEMCONTRACT_ABI="$GOSH_PATH/systemcontract.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
-GIVER_WALLET_KEYS_PATH=/tmp/giver.keys.json
 
-# Generate GOSH keys
-echo "========== Generate keys for GoshRoot"
-tonos-cli genphrase > $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT
-seed=`cat $GOSH_PATH/$GOSH_ROOT_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
-everdev signer add GOSHRootSigner "$seed"
+GOSH_BALANCE=400000000000000
 
+GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
+echo "========== Gosh version: $GOSH_VERSION"
+export GOSH_VERSION=$GOSH_VERSION
+
+# Set network
+NETWORK=`cat /tmp/Giver.network`
 everdev network add $NETWORK $NETWORK
+echo "========== Network: $NETWORK"
 
-# Prepare GIVER_WALLET
-curl https://raw.githubusercontent.com/tonlabs/ton-labs-contracts/master/solidity/safemultisig/SafeMultisigWallet.abi.json -O -s
-GIVER_WALLET_ABI="./SafeMultisigWallet.abi.json"
-everdev signer add GiverWalletSigner $GIVER_WALLET_KEYS_PATH
+# Generate keys
+echo "========== Generate keys for VersionController"
+tonos-cli genphrase > $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT
+seed=`cat $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
+everdev signer add $SIGNER "$seed"
 
-# Calculate GoshRoot and GoshDaoCreator addresses
-GOSH_ROOT_ADDR=$(everdev contract info $GOSH_ABI --signer GOSHRootSigner --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
-echo "========== GoshRoot address: '$GOSH_ROOT_ADDR'"
-echo $GOSH_ROOT_ADDR > $GOSH_PATH/GoshRoot.addr
+# Prepare giver
+GIVER_ABI="../../multisig/MultisigWallet.abi.json"
+GIVER_ADDR=`cat /tmp/Giver.addr`
+GIVER_SEED=`cat /tmp/Giver.seed`
+everdev signer add $GIVER_SIGNER "$GIVER_SEED"
 
-CREATOR_ADDR=$(everdev contract info $CREATOR_ABI --signer GOSHRootSigner --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
-CREATOR_BALANCE=400000000000000
-echo "========== GoshDaoCreator address: '$CREATOR_ADDR'"
-echo $CREATOR_ADDR > $GOSH_PATH/GoshDaoCreator.addr
 
-# Send some tokens to GoshRoot for deploy
-echo "========== Send 50 tons for deploy"
-everdev contract run $GIVER_WALLET_ABI submitTransaction --input "{\"dest\": \"$GOSH_ROOT_ADDR\", \"value\": 50000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer GiverWalletSigner --address $GIVER_WALLET_ADDR > /dev/null || exit 1
-
-# Deploy GoshRoot
-echo "========== Deploy GoshRoot contract"
-everdev contract deploy $GOSH_ABI --input "{\"creator\": \"$CREATOR_ADDR\"}" --network $NETWORK --signer GOSHRootSigner > /dev/null || exit 1
-
-# Apply GoshRoot setters
-echo "========== Run setTokenRoot"
+# ############################################################
+# Get codes
+# ############################################################
+SYSTEMCONTRACT_CODE=$(everdev contract dt $GOSH_PATH/systemcontract.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TOKEN_ROOT_CODE=$(everdev contract dt $SMV_PATH/TokenRoot.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setTokenRoot --input "{\"code\":\"$TOKEN_ROOT_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setTokenWallet"
 TOKEN_WALLET_CODE=$(everdev contract dt $SMV_PATH/TokenWallet.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setTokenWallet --input "{\"code\":\"$TOKEN_WALLET_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setTokenLocker"
 TOKEN_LOCKER_CODE=$(everdev contract dt $SMV_PATH/SMVTokenLocker.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setTokenLocker --input "{\"code\":\"$TOKEN_LOCKER_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setSMVPlatform"
 LOCKER_PLATFORM_CODE=$(everdev contract dt $SMV_PATH/LockerPlatform.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setSMVPlatform --input "{\"code\":\"$LOCKER_PLATFORM_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setSMVClient"
 SMV_CLIENT_CODE=$(everdev contract dt $SMV_PATH/SMVClient.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setSMVClient --input "{\"code\":\"$SMV_CLIENT_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setSMVProposal"
 SMV_PROPOSAL_CODE=$(everdev contract dt $SMV_PATH/SMVProposal.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setSMVProposal --input "{\"code\":\"$SMV_PROPOSAL_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setDiff"
 DIFF_CODE=$(everdev contract dt $GOSH_PATH/diff.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setDiff --input "{\"code\":\"$DIFF_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setRepository"
 REPO_CODE=$(everdev contract dt $GOSH_PATH/repository.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setRepository --input "{\"code\":\"$REPO_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setCommit"
 COMMIT_CODE=$(everdev contract dt $GOSH_PATH/commit.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setCommit --input "{\"code\":\"$COMMIT_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setSnapshot"
 SNAPSHOT_CODE=$(everdev contract dt $GOSH_PATH/snapshot.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setSnapshot --input "{\"code\":\"$SNAPSHOT_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setWallet"
 WALLET_CODE=$(everdev contract dt $GOSH_PATH/goshwallet.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setWallet --input "{\"code\":\"$WALLET_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setDao"
 DAO_CODE=$(everdev contract dt $GOSH_PATH/goshdao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setDao --input "{\"code\":\"$DAO_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setTree"
 TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setTree --input "{\"code\":\"$TREE_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setTag"
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-
-echo "========== Run setcontentSignature"
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-everdev contract run $GOSH_ABI setcontentSignature --input "{\"code\":\"$CONTENTSIG_CODE\"}" --address $GOSH_ROOT_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
+PROFILE_CODE=$(everdev contract dt $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
-# Send tokens to GoshDaoCreator and deploy
-echo "========== Send $CREATOR_BALANCE tons to GoshDaoCreator"
-everdev contract run $GIVER_WALLET_ABI submitTransaction --input "{\"dest\": \"$CREATOR_ADDR\", \"value\": $CREATOR_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer GiverWalletSigner --address $GIVER_WALLET_ADDR > /dev/null || exit 1
-echo "========== Deploy GoshDaoCreator contract"
-everdev contract deploy $CREATOR_ABI "constructor" --input "{\"goshaddr\": \"$GOSH_ROOT_ADDR\"}" --network $NETWORK --signer GOSHRootSigner $SIGNER > /dev/null || exit 1
 
-# Deploy GoshDaoCreator (setters)
-echo "========== Run setWalletCode"
-everdev contract run $CREATOR_ABI setWalletCode --input "{\"code\":\"$WALLET_CODE\"}" --address $CREATOR_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
-echo "========== Run setDaoCode"
-everdev contract run $CREATOR_ABI setDaoCode --input "{\"code\":\"$DAO_CODE\"}" --address $CREATOR_ADDR --signer GOSHRootSigner --network $NETWORK > /dev/null || exit 1
+# ############################################################
+# Calculate VersionController address
+# ############################################################
+VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
+echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
+echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
+
+# ############################################################
+# Deploy VersionController and SystemContract
+# ############################################################
+# Send tokens for deploy VersionController
+echo "========== Send 2000 tons for deploy VersionController"
+everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
+
+# Deploy VersionController
+echo "========== Deploy VersionController"
+everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+
+# Apply VersionController setters
+echo "========== Run VersionController setters"
+echo "     ====> Run setSystemContractCode"
+everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+echo "     ====> Run setProfile"
+everdev contract run $VERSIONCONTROLLER_ABI setProfile --input "{\"code\": \"$PROFILE_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setProfileIndex"
+everdev contract run $VERSIONCONTROLLER_ABI setProfileIndex --input "{\"code\": \"$PROFILEINDEX_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setProfileDao"
+everdev contract run $VERSIONCONTROLLER_ABI setProfileDao --input "{\"code\": \"$PROFILEDAO_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+
+# Deploy SystemContract
+echo "========== Deploy SystemContract"
+everdev contract run $VERSIONCONTROLLER_ABI deploySystemContract --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+
+# Get SystemContract address
+echo "========== Get SystemContract address"
+SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
+echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
+echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract.addr
+echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
+
+# Send tokens to SystemContract
+echo "     ====> Send tokens to SystemContract"
+everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$SYSTEMCONTRACT_ADDR\", \"value\": $GOSH_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
+
+# Set flag to true (enable code setters)
+echo "========== Run SystemContract setFlag (true)"
+everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"true\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+
+# Run SystemContract setters
+echo "========== Run SystemContract setters"
+echo "     ====> Run setTokenRoot"
+everdev contract run $SYSTEMCONTRACT_ABI setTokenRoot --input "{\"code\":\"$TOKEN_ROOT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTokenWallet"
+everdev contract run $SYSTEMCONTRACT_ABI setTokenWallet --input "{\"code\":\"$TOKEN_WALLET_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTokenLocker"
+everdev contract run $SYSTEMCONTRACT_ABI setTokenLocker --input "{\"code\":\"$TOKEN_LOCKER_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setSMVPlatform"
+everdev contract run $SYSTEMCONTRACT_ABI setSMVPlatform --input "{\"code\":\"$LOCKER_PLATFORM_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setSMVClient"
+everdev contract run $SYSTEMCONTRACT_ABI setSMVClient --input "{\"code\":\"$SMV_CLIENT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setSMVProposal"
+everdev contract run $SYSTEMCONTRACT_ABI setSMVProposal --input "{\"code\":\"$SMV_PROPOSAL_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setDiff"
+everdev contract run $SYSTEMCONTRACT_ABI setDiff --input "{\"code\":\"$DIFF_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setRepository"
+everdev contract run $SYSTEMCONTRACT_ABI setRepository --input "{\"code\":\"$REPO_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setCommit"
+everdev contract run $SYSTEMCONTRACT_ABI setCommit --input "{\"code\":\"$COMMIT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setSnapshot"
+everdev contract run $SYSTEMCONTRACT_ABI setSnapshot --input "{\"code\":\"$SNAPSHOT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setcontentSignature"
+everdev contract run $SYSTEMCONTRACT_ABI setcontentSignature --input "{\"code\":\"$CONTENTSIG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setWallet"
+everdev contract run $SYSTEMCONTRACT_ABI setWallet --input "{\"code\":\"$WALLET_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setDao"
+everdev contract run $SYSTEMCONTRACT_ABI setDao --input "{\"code\":\"$DAO_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTree"
+everdev contract run $SYSTEMCONTRACT_ABI setTree --input "{\"code\":\"$TREE_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTag"
+everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+
+# Set flag to false (disable code setters)
+echo "========== Run SystemContract setFlag (false)"
+everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"false\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+
+# Destroy giver
+everdev contract run $GIVER_ABI TheBigBang -i "{\"returnMoney\": \"$SYSTEMCONTRACT_ADDR\"}" -a $GIVER_ADDR -s $GIVER_SIGNER -n $NETWORK > /dev/null || exit 1

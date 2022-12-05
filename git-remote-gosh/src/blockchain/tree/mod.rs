@@ -15,14 +15,15 @@ use std::{
 };
 
 pub use load::Tree;
-pub use save::push_tree;
+pub use save::DeployTree;
+pub use save::TreeNode;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
 };
 
 fn escape_slashes(s: &str) -> String {
-    s.replace("/", "\\/")
+    s.replace('/', "\\/")
 }
 
 fn unescape_slashes(s: &str) -> String {
@@ -60,10 +61,7 @@ impl GoshPath {
     where
         T: AsRef<str>,
     {
-        match value.as_ref() {
-            "." | ".." => false,
-            _ => true,
-        }
+        !matches!(value.as_ref(), "." | "..")
     }
 
     pub fn try_join<T>(&mut self, value: T) -> Result<(), GoshPathError>
@@ -87,7 +85,7 @@ impl Serialize for GoshPath {
     {
         let mut buf = String::new();
         for component in &self.inner {
-            buf.push_str(&escape_slashes(&component));
+            buf.push_str(&escape_slashes(component));
             buf.push('/');
         }
         if buf.ends_with("/") {
@@ -106,7 +104,7 @@ impl<'de> Visitor<'de> for GoshPathVisitor {
         formatter.write_str("expected valid gosh path string")
     }
 
-    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
@@ -127,6 +125,13 @@ impl<'de> Visitor<'de> for GoshPathVisitor {
             .try_join(unescape_slashes(&cur))
             .map_err(E::custom)?;
         Ok(gosh_path)
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        self.visit_str(&v)
     }
 }
 
