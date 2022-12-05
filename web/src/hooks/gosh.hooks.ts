@@ -1,27 +1,26 @@
 import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { getRepoTree, goshClient, goshRoot, ZERO_COMMIT } from '../helpers'
 import {
     goshBlobAtom,
     goshBranchesAtom,
     goshCurrBranchSelector,
-    goshDaoAtom,
     goshRepoBlobSelector,
     goshRepoTreeAtom,
     goshRepoTreeSelector,
     goshWalletAtom,
 } from '../store/gosh.state'
-import { userStateAtom } from '../store/user.state'
 import {
-    GoshDao,
     GoshWallet,
     GoshRepository,
     GoshSmvLocker,
     GoshCommit,
     GoshSnapshot,
-} from '../types/classes'
-import {
+    getRepoTree,
+    goshClient,
+    goshRoot,
+    ZERO_COMMIT,
+    userStateAtom,
     IGoshDao,
     IGoshRepository,
     IGoshRoot,
@@ -29,35 +28,8 @@ import {
     TCreateCommitCallbackParams,
     TGoshBranch,
     TSmvBalanceDetails,
-} from '../types/types'
-
-export const useGoshDao = (name?: string) => {
-    const [details, setDetails] = useRecoilState(goshDaoAtom)
-    const [dao, setDao] = useState<IGoshDao>()
-
-    useEffect(() => {
-        const getDao = async (
-            _name: string,
-            state: { name?: string; address?: string },
-        ) => {
-            if (!state.address || state.name !== _name) {
-                console.debug('Get dao hook (blockchain)')
-                const address = await goshRoot.getDaoAddr(_name)
-                const dao = new GoshDao(goshRoot.account.client, address)
-                const details = await dao.getDetails()
-                setDao(dao)
-                setDetails(details)
-            } else {
-                console.debug('Get dao hook (from state)')
-                setDao(new GoshDao(goshRoot.account.client, state.address))
-            }
-        }
-
-        if (name) getDao(name, { name: details?.name, address: details?.address })
-    }, [name, details?.name, details?.address, setDetails])
-
-    return dao
-}
+    retry,
+} from 'react-gosh'
 
 export const useGoshWallet = (dao?: IGoshDao) => {
     const userState = useRecoilValue(userStateAtom)
@@ -174,7 +146,7 @@ export const useGoshRepoTree = (
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, commitAddr: string) => {
             setTree(undefined)
-            const tree = await getRepoTree(repo, commitAddr, filterPath)
+            const tree = await retry(() => getRepoTree(repo, commitAddr, filterPath), 2)
             setTree(tree)
         }
 

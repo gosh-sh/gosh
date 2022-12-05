@@ -1,8 +1,6 @@
 use super::GitHelper;
 use crate::blockchain;
-use git_hash;
-use git_object;
-use git_odb;
+use crate::blockchain::BlockchainContractAddress;
 use git_odb::Find;
 use git_odb::Write;
 
@@ -15,17 +13,15 @@ impl GitHelper {
     pub async fn calculate_commit_address(
         &mut self,
         commit_id: &git_hash::ObjectId,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<BlockchainContractAddress, Box<dyn Error>> {
         let commit_id = format!("{}", commit_id);
         log::info!(
-            "Calculating commit address for repository <{}> and commit id <{}>",
+            "Calculating commit address for repository {} and commit id <{}>",
             self.repo_addr,
             commit_id
         );
-        let mut repo_contract = &mut self.repo_contract;
-        return Ok(
-            blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await?,
-        );
+        let repo_contract = &mut self.repo_contract;
+        blockchain::get_commit_address(&self.es_client, repo_contract, &commit_id).await
     }
 
     pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
@@ -40,13 +36,12 @@ impl GitHelper {
         let store = &mut self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
-        let object_id = store.write(obj)
-            .map_err(|e|{
-                log::error!("Write git object failed  with: {}", e);
-                e
-            })?;
+        let object_id = store.write(obj).map_err(|e| {
+            log::error!("Write git object failed  with: {}", e);
+            e
+        })?;
         log::info!("Writing git object - success, {}", object_id);
-        return Ok(object_id);
+        Ok(object_id)
     }
 
     async fn write_git_data<'a>(
@@ -59,7 +54,7 @@ impl GitHelper {
         //store.refresh_never();
         let object_id = store.write_buf(obj.kind, obj.data)?;
         log::info!("Writing git data - success");
-        return Ok(object_id);
+        Ok(object_id)
     }
 
     #[instrument(level = "debug")]
@@ -103,7 +98,7 @@ impl GitHelper {
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
         loop {
-            if blobs_restore_plan.is_available() { 
+            if blobs_restore_plan.is_available() {
                 log::info!("Restoring blobs");
                 blobs_restore_plan.restore(self).await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
@@ -118,7 +113,7 @@ impl GitHelper {
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let address = blockchain::Tree::calculate_address(
                     &self.es_client,
-                    &self.repo_addr,
+                    &mut self.repo_contract,
                     &tree_object_id,
                 )
                 .await?;
@@ -128,7 +123,7 @@ impl GitHelper {
 
                 log::info!("Tree obj parsed {}", id);
                 for entry in &tree_object.entries {
-                    let oid = entry.oid.clone();
+                    let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
                             log::trace!("Tree entry: tree {}->{}", id, oid);
@@ -137,11 +132,11 @@ impl GitHelper {
                                 oid,
                             };
                             tree_obj_queue.push_back(to_load);
-                        },
+                        }
                         git_object::tree::EntryMode::Commit => {
                             log::trace!("Tree entry: commit {}->{}", id, oid);
                             commits_queue.push_back(oid);
-                        },
+                        }
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
                             log::trace!("Tree entry: blob {}->{}", id, oid);
@@ -152,7 +147,7 @@ impl GitHelper {
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &self.es_client,
                                 &mut self.repo_contract,
-                                &branch,
+                                branch,
                                 &file_path[1..],
                             )
                             .await?;
@@ -163,11 +158,11 @@ impl GitHelper {
                                 snapshot_address
                             );
                             blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
-                        },
+                        }
                         _ => {
                             log::info!("IT MUST BE NOTED!");
                             panic!();
-                        },
+                        }
                     }
                 }
                 dangling_trees.push(tree_object);
@@ -179,7 +174,7 @@ impl GitHelper {
                 }
                 dangling_trees.clear();
             }
-      
+
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
@@ -193,17 +188,17 @@ impl GitHelper {
                 log::info!("Received commit {}", id);
                 let to_load = TreeObjectsQueueItem {
                     path: "".to_owned(),
-                    oid: obj.tree.clone(),
+                    oid: obj.tree,
                 };
                 log::info!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 for parent_id in &obj.parents {
-                    commits_queue.push_back(parent_id.clone());
+                    commits_queue.push_back(*parent_id);
                 }
                 dangling_commits.push(obj);
                 continue;
             }
-      
+
             if !dangling_commits.is_empty() {
                 for obj in dangling_commits.iter().rev() {
                     self.write_git_object(obj).await?;

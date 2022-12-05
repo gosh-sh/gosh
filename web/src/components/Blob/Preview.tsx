@@ -1,7 +1,6 @@
-import React from 'react'
 import Editor from '@monaco-editor/react'
 import ReactMarkdown from 'react-markdown'
-import { classNames } from '../../utils'
+import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 
 type TBlobPreviewProps = {
@@ -37,17 +36,19 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                 minimap: {
                     enabled: false,
                 },
-                scrollbar: {
-                    vertical: 'hidden',
-                    verticalScrollbarSize: 0,
-                    handleMouseWheel: false,
-                },
+                // scrollbar: {
+                //     vertical: 'hidden',
+                //     verticalScrollbarSize: 0,
+                //     handleMouseWheel: false,
+                // },
             }}
             onMount={(editor) => {
                 // Set diff editor dom element calculated real height
                 editor.onDidContentSizeChange(() => {
                     const node = editor.getDomNode()
-                    if (node) node.style.height = `${editor.getContentHeight()}px`
+                    let height = editor.getContentHeight()
+                    if (height > 1024) height = 1024
+                    if (node) node.style.height = `${height}px`
                 })
             }}
         />

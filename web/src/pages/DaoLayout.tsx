@@ -2,40 +2,49 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../components/Spinner'
-import { useGoshDao, useGoshWallet } from '../hooks/gosh.hooks'
-import { userStatePersistAtom } from '../store/user.state'
-import { IGoshDao, IGoshWallet } from '../types/types'
-import { classNames } from '../utils'
+import { useGoshWallet } from '../hooks/gosh.hooks'
+import {
+    IGoshDao,
+    IGoshWallet,
+    userStatePersistAtom,
+    classNames,
+    useDao,
+    TDaoDetails,
+} from 'react-gosh'
 
 export type TDaoLayoutOutletContext = {
-    dao: IGoshDao
+    dao: {
+        instance: IGoshDao
+        details: TDaoDetails
+        isOwner: boolean
+    }
     wallet?: IGoshWallet
 }
 
 const DaoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName } = useParams()
-    const dao = useGoshDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName)
+    const wallet = useGoshWallet(dao.instance)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
-        { to: `/${daoName}`, title: 'Overview', public: true },
-        { to: `/${daoName}/repos`, title: 'Repositories', public: true },
-        { to: `/${daoName}/events`, title: 'Events', public: true },
-        { to: `/${daoName}/settings`, title: 'Settings', public: false },
+        { to: `/o/${daoName}`, title: 'Overview', public: true },
+        { to: `/o/${daoName}/repos`, title: 'Repositories', public: true },
+        { to: `/o/${daoName}/events`, title: 'Events', public: true },
+        { to: `/o/${daoName}/settings`, title: 'Settings', public: false },
     ]
 
     useEffect(() => {
         const walletAwaited =
             !userStatePersist.phrase || (userStatePersist.phrase && wallet)
-        if (dao && walletAwaited) setIsReady(true)
-    }, [dao, userStatePersist.phrase, wallet])
+        if (dao.instance && walletAwaited) setIsReady(true)
+    }, [dao.instance, userStatePersist.phrase, wallet])
 
     return (
         <div className="container container--full my-10">
             <h1 className="mb-6 px-5 sm:px-0">
-                <Link to={`/${daoName}`} className="font-semibold text-2xl">
+                <Link to={`/o/${daoName}`} className="font-semibold text-2xl">
                     {daoName}
                 </Link>
             </h1>

@@ -1,6 +1,6 @@
 import { Link, useOutletContext, useParams } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 
@@ -19,9 +19,9 @@ const DaoPage = () => {
                 <div>
                     <p className="text-sm text-gray-606060 mb-1">DAO address</p>
                     <CopyClipboard
-                        label={shortString(dao.address)}
+                        label={shortString(dao.instance.address)}
                         componentProps={{
-                            text: dao.address,
+                            text: dao.instance.address,
                         }}
                     />
                 </div>
@@ -29,13 +29,13 @@ const DaoPage = () => {
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
                     {wallet?.isDaoParticipant ? (
                         <Link
-                            to={`/${daoName}/settings/wallet`}
+                            to={`/o/${daoName}/settings/wallet`}
                             className="hover:underline"
                         >
                             Setup git remote
                         </Link>
                     ) : (
-                        <p className="text-sm text-rose-400">Not a DAO participant</p>
+                        <p className="text-sm text-rose-400">Not a DAO member</p>
                     )}
                 </div>
             </div>

@@ -1,17 +1,16 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames } from '../../utils'
+import { classNames, userStateAtom, userStatePersistAtom } from 'react-gosh'
 import { useResetRecoilState } from 'recoil'
-import { userStateAtom, userStatePersistAtom } from '../../store/user.state'
 
 const DropdownMenu = () => {
     const resetUserState = useResetRecoilState(userStateAtom)
     const resetUserStatePersist = useResetRecoilState(userStatePersistAtom)
     const items = [
-        { to: '/account/orgs', title: 'Organizations', className: 'text-gray-050a15' },
-        { to: '/account/repos', title: 'Repositories', className: 'text-gray-050a15' },
-        { to: '/account/settings', title: 'Settings', className: 'text-gray-050a15' },
+        { to: '/a/orgs', title: 'Organizations', className: 'text-gray-050a15' },
+        { to: '/a/repos', title: 'Repositories', className: 'text-gray-050a15' },
+        { to: '/a/settings', title: 'Settings', className: 'text-gray-050a15' },
         {
             to: '',
             title: 'Sign out',

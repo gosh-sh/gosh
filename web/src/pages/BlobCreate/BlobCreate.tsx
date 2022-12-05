@@ -4,12 +4,10 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import TextField from '../../components/FormikForms/TextField'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from '../../helpers'
 import * as Yup from 'yup'
 import { Tab } from '@headlessui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
-import { classNames } from '../../utils'
 import BlobEditor from '../../components/Blob/Editor'
 import BlobPreview from '../../components/Blob/Preview'
 import FormCommitBlock from './FormCommitBlock'
@@ -20,10 +18,17 @@ import {
     useGoshRepoBranches,
     useGoshRepoTree,
 } from '../../hooks/gosh.hooks'
-import { userStateAtom } from '../../store/user.state'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { EGoshError, GoshError } from '../../types/errors'
+import {
+    EGoshError,
+    GoshError,
+    userStateAtom,
+    getCodeLanguageFromFilename,
+    classNames,
+    retry,
+} from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -47,7 +52,7 @@ const BlobCreatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/tree/${branchName}${
+    const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
         pathName && `/${pathName}`
     }`
 
@@ -61,17 +66,18 @@ const BlobCreatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`
             const exists = tree.tree?.items.find(
                 (item) => `${item.path ? `${item.path}/` : ''}${item.name}` === name,
             )
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name })
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
+            const pubkey = userState.keys.public
             await wallet.createCommit(
                 repo,
                 branch,
-                userState.keys.public,
+                pubkey,
                 [
                     {
                         name,
@@ -88,7 +94,7 @@ const BlobCreatePage = () => {
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 

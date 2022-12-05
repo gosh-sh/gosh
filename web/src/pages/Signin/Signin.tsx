@@ -6,8 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { userStatePersistAtom } from '../../store/user.state'
-import { goshClient } from '../../helpers'
+import { goshClient, userStatePersistAtom } from 'react-gosh'
 
 type TFormValues = {
     phrase: string
@@ -35,7 +34,7 @@ const SigninPage = () => {
             element: (
                 <PinCodeModal
                     phrase={values.phrase}
-                    onUnlock={() => navigate('/account/orgs', { replace: true })}
+                    onUnlock={() => navigate('/a/orgs', { replace: true })}
                 />
             ),
         })

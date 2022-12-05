@@ -2,8 +2,8 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
-import { shortString } from '../../utils'
+import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from 'react-gosh'
+import { shortString } from 'react-gosh'
 
 type TRepositoryListItemProps = {
     daoName: string
@@ -25,7 +25,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     <>
                         <Link
                             className="text-xl font-semibold hover:underline"
-                            to={`/${daoName}`}
+                            to={`/o/${daoName}`}
                         >
                             {daoName}
                         </Link>
@@ -34,7 +34,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 )}
                 <Link
                     className="text-xl font-semibold hover:underline"
-                    to={`/${daoName}/${item.name}`}
+                    to={`/o/${daoName}/r/${item.name}`}
                 >
                     {item.name}
                 </Link>

@@ -11,15 +11,16 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import TextField from '../../components/FormikForms/TextField'
 import Spinner from '../../components/Spinner'
-import { TGoshBranch } from '../../types/types'
+import { retry, TGoshBranch } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
 import { useRecoilValue } from 'recoil'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
 import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
-import { GoshCommit } from '../../types/classes'
+import { GoshCommit } from 'react-gosh'
+import ToastError from '../../components/Error/ToastError'
 
 type TCreateBranchFormValues = {
     newName: string
@@ -56,11 +57,14 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForAddProtectedBranch(repoName, name)
-            navigate(`/${daoName}/events`, { replace: true })
+            await retry(
+                () => wallet.startProposalForAddProtectedBranch(repoName, name),
+                3,
+            )
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
@@ -85,11 +89,14 @@ export const BranchesPage = () => {
             if (smvBalance.smvBalance < 20)
                 throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
 
-            await wallet.startProposalForDeleteProtectedBranch(repoName, name)
-            navigate(`/${daoName}/events`, { replace: true })
+            await retry(
+                () => wallet.startProposalForDeleteProtectedBranch(repoName, name),
+                3,
+            )
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         } finally {
             setBranchesBusy((state) => ({
                 ...state,
@@ -108,17 +115,24 @@ export const BranchesPage = () => {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
             const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
-            await wallet.deployBranch(
-                repo,
-                values.newName.toLowerCase(),
-                values.from.name,
-                await commit.getName(),
+            const fromBranchName = values.from.name
+            const commitHash = await commit.getName()
+            await retry(
+                () =>
+                    wallet.deployBranch(
+                        repo,
+                        values.newName.toLowerCase(),
+                        fromBranchName,
+                        commitHash,
+                    ),
+                3,
             )
             await updateBranches()
             helpers.resetForm()
+            helpers.setFieldValue('from', values.from)
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -136,7 +150,7 @@ export const BranchesPage = () => {
                 if (!repoName) throw new GoshError(EGoshError.NO_REPO)
                 if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-                await wallet.deleteBranch(repo, name)
+                await retry(() => wallet.deleteBranch(repo, name), 3)
                 await updateBranches()
             } catch (e: any) {
                 setBranchesBusy((state) => ({
@@ -144,7 +158,7 @@ export const BranchesPage = () => {
                     [name]: { ...state[name], busy: false, delete: false },
                 }))
                 console.error(e)
-                toast.error(e.message)
+                toast.error(<ToastError error={e} />)
             }
         }
     }
@@ -253,7 +267,7 @@ export const BranchesPage = () => {
                     >
                         <div className="grow">
                             <Link
-                                to={`/${daoName}/${repoName}/tree/${branch.name}`}
+                                to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
                                 className="hover:underline"
                             >
                                 {branch.name}

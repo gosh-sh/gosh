@@ -17,7 +17,7 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of DaoCreator */
 contract DaoCreator is Modifiers, Upgradable{
-    string constant version = "0.5.3";
+    string constant version = "0.10.0";
     
     address _gosh;
     TvmCell m_WalletCode;

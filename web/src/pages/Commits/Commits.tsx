@@ -4,11 +4,11 @@ import { useRecoilValue } from 'recoil'
 import BranchSelect from '../../components/BranchSelect'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
-import { getCommit, getCommitTime, ZERO_COMMIT } from '../../helpers'
+import { getCommit, getCommitTime, ZERO_COMMIT } from 'react-gosh'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
 import { goshCurrBranchSelector } from '../../store/gosh.state'
-import { IGoshRepository, TGoshCommit } from '../../types/types'
-import { shortString } from '../../utils'
+import { IGoshRepository, TGoshCommit } from 'react-gosh'
+import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const CommitsPage = () => {
@@ -79,7 +79,7 @@ const CommitsPage = () => {
                 branches={branches}
                 onChange={(selected) => {
                     if (selected) {
-                        navigate(`/${daoName}/${repoName}/commits/${selected.name}`)
+                        navigate(`/o/${daoName}/r/${repoName}/commits/${selected.name}`)
                     }
                 }}
             />
@@ -106,7 +106,7 @@ const CommitsPage = () => {
                         <div>
                             <Link
                                 className="hover:underline"
-                                to={`/${daoName}/${repoName}/commits/${branchName}/${commit.name}`}
+                                to={`/o/${daoName}/r/${repoName}/commits/${branchName}/${commit.name}`}
                             >
                                 {commit.content.title}
                             </Link>
@@ -129,7 +129,7 @@ const CommitsPage = () => {
                         <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">
                             <Link
                                 className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-gray-0a1124"
-                                to={`/${daoName}/${repoName}/commits/${branchName}/${commit.name}`}
+                                to={`/o/${daoName}/r/${repoName}/commits/${branchName}/${commit.name}`}
                             >
                                 {shortString(commit.name || '', 7, 0, '')}
                             </Link>

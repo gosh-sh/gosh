@@ -1,0 +1,3 @@
+FROM nginx:1.21.6
+
+RUN sed -i -e '/http.*{/a autoindex on\; types { text/plain log\; }' /etc/nginx/nginx.conf

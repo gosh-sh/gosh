@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Listbox } from '@headlessui/react'
-import { TGoshBranch } from '../../types/types'
+import { TGoshBranch } from 'react-gosh'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
-import { classNames } from '../../utils'
+import { classNames } from 'react-gosh'
 
 type TBranchSelectProps = {
     className?: string
@@ -40,7 +40,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
             }
             value={branch}
             disabled={disabled}
-            onChange={(value) => onChange(value)}
+            onChange={(value: any) => onChange(value)}
         >
             <Listbox.Button
                 as="div"

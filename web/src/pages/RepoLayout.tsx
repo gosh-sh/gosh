@@ -3,16 +3,15 @@ import { faCode, faCodePullRequest, faCube } from '@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from '../hooks/gosh.hooks'
 import {
-    useGoshRepo,
-    useGoshWallet,
-    useGoshRepoBranches,
-    useGoshDao,
-} from '../hooks/gosh.hooks'
-import { IGoshRepository, IGoshWallet } from '../types/types'
-import { classNames } from '../utils'
+    IGoshRepository,
+    IGoshWallet,
+    classNames,
+    userStatePersistAtom,
+    useDao,
+} from 'react-gosh'
 import { useRecoilValue } from 'recoil'
-import { userStatePersistAtom } from '../store/user.state'
 
 export type TRepoLayoutOutletContext = {
     repo: IGoshRepository
@@ -23,20 +22,20 @@ const RepoLayout = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom)
     const { daoName, repoName, branchName = 'main' } = useParams()
     const repo = useGoshRepo(daoName, repoName)
-    const dao = useGoshDao(daoName)
-    const wallet = useGoshWallet(dao)
+    const dao = useDao(daoName)
+    const wallet = useGoshWallet(dao.instance)
     const { updateBranches } = useGoshRepoBranches(repo)
     const [isFetched, setIsFetched] = useState<boolean>(false)
 
     const tabs = [
         {
-            to: `/${daoName}/${repoName}/tree/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}/tree/${branchName}`,
             title: 'Code',
             icon: faCode,
             public: true,
         },
         {
-            to: `/${daoName}/${repoName}/pull`,
+            to: `/o/${daoName}/r/${repoName}/pull`,
             title: 'Pull request',
             icon: faCodePullRequest,
             public: false,
@@ -45,7 +44,7 @@ const RepoLayout = () => {
 
     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
         tabs.push({
-            to: `/${daoName}/${repoName}/build/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}/build/${branchName}`,
             title: 'Build image',
             icon: faCube,
             public: false,
@@ -67,14 +66,14 @@ const RepoLayout = () => {
         <div className="container container--full my-10">
             <h1 className="flex items-center mb-6 px-5 sm:px-0">
                 <Link
-                    to={`/${daoName}`}
+                    to={`/o/${daoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {daoName}
                 </Link>
                 <span className="mx-2">/</span>
                 <Link
-                    to={`/${daoName}/${repoName}`}
+                    to={`/o/${daoName}/r/${repoName}`}
                     className="font-semibold text-xl hover:underline"
                 >
                     {repoName}

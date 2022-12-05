@@ -1,0 +1,179 @@
+global:
+  root:           NOT_SET
+  organization:   monitoring-org
+  repository:     monitoring-repo
+  branch:         NOT_SET
+  filename:       last
+  handler:        NOT_SET
+  large:          false
+  prefix:         gosh_mon_
+  timeout_ms:     20000
+  longtimeout_ms: 180000
+  interval:       45
+  subinterval:    0
+  origin:         NOT_SET
+  cron:           false
+  appurl:         https://app.gosh.sh/
+  pupextraflags:  []
+  gosh_repo_url:  https://github.com/gosh-sh/gosh.git
+  gosh_branch:    "release:latest"
+  gosh_bin_path:  last-git-remote-gosh
+  release_asset:  git-remote-gosh-amd64
+  username:       monitester
+
+  ipfs_address:  https://ipfs.network.gosh.sh
+  prim_network:  gosh.sh
+  conf_endpoint: network.gosh.sh
+
+  # require | priority | fallback | disabled
+  use_envs: require
+
+  log_ws_req: 600
+  log_ws_res: 300
+
+  # do not use 0, it will result in '-' argument
+  push_verbosity: 1
+  pull_verbosity: 1
+
+
+includes:
+
+  next: &next
+    # for app.gosh.sh
+    appurl: https://next-app.monitoring.gosh.sh/
+    prim_network: vps23.ton.dev
+    conf_endpoint: https://vps23.ton.dev
+    # for remote
+    gosh_branch: "release:latest-prerelease"
+    use_envs: require
+
+
+modes:
+
+  seed-read:
+    handler: seed-read
+
+  root-check:
+    handler: root-check
+
+  seed-read-next:
+    <<: *next
+    handler: seed-read
+
+  root-check-next:
+    <<: *next
+    handler: root-check
+
+  script: &script
+    handler: script
+
+  app-script:
+    <<: *script
+    scriptname: app
+
+  app-script-next:
+    <<: *script
+    scriptname: app-next
+
+  app-script-test:
+    <<: *script
+    scriptname: app-test
+
+# app.gosh.sh
+  app-setup: &app-setup
+    handler: app-setup
+    branch: root
+    branches:
+      - app-small
+      - app-large
+      - remote-small
+      - remote-large
+    cron: true
+    interval: 900
+
+  app-small-read: &app-small-read
+    branch:  app-small
+    handler: app-read
+    large:   false
+
+  app-small-write: &app-small-write
+    branch:  app-small
+    handler: app-write
+    large:   false
+    interval: 200
+
+  app-large-read: &app-large-read
+    branch:     app-large
+    handler:    app-read
+    large:      true
+    timeout_ms: 15000
+
+  app-large-write: &app-large-write
+    branch:     app-large
+    handler:    app-write
+    large:      true
+    timeout_ms: 15000
+    interval:   450
+
+  app-setup-next:
+    <<: *app-setup
+    <<: *next
+
+  app-small-read-next:
+    <<: *app-small-read
+    <<: *next
+
+  app-small-write-next:
+    <<: *app-small-write
+    <<: *next
+
+  app-large-read-next:
+    <<: *app-large-read
+    <<: *next
+
+  app-large-write-next:
+    <<: *app-large-write
+    <<: *next
+
+# git-remote-gosh
+  rem-small-read: &rem-small-read
+    branch:     remote-small
+    handler:    remote-read
+    large:      false
+    timeout_ms: 50
+
+  rem-small-write: &rem-small-write
+    branch:     remote-small
+    handler:    remote-write
+    large:      false
+    interval:   150
+    timeout_ms: 270
+
+  rem-large-read: &rem-large-read
+    branch:     remote-large
+    handler:    remote-read
+    large:      true
+    timeout_ms: 50
+
+  rem-large-write: &rem-large-write
+    branch:  remote-large
+    handler: remote-write
+    large:   true
+    interval: 450
+    timeout_ms: 270
+
+  rem-small-read-next:
+    <<: *rem-small-read
+    <<: *next
+
+  rem-small-write-next:
+    <<: *rem-small-write
+    <<: *next
+
+  rem-large-read-next:
+    <<: *rem-large-read
+    <<: *next
+
+  rem-large-write-next:
+    <<: *rem-large-write
+    <<: *next

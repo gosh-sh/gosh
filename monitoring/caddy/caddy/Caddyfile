@@ -1,0 +1,87 @@
+https://grafana.gosh.sh {
+    @forbidden {
+        not method GET
+        not {
+            method POST
+            path /api/ds/query
+            path /api/frontend-metrics
+        }
+    }
+    respond @forbidden "Method not allowed" 405 {
+        close
+    }
+    reverse_proxy gosh-grafana:3000 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}
+
+https://monitoring.gosh.sh {
+
+}
+
+https://grafana.monitoring.gosh.sh {
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+    }
+    reverse_proxy gosh-grafana:3000 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+        header_up -Authorization
+    }
+}
+
+https://prometheus.monitoring.gosh.sh {
+    basicauth { 
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    }
+    reverse_proxy gosh-prometheus:9090 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}
+
+https://alertmanager.monitoring.gosh.sh {
+    basicauth { 
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    }
+    reverse_proxy gosh-alertmanager:9093 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}
+
+https://pushgateway.monitoring.gosh.sh {
+    basicauth { 
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    }
+    reverse_proxy gosh-pushgateway:9091 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}
+
+https://next-app.monitoring.gosh.sh {
+    reverse_proxy http://gosh.matusevich.pro {
+        header_up Host gosh.matusevich.pro
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}
+
+https://gmlogs.monitoring.gosh.sh {
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+    }
+    reverse_proxy gosh-mon-nginx {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+}

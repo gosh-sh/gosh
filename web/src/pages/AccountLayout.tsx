@@ -1,11 +1,11 @@
-import { classNames } from '../utils'
+import { classNames } from 'react-gosh'
 import { NavLink, Outlet } from 'react-router-dom'
 
 const AccountLayout = () => {
     const tabs = [
-        { to: '/account/orgs', title: 'Organizations' },
-        { to: '/account/repos', title: 'Repositories' },
-        { to: '/account/settings', title: 'Settings' },
+        { to: '/a/orgs', title: 'Organizations' },
+        { to: '/a/repos', title: 'Repositories' },
+        { to: '/a/settings', title: 'Settings' },
     ]
 
     return (

@@ -2,7 +2,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom
 import BranchSelect from '../../components/BranchSelect'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useMonaco } from '@monaco-editor/react'
-import { getCodeLanguageFromFilename } from '../../helpers'
+import { getCodeLanguageFromFilename } from 'react-gosh'
 import BlobPreview from '../../components/Blob/Preview'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -36,7 +36,7 @@ const BlobPage = () => {
                     onChange={(selected) => {
                         if (selected) {
                             navigate(
-                                `/${daoName}/${repoName}/blobs/${selected.name}/${treePath}`,
+                                `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treePath}`,
                             )
                         }
                     }}
@@ -51,7 +51,7 @@ const BlobPage = () => {
                 </div>
                 <div className="grow text-right">
                     <Link
-                        to={`/${daoName}/${repoName}/find/${branchName}`}
+                        to={`/o/${daoName}/r/${repoName}/find/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
@@ -69,14 +69,14 @@ const BlobPage = () => {
                     Loading file...
                 </div>
             )}
-            {monaco && blob.path && blob.content && (
+            {monaco && blob.path && !blob.isFetching && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
                         {!Buffer.isBuffer(blob.content) ? (
                             <>
                                 <CopyClipboard
                                     componentProps={{
-                                        text: blob.content,
+                                        text: blob.content || '',
                                     }}
                                     iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
                                     iconProps={{
@@ -85,7 +85,7 @@ const BlobPage = () => {
                                 />
                                 {!branch?.isProtected && wallet?.isDaoParticipant && (
                                     <Link
-                                        to={`/${daoName}/${repoName}/blobs/update/${branchName}/${treePath}`}
+                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treePath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />

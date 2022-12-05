@@ -7,9 +7,8 @@ import { useGoshRepoBranches } from '../../../hooks/gosh.hooks'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../../store/user.state'
+import { userStateAtom, getCommit } from 'react-gosh'
 import TextField from '../../../components/FormikForms/TextField'
-import { getCommit } from '../../../helpers'
 
 type TBuildFormValues = {
     tag: string
@@ -74,7 +73,9 @@ const BuildPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/build/${selected.name}`)
+                                navigate(
+                                    `/o/${daoName}/r/${repoName}/build/${selected.name}`,
+                                )
                             }
                         }}
                     />

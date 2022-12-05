@@ -1,0 +1,29 @@
+{
+  "name": "gosh-mon",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "set NODE_OPTIONS=--trace-warnings & ts-node-dev --respawn --transpile-only ./src/app.ts",
+    "prod": "tsc && node ./app/app.js",
+    "ons": "tsc && set ONESHOT_DEBUG=2 & node ./app/app.js",
+    "fastons": "tsc && set ONESHOT_DEBUG=1 & node ./app/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.1",
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^2.6.7",
+    "puppeteer": "^13.7.0",
+    "glob": "^8.0.3",
+    "glob-promise": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/js-yaml": "^4.0.5",
+    "@types/node": "^17.0.34",
+    "@types/node-fetch": "^2.6.1",
+    "@types/glob": "^8.0.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.6.4"
+  }
+}

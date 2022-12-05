@@ -4,14 +4,12 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import * as Yup from 'yup'
 import TextField from '../../components/FormikForms/TextField'
 import { Tab } from '@headlessui/react'
-import { classNames } from '../../utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
 import BlobEditor from '../../components/Blob/Editor'
 import FormCommitBlock from '../BlobCreate/FormCommitBlock'
 import { useMonaco } from '@monaco-editor/react'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { getCodeLanguageFromFilename, splitByPath } from '../../helpers'
 import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import { useRecoilValue } from 'recoil'
 import {
@@ -19,12 +17,20 @@ import {
     useCommitProgress,
     useGoshRepoBranches,
 } from '../../hooks/gosh.hooks'
-import { userStateAtom } from '../../store/user.state'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { EGoshError, GoshError } from '../../types/errors'
+import {
+    EGoshError,
+    GoshError,
+    userStateAtom,
+    getCodeLanguageFromFilename,
+    splitByPath,
+    classNames,
+    retry,
+} from 'react-gosh'
 import { toast } from 'react-toastify'
 import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -48,7 +54,7 @@ const BlobUpdatePage = () => {
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext')
     const { progress, progressCallback } = useCommitProgress()
 
-    const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
+    const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}${
         treePath && `/${treePath}`
     }`
 
@@ -62,16 +68,17 @@ const BlobUpdatePage = () => {
                 throw new GoshError(EGoshError.PR_BRANCH, {
                     branch: branchName,
                 })
-            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT)
+            if (!wallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_MEMBER)
             if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
 
             const [path] = splitByPath(treePath || '')
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n')
+            const pubkey = userState.keys.public
             await wallet.createCommit(
                 repo,
                 branch,
-                userState.keys.public,
+                pubkey,
                 [
                     {
                         name: `${path ? `${path}/` : ''}${values.name}`,
@@ -90,7 +97,7 @@ const BlobUpdatePage = () => {
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -122,11 +129,11 @@ const BlobUpdatePage = () => {
                     </div>
                 )}
             </div>
-            {monaco && blob.path && blob.content && (
+            {monaco && blob.path && !blob.isFetching && (
                 <Formik
                     initialValues={{
                         name: splitByPath(blob.path)[1],
-                        content: blob.content.toString(),
+                        content: blob.content ? blob.content.toString() : '',
                         title: '',
                         message: '',
                         tags: '',

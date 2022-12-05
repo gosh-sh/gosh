@@ -1,12 +1,12 @@
-import React from 'react'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import TextField from '../../components/FormikForms/TextField'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError, retry } from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 
 type TFormValues = {
     name: string
@@ -21,15 +21,15 @@ const RepoCreatePage = () => {
         try {
             if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
 
-            await wallet.deployRepo(values.name.toLowerCase())
-            navigate(`/${daoName}/${values.name}`, { replace: true })
+            await retry(() => wallet.deployRepo(values.name.toLowerCase()), 3)
+            navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!wallet) return <Navigate to={`/${daoName}`} />
+    if (!wallet) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">

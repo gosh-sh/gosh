@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router-dom'
-import { IGoshRepository, TGoshCommit } from '../../types/types'
+import { IGoshRepository, TGoshCommit } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { getCommit, getCommitTime } from '../../helpers'
+import { getCommit, getCommitTime } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks'
@@ -90,7 +90,7 @@ const CommitPage = () => {
                             <p className="text-sm">
                                 To see the commit diff follow this
                                 <Link
-                                    to={`/${daoName}/${repoName}/commits/${commit.branch}/${commit.name}`}
+                                    to={`/o/${daoName}/r/${repoName}/commits/${commit.branch}/${commit.name}`}
                                     className="ml-1 underline"
                                 >
                                     link
