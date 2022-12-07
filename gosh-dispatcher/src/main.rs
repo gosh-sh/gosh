@@ -46,8 +46,9 @@ async fn main() -> anyhow::Result<()> {
         eprintln!("Run version: {helper_path}");
         eprintln!("Check for tombstone");
         let (status, tombstone) = run_binary_with_command(&helper_path, args.clone(), "get_dao_tombstone").await?;
-        eprintln!("tombstone: {status:?}/{tombstone}");
         if status.is_ok() && tombstone == "true" {
+            let (status, vc) = run_binary_with_command(&helper_path, args.clone(), "get_version_controller_address").await?;
+            eprintln!("{status:?} {vc}");
             return Err(format_err!("Repository is tombstoned, you need to get the remote link to the new version of repository."));
         }
         let res = Command::new(&helper_path)
@@ -64,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn run_binary_with_command(helper_path: &str, args: Vec<String>, command: &str) -> anyhow::Result<(tokio::io::Result<ExitStatus>, String)> {
-    eprintln!("run {helper_path} with {args:?} and command {command}");
+    // eprintln!("run {helper_path} with {args:?} and command {command}");
     let mut helper = Command::new(helper_path)
         .args(args.clone())
         .stdin(Stdio::piped())
@@ -79,7 +80,7 @@ async fn run_binary_with_command(helper_path: &str, args: Vec<String>, command: 
         .stdout
         .take()
         .ok_or(format_err!("Failed to take stdout of child process"))?;
-    eprintln!("pass command");
+    // eprintln!("pass command");
     stdin.write_all(format!("{command}\n\n").as_bytes()).await?;
     let mut lines = BufReader::new(output).lines();
     let mut result = String::new();

@@ -3,7 +3,8 @@ use std::env;
 
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-
+use ton_client::abi::{decode_account_data, ParamsOfDecodeAccountData};
+use ton_client::net::{ParamsOfQueryCollection, query_collection};
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -130,13 +131,60 @@ where
         Ok(caps)
     }
 
-    async fn print_repo_version(&self) -> anyhow::Result<Vec<String>> {
+    async fn get_repo_version(&self) -> anyhow::Result<Vec<String>> {
         let version = self
             .blockchain
             .repo_contract()
             .get_version(self.blockchain.client())
             .await?;
         Ok(vec![version, "".to_string()])
+    }
+
+    async fn get_version_controller_address(&self) -> anyhow::Result<Vec<String>> {
+        let system_contract_address = &self
+            .blockchain
+            .root_contract()
+            .address;
+        let system_contract_abi = &self
+            .blockchain
+            .root_contract()
+            .abi;
+
+        let filter = Some(serde_json::json!({
+            "id": { "eq": system_contract_address }
+        }));
+        let query = query_collection(
+            Arc::clone(self.blockchain.client()),
+            ParamsOfQueryCollection {
+                collection: "accounts".to_owned(),
+                filter,
+                result: "data".to_owned(),
+                limit: Some(1),
+                order: None,
+            },
+        )
+            .await
+            .map(|r| r.result)?;
+
+        let data = query[0]["data"].as_str().unwrap_or("").to_string();
+        let decode_res = decode_account_data(
+            Arc::clone(self.blockchain.client()),
+            ParamsOfDecodeAccountData {
+                abi: system_contract_abi.to_owned(),
+                data,
+                ..Default::default()
+            }
+        ).await?;
+
+        let version_controller_address = decode_res.data["_versionController"].as_str().unwrap_or("").to_string();
+        let address = BlockchainContractAddress::new(version_controller_address.clone());
+        let version_controller = GoshContract::new(address, gosh_abi::VERSION_CONTROLLER);
+        let versions: serde_json::Value = version_controller.run_static(self.blockchain.client(), "getVersions", None).await?;
+        eprintln!("{versions:?}");
+        // Object {"value0": Object {"0xb9ea58b67d186f6bc1d043eb2abfde3eda294a649974ef2fdad0510acb40ffad": Object {"Key": String("1.0.1"), "Value": String(
+        // serde_json::Map<String, serde_json::Map<String, serde_json::Map<String, String>>>;
+        let map = versions.as_object().unwrap().values().next().unwrap().as_object().unwrap().values().next().unwrap().as_object().unwrap().get("Key").unwrap().as_str().unwrap();
+        Ok(vec![map.to_string(), "".to_string()])
     }
 
     async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {
@@ -279,8 +327,9 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
-            (Some("repo_version"), None, None) => helper.print_repo_version().await?,
+            (Some("repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
+            (Some("get_version_controller_address"), None, None) => helper.get_version_controller_address().await?,
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
