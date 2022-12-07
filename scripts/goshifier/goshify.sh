@@ -50,7 +50,7 @@ git remote add gosh gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$GOSH_REPO
 git push -v gosh
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END-PUSH_START))
-echo "[$(date)] Push end ($MAIN_BRANCH)" | tee -a timings.txt
+echo "[$(date)] Push end ($MAIN_BRANCH)"
 
 echo "[$(date)] $ORG_NAME-$REPO_NAME/$MAIN_BRANCH successfully pushed to gosh in $PUSH_DURATION seconds" | tee -a ../../timings.txt
 
