@@ -85,7 +85,7 @@ const SignupPage = () => {
                 })}
                 enableReinitialize={true}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, setFieldValue }) => (
                     <Form className="px-5 sm:px-124px">
                         <div className="mb-3">
                             <Field
@@ -94,6 +94,11 @@ const SignupPage = () => {
                                 inputProps={{
                                     autoComplete: 'off',
                                     placeholder: 'Username',
+                                    onChange: (e: any) =>
+                                        setFieldValue(
+                                            'username',
+                                            e.target.value.toLowerCase(),
+                                        ),
                                 }}
                             />
                         </div>
