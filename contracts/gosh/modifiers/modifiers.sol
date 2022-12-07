@@ -156,11 +156,14 @@ abstract contract Modifiers is ReplayProtection {
     //Limit for names
     function checkName(string name) internal pure returns(bool) {
         bytes bStr = bytes(name);
+        if (bStr.length == 0) { return false; }
         for (uint i = 0; i < bStr.length; i++) {
-            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) { return false; }
-            if ((uint8(bStr[i]) >= 46) && (uint8(bStr[i]) <= 47)) { return false; }
-            if (uint8(bStr[i]) == 44){ return false; }
-            if (uint8(bStr[i]) == 32){ return false; }
+            bool onecheck = false;
+            if ((uint8(bStr[i]) >= 90) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
+            if (uint8(bStr[i]) == 45) {  onecheck = true; }
+            if (uint8(bStr[i]) == 95) {  onecheck = true; }
+            if (onecheck == false) { return false; }
         }
         return true;
     }
