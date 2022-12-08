@@ -34,10 +34,7 @@ const SignupPage = () => {
         try {
             await signup({
                 ...values,
-                username: (values.username.startsWith('@')
-                    ? values.username
-                    : `@${values.username}`
-                ).trim(),
+                username: values.username.trim(),
             })
 
             // Create PIN-code
@@ -77,7 +74,7 @@ const SignupPage = () => {
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
                     username: Yup.string()
-                        .matches(/^@?[\w-]+$/, 'Username has invalid characters')
+                        .matches(/^[\w-]+$/, 'Username has invalid characters')
                         .max(64, 'Max length is 64 characters')
                         .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),

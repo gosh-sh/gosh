@@ -2,11 +2,7 @@ import { AppConfig } from './appconfig'
 import { TValidationResult } from './types'
 
 const validateUsername = (username: string): TValidationResult => {
-    if (!username.startsWith('@')) {
-        return { valid: false, reason: 'Username has no leading @' }
-    }
-
-    const matches = username.match(/^@[\w-]+/g)
+    const matches = username.match(/^[\w-]+/g)
     if (!matches || matches[0] !== username) {
         return { valid: false, reason: 'Username has incorrect symbols' }
     }
