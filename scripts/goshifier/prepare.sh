@@ -8,6 +8,8 @@ if [[ ! -f 'config.json' ]]; then
     exit 1
 fi
 
+. config.sh
+
 mkdir -p ~/.gosh
 cp config.json ~/.gosh/config.json
 
@@ -16,7 +18,7 @@ WALLET_KEYS=$KEYS
 
 CONF_NET=$(jq -r '."primary-network"' config.json)
 
-if [[ "$NETWORK" != "" ]]; then
+if [[ "$NETWORK" == "" ]]; then
     ENDPOINT=$(jq -r ".networks.\"$CONF_NET\".endpoints[0]" config.json)
     NETWORK=${ENDPOINT#"https://"}
 fi
