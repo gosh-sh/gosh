@@ -131,7 +131,7 @@ const App = () => {
             <Header />
             <main className="main grow">
                 <Routes>
-                    <Route path="/" element={<HomePage />} />
+                    <Route path="/" element={<SignupPage />} />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
