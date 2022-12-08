@@ -12,7 +12,6 @@ use crate::{
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
         EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
     },
-    config,
     ipfs::{service::FileSave, IpfsService},
 };
 use tokio_retry::Retry;

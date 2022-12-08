@@ -1,4 +1,3 @@
-
 pub fn is_going_to_ipfs(new_content: &[u8]) -> bool {
     let mut is_going_to_ipfs = new_content.len() > crate::config::IPFS_CONTENT_THRESHOLD;
     if !is_going_to_ipfs {

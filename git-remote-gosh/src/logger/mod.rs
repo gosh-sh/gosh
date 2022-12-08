@@ -1,12 +1,12 @@
-pub mod test_utils;
 mod id_generator;
 mod telemetry;
+pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
+use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
-use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 

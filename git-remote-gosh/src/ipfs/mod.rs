@@ -114,10 +114,10 @@ impl IpfsService<MiddlewareHttpClient> {
         tracing::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
         tracing::info!("Got response: {:?}", response);
-        let response_body = response.bytes().instrument(
-            debug_span!("decode_response")
-                .or_current(),
-        ).await?;
+        let response_body = response
+            .bytes()
+            .instrument(debug_span!("decode_response").or_current())
+            .await?;
         Ok(Vec::from(&response_body[..]))
     }
 }

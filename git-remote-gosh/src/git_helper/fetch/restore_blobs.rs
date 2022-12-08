@@ -273,10 +273,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.next_content,
                 &snapshot.next_ipfs,
             )
-            .instrument(
-                debug_span!("convert_next_snapshot_into_blob")
-                    .or_current(),
-            )
+            .instrument(debug_span!("convert_next_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -289,10 +286,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.current_content,
                 &snapshot.current_ipfs,
             )
-            .instrument(
-                debug_span!("convert_current_snapshot_into_blob")
-                    .or_current(),
-            )
+            .instrument(debug_span!("convert_current_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
