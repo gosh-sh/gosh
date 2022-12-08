@@ -214,8 +214,10 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (await profile.isDeployed()) return profile
 
         // Deploy profile
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-        await this.gosh.run('deployProfile', { name: username.toLowerCase(), pubkey })
+        await this.gosh.run('deployProfile', {
+            name: username.toLowerCase(),
+            pubkey: pubkey.startsWith('0x') ? pubkey : `0x${pubkey}`,
+        })
         const wait = await whileFinite(async () => await profile.isDeployed())
         if (!wait) throw new GoshError('Deploy profile timeout reached')
         return profile

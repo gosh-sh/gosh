@@ -70,13 +70,14 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_DaoCode = 9;
     uint8 constant m_ProfileCode = 10;
     uint8 constant m_ProfileDaoCode = 11;
+    uint8 constant m_ProfileIndexCode = 12;
     
     //Deploy constants
-    uint128 constant FEE_DEPLOY_DAO = 31000 ton;
+    uint128 constant FEE_DEPLOY_DAO = 50000 ton;
     uint128 constant FEE_DEPLOY_REPO = 15 ton;
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
-    uint128 constant FEE_DEPLOY_SNAPSHOT = 16 ton;
+    uint128 constant FEE_DEPLOY_SNAPSHOT = 50 ton;
     uint128 constant FEE_DEPLOY_BRANCH = 1.4 ton;
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
@@ -86,6 +87,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_PROFILE = 10000 ton;
     uint128 constant FEE_DEPLOY_SYSTEM_CONTRACT = 51 ton;
     uint128 constant FEE_DEPLOY_DAO_PROFILE = 101 ton;
+    uint128 constant FEE_DEPLOY_PROFILE_INDEX = 3 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
