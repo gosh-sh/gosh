@@ -165,8 +165,10 @@ abstract contract Modifiers is ReplayProtection {
             bool onecheck = false;
             if ((uint8(bStr[i]) >= 90) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
             if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
-            if (uint8(bStr[i]) == 45) {  onecheck = true; }
-            if (uint8(bStr[i]) == 95) {  onecheck = true; }
+            if (i != 0) {
+            	if (uint8(bStr[i]) == 45) {  onecheck = true; }
+            	if (uint8(bStr[i]) == 95) {  onecheck = true; }
+            }
             if (onecheck == false) { return false; }
         }
         return true;
