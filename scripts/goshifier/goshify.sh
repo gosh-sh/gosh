@@ -4,6 +4,7 @@ set -e
 set -o pipefail
 
 . config.sh
+. prepare.sh
 
 ORG_NAME=$1
 REPO_NAME=$2
@@ -37,7 +38,7 @@ echo "[$(date)] Create end"
 echo "[$(date)] $GOSH_REPO gosh repository created in $CREATE_DURATION seconds" | tee -a timings.txt
 
 # ......................................................................................................................
-cd $DIR
+cd "$DIR"
 
 MAIN_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
@@ -46,7 +47,7 @@ echo "[$(date)] Repository push start"
 
 echo "[$(date)] Push start ($MAIN_BRANCH)"
 PUSH_START=$SECONDS
-git remote add gosh gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$GOSH_REPO
+git remote add gosh "gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$GOSH_REPO"
 git push -v gosh
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END-PUSH_START))
