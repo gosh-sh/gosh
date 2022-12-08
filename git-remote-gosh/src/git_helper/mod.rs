@@ -1,7 +1,10 @@
 #![allow(unused_variables)]
+
+use std::collections::HashMap;
 use std::env;
 
 use std::sync::Arc;
+use serde_json::Value;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use ton_client::abi::{decode_account_data, ParamsOfDecodeAccountData};
 use ton_client::net::{ParamsOfQueryCollection, query_collection};
@@ -180,11 +183,46 @@ where
         let address = BlockchainContractAddress::new(version_controller_address.clone());
         let version_controller = GoshContract::new(address, gosh_abi::VERSION_CONTROLLER);
         let versions: serde_json::Value = version_controller.run_static(self.blockchain.client(), "getVersions", None).await?;
-        eprintln!("{versions:?}");
+        // eprintln!("{versions:?}");
         // Object {"value0": Object {"0xb9ea58b67d186f6bc1d043eb2abfde3eda294a649974ef2fdad0510acb40ffad": Object {"Key": String("1.0.1"), "Value": String(
         // serde_json::Map<String, serde_json::Map<String, serde_json::Map<String, String>>>;
-        let map = versions.as_object().unwrap().values().next().unwrap().as_object().unwrap().values().next().unwrap().as_object().unwrap().get("Key").unwrap().as_str().unwrap();
-        Ok(vec![map.to_string(), "".to_string()])
+        let map = versions.as_object().unwrap()
+            .values().next().unwrap()
+            .as_object().unwrap()
+            .values().next().unwrap()
+            .as_object().unwrap().get("Key").unwrap().as_str().unwrap();
+        let mut available_versions = vec![];
+        if let Some(versions) = versions.as_object() {
+            if let Some(versions) = versions.values().next() {
+                if let Some(versions) = versions.as_object() {
+                    for version in versions.values() {
+                        if let Some(single_version) = version.as_object() {
+                            if let Some(version) = single_version.get("Key") {
+                                available_versions.push(version.as_str().unwrap_or("Undefined").to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // eprintln!("Available: {available_versions:?}");
+        let mut available_system_addresses = HashMap::new();
+        for version in available_versions {
+            let args = json!({"version": version});
+            let res: GetAddrDaoResult = version_controller.run_static(self.blockchain.client(), "getSystemContractAddr", Some(args)).await?;
+            let sys_address = res.address.clone();
+            let system_contract = GoshContract::new(res.address, gosh_abi::GOSH);
+            let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
+            let res: GetAddrDaoResult = system_contract.run_static(self.blockchain.client(), "getAddrRepository", Some(args)).await?;
+
+            let repo_contract = GoshContract::new(res.address, gosh_abi::DAO);
+            let res: anyhow::Result<Value> = repo_contract.run_static(self.blockchain.client(), "getVersion", None).await;
+            if res.is_ok() {
+                available_system_addresses.insert(version, sys_address);
+            }
+        }
+        let mut res = available_system_addresses.keys().map(|k| k.to_owned()).collect::<Vec<String>>().join(" ");
+        Ok(vec![res, "".to_string()])
     }
 
     async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {

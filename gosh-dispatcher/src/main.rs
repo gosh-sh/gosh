@@ -4,7 +4,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
 const REMOTE_NAME: &str = "git-remote-gosh_v";
-const POSSIBLE_VERSIONS: [&'static str; 3] = ["1_0_1", "1_0_0", "0_11_0"];
+const POSSIBLE_VERSIONS: [&'static str; 4] = ["1_0_2", "1_0_1", "1_0_0", "0_11_0"];
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
