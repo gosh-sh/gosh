@@ -367,8 +367,12 @@ contract SystemContract is Modifiers {
     function getHash(bytes state) external pure returns(uint256) {
         return tvm.hash(state);
     }
+    
+    function getCreator() external view returns(address) {
+        return _versionController;
+    }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("systemcontract", version);
     }
 }

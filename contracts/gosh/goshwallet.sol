@@ -171,7 +171,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         _tombstone = true;
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
@@ -800,8 +799,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return _walletcounter;
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("goshwallet", version);
     }
 
     function getDiffResult(bytes state, bytes diff) external pure returns(optional(bytes)) {

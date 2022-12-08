@@ -229,9 +229,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function askForTombstoneIn(uint256 key, string description) public senderIs(address(this))  accept {
         optional(uint256, address) res = _wallets.next(key);
         if (res.hasValue()) {
-            address pub;
-            (key, pub) = res.get();
-            GoshWallet(getAddrWalletIn(pub, 0)).setTombstoneWallet{value: 0.1 ton, flag: 1}(description);
+            address pubaddr;
+            (key, pubaddr) = res.get();
+            GoshWallet(pubaddr).setTombstoneWallet{value: 0.1 ton, flag: 1}(description);
             this.askForTombstoneIn{value: 0.1 ton, flag: 1}(key, description);
         }
         getMoney();
@@ -426,8 +426,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return (_limit_wallets);
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("goshdao", version);
     }
         
     function getOwner() external view returns(address) {

@@ -108,7 +108,7 @@
 			]
 		},
 		{
-			"name": "getRepoAddress",
+			"name": "getAddrRepository",
 			"inputs": [
 			],
 			"outputs": [
@@ -128,7 +128,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{

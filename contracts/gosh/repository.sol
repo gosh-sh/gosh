@@ -323,8 +323,8 @@ contract Repository is Modifiers{
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("repository", version);
     }
 
     function getOwner() external view returns(address) {
