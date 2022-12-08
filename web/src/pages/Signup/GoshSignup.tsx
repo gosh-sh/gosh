@@ -66,16 +66,12 @@ const GoshSignup = (props: TGoshSignupProps) => {
                 throw new GoshError('Session undefined')
             }
             const { email, phrase } = values
+            const username = values.username.trim()
 
             // Get keys from phrase
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                 phrase,
             })
-
-            // Prepare GOSH username
-            const username = (
-                values.username.startsWith('@') ? values.username : `@${values.username}`
-            ).trim()
 
             // Prepare emails
             const emails = new Set([
@@ -134,7 +130,7 @@ const GoshSignup = (props: TGoshSignupProps) => {
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
                     username: Yup.string()
-                        .matches(/^@?[\w-]+$/, 'Username has invalid characters')
+                        .matches(/^[\w-]+$/, 'Username has invalid characters')
                         .max(64, 'Max length is 64 characters')
                         .required('Username is required'),
                     email: Yup.string().email().required(),
@@ -151,6 +147,11 @@ const GoshSignup = (props: TGoshSignupProps) => {
                                 inputProps={{
                                     autoComplete: 'off',
                                     placeholder: 'Username',
+                                    onChange: (e: any) =>
+                                        setFieldValue(
+                                            'username',
+                                            e.target.value.toLowerCase(),
+                                        ),
                                 }}
                                 help={
                                     <>

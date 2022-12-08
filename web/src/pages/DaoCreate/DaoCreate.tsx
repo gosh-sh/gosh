@@ -85,7 +85,7 @@ const DaoCreatePage = () => {
                                                 e.target.value.toLowerCase(),
                                             ),
                                     }}
-                                    help="Put each @username from new line"
+                                    help="Put each username from new line"
                                 />
                             </div>
 
