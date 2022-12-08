@@ -124,6 +124,16 @@
 			]
 		},
 		{
+			"name": "upgradeTokens",
+			"inputs": [
+				{"name":"newvalue","type":"uint128"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -210,6 +220,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDaoTokenConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
 			]
 		},
 		{
@@ -437,6 +455,7 @@
 		{"name":"_previous","type":"optional(address)"},
 		{"name":"_wallets","type":"map(uint256,address)"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
