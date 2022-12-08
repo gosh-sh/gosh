@@ -61,6 +61,7 @@ contract Profile is Modifiers {
         TvmCell codeIndex,
         uint256 pubkey
     ) public internalMsg {
+        require(checkName(_name), ERR_WRONG_NAME);
         _systemcontract = msg.sender;
         _code[m_ProfileDaoCode] = codeProfileDao;
         _code[m_ProfileIndexCode] = codeIndex;

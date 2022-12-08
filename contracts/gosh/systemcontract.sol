@@ -77,6 +77,7 @@ contract SystemContract is Modifiers {
     }
     
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
+        require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
