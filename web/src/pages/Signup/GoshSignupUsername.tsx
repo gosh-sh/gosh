@@ -7,7 +7,7 @@ import {
     githubSessionAtom,
     signupStepAtom,
 } from '../../store/signup.state'
-import { SwitchField, TextareaField, TextField } from '../../components/Formik'
+import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import { SignupProgress } from './SignupProgress'
 import { supabase } from '../../helpers'
@@ -17,20 +17,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 type TGoshSignupUsernameProps = {
+    phrase: string
     signoutGithub(): Promise<void>
 }
 
 const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
-    const { signoutGithub } = props
+    const { phrase, signoutGithub } = props
     const githubSession = useRecoilValue(githubSessionAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
     const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
-
-    const getRandomPhrase = async () => {
-        const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
-        return phrase
-    }
 
     const getOrCreateSupaUser = async (username: string, pubkey: string) => {
         const userExists = await supabase
@@ -56,46 +52,43 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     }
 
     const onFormSubmit = async (values: { username: string }) => {
-        // try {
-        //     if (!githubSession.session) {
-        //         throw new GoshError('Session undefined')
-        //     }
-        //     const { email, phrase } = values
-        //     const username = values.username.trim()
-        //     // Get keys from phrase
-        //     const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-        //         phrase,
-        //     })
-        //     // Prepare emails
-        //     const emails = new Set([
-        //         githubSession.session?.user.user_metadata.email,
-        //         email,
-        //     ])
-        //     // Deploy GOSH account
-        //     await signup({ ...values, username })
-        //     // Save auto clone repositories
-        //     const supaUser = await getOrCreateSupaUser(username, keypair.public)
-        //     const githubUser = githubSession.session.user
-        //     console.debug('Supa user', supaUser)
-        //     const { error } = await supabase.from('github').insert(
-        //         githubReposSelected.map(([githubUrl, goshUrl]) => ({
-        //             user_id: supaUser.id,
-        //             github_user_id: githubUser.id,
-        //             email: Array.from(emails),
-        //             github_url: githubUrl,
-        //             gosh_url: goshUrl,
-        //         })),
-        //     )
-        //     if (error) {
-        //         throw new GoshError(error.message)
-        //     }
-        //     await signoutGithub()
-        //     setStep({ index: 4 })
-        // } catch (e: any) {
-        //     console.debug('E', e)
-        //     console.error(e.message)
-        //     toast.error(<ToastError error={e} />)
-        // }
+        try {
+            if (!githubSession.session) {
+                throw new GoshError('Session undefined')
+            }
+
+            // Prepare data
+            const githubUser = githubSession.session.user
+            const username = values.username.trim()
+            const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
+                phrase,
+            })
+
+            // Deploy GOSH account
+            await signup({ phrase, username })
+
+            // Save auto clone repositories
+            const supaUser = await getOrCreateSupaUser(username, keypair.public)
+
+            const { error } = await supabase.from('github').insert(
+                githubReposSelected.map(([githubUrl, goshUrl]) => ({
+                    user_id: supaUser.id,
+                    github_user_id: githubUser.id,
+                    email: [githubUser.email],
+                    github_url: githubUrl,
+                    gosh_url: goshUrl,
+                })),
+            )
+            if (error) {
+                throw new GoshError(error.message)
+            }
+
+            await signoutGithub()
+            setStep({ index: 5, data: { username, email: githubUser.email } })
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
     }
 
     return (
@@ -139,10 +132,6 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                             .matches(/^[\w-]+$/, 'Username has invalid characters')
                             .max(64, 'Max length is 64 characters')
                             .required('Username is required'),
-                        isConfirmed: Yup.boolean().oneOf(
-                            [true],
-                            'You should accept this',
-                        ),
                     })}
                 >
                     {({ isSubmitting, setFieldValue }) => (
@@ -188,10 +177,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                     )}
                 </Formik>
 
-                <SignupProgress
-                    progress={signupProgress}
-                    className="mt-4 mx-5 sm:mx-124px"
-                />
+                <SignupProgress progress={signupProgress} className="mt-4" />
             </div>
         </div>
     )

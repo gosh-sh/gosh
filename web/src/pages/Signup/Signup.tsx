@@ -82,8 +82,10 @@ const SignupPage = () => {
             {step?.index === 3 && (
                 <GoshSignupPhrase phrase={phrase} setPhrase={setPhrase} />
             )}
-            {step?.index === 4 && <GoshSignupUsername signoutGithub={signoutGithub} />}
-            {step?.index === 5 && <GoshSignupComplete />}
+            {step?.index === 4 && (
+                <GoshSignupUsername phrase={phrase} signoutGithub={signoutGithub} />
+            )}
+            {step?.index === 5 && <GoshSignupComplete {...step.data} />}
         </div>
     )
 }
