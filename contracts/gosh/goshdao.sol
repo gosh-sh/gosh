@@ -318,7 +318,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, token, _rootTokenRoot);
         getMoney();
     }
     
