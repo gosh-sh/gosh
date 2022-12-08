@@ -3,10 +3,8 @@
 set -e
 set -o pipefail
 
-CONF_ERROR=$(jq -r '.error' config.json)
-
-if [[ "$CONF_ERROR" != "null" ]]; then
-    echo "config.json invalid: $CONF_ERROR"
+if [[ ! -f 'config.json' ]]; then
+    echo "config.json does not exist, copy with your own one"
     exit 1
 fi
 
