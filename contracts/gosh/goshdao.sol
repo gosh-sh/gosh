@@ -210,10 +210,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function upgradeDao(string newversion, string description, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
         description;
-        _tombstone = true;
         getMoney();
         uint256 zero;
         if (_tombstone == false) { this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description); }
+        _tombstone = true;
         SystemContract(_systemcontract).upgradeDao1{value : 0.1 ton, flag: 1}(_nameDao, newversion);
     }
 
