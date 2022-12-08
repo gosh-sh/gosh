@@ -115,6 +115,22 @@
 			]
 		},
 		{
+			"name": "AloneDeployWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneSetConfigDao",
+			"inputs": [
+				{"name":"newtoken","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},

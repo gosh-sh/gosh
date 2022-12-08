@@ -231,6 +231,22 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
     }
     
+    function isAlone (uint128 config, address[] pubaddr, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        (int8 _, uint256 keyaddr) = pub.unpack();
+        _;
+        require(_wallets.prev(keyaddr).hasValue() == false, ERR_NOT_ALONE);
+        require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
+        getMoney();
+        if (typeF == ALONE_SET_CONFIG) { _tokenforperson = config; return; }
+        if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
+    }
+    
+    function deployWalletPrivate(address[] pubaddrdeploy) private {
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
+        getMoney();
+    }
+    
     function askForTombstoneIn(uint256 key, string description) public senderIs(address(this))  accept {
         optional(uint256, address) res = _wallets.next(key);
         if (res.hasValue()) {

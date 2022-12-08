@@ -124,6 +124,9 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
     uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
     
+    uint128 constant ALONE_DEPLOY_WALLET = 1;
+    uint128 constant ALONE_SET_CONFIG = 2;
+    
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
