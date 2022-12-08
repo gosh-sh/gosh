@@ -477,11 +477,6 @@ pub mod tests {
         );
     }
 
-    #[derive(Deserialize, Debug)]
-    struct GetHashResult {
-        #[serde(rename = "value0")]
-        hash: String,
-    }
 
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
