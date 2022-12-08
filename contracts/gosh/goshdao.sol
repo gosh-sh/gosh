@@ -35,7 +35,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => address  ) _wallets;
     mapping(uint8 => TvmCell) _code;
     
-    uint128 _tokenforperson = 100;
+    uint128 _tokenforperson = 20;
     uint128 _limit_wallets;
     //added for SMV
     TvmCell m_TokenLockerCode;
