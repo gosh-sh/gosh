@@ -24,9 +24,9 @@ pub struct GetDiffResultResult {
 #[derive(Deserialize, Debug)]
 pub struct GetVersionResult {
     #[serde(rename = "value0")]
-    pub version: String,
-    #[serde(rename = "value1")]
     pub contract_name: String,
+    #[serde(rename = "value1")]
+    pub version: String,
 }
 
 #[derive(Serialize, Debug)]

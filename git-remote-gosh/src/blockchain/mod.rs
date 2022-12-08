@@ -143,9 +143,9 @@ struct GetHeadResult {
 #[derive(Deserialize, Debug)]
 struct GetVersionResult {
     #[serde(rename = "value0")]
-    pub version: String,
-    #[serde(rename = "value0")]
     pub contract_name: String,
+    #[serde(rename = "value1")]
+    pub version: String,
 }
 
 pub type EverClient = Arc<ClientContext>;
