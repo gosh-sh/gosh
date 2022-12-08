@@ -9,6 +9,10 @@ pragma ever-solidity >=0.66.0;
 import "replayprotection.sol";
 
 //Structs  
+struct MemberToken {
+    address member;
+    uint128 count;
+}
 struct TreeAnswer {
     address sender;
     bool isCommit;

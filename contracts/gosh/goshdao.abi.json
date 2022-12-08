@@ -41,7 +41,8 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"name":"wallets","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"token","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -50,7 +51,7 @@
 			"name": "returnWallets",
 			"inputs": [
 				{"name":"key","type":"uint256"},
-				{"name":"wallets","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -292,11 +293,19 @@
 			]
 		},
 		{
+			"name": "getWalletsToken",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
 			"name": "getWalletsFull",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -466,7 +475,7 @@
 		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_previous","type":"optional(address)"},
-		{"name":"_wallets","type":"map(uint256,address)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},

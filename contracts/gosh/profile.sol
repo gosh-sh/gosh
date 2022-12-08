@@ -92,6 +92,10 @@ contract Profile is Modifiers {
         systemcontract; goshdao; index; ver;
     }
     
+    function destroyedWallet(address systemcontract, address goshdao, uint128 index, string ver) public pure {
+        systemcontract; goshdao; index; ver;
+    }
+    
     function _generateId() inline private pure returns (uint64) {
         return (uint64(now) << 32) | (tx.timestamp & 0xFFFFFFFF);
     }

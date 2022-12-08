@@ -782,6 +782,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function askForDestroy() public senderIs(_getWalletAddr(0)) {
+        if (_index == 0) { 
+            Profile(_pubaddr).destroyedWallet(_systemcontract, _goshdao, _index, version);
+        }
         selfdestruct(giver);
     }
 
