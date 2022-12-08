@@ -6,3 +6,6 @@ export SYSTEM_CONTRACT_ADDR="0:e547605cfff78c2cde87773990dca129e4ddb225b5dd3a1af
 
 # Specify DAO name under which to upload repositories
 export DAO_NAME=""
+
+# Set to not empty to override
+export NETWORK=""

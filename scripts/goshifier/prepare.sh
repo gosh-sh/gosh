@@ -17,8 +17,12 @@ KEYS=keys.json
 WALLET_KEYS=$KEYS
 
 CONF_NET=$(jq -r '."primary-network"' config.json)
-ENDPOINT=$(jq -r ".networks.\"$CONF_NET\".endpoints[0]" config.json)
-NETWORK=${ENDPOINT#"https://"}
+
+if [[ "$NETWORK" != "" ]]; then
+    ENDPOINT=$(jq -r ".networks.\"$CONF_NET\".endpoints[0]" config.json)
+    NETWORK=${ENDPOINT#"https://"}
+fi
+
 USER_PROFILE_NAME=$(jq -r ".networks.\"$CONF_NET\".\"user-wallet\".profile" config.json)
 
 # tonos-cli getkeypair -o $KEYS -p "$SEED" >/dev/null
