@@ -178,7 +178,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function askForTombstone(uint128 index, string description) public senderIs(_getWalletAddr(index)) {
         _tombstone = true;
-        if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
     
