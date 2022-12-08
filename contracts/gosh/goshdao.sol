@@ -35,6 +35,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => address  ) _wallets;
     mapping(uint8 => TvmCell) _code;
     
+    uint128 _tokenforperson = 100;
     uint128 _limit_wallets;
     //added for SMV
     TvmCell m_TokenLockerCode;
@@ -215,6 +216,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _tombstone = true;
         SystemContract(_systemcontract).upgradeDao1{value : 0.1 ton, flag: 1}(_nameDao, newversion);
     }
+    
+    function upgradeTokens(uint128 newvalue, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+        getMoney();
+        _tokenforperson = newvalue;
+    }
 
     //Wallet part
     function setTombstone(address pub, uint128 index, string description) public senderIs(getAddrWalletIn(pub, index))  accept {
@@ -295,7 +301,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, _rootTokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         getMoney();
     }
     
@@ -376,6 +382,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+    
+    function getDaoTokenConfig() external view returns(uint128) {
+        return _tokenforperson;
+    }
 
     function getWalletCode() external view returns(TvmCell) {
         return _code[m_WalletCode];
@@ -421,8 +431,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _nameDao;
     }
     
-    function getConfig() external view returns(uint128) {
-        return (_limit_wallets);
+    function getConfig() external view returns(uint128, uint128) {
+        return (_limit_wallets, _tokenforperson);
     }
 
     function getVersion() external pure returns(string, string) {

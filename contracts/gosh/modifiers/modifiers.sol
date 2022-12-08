@@ -111,6 +111,9 @@ abstract contract Modifiers is ReplayProtection {
     uint32 constant SET_UPGRADE_PROPOSAL_START_AFTER  = 1 minutes;
     uint32 constant SET_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
 
+    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_DURATION  = 1 weeks; 
+
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
@@ -119,6 +122,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DEPLOY_WALLET_DAO_PROPOSAL_KIND = 5;
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
+    uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
     
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     
