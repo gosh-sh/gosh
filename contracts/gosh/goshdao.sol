@@ -130,7 +130,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
             deployWalletIn(address.makeAddrStd(0, key));
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
-        else { _wallets = wallets; }
         getMoney();
     }
     
