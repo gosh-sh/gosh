@@ -444,7 +444,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const profiles = []
         for (const key in value0) {
             const profile = `0:${key.slice(2)}`
-            profiles.push({ profile, wallet: value0[key] })
+            profiles.push({ profile, wallet: value0[key].member })
         }
         return profiles
     }
@@ -2204,6 +2204,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshDeleteProtectedBranchProposalParams'
         } else if (type === ESmvEventType.PR) {
             fn = 'getGoshSetCommitProposalParams'
+        } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
+            fn = 'getGoshSetConfigDaoProposalParams'
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
