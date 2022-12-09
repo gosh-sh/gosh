@@ -70,18 +70,36 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             // Save auto clone repositories
             const supaUser = await getOrCreateSupaUser(username, keypair.public)
 
-            const { error } = await supabase.from('github').insert(
+            const supaGithubUser = await supabase
+                .from('github_users')
+                .select('*', { count: 'exact' })
+                .eq('user_id', supaUser.id)
+            if (!supaGithubUser.count) {
+                const { error: error0 } = await supabase.from('github_users').upsert(
+                    {
+                        user_id: supaUser.id,
+                        github_user_id: githubUser.id,
+                        email: [githubUser.email],
+                        full_name: githubUser.user_metadata.full_name,
+                    },
+                    {
+                        ignoreDuplicates: false,
+                    },
+                )
+                if (error0) {
+                    throw new GoshError(error0.message)
+                }
+            }
+
+            const { error: error1 } = await supabase.from('github').insert(
                 githubReposSelected.map(([githubUrl, goshUrl]) => ({
                     user_id: supaUser.id,
-                    github_user_id: githubUser.id,
-                    email: [githubUser.email],
-                    full_name: githubUser.user_metadata.full_name,
                     github_url: githubUrl,
                     gosh_url: goshUrl,
                 })),
             )
-            if (error) {
-                throw new GoshError(error.message)
+            if (error1) {
+                throw new GoshError(error1.message)
             }
 
             await signoutGithub()
