@@ -3,12 +3,14 @@
 set -e
 set -o pipefail
 
+cd "$(dirname "$0")"
+
 ORG_NAME=$1
 REPO_NAME=$2
 
 SYSTEM_CONTRACT_ADDR=$3
 DAO_NAME=$4
-REPO_NAME=$5
+GOSH_REPO=$5
 
 if [[ "$5" == "" ]]; then
     echo "Usage: $0 git_user_or_organization_name git_repository_name gosh_system_contract_addr gosh_dao_name gosh_repo_name"
@@ -29,18 +31,24 @@ CLONE_DURATION=$((CLONE_END-CLONE_START))
 
 echo "[$(date)] $ORG_NAME/$REPO_NAME cloned from github in $CLONE_DURATION seconds" | tee -a timings.txt
 
-GOSH_REPO="$ORG_NAME-$REPO_NAME"
-
-echo "[$(date)] Create start"
+echo "[$(date)] Create DAO start"
 CREATE_START=$SECONDS
-./create-repo.sh "$GOSH_REPO"
+./create-dao.sh "$SYSTEM_CONTRACT_ADDR" "$DAO_NAME"
 CREATE_END=$SECONDS
 CREATE_DURATION=$((CREATE_END-CREATE_START))
-echo "[$(date)] Create end"
+echo "[$(date)] Create DAO end"
+
+echo "[$(date)] $GOSH_REPO gosh organization created in $CREATE_DURATION seconds" | tee -a timings.txt
+
+echo "[$(date)] Create repo start"
+CREATE_START=$SECONDS
+./create-repo.sh "$SYSTEM_CONTRACT_ADDR" "$DAO_NAME" "$GOSH_REPO"
+CREATE_END=$SECONDS
+CREATE_DURATION=$((CREATE_END-CREATE_START))
+echo "[$(date)] Create repo end"
 
 echo "[$(date)] $GOSH_REPO gosh repository created in $CREATE_DURATION seconds" | tee -a timings.txt
 
-# ......................................................................................................................
 cd "$DIR"
 
 MAIN_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -85,4 +93,3 @@ ALL_PUSH_DURATION=$((ALL_PUSH_END-ALL_PUSH_START))
 echo "[$(date)] $ORG_NAME-$REPO_NAME successfully pushed to gosh in $ALL_PUSH_DURATION seconds" | tee -a ../../timings.txt
 
 cd ../..
-# ......................................................................................................................

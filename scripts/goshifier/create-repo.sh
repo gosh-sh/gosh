@@ -1,7 +1,9 @@
 #!/bin/bash
 
-set -e 
+set -e
 set -o pipefail
+
+cd "$(dirname "$0")"
 
 export SYSTEM_CONTRACT_ADDR=$1
 export DAO_NAME=$2
@@ -15,13 +17,24 @@ fi
 . prepare.sh
 . util.sh
 
-tonos-cli -u "$NETWORK" call --abi "$WALLET_ABI" --sign "$WALLET_KEYS" "$WALLET_ADDR" deployRepository "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
-
+DAO_ADDR=$(tonos-cli -u "$NETWORK" -j run "$SYSTEM_CONTRACT_ADDR" getAddrDao "{\"name\":\"$DAO_NAME\"}" --abi "$SYSTEM_CONTRACT_ABI" | jq -r '.value0')
+WALLET_ADDR=$(tonos-cli -u "$NETWORK" -j run "$DAO_ADDR" getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi "$DAO_ABI" | jq -r '.value0')
 REPO_ADDR=$(tonos-cli -u "$NETWORK" -j run "$DAO_ADDR" getAddrRepository "{\"name\":\"$REPO_NAME\"}" --abi "$DAO_ABI" | jq -r '.value0')
+export DAO_ADDR
+export WALLET_ADDR
+export REPO_ADDR
 
-echo "***** awaiting repo deploy ($REPO_ADDR) *****"
-wait_account_active "$REPO_ADDR"
-sleep 1
+status=`tonos-cli -j -u "$NETWORK" account "$REPO_ADDR" | jq -r '."'"$REPO_ADDR"'".acc_type'`
+
+if [ "$status" != "Active" ]; then
+    tonos-cli -u "$NETWORK" call --abi "$WALLET_ABI" --sign "$WALLET_KEYS" "$WALLET_ADDR" deployRepository "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+
+    echo "***** awaiting repo deploy ($REPO_ADDR) *****"
+    wait_account_active "$REPO_ADDR"
+    sleep 1
+else
+    echo "***** repo already deployed ($REPO_ADDR) *****"
+fi
 
 COMMIT_ADDR=$(tonos-cli -u "$NETWORK" -j run "$REPO_ADDR" getAddrBranch "{\"name\":\"main\"}" --abi "$REPO_ABI" | jq -r '.value0.commitaddr')
 
