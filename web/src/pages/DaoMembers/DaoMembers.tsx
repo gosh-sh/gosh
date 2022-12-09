@@ -57,8 +57,8 @@ const DaoMembersPage = () => {
                             <DaoMemberListItem
                                 key={index}
                                 item={item}
-                                daoOwner={dao.details.owner}
-                                isDaoOwner={dao.details.isAuthOwner}
+                                owner={dao.details.owner}
+                                isAuthMember={dao.details.isAuthMember}
                                 isFetching={deleteDaoMember.isFetching(item.name)}
                                 onDelete={onMemberDelete}
                             />
