@@ -336,7 +336,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{
@@ -353,14 +354,6 @@
 			],
 			"outputs": [
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"value0","type":"optional(tuple)"}
-			]
-		},
-		{
-			"name": "getTombstone",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
 			]
 		},
 		{
@@ -383,7 +376,6 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"name":"_tombstone","type":"bool"},
 		{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"_previousversion","type":"optional(tuple)"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"},

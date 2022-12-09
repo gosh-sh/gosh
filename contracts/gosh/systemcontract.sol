@@ -77,6 +77,7 @@ contract SystemContract is Modifiers {
     }
     
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
+        require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
@@ -366,8 +367,12 @@ contract SystemContract is Modifiers {
     function getHash(bytes state) external pure returns(uint256) {
         return tvm.hash(state);
     }
+    
+    function getCreator() external view returns(address) {
+        return _versionController;
+    }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("systemcontract", version);
     }
 }

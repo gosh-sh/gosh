@@ -9,6 +9,10 @@ pragma ever-solidity >=0.66.0;
 import "replayprotection.sol";
 
 //Structs  
+struct MemberToken {
+    address member;
+    uint128 count;
+}
 struct TreeAnswer {
     address sender;
     bool isCommit;
@@ -111,6 +115,9 @@ abstract contract Modifiers is ReplayProtection {
     uint32 constant SET_UPGRADE_PROPOSAL_START_AFTER  = 1 minutes;
     uint32 constant SET_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
 
+    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_DURATION  = 1 weeks; 
+
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
@@ -119,6 +126,10 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DEPLOY_WALLET_DAO_PROPOSAL_KIND = 5;
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
+    uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
+    
+    uint128 constant ALONE_DEPLOY_WALLET = 1;
+    uint128 constant ALONE_SET_CONFIG = 2;
     
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     
@@ -156,11 +167,16 @@ abstract contract Modifiers is ReplayProtection {
     //Limit for names
     function checkName(string name) internal pure returns(bool) {
         bytes bStr = bytes(name);
+        if (bStr.length == 0) { return false; }
+        if (bStr.length > 39) { return false; }
         for (uint i = 0; i < bStr.length; i++) {
-            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) { return false; }
-            if ((uint8(bStr[i]) >= 46) && (uint8(bStr[i]) <= 47)) { return false; }
-            if (uint8(bStr[i]) == 44){ return false; }
-            if (uint8(bStr[i]) == 32){ return false; }
+            bool onecheck = false;
+            if ((uint8(bStr[i]) >= 90) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
+            if (i != 0) {
+            	if ((uint8(bStr[i]) == 45) && (uint8(bStr[i - 1]) != 45)) {  onecheck = true; }
+            }
+            if (onecheck == false) { return false; }
         }
         return true;
     }

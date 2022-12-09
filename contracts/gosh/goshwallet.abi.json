@@ -24,6 +24,7 @@
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
+				{"name":"tokenforperson","type":"uint128"},
 				{"name":"_tip3Root","type":"address"}
 			],
 			"outputs": [
@@ -114,9 +115,34 @@
 			]
 		},
 		{
+			"name": "AloneDeployWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneSetConfigDao",
+			"inputs": [
+				{"name":"newtoken","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForChangeTokenConfig",
+			"inputs": [
+				{"name":"tokenforperson","type":"uint128"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -478,7 +504,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{
@@ -714,6 +741,7 @@
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
+		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
