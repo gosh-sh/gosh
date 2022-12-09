@@ -79,7 +79,12 @@ function useUser() {
         const { username, phrase } = params
         const gosh = GoshAdapterFactory.createLatest()
         const profile = await gosh.getProfile({ username })
-        if (await profile.isDeployed()) throw new GoshError(EGoshError.PROFILE_EXISTS)
+        if (await profile.isDeployed()) {
+            throw new GoshError(
+                EGoshError.PROFILE_EXISTS,
+                `GOSH username '${username}' is already taken`,
+            )
+        }
 
         setSignupProgress((state) => ({ ...state, isFetching: true }))
         const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
@@ -101,8 +106,8 @@ function useUser() {
             }))
         }
 
+        resetUser()
         resetUserPersist()
-        setUserPersist((state) => ({ ...state, username, profile: profile.address }))
     }
 
     const signout = () => {
