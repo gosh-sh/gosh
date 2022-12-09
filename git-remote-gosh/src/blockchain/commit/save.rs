@@ -174,7 +174,7 @@ impl BlockchainCommitPusher for Everscale {
             }
             sleep(Duration::from_secs(10)).await;
         }
-        tracing::info!("Time elapsed in notify_commit() is: {:?}", start.elapsed());
+        tracing::info!("Time spent on `set_commit` is: {:?}", start.elapsed());
         Ok(())
     }
 }
