@@ -46,7 +46,6 @@ const DaosPage = () => {
                 name: key,
                 repos: imported[key],
             }))
-            console.debug('Imported sorted', importedList)
             setGithubData(importedList)
         }
 
