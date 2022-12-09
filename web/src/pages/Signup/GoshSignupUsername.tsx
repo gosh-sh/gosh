@@ -75,6 +75,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                     user_id: supaUser.id,
                     github_user_id: githubUser.id,
                     email: [githubUser.email],
+                    full_name: githubUser.user_metadata.full_name,
                     github_url: githubUrl,
                     gosh_url: goshUrl,
                 })),
