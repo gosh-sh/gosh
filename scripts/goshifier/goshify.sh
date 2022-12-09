@@ -3,16 +3,19 @@
 set -e
 set -o pipefail
 
-. config.sh
-. prepare.sh
-
 ORG_NAME=$1
 REPO_NAME=$2
 
-if [[ "$2" == "" ]]; then
-    echo "Usage: $0 user_or_organization_name repository_name"
-	exit 1
+SYSTEM_CONTRACT_ADDR=$3
+DAO_NAME=$4
+REPO_NAME=$5
+
+if [[ "$5" == "" ]]; then
+    echo "Usage: $0 git_user_or_organization_name git_repository_name gosh_system_contract_addr gosh_dao_name gosh_repo_name"
+    exit 1
 fi
+
+. prepare.sh
 
 DIR="repos/$ORG_NAME-$REPO_NAME"
 rm -rf "$DIR"

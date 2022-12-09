@@ -8,8 +8,6 @@ if [[ ! -f 'config.json' ]]; then
     exit 1
 fi
 
-. config.sh
-
 mkdir -p ~/.gosh
 cp config.json ~/.gosh/config.json
 

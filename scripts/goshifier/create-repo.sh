@@ -3,11 +3,17 @@
 set -e 
 set -o pipefail
 
-. config.sh
+export SYSTEM_CONTRACT_ADDR=$1
+export DAO_NAME=$2
+export REPO_NAME=$3
+
+if [[ "$3" == "" ]]; then
+    echo "Usage: $0 gosh_system_contract_addr gosh_dao_name gosh_repo_name"
+    exit 1
+fi
+
 . prepare.sh
 . util.sh
-
-REPO_NAME=$1
 
 tonos-cli -u "$NETWORK" call --abi "$WALLET_ABI" --sign "$WALLET_KEYS" "$WALLET_ADDR" deployRepository "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
 
