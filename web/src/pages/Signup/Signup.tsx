@@ -34,10 +34,7 @@ const SignupPage = () => {
         try {
             await signup({
                 ...values,
-                username: (values.username.startsWith('@')
-                    ? values.username
-                    : `@${values.username}`
-                ).trim(),
+                username: values.username.trim(),
             })
 
             // Create PIN-code
@@ -77,7 +74,7 @@ const SignupPage = () => {
                 onSubmit={onFormSubmit}
                 validationSchema={Yup.object().shape({
                     username: Yup.string()
-                        .matches(/^@?[\w-]+$/, 'Username has invalid characters')
+                        .matches(/^[\w-]+$/, 'Username has invalid characters')
                         .max(64, 'Max length is 64 characters')
                         .required('Username is required'),
                     phrase: Yup.string().required('Phrase is required'),
@@ -85,7 +82,7 @@ const SignupPage = () => {
                 })}
                 enableReinitialize={true}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, setFieldValue }) => (
                     <Form className="px-5 sm:px-124px">
                         <div className="mb-3">
                             <Field
@@ -94,6 +91,11 @@ const SignupPage = () => {
                                 inputProps={{
                                     autoComplete: 'off',
                                     placeholder: 'Username',
+                                    onChange: (e: any) =>
+                                        setFieldValue(
+                                            'username',
+                                            e.target.value.toLowerCase(),
+                                        ),
                                 }}
                             />
                         </div>

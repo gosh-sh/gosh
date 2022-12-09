@@ -73,10 +73,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell platformCode,
         TvmCell clientCode,
         TvmCell proposalCode,
+        uint128 tokenforperson,
         address _tip3Root
     ) public SMVAccount(pubaddr, lockerCode, tokenWalletCode, tvm.hash(platformCode), platformCode.depth(),
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
-                        proposalCode.depth(), _tip3Root
+                        proposalCode.depth(), tokenforperson, _tip3Root
     ) {
         _rootpubaddr = rootpubaddr;
         _nameDao = nameDao;
@@ -117,7 +118,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         getMoney();
     }
 
@@ -171,7 +172,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         _tombstone = true;
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
@@ -179,7 +179,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function askForTombstone(uint128 index, string description) public senderIs(_getWalletAddr(index)) {
         _tombstone = true;
-        if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
     
@@ -214,12 +213,28 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         getMoney();
     }
-
+    
+    function AloneDeployWalletDao(address[] pubaddr) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(0, pubaddr, _pubaddr, _index, ALONE_DEPLOY_WALLET);
+    }
+    
+    function AloneSetConfigDao(uint128 newtoken) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        address[] pubaddr;
+        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(newtoken, pubaddr, _pubaddr, _index, ALONE_SET_CONFIG);
+    }
+    
     function startProposalForDeployWalletDao(
         address[] pubaddr,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         tvm.accept();
         _saveMsg();
 
@@ -233,12 +248,33 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         getMoney();
     }
+    
+    function startProposalForChangeTokenConfig(
+        uint128 tokenforperson,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = CHANGE_TOKEN_CONFIG_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, tokenforperson);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER, CHANGE_TOKEN_CONFIG_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
 
     function startProposalForDeleteWalletDao(
         address[] pubaddr,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         tvm.accept();
         _saveMsg();
 
@@ -259,6 +295,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function _upgradeDao(string newversion, string description) private view {
     	GoshDao(_goshdao).upgradeDao{value : 0.1 ton, flag : 1}(newversion, description, _pubaddr, _index);
+    }
+    
+    function _upgradeConfig(uint128 value) private view {
+    	GoshDao(_goshdao).upgradeTokens{value : 0.1 ton, flag : 1}(value, _pubaddr, _index);
     }
 
     function _deployWalletDao(address[] pubaddr) private view {
@@ -284,7 +324,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, m_tokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
         getMoney();
     }
@@ -300,6 +340,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _getWalletAddr(uint128 index) internal view returns(address) {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _getWalletTokenConfig() internal view returns(uint128) {
+        return DEFAULT_DAO_BALANCE;
     }
 
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
@@ -706,7 +750,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == SET_UPGRADE_PROPOSAL_KIND) {
                 (string newversion, string description) = s.decode(string, string);
                 _upgradeDao(newversion, description);
-            }            
+            } else
+            if (kind == CHANGE_TOKEN_CONFIG_PROPOSAL_KIND) {
+                (uint128 newtokennumber) = s.decode(uint128);
+                _upgradeConfig(newtokennumber);
+            }       
         }
     }
 
@@ -734,6 +782,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function askForDestroy() public senderIs(_getWalletAddr(0)) {
+        if (_index == 0) { 
+            Profile(_pubaddr).destroyedWallet(_systemcontract, _goshdao, _index, version);
+        }
         selfdestruct(giver);
     }
 
@@ -800,8 +851,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return _walletcounter;
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("goshwallet", version);
     }
 
     function getDiffResult(bytes state, bytes diff) external pure returns(optional(bytes)) {

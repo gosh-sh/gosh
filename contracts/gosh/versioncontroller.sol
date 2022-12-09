@@ -181,7 +181,7 @@ contract VersionController is Modifiers {
         return _SystemContractCode;
     }
 
-    function getVersion() external pure returns(string) {
-        return _version;
+    function getVersion() external pure returns(string, string) {
+        return ("versioncontroller", _version);
     }
 }

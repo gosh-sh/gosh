@@ -33,8 +33,16 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"address"},
+				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getCreator",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
