@@ -50,7 +50,7 @@ const DaosPage = () => {
         }
 
         _getGithubData()
-    }, [])
+    }, [user.username])
 
     return (
         <>
