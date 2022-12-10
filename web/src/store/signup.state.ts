@@ -69,7 +69,6 @@ export const githubRepositoriesSelectedSelector = selector({
                 selected.push([githubUrl, goshUrl])
             })
         }
-        console.debug('Selected repos', selected)
         return selected
     },
 })
