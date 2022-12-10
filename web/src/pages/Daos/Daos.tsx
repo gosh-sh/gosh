@@ -26,7 +26,7 @@ const DaosPage = () => {
                 .from('users')
                 .select(`*, github (updated_at, github_url)`)
                 .eq('gosh_username', user.username)
-            if (!data) return
+            if (!data?.length) return
 
             const imported: { [name: string]: string[] } = {}
             const row = data[0]
