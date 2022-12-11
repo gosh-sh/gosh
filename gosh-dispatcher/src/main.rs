@@ -4,7 +4,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
 const REMOTE_NAME: &str = "git-remote-gosh_v";
-const POSSIBLE_VERSIONS: [&'static str; 4] = ["1_0_2", "1_0_1", "1_0_0", "0_11_0"];
+const POSSIBLE_VERSIONS: [&'static str; 3] = ["1_0_2", "1_0_1", "1_0_0"];
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -49,6 +49,7 @@ async fn main() -> anyhow::Result<()> {
         if status.is_ok() && tombstone == "true" {
             let (status, vc) = run_binary_with_command(&helper_path, args.clone(), "get_version_controller_address").await?;
             eprintln!("{status:?} {vc}");
+            let versions = vc.split(" ").collect::<Vec<String>>();
             return Err(format_err!("Repository is tombstoned, you need to get the remote link to the new version of repository."));
         }
         let res = Command::new(&helper_path)

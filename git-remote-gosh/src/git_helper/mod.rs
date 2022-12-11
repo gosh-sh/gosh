@@ -153,6 +153,12 @@ where
             .root_contract()
             .abi;
 
+        let cur_version = self
+            .blockchain
+            .repo_contract()
+            .get_version(self.blockchain.client())
+            .await?;
+
         let filter = Some(serde_json::json!({
             "id": { "eq": system_contract_address }
         }));
@@ -186,11 +192,11 @@ where
         // eprintln!("{versions:?}");
         // Object {"value0": Object {"0xb9ea58b67d186f6bc1d043eb2abfde3eda294a649974ef2fdad0510acb40ffad": Object {"Key": String("1.0.1"), "Value": String(
         // serde_json::Map<String, serde_json::Map<String, serde_json::Map<String, String>>>;
-        let map = versions.as_object().unwrap()
-            .values().next().unwrap()
-            .as_object().unwrap()
-            .values().next().unwrap()
-            .as_object().unwrap().get("Key").unwrap().as_str().unwrap();
+        // let map = versions.as_object().unwrap()
+        //     .values().next().unwrap()
+        //     .as_object().unwrap()
+        //     .values().next().unwrap()
+        //     .as_object().unwrap().get("Key").unwrap().as_str().unwrap();
         let mut available_versions = vec![];
         if let Some(versions) = versions.as_object() {
             if let Some(versions) = versions.values().next() {
@@ -198,13 +204,17 @@ where
                     for version in versions.values() {
                         if let Some(single_version) = version.as_object() {
                             if let Some(version) = single_version.get("Key") {
-                                available_versions.push(version.as_str().unwrap_or("Undefined").to_string());
+                                let version = version.as_str().unwrap_or("Undefined").to_string();
+                                if version != cur_version {
+                                    available_versions.push(version);
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
         // eprintln!("Available: {available_versions:?}");
         let mut available_system_addresses = HashMap::new();
         for version in available_versions {
