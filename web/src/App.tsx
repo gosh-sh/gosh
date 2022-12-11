@@ -10,7 +10,6 @@ import AccountLayout from './pages/AccountLayout'
 import DaoLayout from './pages/DaoLayout'
 import DaoSettingsLayout from './pages/DaoSettingsLayout'
 import RepoLayout from './pages/RepoLayout'
-import HomePage from './pages/Home'
 import SettingsPage from './pages/Settings'
 import SignupPage from './pages/Signup'
 import SigninPage from './pages/Signin'
@@ -131,7 +130,16 @@ const App = () => {
             <Header />
             <main className="main grow">
                 <Routes>
-                    <Route path="/" element={<HomePage />} />
+                    <Route
+                        path="/"
+                        element={
+                            process.env.REACT_APP_ISDOCKEREXT === 'true' ? (
+                                <SigninPage />
+                            ) : (
+                                <SignupPage />
+                            )
+                        }
+                    />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>

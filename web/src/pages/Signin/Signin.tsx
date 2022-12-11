@@ -2,7 +2,7 @@ import { useSetRecoilState } from 'recoil'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { useUser } from 'react-gosh'
+import { AppConfig, useUser } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { useEffect, useState } from 'react'
@@ -71,7 +71,31 @@ const SigninPage = () => {
                 Sign in to Gosh
             </h1>
 
-            {!step && <SigninPhraseForm onSubmit={onPhraseSubmit} />}
+            {!step && (
+                <>
+                    <SigninPhraseForm onSubmit={onPhraseSubmit} />
+                    {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
+                        <div className="text-center mt-8">
+                            <p className="text-lg font-medium">Don't have an account?</p>
+                            <p>
+                                Register at
+                                <a
+                                    href="https://app.gosh.sh/"
+                                    className="ml-1 text-blue-1e7aec underline"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        AppConfig.dockerclient?.host.openExternal(
+                                            'https://app.gosh.sh/',
+                                        )
+                                    }}
+                                >
+                                    app.gosh.sh
+                                </a>
+                            </p>
+                        </div>
+                    )}
+                </>
+            )}
             {step?.name === 'ProfileRequired' && (
                 <SigninProfileForm
                     profiles={step.data.profiles}

@@ -61,8 +61,12 @@ contract ProfileIndex is Modifiers {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
     
-    function getVersion() external view returns(address, string) {
-        return (_versioncontroller, version);
+    function getVersion() external pure returns(string, string) {
+        return ("profileindex", version);
+    }
+    
+    function getCreator() external view returns(address) {
+        return _versioncontroller;
     }
     
     function getData() external view returns(uint256, string, address) {

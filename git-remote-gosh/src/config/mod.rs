@@ -9,6 +9,7 @@ use std::{
 mod defaults;
 
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
+pub const SET_COMMIT_TIMEOUT: &u64 = &180; // in secs
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {

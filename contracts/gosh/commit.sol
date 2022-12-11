@@ -446,7 +446,7 @@ contract Commit is Modifiers {
         return _nameBranch;
     }
 
-    function getRepoAddress() external view returns(address) {
+    function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
 
@@ -473,8 +473,8 @@ contract Commit is Modifiers {
         return (_count, _countready);
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("commit", version);
     }
 
     function getOwner() external view returns(address) {

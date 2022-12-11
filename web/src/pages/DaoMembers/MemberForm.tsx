@@ -51,7 +51,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                                     disabled: isSubmitting,
                                     rows: 5,
                                 }}
-                                help="Put each @username from new line"
+                                help="Put each username from new line"
                             />
                         </div>
 

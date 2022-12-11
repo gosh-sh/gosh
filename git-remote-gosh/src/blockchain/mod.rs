@@ -143,6 +143,8 @@ struct GetHeadResult {
 #[derive(Deserialize, Debug)]
 struct GetVersionResult {
     #[serde(rename = "value0")]
+    pub contract_name: String,
+    #[serde(rename = "value1")]
     pub version: String,
 }
 
@@ -480,11 +482,6 @@ pub mod tests {
         );
     }
 
-    #[derive(Deserialize, Debug)]
-    struct GetHashResult {
-        #[serde(rename = "value0")]
-        hash: String,
-    }
 
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {

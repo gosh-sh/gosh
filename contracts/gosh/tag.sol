@@ -77,9 +77,9 @@ contract Tag is Modifiers{
     function getContent() external view returns(string) {
         return _content;
     }
-
-    function getVersion() external pure returns(string) {
-        return version;
+    
+    function getVersion() external pure returns(string, string) {
+        return ("tag", version);
     }
     
     function getOwner() external view returns(address) {

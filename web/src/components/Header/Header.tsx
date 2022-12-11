@@ -111,32 +111,20 @@ const Header = () => {
                             </a>
 
                             {!user.persist.phrase &&
-                                location.pathname.search(/signin|signup/) < 0 &&
-                                location.pathname !== '/' && (
-                                    <>
-                                        <Link
-                                            to={`/a/signup`}
-                                            className="btn btn--header icon-arrow"
-                                        >
-                                            Sign up
-                                        </Link>
-                                        <Link
-                                            to={`/a/signin`}
-                                            className="btn btn--header icon-arrow"
-                                        >
-                                            Sign in
-                                        </Link>
-                                    </>
+                                location.pathname.search(/signin|signup/) < 0 && (
+                                    <Link
+                                        to={`/a/signin`}
+                                        className="btn btn--header icon-arrow"
+                                    >
+                                        Sign in
+                                    </Link>
                                 )}
                             {location.pathname.search('/signin') >= 0 && (
                                 <>
                                     {/* <div className="text-lg text-gray-53596d hidden sm:block">
                                         Don't have an account?
                                     </div> */}
-                                    <Link
-                                        to={`/a/signup`}
-                                        className="btn btn--header icon-arrow"
-                                    >
+                                    <Link to={`/`} className="btn btn--header icon-arrow">
                                         Sign up
                                     </Link>
                                 </>
