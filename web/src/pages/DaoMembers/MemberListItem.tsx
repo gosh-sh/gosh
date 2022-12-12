@@ -6,14 +6,14 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 type TMemberListItemProps = {
     item: TDaoMemberListItem
-    daoOwner: string
-    isDaoOwner: boolean
+    owner: string
+    isAuthMember: boolean
     isFetching: boolean
     onDelete(username: string): Promise<void>
 }
 
 const DaoMemberListItem = (props: TMemberListItemProps) => {
-    const { item, daoOwner, isDaoOwner, isFetching, onDelete } = props
+    const { item, owner, isAuthMember, isFetching, onDelete } = props
 
     return (
         <div className="flex flex-wrap gap-x-4 items-center justify-between py-2">
@@ -48,14 +48,14 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                     </div>
                 </div>
             </div>
-            {isDaoOwner && (
+            {isAuthMember && (
                 <div>
                     <button
                         type="button"
                         className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
                                         hover:bg-rose-500 disabled:bg-rose-400"
                         onClick={() => onDelete(item.name)}
-                        disabled={item.profile === daoOwner || isFetching}
+                        disabled={isFetching || item.profile === owner}
                     >
                         {isFetching ? (
                             <Spinner size="xs" />

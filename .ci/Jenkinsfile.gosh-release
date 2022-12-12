@@ -6,7 +6,7 @@ pipeline {
     }
 
     stages {
-        stage("Release: Git Helper Snap"){
+        /*stage("Release: Git Helper Snap"){
             agent {
                 node {
                     label 'jenkins-main'
@@ -23,7 +23,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Publish: update release') {
             agent {
                 docker {

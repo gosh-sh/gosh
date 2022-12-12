@@ -1,6 +1,6 @@
 #!/bin/bash
 # start after deploy.sh
-set -e 
+set -e
 set -o pipefail
 
 export NETWORK=vps23.ton.dev
@@ -27,7 +27,7 @@ tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile
-USER_PROFILE_NAME="@user106"
+USER_PROFILE_NAME="user106"
 tonos-cli call --abi $SYSTEM_CONTRACT_ABI $SYSTEM_CONTRACT_ADDR deployProfile "{\"pubkey\":\"$DAO_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
 USER_PROFILE_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 

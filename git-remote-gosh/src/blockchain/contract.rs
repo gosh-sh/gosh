@@ -131,6 +131,7 @@ impl GoshContract {
 
     pub async fn get_version(&self, context: &EverClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.read_state(context, "getVersion", None).await?;
+        tracing::trace!("get_version result: {:?}", result);
         Ok(result.version)
     }
 }
@@ -160,7 +161,8 @@ impl ContractRead for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_local(client, self, function_name, args).await?;
-        tracing::trace!("run_local result: {:?}", result);
+        // TODO: this log can be very long, but the value is JSON and can't be shorten. Consider logging it after deserializing.
+        // tracing::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }

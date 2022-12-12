@@ -197,6 +197,7 @@ interface IContract {
     version: string
 
     isDeployed(): Promise<boolean>
+    boc(): Promise<string>
     getMessages(
         variables: {
             msgType: string[]
@@ -218,13 +219,22 @@ interface IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        settings?: { logging?: boolean; retries?: number },
+        settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
 
 interface IGoshRoot extends IContract {
     address: TAddress
+
+    getProfileIndex(options: {
+        address?: TAddress
+        pubkey?: string
+        username?: string
+    }): Promise<IGoshProfileIndex>
+    getProfileIndexes(
+        pubkey: string,
+    ): Promise<{ pubkey: string; name: string; profile: TAddress }[]>
 }
 
 interface IGoshProfile extends IContract {
@@ -255,6 +265,10 @@ interface IGoshProfileDao extends IContract {
 }
 
 interface IGosh extends IContract {
+    address: TAddress
+}
+
+interface IGoshProfileIndex extends IContract {
     address: TAddress
 }
 
@@ -324,6 +338,7 @@ export {
     IGoshProfile,
     IGoshProfileDao,
     IGosh,
+    IGoshProfileIndex,
     IGoshDao,
     IGoshRepository,
     IGoshWallet,

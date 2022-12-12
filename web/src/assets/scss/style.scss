@@ -22,7 +22,7 @@ body,
 }
 
 .wrapper {
-    background-image: url('../images/bg.png');
+    /* background-image: url('../images/bg.png'); */
     @apply bg-right-top
         bg-no-repeat
         bg-cover
@@ -273,7 +273,8 @@ for those elements which require gradient border color
         w-16
         rounded-full
         transition-colors
-        outline-none;
+        outline-none
+        border;
 
     &::after {
         @extend .gradient-border-after;

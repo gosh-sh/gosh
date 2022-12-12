@@ -51,6 +51,7 @@ async fn write_git_data<'a>(
     Ok(object_id)
 }
 
+#[instrument(level = "debug", skip(obj))]
 async fn write_git_object(
     repo: &mut git_repository::Repository,
     obj: impl git_object::WriteTo,
@@ -254,6 +255,7 @@ impl BlobsRebuildingPlan {
         tracing::info!("new state: {:?}", self.snapshot_address_to_blob_sha);
     }
 
+    #[instrument(level = "debug", skip(es_client))]
     async fn restore_snapshot_blob(
         es_client: &EverClient,
         ipfs_endpoint: &str,
@@ -271,6 +273,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.next_content,
                 &snapshot.next_ipfs,
             )
+            .instrument(debug_span!("convert_next_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -283,6 +286,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.current_content,
                 &snapshot.current_ipfs,
             )
+            .instrument(debug_span!("convert_current_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))

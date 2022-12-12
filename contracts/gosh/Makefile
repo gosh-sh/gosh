@@ -1,4 +1,4 @@
-tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao
+tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
 KEYS_PATH = ${CURDIR}
 clean:
 	rm -f *.tvc *.abi.json *.code
@@ -40,14 +40,13 @@ deploy-docker:
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
 
-# TODO: Update with giver
 upgrade-docker:
 	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
-		-v ${KEYS_PATH}:/tmp/giver.keys.json \
-		-e GIVER_WALLET_ADDR=${GIVER_WALLET_ADDR} \
-		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
+		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
+		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
+		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
 		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \
-		-e NETWORK=${NETWORK} \
+		-e VERSIONCONTROLLER_SEED="${VERSIONCONTROLLER_SEED}" \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./upgrade.sh'

@@ -70,6 +70,7 @@ impl BlockchainBranchesService for Everscale {
         let result: GetBoolResult = contract
             .read_state(self.client(), "isBranchProtected", Some(params))
             .await?;
+        tracing::trace!("is_branch_protected result: {:?}", result);
         Ok(result.is_ok)
     }
 
@@ -84,6 +85,7 @@ impl BlockchainBranchesService for Everscale {
         let result: GetAddrBranchResult = contract
             .read_state(self.client(), "getAddrBranch", Some(args))
             .await?;
+        tracing::trace!("remote_rev_parse result: {:?}", result);
         if result.branch.branch_name.is_empty() {
             Ok(None)
         } else {

@@ -4,7 +4,7 @@ use opentelemetry::KeyValue;
 
 const OPENTELEMETRY_FLAG: &str = "GOSH_OPENTELEMETRY";
 const OPENTELEMETRY_SERVICE_NAME: &str = "gosh";
-const OPENTELEMETRY_FILTER_LEVEL: &str = "GOSH_OPENTELEMETRY_FILTER_LEVEL";
+pub const OPENTELEMETRY_FILTER_LEVEL: &str = "GOSH_OPENTELEMETRY_FILTER_LEVEL";
 
 pub(super) fn do_init_opentelemetry() -> bool {
     std::env::var(OPENTELEMETRY_FLAG).is_ok()
