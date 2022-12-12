@@ -11,7 +11,7 @@ use std::{fmt, option::Option};
 
 pub mod diffs;
 
-#[derive(Deserialize, Debug, DataContract)]
+#[derive(Deserialize, DataContract)]
 #[abi = "snapshot.abi.json"]
 #[abi_data_fn = "getSnapshot"]
 pub struct Snapshot {
@@ -40,6 +40,42 @@ pub struct Snapshot {
 
     #[serde(rename = "value7")]
     pub ready_for_diffs: bool,
+}
+
+fn crop_vec(v: &Vec<u8>) -> String {
+    if v.len() > 8 {
+        let mut str = v[0..4]
+            .to_vec()
+            .iter()
+            .fold(format!("Len: {}, Data: ", v.len()), |acc, el| {
+                format!("{acc}{:02X}", el)
+            });
+        str.push_str("..");
+        v[v.len() - 4..]
+            .to_vec()
+            .iter()
+            .fold(str, |acc, el| format!("{acc}{:02X}", el))
+    } else {
+        v.iter()
+            .map(|el| format!("{:02X}", el))
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+impl fmt::Debug for Snapshot {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        f.debug_struct("Snapshot")
+            .field("next_commit", &self.next_commit)
+            .field("next_content", &crop_vec(&self.next_content))
+            .field("next_ipfs", &self.next_ipfs)
+            .field("current_commit", &self.current_commit)
+            .field("current_content", &crop_vec(&self.current_content))
+            .field("current_ipfs", &self.current_ipfs)
+            .field("original_commit", &self.original_commit)
+            .field("ready_for_diffs", &self.ready_for_diffs)
+            .finish()
+    }
 }
 
 #[derive(Deserialize, Debug)]

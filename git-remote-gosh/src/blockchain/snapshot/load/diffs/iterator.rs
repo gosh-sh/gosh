@@ -68,7 +68,11 @@ struct Messages {
 }
 
 impl DiffMessagesIterator {
-    #[instrument(level = "debug", skip(snapshot_address))]
+    #[instrument(
+        level = "debug",
+        skip(snapshot_address),
+        name = "new_DiffMessagesIterator"
+    )]
     pub fn new(
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
@@ -77,10 +81,7 @@ impl DiffMessagesIterator {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
             buffer_cursor: 0,
-            next: Some(NextChunk::MessagesPage(
-                snapshot_address.into(),
-                None,
-            )),
+            next: Some(NextChunk::MessagesPage(snapshot_address.into(), None)),
         }
     }
 
@@ -170,8 +171,7 @@ impl DiffMessagesIterator {
                 let mut next_page_info = None;
                 while index.is_none() {
                     tracing::info!("loading messages");
-                    let (buffer, page) =
-                        load_messages_to(client, &address, &cursor, None).await?;
+                    let (buffer, page) = load_messages_to(client, &address, &cursor, None).await?;
                     for (i, item) in buffer.iter().enumerate() {
                         if &item.created_at <= ignore_commits_created_after {
                             index = Some(i);
@@ -203,8 +203,7 @@ impl DiffMessagesIterator {
                 .await?
             }
             Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, page) =
-                    load_messages_to(client, &address, cursor, None).await?;
+                let (buffer, page) = load_messages_to(client, &address, cursor, None).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 DiffMessagesIterator::into_next_page(
@@ -337,4 +336,3 @@ pub async fn load_messages_to(
     };
     Ok((messages, page))
 }
-
