@@ -231,8 +231,14 @@ where
                 available_system_addresses.insert(version, sys_address);
             }
         }
-        let mut res = available_system_addresses.keys().map(|k| k.to_owned()).collect::<Vec<String>>().join(" ");
-        Ok(vec![res, "".to_string()])
+        let mut res = vec![];
+        for (version, address) in available_system_addresses {
+            res.push(format!("{version} {}", address.to_string()));
+        }
+        // let mut res = available_system_addresses.keys().map(|k| k.to_owned()).collect::<Vec<String>>().join(" ");
+        // Ok(vec![res, "".to_string()])
+        res.push("".to_string());
+        Ok(res)
     }
 
     async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {
