@@ -1,27 +1,24 @@
-import { TonClient } from "npm:@eversdk/core";
+import { TonClient } from 'npm:@eversdk/core'
 // @deno-types="../../node_modules/@eversdk/lib-web/index.d.ts"
-import {
-  libWeb,
-  libWebSetup,
-} from "../../node_modules/@eversdk/lib-web/index.js";
+import { libWeb, libWebSetup } from '../../node_modules/@eversdk/lib-web/index.js'
 
-let everClient: TonClient;
+let everClient: TonClient
 
 export function getEverClient(): TonClient {
-  if (!everClient) {
-    const binaryURL = new URL(
-      "../../node_modules/@eversdk/lib-web/eversdk.wasm",
-      import.meta.url,
-    ).toString();
+    if (!everClient) {
+        const binaryURL = new URL(
+            '../../node_modules/@eversdk/lib-web/eversdk.wasm',
+            import.meta.url,
+        ).toString()
 
-    libWebSetup({
-      disableSeparateWorker: true,
-      binaryURL,
-    });
+        libWebSetup({
+            disableSeparateWorker: true,
+            binaryURL,
+        })
 
-    // deno-lint-ignore no-explicit-any
-    TonClient.useBinaryLibrary(libWeb as any);
-    everClient = new TonClient();
-  }
-  return everClient;
+        // deno-lint-ignore no-explicit-any
+        TonClient.useBinaryLibrary(libWeb as any)
+        everClient = new TonClient()
+    }
+    return everClient
 }
