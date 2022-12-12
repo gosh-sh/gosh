@@ -1,11 +1,6 @@
 {
     "semi": false,
-    "tabWidth": 4,
     "trailingComma": "all",
     "singleQuote": true,
-    "printWidth": 90,
-    "overrides": [
-        { "files": "**/*.{js,jsx,ts,tsx,json,jsonc}", "options": { "tabWidth": 4 } },
-        { "files": "**/*.{yaml,yml}", "options": { "tabWidth": 2 } }
-    ]
+    "printWidth": 90
 }
