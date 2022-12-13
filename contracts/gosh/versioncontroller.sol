@@ -19,6 +19,11 @@ struct SystemContractV {
     string Key;
     TvmCell Value;
 }
+
+struct SystemContractAddr {
+    string Key;
+    address Value;
+}
 /* Version contract of SystemContract */
 contract VersionController is Modifiers {
     string constant _version = "1.0.0";
@@ -107,6 +112,16 @@ contract VersionController is Modifiers {
     function onCodeUpgrade(TvmCell cell) private pure {
     }
     
+    function _getSystemContractAddr(TvmCell code) private view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: code,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
     //Setters
     function setProfileIndex(TvmCell code) public  onlyOwner accept {
         _code[m_ProfileIndexCode] = code;
@@ -175,6 +190,32 @@ contract VersionController is Modifiers {
             varInit: {}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getVersionAddr() external view returns(address[]) {
+        address[] data;
+        uint256 key;
+        optional(uint256, SystemContractV) res = _SystemContractCode.next(key);
+        while (res.hasValue()) {
+            SystemContractV code;
+            (key, code) = res.get();
+            data.push(_getSystemContractAddr(code.Value));
+            res = _SystemContractCode.next(key);
+        }
+        return data;
+    }
+    
+    function getVersionAddrMap() external view returns(SystemContractAddr[]) {
+        SystemContractAddr[] data;
+        uint256 key;
+        optional(uint256, SystemContractV) res = _SystemContractCode.next(key);
+        while (res.hasValue()) {
+            SystemContractV code;
+            (key, code) = res.get();
+            data.push(SystemContractAddr(code.Key, _getSystemContractAddr(code.Value)));
+            res = _SystemContractCode.next(key);
+        }
+        return data;
     }
 
     function getVersions() external view returns(mapping(uint256 => SystemContractV)) {
