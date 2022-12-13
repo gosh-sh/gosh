@@ -1,7 +1,9 @@
 import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
+import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { createSupabaseClient } from './utils/db.ts'
 import { sendEmail } from './utils/email.ts'
 
+dotenv.config({ export: true })
 const supabase = createSupabaseClient('public')
 
 while (true) {

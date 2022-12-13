@@ -28,20 +28,20 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
 
-    const getOrCreateSupaUser = async (
-        username: string,
-        pubkey: string,
-        authUserId: string,
-    ) => {
-        const userExists = await supabase
+    const getDbUser = async (username: string) => {
+        const { data, error } = await supabase
             .from('users')
             .select()
             .eq('gosh_username', username)
-        if (userExists.data?.length) {
-            return userExists.data[0]
+            .single()
+        if (error?.code === 'PGRST116') return null
+        if (error) {
+            throw new GoshError(error.message)
         }
+        return data
+    }
 
-        // Create user
+    const createDbUser = async (username: string, pubkey: string, authUserId: string) => {
         const { data, error } = await supabase
             .from('users')
             .insert({
@@ -50,10 +50,11 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                 auth_user: authUserId,
             })
             .select()
-        if (!data) {
-            throw new GoshError(error.message || 'Error creating user')
+            .single()
+        if (error) {
+            throw new GoshError(error.message)
         }
-        return data[0]
+        return data
     }
 
     const onFormSubmit = async (values: { username: string }) => {
@@ -69,18 +70,16 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                 phrase,
             })
 
-            // Deploy GOSH account
-            await signup({ phrase, username })
+            // Get or create DB user
+            let dbUser = await getDbUser(username)
+            if (!dbUser) {
+                dbUser = await createDbUser(username, keypair.public, githubUser.id)
+            }
 
             // Save auto clone repositories
-            const goshUser = await getOrCreateSupaUser(
-                username,
-                keypair.public,
-                githubUser.id,
-            )
             const { error: error } = await supabase.from('github').insert(
                 githubReposSelected.map(([githubUrl, goshUrl]) => ({
-                    user_id: goshUser.id,
+                    user_id: dbUser.id,
                     github_url: githubUrl,
                     gosh_url: goshUrl,
                 })),
@@ -89,6 +88,8 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                 throw new GoshError(error.message)
             }
 
+            // Deploy GOSH account
+            await signup({ phrase, username })
             await signoutGithub()
             setStep({ index: 5, data: { username, email: githubUser.email } })
         } catch (e: any) {
