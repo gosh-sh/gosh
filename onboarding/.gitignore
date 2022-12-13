@@ -4,3 +4,4 @@ node_modules
 
 /media
 /abi
+deno.lock

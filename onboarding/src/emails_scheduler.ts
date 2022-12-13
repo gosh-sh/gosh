@@ -1,6 +1,8 @@
 import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
+import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { createSupabaseClient } from './utils/db.ts'
 
+dotenv.config({ export: true })
 const supabase = createSupabaseClient('public')
 
 // welcome emails
@@ -27,6 +29,10 @@ while (true) {
             if (email_list.length > 0) {
                 const mail_to = email_list[0].trim()
 
+                const mail_html = new TextDecoder().decode(
+                    Deno.readFileSync('emails/onboarding.html'),
+                )
+
                 const { data: emails, error } = await supabase
                     .from('emails')
                     .select()
@@ -51,15 +57,7 @@ Your DAO has been set up for you, and you're now all set to build consensus arou
 
 START BUILDING https://app.gosh.sh/a/signin
 `,
-                            html: `\
-<h1>Good news!</h1>
-
-<p>Your repository has been successfully uploaded to GOSH </p>
-
-<p>Your DAO has been set up for you, and you're now all set to build consensus around your code </p>
-
-<p><a href="https://app.gosh.sh/a/signin">START BUILDING</a></p>
-`,
+                            html: mail_html,
                             is_welcome: true,
                         })
                         .then((res: any) => {
