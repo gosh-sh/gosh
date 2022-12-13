@@ -28,7 +28,11 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
 
-    const getOrCreateSupaUser = async (username: string, pubkey: string) => {
+    const getOrCreateSupaUser = async (
+        username: string,
+        pubkey: string,
+        authUserId: string,
+    ) => {
         const userExists = await supabase
             .from('users')
             .select()
@@ -43,6 +47,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             .insert({
                 gosh_username: username,
                 gosh_pubkey: `0x${pubkey}`,
+                auth_user: authUserId,
             })
             .select()
         if (!data) {
@@ -68,38 +73,20 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             await signup({ phrase, username })
 
             // Save auto clone repositories
-            const supaUser = await getOrCreateSupaUser(username, keypair.public)
-
-            const supaGithubUser = await supabase
-                .from('github_users')
-                .select('*', { count: 'exact' })
-                .eq('user_id', supaUser.id)
-            if (!supaGithubUser.count) {
-                const { error: error0 } = await supabase.from('github_users').upsert(
-                    {
-                        user_id: supaUser.id,
-                        github_user_id: githubUser.id,
-                        email: [githubUser.email],
-                        full_name: githubUser.user_metadata.full_name,
-                    },
-                    {
-                        ignoreDuplicates: false,
-                    },
-                )
-                if (error0) {
-                    throw new GoshError(error0.message)
-                }
-            }
-
-            const { error: error1 } = await supabase.from('github').insert(
+            const goshUser = await getOrCreateSupaUser(
+                username,
+                keypair.public,
+                githubUser.id,
+            )
+            const { error: error } = await supabase.from('github').insert(
                 githubReposSelected.map(([githubUrl, goshUrl]) => ({
-                    user_id: supaUser.id,
+                    user_id: goshUser.id,
                     github_url: githubUrl,
                     gosh_url: goshUrl,
                 })),
             )
-            if (error1) {
-                throw new GoshError(error1.message)
+            if (error) {
+                throw new GoshError(error.message)
             }
 
             await signoutGithub()

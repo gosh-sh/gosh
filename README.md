@@ -1,4 +1,4 @@
-#### GOSH  
+# GOSH
 
 [GOSH Documentation](https://docs.gosh.sh/)
 
