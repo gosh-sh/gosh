@@ -33,7 +33,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.VERSION = TAG.trim()
+                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     dir('.ci/scripts') {
                         withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                             sh './update-github-release.sh "$TOKEN" "$VERSION" "$VERSION"'
