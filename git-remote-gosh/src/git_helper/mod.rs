@@ -143,15 +143,15 @@ where
         Ok(vec![version, "".to_string()])
     }
 
-    async fn get_version_controller_address(&self) -> anyhow::Result<Vec<String>> {
-        let system_contract_address = &self
-            .blockchain
-            .root_contract()
-            .address;
-        let system_contract_abi = &self
-            .blockchain
-            .root_contract()
-            .abi;
+    async fn get_highest_repo_version(&self) -> anyhow::Result<Vec<String>> {
+        // let system_contract_address = &self
+        //     .blockchain
+        //     .root_contract()
+        //     .address;
+        // let system_contract_abi = &self
+        //     .blockchain
+        //     .root_contract()
+        //     .abi;
 
         let cur_version = self
             .blockchain
@@ -159,36 +159,80 @@ where
             .get_version(self.blockchain.client())
             .await?;
 
-        let filter = Some(serde_json::json!({
-            "id": { "eq": system_contract_address }
-        }));
-        let query = query_collection(
-            Arc::clone(self.blockchain.client()),
-            ParamsOfQueryCollection {
-                collection: "accounts".to_owned(),
-                filter,
-                result: "data".to_owned(),
-                limit: Some(1),
-                order: None,
-            },
-        )
-            .await
-            .map(|r| r.result)?;
+        // let filter = Some(serde_json::json!({
+        //     "id": { "eq": system_contract_address }
+        // }));
+        // let query = query_collection(
+        //     Arc::clone(self.blockchain.client()),
+        //     ParamsOfQueryCollection {
+        //         collection: "accounts".to_owned(),
+        //         filter,
+        //         result: "data".to_owned(),
+        //         limit: Some(1),
+        //         order: None,
+        //     },
+        // )
+        //     .await
+        //     .map(|r| r.result)?;
+        //
+        // let data = query[0]["data"].as_str().unwrap_or("").to_string();
+        // let decode_res = decode_account_data(
+        //     Arc::clone(self.blockchain.client()),
+        //     ParamsOfDecodeAccountData {
+        //         abi: system_contract_abi.to_owned(),
+        //         data,
+        //         ..Default::default()
+        //     }
+        // ).await?;
+        //
+        // let version_controller_address = decode_res.data["_versionController"].as_str().unwrap_or("").to_string();
+        // let address = BlockchainContractAddress::new(version_controller_address.clone());
 
-        let data = query[0]["data"].as_str().unwrap_or("").to_string();
-        let decode_res = decode_account_data(
-            Arc::clone(self.blockchain.client()),
-            ParamsOfDecodeAccountData {
-                abi: system_contract_abi.to_owned(),
-                data,
-                ..Default::default()
-            }
+        let version_controller_address: GetAddrDaoResult = self
+            .blockchain
+            .root_contract()
+            .run_static(self.blockchain.client(), "getCreator", None)
+            .await?;
+
+        let version_controller =
+            GoshContract::new(
+                version_controller_address.address,
+                gosh_abi::VERSION_CONTROLLER
+            );
+
+        let versions: serde_json::Value = version_controller.run_static(
+            self.blockchain.client(),
+            "getVersionAddrMap",
+            None
         ).await?;
 
-        let version_controller_address = decode_res.data["_versionController"].as_str().unwrap_or("").to_string();
-        let address = BlockchainContractAddress::new(version_controller_address.clone());
-        let version_controller = GoshContract::new(address, gosh_abi::VERSION_CONTROLLER);
-        let versions: serde_json::Value = version_controller.run_static(self.blockchain.client(), "getVersions", None).await?;
+        // Result: {
+        //     "value0": [
+        //     {
+        //         "Key": "1.0.0",
+        //         "Value": "0:946d700f1ea557e51fbb7318af2f6076960689454db58cbb20039eba869ddc8c"
+        //     },
+        //     {
+        //         "Key": "1.0.2",
+        //         "Value": "0:875b7acd8ea8f0ac9eb0b35f774c59d5eace11a6ca417dfaee6f01e1ff2101bb"
+        //     },
+        //     {
+        //         "Key": "1.0.1",
+        //         "Value": "0:155e4dd147c260c63a6ce1c9946968d012127da8a25d23ab31e73351b8cc64c8"
+        //     }
+        //     ]
+        // }
+
+        let versions: Vec<(String, String)>= versions.as_object().unwrap()
+            .values().next().unwrap()
+            .as_array().unwrap().iter()
+            .map(|ver| {
+                let map = ver.as_object().unwrap();
+                (map.get("Key").unwrap().as_str().unwrap().to_string(),
+                 map.get("Value").unwrap().as_str().unwrap().to_string())
+            })
+            .collect();
+        // let versions: serde_json::Value = version_controller.run_static(self.blockchain.client(), "getVersions", None).await?;
         // eprintln!("{versions:?}");
         // Object {"value0": Object {"0xb9ea58b67d186f6bc1d043eb2abfde3eda294a649974ef2fdad0510acb40ffad": Object {"Key": String("1.0.1"), "Value": String(
         // serde_json::Map<String, serde_json::Map<String, serde_json::Map<String, String>>>;
@@ -197,48 +241,58 @@ where
         //     .as_object().unwrap()
         //     .values().next().unwrap()
         //     .as_object().unwrap().get("Key").unwrap().as_str().unwrap();
-        let mut available_versions = vec![];
-        if let Some(versions) = versions.as_object() {
-            if let Some(versions) = versions.values().next() {
-                if let Some(versions) = versions.as_object() {
-                    for version in versions.values() {
-                        if let Some(single_version) = version.as_object() {
-                            if let Some(version) = single_version.get("Key") {
-                                let version = version.as_str().unwrap_or("Undefined").to_string();
-                                if version != cur_version {
-                                    available_versions.push(version);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // let mut available_versions = vec![];
+        // if let Some(versions) = versions.as_object() {
+        //     if let Some(versions) = versions.values().next() {
+        //         if let Some(versions) = versions.as_object() {
+        //             for version in versions.values() {
+        //                 if let Some(single_version) = version.as_object() {
+        //                     if let Some(version) = single_version.get("Key") {
+        //                         let version = version.as_str().unwrap_or("Undefined").to_string();
+        //                         if version != cur_version {
+        //                             available_versions.push(version);
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        // eprintln!("Available: {available_versions:?}");
-        let mut available_system_addresses = HashMap::new();
-        for version in available_versions {
-            let args = json!({"version": version});
-            let res: GetAddrDaoResult = version_controller.run_static(self.blockchain.client(), "getSystemContractAddr", Some(args)).await?;
-            let sys_address = res.address.clone();
-            let system_contract = GoshContract::new(res.address, gosh_abi::GOSH);
+        eprintln!("Available: {versions:?}");
+        let mut highest: Option<(String, String)> = None;
+        for version in versions {
+            let address = BlockchainContractAddress::new(version.1.clone());
+            let system_contract = GoshContract::new(address, gosh_abi::GOSH);
             let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
-            let res: GetAddrDaoResult = system_contract.run_static(self.blockchain.client(), "getAddrRepository", Some(args)).await?;
-
-            let repo_contract = GoshContract::new(res.address, gosh_abi::DAO);
+            let repo_addr: GetAddrDaoResult = system_contract.run_static(self.blockchain.client(), "getAddrRepository", Some(args)).await?;
+            let repo_contract = GoshContract::new(repo_addr.address, gosh_abi::REPO);
             let res: anyhow::Result<Value> = repo_contract.run_static(self.blockchain.client(), "getVersion", None).await;
-            if res.is_ok() {
-                available_system_addresses.insert(version, sys_address);
+            if res.is_err() {
+                continue;
+            }
+            if let Some(high) = highest.clone() {
+                if version.0 > high.0 {
+                    highest = Some(version);
+                }
+            } else {
+                highest = Some(version);
             }
         }
-        let mut res = vec![];
-        for (version, address) in available_system_addresses {
-            res.push(format!("{version} {}", address.to_string()));
+        if let Some(highest) = highest {
+            Ok(vec![format!("{} {}", highest.0, highest.1), "".to_string()])
+        } else {
+            Err(anyhow::format_err!("Failed to obtain highest repo version"))
         }
+        // let mut res = vec![];
+        // for (version, address) in available_system_addresses {
+        //     res.push(format!("{version} {}", address.to_string()));
+        // }
         // let mut res = available_system_addresses.keys().map(|k| k.to_owned()).collect::<Vec<String>>().join(" ");
-        // Ok(vec![res, "".to_string()])
-        res.push("".to_string());
-        Ok(res)
+        // // Ok(vec![res, "".to_string()])
+        // res.push("".to_string());
+        // Ok(res)
+        // Ok(vec!["".to_string()])
     }
 
     async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {
@@ -383,7 +437,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (Some("repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
-            (Some("get_version_controller_address"), None, None) => helper.get_version_controller_address().await?,
+            (Some("get_highest_repo_version"), None, None) => helper.get_highest_repo_version().await?,
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
