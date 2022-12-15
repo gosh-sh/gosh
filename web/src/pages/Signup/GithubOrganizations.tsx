@@ -5,18 +5,18 @@ import {
     githubOrganizationsAtom,
     githubRepositoriesAtom,
     githubRepositoriesSelectedSelector,
-    githubSessionAtom,
+    oAuthSessionAtom,
     octokitSelector,
     signupStepAtom,
 } from '../../store/signup.state'
 
 type TGithubOrganizationsProps = {
-    signoutGithub(): Promise<void>
+    signoutOAuth(): Promise<void>
 }
 
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
-    const { signoutGithub } = props
-    const { session } = useRecoilValue(githubSessionAtom)
+    const { signoutOAuth } = props
+    const { session } = useRecoilValue(oAuthSessionAtom)
     const [githubOrgs, setGithubOrgs] = useRecoilState(githubOrganizationsAtom)
     const githubRepos = useRecoilValue(githubRepositoriesAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
@@ -59,7 +59,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         Hey, {session.user.user_metadata.name}
                     </div>
                     <div className="aside-step__btn-signout">
-                        <button type="button" onClick={signoutGithub}>
+                        <button type="button" onClick={signoutOAuth}>
                             Signout
                         </button>
                     </div>

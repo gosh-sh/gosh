@@ -1,9 +1,9 @@
 type TGoshSignupStartProps = {
-    signinGithub(): Promise<void>
+    signinOAuth(): Promise<void>
 }
 
 const GoshSignupStart = (props: TGoshSignupStartProps) => {
-    const { signinGithub } = props
+    const { signinOAuth } = props
 
     return (
         <div className="signup signup--home">
@@ -26,7 +26,7 @@ const GoshSignupStart = (props: TGoshSignupStartProps) => {
                 <button
                     type="button"
                     className="aside-home__signup"
-                    onClick={signinGithub}
+                    onClick={signinOAuth}
                 >
                     Create account with Github
                 </button>

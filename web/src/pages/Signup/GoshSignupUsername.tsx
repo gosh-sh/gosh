@@ -4,7 +4,7 @@ import { AppConfig, GoshError, useUser } from 'react-gosh'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import {
     githubRepositoriesSelectedSelector,
-    githubSessionAtom,
+    oAuthSessionAtom,
     signupStepAtom,
 } from '../../store/signup.state'
 import { TextField } from '../../components/Formik'
@@ -18,12 +18,12 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 type TGoshSignupUsernameProps = {
     phrase: string
-    signoutGithub(): Promise<void>
+    signoutOAuth(): Promise<void>
 }
 
 const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
-    const { phrase, signoutGithub } = props
-    const githubSession = useRecoilValue(githubSessionAtom)
+    const { phrase, signoutOAuth } = props
+    const { session } = useRecoilValue(oAuthSessionAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
     const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
@@ -59,12 +59,11 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
     const onFormSubmit = async (values: { username: string }) => {
         try {
-            if (!githubSession.session) {
+            if (!session) {
                 throw new GoshError('Session undefined')
             }
 
             // Prepare data
-            const githubUser = githubSession.session.user
             const username = values.username.trim()
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                 phrase,
@@ -73,7 +72,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             // Get or create DB user
             let dbUser = await getDbUser(username)
             if (!dbUser) {
-                dbUser = await createDbUser(username, keypair.public, githubUser.id)
+                dbUser = await createDbUser(username, keypair.public, session.user.id)
             }
 
             // Save auto clone repositories
@@ -90,8 +89,8 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
             // Deploy GOSH account
             await signup({ phrase, username })
-            await signoutGithub()
-            setStep({ index: 5, data: { username, email: githubUser.email } })
+            await signoutOAuth()
+            setStep({ index: 5, data: { username, email: session.user.email } })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -116,13 +115,13 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             <div className="signup__content">
                 <div className="signup__nickname-form nickname-form">
                     <p className="nickname-form__title">
-                        {githubSession.session?.user.user_metadata.user_name}
+                        {session?.user.user_metadata.user_name}
                     </p>
                     <p className="nickname-form__subtitle">your GOSH nickname</p>
 
                     <Formik
                         initialValues={{
-                            username: githubSession.session?.user.user_metadata.user_name,
+                            username: session?.user.user_metadata.user_name,
                             isConfirmed: false,
                         }}
                         onSubmit={onFormSubmit}
