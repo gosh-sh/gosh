@@ -1,6 +1,6 @@
 {
   "config": {
-    "url": "vps",
+    "url": "gosh",
     "wc": 0,
     "addr": null,
     "method": null,
@@ -24,10 +24,17 @@
     "project_id": null,
     "access_key": null,
     "endpoints": [
-      "https://vps23.ton.dev"
+      "https://bhs01.network.gosh.sh",
+      "https://eri01.network.gosh.sh",
+      "https://gra01.network.gosh.sh"
     ]
   },
   "endpoints_map": {
+    "gosh": [
+      "https://bhs01.network.gosh.sh",
+      "https://eri01.network.gosh.sh",
+      "https://gra01.network.gosh.sh"
+    ],
     "http://127.0.0.1/": [
       "http://0.0.0.0",
       "http://127.0.0.1",

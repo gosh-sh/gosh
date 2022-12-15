@@ -8,4 +8,8 @@ keywords = ['git-remote', 'git', 'gosh']
 
 [dependencies]
 anyhow = "^1.0"
+git-remote-gosh = { path = "../git-remote-gosh" }
+shellexpand = "3.0.0"
 tokio = { version = "1.21.2", features = ["full"] }
+tracing = "0.1.37"
+version-compare = "0.1.1"

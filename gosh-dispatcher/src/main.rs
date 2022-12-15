@@ -1,98 +1,128 @@
+extern crate shellexpand;
+
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{prelude::*, Read};
+use std::path::Path;
 use anyhow::format_err;
-use std::process::{ExitStatus, Stdio};
+use std::process::{exit, ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
-const REMOTE_NAME: &str = "git-remote-gosh_v";
-const POSSIBLE_VERSIONS: [&'static str; 4] = ["1_0_2", "1_0_1", "1_0_0", "0_11_0"];
+use git_remote_gosh::logger::set_log_verbosity;
+use tokio::task::JoinSet;
+use tracing::Instrument;
+use version_compare::Version;
+
+#[cfg(target_family = "unix")]
+pub const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
+
+#[cfg(target_family = "windows")]
+pub const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // TODO: return initial level to 1 after debug
+    set_log_verbosity(5);
+
+
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     eprintln!("Dispatcher git-remote-gosh v{version}");
 
+    let possible_versions = load_remote_versions_from_ini()?;
+
     let mut args = std::env::args().collect::<Vec<String>>();
+    // zero arg is always current binary path, we don't need it
     args.remove(0);
 
-    let mut proper_start_version = None;
-    let mut returned_version = None;
-    let mut existing_versions = vec![];
-    for ver in POSSIBLE_VERSIONS {
-        let helper_path = format!("{}{}", REMOTE_NAME, ver);
-        let found = run_binary_with_command(&helper_path, args.clone(), "repo_version").await;
-        if let Ok((exec_res, version)) = found {
-            let version = version[0].clone();
-            if !version.is_empty() {
-                returned_version = Some(version);
+    let mut get_supported_versions: JoinSet<anyhow::Result<(tokio::io::Result<ExitStatus>, Vec<String>, String)>> = JoinSet::new();
+
+    for helper_path in possible_versions {
+        let n_args = args.clone();
+        get_supported_versions.spawn(
+            async move {
+                run_binary_with_command(
+                    helper_path,
+                    n_args,
+                    "supported_contract_versions"
+                ).await
             }
-            if exec_res.is_err() {
+                .instrument(tracing::debug_span!("tokio::spawn::get_supported_versions").or_current())
+        );
+    }
+
+    let mut existing_to_supported_map = HashMap::new();
+
+    while let Some(finished_task) = get_supported_versions.join_next().await {
+        let task_result = finished_task
+            .map_err(|e| format_err!("Failed to finish async task: {e}"))?;
+        if let Ok((_exec_res, versions, helper_path)) = task_result {
+            if !versions.is_empty() {
+                existing_to_supported_map.insert(helper_path.to_string(), versions);
+            }
+        }
+    }
+
+    tracing::trace!("existing: {existing_to_supported_map:?}");
+    if existing_to_supported_map.is_empty() {
+        return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to {INI_LOCATION}"));
+    }
+
+    let mut highest = None;
+    for helper_path in existing_to_supported_map.keys() {
+        tracing::trace!("Run version: {helper_path}");
+        if let Ok((status, versions, _)) = run_binary_with_command(helper_path.to_owned(), args.clone(), "get_repo_versions").await {
+            tracing::trace!("Get versions: {status:?} {versions:?}");
+            if versions.len() == 0 {
                 continue;
             }
-            existing_versions.push(ver.to_string());
-            let exit_code = exec_res.unwrap().code().unwrap_or(-1);
-            if (exit_code == 0)
-                && returned_version.is_some()
-                && returned_version.clone().unwrap() == ver.replace("_", ".")
-            {
-                proper_start_version = Some(helper_path);
-                break;
-            }
+            let mut parse = versions.iter().map(|s| {
+                let mut iter = s.split(" ");
+                (Version::from(iter.next().unwrap_or("")).unwrap(),
+                 iter.next().unwrap_or("").to_string())
+            }).collect::<Vec<(Version, String)>>();
+            parse.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal));
+            tracing::trace!("Parse: {parse:?}");
+            highest = Some(parse.last().map(|val| (val.0.to_string(), val.1.clone())).unwrap().to_owned());
+            break;
         }
     }
-    eprintln!("existing: {existing_versions:?}");
-    if proper_start_version.is_none() {
-        if let Some(version) = returned_version {
-            eprintln!("Specified repo has such version: {version}\nPls obtain corresponding version {REMOTE_NAME} to work with it.");
-            return Err(format_err!("Failed to find proper git-remote-gosh version"));
-        }
-        // 0_11_0 version doesn't support repo_version command, so choose to try it if no proper
-        // helper was found
-        proper_start_version = Some(format!("{}{}", REMOTE_NAME, "0_11_0"));
+
+    tracing::trace!("Highest: {highest:?}");
+    if highest.is_none() {
+        return Err(format_err!("Failed to query the highest repository version."));
     }
-    if let Some(helper_path) = proper_start_version.clone() {
-        eprintln!("Run version: {helper_path}");
-        eprintln!("Check for tombstone");
-        let (status, tombstone) = run_binary_with_command(&helper_path, args.clone(), "get_dao_tombstone").await?;
-        if status.is_ok() && tombstone[0] == "true" {
-            let (status, versions) = run_binary_with_command(&helper_path, args.clone(), "get_highest_repo_version").await?;
-            eprintln!("{status:?} {versions:?}");
-            // "1.0.2 0:7e6bcee1e9ccd4db5e1d7adca6352deefa12183e4c227148d29c67517d806c49"
-            let mut chosen_version = String::new();
-            if versions.len() == 0 {
-                return Err(format_err!("Repository is tombstoned, and no new versions of the repository were found. Please deploy the repository with version greater than {}.", returned_version.unwrap()));
-            }
-            chosen_version = versions[0].clone();
-            let parse = chosen_version.split(" ").collect::<Vec<&str>>().iter().map(|s| s.to_string()).collect::<Vec<String>>();
-            let (new_version, system_address) = (parse[0].clone(), parse[1].clone());
-            let new_version = new_version.replace(".", "_");
-            if existing_versions.contains(&new_version) {
-                proper_start_version = Some(format!("{}{}", REMOTE_NAME, new_version));
-                eprintln!("New remote version: {:?}", proper_start_version);
-            } else {
-                return Err(format_err!("Repository is tombstoned, new version {new_version} is available, but corresponding git-remote-version was not found."));
-            }
-            let old_system = args[1].split("://").collect::<Vec<&str>>()[1].split("/").collect::<Vec<&str>>()[0].to_string();
-            let new_repo_link = args[1].clone().replace(&old_system, &system_address);
-            eprintln!("New repo link: {new_repo_link}");
-            args[1] = new_repo_link;
+    let (repo_version, system_contract_address) = highest.unwrap();
+
+    let mut proper_remote_version = None;
+    for version in existing_to_supported_map {
+        if version.1.contains(&repo_version) {
+            proper_remote_version = Some(version.0);
         }
     }
-    if let Some(helper_path) = proper_start_version {
-        let res = Command::new(&helper_path)
-            .args(args.clone())
-            .status()
-            .await?;
-        return match res.code() {
-            Some(0) => Ok(()),
-            Some(code) => Err(format_err!("Failed with code: {code}")),
-            None => Err(format_err!("Failed")),
-        };
+    if proper_remote_version.is_none() {
+        return Err(format_err!("No git-remote-gosh version capable to work with repo version {repo_version} was found."));
     }
-    Err(format_err!("Failed to find proper git-remote-gosh version"))
+    let helper_path = proper_remote_version.unwrap();
+    let old_system = args[1].split("://").collect::<Vec<&str>>()[1].split("/").collect::<Vec<&str>>()[0].to_string();
+    let new_repo_link = args[1].clone().replace(&old_system, &system_contract_address);
+    tracing::trace!("New repo link: {new_repo_link}");
+    args[1] = new_repo_link;
+
+    let res = Command::new(&helper_path)
+        .args(args.clone())
+        .status()
+        .await?;
+    match res.code() {
+        Some(0) => Ok(()),
+        Some(code) => Err(format_err!("Failed with code: {code}")),
+        None => Err(format_err!("Failed")),
+    }
 }
 
-async fn run_binary_with_command(helper_path: &str, args: Vec<String>, command: &str) -> anyhow::Result<(tokio::io::Result<ExitStatus>, Vec<String>)> {
-    let mut helper = Command::new(helper_path)
+async fn run_binary_with_command(helper_path: String, args: Vec<String>, command: &str) -> anyhow::Result<(tokio::io::Result<ExitStatus>, Vec<String>, String)> {
+    let mut helper = Command::new(&helper_path)
         .args(args.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -115,7 +145,22 @@ async fn run_binary_with_command(helper_path: &str, args: Vec<String>, command: 
         }
         result.push(line);
     }
-    // eprintln!("{command}: {result:?}");
+    tracing::trace!("Binary call result: {result:?}");
+    Ok((helper.wait().await, result, helper_path))
+}
 
-    Ok((helper.wait().await, result))
+fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
+    let path_str =
+        std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| INI_LOCATION.to_string());
+    let path_str = shellexpand::tilde(&path_str).into_owned();
+    let path = Path::new(&path_str);
+    let file = File::open(path)
+        .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", INI_LOCATION, e))?;
+    let buf = std::io::BufReader::new(file);
+    let res = buf.lines()
+        .map(|l| l.expect("Failed to parse ini string."))
+        .filter(|line| !line.is_empty() && !line.starts_with("#"))
+        .collect();
+    tracing::trace!("git-remote-gosh versions from ini: {res:?}");
+    Ok(res)
 }
