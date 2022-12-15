@@ -9,6 +9,7 @@ export async function createDaoBot(dao_name: string) {
             ...(await generateEverWallet()),
         })
         .select()
+        .single()
     if (error) {
         console.error('Db error:', error)
         throw new Error(error.message)
