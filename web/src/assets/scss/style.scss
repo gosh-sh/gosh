@@ -612,7 +612,10 @@ for those elements which require gradient border color
         @apply mt-10 w-full md:w-1/2 mx-auto;
 
         button {
-            @apply btn btn--body w-full py-3 leading-normal font-medium;
+            @apply btn btn--body
+                w-full
+                px-4 py-3
+                leading-normal font-medium;
         }
 
         button .spinner {
@@ -640,7 +643,10 @@ for those elements which require gradient border color
         @apply mt-5 w-full md:w-1/2 mx-auto;
 
         button {
-            @apply btn btn--body w-full py-3 leading-normal font-medium;
+            @apply btn btn--body
+                w-full
+                px-4 py-3
+                leading-normal font-medium;
         }
 
         button .spinner {
