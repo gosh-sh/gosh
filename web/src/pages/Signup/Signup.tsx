@@ -26,7 +26,7 @@ const SignupPage = () => {
                 provider: 'github',
                 options: {
                     redirectTo: document.location.href,
-                    scopes: 'user read:org',
+                    scopes: 'read:user read:org',
                 },
             })
             if (error) throw new GoshError(error.message)
