@@ -7,6 +7,7 @@
     },
     "tasks": {
         "fmt": "npx prettier -w .",
-        "docker": "docker buildx build -t gosh-onboarding ."
+        "docker": "docker buildx build -t gosh-onboarding .",
+        "supabase_types": "mkdir -p src/db && npx supabase gen types typescript --db-url postgresql://postgres:$(cat ../../_keys/supabase-pass)@db.xdhskvsztepbyisbqsjj.supabase.co:5432/postgres > src/db/types.ts"
     }
 }
