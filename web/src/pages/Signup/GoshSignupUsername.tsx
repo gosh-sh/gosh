@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
-import { AppConfig, classNames, GoshError, useUser } from 'react-gosh'
+import { AppConfig, GoshError, useUser } from 'react-gosh'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import {
     githubRepositoriesSelectedSelector,
@@ -77,7 +77,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             }
 
             // Save auto clone repositories
-            const { error: error } = await supabase.from('github').insert(
+            const { error } = await supabase.from('github').insert(
                 githubReposSelected.map(([githubUrl, goshUrl]) => ({
                     user_id: dbUser.id,
                     github_url: githubUrl,
@@ -99,92 +99,79 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     }
 
     return (
-        <div className="flex justify-between items-start pt-36 pb-5">
-            <div className="basis-1/2 px-24">
-                <div className="mt-28">
-                    <button
-                        type="button"
-                        className={classNames(
-                            'rounded-full border w-10 h-10 mr-6 text-gray-200',
-                            'hover:text-gray-400 hover:bg-gray-50',
-                        )}
-                        onClick={() => setStep({ index: 3 })}
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} />
-                    </button>
-                    <span className="text-xl font-medium">Back</span>
+        <div className="signup signup--username">
+            <div className="signup__aside signup__aside--step aside-step">
+                <div className="aside-step__header">
+                    <div className="aside-step__btn-back">
+                        <button type="button" onClick={() => setStep({ index: 3 })}>
+                            <FontAwesomeIcon icon={faArrowLeft} />
+                        </button>
+                    </div>
+                    <span className="aside-step__title">Back</span>
                 </div>
-
-                <p className="mt-8 mb-4 text-2xl leading-normal font-medium">
-                    Choose a short nickname
-                </p>
-
-                <p className="text-gray-53596d">or create a new one</p>
+                <p className="aside-step__text">Choose a short nickname</p>
+                <p className="aside-step__text-secondary">or create a new one</p>
             </div>
 
-            <div className="basis-1/2 border rounded-xl p-10">
-                <p className="text-2xl text-center text-blue-348eff font-medium mb-1">
-                    {githubSession.session?.user.user_metadata.user_name}
-                </p>
-                <p className="text-gray-53596d text-center mb-8">your GOSH nickname</p>
+            <div className="signup__content">
+                <div className="signup__nickname-form nickname-form">
+                    <p className="nickname-form__title">
+                        {githubSession.session?.user.user_metadata.user_name}
+                    </p>
+                    <p className="nickname-form__subtitle">your GOSH nickname</p>
 
-                <Formik
-                    initialValues={{
-                        username: githubSession.session?.user.user_metadata.user_name,
-                        isConfirmed: false,
-                    }}
-                    onSubmit={onFormSubmit}
-                    validationSchema={Yup.object().shape({
-                        username: Yup.string()
-                            .matches(/^[\w-]+$/, 'Username has invalid characters')
-                            .max(64, 'Max length is 64 characters')
-                            .required('Username is required'),
-                    })}
-                >
-                    {({ isSubmitting, setFieldValue }) => (
-                        <Form className="px-12">
-                            <div className="mb-3">
-                                <Field
-                                    name="username"
-                                    component={TextField}
-                                    inputProps={{
-                                        autoComplete: 'off',
-                                        placeholder: 'Username',
-                                        onChange: (e: any) =>
-                                            setFieldValue(
-                                                'username',
-                                                e.target.value.toLowerCase(),
-                                            ),
-                                    }}
-                                    help={
-                                        <>
-                                            <p>GOSH username</p>
-                                            <p>
-                                                Can be changed, if is already taken or you
-                                                prefer another
-                                            </p>
-                                        </>
-                                    }
-                                />
-                            </div>
+                    <Formik
+                        initialValues={{
+                            username: githubSession.session?.user.user_metadata.user_name,
+                            isConfirmed: false,
+                        }}
+                        onSubmit={onFormSubmit}
+                        validationSchema={Yup.object().shape({
+                            username: Yup.string()
+                                .matches(/^[\w-]+$/, 'Username has invalid characters')
+                                .max(64, 'Max length is 64 characters')
+                                .required('Username is required'),
+                        })}
+                    >
+                        {({ isSubmitting, setFieldValue }) => (
+                            <Form>
+                                <div className="mb-3">
+                                    <Field
+                                        name="username"
+                                        component={TextField}
+                                        inputProps={{
+                                            autoComplete: 'off',
+                                            placeholder: 'Username',
+                                            onChange: (e: any) =>
+                                                setFieldValue(
+                                                    'username',
+                                                    e.target.value.toLowerCase(),
+                                                ),
+                                        }}
+                                        help={
+                                            <>
+                                                <p>GOSH username</p>
+                                                <p>
+                                                    Can be changed, if is already taken or
+                                                    you prefer another
+                                                </p>
+                                            </>
+                                        }
+                                    />
+                                </div>
 
-                            <div className="mt-10">
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="btn btn--body w-full py-3 leading-normal font-medium"
-                                >
-                                    {isSubmitting && (
-                                        <Spinner className="mr-3" size={'lg'} />
-                                    )}
-                                    Create account
-                                </button>
-                            </div>
-                        </Form>
-                    )}
-                </Formik>
+                                <div className="nickname-form__submit">
+                                    <button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting && <Spinner size={'lg'} />}
+                                        Create account
+                                    </button>
+                                </div>
+                            </Form>
+                        )}
+                    </Formik>
 
-                <SignupProgress progress={signupProgress} className="mt-4" />
+                    <SignupProgress progress={signupProgress} className="mt-4" />
+                </div>
             </div>
         </div>
     )
