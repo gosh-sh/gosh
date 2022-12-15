@@ -143,6 +143,7 @@ export interface Database {
                     gosh_username: string
                     gosh_pubkey: string
                     auth_user: string | null
+                    updated_at: string | null
                 }
                 Insert: {
                     id?: string
@@ -150,6 +151,7 @@ export interface Database {
                     gosh_username: string
                     gosh_pubkey: string
                     auth_user?: string | null
+                    updated_at?: string | null
                 }
                 Update: {
                     id?: string
@@ -157,6 +159,7 @@ export interface Database {
                     gosh_username?: string
                     gosh_pubkey?: string
                     auth_user?: string | null
+                    updated_at?: string | null
                 }
             }
         }
