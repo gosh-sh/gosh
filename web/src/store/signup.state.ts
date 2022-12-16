@@ -3,12 +3,12 @@ import { Session } from '@supabase/supabase-js'
 import { AppConfig } from 'react-gosh'
 import { atom, selector, selectorFamily } from 'recoil'
 
-export const githubSessionAtom = atom<{
+export const oAuthSessionAtom = atom<{
     session: Session | null
     isLoading: boolean
 }>({
-    key: 'SignupGithubSessionAtom',
-    default: { session: null, isLoading: true },
+    key: 'SignupOAuthSessionAtom',
+    default: { session: null, isLoading: false },
 })
 
 export const githubOrganizationsAtom = atom<{ items: any[]; isFetching: boolean }>({
@@ -34,7 +34,7 @@ export const signupStepAtom = atom<{ index: number; data?: any } | undefined>({
 export const octokitSelector = selector({
     key: 'SignupOctokitSelector',
     get: ({ get }) => {
-        const session = get(githubSessionAtom)
+        const session = get(oAuthSessionAtom)
         return new Octokit({ auth: session.session?.provider_token })
     },
 })

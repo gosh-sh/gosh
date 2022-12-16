@@ -15,7 +15,7 @@ build:
 	  --rm \
 	  --volume $(CURRENT_DIR):/workdir \
 	  --volume $(GOSH_PACKAGE_DIR):/react-gosh \
-	  --env REACT_APP_ISDOCKEREXT=true \
+	  --env REACT_APP_ISDOCKEREXT=${REACT_APP_ISDOCKEREXT} \
 	  --env BUILD_PATH=/dest \
 	  --volume $(abspath ./build):/dest \
 	  --platform linux/amd64 \

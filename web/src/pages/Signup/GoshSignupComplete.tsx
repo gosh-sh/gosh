@@ -9,19 +9,21 @@ const GoshSignupComplete = (props: TGoshSignupCompleteProps) => {
     const { username, email } = props
 
     return (
-        <div className="flex justify-between items-center pt-56 pb-5">
-            <div className="basis-1/2 px-24">
-                <div className="text-2xl font-medium">
-                    Welcome to GOSH, <br />
-                    {username}
+        <div className="signup signup--complete">
+            <div className="signup__aside signup__aside--complete aside-step">
+                <div className="aside-step__header">
+                    <div className="aside-step__text">
+                        Welcome to GOSH, <br />
+                        {username}
+                    </div>
                 </div>
 
-                <p className="mt-4 text-gray-53596d">
+                <p className="aside-step__text-secondary">
                     When the repositories are uploaded we will send a notification to
-                    <span className="text-blue-348eff"> {email}</span>
+                    <span className="aside-step__text-blue"> {email}</span>
                 </p>
             </div>
-            <div className="basis-1/2 px-3">
+            <div className="signup__content signup__content--first">
                 <img src={githubgosh} alt="" />
             </div>
         </div>

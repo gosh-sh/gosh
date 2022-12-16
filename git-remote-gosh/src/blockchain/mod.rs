@@ -351,7 +351,7 @@ async fn run_static(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    tracing::debug!("cb: {:#?}", pe);
+    tracing::debug!("process_message callback: {:#?}", pe);
 }
 
 #[instrument(level = "debug", skip(context))]

@@ -6,7 +6,7 @@ use std::fs::File;
 use std::io::{prelude::*, Read};
 use std::path::Path;
 use anyhow::format_err;
-use std::process::{exit, ExitStatus, Stdio};
+use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 

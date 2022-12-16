@@ -62,7 +62,7 @@ impl BlockchainCall for Everscale {
         let sdk_result = ton_client::processing::process_message(
             Arc::clone(self.client()),
             ParamsOfProcessMessage {
-                send_events: false,
+                send_events: true,
                 message_encode_params,
             },
             default_callback,

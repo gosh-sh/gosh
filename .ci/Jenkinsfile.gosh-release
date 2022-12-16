@@ -24,6 +24,19 @@ pipeline {
                 }
             }
         }*/
+        stage('Web: deploy prod') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+                }
+            }
+            steps {
+                script {
+                    build job: 'deploy-web', parameters: [[$class: 'StringParameterValue', name: 'sha1', value: ${TAG}]]
+                }
+            }
+        }
         stage('Publish: update release') {
             agent {
                 docker {
