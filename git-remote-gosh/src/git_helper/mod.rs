@@ -1,13 +1,11 @@
 #![allow(unused_variables)]
 
-use std::collections::HashMap;
 use std::env;
 
-use std::sync::Arc;
 use serde_json::Value;
+use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-use ton_client::abi::{decode_account_data, ParamsOfDecodeAccountData};
-use ton_client::net::{ParamsOfQueryCollection, query_collection};
+
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -163,25 +161,30 @@ where
             .run_static(self.blockchain.client(), "getCreator", None)
             .await?;
 
-        let version_controller =
-            GoshContract::new(
-                version_controller_address.address,
-                gosh_abi::VERSION_CONTROLLER
-            );
+        let version_controller = GoshContract::new(
+            version_controller_address.address,
+            gosh_abi::VERSION_CONTROLLER,
+        );
 
-        let versions: serde_json::Value = version_controller.run_static(
-            self.blockchain.client(),
-            "getVersionAddrMap",
-            None
-        ).await?;
+        let versions: serde_json::Value = version_controller
+            .run_static(self.blockchain.client(), "getVersionAddrMap", None)
+            .await?;
 
-        let versions: Vec<(String, String)>= versions.as_object().unwrap()
-            .values().next().unwrap()
-            .as_array().unwrap().iter()
+        let versions: Vec<(String, String)> = versions
+            .as_object()
+            .unwrap()
+            .values()
+            .next()
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
             .map(|ver| {
                 let map = ver.as_object().unwrap();
-                (map.get("Key").unwrap().as_str().unwrap().to_string(),
-                 map.get("Value").unwrap().as_str().unwrap().to_string())
+                (
+                    map.get("Key").unwrap().as_str().unwrap().to_string(),
+                    map.get("Value").unwrap().as_str().unwrap().to_string(),
+                )
             })
             .collect();
 
@@ -191,9 +194,13 @@ where
             let address = BlockchainContractAddress::new(version.1.clone());
             let system_contract = GoshContract::new(address, gosh_abi::GOSH);
             let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
-            let repo_addr: GetAddrDaoResult = system_contract.run_static(self.blockchain.client(), "getAddrRepository", Some(args)).await?;
+            let repo_addr: GetAddrDaoResult = system_contract
+                .run_static(self.blockchain.client(), "getAddrRepository", Some(args))
+                .await?;
             let repo_contract = GoshContract::new(repo_addr.address, gosh_abi::REPO);
-            let res: anyhow::Result<Value> = repo_contract.run_static(self.blockchain.client(), "getVersion", None).await;
+            let res: anyhow::Result<Value> = repo_contract
+                .run_static(self.blockchain.client(), "getVersion", None)
+                .await;
             if res.is_err() {
                 continue;
             }
@@ -207,12 +214,18 @@ where
         let dao_address: GetAddrDaoResult = self
             .blockchain
             .root_contract()
-            .run_static(self.blockchain.client(), "getAddrDao", Some(serde_json::json!({ "name": self.remote.dao })))
+            .run_static(
+                self.blockchain.client(),
+                "getAddrDao",
+                Some(serde_json::json!({ "name": self.remote.dao })),
+            )
             .await?;
 
         let dao_contract = GoshContract::new(dao_address.address, gosh_abi::DAO);
 
-        let tombstone: GetTombstoneResult = dao_contract.run_static(self.blockchain.client(), "getTombstone", None).await?;
+        let tombstone: GetTombstoneResult = dao_contract
+            .run_static(self.blockchain.client(), "getTombstone", None)
+            .await?;
         Ok(vec![format!("{}", tombstone.tombstone), "".to_string()])
     }
 
@@ -346,7 +359,9 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("get_repo_versions"), None, None) => helper.get_repo_versions().await?,
-            (Some("supported_contract_versions"), None, None) => helper.supported_contract_versions().await?,
+            (Some("supported_contract_versions"), None, None) => {
+                helper.supported_contract_versions().await?
+            }
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };

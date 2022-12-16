@@ -482,7 +482,6 @@ pub mod tests {
         );
     }
 
-
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
         let te = TestEnv::new();
