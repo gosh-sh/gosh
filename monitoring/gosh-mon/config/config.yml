@@ -63,9 +63,9 @@ includes:
 
   next: &next
     # for app.gosh.sh
-    appurl: https://next-app.monitoring.gosh.sh/
-    prim_network: fld.dapp.tonlabs.io
-    conf_endpoint: https://n01.fld.dapp.tonlabs.io
+    appurl: https://v3-0-5-dev.gosh.matusevich.pro/
+    prim_network: vps23.ton.dev
+    conf_endpoint: https://vps23.ton.dev
     # for remote
     gosh_branch: "release:latest-prerelease"
     use_envs: require
