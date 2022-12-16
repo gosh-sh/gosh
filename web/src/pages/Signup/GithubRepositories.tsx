@@ -2,7 +2,6 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
-import { classNames } from 'react-gosh'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import Spinner from '../../components/Spinner'
 import {
@@ -91,45 +90,35 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
     }, [getGithubRepositories])
 
     return (
-        <div className="flex justify-between items-start pt-36 pb-5">
-            <div className="basis-1/2 px-24">
-                <div className="mt-28">
-                    <button
-                        type="button"
-                        className={classNames(
-                            'rounded-full border w-10 h-10 mr-6 text-gray-200',
-                            'hover:text-gray-400 hover:bg-gray-50',
-                        )}
-                        onClick={() => setStep({ index: 1 })}
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} />
-                    </button>
-                    <span className="text-xl font-medium">{organization.login}</span>
+        <div className="signup signup--repositories">
+            <div className="signup__aside signup__aside--step aside-step">
+                <div className="aside-step__header">
+                    <div className="aside-step__btn-back">
+                        <button type="button" onClick={() => setStep({ index: 1 })}>
+                            <FontAwesomeIcon icon={faArrowLeft} />
+                        </button>
+                    </div>
+                    <span className="aside-step__title">{organization.login}</span>
                 </div>
 
-                <p className="mt-8 mb-14 text-2xl leading-normal font-medium">
-                    Select repositories to add to GOSH
-                </p>
+                <p className="aside-step__text">Select repositories to add to GOSH</p>
             </div>
-            <div className="basis-1/2 px-3">
-                <div className="mb-4 text-end">
+            <div className="signup__content">
+                <div className="signup__reload-items">
                     <button
                         type="button"
-                        className="btn btn--body text-xs px-2 py-1.5"
                         disabled={githubOrgRepos?.isFetching}
                         onClick={getGithubRepositories}
                     >
-                        {githubOrgRepos?.isFetching && (
-                            <Spinner className="mr-3" size="xs" />
-                        )}
+                        {githubOrgRepos?.isFetching && <Spinner size="xs" />}
                         Refresh
                     </button>
                 </div>
 
                 {!githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
-                    <div className="text-center text-gray-53596d w-1/2 mx-auto mt-28">
-                        <p className=" text-xl">Nothing to show</p>
-                        <p className="leading-tight mt-2">
+                    <div className="signup__norepos">
+                        <p className="signup__norepos-title">Nothing to show</p>
+                        <p className="signup__norepos-content">
                             You should have at least one repository on GitHub
                         </p>
                     </div>
@@ -138,17 +127,16 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                 {githubOrgRepos?.items.map((item, index) => (
                     <div
                         key={index}
-                        className={classNames(
-                            'border rounded-xl p-5 mb-6 cursor-pointer',
-                            'hover:bg-gray-50',
-                        )}
+                        className="signup__repoitem repoitem"
                         onClick={() => onRepositoryCheck(item.id)}
                     >
-                        <div className="font-medium relative">
-                            <FontAwesomeIcon icon={faHardDrive} className="mr-2.5" />
-                            <span className="text-blue-1e7aec">{item.name}</span>
-
-                            <div className="absolute top-0.5 right-0.5">
+                        <div className="repoitem__header">
+                            <FontAwesomeIcon
+                                icon={faHardDrive}
+                                className="repoitem__icon"
+                            />
+                            <div className="repoitem__title">{item.name}</div>
+                            <div className="repoitem__check">
                                 <input
                                     type="checkbox"
                                     checked={item.isSelected}
@@ -157,11 +145,9 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                             </div>
                         </div>
 
-                        <p className="text-sm text-gray-53596d mt-1.5">
-                            {item.description}
-                        </p>
+                        <p className="repoitem__description">{item.description}</p>
 
-                        <p className="text-xs text-gray-53596d mt-2.5">
+                        <p className="repoitem__secondary">
                             Updated on {new Date(item.updated_at).toLocaleDateString()}
                         </p>
                     </div>
