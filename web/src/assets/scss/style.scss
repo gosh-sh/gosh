@@ -513,7 +513,10 @@ for those elements which require gradient border color
     }
 
     &__media {
-        @apply w-[4rem] min-w-[4rem];
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply w-[4rem] min-w-[4rem]; */
+        width: 4rem;
+        min-width: 4rem;
 
         img {
             @apply w-full rounded-xl;
@@ -530,8 +533,11 @@ for those elements which require gradient border color
 
     &__title {
         @apply text-xl font-medium leading-tight
-            whitespace-nowrap text-ellipsis overflow-hidden
-            max-w-[80%];
+            whitespace-nowrap text-ellipsis overflow-hidden;
+
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply max-w-[80%] */
+        max-width: 80%;
     }
 
     &__arrow {
@@ -581,8 +587,11 @@ for those elements which require gradient border color
 
     &__title {
         @apply text-blue-1e7aec
-            whitespace-nowrap text-ellipsis overflow-hidden
-            max-w-[80%];
+            whitespace-nowrap text-ellipsis overflow-hidden;
+
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply max-w-[80%] */
+        max-width: 80%;
     }
 
     &__check {
