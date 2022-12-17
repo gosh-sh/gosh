@@ -1,11 +1,20 @@
-import React from 'react'
 import { FontAwesomeIcon, FontAwesomeIconProps } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { classNames } from 'react-gosh'
 
 type TSpinnerProps = Omit<FontAwesomeIconProps, 'icon'>
 
 const Spinner = (props: TSpinnerProps) => {
-    return <FontAwesomeIcon {...props} icon={faSpinner} spin speed={'100s'} />
+    const { className, ...rest } = props
+    return (
+        <FontAwesomeIcon
+            className={classNames('spinner', className)}
+            {...rest}
+            icon={faSpinner}
+            spin
+            speed={'100s'}
+        />
+    )
 }
 
 export default Spinner

@@ -1,23 +1,22 @@
 import { useCallback, useEffect } from 'react'
-import { classNames } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import Spinner from '../../components/Spinner'
 import {
     githubOrganizationsAtom,
     githubRepositoriesAtom,
     githubRepositoriesSelectedSelector,
-    githubSessionAtom,
+    oAuthSessionAtom,
     octokitSelector,
     signupStepAtom,
 } from '../../store/signup.state'
 
 type TGithubOrganizationsProps = {
-    signoutGithub(): Promise<void>
+    signoutOAuth(): Promise<void>
 }
 
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
-    const { signoutGithub } = props
-    const { session } = useRecoilValue(githubSessionAtom)
+    const { signoutOAuth } = props
+    const { session } = useRecoilValue(oAuthSessionAtom)
     const [githubOrgs, setGithubOrgs] = useRecoilState(githubOrganizationsAtom)
     const githubRepos = useRecoilValue(githubRepositoriesAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
@@ -53,42 +52,43 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
 
     if (!session) return null
     return (
-        <div className="flex justify-between items-start pt-36 pb-5">
-            <div className="basis-1/2 px-24">
-                <div className="text-xl mt-28">
-                    Hey, {session.user.user_metadata.name}
-                    <button
-                        type="button"
-                        className="btn btn--body px-2 py-1.5 text-xs ml-2"
-                        onClick={signoutGithub}
-                    >
-                        Signout
-                    </button>
+        <div className="signup signup--organizations">
+            <div className="signup__aside signup__aside--step aside-step">
+                <div className="aside-step__header">
+                    <div className="aside-step__title">
+                        Hey, {session.user.user_metadata.name}
+                    </div>
+                    <div className="aside-step__btn-signout">
+                        <button type="button" onClick={signoutOAuth}>
+                            Signout
+                        </button>
+                    </div>
                 </div>
 
-                <p className="mt-8 mb-14 text-2xl leading-normal font-medium">
+                <p className="aside-step__text">
                     Select GitHub organization to
-                    <span className="text-blue-348eff"> create your DAO on GOSH</span>
+                    <span className="aside-step__text-blue">
+                        &nbsp;create your DAO on GOSH
+                    </span>
                 </p>
 
                 <button
                     type="button"
-                    className="btn btn--body py-3 px-5 text-base leading-normal font-medium w-9/12"
+                    className="aside-step__btn-upload"
                     onClick={() => setStep({ index: 3 })}
                     disabled={!githubReposSelected.length}
                 >
                     Upload
                 </button>
             </div>
-            <div className="basis-1/2 px-3">
-                <div className="mb-4 text-end">
+            <div className="signup__content">
+                <div className="signup__reload-items">
                     <button
                         type="button"
-                        className="btn btn--body text-xs px-2 py-1.5"
                         disabled={githubOrgs.isFetching}
                         onClick={getGithubOrganizations}
                     >
-                        {githubOrgs.isFetching && <Spinner className="mr-3" size="xs" />}
+                        {githubOrgs.isFetching && <Spinner size="xs" />}
                         Refresh
                     </button>
                 </div>
@@ -97,7 +97,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                     const selected = githubRepos[item.id]?.items
                         .filter((item) => item.isSelected)
                         .map((item, index) => (
-                            <span key={index} className="text-blue-348eff px-1">
+                            <span key={index} className="orgitem__repo">
                                 {item.name}
                             </span>
                         ))
@@ -105,10 +105,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                     return (
                         <div
                             key={index}
-                            className={classNames(
-                                'border rounded-xl p-5 mb-6 flex flex-nowrap cursor-pointer',
-                                'hover:bg-gray-50',
-                            )}
+                            className="signup__orgitem orgitem"
                             onClick={() => {
                                 setStep({
                                     index: 2,
@@ -116,25 +113,31 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                 })
                             }}
                         >
-                            <div className="overflow-hidden">
-                                <img
-                                    src={item.avatar_url}
-                                    className="w-20 h-20 rounded-xl"
-                                    alt=""
-                                />
+                            <div className="orgitem__main">
+                                <div className="orgitem__media">
+                                    <img src={item.avatar_url} alt="" />
+                                </div>
+                                <div className="orgitem__content">
+                                    <div className="orgitem__header">
+                                        <div className="orgitem__title">{item.login}</div>
+                                        <div className="orgitem__arrow">
+                                            <i className="icon-arrow"></i>
+                                        </div>
+                                    </div>
+
+                                    <p className="orgitem__description">
+                                        {item.description}
+                                    </p>
+
+                                    <div className="orgitem__repos">
+                                        {selected?.length
+                                            ? selected
+                                            : 'Select repository'}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="pl-4">
-                                <div className="text-xl font-medium leading-tight">
-                                    {item.login}
-                                </div>
-
-                                <p className="text-sm text-gray-53596d">
-                                    {item.description}
-                                </p>
-
-                                <div className="text-gray-606060 text-xs mt-3">
-                                    {selected?.length ? selected : 'Select repository'}
-                                </div>
+                            <div className="orgitem__repos orgitem__repos--xs">
+                                {selected?.length ? selected : 'Select repository'}
                             </div>
                         </div>
                     )
