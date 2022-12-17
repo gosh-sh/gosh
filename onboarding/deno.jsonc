@@ -6,8 +6,6 @@
         }
     },
     "tasks": {
-        "fmt": "npx prettier -w .",
-        "docker": "docker buildx build -t gosh-onboarding .",
         "supabase_types": "mkdir -p src/db && npx supabase gen types typescript --db-url $SUPABASE_ADMIN_URI > src/db/types.ts && npx prettier -w src/db/types.ts"
     }
 }

@@ -36,3 +36,15 @@ export async function getDaoBot(dao_name: string) {
 export async function getOrCreateDaoBot(dao_name: string) {
     return (await getDaoBot(dao_name)) ?? (await createDaoBot(dao_name))
 }
+
+export async function getDaoBotsWithoutProfile() {
+    const { data, error } = await getDb()
+        .from('dao_bot')
+        .select()
+        .is('profile_gosh_address', null)
+    if (error) {
+        console.log(error)
+        throw new Error(error.message)
+    }
+    return data
+}

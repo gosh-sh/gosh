@@ -12,6 +12,7 @@ export interface Database {
                     pubkey: string
                     secret: string
                     profile_gosh_address: string | null
+                    initialized_at: string | null
                 }
                 Insert: {
                     id?: string
@@ -21,6 +22,7 @@ export interface Database {
                     pubkey: string
                     secret: string
                     profile_gosh_address?: string | null
+                    initialized_at?: string | null
                 }
                 Update: {
                     id?: string
@@ -30,6 +32,7 @@ export interface Database {
                     pubkey?: string
                     secret?: string
                     profile_gosh_address?: string | null
+                    initialized_at?: string | null
                 }
             }
             emails: {

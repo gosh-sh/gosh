@@ -7,7 +7,8 @@
 .env
 
 /media
-/abi
 node_modules
 !/node_modules/@eversdk/lib-web/eversdk.wasm
 !/node_modules/@eversdk/lib-web/index.js
+
+/tonos-cli.conf.json

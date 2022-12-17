@@ -1,6 +1,12 @@
-import { TonClient } from 'npm:@eversdk/core'
+import { abiSerialized, TonClient } from 'npm:@eversdk/core'
 // @deno-types="../../node_modules/@eversdk/lib-web/index.d.ts"
 import { libWeb, libWebSetup } from '../../node_modules/@eversdk/lib-web/index.js'
+
+// https://app.gosh.sh/envs.json
+export const SYSTEM_CONTRACT_ADDR =
+    '0:18fae8e25d9ffea2b0875646398efe00361805b371ce61216a053af161a3a30e'
+export const NETWORK =
+    'https://bhs01.network.gosh.sh,https://eri01.network.gosh.sh,https://gra01.network.gosh.sh'
 
 let everClient: TonClient
 
@@ -22,3 +28,15 @@ export function getEverClient(): TonClient {
     }
     return everClient
 }
+
+export async function getAccountBoc(addr: string) {
+    const result = await getEverClient().net.query_collection({
+        collection: 'accounts',
+        filter: { id: { eq: addr } },
+        result: 'boc',
+    })
+    console.log('boc result', result)
+    return result
+}
+
+// const abi = abiSerialized(json_file_content)

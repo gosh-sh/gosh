@@ -5,3 +5,5 @@ node_modules
 /media
 /abi
 deno.lock
+
+/tonos-cli.conf.json
