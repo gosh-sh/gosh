@@ -37,11 +37,11 @@ export async function getOrCreateDaoBot(dao_name: string) {
     return (await getDaoBot(dao_name)) ?? (await createDaoBot(dao_name))
 }
 
-export async function getDaoBotsWithoutProfile() {
+export async function getDaoBotsForInit() {
     const { data, error } = await getDb()
         .from('dao_bot')
         .select()
-        .is('profile_gosh_address', null)
+        .is('initialized_at', null)
     if (error) {
         console.log(error)
         throw new Error(error.message)

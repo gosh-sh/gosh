@@ -2,6 +2,7 @@ include .env
 
 .PHONY: docker
 docker:
+	rm -rf abi
 	mkdir -p abi
 	cp ../contracts/gosh/*.abi.json abi
 	npm i
