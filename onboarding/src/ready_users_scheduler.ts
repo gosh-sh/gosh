@@ -12,11 +12,12 @@ while (true) {
     for (const user of data) {
         const email_list: string[] = []
 
-        user.github_users?.forEach((github_user: { email: string[] }) => {
-            if (github_user.email) {
-                email_list.push(github_user.email[0])
-            }
-        })
+        // TODO: now have to use different TABLE auth.users to get an email
+        // user.github_users?.forEach((github_user: { email: string[] }) => {
+        //     if (github_user.email) {
+        //         email_list.push(github_user.email[0])
+        //     }
+        // })
 
         console.log(email_list)
 

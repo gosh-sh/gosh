@@ -1,10 +1,11 @@
 import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
+import { MAX_RETRIES } from './config.ts'
 import { getDaoBotsForInit } from './dao_bot/dao_bot.ts'
 import { getBotNameByDao } from './dao_bot/utils.ts'
 import { getDb } from './db/db.ts'
-import { NETWORK, SYSTEM_CONTRACT_ABI, SYSTEM_CONTRACT_ADDR } from './eversdk/client.ts'
-import { MAX_RETRIES } from './settings.ts'
+import { PROFILE_ABI, SYSTEM_CONTRACT_ABI } from './eversdk/abi.ts'
+import { SYSTEM_CONTRACT_ADDR } from './eversdk/client.ts'
 import { tonos_cli } from './shortcuts.ts'
 
 dotenv.config({ export: true })
@@ -53,12 +54,54 @@ async function initNewDaoBot() {
                     dao_bot = data
                 }
             }
+
             // create dao
+            if (!dao_bot.profile_gosh_address) {
+                console.error('This should be unreachable')
+                continue
+            }
+
+            console.log('Attempt to create dao', dao_bot.dao_name)
+            const dao_addr = await getAddrDao(dao_bot.dao_name)
+            const dao = await getOrCreateDao(
+                dao_addr,
+                dao_bot.dao_name,
+                dao_bot.profile_gosh_address,
+                dao_bot.seed,
+            )
+
+            // change dao config
+
+            // schedule repo upload
+
+            console.log('Finish')
         }
     } catch (err) {
         console.error('Fail update dao bots', err)
     }
     release()
+}
+
+async function getOrCreateDao(
+    dao_addr: string,
+    dao_name: string,
+    user_profile_addr: string,
+    user_seed: string,
+) {
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const { [dao_addr]: dao } = await getAccount(dao_addr)
+            console.log('Got account', dao)
+            if (dao.acc_type === 'Active') {
+                return dao
+            }
+            const res = await deployDao(dao_name, user_profile_addr, user_seed)
+            console.log('Deploy dao res', res)
+        } catch (err) {
+            console.error(`Attempt ${i}:`, err)
+        }
+    }
+    throw new Error(`Can't get or create dao ${dao_name}`)
 }
 
 async function getOrCreateProfile(name: string, pubkey: string): Promise<string> {
@@ -99,24 +142,35 @@ async function getOrCreateProfile(name: string, pubkey: string): Promise<string>
     throw new Error(`Can't get or create profile for ${name}`)
 }
 
-async function getOrCreateDao(dao_name: string) {
-    // DAO_ADDR=$($TONOS_CLI -j run $SYSTEM_CONTRACT_ADDR getAddrDao "{\"name\":\"$DAO_NAME\"}"
-    // --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
-    // INITIAL_WALLET_ADDR=$($TONOS_CLI -j -u $NETWORK run $DAO_ADDR getWallets {} --abi $DAO_ABI | jq -r ".value0 | first")
-    // $TONOS_CLI -j -u $NETWORK call $INITIAL_WALLET_ADDR \
-    //     AloneSetConfigDao "{\"newtoken\": $WELCOME_TOKENS}" \
-    //     --abi $CONTRACTS_PATH/goshwallet.abi.json --sign "$INITIAL_SEED" > /dev/null || exit 20
-    try {
-        const { value0 } = await tonos_cli(
-            'run',
-            '--abi',
-            SYSTEM_CONTRACT_ABI,
-            SYSTEM_CONTRACT_ADDR,
-            'getAddrDao',
-            JSON.stringify({ name: dao_name }),
-        )
-        return value0
-    } catch (err) {
-        console.log(err)
-    }
+async function getAddrDao(dao_name: string) {
+    const { value0 } = await tonos_cli(
+        'run',
+        '--abi',
+        SYSTEM_CONTRACT_ABI,
+        SYSTEM_CONTRACT_ADDR,
+        'getAddrDao',
+        JSON.stringify({ name: dao_name }),
+    )
+    return value0
+}
+
+async function getAccount(addr: string) {
+    return await tonos_cli('account', addr)
+}
+
+async function deployDao(dao_name: string, profile_addr: string, seed: string) {
+    return await tonos_cli(
+        'call',
+        '--abi',
+        PROFILE_ABI,
+        profile_addr,
+        '--sign',
+        seed,
+        'deployDao',
+        JSON.stringify({
+            systemcontract: SYSTEM_CONTRACT_ADDR,
+            name: dao_name,
+            pubmem: [profile_addr],
+        }),
+    )
 }
