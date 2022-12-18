@@ -7,7 +7,7 @@ dotenv.config({ export: true })
 // TODO: sub on "all daos are ready"
 
 while (true) {
-    const { data, error } = await getDb().from('users').select(`*`)
+    const { data, error } = await getDb().from('users').select(`*, (github)`)
 
     for (const user of data) {
         const email_list: string[] = []

@@ -1,14 +1,7 @@
 version: '3.8'
 
 services:
-  # redis:
-  #   container_name: redis
-  #   image: redis
-  #   restart: always
-  #   ports:
-  #     - 6379:6379
-
-  send_email:
+  dev:
     image: gosh-onboarding
     restart: always
     volumes:
@@ -21,14 +14,42 @@ services:
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
     command: >
-      deno run -A ./src/create_dao_bot_profile_scheduler.ts
+      bash
 
-  # dao_bot:
-  #   image: gosh-onboarding
+  # redis:
+  #   container_name: redis
+  #   image: redis
   #   restart: always
-  #   environment:
-  #     SUPABASE_URL: ${SUPABASE_URL}
-  #     SUPABASE_KEY: ${SUPABASE_KEY}
-  #     REDIS_HOST: ${REDIS_HOST}
-  #   command: >
-  #     deno run -A src/emails.ts
+  #   ports:
+  #     - 6379:6379
+
+  send_email:
+    image: gosh-onboarding
+    restart: always
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_HOST: ${REDIS_HOST}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+    command: >
+      deno run -A ./src/send_email_scheduler.ts
+
+  create_dao_bot:
+    image: gosh-onboarding
+    restart: always
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+    command: >
+      deno run -A ./src/create_dao_bot_scheduler.ts
+
+  create_dao:
+    image: gosh-onboarding
+    restart: always
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+    command: >
+      deno run -A ./src/create_dao_scheduler.ts

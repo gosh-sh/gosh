@@ -20,7 +20,7 @@ export async function run_bash({
     return { status, stdout, stderr }
 }
 
-export async function tonos_cli(...args: string[]) {
+export async function tonosCli(...args: string[]) {
     const cmd = ['tonos-cli', '-j', ...args]
     const p = Deno.run({
         cmd,
@@ -38,5 +38,5 @@ export async function tonos_cli(...args: string[]) {
     if (status.success) {
         return JSON.parse(stdout)
     }
-    throw new Error(`Process "${cmd.join(' ')}" return code ${status.code}`)
+    throw new Error(`Process "${cmd.join(' ')}" return code ${status.code}\n${stdout}`)
 }

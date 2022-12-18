@@ -1,12 +1,23 @@
 import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
+import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
 import { MAX_RETRIES } from './config.ts'
 import { getDaoBotsForInit } from './dao_bot/dao_bot.ts'
 import { getBotNameByDao } from './dao_bot/utils.ts'
 import { getDb } from './db/db.ts'
 import { PROFILE_ABI, SYSTEM_CONTRACT_ABI } from './eversdk/abi.ts'
 import { SYSTEM_CONTRACT_ADDR } from './eversdk/client.ts'
-import { tonos_cli } from './shortcuts.ts'
+import { tonosCli } from './shortcuts.ts'
+
+type Account = {
+    acc_type: 'Active' | string
+    address: string
+    balance: string
+    last_paid: string
+    last_trans_lt: string
+    'data(boc)': string
+    code_hash: string
+}
 
 dotenv.config({ export: true })
 
@@ -63,14 +74,18 @@ async function initNewDaoBot() {
 
             console.log('Attempt to create dao', dao_bot.dao_name)
             const dao_addr = await getAddrDao(dao_bot.dao_name)
-            const dao = await getOrCreateDao(
-                dao_addr,
-                dao_bot.dao_name,
-                dao_bot.profile_gosh_address,
-                dao_bot.seed,
-            )
-
-            // change dao config
+            try {
+                const dao = await getOrCreateDao(
+                    dao_addr,
+                    dao_bot.dao_name,
+                    dao_bot.profile_gosh_address,
+                    dao_bot.seed,
+                )
+            } catch (err) {
+                // ignore for now
+                console.log(err)
+                continue
+            }
 
             // schedule repo upload
 
@@ -87,16 +102,21 @@ async function getOrCreateDao(
     dao_name: string,
     user_profile_addr: string,
     user_seed: string,
-) {
+): Promise<Account> {
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
-            const { [dao_addr]: dao } = await getAccount(dao_addr)
-            console.log('Got account', dao)
-            if (dao.acc_type === 'Active') {
-                return dao
+            const data = await getAccount(dao_addr)
+            console.log('Got account data', data)
+            if (data) {
+                const { [dao_addr]: dao } = data
+                if (dao?.acc_type === 'Active') {
+                    return dao
+                }
             }
             const res = await deployDao(dao_name, user_profile_addr, user_seed)
             console.log('Deploy dao res', res)
+            console.log('Sleep...')
+            await sleep(5)
         } catch (err) {
             console.error(`Attempt ${i}:`, err)
         }
@@ -110,7 +130,7 @@ async function getOrCreateProfile(name: string, pubkey: string): Promise<string>
     }
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
-            const { value0: bot_profile_addr } = await tonos_cli(
+            const { value0: bot_profile_addr } = await tonosCli(
                 'run',
                 '--abi',
                 SYSTEM_CONTRACT_ABI,
@@ -125,7 +145,7 @@ async function getOrCreateProfile(name: string, pubkey: string): Promise<string>
             console.log('Get profile error', err)
 
             try {
-                await tonos_cli(
+                await tonosCli(
                     'call',
                     '--abi',
                     SYSTEM_CONTRACT_ABI,
@@ -142,8 +162,8 @@ async function getOrCreateProfile(name: string, pubkey: string): Promise<string>
     throw new Error(`Can't get or create profile for ${name}`)
 }
 
-async function getAddrDao(dao_name: string) {
-    const { value0 } = await tonos_cli(
+async function getAddrDao(dao_name: string): Promise<string> {
+    const { value0 } = await tonosCli(
         'run',
         '--abi',
         SYSTEM_CONTRACT_ABI,
@@ -154,12 +174,12 @@ async function getAddrDao(dao_name: string) {
     return value0
 }
 
-async function getAccount(addr: string) {
-    return await tonos_cli('account', addr)
+async function getAccount(addr: string): Promise<{ [key: string]: Account } | null> {
+    return await tonosCli('account', addr)
 }
 
 async function deployDao(dao_name: string, profile_addr: string, seed: string) {
-    return await tonos_cli(
+    return await tonosCli(
         'call',
         '--abi',
         PROFILE_ABI,
