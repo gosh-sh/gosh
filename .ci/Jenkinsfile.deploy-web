@@ -25,6 +25,7 @@ pipeline {
                     dir('web') {
                         sh 'aws s3 rm s3://app-gosh-sh --recursive'
                         sh 'aws s3 sync build/ s3://app-gosh-sh'
+                        sh "aws cloudfront create-invalidation --distribution-id E2N1XW3TTILT0O --paths '/*'"
                     }
                 }
             }
