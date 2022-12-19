@@ -24,6 +24,7 @@ pipeline {
             steps {
                 script {
                     dir('onboarding') {
+                        sh 'docker-compose stop'
                         sh 'docker-compose rm -f'
                         sh 'cp /opt/onboarding/.env ./'
                         sh 'docker-compose up -d'
