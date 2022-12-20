@@ -49,7 +49,7 @@ export async function deployDaoBotProfile(dao_bot: DaoBot) {
             .save()
 
         job.on('failed', (err) => {
-            console.error(`Account is not created `, err.message)
+            console.error(`Account is not created`, err.message)
         })
 
         job.on('succeeded', async (res) => {

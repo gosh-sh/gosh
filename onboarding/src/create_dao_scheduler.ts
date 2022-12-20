@@ -1,10 +1,7 @@
-import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
 import { getDaoBotsForInit } from './dao_bot/dao_bot.ts'
 import { deployDaoBotProfile } from './dao_bot/tasks.ts'
 import { getDb } from './db/db.ts'
-
-dotenv.config({ export: true })
 
 const mutex = new Mutex()
 
@@ -15,14 +12,14 @@ getDb()
         { event: '*', schema: 'public', table: 'dao_bot' },
         async (payload) => {
             console.log('dao bots updated', payload)
-            await initNewDaoBot()
+            await initNewDaoBots()
         },
     )
     .subscribe()
 
-initNewDaoBot()
+initNewDaoBots()
 
-async function initNewDaoBot() {
+async function initNewDaoBots() {
     const release = await mutex.acquire()
     try {
         const dao_bots = await getDaoBotsForInit()

@@ -41,5 +41,13 @@ export async function createDao(dao_name: string) {
             .retries(MAX_RETRIES)
             .backoff('fixed', 10000)
             .save()
+
+        job.on('failed', (err) => {
+            console.error(`Dao is not created`, err.message)
+        })
+
+        job.on('succeeded', async (res) => {
+            await onSuccess()
+        })
     }
 }
