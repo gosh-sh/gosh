@@ -1,4 +1,4 @@
-export async function run_bash({
+export async function runBash({
     script,
     env,
 }: {
@@ -22,6 +22,8 @@ export async function run_bash({
 
 export async function tonosCli(...args: string[]) {
     const cmd = ['tonos-cli', '-j', ...args]
+    const display_cmd = cmd.map((x) => `'${x}'`).join(' ')
+    console.debug(`tonos cli: ${display_cmd}`)
     const p = Deno.run({
         cmd,
         stderr: 'piped',
@@ -38,5 +40,5 @@ export async function tonosCli(...args: string[]) {
     if (status.success) {
         return JSON.parse(stdout)
     }
-    throw new Error(`Process "${cmd.join(' ')}" return code ${status.code}\n${stdout}`)
+    throw new Error(`Process "${display_cmd}" return code ${status.code}\n${stdout}`)
 }
