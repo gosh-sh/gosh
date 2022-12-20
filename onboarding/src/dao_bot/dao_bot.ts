@@ -1,7 +1,10 @@
 import { getDb } from '../db/db.ts'
+import { Database } from '../db/types.ts'
 import { generateEverWallet } from '../eversdk/tasks.ts'
 
-export async function createDaoBot(dao_name: string) {
+export type DaoBot = Database['public']['Tables']['dao_bot']['Row']
+
+export async function createDaoBot(dao_name: string): Promise<DaoBot> {
     const { data, error } = await getDb()
         .from('dao_bot')
         .insert({
@@ -20,7 +23,7 @@ export async function createDaoBot(dao_name: string) {
     return data
 }
 
-export async function getDaoBot(dao_name: string) {
+export async function getDaoBot(dao_name: string): Promise<DaoBot | null> {
     const { data, error } = await getDb()
         .from('dao_bot')
         .select()
@@ -33,7 +36,7 @@ export async function getDaoBot(dao_name: string) {
     return data
 }
 
-export async function getOrCreateDaoBot(dao_name: string) {
+export async function getOrCreateDaoBot(dao_name: string): Promise<DaoBot> {
     return (await getDaoBot(dao_name)) ?? (await createDaoBot(dao_name))
 }
 
@@ -47,4 +50,20 @@ export async function getDaoBotsForInit() {
         throw new Error(error.message)
     }
     return data
+}
+
+export async function updateDaoBot(
+    dao_bot_id: string,
+    update_data: any,
+): Promise<DaoBot> {
+    const { data, error } = await getDb()
+        .from('dao_bot')
+        .update(update_data)
+        .eq('id', dao_bot_id)
+        .select()
+        .single()
+    if (!error && data) {
+        return data
+    }
+    throw new Error(`Error while update dao bot ${error.message}`)
 }

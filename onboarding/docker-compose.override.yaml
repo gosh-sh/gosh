@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  dev:
+    image: gosh-onboarding
+    restart: always
+    volumes:
+      - '.:/app'
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis:6379
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+    command: >
+      bash
+
+  redis:
+    ports:
+      - 6379:6379
