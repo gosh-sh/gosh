@@ -1,12 +1,20 @@
 import { MAX_RETRIES } from '../config.ts'
 import { getDaoBot } from '../dao_bot/dao_bot.ts'
 import { isAccountActive } from '../eversdk/account.ts'
-import { CHECK_ACCOUNT_QUEUE } from '../queues/constants.ts'
+import { getGithubsForDaoBot } from '../github/github.ts'
+import { CHECK_ACCOUNT_QUEUE, CREATE_GOSH_REPO_QUEUE } from '../queues/constants.ts'
 import Queue from '../queues/mod.ts'
 import { getRedisClient } from '../redis/mod.ts'
 import { deployDao, getAddrDao } from './blockchain.ts'
 
 const checkAccountQueue = new Queue(CHECK_ACCOUNT_QUEUE, {
+    redis: getRedisClient(),
+    isWorker: false,
+    activateDelayedJobs: true,
+    getEvents: true,
+})
+
+const createGoshRepoQueue = new Queue(CREATE_GOSH_REPO_QUEUE, {
     redis: getRedisClient(),
     isWorker: false,
     activateDelayedJobs: true,
@@ -24,6 +32,14 @@ export async function createDao(dao_name: string) {
     const onSuccess = async () => {
         // get all non-uploaded repos for dao
         // queue create all repos
+        const repos = await getGithubsForDaoBot(dao_bot.id)
+        for (const repo of repos) {
+            createGoshRepoQueue
+                .createJob({
+                    repo_id: repo,
+                })
+                .save()
+        }
     }
 
     if (await isAccountActive(dao_addr)) {

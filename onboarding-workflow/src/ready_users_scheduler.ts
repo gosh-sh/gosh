@@ -5,7 +5,30 @@ import { getDb } from './db/db.ts'
 dotenv.config({ export: true })
 
 // TODO: sub on "all daos are ready"
+const { data, error } = await getDb()
+    .from('users')
+    .select(`*, githubs:github(count)`)
+    .is('onboarded_at', null)
+    .not('github.updated_at', 'is', null)
 
+if (data) console.log(data)
+if (error) console.log(error)
+
+// -- drop view if exists view_ready_users;
+// -- create or replace VIEW public.view_ready_users AS (
+// select
+//   u.*,
+//   count(*) as repo_count
+// from
+//   users as u
+//   join github as gh on gh.user_id = u.id
+// -- where
+// --   gh.updated_at is null  -- all gh repo are updated
+// group by
+//   u.id
+// -- );
+
+/*
 while (true) {
     const { data, error } = await getDb().from('users').select(`*, (github)`)
 
@@ -66,3 +89,4 @@ START BUILDING https://app.gosh.sh/a/signin
     console.log('Sleep...')
     await sleep(10)
 }
+*/
