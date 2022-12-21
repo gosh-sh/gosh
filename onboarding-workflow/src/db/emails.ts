@@ -1,4 +1,4 @@
-import { getDb } from '../db/db.ts'
+import { getDb } from './db.ts'
 
 export async function getEmailsNotSent() {
     const { data, error } = await getDb().from('emails').select().is('sent_at', null)

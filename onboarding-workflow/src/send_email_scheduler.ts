@@ -1,7 +1,7 @@
 import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
 import { getDb } from './db/db.ts'
-import { getEmailsNotSent } from './emails/emails.ts'
+import { getEmailsNotSent } from './db/emails.ts'
 import { sendEmail } from './utils/email.ts'
 
 dotenv.config({ export: true })

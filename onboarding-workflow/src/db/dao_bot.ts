@@ -1,5 +1,5 @@
-import { getDb } from '../db/db.ts'
-import { Database } from '../db/types.ts'
+import { getDb } from './db.ts'
+import { Database } from './types.ts'
 import { generateEverWallet } from '../eversdk/tasks.ts'
 
 export type DaoBot = Database['public']['Tables']['dao_bot']['Row']

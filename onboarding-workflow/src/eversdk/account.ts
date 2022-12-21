@@ -1,5 +1,5 @@
 import { tonosCli } from '../shortcuts.ts'
-import { GOSH_WALLET_ABI, PROFILE_ABI } from './abi.ts'
+import { GOSH_WALLET_ABI } from './abi.ts'
 
 type Account = {
     acc_type: 'Active' | string

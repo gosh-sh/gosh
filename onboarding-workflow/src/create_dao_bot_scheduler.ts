@@ -1,7 +1,7 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { getOrCreateDaoBot } from './dao_bot/dao_bot.ts'
+import { getOrCreateDaoBot } from './db/dao_bot.ts'
 import { getDb } from './db/db.ts'
-import { getGithubsWithoutDao } from './github/github.ts'
+import { getGithubsWithoutDao } from './db/github.ts'
 
 const mutex = new Mutex()
 

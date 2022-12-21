@@ -1,6 +1,6 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { getDaoBotsForInit } from './dao_bot/dao_bot.ts'
-import { deployDaoBotProfile } from './dao_bot/tasks.ts'
+import { deployDaoBotProfile } from './actions/dao_bot.ts'
+import { getDaoBotsForInit } from './db/dao_bot.ts'
 import { getDb } from './db/db.ts'
 
 const mutex = new Mutex()

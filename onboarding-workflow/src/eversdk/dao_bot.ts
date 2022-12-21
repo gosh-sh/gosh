@@ -1,6 +1,6 @@
-import { SYSTEM_CONTRACT_ABI } from '../eversdk/abi.ts'
-import { SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
 import { tonosCli } from '../shortcuts.ts'
+import { SYSTEM_CONTRACT_ABI } from './abi.ts'
+import { SYSTEM_CONTRACT_ADDR } from './client.ts'
 
 export async function deployProfile(name: string, pubkey: string): Promise<void> {
     if (!pubkey.startsWith('0x')) {

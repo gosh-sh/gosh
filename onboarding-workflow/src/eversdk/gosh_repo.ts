@@ -1,4 +1,4 @@
-import { GOSH_DAO_ABI, GOSH_WALLET_ABI } from '../eversdk/abi.ts'
+import { GOSH_DAO_ABI, GOSH_WALLET_ABI } from './abi.ts'
 import { tonosCli } from '../shortcuts.ts'
 
 export async function getAddrRepository(
