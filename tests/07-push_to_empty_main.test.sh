@@ -5,7 +5,7 @@
 # 3 push changes
 # 4 clone repo
 
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
 
@@ -20,11 +20,10 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 # clone repo
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 #check
 cd $REPO_NAME
@@ -43,15 +42,14 @@ git add .
 git commit -m "foo-$CHANGE"
 
 echo "***** awaiting push into main *****"
-git push --set-upstream origin main
+git push -u origin main
 
-echo "***** awaiting set commit in main *****"
-wait_set_commit $REPO_ADDR main
-sleep 30
+# echo "***** awaiting set commit in main *****"
+# wait_set_commit $REPO_ADDR main
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 echo "***** comparing repositories *****"

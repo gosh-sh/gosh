@@ -9,7 +9,7 @@
 # 7. clone main repo into repo11-clone
 # 8. comparing repositories
 
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
 
@@ -26,10 +26,9 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 #check
 cd $REPO_NAME
@@ -55,16 +54,15 @@ SUBMODULE_DEST=from-github
 git submodule add https://github.com/gosh-sh/test-repo.git SUBMODULE_DEST
 git commit -m "Added github submodule"
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push --set-upstream origin $BRANCH_NAME
+git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo (2) *****"
 cd ..
 git clone --recurse-submodules \
-    gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+    gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** comparing repositories (2) *****"
 

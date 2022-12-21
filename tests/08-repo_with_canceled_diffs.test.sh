@@ -28,11 +28,10 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 # 2
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
 
 cd $REPO_NAME"-clone1"
 
@@ -57,14 +56,13 @@ git commit -m "added-$FILE1-now-$CHANGE"
 echo "***** awaiting push $FILE1 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 cd ..
 
 # 5
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
 
 cd $REPO_NAME"-clone1"
 
@@ -78,9 +76,8 @@ git commit -m "rewrite-$FILE1-now-$CHANGE"
 echo "***** awaiting push $FILE1 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 # 8
 cd ../$REPO_NAME"-clone2"
@@ -99,13 +96,11 @@ git commit -m "added-$FILE2-now-$CHANGE"
 echo "***** push $FILE2 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME 2>&1 | grep 'fetch first'
 
-sleep 30
-
 cd ..
 
 # 10
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone3"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone3"
 
 # 11
 echo "***** comparing repositories *****"
