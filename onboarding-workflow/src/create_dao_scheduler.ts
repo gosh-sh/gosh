@@ -1,5 +1,5 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { deployDaoBotProfile } from './actions/dao_bot.ts'
+import { initDaoBot } from './actions/dao_bot.ts'
 import { getDaoBotsForInit } from './db/dao_bot.ts'
 import { getDb } from './db/db.ts'
 
@@ -28,7 +28,7 @@ async function initNewDaoBots() {
             console.log('Process dao bot for', dao_bot.dao_name)
 
             // create profile addr if not present
-            await deployDaoBotProfile(dao_bot)
+            await initDaoBot(dao_bot)
         }
     } catch (err) {
         console.error('Fail update dao bots', err)

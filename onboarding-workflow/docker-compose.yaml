@@ -59,16 +59,6 @@ services:
     command: >
       deno run -A ./src/consumers/check_wallet_access.ts
 
-  consumer_create_dao:
-    image: gosh-onboarding
-    restart: always
-    environment:
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
-    command: >
-      deno run -A ./src/consumers/create_dao.ts
-
   consumer_create_gosh_repo:
     image: gosh-onboarding
     restart: always

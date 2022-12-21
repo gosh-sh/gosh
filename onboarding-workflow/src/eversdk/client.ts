@@ -3,6 +3,7 @@ import { TonClient } from 'npm:@eversdk/core'
 import { libWeb, libWebSetup } from '../../node_modules/@eversdk/lib-web/index.js'
 
 // https://app.gosh.sh/envs.json
+// TODO: read envs
 export const SYSTEM_CONTRACT_ADDR =
     '0:18fae8e25d9ffea2b0875646398efe00361805b371ce61216a053af161a3a30e'
 
