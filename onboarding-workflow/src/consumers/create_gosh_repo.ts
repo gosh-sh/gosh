@@ -12,6 +12,5 @@ const createGoshRepoConsumer = new Queue(CREATE_GOSH_REPO_QUEUE, {
 createGoshRepoConsumer.process(async (job) => {
     console.log('Got', job.data)
     const { github_id } = job.data
-
     await initializeGoshRepo(github_id)
 })
