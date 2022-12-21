@@ -14,7 +14,11 @@ export async function getAddrDao(dao_name: string): Promise<string> {
     return value0
 }
 
-export async function deployDao(dao_name: string, profile_addr: string, seed: string) {
+export async function deployDao(
+    dao_name: string,
+    profile_addr: string,
+    seed: string,
+): Promise<any> {
     return await tonosCli(
         'call',
         '--abi',
@@ -28,5 +32,23 @@ export async function deployDao(dao_name: string, profile_addr: string, seed: st
             name: dao_name,
             pubmem: [profile_addr],
         }),
+    )
+}
+
+export async function turnOnDao(
+    wallet_addr: string,
+    profile_addr: string,
+    wallet_pubkey: string,
+    seed: string,
+): Promise<any> {
+    return await tonosCli(
+        'call',
+        '--abi',
+        PROFILE_ABI,
+        profile_addr,
+        '--sign',
+        seed,
+        'turnOn',
+        JSON.stringify({ pubkey: wallet_pubkey, wallet: wallet_addr }),
     )
 }
