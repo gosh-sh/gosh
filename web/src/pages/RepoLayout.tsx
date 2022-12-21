@@ -40,14 +40,14 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
-    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { daoName, repoName, branchName } = useParams()
     const { dao, repository, isFetching } = useRepo(daoName!, repoName!)
     const { updateBranches } = useBranches(repository.adapter)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
         {
-            to: `/o/${daoName}/r/${repoName}/tree/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}${branchName ? `/tree/${branchName}` : ''}`,
             title: 'Code',
             icon: faCode,
             public: true,
