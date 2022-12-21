@@ -24,18 +24,17 @@ optional GOSH_REPOSITORY_ADDRESS
 
 cd "$GOSH_ABI_DIR"
 GOSH_ABI_DIR="$(pwd)"
-cd - 1> /dev/null
+cd - 1>/dev/null
 SYSTEM_CONTRACT_ABI="${GOSH_ABI_DIR}/systemcontract.abi.json"
 ensure_abi_exists SYSTEM_CONTRACT_ABI
 #
 # Prepare constants for this run
 #
-THIS_RUN_WORKDIR="${WORKDIR}/${GIT_REPO_URL//[^a-zA-Z0-9]}-${BASHPID}-$(date +%s)"
-mkdir -p $THIS_RUN_WORKDIR
-cd $THIS_RUN_WORKDIR
+THIS_RUN_WORKDIR="${WORKDIR}/${GIT_REPO_URL//[^a-zA-Z0-9]/}-${BASHPID}-$(date +%s)"
+mkdir -p "$THIS_RUN_WORKDIR"
+cd "$THIS_RUN_WORKDIR"
 LOG_FILE="$(pwd)/log.txt"
 GOSH_CONFIG_PATH="$(pwd)/config.json"
-
 
 log "This task is to clone to gosh from ${GIT_REPO_URL}."
 # ---------
@@ -47,9 +46,9 @@ log "...granted"
 # ---------
 log "Cloning github repo..."
 CLONE_START=$SECONDS
-git clone $GIT_REPO_URL "repo"
+git clone "$GIT_REPO_URL" "repo"
 CLONE_END=$SECONDS
-log "...clone complete. Cloned from github in $((CLONE_END-CLONE_START)) seconds."
+log "...clone complete. Cloned from github in $((CLONE_END - CLONE_START)) seconds."
 
 # ---------
 # log "Creating gosh repository..."
@@ -68,7 +67,7 @@ fi
 
 # ---------
 log "creating config.json"
-cat > ${GOSH_CONFIG_PATH} <<EOF
+cat >"$GOSH_CONFIG_PATH" <<EOF
 {
     "primary-network": "mainnet",
     "networks": {
@@ -90,7 +89,7 @@ log "Pushing github repo to gosh...\n________________"
 PUSH_START=$SECONDS
 cd ./repo
 git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
-git push --all -v gosh >> $LOG_FILE
+git push --all -v gosh >>"$LOG_FILE"
 PUSH_END=$SECONDS
-PUSH_DURATION=$((PUSH_END-PUSH_START))
+PUSH_DURATION=$((PUSH_END - PUSH_START))
 log "...complete. Push took $(convertsecs $PUSH_DURATION)."
