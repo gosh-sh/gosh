@@ -137,6 +137,11 @@ interface IGoshRepositoryAdapter {
         commit: string,
         label: string,
     ): Promise<string>
+    getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]>
+    subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ): Promise<void>
+    unsubscribe(): Promise<void>
 
     createBranch(
         name: string,
@@ -204,6 +209,7 @@ interface IContract {
             node?: string[]
             cursor?: string
             limit?: number
+            allow_latest_inconsistent_data?: boolean
         },
         decode?: boolean,
         all?: boolean,

@@ -26,14 +26,14 @@ const RepoPage = () => {
     const treepath = useParams()['*'] || ''
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
     const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 
     const getRemoteUrl = (short: boolean): string => {
-        const goshAddress = AppConfig.versions[repo.getVersion()]
+        const goshAddress = AppConfig.versions[repository.details.version]
         const goshstr = short ? shortString(goshAddress) : goshAddress
         return `gosh://${goshstr}/${daoName}/${repoName}`
     }

@@ -26,17 +26,20 @@ type TCreateBranchFormValues = {
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
     const [branchName, setBranchName] = useState<string>('main')
-    const { branches, branch, updateBranches } = useBranches(repo, branchName)
+    const { branches, branch, updateBranches } = useBranches(
+        repository.adapter,
+        branchName,
+    )
     const {
         create: createBranch,
         destroy: deleteBranch,
         lock: lockBranch,
         unlock: unlockBranch,
         progress: branchProgress,
-    } = useBranchManagement(dao.details, repo)
+    } = useBranchManagement(dao.details, repository.adapter)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
 

@@ -14,6 +14,7 @@ import {
     TBranchOperateProgress,
     TCommit,
     TPushProgress,
+    TRepository,
     TRepositoryListItem,
     TTree,
     TTreeItem,
@@ -146,6 +147,7 @@ function useRepo(dao: string, repo: string) {
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [daoAdapter, setDaoAdapter] = useState<IGoshDaoAdapter>()
     const [repoAdapter, setRepoAdapter] = useState<IGoshRepositoryAdapter>()
+    const [repoDetails, setRepoDetails] = useState<TRepository>()
     const [isFetching, setIsFetching] = useState<boolean>(true)
 
     useEffect(() => {
@@ -157,10 +159,13 @@ function useRepo(dao: string, repo: string) {
 
                 const repoInstance = await daoInstance.getRepository({ name: repo })
                 if (await repoInstance.isDeployed()) {
-                    const details = await daoInstance.getDetails()
+                    const daoDetails = await daoInstance.getDetails()
+                    const repoDetails = await repoInstance.getDetails()
+
                     setDaoAdapter(daoInstance)
-                    setDaoDetails(details)
+                    setDaoDetails(daoDetails)
                     setRepoAdapter(repoInstance)
+                    setRepoDetails(repoDetails)
                     setIsFetching(false)
                     break
                 }
@@ -170,13 +175,40 @@ function useRepo(dao: string, repo: string) {
         _getRepo()
     }, [dao, repo])
 
+    useEffect(() => {
+        const _getIncomingCommits = async () => {
+            if (!repoAdapter) return
+
+            const incoming = await repoAdapter.getIncomingCommits()
+            setRepoDetails((state) => {
+                if (!state) return state
+                return { ...state, commitsIn: incoming }
+            })
+        }
+
+        _getIncomingCommits()
+        repoAdapter?.subscribeIncomingCommits((incoming) => {
+            setRepoDetails((state) => {
+                if (!state) return state
+                return { ...state, commitsIn: incoming }
+            })
+        })
+
+        return () => {
+            repoAdapter?.unsubscribe()
+        }
+    }, [repoAdapter])
+
     return {
         isFetching,
         dao: {
             adapter: daoAdapter,
             details: daoDetails,
         },
-        adapter: repoAdapter,
+        repository: {
+            adapter: repoAdapter,
+            details: repoDetails,
+        },
     }
 }
 

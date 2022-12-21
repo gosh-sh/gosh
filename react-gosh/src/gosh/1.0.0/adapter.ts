@@ -513,7 +513,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         auth?: { username: string; wallet0: IGoshWallet },
         config?: { maxWalletsWrite: number },
     ) {
-        console.debug('Repo', auth, config)
         this.gosh = gosh
         this.client = gosh.client
         this.repo = new GoshRepository(this.client, address)
@@ -555,7 +554,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             version: this.repo.version,
             branches: (await this._getBranches()).length,
             head: await this.getHead(),
-            tags: await this.getTags(),
+            commitsIn: [],
         }
     }
 
@@ -941,6 +940,90 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const instance = new GoshContentSignature(this.client, address)
         const { value0 } = await instance.runLocal('getContent', {})
         return value0
+    }
+
+    async getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]> {
+        // Read limited amount of IntIn repo messages
+        const { messages } = await this.repo.getMessages(
+            {
+                msgType: ['IntIn'],
+                node: ['block_id', 'src', 'dst_transaction {id out_msgs}'],
+                limit: 30,
+                allow_latest_inconsistent_data: true,
+            },
+            true,
+        )
+
+        // Remove all messages from tail until `SendDiff` first occurence
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const { decoded } = messages[i]
+            if (decoded && decoded.name === 'SendDiff') {
+                break
+            }
+            messages.splice(i, 1)
+        }
+
+        // Get successful `SendDiff` messages
+        const sendDiffs = await Promise.all(
+            messages
+                .filter(({ decoded }) => decoded.name === 'SendDiff')
+                .map(async ({ decoded, message }) => {
+                    const { result } = await this.client.net.query_collection({
+                        collection: 'messages',
+                        filter: {
+                            id: { in: message.dst_transaction.out_msgs },
+                        },
+                        result: 'dst_transaction {id aborted status}',
+                    })
+
+                    const txSuccess = result.every(
+                        ({ dst_transaction: tx }) => tx.status === 3 && !tx.aborted,
+                    )
+                    return { decoded, message: { ...message, aborted: !txSuccess } }
+                }),
+        )
+        const incoming = sendDiffs
+            .filter(({ message }) => !message.aborted)
+            .map(({ decoded }) => decoded.value)
+
+        // Get `setComit` or `commitCanceled` messages and remove corresponding
+        // `SendDiff` messages
+        const setCommits = messages.filter(({ decoded }) => {
+            return ['setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+        })
+        for (const { message } of setCommits) {
+            const index = incoming.findIndex(({ commit }) => commit === message.src)
+            incoming.splice(index, 1)
+        }
+
+        return await Promise.all(
+            incoming.map(async (item) => {
+                const commit = await this.getCommit({ address: item.commit })
+                return { ...item, commit }
+            }),
+        )
+    }
+
+    async subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ) {
+        await this.repo.account.subscribeMessages('body msg_type', async (message) => {
+            const decoded = await this.repo.decodeMessageBody(
+                message.body,
+                message.msg_type,
+            )
+            if (
+                decoded &&
+                ['SendDiff', 'setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+            ) {
+                const incoming = await this.getIncomingCommits()
+                callback(incoming)
+            }
+        })
+    }
+
+    async unsubscribe() {
+        await this.repo.account.free()
     }
 
     async createBranch(
