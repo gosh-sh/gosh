@@ -35,3 +35,19 @@ export async function getGithub(id: string): Promise<Github> {
     }
     throw new Error(`Github ${id} not found`)
 }
+
+export async function getGithubWithDaoBot(id: string): Promise<Github> {
+    const { data, error } = await getDb()
+        .from('github')
+        .select('*, dao_bot(*)')
+        .eq('id', id)
+        .single()
+    if (!error && data) {
+        return data
+    }
+    if (error) {
+        console.error(error)
+        throw new Error(error.message)
+    }
+    throw new Error(`Github ${id} not found`)
+}

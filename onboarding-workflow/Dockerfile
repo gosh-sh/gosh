@@ -13,9 +13,11 @@ RUN \
 
 FROM denoland/deno:debian-1.29.1
 RUN apt update && apt install -y jq ca-certificates
+# TODO: will go away after ever sdk supports deno land
 WORKDIR /app/node_modules/@eversdk/lib-web
 COPY --link node_modules/@eversdk/lib-web/index.js ./
 COPY --link node_modules/@eversdk/lib-web/eversdk.wasm ./
+
 COPY --link --from=tonos-cli /usr/local/cargo/bin/tonos-cli /usr/local/bin/tonos-cli
 WORKDIR /app
 COPY --link src src

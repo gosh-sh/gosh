@@ -1,4 +1,4 @@
-import { getGithub, getGithubsForDaoBot } from '../github/github.ts'
+import { initializeGoshRepo } from '../gosh_repo/tasks.ts'
 import { CREATE_GOSH_REPO_QUEUE } from '../queues/constants.ts'
 import Queue from '../queues/mod.ts'
 import { getRedisClient } from '../redis/mod.ts'
@@ -11,13 +11,7 @@ const createGoshRepoConsumer = new Queue(CREATE_GOSH_REPO_QUEUE, {
 
 createGoshRepoConsumer.process(async (job) => {
     console.log('Got', job.data)
-    const { repo_id } = job.data
-    const github_repo = getGithub(repo_id)
+    const { github_id } = job.data
 
-    // 1. create repo on blockchain
-    await createRepo(github_repo)
-
-    // 2. run shell to upload
-
-    // 3. updated_at field in supabase
+    await initializeGoshRepo(github_id)
 })

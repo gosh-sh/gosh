@@ -23,7 +23,7 @@ export async function createDaoBot(dao_name: string): Promise<DaoBot> {
     return data
 }
 
-export async function getDaoBot(dao_name: string): Promise<DaoBot | null> {
+export async function getDaoBotByDaoName(dao_name: string): Promise<DaoBot | null> {
     const { data, error } = await getDb()
         .from('dao_bot')
         .select()
@@ -36,8 +36,17 @@ export async function getDaoBot(dao_name: string): Promise<DaoBot | null> {
     return data
 }
 
+export async function getDaoBot(id: string): Promise<DaoBot | null> {
+    const { data, error } = await getDb().from('dao_bot').select().eq('id', id).single()
+    if (error) {
+        console.error('Db error:', error)
+        return null
+    }
+    return data
+}
+
 export async function getOrCreateDaoBot(dao_name: string): Promise<DaoBot> {
-    return (await getDaoBot(dao_name)) ?? (await createDaoBot(dao_name))
+    return (await getDaoBotByDaoName(dao_name)) ?? (await createDaoBot(dao_name))
 }
 
 export async function getDaoBotsForInit() {

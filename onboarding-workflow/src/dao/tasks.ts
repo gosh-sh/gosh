@@ -1,5 +1,5 @@
 import { MAX_RETRIES } from '../config.ts'
-import { getDaoBot } from '../dao_bot/dao_bot.ts'
+import { getDaoBotByDaoName } from '../dao_bot/dao_bot.ts'
 import { isAccountActive } from '../eversdk/account.ts'
 import { getGithubsForDaoBot } from '../github/github.ts'
 import { CHECK_ACCOUNT_QUEUE, CREATE_GOSH_REPO_QUEUE } from '../queues/constants.ts'
@@ -22,7 +22,7 @@ const createGoshRepoQueue = new Queue(CREATE_GOSH_REPO_QUEUE, {
 })
 
 export async function createDao(dao_name: string) {
-    const dao_bot = await getDaoBot(dao_name)
+    const dao_bot = await getDaoBotByDaoName(dao_name)
     if (!dao_bot) {
         throw new Error(`Dao bot not found for ${dao_name}`)
     }
@@ -32,12 +32,13 @@ export async function createDao(dao_name: string) {
     const onSuccess = async () => {
         // get all non-uploaded repos for dao
         // queue create all repos
-        const repos = await getGithubsForDaoBot(dao_bot.id)
-        for (const repo of repos) {
+        const githubs = await getGithubsForDaoBot(dao_bot.id)
+        for (const github of githubs) {
             createGoshRepoQueue
                 .createJob({
-                    repo_id: repo,
+                    github_id: github.id,
                 })
+                .setId(github.id)
                 .save()
         }
     }
