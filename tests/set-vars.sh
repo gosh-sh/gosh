@@ -76,7 +76,7 @@ tee $USER_CONFIG <<EOF
         "pubkey": "$WALLET_PUBKEY",
         "secret": "$WALLET_SECRET"
       },
-      "endpoints": ["https://$NETWORK/"]
+      "endpoints": ["$NETWORK"]
     }
   }
 }

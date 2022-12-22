@@ -36,6 +36,7 @@ deploy-docker:
 		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../../tests/util.sh:/tmp/util.sh \
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
