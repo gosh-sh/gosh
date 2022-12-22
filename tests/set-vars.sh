@@ -4,7 +4,15 @@ set -e
 set -o pipefail
 . ./util.sh
 
-export NETWORK=n01.fld.dapp.tonlabs.io
+# Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <network_name>
+DEFAULT_NETWORK=n01.fld.dapp.tonlabs.io
+
+if [ -z "$1" ]
+  then
+    export NETWORK=$DEFAULT_NETWORK
+else
+    export NETWORK=$1
+fi
 echo "NETWORK=$NETWORK" > env.env
 
 tonos-cli config --url $NETWORK
