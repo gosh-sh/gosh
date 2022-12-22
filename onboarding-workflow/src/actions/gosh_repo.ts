@@ -1,12 +1,14 @@
 import { DaoBot } from '../db/dao_bot.ts'
 import { Github, getGithubWithDaoBot } from '../db/github.ts'
 import { isAccountActive } from '../eversdk/account.ts'
+import { GOSH_ENDPOINTS, SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
 import { getAddrDao } from '../eversdk/dao.ts'
 import {
     deployRepository,
     getAddrRepository,
     getAddrWallet,
 } from '../eversdk/gosh_repo.ts'
+import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { getRepoNameFromUrl } from '../utils/gosh_repo.ts'
 import { waitForAccountActive } from './account.ts'
 
@@ -37,21 +39,64 @@ export async function initializeGoshRepo(github_id: string) {
         // ignore errors
         try {
             await deployRepository(repo_name, wallet_addr, dao_bot.seed)
-        } catch (err) {
+        } catch (_err) {
             // ignore errors
         }
         await waitForAccountActive(repo_addr)
     }
-    console.log(`Repo ${repo_addr} is ready`)
-    await pushRepo(repo_name, github, dao_bot)
 
-    // TODO: update database
+    console.log(`Repo ${repo_addr} is ready`)
+    const result = await pushRepo(repo_name, dao_addr, github, dao_bot)
+    if (result) {
+        // TODO: update database
+    }
 }
 
-async function pushRepo(repo_name: string, github: Github, dao_bot: DaoBot) {
+async function pushRepo(
+    repo_name: string,
+    dao_addr: string,
+    github: Github,
+    dao_bot: DaoBot,
+): Promise<boolean> {
     console.log(`About to push`, github)
+    const bot_name = getBotNameByDaoName(dao_bot.dao_name)
     // TODO: bash-push
-    const root_dir = `/tmp/${dao_bot.dao_name}/${repo_name}`
-    await Deno.mkdir(root_dir, { recursive: true })
-    // Deno.run({ cmd: [], cwd: root_dir })
+    const work_dir = `/tmp/${SYSTEM_CONTRACT_ADDR}/${dao_bot.dao_name}/${repo_name}`
+    await Deno.mkdir(work_dir, { recursive: true })
+
+    // GOSH_CONFIG_PATH
+    // TODO:config
+    const config = JSON.stringify({
+        'primary-network': 'mainnet',
+        networks: {
+            mainnet: {
+                'user-wallet': {
+                    profile: bot_name,
+                    pubkey: dao_bot.pubkey,
+                    secret: dao_bot.secret,
+                },
+                endpoints: GOSH_ENDPOINTS,
+            },
+        },
+    })
+
+    const gosh_config_path = `${work_dir}/gosh-config.json`
+    await Deno.writeTextFile(gosh_config_path, config)
+
+    const p = Deno.run({
+        cmd: ['bash', '/app/bin/upload_repo.sh'],
+        cwd: '/app/bin',
+        env: {
+            WORKDIR: work_dir,
+            GIT_REPO_URL: `https://github.com${github.github_url}`,
+            GOSH_SYSTEM_CONTRACT_ADDR: SYSTEM_CONTRACT_ADDR,
+            GOSH_DAO_NAME: dao_bot.dao_name,
+            GOSH_DAO_ADDRESS: dao_addr,
+            GOSH_REPO_NAME: repo_name,
+            GOSH_BOT_NAME: getBotNameByDaoName(dao_bot.dao_name),
+            GOSH_CONFIG_PATH: gosh_config_path,
+        },
+    })
+    const status = await p.status()
+    return status.success
 }

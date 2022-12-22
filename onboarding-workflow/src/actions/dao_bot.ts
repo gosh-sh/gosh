@@ -1,5 +1,5 @@
 import { DaoBot, updateDaoBot } from '../db/dao_bot.ts'
-import { getGithubsForDaoBot, Github } from '../db/github.ts'
+import { getGithubsForClone, Github } from '../db/github.ts'
 import { hasAccess, isAccountActive } from '../eversdk/account.ts'
 import { deployDao, getAddrDao, turnOnDao } from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
@@ -17,7 +17,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
     if (!(await isAccountActive(bot_profile_addr))) {
         try {
             await deployProfile(bot_name, dao_bot.pubkey)
-        } catch (err) {
+        } catch (_err) {
             // ignore all errors
         }
         await waitForAccountActive(bot_profile_addr)
@@ -41,7 +41,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
             // 1. DAO already created by user itself (or before)
             // 2. we can't have an access to it and SHOULDN'T
             await deployDao(dao_bot.dao_name, dao_bot.profile_gosh_address, dao_bot.seed)
-        } catch (err) {
+        } catch (_err) {
             // ignore error for now
         }
         await waitForAccountActive(dao_addr)
@@ -57,7 +57,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
                 dao_bot.pubkey,
                 dao_bot.seed,
             )
-        } catch (err) {
+        } catch (_err) {
             // ignore error for now
         }
         console.log(`About to wait for access ${wallet_addr}`)
@@ -67,8 +67,9 @@ export async function initDaoBot(dao_bot: DaoBot) {
     console.log(`Wallet access granted for ${wallet_addr}`)
 
     // queue create all repos
-    const githubs: Github[] = await getGithubsForDaoBot(dao_bot.id)
+    const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
+        console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
         createGoshRepoProducer()
             .createJob({
                 github_id: github.id,
