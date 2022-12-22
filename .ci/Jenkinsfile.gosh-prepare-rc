@@ -111,7 +111,7 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --name jenkins-docker-agent --network docker-network-for-se'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
                 }
             }
             steps {
@@ -188,7 +188,8 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
+
                 }
             }
             steps {
