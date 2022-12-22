@@ -3,7 +3,6 @@ import { getRedisClient } from '../redis/mod.ts'
 import {
     CHECK_ACCOUNT_QUEUE,
     CHECK_WALLET_ACCESS_QUEUE,
-    CREATE_DAO_QUEUE,
     CREATE_GOSH_REPO_QUEUE,
 } from './constants.ts'
 
@@ -36,33 +35,32 @@ function defaultConsumer<T = any>(queue_name: string, settings?: Queue.QueueSett
     })
 }
 
-// TODO: add job.data types
+export type CheckAccountRequest = { addr: string }
+
 export function checkAccountProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer<{ addr: string }>(CHECK_ACCOUNT_QUEUE, settings)
+    return defaultProducer<CheckAccountRequest>(CHECK_ACCOUNT_QUEUE, settings)
 }
 
 export function checkAccountConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer<{ addr: string }>(CHECK_ACCOUNT_QUEUE, settings)
+    return defaultConsumer<CheckAccountRequest>(CHECK_ACCOUNT_QUEUE, settings)
 }
 
+export type CheckWalletAccessRequest = { wallet_addr: string; wallet_pubkey: string }
+
 export function checkWalletAccessProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer<{ wallet_addr: string; wallet_pubkey: string }>(
-        CHECK_WALLET_ACCESS_QUEUE,
-        settings,
-    )
+    return defaultProducer<CheckWalletAccessRequest>(CHECK_WALLET_ACCESS_QUEUE, settings)
 }
 
 export function checkWalletAccessConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer<{ wallet_addr: string; wallet_pubkey: string }>(
-        CHECK_WALLET_ACCESS_QUEUE,
-        settings,
-    )
+    return defaultConsumer<CheckWalletAccessRequest>(CHECK_WALLET_ACCESS_QUEUE, settings)
 }
 
+export type CreateGoshRepoRequest = { github_id: string }
+
 export function createGoshRepoProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer<{ github_id: string }>(CREATE_GOSH_REPO_QUEUE, settings)
+    return defaultProducer<CreateGoshRepoRequest>(CREATE_GOSH_REPO_QUEUE, settings)
 }
 
 export function createGoshRepoConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer<{ github_id: string }>(CREATE_GOSH_REPO_QUEUE, settings)
+    return defaultConsumer<CreateGoshRepoRequest>(CREATE_GOSH_REPO_QUEUE, settings)
 }
