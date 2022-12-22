@@ -1,5 +1,6 @@
 tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
 KEYS_PATH = ${CURDIR}
+EXTRA_DOCKER_ARGS = '--network host'
 clean:
 	rm -f *.tvc *.abi.json *.code
 	rm -rf .solc_imports
@@ -36,6 +37,8 @@ deploy-docker:
 		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../../tests/util.sh:/tmp/util.sh \
+		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
@@ -46,6 +49,8 @@ upgrade-docker:
 		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../../tests/util.sh:/tmp/util.sh \
+		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \
 		-e VERSIONCONTROLLER_SEED="${VERSIONCONTROLLER_SEED}" \
 		everdev:latest \

@@ -1,4 +1,13 @@
-. ./env.env
+if [ -e env.env ]; then
+    . ./env.env
+fi
+
+function delay {
+    sleep_for=$1
+
+    echo "falling asleep for ${sleep_for} sec"
+    sleep $sleep_for
+}
 
 function wait_account_active {
     stop_at=$((SECONDS+120))
