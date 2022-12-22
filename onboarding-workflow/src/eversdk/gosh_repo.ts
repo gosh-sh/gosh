@@ -40,12 +40,12 @@ export async function deployRepository(
     seed: string,
 ): Promise<string> {
     const { value0: profile_addr } = await tonosCli(
-        'run',
+        'call',
         '--abi',
         GOSH_WALLET_ABI,
+        wallet_addr,
         '--sign',
         seed,
-        wallet_addr,
         'deployRepository',
         JSON.stringify({
             nameRepo: repo_name,
