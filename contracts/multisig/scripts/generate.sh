@@ -14,8 +14,8 @@ tonos-cli genphrase | grep -o '".*"' | tr -d '"' > $GIVER_PATH/$GIVER_SEED_FILE_
 seed=`cat $GIVER_PATH/$GIVER_SEED_FILE_OUT`
 everdev signer add $SIGNER "$seed"
 
-echo $NETWORK_ENDPOINT > $GIVER_PATH/$GIVER_NETWORK_FILE_OUT
-everdev network add $NETWORK_NAME "$NETWORK_ENDPOINT"
+echo $NETWORK > $GIVER_PATH/$GIVER_NETWORK_FILE_OUT
+everdev network add $NETWORK_NAME "$NETWORK"
 
 # Calculate GoshGiver address
 GIVER_ADDR=$(everdev contract info $GIVER_ABI -s $SIGNER -n $NETWORK_NAME | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')

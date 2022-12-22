@@ -30,7 +30,7 @@ generate-docker:
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		-e GIVER_SEED_FILE_OUT="Giver.seed" \
 		-e GIVER_NETWORK_FILE_OUT="Giver.network" \
-		-e NETWORK_ENDPOINT=${NETWORK_ENDPOINT} \
+		-e NETWORK=${NETWORK} \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/multisig/scripts && ./generate.sh'
 
