@@ -25,6 +25,7 @@ export async function getAccount(addr: string): Promise<Account | null> {
 
 export async function isAccountActive(addr: string): Promise<boolean> {
     const account = await getAccount(addr)
+    console.debug('isAccountActive output', account)
     return account?.acc_type === 'Active'
 }
 
@@ -45,7 +46,14 @@ export async function getAccess(wallet_addr: string): Promise<string | null> {
     return null
 }
 
-export async function hasAccess(wallet_addr: string): Promise<boolean> {
+export async function hasAccess(
+    wallet_addr: string,
+    wallet_pubkey: string,
+): Promise<boolean> {
+    if (!wallet_pubkey.startsWith('0x')) {
+        wallet_pubkey = `0x${wallet_pubkey}`
+    }
     const granted_pubkey = await getAccess(wallet_addr)
-    return granted_pubkey === wallet_addr
+    console.log('hasAccess output', granted_pubkey)
+    return granted_pubkey === wallet_pubkey
 }

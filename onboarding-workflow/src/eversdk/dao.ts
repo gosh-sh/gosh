@@ -31,6 +31,7 @@ export async function deployDao(
             systemcontract: SYSTEM_CONTRACT_ADDR,
             name: dao_name,
             pubmem: [profile_addr],
+            previous: null,
         }),
     )
 }
@@ -41,6 +42,9 @@ export async function turnOnDao(
     wallet_pubkey: string,
     seed: string,
 ): Promise<any> {
+    if (!wallet_pubkey.startsWith('0x')) {
+        wallet_pubkey = `0x${wallet_pubkey}`
+    }
     return await tonosCli(
         'call',
         '--abi',

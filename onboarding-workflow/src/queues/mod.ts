@@ -18,16 +18,18 @@ const defaultConsumerSettings = {
     getEvents: true,
 }
 
-function defaultProducer(queue_name: string, settings?: Queue.QueueSettings) {
-    return new Queue(queue_name, {
+// deno-lint-ignore no-explicit-any
+function defaultProducer<T = any>(queue_name: string, settings?: Queue.QueueSettings) {
+    return new Queue<T>(queue_name, {
         redis: getRedisClient(),
         ...defaultProducerSettings,
         ...settings,
     })
 }
 
-function defaultConsumer(queue_name: string, settings?: Queue.QueueSettings) {
-    return new Queue(queue_name, {
+// deno-lint-ignore no-explicit-any
+function defaultConsumer<T = any>(queue_name: string, settings?: Queue.QueueSettings) {
+    return new Queue<T>(queue_name, {
         redis: getRedisClient(),
         ...defaultConsumerSettings,
         ...settings,
@@ -36,33 +38,31 @@ function defaultConsumer(queue_name: string, settings?: Queue.QueueSettings) {
 
 // TODO: add job.data types
 export function checkAccountProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer(CHECK_ACCOUNT_QUEUE, settings)
+    return defaultProducer<{ addr: string }>(CHECK_ACCOUNT_QUEUE, settings)
 }
 
 export function checkAccountConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer(CHECK_ACCOUNT_QUEUE, settings)
+    return defaultConsumer<{ addr: string }>(CHECK_ACCOUNT_QUEUE, settings)
 }
 
 export function checkWalletAccessProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer(CHECK_WALLET_ACCESS_QUEUE, settings)
+    return defaultProducer<{ wallet_addr: string; wallet_pubkey: string }>(
+        CHECK_WALLET_ACCESS_QUEUE,
+        settings,
+    )
 }
 
 export function checkWalletAccessConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer(CHECK_WALLET_ACCESS_QUEUE, settings)
+    return defaultConsumer<{ wallet_addr: string; wallet_pubkey: string }>(
+        CHECK_WALLET_ACCESS_QUEUE,
+        settings,
+    )
 }
 
 export function createGoshRepoProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer(CREATE_GOSH_REPO_QUEUE, settings)
+    return defaultProducer<{ github_id: string }>(CREATE_GOSH_REPO_QUEUE, settings)
 }
 
 export function createGoshRepoConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer(CREATE_GOSH_REPO_QUEUE, settings)
-}
-
-export function createDaoProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer(CREATE_DAO_QUEUE, settings)
-}
-
-export function createDaoConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer(CREATE_DAO_QUEUE, settings)
+    return defaultConsumer<{ github_id: string }>(CREATE_GOSH_REPO_QUEUE, settings)
 }

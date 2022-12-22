@@ -5,10 +5,18 @@ services:
     container_name: redis
     image: redis
     restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 5
 
   send_email:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -22,6 +30,9 @@ services:
   create_dao_bot:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -32,6 +43,9 @@ services:
   create_dao:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -42,6 +56,9 @@ services:
   consumer_check_account:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -52,6 +69,9 @@ services:
   consumer_check_wallet_access:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -62,6 +82,9 @@ services:
   consumer_create_gosh_repo:
     image: gosh-onboarding
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}

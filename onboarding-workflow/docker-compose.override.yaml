@@ -3,7 +3,6 @@ version: '3.8'
 services:
   dev:
     image: gosh-onboarding
-    restart: always
     volumes:
       - '.:/app'
     environment:
