@@ -42,8 +42,7 @@ while (true) {
         github (
             updated_at,
             dao_bot (dao_name, profile_gosh_address, seed)
-        ),
-        auth_users (*)
+        )
     `)
     if (error) {
         throw new Error(error.message)
@@ -68,6 +67,10 @@ while (true) {
     // Iterate ready for onboarding data
     console.log('Ready', ready)
     for (const user of ready) {
+        if (!user.auth_user) {
+            throw new Error(`Auth user for user ${user.id} does not exist`)
+        }
+
         // Collect unique DAOs for user
         const github = Array.isArray(user.github) ? user.github : [user.github]
         const daos: any[] = []
@@ -108,13 +111,15 @@ while (true) {
         )
 
         // Send onboarding message
-        if (!user.auth_users) {
-            throw new Error(`User ${user.id} has no email address`)
+        const { data: authUser, error: authUserError } =
+            await getDb().auth.admin.getUserById(user.auth_user)
+        if (authUserError) {
+            throw new Error(authUserError.message)
         }
-        const authUser = Array.isArray(user.auth_users)
-            ? user.auth_users[0]
-            : user.auth_users
-        const mailTo = authUser.email!.trim()
+        if (!authUser.user.email) {
+            throw new Error(`Email for user ${user.auth_user} not found`)
+        }
+        const mailTo = authUser.user.email.trim()
         const mailHtmlBody = new TextDecoder().decode(
             Deno.readFileSync('emails/onboarding.html'),
         )
