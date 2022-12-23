@@ -11,23 +11,24 @@ services:
       timeout: 3s
       retries: 5
 
-  send_email:
-    image: gosh-onboarding
-    restart: always
-    depends_on:
-      redis:
-        condition: service_healthy
-    environment:
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
-      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
-      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-      EMAIL_FROM: ${EMAIL_FROM}
-    command: >
-      deno run -A ./src/send_email_scheduler.ts
+  # TODO: uncomment when everything is ready
+  # send_email:
+  #   image: gosh-onboarding
+  #   restart: always
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   environment:
+  #     SUPABASE_URL: ${SUPABASE_URL}
+  #     SUPABASE_KEY: ${SUPABASE_KEY}
+  #     REDIS_URL: redis://redis:6379
+  #     SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+  #     GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+  #     EMAIL_USERNAME: ${EMAIL_USERNAME}
+  #     EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+  #     EMAIL_FROM: ${EMAIL_FROM}
+  #   command: >
+  #     deno run -A ./src/send_email_scheduler.ts
 
   create_dao_bot:
     image: gosh-onboarding
@@ -58,6 +59,21 @@ services:
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/create_dao_scheduler.ts
+
+  ready_users:
+    image: gosh-onboarding
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/ready_users_scheduler.ts
 
   consumer_check_account:
     image: gosh-onboarding
