@@ -21,6 +21,8 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
@@ -36,6 +38,8 @@ services:
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       REDIS_URL: redis://redis:6379
     command: >
       deno run -A ./src/create_dao_bot_scheduler.ts
@@ -50,6 +54,8 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/create_dao_scheduler.ts
 
@@ -63,6 +69,8 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/consumers/check_account.ts
 
@@ -76,6 +84,8 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/consumers/check_wallet_access.ts
 
@@ -89,5 +99,7 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/consumers/create_gosh_repo.ts

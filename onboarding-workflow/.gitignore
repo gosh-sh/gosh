@@ -7,3 +7,4 @@ node_modules
 deno.lock
 
 /tonos-cli.conf.json
+/docker-compose.override.yaml
