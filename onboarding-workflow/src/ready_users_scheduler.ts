@@ -37,9 +37,14 @@ if (error) console.log(error)
 // -- );
 
 while (true) {
-    const { data, error } = await getDb()
-        .from('users')
-        .select(`*, github (updated_at, dao_bot (dao_name, profile_gosh_address, seed))`)
+    const { data, error } = await getDb().from('users').select(`
+        *,
+        github (
+            updated_at,
+            dao_bot (dao_name, profile_gosh_address, seed)
+        ),
+        auth_users (*)
+    `)
     if (error) {
         throw new Error(error.message)
     }
@@ -102,21 +107,14 @@ while (true) {
             }),
         )
 
-        // Get user email and send onboarding message
-        const { data: authUser, error: queryAuthUserError } = await getDb()
-            .from('auth_users')
-            .select('email')
-            .eq('id', user.auth_user)
-            .single()
-        if (queryAuthUserError) {
-            throw new Error(queryAuthUserError.message)
+        // Send onboarding message
+        if (!user.auth_users) {
+            throw new Error(`User ${user.id} has no email address`)
         }
-        if (!authUser || !authUser.email) {
-            throw new Error(`User ${user.auth_user} not found or has no email address`)
-        }
-        console.log('Auth user', authUser)
-
-        const mailTo = authUser.email.trim()
+        const authUser = Array.isArray(user.auth_users)
+            ? user.auth_users[0]
+            : user.auth_users
+        const mailTo = authUser.email!.trim()
         const mailHtmlBody = new TextDecoder().decode(
             Deno.readFileSync('emails/onboarding.html'),
         )
@@ -137,14 +135,14 @@ while (true) {
                     mail_to: mailTo,
                     subject: 'Welcome to GOSH!',
                     content: `\
-Good news!
+    Good news!
 
-Your repository has been successfully uploaded to GOSH
+    Your repository has been successfully uploaded to GOSH
 
-Your DAO has been set up for you, and you're now all set to build consensus around your code
+    Your DAO has been set up for you, and you're now all set to build consensus around your code
 
-START BUILDING https://app.gosh.sh/a/signin
-`,
+    START BUILDING https://app.gosh.sh/a/signin
+    `,
                     html: mailHtmlBody,
                     is_welcome: true,
                 })
