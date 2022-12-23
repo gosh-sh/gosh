@@ -75,7 +75,6 @@ import {
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
-import { validateUsername } from '../../validators'
 import { GoshContentSignature } from './goshcontentsignature'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
@@ -104,21 +103,22 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return GoshAdapter_1_0_0.instance
     }
 
+    isValidUsername(username: string): TValidationResult {
+        return this._isValidName(username, 'Username')
+    }
+
     isValidDaoName(name: string): TValidationResult {
-        const matches = name.match(/^[\w-]+$/g)
-        if (!matches || matches[0] !== name) {
-            return { valid: false, reason: 'Name has incorrect symbols' }
-        }
-        if (name.length > 64) {
-            return { valid: false, reason: 'Name is too long (>64)' }
-        }
-        return { valid: true }
+        return this._isValidName(name, 'DAO name')
+    }
+
+    isValidRepoName(name: string): TValidationResult {
+        return this._isValidName(name, 'Repository name')
     }
 
     async isValidProfile(username: string[]): Promise<TAddress[]> {
         return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
-            const { valid, reason } = validateUsername(member)
+            const { valid, reason } = this.isValidUsername(member)
             if (!valid) throw new GoshError(`${member}: ${reason}`)
 
             const profile = await this.getProfile({ username: member })
@@ -245,6 +245,34 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (!wait) throw new GoshError('Deploy profile timeout reached')
         return profile
     }
+
+    private _isValidName(name: string, field?: string): TValidationResult {
+        field = field || 'Name'
+
+        const matchSymbols = name.match(/^[\w-]+$/g)
+        if (!matchSymbols || matchSymbols[0] !== name) {
+            return { valid: false, reason: `${field} has incorrect symbols` }
+        }
+
+        const matchHyphens = name.match(/-{2,}/g)
+        if (matchHyphens && matchHyphens.length > 0) {
+            return { valid: false, reason: `${field} can not contain consecutive "-"` }
+        }
+
+        if (name.startsWith('-')) {
+            return { valid: false, reason: `${field} can not start with "-"` }
+        }
+
+        if (name.toLowerCase() !== name) {
+            return { valid: false, reason: `${field} should be lowercase` }
+        }
+
+        if (name.length > 39) {
+            return { valid: false, reason: `${field} is too long (Max length is 39)` }
+        }
+
+        return { valid: true }
+    }
 }
 
 class GoshDaoAdapter implements IGoshDaoAdapter {
@@ -276,6 +304,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!pubkey) {
             await this.profile.turnOn(this.wallet.address, keys.public, keys)
         }
+    }
+
+    getGosh(): IGoshAdapter {
+        return this.gosh
     }
 
     getAddress(): TAddress {
@@ -382,6 +414,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         prev?: { addr: TAddress; version: string } | undefined,
     ): Promise<IGoshRepositoryAdapter> {
         if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+
+        const { valid, reason } = this.gosh.isValidRepoName(name)
+        if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })

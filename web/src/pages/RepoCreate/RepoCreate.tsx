@@ -1,5 +1,4 @@
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { TextField } from '../../components/Formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
@@ -7,6 +6,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
+import yup from '../../yup-extended'
 
 type TFormValues = {
     name: string
@@ -39,10 +39,10 @@ const RepoCreatePage = () => {
                 <Formik
                     initialValues={{ name: '' }}
                     onSubmit={onRepoCreate}
-                    validationSchema={Yup.object().shape({
-                        name: Yup.string()
-                            .matches(/^[\w-]+$/, 'Name has invalid characters')
-                            .max(64, 'Max length is 64 characters')
+                    validationSchema={yup.object().shape({
+                        name: yup
+                            .string()
+                            .reponame(dao.adapter.getGosh())
                             .required('Name is required'),
                     })}
                 >
