@@ -1,4 +1,9 @@
-import { PROFILE_ABI, SYSTEM_CONTRACT_ABI } from '../eversdk/abi.ts'
+import {
+    GOSH_DAO_ABI,
+    GOSH_WALLET_ABI,
+    PROFILE_ABI,
+    SYSTEM_CONTRACT_ABI,
+} from '../eversdk/abi.ts'
 import { SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
 import { tonosCli } from '../shortcuts.ts'
 
@@ -54,5 +59,54 @@ export async function turnOnDao(
         seed,
         'turnOn',
         JSON.stringify({ pubkey: wallet_pubkey, wallet: wallet_addr }),
+    )
+}
+
+export async function isDaoMember(
+    dao_addr: string,
+    profile_addr: string,
+): Promise<boolean> {
+    const { value0 } = await tonosCli(
+        'run',
+        '--abi',
+        GOSH_DAO_ABI,
+        dao_addr,
+        'isMember',
+        JSON.stringify({ pubaddr: profile_addr }),
+    )
+    return value0
+}
+
+export async function setAloneDaoConfig(
+    tokens: number,
+    wallet_addr: string,
+    seed: string,
+): Promise<boolean> {
+    return await tonosCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneSetConfigDao',
+        JSON.stringify({ newtoken: tokens }),
+    )
+}
+
+export async function deployAloneDaoWallet(
+    profile_address: string[],
+    wallet_addr: string,
+    seed: string,
+): Promise<boolean> {
+    return await tonosCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneDeployWalletDao',
+        JSON.stringify({ pubaddr: profile_address }),
     )
 }
