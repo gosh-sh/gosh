@@ -28,11 +28,9 @@ async function initNewDaoBots() {
             console.log('Process dao bot for', dao_bot.dao_name)
 
             // create profile addr if not present
-            try {
-                await initDaoBot(dao_bot)
-            } catch (err) {
+            initDaoBot(dao_bot).catch((err) => {
                 console.log('Fail to init DAO bot', err.message)
-            }
+            })
         }
     } catch (err) {
         console.error('Fail update dao bots', err)

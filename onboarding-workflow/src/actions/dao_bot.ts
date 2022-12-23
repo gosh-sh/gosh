@@ -70,10 +70,13 @@ export async function initDaoBot(dao_bot: DaoBot) {
     const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
         console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
+        // TODO: more logs
         createGoshRepoProducer()
             .createJob({
                 github_id: github.id,
             })
+            // deduplication
+            .retries(5)
             .setId(github.id)
             .save()
     }

@@ -18,7 +18,7 @@ export async function deployDao(
     dao_name: string,
     profile_addr: string,
     seed: string,
-): Promise<any> {
+): Promise<unknown> {
     return await tonosCli(
         'call',
         '--abi',

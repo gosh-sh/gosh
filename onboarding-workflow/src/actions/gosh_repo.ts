@@ -1,5 +1,5 @@
 import { DaoBot } from '../db/dao_bot.ts'
-import { Github, getGithubWithDaoBot } from '../db/github.ts'
+import { Github, getGithubWithDaoBot, updateGithub } from '../db/github.ts'
 import { isAccountActive } from '../eversdk/account.ts'
 import { GOSH_ENDPOINTS, SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
 import { getAddrDao } from '../eversdk/dao.ts'
@@ -45,11 +45,19 @@ export async function initializeGoshRepo(github_id: string) {
         await waitForAccountActive(repo_addr)
     }
 
-    console.log(`Repo ${repo_addr} is ready`)
+    console.log(`Repo ${repo_addr} is ready to be pushed`)
+
     const result = await pushRepo(repo_name, dao_addr, github, dao_bot)
-    if (result) {
-        // TODO: update database
+    console.log(`Repo push result ${result}`)
+    if (!result.success) {
+        console.log(`git push exited with ${result.code}`)
+        throw new Error(`git push exited with ${result.code}`)
     }
+
+    await updateGithub(github.id, {
+        updated_at: new Date().toISOString(),
+    })
+    console.log(`Repo ${github.id} has been clonned`)
 }
 
 async function pushRepo(
@@ -57,15 +65,12 @@ async function pushRepo(
     dao_addr: string,
     github: Github,
     dao_bot: DaoBot,
-): Promise<boolean> {
+): Promise<Deno.ProcessStatus> {
     console.log(`About to push`, github)
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
-    // TODO: bash-push
     const work_dir = `/tmp/${SYSTEM_CONTRACT_ADDR}/${dao_bot.dao_name}/${repo_name}`
     await Deno.mkdir(work_dir, { recursive: true })
 
-    // GOSH_CONFIG_PATH
-    // TODO:config
     const config = JSON.stringify({
         'primary-network': 'mainnet',
         networks: {
@@ -98,5 +103,5 @@ async function pushRepo(
         },
     })
     const status = await p.status()
-    return status.success
+    return status
 }
