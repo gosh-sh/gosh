@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
 
@@ -15,10 +15,9 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 cd $REPO_NAME
 
@@ -45,13 +44,12 @@ git commit -m "test-push-$CHANGE"
 echo "***** awaiting push into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** comparing repositories *****"
 DIFF_STATUS=1
