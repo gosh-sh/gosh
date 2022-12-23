@@ -12,7 +12,7 @@
 # 10. comparing repositories repo10-clone1 and repo10-clone2 (similar)
 
 
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
 
@@ -28,10 +28,9 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone1"
 
 cd $REPO_NAME"-clone1"
 
@@ -53,11 +52,10 @@ git add $FILE1
 git commit -m "added-$FILE1-now-$CHANGE"
 
 echo "***** awaiting push $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 # 5-6
 echo "Hello again A! it changed #1 time $CHANGE now" > $FILE1
@@ -66,11 +64,10 @@ git add $FILE1
 git commit -m "push (1)-$CHANGE"
 
 echo "***** awaiting push (1) $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
 
-echo "***** awaiting set commit (1) into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit (1) into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 # 7-8
 echo "Hello again Aa! it changed #2 time $CHANGE now" > $FILE1
@@ -79,17 +76,16 @@ git add $FILE1
 git commit -m "push (2)-$CHANGE"
 
 echo "***** awaiting push (2) $FILE1 into $BRANCH_NAME *****"
-git push -vvv -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
+git push -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs" && exit 127
 
-echo "***** awaiting set commit (2) into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit (2) into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 cd ..
 
 # 9
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
 
 # 10
 echo "***** comparing repositories *****"
