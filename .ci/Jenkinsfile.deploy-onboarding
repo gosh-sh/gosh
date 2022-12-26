@@ -25,8 +25,7 @@ pipeline {
             steps {
                 script {
                     dir('onboarding-workflow') {
-                        sh 'docker-compose stop'
-                        sh 'docker-compose rm -f'
+                        sh 'docker compose down -v --remove-orphans'
                         sh 'docker-compose up -d'
                     }
                 }
