@@ -17,6 +17,7 @@ pipeline {
                         sh 'make build-contracts'
                     }
                     dir('onboarding-workflow') {
+                        sh 'docker compose down -v --remove-orphans || true'
                         sh 'npm i'
                         sh 'cp /opt/onboarding/.env ./'
                         sh 'make docker'
@@ -28,7 +29,6 @@ pipeline {
             steps {
                 script {
                     dir('onboarding-workflow') {
-                        sh 'docker compose down -v --remove-orphans'
                         sh 'docker-compose up -d'
                     }
                 }
