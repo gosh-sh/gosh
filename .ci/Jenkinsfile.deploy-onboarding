@@ -15,7 +15,7 @@ pipeline {
                     currentBuild.displayName = "#${BUILD_NUMBER}_deploy-onbd_${VERSION}"
                     dir('onboarding-workflow') {
                         sh 'npm i'
-                        sh 'DOCKER_BUILDKIT=1 docker build -t gosh-onboarding .'
+                        sh 'make docker'
                     }
                 }
             }
