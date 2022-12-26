@@ -30,6 +30,7 @@ WORKDIR /app
 COPY --link src src
 COPY --link bin bin
 COPY --link abi abi
+COPY --link emails emails
 
 ARG GOSH_ENDPOINTS
 ENV GOSH_ENDPOINTS=${GOSH_ENDPOINTS}

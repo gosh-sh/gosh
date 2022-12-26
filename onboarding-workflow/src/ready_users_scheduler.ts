@@ -40,12 +40,13 @@ while (true) {
     }
     if (!data) {
         await sleep(10)
+        continue
     }
 
     // Filter users
     // User `onboarded_at` should be null, all user repos should have
     // date at `updated_at` field
-    const ready = data
+    const ready_users = data
         .filter(({ onboarded_at }) => !onboarded_at)
         .filter(({ github }) => {
             if (!github) {
@@ -56,10 +57,11 @@ while (true) {
         })
 
     // Iterate ready for onboarding data
-    console.log('Ready', ready)
-    for (const user of ready) {
+    console.log('Ready', ready_users)
+    for (const user of ready_users) {
         if (!user.auth_user) {
-            throw new Error(`Auth user for user ${user.id} does not exist`)
+            console.log(`Auth user for user ${user.id} does not exist`)
+            continue
         }
 
         // Collect unique DAOs for user
@@ -108,7 +110,8 @@ while (true) {
             throw new Error(authUserError.message)
         }
         if (!authUser.user.email) {
-            throw new Error(`Email for user ${user.auth_user} not found`)
+            console.log(`Error: Email for user ${user.auth_user} not found`)
+            continue
         }
         const mailTo = authUser.user.email.trim()
         const mailHtmlBody = new TextDecoder().decode(
