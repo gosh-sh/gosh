@@ -13,6 +13,9 @@ pipeline {
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "#${BUILD_NUMBER}_deploy-onbd_${VERSION}"
+                    dir('contracts/gosh') {
+                        sh 'make build-contracts'
+                    }
                     dir('onboarding-workflow') {
                         sh 'npm i'
                         sh 'cp /opt/onboarding/.env ./'
