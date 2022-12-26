@@ -21,8 +21,8 @@ const BlobPage = () => {
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch } = useBranches(repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch } = useBranches(repository.adapter, branchName)
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
     return (

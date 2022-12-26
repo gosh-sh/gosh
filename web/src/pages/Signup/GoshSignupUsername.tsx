@@ -1,5 +1,4 @@
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { AppConfig, GoshError, useUser } from 'react-gosh'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import {
@@ -15,6 +14,7 @@ import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import yup from '../../yup-extended'
 
 type TGoshSignupUsernameProps = {
     phrase: string
@@ -125,10 +125,10 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                             isConfirmed: false,
                         }}
                         onSubmit={onFormSubmit}
-                        validationSchema={Yup.object().shape({
-                            username: Yup.string()
-                                .matches(/^[\w-]+$/, 'Username has invalid characters')
-                                .max(64, 'Max length is 64 characters')
+                        validationSchema={yup.object().shape({
+                            username: yup
+                                .string()
+                                .username()
                                 .required('Username is required'),
                         })}
                     >
