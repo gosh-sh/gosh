@@ -15,6 +15,7 @@ pipeline {
                     currentBuild.displayName = "#${BUILD_NUMBER}_deploy-onbd_${VERSION}"
                     dir('onboarding-workflow') {
                         sh 'npm i'
+                        sh 'cp /opt/onboarding/.env ./'
                         sh 'make docker'
                     }
                 }
@@ -26,7 +27,6 @@ pipeline {
                     dir('onboarding-workflow') {
                         sh 'docker-compose stop'
                         sh 'docker-compose rm -f'
-                        sh 'cp /opt/onboarding/.env ./'
                         sh 'docker-compose up -d'
                     }
                 }
