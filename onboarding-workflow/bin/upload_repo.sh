@@ -17,13 +17,16 @@ ensure_provided GOSH_REPO_NAME
 ensure_provided GOSH_BOT_NAME
 ensure_provided GOSH_CONFIG_PATH
 
+LOG_DIR=/tmp/logs/git-remote-gosh
+mkdir -p $LOG_DIR
+LOG_FILE="$LOG_DIR"/"$GOSH_DAO_NAME"-"$GOSH_REPO_NAME".log
+
 #
 # Prepare constants for this run
 #
 THIS_RUN_WORKDIR="${WORKDIR}/${GIT_REPO_URL//[^a-zA-Z0-9]/}-${BASHPID}-$(date +%s)"
 mkdir -p "$THIS_RUN_WORKDIR"
 cd "$THIS_RUN_WORKDIR"
-LOG_FILE="$(pwd)/log.txt"
 
 # ---------
 log "Cloning github repo..."
@@ -38,7 +41,7 @@ log "Pushing github repo to gosh...\n________________"
 PUSH_START=$SECONDS
 cd ./repo
 git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
-git push --all -v gosh >>"$LOG_FILE"
+git push --all -vvv gosh >>"$LOG_FILE"
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END - PUSH_START))
 log "...complete. Push took $(convertsecs $PUSH_DURATION)."

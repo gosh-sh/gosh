@@ -111,6 +111,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    volumes:
+      - './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
