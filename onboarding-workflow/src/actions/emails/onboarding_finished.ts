@@ -37,7 +37,7 @@ export async function emailOnboardingFinished(user: User) {
         throw new Error(error.message)
     }
 
-    if (!emails) {
+    if (emails.length === 0) {
         console.log(`Try create ${INTENT_ONBOARDING_FINISHED} email ${mail_to}`)
         await getDb()
             .from('emails')

@@ -38,7 +38,7 @@ export async function emailWelcomeHighDemand(user: User) {
         throw new Error(error.message)
     }
 
-    if (!emails) {
+    if (emails.length === 0) {
         console.log(`Try create ${INTENT_WELCOME_HIGH_DEMAND} email ${mail_to}`)
         const mail_html = new TextDecoder().decode(Deno.readFileSync(EMAIL_HTML_FILE))
         await getDb()
