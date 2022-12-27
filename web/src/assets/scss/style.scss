@@ -432,7 +432,8 @@ for those elements which require gradient border color
     }
 
     &__phrase-form {
-        @apply w-full max-w-[25.375rem] mx-auto;
+        @apply w-full max-w-[25.375rem] mx-auto
+            border rounded-xl p-5 lg:px-8 lg:py-12;
     }
 
     &__nickname-form {
@@ -682,9 +683,13 @@ for those elements which require gradient border color
     }
 }
 
-.phrase-form {
-    @apply border rounded-xl p-5 lg:px-8 lg:py-12;
+.signin {
+    &__phrase-form {
+        @apply px-5;
+    }
+}
 
+.phrase-form {
     &__words {
         @apply relative flex flex-wrap justify-center gap-3;
     }
@@ -739,17 +744,23 @@ for those elements which require gradient border color
     }
 
     &__submit {
-        @apply mt-5;
+        @apply mt-5 text-center;
 
         button {
             @apply btn btn--body
-                w-full
                 px-4 py-3
+                w-full md:w-1/3
                 leading-normal font-medium;
         }
 
         button .spinner {
             @apply mr-3;
+        }
+    }
+
+    &__submit--full {
+        button {
+            @apply w-full;
         }
     }
 }

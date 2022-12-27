@@ -7,7 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Combobox } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AppConfig, EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
@@ -36,10 +36,10 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
               })
               .slice(0, 5)
 
-    const setRandomPhrase = async () => {
+    const setRandomPhrase = useCallback(async () => {
         const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
         setPhrase(phrase.split(' '))
-    }
+    }, [setPhrase])
 
     const onFormSubmit = async (values: { words: string[] }) => {
         try {
@@ -71,7 +71,7 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
         if (!phrase.length) {
             setRandomPhrase()
         }
-    }, [phrase])
+    }, [phrase, setRandomPhrase])
 
     return (
         <div className="signup signup--phrase">
@@ -195,7 +195,7 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
                                     />
                                 </div>
 
-                                <div className="phrase-form__submit">
+                                <div className="phrase-form__submit phrase-form__submit--full">
                                     <button type="submit" disabled={isSubmitting}>
                                         {isSubmitting && <Spinner size={'lg'} />}
                                         Continue
