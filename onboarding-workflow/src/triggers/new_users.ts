@@ -44,13 +44,13 @@ async function notifyNewUsers() {
             const mail_to = user.email.trim()
             const user_created_at = new Date(user.created_at)
 
-            // ???
-            if (now.getTime() - user_created_at.getTime() < 24 * 60 * 60 * 1000) {
+            // TODO: improve with DB views/triggers
+            if (now.getTime() - user_created_at.getTime() < 48 * 60 * 60 * 1000) {
                 console.log(`Ignore old user ${user.id}`)
                 continue
             }
 
-            // ???
+            // don't welcome if onboarded
             const { data: emails, error } = await getDb()
                 .from('emails')
                 .select()
