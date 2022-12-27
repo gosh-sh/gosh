@@ -1,3 +1,4 @@
+import { faPaste } from '@fortawesome/free-regular-svg-icons'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Combobox } from '@headlessui/react'
@@ -23,20 +24,20 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
               })
               .slice(0, 5)
 
-    const onPhrasePaste = (
-        e: any,
+    const onPhrasePaste = async (
         setFieldValue: (
             field: string,
             value: any,
             shouldValidate?: boolean | undefined,
         ) => void,
     ) => {
-        const data = e.clipboardData.getData('text').split(' ')
-        for (let i = 0; i < data.length; i++) {
+        const data = await navigator.clipboard.readText()
+        const words = data.split(' ')
+        for (let i = 0; i < words.length; i++) {
             if (i > 12) {
                 break
             }
-            setFieldValue(`words.${i}`, data[i])
+            setFieldValue(`words.${i}`, words[i])
         }
     }
 
@@ -59,6 +60,13 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
                 {({ isSubmitting, setFieldValue, values }) => (
                     <Form>
                         <div className="phrase-form__words-btns">
+                            <button
+                                type="button"
+                                onClick={() => onPhrasePaste(setFieldValue)}
+                            >
+                                <FontAwesomeIcon icon={faPaste} />
+                                Paste
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => {
@@ -95,9 +103,7 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
                                         onChange={(event) =>
                                             setWordsQuery(event.target.value)
                                         }
-                                        onPaste={(e: any) =>
-                                            onPhrasePaste(e, setFieldValue)
-                                        }
+                                        onPaste={() => onPhrasePaste(setFieldValue)}
                                         className="phrase-form__word-input"
                                     />
                                     <Combobox.Options className="phrase-form__word-suggestions">
