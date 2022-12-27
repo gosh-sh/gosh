@@ -162,7 +162,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function volunteersnap(address[] snap, uint128 index) public senderIs(address(this)) accept {
-        snap[index].transfer(10 ton);
+        snap[index].transfer(1000 ton);
         this.volunteersnap(snap, index + 1);
         getMoney();       
     }
