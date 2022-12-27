@@ -50,6 +50,15 @@ async function notifyNewUsers() {
                 continue
             }
 
+            const { data: users, error: usersError } = await getDb()
+                .from('users')
+                .select()
+                .eq('auth_user', user.id)
+            if (usersError || users.length === 0) {
+                console.log(`User ${user.id} has no public.user`)
+                continue
+            }
+
             // don't welcome if onboarded
             const { data: emails, error } = await getDb()
                 .from('emails')
