@@ -22,9 +22,9 @@ export async function emailWelcomeHighDemand(user: User) {
     }
 
     const mail_to = user.email.trim()
-    const mail_html = new TextDecoder().decode(Deno.readFileSync(EMAIL_HTML_FILE))
 
     // TODO: should be done via DB constraint
+    // deduplicate
     const { data: emails, error } = await getDb()
         .from('emails')
         .select()
@@ -40,6 +40,7 @@ export async function emailWelcomeHighDemand(user: User) {
 
     if (!emails) {
         console.log(`Try create ${INTENT_WELCOME_HIGH_DEMAND} email ${mail_to}`)
+        const mail_html = new TextDecoder().decode(Deno.readFileSync(EMAIL_HTML_FILE))
         await getDb()
             .from('emails')
             .insert({
