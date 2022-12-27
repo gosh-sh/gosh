@@ -1,4 +1,7 @@
+import { faArrowRightFromBracket, faRotateRight } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
+import { classNames } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import Spinner from '../../components/Spinner'
 import {
@@ -9,6 +12,8 @@ import {
     octokitSelector,
     signupStepAtom,
 } from '../../store/signup.state'
+import GithubEmpty from './GithubEmpty'
+import GithubRepositories from './GithubRepositories'
 
 type TGithubOrganizationsProps = {
     signoutOAuth(): Promise<void>
@@ -23,6 +28,18 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const octokit = useRecoilValue(octokitSelector)
     const setStep = useSetRecoilState(signupStepAtom)
 
+    const toggleOrganization = (id: number) => {
+        setGithubOrgs((state) => {
+            const { items } = state
+            return {
+                ...state,
+                items: items.map((item) => {
+                    return item.id === id ? { ...item, isOpen: !item.isOpen } : item
+                }),
+            }
+        })
+    }
+
     const getGithubOrganizations = useCallback(async () => {
         if (!octokit || !session) return
 
@@ -34,8 +51,9 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 login: session.user.user_metadata.user_name,
                 avatar_url: session.user.user_metadata.avatar_url,
                 isUser: true,
+                isOpen: false,
             },
-            ...data.map((item: any) => ({ ...item, isUser: false })),
+            ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
         ]
         setGithubOrgs((state) => {
             const items = combined.map((item: any) => {
@@ -55,14 +73,23 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         <div className="signup signup--organizations">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <div className="aside-step__title">
-                        Hey, {session.user.user_metadata.name}
-                    </div>
-                    <div className="aside-step__btn-signout">
-                        <button type="button" onClick={signoutOAuth}>
-                            Signout
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        className="aside-step__btn-signout"
+                        onClick={signoutOAuth}
+                    >
+                        <div className="aside-step__btn-signout-slide">
+                            <span className="aside-step__btn-signout-user">
+                                Hey, {session.user.user_metadata.name}
+                            </span>
+                            <span className="aside-step__btn-signout-text">Sign out</span>
+                        </div>
+                        <FontAwesomeIcon
+                            icon={faArrowRightFromBracket}
+                            size="lg"
+                            className="aside-step__btn-signout-icon"
+                        />
+                    </button>
                 </div>
 
                 <p className="aside-step__text">
@@ -75,7 +102,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 <button
                     type="button"
                     className="aside-step__btn-upload"
-                    onClick={() => setStep({ index: 3 })}
+                    onClick={() => setStep({ index: 2 })}
                     disabled={!githubReposSelected.length}
                 >
                     Upload
@@ -88,10 +115,16 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         disabled={githubOrgs.isFetching}
                         onClick={getGithubOrganizations}
                     >
-                        {githubOrgs.isFetching && <Spinner size="xs" />}
+                        {githubOrgs.isFetching ? (
+                            <Spinner size="xs" className="icon" />
+                        ) : (
+                            <FontAwesomeIcon icon={faRotateRight} className="icon" />
+                        )}
                         Refresh
                     </button>
                 </div>
+
+                {!githubOrgs?.isFetching && !githubOrgs?.items.length && <GithubEmpty />}
 
                 {githubOrgs.items.map((item, index) => {
                     const selected = githubRepos[item.id]?.items
@@ -103,24 +136,27 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         ))
 
                     return (
-                        <div
-                            key={index}
-                            className="signup__orgitem orgitem"
-                            onClick={() => {
-                                setStep({
-                                    index: 2,
-                                    data: { organization: item },
-                                })
-                            }}
-                        >
-                            <div className="orgitem__main">
+                        <div key={index} className="signup__orgitem orgitem">
+                            <div
+                                className="orgitem__main"
+                                onClick={() => {
+                                    toggleOrganization(item.id)
+                                }}
+                            >
                                 <div className="orgitem__media">
                                     <img src={item.avatar_url} alt="" />
                                 </div>
                                 <div className="orgitem__content">
                                     <div className="orgitem__header">
                                         <div className="orgitem__title">{item.login}</div>
-                                        <div className="orgitem__arrow">
+                                        <div
+                                            className={classNames(
+                                                'orgitem__arrow',
+                                                item.isOpen
+                                                    ? 'orgitem__arrow-open'
+                                                    : null,
+                                            )}
+                                        >
                                             <i className="icon-arrow"></i>
                                         </div>
                                     </div>
@@ -129,16 +165,22 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                         {item.description}
                                     </p>
 
-                                    <div className="orgitem__repos">
+                                    <div className="orgitem__footer">
                                         {selected?.length
                                             ? selected
                                             : 'Select repository'}
                                     </div>
                                 </div>
                             </div>
-                            <div className="orgitem__repos orgitem__repos--xs">
+                            <div className="orgitem__footer orgitem__footer--xs">
                                 {selected?.length ? selected : 'Select repository'}
                             </div>
+
+                            {item.isOpen && (
+                                <div className="orgitem__repos">
+                                    <GithubRepositories organization={item} />
+                                </div>
+                            )}
                         </div>
                     )
                 })}
