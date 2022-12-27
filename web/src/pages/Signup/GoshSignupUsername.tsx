@@ -69,7 +69,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             }
 
             // Prepare data
-            const username = values.username.trim()
+            const username = values.username.trim().toLowerCase()
             const seed = phrase.join(' ')
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
                 phrase: seed,
