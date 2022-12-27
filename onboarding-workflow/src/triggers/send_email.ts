@@ -1,8 +1,8 @@
 import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { getDb } from './db/db.ts'
-import { getEmailsNotSent } from './db/emails.ts'
-import { sendEmail } from './utils/email.ts'
+import { getDb } from '../db/db.ts'
+import { getEmailsNotSent } from '../db/emails.ts'
+import { sendEmail } from '../utils/email.ts'
 
 dotenv.config({ export: true })
 
@@ -12,10 +12,10 @@ getDb()
     .channel('emails:not_sent')
     .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'emails' },
-        async (payload) => {
-            console.log('INSERT emails', payload)
-            await sendEmails()
+        { event: '*', schema: 'public', table: 'emails' },
+        (payload) => {
+            console.log('check emails', payload)
+            sendEmails()
         },
     )
     .subscribe()

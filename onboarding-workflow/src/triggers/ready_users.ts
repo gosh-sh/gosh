@@ -1,14 +1,15 @@
 import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
-import { getDb } from './db/db.ts'
+import { getDb } from '../db/db.ts'
+import { emailOnboardingFinished } from '../actions/emails/onboarding_finished.ts'
 import {
     deployAloneDaoWallet,
     getAddrDao,
     isDaoMember,
     setAloneDaoConfig,
-} from './eversdk/dao.ts'
-import { calculateProfileAddr } from './eversdk/dao_bot.ts'
-import { getAddrWallet } from './eversdk/gosh_repo.ts'
+} from '../eversdk/dao.ts'
+import { calculateProfileAddr } from '../eversdk/dao_bot.ts'
+import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 
 dotenv.config({ export: true })
 
@@ -109,46 +110,8 @@ while (true) {
         if (authUserError) {
             throw new Error(authUserError.message)
         }
-        if (!authUser.user.email) {
-            console.log(`Error: Email for user ${user.auth_user} not found`)
-            continue
-        }
-        const mailTo = authUser.user.email.trim()
-        const mailHtmlBody = new TextDecoder().decode(
-            Deno.readFileSync('emails/onboarding.html'),
-        )
 
-        const { data: emails } = await getDb()
-            .from('emails')
-            .select()
-            .eq('is_welcome', true)
-            .eq('mail_to', mailTo)
-
-        console.log(`Emails: ${emails}`)
-
-        if (!emails || emails.length == 0) {
-            console.log(`Try create welcome email ${mailTo}`)
-            await getDb()
-                .from('emails')
-                .insert({
-                    mail_to: mailTo,
-                    subject: 'Welcome to GOSH!',
-                    content: `\
-    Good news!
-
-    Your repository has been successfully uploaded to GOSH
-
-    Your DAO has been set up for you, and you're now all set to build consensus around your code
-
-    START BUILDING https://app.gosh.sh/a/signin
-    `,
-                    html: mailHtmlBody,
-                    is_welcome: true,
-                })
-                .then((res: any) => {
-                    console.log(`Email insert:`, res)
-                })
-        }
+        await emailOnboardingFinished(authUser.user)
     }
 
     console.log('Sleep...')

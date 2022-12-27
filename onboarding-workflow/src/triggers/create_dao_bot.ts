@@ -1,7 +1,7 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { getOrCreateDaoBot } from './db/dao_bot.ts'
-import { getDb } from './db/db.ts'
-import { getGithubsWithoutDao } from './db/github.ts'
+import { getOrCreateDaoBot } from '../db/dao_bot.ts'
+import { getDb } from '../db/db.ts'
+import { getGithubsWithoutDao } from '../db/github.ts'
 
 const mutex = new Mutex()
 
@@ -10,9 +10,9 @@ getDb()
     .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'github' },
-        async (payload) => {
+        (payload) => {
             console.log('githubs updated', payload)
-            await updateGithubs()
+            updateGithubs()
         },
     )
     .subscribe()

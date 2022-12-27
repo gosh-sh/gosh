@@ -19,6 +19,7 @@ export async function getGithubsForClone(dao_bot_id: string): Promise<Github[]> 
         .select()
         .eq('dao_bot', dao_bot_id)
         .is('updated_at', null)
+        .eq('ignore', false)
     if (error) {
         console.error(error)
         throw new Error(error.message)

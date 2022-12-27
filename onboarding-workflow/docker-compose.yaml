@@ -27,7 +27,7 @@ services:
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
     command: >
-      deno run -A ./src/send_email_scheduler.ts
+      deno run -A ./src/triggers/send_email.ts
 
   create_dao_bot:
     image: gosh-onboarding
@@ -42,7 +42,7 @@ services:
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       REDIS_URL: redis://redis:6379
     command: >
-      deno run -A ./src/create_dao_bot_scheduler.ts
+      deno run -A ./src/triggers/create_dao_bot.ts
 
   create_dao:
     image: gosh-onboarding
@@ -57,7 +57,7 @@ services:
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
-      deno run -A ./src/create_dao_scheduler.ts
+      deno run -A ./src/triggers/create_dao.ts
 
   ready_users:
     image: gosh-onboarding
@@ -72,7 +72,7 @@ services:
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
-      deno run -A ./src/ready_users_scheduler.ts
+      deno run -A ./src/triggers/ready_users.ts
 
   consumer_check_account:
     image: gosh-onboarding

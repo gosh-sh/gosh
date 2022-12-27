@@ -1,7 +1,7 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
-import { initDaoBot } from './actions/dao_bot.ts'
-import { getDaoBotsForInit } from './db/dao_bot.ts'
-import { getDb } from './db/db.ts'
+import { initDaoBot } from '../actions/dao_bot.ts'
+import { getDaoBotsForInit } from '../db/dao_bot.ts'
+import { getDb } from '../db/db.ts'
 
 const mutex = new Mutex()
 
@@ -10,9 +10,9 @@ getDb()
     .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'dao_bot' },
-        async (payload) => {
+        (payload) => {
             console.log('dao bots updated', payload)
-            await initNewDaoBots()
+            initNewDaoBots()
         },
     )
     .subscribe()
