@@ -259,8 +259,17 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
             return { valid: false, reason: `${field} can not contain consecutive "-"` }
         }
 
+        const matchUnderscores = name.match(/_{2,}/g)
+        if (matchUnderscores && matchUnderscores.length > 0) {
+            return { valid: false, reason: `${field} can not contain consecutive "_"` }
+        }
+
         if (name.startsWith('-')) {
             return { valid: false, reason: `${field} can not start with "-"` }
+        }
+
+        if (name.startsWith('_')) {
+            return { valid: false, reason: `${field} can not start with "_"` }
         }
 
         if (name.toLowerCase() !== name) {
