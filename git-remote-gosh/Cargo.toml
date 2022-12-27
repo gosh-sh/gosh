@@ -13,7 +13,7 @@ keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
 rust-version = "1.65"
-version = '3.0.2'
+version = '3.0.6'
 
 [profile.profiling]
 debug = 1
