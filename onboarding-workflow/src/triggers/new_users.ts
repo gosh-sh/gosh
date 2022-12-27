@@ -1,4 +1,5 @@
 import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
+import { INTENT_ONBOARDING_FINISHED } from '../actions/emails/constants.ts'
 import { emailWelcomeHighDemand } from '../actions/emails/welcome_high_demand.ts'
 import { getDb } from '../db/db.ts'
 
@@ -20,6 +21,8 @@ notifyNewUsers()
 
 async function notifyNewUsers() {
     const release = await mutex.acquire()
+    const now = new Date()
+
     try {
         const {
             data: { users },
@@ -31,10 +34,47 @@ async function notifyNewUsers() {
         }
 
         for (const user of users) {
-            console.log('Process potentially new user', user)
+            console.log('Process potentially new user', user.id)
 
-            // ignore errors
-            emailWelcomeHighDemand(user)
+            if (!user.email) {
+                console.log(`Error: user ${user.id} has no email`)
+                continue
+            }
+
+            const mail_to = user.email.trim()
+            const user_created_at = new Date(user.created_at)
+
+            // ???
+            if (now.getTime() - user_created_at.getTime() < 24 * 60 * 60 * 1000) {
+                console.log(`Ignore old user ${user.id}`)
+                continue
+            }
+
+            // ???
+            const { data: emails, error } = await getDb()
+                .from('emails')
+                .select()
+                .eq('mail_to', mail_to)
+                .eq('intent', INTENT_ONBOARDING_FINISHED)
+
+            if (error) {
+                console.log(`DB error: ${error}`)
+                continue
+            }
+
+            if (emails.length > 0) {
+                console.log(
+                    `User ${user.id} already has onboarding email (no need to welcome)`,
+                )
+                continue
+            }
+
+            try {
+                await emailWelcomeHighDemand(user)
+            } catch (err) {
+                // ignore errors
+                console.log('Error while emailWelcomeHighDemand()', err)
+            }
         }
     } catch (err) {
         console.error('Fail process new users', err)
