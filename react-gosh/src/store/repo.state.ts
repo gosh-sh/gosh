@@ -1,6 +1,19 @@
 import { atom, selectorFamily } from 'recoil'
+import { IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { getTreeItemFullPath } from '../helpers'
-import { TBranch, TTree, TTreeItem } from '../types/repo.types'
+import { TBranch, TRepository, TTree, TTreeItem } from '../types/repo.types'
+
+const repositoryAtom = atom<{
+    isFetching: boolean
+    adapter?: IGoshRepositoryAdapter
+    details?: TRepository
+}>({
+    key: 'GoshRepositoryAtom',
+    default: {
+        isFetching: false,
+    },
+    dangerouslyAllowMutability: true,
+})
 
 const branchesAtom = atom<TBranch[]>({
     key: 'GoshBranchesAtom',
@@ -53,4 +66,4 @@ const treeSelector = selectorFamily({
         },
 })
 
-export { branchesAtom, branchSelector, treeAtom, treeSelector }
+export { repositoryAtom, branchesAtom, branchSelector, treeAtom, treeSelector }

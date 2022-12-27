@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
-import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
+import {
+    branchesAtom,
+    branchSelector,
+    daoAtom,
+    repositoryAtom,
+    treeAtom,
+    treeSelector,
+} from '../store'
 import { TAddress, TDao } from '../types'
 import {
     TBranch,
@@ -14,6 +21,7 @@ import {
     TBranchOperateProgress,
     TCommit,
     TPushProgress,
+    TRepository,
     TRepositoryListItem,
     TTree,
     TTreeItem,
@@ -145,7 +153,7 @@ function useRepoList(dao: string, perPage: number) {
 function useRepo(dao: string, repo: string) {
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [daoAdapter, setDaoAdapter] = useState<IGoshDaoAdapter>()
-    const [repoAdapter, setRepoAdapter] = useState<IGoshRepositoryAdapter>()
+    const [repository, setRepository] = useRecoilState(repositoryAtom)
     const [isFetching, setIsFetching] = useState<boolean>(true)
 
     useEffect(() => {
@@ -157,10 +165,16 @@ function useRepo(dao: string, repo: string) {
 
                 const repoInstance = await daoInstance.getRepository({ name: repo })
                 if (await repoInstance.isDeployed()) {
-                    const details = await daoInstance.getDetails()
+                    const daoDetails = await daoInstance.getDetails()
+                    const repoDetails = await repoInstance.getDetails()
+
                     setDaoAdapter(daoInstance)
-                    setDaoDetails(details)
-                    setRepoAdapter(repoInstance)
+                    setDaoDetails(daoDetails)
+                    setRepository({
+                        isFetching: false,
+                        adapter: repoInstance,
+                        details: repoDetails,
+                    })
                     setIsFetching(false)
                     break
                 }
@@ -170,13 +184,45 @@ function useRepo(dao: string, repo: string) {
         _getRepo()
     }, [dao, repo])
 
+    useEffect(() => {
+        const _getIncomingCommits = async () => {
+            if (!repository.adapter) return
+
+            const incoming = await repository.adapter.getIncomingCommits()
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, commitsIn: incoming },
+                }
+            })
+        }
+
+        _getIncomingCommits()
+        repository.adapter?.subscribeIncomingCommits((incoming) => {
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, commitsIn: incoming },
+                }
+            })
+        })
+
+        return () => {
+            repository.adapter?.unsubscribe()
+        }
+    }, [repository.adapter])
+
     return {
         isFetching,
         dao: {
             adapter: daoAdapter,
             details: daoDetails,
         },
-        adapter: repoAdapter,
+        repository,
     }
 }
 
@@ -251,11 +297,12 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 }
 
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
+    const setRepository = useSetRecoilState(repositoryAtom)
     const { updateBranches } = useBranches(repo)
     const { pushUpgrade } = _usePush(dao, repo)
     const [progress, setProgress] = useState<{
         name?: string
-        type?: 'create' | 'destroy' | '(un)lock'
+        type?: 'create' | 'destroy' | '(un)lock' | 'sethead'
         isFetching: boolean
         details: TBranchOperateProgress
     }>({ isFetching: false, details: {} })
@@ -313,6 +360,25 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         }
     }
 
+    const sethead = async (name: string) => {
+        try {
+            setProgress({ name, type: 'sethead', isFetching: true, details: {} })
+            await repo.setHead(name)
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, head: name },
+                }
+            })
+        } catch (e) {
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
+        }
+    }
+
     const _branchOperateCallback = (params: TBranchOperateProgress) => {
         setProgress((currVal) => {
             const { details } = currVal
@@ -328,7 +394,7 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         })
     }
 
-    return { create, destroy, lock, unlock, progress }
+    return { create, destroy, lock, unlock, sethead, progress }
 }
 
 function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string) {

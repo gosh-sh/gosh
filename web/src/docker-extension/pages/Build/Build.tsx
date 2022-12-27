@@ -16,8 +16,8 @@ type TBuildFormValues = {
 const BuildPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const { repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
     const [output, setOutput] = useState('')
 
     const isDisabled = false
@@ -36,10 +36,13 @@ const BuildPage = () => {
     const onBuild = async (values: TBuildFormValues, { setSubmitting }: any) => {
         setOutput('')
         if (!!branch) {
-            const commit = await repo.getCommit({ address: branch.commit.address })
+            const commit = await repository.adapter.getCommit({
+                address: branch.commit.address,
+            })
 
+            const addr = AppConfig.versions[repository.details.version]
             await DockerClient.buildImage(
-                `gosh://${AppConfig.versions[repo.getVersion()]}/${daoName}/${repoName}`,
+                `gosh://${addr}/${daoName}/${repoName}`,
                 commit.name,
                 values.imageDockerfile,
                 values.tag,

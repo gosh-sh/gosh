@@ -75,7 +75,6 @@ import {
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
-import { validateUsername } from '../../validators'
 import { GoshContentSignature } from './goshcontentsignature'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
@@ -104,21 +103,22 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return GoshAdapter_1_0_0.instance
     }
 
+    isValidUsername(username: string): TValidationResult {
+        return this._isValidName(username, 'Username')
+    }
+
     isValidDaoName(name: string): TValidationResult {
-        const matches = name.match(/^[\w-]+$/g)
-        if (!matches || matches[0] !== name) {
-            return { valid: false, reason: 'Name has incorrect symbols' }
-        }
-        if (name.length > 64) {
-            return { valid: false, reason: 'Name is too long (>64)' }
-        }
-        return { valid: true }
+        return this._isValidName(name, 'DAO name')
+    }
+
+    isValidRepoName(name: string): TValidationResult {
+        return this._isValidName(name, 'Repository name')
     }
 
     async isValidProfile(username: string[]): Promise<TAddress[]> {
         return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
-            const { valid, reason } = validateUsername(member)
+            const { valid, reason } = this.isValidUsername(member)
             if (!valid) throw new GoshError(`${member}: ${reason}`)
 
             const profile = await this.getProfile({ username: member })
@@ -245,6 +245,34 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (!wait) throw new GoshError('Deploy profile timeout reached')
         return profile
     }
+
+    private _isValidName(name: string, field?: string): TValidationResult {
+        field = field || 'Name'
+
+        const matchSymbols = name.match(/^[\w-]+$/g)
+        if (!matchSymbols || matchSymbols[0] !== name) {
+            return { valid: false, reason: `${field} has incorrect symbols` }
+        }
+
+        const matchHyphens = name.match(/-{2,}/g)
+        if (matchHyphens && matchHyphens.length > 0) {
+            return { valid: false, reason: `${field} can not contain consecutive "-"` }
+        }
+
+        if (name.startsWith('-')) {
+            return { valid: false, reason: `${field} can not start with "-"` }
+        }
+
+        if (name.toLowerCase() !== name) {
+            return { valid: false, reason: `${field} should be lowercase` }
+        }
+
+        if (name.length > 39) {
+            return { valid: false, reason: `${field} is too long (Max length is 39)` }
+        }
+
+        return { valid: true }
+    }
 }
 
 class GoshDaoAdapter implements IGoshDaoAdapter {
@@ -276,6 +304,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!pubkey) {
             await this.profile.turnOn(this.wallet.address, keys.public, keys)
         }
+    }
+
+    getGosh(): IGoshAdapter {
+        return this.gosh
     }
 
     getAddress(): TAddress {
@@ -382,6 +414,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         prev?: { addr: TAddress; version: string } | undefined,
     ): Promise<IGoshRepositoryAdapter> {
         if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+
+        const { valid, reason } = this.gosh.isValidRepoName(name)
+        if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
@@ -513,7 +548,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         auth?: { username: string; wallet0: IGoshWallet },
         config?: { maxWalletsWrite: number },
     ) {
-        console.debug('Repo', auth, config)
         this.gosh = gosh
         this.client = gosh.client
         this.repo = new GoshRepository(this.client, address)
@@ -555,7 +589,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             version: this.repo.version,
             branches: (await this._getBranches()).length,
             head: await this.getHead(),
-            tags: await this.getTags(),
+            commitsIn: [],
         }
     }
 
@@ -941,6 +975,90 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const instance = new GoshContentSignature(this.client, address)
         const { value0 } = await instance.runLocal('getContent', {})
         return value0
+    }
+
+    async getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]> {
+        // Read limited amount of IntIn repo messages
+        const { messages } = await this.repo.getMessages(
+            {
+                msgType: ['IntIn'],
+                node: ['block_id', 'src', 'dst_transaction {id out_msgs}'],
+                limit: 30,
+                allow_latest_inconsistent_data: true,
+            },
+            true,
+        )
+
+        // Remove all messages from tail until `SendDiff` first occurence
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const { decoded } = messages[i]
+            if (decoded && decoded.name === 'SendDiff') {
+                break
+            }
+            messages.splice(i, 1)
+        }
+
+        // Get successful `SendDiff` messages
+        const sendDiffs = await Promise.all(
+            messages
+                .filter(({ decoded }) => decoded.name === 'SendDiff')
+                .map(async ({ decoded, message }) => {
+                    const { result } = await this.client.net.query_collection({
+                        collection: 'messages',
+                        filter: {
+                            id: { in: message.dst_transaction.out_msgs },
+                        },
+                        result: 'dst_transaction {id aborted status}',
+                    })
+
+                    const txSuccess = result.every(
+                        ({ dst_transaction: tx }) => tx.status === 3 && !tx.aborted,
+                    )
+                    return { decoded, message: { ...message, aborted: !txSuccess } }
+                }),
+        )
+        const incoming = sendDiffs
+            .filter(({ message }) => !message.aborted)
+            .map(({ decoded }) => decoded.value)
+
+        // Get `setComit` or `commitCanceled` messages and remove corresponding
+        // `SendDiff` messages
+        const setCommits = messages.filter(({ decoded }) => {
+            return ['setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+        })
+        for (const { message } of setCommits) {
+            const index = incoming.findIndex(({ commit }) => commit === message.src)
+            incoming.splice(index, 1)
+        }
+
+        return await Promise.all(
+            incoming.map(async (item) => {
+                const commit = await this.getCommit({ address: item.commit })
+                return { ...item, commit }
+            }),
+        )
+    }
+
+    async subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ) {
+        await this.repo.account.subscribeMessages('body msg_type', async (message) => {
+            const decoded = await this.repo.decodeMessageBody(
+                message.body,
+                message.msg_type,
+            )
+            if (
+                decoded &&
+                ['SendDiff', 'setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+            ) {
+                const incoming = await this.getIncomingCommits()
+                callback(incoming)
+            }
+        })
+    }
+
+    async unsubscribe() {
+        await this.repo.account.free()
     }
 
     async createBranch(

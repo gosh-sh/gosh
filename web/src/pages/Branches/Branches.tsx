@@ -4,6 +4,7 @@ import {
     faTrash,
     faLock,
     faLockOpen,
+    faCodeBranch,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
@@ -26,21 +27,24 @@ type TCreateBranchFormValues = {
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
     const [branchName, setBranchName] = useState<string>('main')
-    const { branches, branch, updateBranches } = useBranches(repo, branchName)
+    const { branches, branch, updateBranches } = useBranches(
+        repository.adapter,
+        branchName,
+    )
     const {
         create: createBranch,
         destroy: deleteBranch,
         lock: lockBranch,
         unlock: unlockBranch,
+        sethead: setheadBranch,
         progress: branchProgress,
-    } = useBranchManagement(dao.details, repo)
+    } = useBranchManagement(dao.details, repository.adapter)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
 
-    /** Lock branch by SMV */
     const onBranchLock = async (name: string) => {
         try {
             await lockBranch(name)
@@ -51,7 +55,6 @@ export const BranchesPage = () => {
         }
     }
 
-    /** Unlock branch by SMV */
     const onBranchUnlock = async (name: string) => {
         try {
             await unlockBranch(name)
@@ -62,7 +65,6 @@ export const BranchesPage = () => {
         }
     }
 
-    /** Create new branch */
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
         helpers: FormikHelpers<any>,
@@ -80,7 +82,6 @@ export const BranchesPage = () => {
         }
     }
 
-    /** Delete branch */
     const onBranchDelete = async (name: string) => {
         if (window.confirm(`Delete branch '${name}'?`)) {
             try {
@@ -89,6 +90,15 @@ export const BranchesPage = () => {
                 console.error(e)
                 toast.error(<ToastError error={e} />)
             }
+        }
+    }
+
+    const onBranchSetHead = async (name: string) => {
+        try {
+            await setheadBranch(name)
+        } catch (e: any) {
+            console.error(e)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -206,19 +216,30 @@ export const BranchesPage = () => {
                         <div className="grow">
                             <Link
                                 to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
-                                className="hover:underline"
+                                className="hover:underline mr-2"
                             >
                                 {branch.name}
                             </Link>
 
                             {branch.isProtected && (
-                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 ml-2">
+                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
                                     <FontAwesomeIcon
-                                        className="mr-2"
+                                        className="mr-1"
                                         size="sm"
                                         icon={faLock}
                                     />
                                     Locked
+                                </div>
+                            )}
+
+                            {repository.details.head === branch.name && (
+                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
+                                    <FontAwesomeIcon
+                                        className="mr-1"
+                                        size="sm"
+                                        icon={faCodeBranch}
+                                    />
+                                    Head
                                 </div>
                             )}
                         </div>
@@ -227,7 +248,7 @@ export const BranchesPage = () => {
                                 <>
                                     <button
                                         type="button"
-                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3"
+                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
                                         onClick={() => {
                                             branch.isProtected
                                                 ? onBranchUnlock(branch.name)
@@ -252,6 +273,27 @@ export const BranchesPage = () => {
                                         <span className="ml-2">
                                             {branch.isProtected ? 'Unlock' : 'Lock'}
                                         </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
+                                        onClick={() => onBranchSetHead(branch.name)}
+                                        disabled={
+                                            branchProgress.isFetching ||
+                                            repository.details.head === branch.name
+                                        }
+                                    >
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === 'sethead' &&
+                                        branchProgress.name === branch.name ? (
+                                            <Spinner size="xs" />
+                                        ) : (
+                                            <FontAwesomeIcon
+                                                icon={faCodeBranch}
+                                                size="sm"
+                                            />
+                                        )}
+                                        <span className="ml-2">Set head</span>
                                     </button>
                                     <button
                                         type="button"

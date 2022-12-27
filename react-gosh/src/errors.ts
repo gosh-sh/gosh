@@ -19,6 +19,7 @@ export enum EGoshError {
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
+    REPO_NAME_INVALID = 'Incorrect repository name',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',
     NO_BRANCH = 'Branch undefined',
