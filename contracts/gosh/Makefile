@@ -1,6 +1,6 @@
 tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
 KEYS_PATH = ${CURDIR}
-EXTRA_DOCKER_ARGS = '--network host'
+EXTRA_DOCKER_ARGS = '--network=host'
 clean:
 	rm -f *.tvc *.abi.json *.code
 	rm -rf .solc_imports
