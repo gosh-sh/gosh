@@ -40,7 +40,7 @@ while (true) {
         throw new Error(error.message)
     }
     if (!data) {
-        await sleep(10)
+        await sleep(30)
         continue
     }
 
@@ -112,8 +112,18 @@ while (true) {
         }
 
         await emailOnboardingFinished(authUser.user)
+
+        const { error } = await getDb()
+            .from('users')
+            .update({
+                onboarded_at: new Date().toISOString(),
+            })
+            .eq('id', user.id)
+        if (!error) {
+            console.log('User onboarding finished', user)
+        }
     }
 
     console.log('Sleep...')
-    await sleep(10)
+    await sleep(30)
 }
