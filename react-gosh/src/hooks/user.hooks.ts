@@ -109,8 +109,8 @@ function useUser() {
             }))
         }
 
-        resetUser()
         resetUserPersist()
+        setUserPersist((state) => ({ ...state, username, profile: profile.address }))
     }
 
     const signout = () => {

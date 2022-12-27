@@ -15,14 +15,19 @@ import ToastError from '../../components/Error/ToastError'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import yup from '../../yup-extended'
+import { appModalStateAtom } from '../../store/app.state'
+import PinCodeModal from '../../components/Modal/PinCode'
+import { useNavigate } from 'react-router-dom'
 
 type TGoshSignupUsernameProps = {
-    phrase: string
+    phrase: string[]
     signoutOAuth(): Promise<void>
 }
 
 const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     const { phrase, signoutOAuth } = props
+    const navigate = useNavigate()
+    const setModal = useSetRecoilState(appModalStateAtom)
     const { session } = useRecoilValue(oAuthSessionAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
     const setStep = useSetRecoilState(signupStepAtom)
@@ -65,8 +70,9 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
             // Prepare data
             const username = values.username.trim()
+            const seed = phrase.join(' ')
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-                phrase,
+                phrase: seed,
             })
 
             // Get or create DB user
@@ -88,9 +94,21 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             }
 
             // Deploy GOSH account
-            await signup({ phrase, username })
+            await signup({ phrase: seed, username })
             await signoutOAuth()
-            setStep({ index: 5, data: { username, email: session.user.email } })
+            setStep({ index: 4, data: { username, email: session.user.email } })
+
+            // Create PIN-code
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal
+                        phrase={seed}
+                        onUnlock={() => navigate('/a/orgs', { replace: true })}
+                    />
+                ),
+            })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -102,7 +120,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
                     <div className="aside-step__btn-back">
-                        <button type="button" onClick={() => setStep({ index: 3 })}>
+                        <button type="button" onClick={() => setStep({ index: 2 })}>
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </button>
                     </div>

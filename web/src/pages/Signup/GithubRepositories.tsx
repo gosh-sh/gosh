@@ -1,15 +1,13 @@
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import Spinner from '../../components/Spinner'
 import {
     githubRepositoriesAtom,
     githubRepositoriesSelector,
     octokitSelector,
-    signupStepAtom,
 } from '../../store/signup.state'
+import GithubEmpty from './GithubEmpty'
 
 type TGithubRepositoriesProps = {
     organization: any
@@ -20,7 +18,6 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
     const setGithubRepos = useSetRecoilState(githubRepositoriesAtom)
     const githubOrgRepos = useRecoilValue(githubRepositoriesSelector(organization.id))
     const octokit = useRecoilValue(octokitSelector)
-    const setStep = useSetRecoilState(signupStepAtom)
 
     const onRepositoryCheck = (id: number) => {
         setGithubRepos((state) => ({
@@ -90,70 +87,37 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
     }, [getGithubRepositories])
 
     return (
-        <div className="signup signup--repositories">
-            <div className="signup__aside signup__aside--step aside-step">
-                <div className="aside-step__header">
-                    <div className="aside-step__btn-back">
-                        <button type="button" onClick={() => setStep({ index: 1 })}>
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </button>
-                    </div>
-                    <span className="aside-step__title">{organization.login}</span>
-                </div>
+        <>
+            {!githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
+                <GithubEmpty />
+            )}
 
-                <p className="aside-step__text">Select repositories to add to GOSH</p>
-            </div>
-            <div className="signup__content">
-                <div className="signup__reload-items">
-                    <button
-                        type="button"
-                        disabled={githubOrgRepos?.isFetching}
-                        onClick={getGithubRepositories}
-                    >
-                        {githubOrgRepos?.isFetching && <Spinner size="xs" />}
-                        Refresh
-                    </button>
-                </div>
-
-                {!githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
-                    <div className="signup__norepos">
-                        <p className="signup__norepos-title">Nothing to show</p>
-                        <p className="signup__norepos-content">
-                            You should have at least one repository on GitHub
-                        </p>
-                    </div>
-                )}
-
-                {githubOrgRepos?.items.map((item, index) => (
-                    <div
-                        key={index}
-                        className="signup__repoitem repoitem"
-                        onClick={() => onRepositoryCheck(item.id)}
-                    >
-                        <div className="repoitem__header">
-                            <FontAwesomeIcon
-                                icon={faHardDrive}
-                                className="repoitem__icon"
+            {githubOrgRepos?.items.map((item, index) => (
+                <div
+                    key={index}
+                    className="signup__repoitem repoitem"
+                    onClick={() => onRepositoryCheck(item.id)}
+                >
+                    <div className="repoitem__header">
+                        <FontAwesomeIcon icon={faHardDrive} className="repoitem__icon" />
+                        <div className="repoitem__title">{item.name}</div>
+                        <div className="repoitem__check">
+                            <input
+                                type="checkbox"
+                                checked={item.isSelected}
+                                onChange={() => {}}
                             />
-                            <div className="repoitem__title">{item.name}</div>
-                            <div className="repoitem__check">
-                                <input
-                                    type="checkbox"
-                                    checked={item.isSelected}
-                                    onChange={() => {}}
-                                />
-                            </div>
                         </div>
-
-                        <p className="repoitem__description">{item.description}</p>
-
-                        <p className="repoitem__secondary">
-                            Updated on {new Date(item.updated_at).toLocaleDateString()}
-                        </p>
                     </div>
-                ))}
-            </div>
-        </div>
+
+                    <p className="repoitem__description">{item.description}</p>
+
+                    <p className="repoitem__secondary">
+                        Updated on {new Date(item.updated_at).toLocaleDateString()}
+                    </p>
+                </div>
+            ))}
+        </>
     )
 }
 
