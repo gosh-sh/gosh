@@ -7,9 +7,9 @@ pipeline {
     stages {
         stage('Build') {     
             steps {
-                git branch: 'master',
-                    credentialsId: 'github-gosh-release',
-                    url: 'https://github.com/gosh-sh/gosh-site.git'
+                withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                    sh 'git clone https://$TOKEN@github.com/gosh-sh/gosh-site.git'
+                }
                 script {
                     sh "npm build"
                 }
