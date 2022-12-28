@@ -11,14 +11,16 @@ pipeline {
                     sh 'git clone https://$TOKEN@github.com/gosh-sh/gosh-site.git'
                 }
                 script {
-                    sh "PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} npm run build"
+                    dir('gosh-site') {
+                        sh "PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} npm run build"
+                    }
                 }
             }
         }
         stage('Deploy') {
             steps {
                 script {
-                    dir('web') {
+                    dir('gosh-site') {
                         sh 'aws s3 rm s3://gosh-sh --recursive'
                         sh 'aws s3 sync build/ s3://gosh-sh'
                         sh "aws cloudfront create-invalidation --distribution-id E2IXFBDTRHZ0Z2 --paths '/*'"
