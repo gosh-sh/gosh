@@ -54,6 +54,7 @@ export async function getDaoBotsForInit() {
         .from('dao_bot')
         .select()
         .is('initialized_at', null)
+        .order('created_at', { ascending: false })
     if (error) {
         console.log(error)
         throw new Error(error.message)
