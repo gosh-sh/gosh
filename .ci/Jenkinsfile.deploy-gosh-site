@@ -1,0 +1,35 @@
+pipeline {
+    agent {
+        node {
+            label 'jenkins-main'
+        }
+    }
+    stages {
+        stage('Build') {     
+            steps {
+                git branch: 'master',
+                    credentialsId: 'github-gosh-release',
+                    url: 'https://github.com/gosh-sh/gosh-site.git'
+                script {
+                    sh "npm build"
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    dir('web') {
+                        sh 'aws s3 rm s3://gosh-sh --recursive'
+                        sh 'aws s3 sync build/ s3://gosh-sh'
+                        sh "aws cloudfront create-invalidation --distribution-id E2IXFBDTRHZ0Z2 --paths '/*'"
+                    }
+                }
+            }
+            post {
+                always {
+                    cleanWs()
+                }
+            }
+        }
+    }
+}
