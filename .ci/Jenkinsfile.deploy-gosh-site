@@ -11,7 +11,7 @@ pipeline {
                     sh 'git clone https://$TOKEN@github.com/gosh-sh/gosh-site.git'
                 }
                 script {
-                    sh "PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} npm build"
+                    sh "PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} npm run build"
                 }
             }
         }
