@@ -8,11 +8,11 @@ pipeline {
         stage('Build') {     
             steps {
                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                    sh 'git clone https://$TOKEN@github.com/gosh-sh/gosh-site.git'
+                    sh 'git clone https://oauth2:$TOKEN@github.com/gosh-sh/gosh-site.git'
                 }
                 script {
                     dir('gosh-site') {
-                        sh "PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} npm run build"
+                        sh "export PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} && npm i && npm run build"
                     }
                 }
             }
