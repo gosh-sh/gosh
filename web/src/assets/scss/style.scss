@@ -127,8 +127,6 @@ for those elements which require gradient border color
         }
 
         &:hover {
-            @apply text-white;
-
             &::after {
                 @apply sm:bg-button-header-focus-border;
             }
@@ -373,7 +371,9 @@ for those elements which require gradient border color
     }
 
     &--complete {
-        @apply pt-16 md:pt-56;
+        @apply relative border rounded-xl items-center
+            py-9 px-4 lg:px-16
+            mb-9;
     }
 
     &__aside {
@@ -384,7 +384,7 @@ for those elements which require gradient border color
         }
 
         &--complete {
-            @apply px-0 lg:px-24 mt-0;
+            @apply px-0 mt-0;
         }
     }
 
@@ -394,7 +394,7 @@ for those elements which require gradient border color
             overflow-hidden;
 
         &--first {
-            @apply order-first lg:order-none mt-7 mb-24;
+            @apply order-first lg:order-none mt-0 mb-10 lg:mb-0;
         }
     }
 
@@ -402,10 +402,10 @@ for those elements which require gradient border color
         @apply mb-4 text-end;
 
         button {
-            @apply btn btn--body text-xs px-2 py-1.5;
+            @apply text-gray-7c8db5 text-sm px-2 py-1.5;
         }
 
-        button .spinner {
+        button .icon {
             @apply mr-2;
         }
     }
@@ -415,7 +415,6 @@ for those elements which require gradient border color
     }
 
     &__repoitem {
-        @apply mb-6;
     }
 
     &__norepos {
@@ -433,11 +432,18 @@ for those elements which require gradient border color
     }
 
     &__phrase-form {
-        @apply w-full max-w-[25.375rem] mx-auto;
+        @apply w-full max-w-[25.375rem] mx-auto
+            border rounded-xl p-5 lg:px-8 lg:py-12;
     }
 
     &__nickname-form {
         @apply w-full max-w-[25.375rem] mx-auto;
+    }
+
+    &__dismiss-btn {
+        @apply absolute right-4 top-3
+            p-1
+            text-gray-7c8db5 hover:text-black;
     }
 }
 .signup .aside-home {
@@ -468,10 +474,46 @@ for those elements which require gradient border color
     }
 
     &__btn-signout {
-        @apply ml-2;
+        @apply flex flex-nowrap items-center
+            px-3 py-2
+            w-full
+            rounded-lg;
 
-        button {
-            @apply btn btn--body px-2 py-1.5 text-xs;
+        &-slide {
+            @apply grow
+                flex flex-nowrap
+                text-xl text-left
+                whitespace-nowrap text-ellipsis overflow-hidden;
+        }
+
+        &-icon {
+            @apply text-gray-7c8db5;
+        }
+
+        &-user {
+            @apply block
+                transition-all duration-300
+                whitespace-nowrap text-ellipsis overflow-hidden;
+        }
+
+        &-text {
+            @apply block
+                transition-all duration-75
+                translate-x-full w-0 overflow-hidden;
+        }
+
+        &:hover {
+            @apply bg-gray-50;
+
+            .aside-step__btn-signout-user {
+                @apply -translate-x-full w-0;
+            }
+            .aside-step__btn-signout-text {
+                @apply translate-x-0 w-full;
+            }
+            .aside-step__btn-signout-icon {
+                @apply text-black;
+            }
         }
     }
 
@@ -506,10 +548,18 @@ for those elements which require gradient border color
     }
 }
 .signup .orgitem {
-    @apply border rounded-xl cursor-pointer;
+    @apply border rounded-xl overflow-hidden;
 
     &__main {
-        @apply flex flex-nowrap p-5;
+        @apply flex flex-nowrap p-5 cursor-pointer;
+
+        &:hover {
+            @apply bg-gray-50;
+
+            .orgitem__arrow {
+                @apply text-gray-53596d;
+            }
+        }
     }
 
     &__media {
@@ -541,20 +591,25 @@ for those elements which require gradient border color
     }
 
     &__arrow {
-        @apply absolute right-3 top-0
+        @apply absolute right-1 top-0
             text-base text-gray-200
-            transition-transform;
+            transition-transform
+            -rotate-90;
+    }
+
+    &__arrow-open {
+        @apply rotate-90;
     }
 
     &__description {
         @apply text-xs md:text-sm text-gray-53596d;
     }
 
-    &__repos {
+    &__footer {
         @apply text-gray-606060 text-xs mt-3 hidden lg:block;
     }
 
-    &__repos--xs {
+    &__footer--xs {
         @apply border-t px-5 py-2 mt-0 block lg:hidden;
     }
 
@@ -562,17 +617,12 @@ for those elements which require gradient border color
         @apply text-blue-348eff pr-2;
     }
 
-    &:hover {
-        @apply bg-gray-50;
-
-        .orgitem__arrow {
-            @apply translate-x-3 text-gray-53596d;
-        }
+    &__repos {
+        @apply max-h-96 overflow-auto;
     }
 }
 .signup .repoitem {
-    @apply border rounded-xl
-        p-5
+    @apply p-5
         cursor-pointer
         hover:bg-gray-50;
 
@@ -618,7 +668,7 @@ for those elements which require gradient border color
     }
 
     &__submit {
-        @apply mt-10 w-full md:w-1/2 mx-auto;
+        @apply mt-10 mx-auto;
 
         button {
             @apply btn btn--body
@@ -633,15 +683,60 @@ for those elements which require gradient border color
     }
 }
 
-.phrase-form {
-    @apply border rounded-xl p-5 lg:p-10;
+.signin {
+    &__phrase-form {
+        @apply px-5;
+    }
+}
 
-    &__generate {
-        @apply mt-2 text-end;
+.phrase-form {
+    &__words {
+        @apply relative flex flex-wrap justify-center gap-3;
+    }
+
+    &__word {
+        @apply relative;
+    }
+
+    &__word-label {
+        @apply block text-xs text-gray-7c8db5;
+    }
+
+    &__word-input {
+        @apply border rounded-lg w-full lg:max-w-[150px] px-3 py-2;
+    }
+
+    &__word-suggestions {
+        @apply absolute left-0 top-full w-full
+            border rounded-lg overflow-hidden
+            bg-white
+            mt-1
+            z-1;
+    }
+
+    &__word-suggestion {
+        @apply px-3 py-2 cursor-pointer hover:bg-gray-50;
+    }
+
+    &__words-btns {
+        @apply text-right text-sm text-gray-7c8db5 mb-4;
 
         button {
-            @apply btn btn--body py-1.5 px-2 text-xs leading-normal;
+            @apply px-2 py-1 rounded-lg
+                hover:bg-gray-fafafd;
         }
+
+        button svg {
+            @apply mr-1;
+        }
+    }
+
+    &__words-clear-btn {
+        @apply absolute
+            right-0 lg:right-2 -top-3 lg:-top-6
+            py-1 px-2 rounded-lg
+            text-gray-7c8db5 hover:text-black
+            hover:bg-gray-50;
     }
 
     &__confirm {
@@ -649,17 +744,23 @@ for those elements which require gradient border color
     }
 
     &__submit {
-        @apply mt-5 w-full md:w-1/2 mx-auto;
+        @apply mt-5 text-center;
 
         button {
             @apply btn btn--body
-                w-full
                 px-4 py-3
+                w-full md:w-1/3
                 leading-normal font-medium;
         }
 
         button .spinner {
             @apply mr-3;
+        }
+    }
+
+    &__submit--full {
+        button {
+            @apply w-full;
         }
     }
 }

@@ -33,7 +33,7 @@ pipeline {
             }
             steps {
                 script {
-                    build job: 'deploy-web', parameters: [[$class: 'StringParameterValue', name: 'sha1', value: ${TAG}]]
+                    build job: 'deploy-web', parameters: [[$class: 'StringParameterValue', name: 'sha1', value: "${TAG}"]]
                 }
             }
         }

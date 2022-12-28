@@ -7,10 +7,8 @@ import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import GithubOrganizations from './GithubOrganizations'
 import { oAuthSessionAtom, signupStepAtom } from '../../store/signup.state'
-import GithubRepositories from './GithubRepositories'
 import GoshSignupUsername from './GoshSignupUsername'
 import { supabase } from '../../helpers'
-import GoshSignupComplete from './GoshSignupComplete'
 import GoshSignupStart from './GoshSignupStart'
 import GoshSignupPhrase from './GoshSignupPhrase'
 
@@ -21,7 +19,7 @@ const SignupPage = () => {
     const [oAuthSession, setOAuthSession] = useRecoilState(oAuthSessionAtom)
     const resetOAuthSession = useResetRecoilState(oAuthSessionAtom)
     const [step, setStep] = useRecoilState(signupStepAtom)
-    const [phrase, setPhrase] = useState<string>('')
+    const [phrase, setPhrase] = useState<string[]>([])
 
     const signinOAuth = async () => {
         try {
@@ -93,14 +91,12 @@ const SignupPage = () => {
 
             {step?.index === 0 && <GoshSignupStart signinOAuth={signinOAuth} />}
             {step?.index === 1 && <GithubOrganizations signoutOAuth={signoutOAuth} />}
-            {step?.index === 2 && <GithubRepositories {...step.data} />}
-            {step?.index === 3 && (
+            {step?.index === 2 && (
                 <GoshSignupPhrase phrase={phrase} setPhrase={setPhrase} />
             )}
-            {step?.index === 4 && (
+            {step?.index === 3 && (
                 <GoshSignupUsername phrase={phrase} signoutOAuth={signoutOAuth} />
             )}
-            {step?.index === 5 && <GoshSignupComplete {...step.data} />}
         </div>
     )
 }

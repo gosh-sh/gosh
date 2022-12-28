@@ -1,46 +1,77 @@
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import {
+    faArrowLeft,
+    faExclamation,
+    faTimes,
+    faRotateRight,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Combobox } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
+import { useCallback, useEffect, useState } from 'react'
 import { AppConfig, EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
 import * as Yup from 'yup'
 import ToastError from '../../components/Error/ToastError'
-import { SwitchField, TextareaField } from '../../components/Formik'
+import { SwitchField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import { signupStepAtom } from '../../store/signup.state'
 
 type TGoshSignupPhraseProps = {
-    phrase: string
-    setPhrase(phrase: string): void
+    phrase: string[]
+    setPhrase: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
     const { phrase, setPhrase } = props
     const setStep = useSetRecoilState(signupStepAtom)
+    const [wordsList, setWordsList] = useState<string[]>([])
+    const [wordsQuery, setWordsQuery] = useState('')
 
-    const getRandomPhrase = async () => {
+    const wordsSuggested = !wordsQuery
+        ? wordsList.slice(0, 5)
+        : wordsList
+              .filter((word) => {
+                  return word.toLowerCase().startsWith(wordsQuery.toLowerCase())
+              })
+              .slice(0, 5)
+
+    const setRandomPhrase = useCallback(async () => {
         const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
-        return phrase
-    }
+        setPhrase(phrase.split(' '))
+    }, [setPhrase])
 
-    const onFormSubmit = async (values: { phrase: string }) => {
+    const onFormSubmit = async (values: { words: string[] }) => {
         try {
-            const { phrase } = values
+            const { words } = values
             const { valid } = await AppConfig.goshclient.crypto.mnemonic_verify({
-                phrase,
+                phrase: words.join(' '),
             })
             if (!valid) {
                 throw new GoshError(EGoshError.PHRASE_INVALID)
             }
-
-            setPhrase(phrase)
-            setStep({ index: 4 })
+            setPhrase(words)
+            setStep({ index: 3 })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
         }
     }
+
+    useEffect(() => {
+        const _getWords = async () => {
+            const { words } = await AppConfig.goshclient.crypto.mnemonic_words({})
+            setWordsList(words.split(' '))
+        }
+
+        _getWords()
+    }, [])
+
+    useEffect(() => {
+        if (!phrase.length) {
+            setRandomPhrase()
+        }
+    }, [phrase, setRandomPhrase])
 
     return (
         <div className="signup signup--phrase">
@@ -57,8 +88,8 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
                 <p className="aside-step__text">Let's set up your GOSH account</p>
 
                 <p className="aside-step__text-secondary">
-                    Make sure to write your seed phrase on paper, you will not be able to
-                    retrieve it later
+                    Write down the seed phrase in a safe place or enter an existing one if
+                    you already have a GOSH account
                 </p>
             </div>
 
@@ -66,54 +97,91 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
                 <div className="signup__phrase-form phrase-form">
                     <Formik
                         initialValues={{
-                            phrase,
+                            words: phrase,
                             isConfirmed: false,
                         }}
                         onSubmit={onFormSubmit}
                         validationSchema={Yup.object().shape({
-                            phrase: Yup.string().required('Phrase is required'),
                             isConfirmed: Yup.boolean().oneOf(
                                 [true],
                                 'You should accept this',
                             ),
                         })}
+                        enableReinitialize
                     >
-                        {({ isSubmitting, setFieldValue }) => (
+                        {({ isSubmitting, setFieldValue, values }) => (
                             <Form>
-                                <div>
-                                    <Field
-                                        name="phrase"
-                                        component={TextareaField}
-                                        errorEnabled={false}
-                                        inputProps={{
-                                            className: '!px-5 !py-3',
-                                            autoComplete: 'off',
-                                            placeholder:
-                                                'Provide your seed phrase or generate random one',
-                                            rows: 4,
-                                        }}
-                                        help={
-                                            <>
-                                                <p>GOSH cannot reset this phrase</p>
-                                                <p>
-                                                    If you forget it, you might lose
-                                                    access to your account
-                                                </p>
-                                            </>
-                                        }
-                                    />
-                                </div>
-
-                                <div className="phrase-form__generate">
+                                <div className="phrase-form__words-btns">
                                     <button
                                         type="button"
-                                        onClick={async () => {
-                                            const phrase = await getRandomPhrase()
-                                            setFieldValue('phrase', phrase)
+                                        onClick={() => {
+                                            for (let i = 0; i < 12; i++) {
+                                                setFieldValue(`words.${i}`, '')
+                                            }
                                         }}
                                     >
-                                        Generate phrase
+                                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                                        Clear
                                     </button>
+                                    <button type="button" onClick={setRandomPhrase}>
+                                        <FontAwesomeIcon icon={faRotateRight} />
+                                        Generate
+                                    </button>
+                                </div>
+
+                                <div className="phrase-form__words">
+                                    {values.words.map((word, index) => (
+                                        <Combobox
+                                            key={index}
+                                            as="div"
+                                            value={word}
+                                            nullable
+                                            onChange={(value) => {
+                                                setFieldValue(
+                                                    `words.${index}`,
+                                                    value ? value.toLowerCase() : '',
+                                                )
+                                            }}
+                                            className="phrase-form__word"
+                                        >
+                                            <Combobox.Label className="phrase-form__word-label">
+                                                Word #{index + 1}
+                                            </Combobox.Label>
+                                            <Combobox.Input
+                                                displayValue={(v: string) => v}
+                                                onChange={(event) =>
+                                                    setWordsQuery(event.target.value)
+                                                }
+                                                className="phrase-form__word-input"
+                                            />
+                                            <Combobox.Options className="phrase-form__word-suggestions">
+                                                {wordsSuggested.map((word) => (
+                                                    <Combobox.Option
+                                                        key={word}
+                                                        value={word}
+                                                        className="phrase-form__word-suggestion"
+                                                    >
+                                                        {word}
+                                                    </Combobox.Option>
+                                                ))}
+                                            </Combobox.Options>
+                                        </Combobox>
+                                    ))}
+                                </div>
+
+                                <div className="flex flex-nowrap mt-5 bg-red-ff3b30/5 px-3 py-2.5 rounded-xl text-red-ff3b30">
+                                    <div>
+                                        <div className="border border-red-ff3b30 rounded-xl px-4 py-2">
+                                            <FontAwesomeIcon
+                                                icon={faExclamation}
+                                                size="lg"
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="ml-3 text-xs">
+                                        GOSH cannot reset this phrase! If you forget it,
+                                        you might lose access to your account
+                                    </span>
                                 </div>
 
                                 <div className="phrase-form__confirm">
@@ -127,7 +195,7 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
                                     />
                                 </div>
 
-                                <div className="phrase-form__submit">
+                                <div className="phrase-form__submit phrase-form__submit--full">
                                     <button type="submit" disabled={isSubmitting}>
                                         {isSubmitting && <Spinner size={'lg'} />}
                                         Continue
