@@ -3,15 +3,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import { TRepository, TTag } from 'react-gosh/dist/types/repo.types'
+import { TRepository } from 'react-gosh/dist/types/repo.types'
 
 type TRepositoryListItemProps = {
     daoName: string
     daoLink?: boolean
-    item: Omit<TRepository, 'branches' | 'head' | 'tags'> & {
+    item: Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
         branches?: number
         head?: string
-        tags?: TTag[]
+        commitsIn?: any[]
     }
 }
 
@@ -44,20 +44,6 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
             </div>
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
-
-            {!!item?.tags && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {item.tags.map((tag, index) => (
-                        <button
-                            key={index}
-                            type="button"
-                            className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
-                        >
-                            {tag.content}
-                        </button>
-                    ))}
-                </div>
-            )}
 
             <div className="flex gap-4 mt-3 text-xs text-gray-606060 justify-between">
                 <div className="flex gap-4">

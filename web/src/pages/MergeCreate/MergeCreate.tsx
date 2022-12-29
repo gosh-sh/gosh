@@ -15,7 +15,7 @@ import BranchCommitForm from '../../components/Commit/BranchCommitForm'
 const MergeCreatePage = () => {
     const navigate = useNavigate()
     const { daoName, repoName } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const {
         srcBranch,
         dstBranch,
@@ -24,7 +24,7 @@ const MergeCreatePage = () => {
         push,
         pushProgress,
         branchProgress,
-    } = useMergeRequest(dao.details, repo)
+    } = useMergeRequest(dao.details, repository.adapter)
 
     const onBuild = async (values: any) => {
         try {

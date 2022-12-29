@@ -24,6 +24,9 @@ module.exports = {
                 'blue-348eff': '#348eff',
                 'blue-1e7aec': '#1e7aec',
                 'gray-53596d': '#53596d',
+                'gray-7c8db5': '#7c8db5',
+                'gray-fafafd': '#fafafd',
+                'red-ff3b30': '#ff3b30',
             },
             backgroundImage: {
                 'button-border':

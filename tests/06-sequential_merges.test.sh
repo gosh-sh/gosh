@@ -19,10 +19,10 @@
 # 14 push changes
 # 15 fetch changes
 
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
-
+set -x
 REPO_NAME=repo6
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -34,10 +34,9 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 #check
 cd $REPO_NAME
@@ -60,15 +59,15 @@ git add .
 git commit -m "foo-$CHANGE"
 
 echo "***** awaiting push in dev *****"
-git push --set-upstream origin $BRANCH_NAME
+git push -u origin $BRANCH_NAME
+delay 60
 
-echo "***** awaiting set commit in dev *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit in dev *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 echo "***** comparing repositories *****"
@@ -89,11 +88,11 @@ git add .
 git commit -m "foo-$CHANGE v2"
 
 echo "***** awaiting push in dev2 *****"
-git push --set-upstream origin $BRANCH_NAME"2"
+git push -u origin $BRANCH_NAME"2"
+delay 60
 
-echo "***** awaiting set commit in dev2 *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME"2"
-sleep 30
+# echo "***** awaiting set commit in dev2 *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME"2"
 
 cd ../$REPO_NAME"-clone"
 git pull
@@ -116,10 +115,10 @@ git merge $BRANCH_NAME"2"
 
 echo "***** awaiting push in dev *****"
 git push
+delay 60
 
-echo "***** awaiting set commit in dev *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit in dev *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 cd ../$REPO_NAME"-clone"
 git pull
@@ -138,11 +137,11 @@ cd $REPO_NAME
 git checkout -b main
 git merge $BRANCH_NAME
 echo "***** awaiting push in main *****"
-git push --set-upstream origin main
+git push -u origin main
+delay 120
 
-echo "***** awaiting set commit in main *****"
-wait_set_commit $REPO_ADDR main
-sleep 30
+# echo "***** awaiting set commit in main *****"
+# wait_set_commit $REPO_ADDR main
 
 cd ../$REPO_NAME"-clone"
 git pull

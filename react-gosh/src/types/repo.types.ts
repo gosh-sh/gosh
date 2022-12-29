@@ -13,14 +13,14 @@ type TRepository = {
     version: string
     branches: number
     head: string
-    tags: TTag[]
+    commitsIn: { branch: string; commit: TCommit }[]
 }
 
-type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'tags'> & {
+type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
     adapter: IGoshRepositoryAdapter
     branches?: number
     head?: string
-    tags?: TTag[]
+    commitsIn?: { branch: string; commit: TCommit }[]
     isLoadDetailsFired?: boolean
 }
 
