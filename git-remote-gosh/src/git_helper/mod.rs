@@ -24,7 +24,7 @@ pub mod ever_client;
 mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
-static SUPPORTED_CONTRACT_VERSIONS_LIST: [&str; 3] = ["1.0.0", "1.0.1", "1.0.2"];
+static SUPPORTED_CONTRACT_VERSIONS_LIST: [&str; 1] = ["1.0.0"];
 
 pub struct GitHelper<
     Blockchain = crate::blockchain::Everscale,
@@ -356,10 +356,10 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
-            (Some("repo_version"), None, None) => helper.get_repo_version().await?,
-            (Some("get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
-            (Some("get_repo_versions"), None, None) => helper.get_repo_versions().await?,
-            (Some("supported_contract_versions"), None, None) => {
+            (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
+            (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
+            (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions().await?,
+            (Some("gosh_supported_contract_versions"), None, None) => {
                 helper.supported_contract_versions().await?
             }
             (None, None, None) => return Ok(()),

@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
         let n_args = args.clone();
         get_supported_versions.spawn(
             async move {
-                run_binary_with_command(helper_path, n_args, "supported_contract_versions").await
+                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_versions").await
             }
             .instrument(tracing::debug_span!("tokio::spawn::get_supported_versions").or_current()),
         );
@@ -54,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
     while let Some(finished_task) = get_supported_versions.join_next().await {
         let task_result =
             finished_task.map_err(|e| format_err!("Failed to finish async task: {e}"))?;
+        tracing::trace!("Task result: {task_result:?}");
         if let Ok((_exec_res, versions, helper_path)) = task_result {
             if !versions.is_empty() {
                 existing_to_supported_map.insert(helper_path.to_string(), versions);
@@ -63,14 +64,14 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::trace!("existing: {existing_to_supported_map:?}");
     if existing_to_supported_map.is_empty() {
-        return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to {INI_LOCATION}"));
+        return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to ini file"));
     }
 
     let mut highest = None;
     for helper_path in existing_to_supported_map.keys() {
         tracing::trace!("Run version: {helper_path}");
         if let Ok((status, versions, _)) =
-            run_binary_with_command(helper_path.to_owned(), args.clone(), "get_repo_versions").await
+            run_binary_with_command(helper_path.to_owned(), args.clone(), "gosh_get_all_repo_versions").await
         {
             tracing::trace!("Get versions: {status:?} {versions:?}");
             if versions.len() == 0 {
@@ -147,7 +148,7 @@ async fn run_binary_with_command(
         .args(args.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        // .stderr(Stdio::null())
         .spawn()?;
     let mut stdin = helper
         .stdin
@@ -173,9 +174,10 @@ async fn run_binary_with_command(
 fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
     let path_str = std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| INI_LOCATION.to_string());
     let path_str = shellexpand::tilde(&path_str).into_owned();
+    tracing::trace!("dispatcher ini path: {path_str}");
     let path = Path::new(&path_str);
     let file = File::open(path)
-        .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", INI_LOCATION, e))?;
+        .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", path_str, e))?;
     let buf = std::io::BufReader::new(file);
     let res = buf
         .lines()
