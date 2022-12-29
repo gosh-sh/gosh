@@ -48,6 +48,10 @@ build: copy_abi clear_screen
 install: copy_abi clear_screen
 	cargo install --path .
 
+.PHONY: install_for_test
+install_for_test: copy_abi clear_screen
+	cargo install --path . -F for_test
+
 .PHONY: test
 test: copy_abi clear_screen
 	cargo test

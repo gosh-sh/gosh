@@ -7,13 +7,7 @@ cd ../gosh-dispatcher/
 cargo install --path .
 
 cd ../git-remote-gosh/
-sed -i 's/1]/2]/' src/git_helper/mod.rs
-sed -i 's/"1.0.0"/"1.0.0", "9999.0.0"/' src/git_helper/mod.rs
-
-make install
-
-sed -i 's/2]/1]/' src/git_helper/mod.rs
-sed -i 's/"1.0.0", "9999.0.0"/"1.0.0"/' src/git_helper/mod.rs
+make install_for_test
 
 cd ../tests
 

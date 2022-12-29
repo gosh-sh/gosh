@@ -135,6 +135,8 @@ where
 
     async fn supported_contract_versions(&self) -> anyhow::Result<Vec<String>> {
         let mut versions = SUPPORTED_CONTRACT_VERSIONS_LIST.map(&String::from).to_vec();
+#[cfg(feature = "for_test")]
+        versions.push("9999.0.0".to_owned());
         versions.push("".to_owned());
         Ok(versions)
     }
