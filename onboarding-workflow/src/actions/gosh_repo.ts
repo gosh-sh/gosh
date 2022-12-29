@@ -48,7 +48,7 @@ export async function initializeGoshRepo(github_id: string) {
     console.log(`Repo ${repo_addr} is ready to be pushed`)
 
     const result = await pushRepo(repo_name, dao_addr, github, dao_bot)
-    console.log(`Repo push result ${result}`)
+    console.log('Repo push result', result)
     if (!result.success) {
         console.log(`git push exited with ${result.code}`)
         throw new Error(`git push exited with ${result.code}`)
