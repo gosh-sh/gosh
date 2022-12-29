@@ -1,7 +1,7 @@
 import { DaoBot, updateDaoBot } from '../db/dao_bot.ts'
 import { getGithubsForClone, Github } from '../db/github.ts'
 import { hasAccess, isAccountActive } from '../eversdk/account.ts'
-import { deployDao, getAddrDao, turnOnDao } from '../eversdk/dao.ts'
+import { deployDao, getAddrDao, isDaoMember, turnOnDao } from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
 import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 import { createGoshRepoProducer } from '../queues/mod.ts'
@@ -45,6 +45,18 @@ export async function initDaoBot(dao_bot: DaoBot) {
             // ignore error for now
         }
         await waitForAccountActive(dao_addr)
+        // assert if not a member of DAO
+    }
+
+    if (!(await isDaoMember(dao_addr, bot_profile_addr))) {
+        console.log(
+            'DAO exists but account is not a member of DAO',
+            dao_addr,
+            'bot_profile_addr',
+            bot_profile_addr,
+        )
+        throw new Error(`DAO exists but account is not a member of DAO`)
+        // TODO mark such DAO in DB
     }
 
     // ensure wallet has access
