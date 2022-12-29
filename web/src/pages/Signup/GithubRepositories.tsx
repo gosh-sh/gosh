@@ -87,6 +87,8 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
         organization.login,
         organization.isUser,
         setGithubRepos,
+        isOpen,
+        signoutOAuth,
     ])
 
     useEffect(() => {

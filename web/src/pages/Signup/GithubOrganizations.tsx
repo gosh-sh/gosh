@@ -71,7 +71,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
             })
             return { items, isFetching: false }
         })
-    }, [octokit, session, setGithubOrgs])
+    }, [octokit, session, setGithubOrgs, signoutOAuth])
 
     useEffect(() => {
         getGithubOrganizations()
