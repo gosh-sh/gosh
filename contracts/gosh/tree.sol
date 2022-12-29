@@ -26,7 +26,7 @@ struct PauseTree {
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
 
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
@@ -298,7 +298,7 @@ contract Tree is Modifiers {
 
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Getters
@@ -310,9 +310,9 @@ contract Tree is Modifiers {
     function getsha() external view returns(uint256, string) {
         return (_shaTreeLocal, _shaTree);
     }
-
-    function getVersion() external pure returns(string) {
-        return version;
+    
+    function getVersion() external pure returns(string, string) {
+        return ("tree", version);
     }
 
     function getOwner() external view returns(address) {

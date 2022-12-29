@@ -18,9 +18,8 @@ import "./modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
 
-    bool _tombstone = false;
     optional(AddrVersion) _previousversion;
     address _pubaddr;
     mapping(uint8 => TvmCell) _code;
@@ -80,23 +79,16 @@ contract Repository is Modifiers{
     }
 
     function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
-        if (ans == false) { selfdestruct(_goshdao); }
+        if (ans == false) { selfdestruct(giver); }
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
         _ready = true;
     }
 
-    /*function setTombstone(address pubaddr, uint128 index, string description) public {
-        description;
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        _tombstone = true;
-    }*/
-
     //Branch part
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
@@ -112,7 +104,6 @@ contract Repository is Modifiers{
 
     function deleteBranch(address pubaddr, string name, uint128 index) public minValue(0.3 ton){
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         tvm.accept();
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
@@ -179,13 +170,12 @@ contract Repository is Modifiers{
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Setters
     function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         if (_Branches[tvm.hash(nameBranch)].commitaddr != oldcommit) {
@@ -198,7 +188,6 @@ contract Repository is Modifiers{
 
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index),ERR_SENDER_NO_ALLOWED);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
@@ -209,7 +198,6 @@ contract Repository is Modifiers{
 
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == true) { return; }
@@ -218,7 +206,6 @@ contract Repository is Modifiers{
 
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch.exists(tvm.hash(branch)) == false) { return; }
@@ -236,7 +223,6 @@ contract Repository is Modifiers{
 
     function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(_tombstone == false, ERR_OLD_CONTRACT);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == false) {
@@ -337,8 +323,8 @@ contract Repository is Modifiers{
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("repository", version);
     }
 
     function getOwner() external view returns(address) {
@@ -347,10 +333,6 @@ contract Repository is Modifiers{
 
     function getPrevious() external view returns(optional(AddrVersion)) {
         return _previousversion;
-    }
-
-    function getTombstone() external view returns(bool) {
-        return _tombstone;
     }
 
     function getReady() external view returns(bool) {

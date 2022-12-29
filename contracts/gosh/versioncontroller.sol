@@ -10,12 +10,19 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
+import "./libraries/GoshLib.sol";
 import "systemcontract.sol";
 import "profiledao.sol";
+import "profileindex.sol";
 
 struct SystemContractV {
     string Key;
     TvmCell Value;
+}
+
+struct SystemContractAddr {
+    string Key;
+    address Value;
 }
 /* Version contract of SystemContract */
 contract VersionController is Modifiers {
@@ -105,7 +112,21 @@ contract VersionController is Modifiers {
     function onCodeUpgrade(TvmCell cell) private pure {
     }
     
+    function _getSystemContractAddr(TvmCell code) private view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: code,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
     //Setters
+    function setProfileIndex(TvmCell code) public  onlyOwner accept {
+        _code[m_ProfileIndexCode] = code;
+    }
+    
     function setProfile(TvmCell code) public  onlyOwner accept {
         _code[m_ProfileCode] = code;
     }
@@ -115,13 +136,35 @@ contract VersionController is Modifiers {
     }
 
     //Getters   
-    function getProfileAddr(string name) external view returns(address) {
+    function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version),
+            contr: ProfileIndex,
+            pubkey: tvm.pubkey(),
+            varInit: { _name : name }
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }    
+    
+    function getProfileIndexAddr(uint256 pubkey, string name) external view returns(address) {
+        return _getProfileIndexAddr(pubkey, name);
+    }
+    
+    function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version);
+    }
+    
+    function _getProfileAddr(string name) private view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
             varInit: {_name : name, _versioncontroller: address(this)}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getProfileAddr(string name) external view returns(address) {
+        return _getProfileAddr(name);
     }
     
     function getProfileDaoAddr(string name) external view returns(address){
@@ -148,12 +191,38 @@ contract VersionController is Modifiers {
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+    
+    function getVersionAddr() external view returns(address[]) {
+        address[] data;
+        uint256 key;
+        optional(uint256, SystemContractV) res = _SystemContractCode.next(key);
+        while (res.hasValue()) {
+            SystemContractV code;
+            (key, code) = res.get();
+            data.push(_getSystemContractAddr(code.Value));
+            res = _SystemContractCode.next(key);
+        }
+        return data;
+    }
+    
+    function getVersionAddrMap() external view returns(SystemContractAddr[]) {
+        SystemContractAddr[] data;
+        uint256 key;
+        optional(uint256, SystemContractV) res = _SystemContractCode.next(key);
+        while (res.hasValue()) {
+            SystemContractV code;
+            (key, code) = res.get();
+            data.push(SystemContractAddr(code.Key, _getSystemContractAddr(code.Value)));
+            res = _SystemContractCode.next(key);
+        }
+        return data;
+    }
 
     function getVersions() external view returns(mapping(uint256 => SystemContractV)) {
         return _SystemContractCode;
     }
 
-    function getVersion() external pure returns(string) {
-        return _version;
+    function getVersion() external pure returns(string, string) {
+        return ("versioncontroller", _version);
     }
 }

@@ -12,7 +12,8 @@ edition = '2021'
 keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
-version = '3.0.0'
+rust-version = "1.65"
+version = '3.0.6'
 
 [profile.profiling]
 debug = 1
@@ -42,11 +43,15 @@ hex = '^0'
 indexmap = '^1'
 lru = '^0.8.1'
 mockall_double = '^0'
+object-pool = "0.5.4"
+once_cell = "^1.16.0"
 openssl = {version = '0.10', features = ['vendored']}
 opentelemetry = {version = "0.18.0", features = ["rt-tokio"]}
 opentelemetry-otlp = {version = "0.11.0", features = ["grpc-tonic"]}
 opentelemetry-semantic-conventions = "0.10.0"
 primitive-types = '^0.12'
+reqwest-middleware = "0.2.0"
+reqwest-tracing = "0.4.0"
 serde_json = '^1.0'
 sha256 = '1.0.3'
 shellexpand = '^2.1.0'
@@ -74,34 +79,19 @@ version = '^0'
 features = ['blocking', 'gzip', 'json', 'multipart', 'stream']
 version = '^0'
 
-[dependencies.reqwest-middleware]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-middleware'
-
-[dependencies.reqwest-retry]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-retry'
-
-[dependencies.reqwest-tracing]
-# wait until https://github.com/TrueLayer/reqwest-middleware/pull/49 appears in crates.io
-git = 'https://github.com/TrueLayer/reqwest-middleware'
-package = 'reqwest-tracing'
-
 [dependencies.tokio]
-features = ['full']
-version = '1.20.1'
+features = ['full', 'rt']
+version = '1.21.2'
 
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = '1.37.2'
+rev = '13eb9bfd8e7553c5551b497b5c66542c742c0c1a'
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = '1.37.2'
+rev = '13eb9bfd8e7553c5551b497b5c66542c742c0c1a'
 
 [dependencies.zstd]
 default-features = false
@@ -109,4 +99,4 @@ version = '^0.11.0'
 
 [patch.crates-io.tokio]
 git = 'https://github.com/tokio-rs/tokio'
-tag = 'tokio-1.20.1'
+tag = 'tokio-1.21.2'

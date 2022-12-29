@@ -6,10 +6,9 @@ macro_rules! provide {
     };
 }
 
-provide!(find_tree_blob_occurrences);
-provide!(try_find_tree_leaf);
 provide!(generate_blob_diff);
 provide!(build_tree_diff);
 pub use build_tree_diff::build_tree_diff_from_commits;
 
+pub mod ipfs_content;
 pub mod retry;

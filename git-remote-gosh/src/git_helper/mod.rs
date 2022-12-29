@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 use std::env;
 
+use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::{
@@ -56,7 +57,11 @@ where
     Blockchain: BlockchainService,
     FileProvider: FileStorage,
 {
-    pub fn local_repository(&mut self) -> &mut git_repository::Repository {
+    pub fn local_repository(&self) -> &git_repository::Repository {
+        &self.local_git_repository
+    }
+
+    pub fn local_repository_mut(&mut self) -> &mut git_repository::Repository {
         &mut self.local_git_repository
     }
 
@@ -66,7 +71,7 @@ where
     ) -> anyhow::Result<BlockchainContractAddress> {
         let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
-            &self.blockchain.client().clone(),
+            &Arc::clone(self.blockchain.client()),
             &mut repo_contract,
             &tree_id.to_string(),
         )
@@ -84,7 +89,7 @@ where
         let remote = Remote::new(url, &config)?;
         let ever_client = create_client(&config, &remote.network)?;
 
-        let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+        let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
 
         let dao: GetAddrDaoResult = gosh_root_contract
             .run_static(
@@ -159,9 +164,9 @@ async fn build_blockchain(
     let mut blockchain_builder = EverscaleBuilder::default();
     let remote = Remote::new(url, &config)?;
     let ever_client = create_client(&config, &remote.network)?;
-    blockchain_builder.ever_client(ever_client.clone());
+    blockchain_builder.ever_client(Arc::clone(&ever_client));
 
-    let mut gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
+    let gosh_root_contract = GoshContract::new(&remote.gosh, gosh_abi::GOSH);
     let dao: GetAddrDaoResult = gosh_root_contract
         .run_static(
             &ever_client,
@@ -187,7 +192,7 @@ async fn build_blockchain(
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
-#[instrument(level = "debug")]
+#[instrument(level = "debug", skip(config))]
 pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;

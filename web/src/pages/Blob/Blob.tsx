@@ -7,6 +7,7 @@ import {
     faMagnifyingGlass,
     faPencil,
     faFloppyDisk,
+    faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import CopyClipboard from '../../components/CopyClipboard'
 import Spinner from '../../components/Spinner'
@@ -20,8 +21,8 @@ const BlobPage = () => {
 
     const { daoName, repoName, branchName = 'main' } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch } = useBranches(repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch } = useBranches(repository.adapter, branchName)
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
     return (
@@ -95,6 +96,15 @@ const BlobPage = () => {
                                 content={blob.content}
                                 label={<FontAwesomeIcon icon={faFloppyDisk} />}
                             />
+                        )}
+
+                        {!branch?.isProtected && dao.details.isAuthMember && (
+                            <Link
+                                to={`/o/${daoName}/r/${repoName}/blobs/delete/${branchName}/${treepath}`}
+                                className="text-rose-700/60 hover:text-rose-700 p-1 ml-2"
+                            >
+                                <FontAwesomeIcon icon={faTrash} size="sm" />
+                            </Link>
                         )}
                     </div>
                     <BlobPreview filename={blob.path} value={blob.content} />

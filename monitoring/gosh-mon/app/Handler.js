@@ -38,7 +38,7 @@ class Handler {
             this.lock_branch = c.branch;
         this.useFields(c, [], ['redis_host', 'redis_pref', 'do_lock',
             'redlock_retry_delay_ms', 'redlock_retry_jitter_ms', 'redlock_autoextend_ms']);
-        if (this.redis_host !== '') {
+        if (this.redis_host !== '' && this.sub === '') { // Do not use redis if running in script
             this.redis = new ioredis_1.default({ host: this.redis_host });
             this.redlock = new redlock_1.default([this.redis], {
                 // retryCount is set manually each time redlock is used

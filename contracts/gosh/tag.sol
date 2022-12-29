@@ -15,7 +15,7 @@ import "goshwallet.sol";
 
 /* Root contract of tag */
 contract Tag is Modifiers{
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
     
     string static _nametag;
     string _nameCommit;
@@ -66,7 +66,7 @@ contract Tag is Modifiers{
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
     
     //Getters
@@ -77,9 +77,9 @@ contract Tag is Modifiers{
     function getContent() external view returns(string) {
         return _content;
     }
-
-    function getVersion() external pure returns(string) {
-        return version;
+    
+    function getVersion() external pure returns(string, string) {
+        return ("tag", version);
     }
     
     function getOwner() external view returns(address) {

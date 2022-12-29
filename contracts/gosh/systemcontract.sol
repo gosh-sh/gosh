@@ -21,11 +21,14 @@ import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
 contract SystemContract is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
     
     address _versionController;
     bool _flag = true;
     mapping(uint8 => TvmCell) _code;
+
+    //Limits
+    uint128 _limit_wallets = 64;
 
     //SMV
     TvmCell m_TokenLockerCode;
@@ -74,12 +77,13 @@ contract SystemContract is Modifiers {
     }
     
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
+        require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = tvm.buildStateInit({
             code: _code[m_ProfileCode],
             contr: Profile,
             varInit: {_name: name, _versioncontroller: _versionController}
         });
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], pubkey);
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey);
     }
 
     
@@ -98,6 +102,7 @@ contract SystemContract is Modifiers {
             msg.sender,
             name,
             pubmem,
+            _limit_wallets,
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -192,6 +197,10 @@ contract SystemContract is Modifiers {
     function setFlag(bool flag) public onlyOwner accept saveMsg {
         _flag = flag;
     }
+   
+    function setLimitWallets(uint128 limit_wallets) public onlyOwner accept saveMsg {
+        _limit_wallets = limit_wallets;
+    }      
     
     //SMV
 
@@ -358,8 +367,12 @@ contract SystemContract is Modifiers {
     function getHash(bytes state) external pure returns(uint256) {
         return tvm.hash(state);
     }
+    
+    function getCreator() external view returns(address) {
+        return _versionController;
+    }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("systemcontract", version);
     }
 }

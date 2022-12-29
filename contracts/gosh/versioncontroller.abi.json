@@ -60,6 +60,14 @@
 			]
 		},
 		{
+			"name": "setProfileIndex",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setProfile",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -73,6 +81,25 @@
 				{"name":"code","type":"cell"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getProfileIndexAddr",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProfileIndexCode",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
@@ -112,6 +139,22 @@
 			]
 		},
 		{
+			"name": "getVersionAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"}
+			]
+		},
+		{
+			"name": "getVersionAddrMap",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"address"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
 			"name": "getVersions",
 			"inputs": [
 			],
@@ -124,7 +167,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		}
 	],

@@ -8,6 +8,7 @@ import {
     DecodedMessageBody,
     KeyPair,
     ResultOfProcessMessage,
+    ResultOfRunTvm,
     signerKeys,
     signerNone,
     TonClient,
@@ -20,6 +21,8 @@ import { TAddress } from '../types'
 import { retry } from '../helpers'
 
 class BaseContract implements IContract {
+    private cachedBoc?: string
+
     address: TAddress
     account: Account
     version: string
@@ -43,6 +46,11 @@ class BaseContract implements IContract {
             },
         )
         this.version = options?.version ?? ''
+    }
+
+    async boc(): Promise<string> {
+        if (!this.cachedBoc) this.cachedBoc = await this.account.boc()
+        return this.cachedBoc
     }
 
     async isDeployed(): Promise<boolean> {
@@ -122,9 +130,9 @@ class BaseContract implements IContract {
         const page = edges
             .map((edge: any) => ({ message: edge.node, decoded: null }))
             .sort((a: any, b: any) => {
-                const a_lt = parseInt(a.created_lt, 16)
-                const b_lt = parseInt(b.created_lt, 16)
-                return a_lt < b_lt ? 1 : -1
+                const a_lt = parseInt(a.message.created_lt, 16)
+                const b_lt = parseInt(b.message.created_lt, 16)
+                return b_lt - a_lt
             })
         if (decode) {
             await Promise.all(
@@ -170,12 +178,16 @@ class BaseContract implements IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        settings?: { logging?: boolean; retries?: number },
+        settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any> {
-        const { logging = true, retries = 1 } = settings ?? {}
+        const { logging = true, retries = 2, useCachedBoc = false } = settings ?? {}
 
         const result = await retry(async () => {
-            return await this.account.runLocal(functionName, input, options)
+            if (useCachedBoc) {
+                return await this._runLocalCached(functionName, input)
+            } else {
+                return await this.account.runLocal(functionName, input, options)
+            }
         }, retries)
         if (logging) console.debug('[RunLocal]', { functionName, input, result })
 
@@ -196,6 +208,31 @@ class BaseContract implements IContract {
         } catch {
             return null
         }
+    }
+
+    private async _runLocalCached(
+        functionName: string,
+        input: object,
+    ): Promise<ResultOfRunTvm> {
+        const { message } = await this.account.client.abi.encode_message({
+            address: this.address,
+            abi: this.account.abi,
+            signer: this.account.signer,
+            call_set: {
+                function_name: functionName,
+                input,
+            },
+        })
+        const result = await this.account.client.tvm.run_tvm({
+            account: await this.boc(),
+            abi: this.account.abi,
+            message,
+            return_updated_account: true,
+        })
+        if (result.account) {
+            this.cachedBoc = result.account
+        }
+        return result
     }
 }
 

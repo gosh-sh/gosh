@@ -17,7 +17,7 @@ import "repository.sol";
 import "diff.sol";
 
 contract Snapshot is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
     
     string _baseCommit;
     string _basemaybe = "";
@@ -37,6 +37,9 @@ contract Snapshot is Modifiers {
     string _name; 
     string _branch;
     bool _ready = false;
+    
+    uint128 timeMoney = 0; 
+    bool _flag = false;
 
     constructor(
         address pubaddr,
@@ -89,6 +92,15 @@ contract Snapshot is Modifiers {
             Commit(_buildCommitAddr(_oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
         }
+        getMoney();
+    }
+    
+    function getMoney() private {
+        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (_flag == true) { return; }
+        if (address(this).balance > 1000 ton) { return; }
+        _flag = true;
+        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton}(_branch, _rootRepo, _name);
     }
 
     function _buildCommitAddr(string commit) private view returns(address) {
@@ -102,8 +114,8 @@ contract Snapshot is Modifiers {
     }
     
     function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
-        if (value1.hasValue() == false) { selfdestruct(_rootRepo); return; }
-        if (value1.get().sha256 != value0.sha) { selfdestruct(_rootRepo); return; }
+        if (value1.hasValue() == false) { selfdestruct(giver); return; }
+        if (value1.get().sha256 != value0.sha) { selfdestruct(giver); return; }
         _ready = true;
     }
     
@@ -144,7 +156,9 @@ contract Snapshot is Modifiers {
         require(_ready == true, ERR_SNAPSHOT_NOT_READY);
         if (_basemaybe == "") { _basemaybe = diff.commit; }
         tvm.accept();
+        getMoney();
         uint256 empty;
+        
         if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
@@ -153,9 +167,25 @@ contract Snapshot is Modifiers {
             _applying = true; 
             _commits = namecommit;
         }
+        if (diff.removeIpfs == true) {
+            if ((diff.ipfs.hasValue()) || (_ipfs.hasValue() == false) || (diff.patch.hasValue() == false)) { 
+            	DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); 
+            	return;
+            }            
+            if (tvm.hash(gosh.unzip(diff.patch.get())) == diff.sha256) {
+                       _snapshot = diff.patch.get();
+                       _ipfs = null;
+                        DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+                        _applying = true;
+            }
+            else {
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(gosh.unzip(diff.patch.get())));
+            }
+            return;
+        }
         if (diff.ipfs.hasValue()) {
             _ipfs = diff.ipfs.get();
-            DiffC(msg.sender).approveDiff{value: 0.15 ton, flag: 1}(true, namecommit, empty);
+            DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, empty);
             _applying = true;
             return;
         } else {
@@ -227,19 +257,25 @@ contract Snapshot is Modifiers {
         return address(tvm.hash(state));
     }
     
+    receive() external {
+        if (msg.sender == _goshdao) {
+            _flag = false;
+        }
+    }
+    
     onBounce(TvmSlice body) external {
         body;
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
     }
     
     fallback() external {
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(_rootRepo); }
+        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
     }
 
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Getters
@@ -253,7 +289,7 @@ contract Snapshot is Modifiers {
         return NameOfFile;
     }
 
-    function getRepoAddress() external view returns(address) {
+    function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
     
@@ -261,8 +297,8 @@ contract Snapshot is Modifiers {
         return _baseCommit;
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("snapshot", version);
     }
     
     function getOwner() external view returns(address) {

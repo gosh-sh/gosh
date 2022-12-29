@@ -13,14 +13,14 @@ type TRepository = {
     version: string
     branches: number
     head: string
-    tags: TTag[]
+    commitsIn: { branch: string; commit: TCommit }[]
 }
 
-type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'tags'> & {
+type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
     adapter: IGoshRepositoryAdapter
     branches?: number
     head?: string
-    tags?: TTag[]
+    commitsIn?: { branch: string; commit: TCommit }[]
     isLoadDetailsFired?: boolean
 }
 
@@ -72,6 +72,7 @@ type TDiff = {
     commit: string
     sha1: string
     sha256: string
+    removeIpfs: boolean
 }
 
 type TPushProgress = {
@@ -91,6 +92,24 @@ type TUpgradeData = {
         treepath: string
         content: string | Buffer
     }[]
+}
+
+type TPushBlobData = {
+    data: {
+        snapshot: string
+        treepath: string
+        treeitem?: TTreeItem
+        compressed: string
+        patch: string | null
+        flags: EBlobFlag
+        hashes: {
+            sha1: string
+            sha256: string
+        }
+        isGoingIpfs: boolean
+        isGoingOnchain: boolean
+    }
+    status: number
 }
 
 type TBranchCompareProgress = {
@@ -123,6 +142,7 @@ export {
     TTag,
     TDiff,
     TUpgradeData,
+    TPushBlobData,
     TPushProgress,
     TBranchCompareProgress,
     TBranchOperateProgress,

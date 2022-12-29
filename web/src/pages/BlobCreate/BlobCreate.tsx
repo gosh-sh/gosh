@@ -9,8 +9,12 @@ const BlobCreatePage = () => {
     const treepath = useParams()['*']
     const navigate = useNavigate()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { push, progress: pushProgress } = usePush(
+        dao.details,
+        repository.adapter,
+        branchName,
+    )
 
     const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
         treepath && `/${treepath}`
@@ -19,13 +23,12 @@ const BlobCreatePage = () => {
     const onPush = async (values: any) => {
         try {
             const { name, title, message, tags, content } = values
-            const treepathNew = `${treepath ? `${treepath}/` : ''}${name}`
-            await push(
-                title,
-                [{ treepath: treepathNew, original: '', modified: content }],
-                message,
-                tags,
-            )
+            const blobNew = {
+                treepath: ['', `${treepath ? `${treepath}/` : ''}${name}`],
+                original: '',
+                modified: content,
+            }
+            await push(title, [blobNew], message, tags)
             navigate(urlBack)
         } catch (e: any) {
             console.error(e.message)

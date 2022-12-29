@@ -13,7 +13,6 @@ import {
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
 import { AppConfig, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
@@ -21,27 +20,31 @@ import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
+import RepoReadme from './Readme'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
-    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { daoName, repoName, branchName } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
-    const tree = useTree(daoName!, repoName!, branch?.commit, treepath)
-    const subtree = useRecoilValue(tree.getSubtree(treepath))
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
+    const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 
     const getRemoteUrl = (short: boolean): string => {
-        const goshAddress = AppConfig.versions[repo.getVersion()]
+        const goshAddress = AppConfig.versions[repository.details.version]
         const goshstr = short ? shortString(goshAddress) : goshAddress
         return `gosh://${goshstr}/${daoName}/${repoName}`
     }
 
     useEffect(() => {
-        updateBranch(branchName)
-    }, [branchName, updateBranch])
+        if (!branchName) {
+            navigate(`/o/${daoName}/r/${repoName}/tree/${repository.details.head}`)
+        } else {
+            updateBranch(branchName)
+        }
+    }, [daoName, repoName, branchName, repository.details.head, navigate, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -150,17 +153,11 @@ const RepoPage = () => {
                 </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4">
                 {subtree === undefined && (
-                    <div className="text-gray-606060 text-sm">
+                    <div className="text-gray-606060 text-sm py-3">
                         <Spinner className="mr-3" />
                         Loading tree...
-                    </div>
-                )}
-
-                {subtree && !subtree?.length && (
-                    <div className="text-sm text-gray-606060 text-center">
-                        There are no files yet
                     </div>
                 )}
 
@@ -174,7 +171,7 @@ const RepoPage = () => {
                         ..
                     </Link>
                 )}
-                <div className="divide-y divide-gray-c4c4c4">
+                <div className="divide-y divide-gray-c4c4c4 mb-5">
                     {subtree?.map((item: any, index: number) => {
                         const path = [item.path, item.name]
                             .filter((part) => part !== '')
@@ -215,6 +212,20 @@ const RepoPage = () => {
                         )
                     })}
                 </div>
+
+                {subtree && !subtree?.length && (
+                    <div className="text-sm text-gray-606060 text-center py-3">
+                        There are no files yet
+                    </div>
+                )}
+
+                <RepoReadme
+                    className="border rounded overflow-hidden"
+                    dao={daoName!}
+                    repo={repoName!}
+                    branch={branch!.name}
+                    blobs={blobs || []}
+                />
             </div>
         </div>
     )

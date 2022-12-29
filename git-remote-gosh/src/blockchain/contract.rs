@@ -11,6 +11,11 @@ pub trait ContractInfo: Debug {
     fn get_keys(&self) -> &Option<ton_client::crypto::KeyPair>;
 }
 
+pub trait MirroredContractsPool: Debug {
+    type Output;
+    fn take_one(&self) -> Self::Output;
+}
+
 #[async_trait]
 pub trait ContractStatic: Debug {
     async fn static_method<T>(
@@ -62,7 +67,7 @@ impl ContractStatic for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_static(client, self, function_name, args).await?;
-        tracing::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_static result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
@@ -73,7 +78,6 @@ pub struct GoshContract {
     pub pretty_name: String,
     pub abi: Abi,
     pub keys: Option<KeyPair>,
-    pub boc_ref: Option<String>,
 }
 
 impl std::fmt::Debug for GoshContract {
@@ -95,7 +99,6 @@ impl GoshContract {
             address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: None,
-            boc_ref: None,
         }
     }
 
@@ -108,13 +111,12 @@ impl GoshContract {
             address: address.into(),
             abi: Abi::Json(abi.to_string()),
             keys: Some(keys),
-            boc_ref: None,
         }
     }
 
     #[instrument(level = "debug", skip(context))]
     pub async fn run_static<T>(
-        &mut self,
+        &self,
         context: &EverClient,
         function_name: &str,
         args: Option<serde_json::Value>,
@@ -123,12 +125,13 @@ impl GoshContract {
         T: de::DeserializeOwned,
     {
         let result = run_static(context, self, function_name, args).await?;
-        tracing::trace!("run_statuc result: {:?}", result);
+        tracing::trace!("run_static result: {:?}", result);
         Ok(serde_json::from_value::<T>(result)?)
     }
 
     pub async fn get_version(&self, context: &EverClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.read_state(context, "getVersion", None).await?;
+        tracing::trace!("get_version result: {:?}", result);
         Ok(result.version)
     }
 }
@@ -147,6 +150,7 @@ impl ContractInfo for GoshContract {
 
 #[async_trait]
 impl ContractRead for GoshContract {
+    #[instrument(level = "debug", skip(self, client))]
     async fn read_state<T>(
         &self,
         client: &EverClient,
@@ -157,7 +161,8 @@ impl ContractRead for GoshContract {
         for<'de> T: Deserialize<'de>,
     {
         let result = run_local(client, self, function_name, args).await?;
-        tracing::trace!("run_local result: {:?}", result);
+        // TODO: this log can be very long, but the value is JSON and can't be shorten. Consider logging it after deserializing.
+        // tracing::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }

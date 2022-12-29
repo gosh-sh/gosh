@@ -10,12 +10,13 @@ import { BranchSelect } from '../../components/Branches'
 const CommitsPage = () => {
     const navigate = useNavigate()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch } = useBranches(repo, branchName)
+    const { repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch } = useBranches(repository.adapter, branchName)
     const { isFetching, isEmpty, items, hasMore, getMore } = useCommitList(
         daoName!,
-        repo,
+        repository.adapter,
         branchName,
+        10,
     )
 
     return (

@@ -246,6 +246,13 @@ function getGoshAddProtectedBranchProposalParams () external view
     (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
 }
 
+function getGoshSetConfigDaoProposalParams () external view
+         returns( uint256  proposalKind,  uint128 token)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, token) = s.decode(uint256, uint128);
+}
+
 function getGoshDeleteProtectedBranchProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName)
 {

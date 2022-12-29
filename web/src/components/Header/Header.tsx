@@ -6,6 +6,7 @@ import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
+import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
 import { AppConfig, useUser } from 'react-gosh'
@@ -72,6 +73,24 @@ const Header = () => {
                             )}
 
                             <a
+                                href="https://blog.gosh.sh/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-gray-050a15 sm:text-gray-53596d hover:underline"
+                                onClick={(e) => {
+                                    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+                                        e.preventDefault()
+                                        AppConfig.dockerclient?.host.openExternal(
+                                            'https://blog.gosh.sh/',
+                                        )
+                                    }
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faBlog} size="lg" />
+                                <span className="ml-3 hidden sm:inline">Our blog</span>
+                            </a>
+
+                            <a
                                 href="https://t.me/gosh_sh"
                                 target="_blank"
                                 rel="noreferrer"
@@ -92,32 +111,20 @@ const Header = () => {
                             </a>
 
                             {!user.persist.phrase &&
-                                location.pathname.search(/signin|signup/) < 0 &&
-                                location.pathname !== '/' && (
-                                    <>
-                                        <Link
-                                            to={`/a/signup`}
-                                            className="btn btn--header icon-arrow"
-                                        >
-                                            Sign up
-                                        </Link>
-                                        <Link
-                                            to={`/a/signin`}
-                                            className="btn btn--header icon-arrow"
-                                        >
-                                            Sign in
-                                        </Link>
-                                    </>
+                                location.pathname.search(/signin|signup/) < 0 && (
+                                    <Link
+                                        to={`/a/signin`}
+                                        className="btn btn--header icon-arrow"
+                                    >
+                                        Sign in
+                                    </Link>
                                 )}
                             {location.pathname.search('/signin') >= 0 && (
                                 <>
                                     {/* <div className="text-lg text-gray-53596d hidden sm:block">
                                         Don't have an account?
                                     </div> */}
-                                    <Link
-                                        to={`/a/signup`}
-                                        className="btn btn--header icon-arrow"
-                                    >
+                                    <Link to={`/`} className="btn btn--header icon-arrow">
                                         Sign up
                                     </Link>
                                 </>

@@ -24,7 +24,15 @@
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
+				{"name":"tokenforperson","type":"uint128"},
 				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -107,9 +115,34 @@
 			]
 		},
 		{
+			"name": "AloneDeployWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneSetConfigDao",
+			"inputs": [
+				{"name":"newtoken","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForChangeTokenConfig",
+			"inputs": [
+				{"name":"tokenforperson","type":"uint128"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -125,7 +158,7 @@
 			]
 		},
 		{
-			"name": "deployWallet",
+			"name": "deployWalletIn",
 			"inputs": [
 			],
 			"outputs": [
@@ -182,7 +215,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
 				{"name":"last","type":"bool"}
@@ -261,21 +294,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametag","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateConfig",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setConfig",
-			"inputs": [
-				{"name":"limit_wallets","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -486,7 +504,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{
@@ -722,6 +741,7 @@
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
+		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},

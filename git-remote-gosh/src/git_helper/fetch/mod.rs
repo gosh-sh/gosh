@@ -8,6 +8,7 @@ use git_odb::{Find, Write};
 use std::{
     collections::{HashSet, VecDeque},
     str::FromStr,
+    sync::Arc,
 };
 mod restore_blobs;
 
@@ -29,8 +30,8 @@ where
         blockchain::get_commit_address(&self.blockchain.client(), repo_contract, &commit_id).await
     }
 
-    pub fn is_commit_in_local_cache(&mut self, object_id: &git_hash::ObjectId) -> bool {
-        return self.local_repository().objects.contains(object_id);
+    pub fn is_commit_in_local_cache(&self, object_id: &git_hash::ObjectId) -> bool {
+        self.local_repository().objects.contains(object_id)
     }
 
     async fn write_git_object(
@@ -38,7 +39,7 @@ where
         obj: impl git_object::WriteTo,
     ) -> anyhow::Result<git_hash::ObjectId> {
         tracing::info!("Writing git object");
-        let store = &mut self.local_repository().objects;
+        let store = &self.local_repository().objects;
         // It should refresh once even if the refresh mode is never, just to initialize the index
         //store.refresh_never();
         let object_id = store.write(obj).map_err(|e| {
@@ -46,19 +47,6 @@ where
             e
         })?;
         tracing::info!("Writing git object - success, {}", object_id);
-        Ok(object_id)
-    }
-
-    async fn write_git_data<'a>(
-        &mut self,
-        obj: git_object::Data<'a>,
-    ) -> anyhow::Result<git_hash::ObjectId> {
-        tracing::info!("Writing git data: {} -> size: {}", obj.kind, obj.data.len());
-        let store = &mut self.local_repository().objects;
-        // It should refresh once even if the refresh mode is never, just to initialize the index
-        //store.refresh_never();
-        let object_id = store.write_buf(obj.kind, obj.data)?;
-        tracing::info!("Writing git data - success");
         Ok(object_id)
     }
 
@@ -118,7 +106,7 @@ where
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let mut repo_contract = self.blockchain.repo_contract().clone();
                 let address = blockchain::Tree::calculate_address(
-                    &self.blockchain.client().clone(),
+                    &Arc::clone(self.blockchain.client()),
                     &mut repo_contract,
                     &tree_object_id,
                 )
@@ -148,7 +136,7 @@ where
 
                             let mut repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = blockchain::Snapshot::calculate_address(
-                                &self.blockchain.client().clone(),
+                                &Arc::clone(self.blockchain.client()),
                                 &mut repo_contract,
                                 branch,
                                 // Note:

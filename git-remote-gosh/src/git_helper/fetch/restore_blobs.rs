@@ -1,10 +1,11 @@
 use super::GitHelper;
+use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
         self, snapshot::diffs::DiffMessage, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{EverClient, GoshContract},
-    ipfs::{service::FileLoad, IpfsService},
+    ipfs::service::FileLoad,
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::ObjectId;
@@ -17,6 +18,7 @@ use std::{
     sync::{Arc, Mutex},
     vec::Vec,
 };
+use tracing::Instrument;
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -49,6 +51,7 @@ async fn write_git_data<'a>(
     Ok(object_id)
 }
 
+#[instrument(level = "debug", skip(obj))]
 async fn write_git_object(
     repo: &mut git_repository::Repository,
     obj: impl git_object::WriteTo,
@@ -126,9 +129,8 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // This should download next messages seemless
     let mut messages =
         blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
-    let mut walked_through_ipfs = false;
-    let mut first_after_ipfs = false;
     let mut preserved_message: Option<DiffMessage> = None;
+    let mut transition_content: Option<Vec<u8>> = None;
 
     while !blobs.is_empty() {
         tracing::info!("Still expecting to restore blobs: {:?}", blobs);
@@ -145,36 +147,31 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         };
         tracing::debug!("got message: {:?}", message);
 
-        let blob_data: Vec<u8> = if let Some(ipfs) = &message.diff.ipfs {
-            walked_through_ipfs = true;
-            load_data_from_ipfs(&IpfsService::new(&ipfs_endpoint), ipfs).await?
-        } else if walked_through_ipfs {
-            walked_through_ipfs = false;
-            first_after_ipfs = true;
-
+        let blob_data: Vec<u8> = if message.diff.remove_ipfs {
+            let data = match message.diff.get_patch_data() {
+                Some(content) => content,
+                None => panic!("Broken diff detected: content doesn't exist"),
+            };
+            data
+        } else if let Some(ipfs) = &message.diff.ipfs {
+            transition_content = message.diff.get_patch_data();
+            load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
+        } else if let Some(content) = transition_content.clone() {
             // we won't use the message, so we'll store it for the next iteration
             preserved_message = Some(message);
-
-            let snapshot = blockchain::Snapshot::load(es_client, snapshot_address).await?;
-            snapshot.next_content
+            transition_content = None;
+            content
         } else {
-            let patched_blob = if first_after_ipfs {
-                first_after_ipfs = false;
-                let blockchain::Snapshot { next_content, .. } =
-                    blockchain::Snapshot::load(es_client, snapshot_address).await?;
-                next_content.clone()
-            } else {
-                let patched_blob_sha = &message
-                    .diff
-                    .modified_blob_sha1
-                    .as_ref()
-                    .expect("Option on this should be reverted. It must always be there");
-                let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-                let content = last_restored_snapshots
-                    .get(&patched_blob_sha)
-                    .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
-                content.to_vec()
-            };
+            let patched_blob_sha = &message
+                .diff
+                .modified_blob_sha1
+                .as_ref()
+                .expect("Option on this should be reverted. It must always be there");
+            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+            let content = last_restored_snapshots
+                .get(&patched_blob_sha)
+                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+            let patched_blob = content.to_vec();
 
             message
                 .diff
@@ -258,13 +255,14 @@ impl BlobsRebuildingPlan {
         tracing::info!("new state: {:?}", self.snapshot_address_to_blob_sha);
     }
 
+    #[instrument(level = "debug", skip(es_client))]
     async fn restore_snapshot_blob(
         es_client: &EverClient,
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
-        let ipfs_client = IpfsService::new(ipfs_endpoint);
+        let ipfs_client = build_ipfs(ipfs_endpoint)?;
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         tracing::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
@@ -275,6 +273,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.next_content,
                 &snapshot.next_ipfs,
             )
+            .instrument(debug_span!("convert_next_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -287,6 +286,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.current_content,
                 &snapshot.current_ipfs,
             )
+            .instrument(debug_span!("convert_current_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -327,38 +327,46 @@ impl BlobsRebuildingPlan {
             FuturesUnordered::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
-            let es_client = git_helper.blockchain.client().clone();
+            let es_client = Arc::clone(git_helper.blockchain.client());
             let ipfs_http_endpoint = git_helper.config.ipfs_http_endpoint().to_string();
             let mut repo = git_helper.local_repository().clone();
             let mut repo_contract = git_helper.blockchain.repo_contract().clone();
             let snapshot_address_clone = snapshot_address.clone();
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
-            fetched_blobs.push(tokio::spawn(async move {
-                let attempt = 0;
-                let result = loop {
-                    let result = restore_a_set_of_blobs_from_a_known_snapshot(
-                        &es_client,
-                        &ipfs_http_endpoint,
-                        &mut repo,
-                        &mut repo_contract,
-                        &snapshot_address_clone,
-                        &mut blobs_to_restore,
-                        &visited_ref,
-                    )
-                    .await;
-                    if result.is_ok() || attempt > FETCH_MAX_TRIES {
-                        break result;
-                    } else {
-                        tracing::debug!(
-                            "restore_a_set_of_blobs_from_a_known_snapshot error {:?}",
-                            result.unwrap_err()
-                        );
-                        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-                    }
-                };
-                result.map_err(|e| anyhow::Error::from(e))
-            }));
+            fetched_blobs.push(tokio::spawn(
+                async move {
+                    let attempt = 0;
+                    let result = loop {
+                        let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                            &es_client,
+                            &ipfs_http_endpoint,
+                            &mut repo,
+                            &mut repo_contract,
+                            &snapshot_address_clone,
+                            &mut blobs_to_restore,
+                            &visited_ref,
+                        )
+                        .await;
+                        if result.is_ok() || attempt > FETCH_MAX_TRIES {
+                            break result;
+                        } else {
+                            tracing::debug!(
+                                "restore_a_set_of_blobs_from_a_known_snapshot <{:#?}> error {:?}",
+                                snapshot_address_clone,
+                                result.unwrap_err()
+                            );
+                            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                            panic!("stopped");
+                        }
+                    };
+                    result.map_err(|e| anyhow::Error::from(e))
+                }
+                .instrument(
+                    debug_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
+                        .or_current(),
+                ),
+            ));
             blobs.clear();
         }
         self.snapshot_address_to_blob_sha.clear();

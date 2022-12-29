@@ -5,7 +5,9 @@ use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
+use tokio::task::{JoinError, JoinSet};
 use tokio_retry::Retry;
+use tracing::Instrument;
 
 use super::{
     push_diff::push_new_branch_snapshot, utilities::retry::default_retry_strategy,
@@ -91,7 +93,7 @@ where
             })
             .collect();
 
-        let mut snapshot_handlers = Vec::new();
+        let mut snapshot_handlers = JoinSet::new();
 
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
@@ -116,26 +118,35 @@ where
             let new_branch = self.new_branch.clone();
             let full_path = entry.filepath.to_string();
 
-            snapshot_handlers.push(tokio::spawn(async move {
-                Retry::spawn(default_retry_strategy(), || async {
-                    push_new_branch_snapshot(
-                        &blockchain,
-                        &file_provider,
-                        &remote_network,
-                        &dao_addr,
-                        &repo_addr,
-                        &ancestor_commit,
-                        &new_branch,
-                        &full_path,
-                        &content,
-                    )
+            snapshot_handlers.spawn(
+                async move {
+                    Retry::spawn(default_retry_strategy(), || async {
+                        tracing::debug!("attempt to push a new snapshot");
+                        push_new_branch_snapshot(
+                            &blockchain,
+                            &file_provider,
+                            &remote_network,
+                            &dao_addr,
+                            &repo_addr,
+                            &ancestor_commit,
+                            &new_branch,
+                            &full_path,
+                            &content,
+                        )
+                        .await
+                        .map_err(|e| {
+                            tracing::warn!("Attempt failed with {:#?}", e);
+                            e
+                        })
+                    })
                     .await
-                })
-                .await
-            }));
+                }
+                .instrument(debug_span!("tokio::spawn::push_new_branch_snapshot").or_current()),
+            );
         }
-        for handler in snapshot_handlers {
-            handler.await??;
+        while let Some(finished_task) = snapshot_handlers.join_next().await {
+            let result: Result<anyhow::Result<()>, JoinError> = finished_task;
+            result??;
         }
         Ok(())
     }

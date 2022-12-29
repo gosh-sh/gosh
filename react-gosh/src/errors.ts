@@ -19,6 +19,7 @@ export enum EGoshError {
     NOT_MEMBER = 'Not a DAO member',
     META_LOAD = 'Error loading meta',
 
+    REPO_NAME_INVALID = 'Incorrect repository name',
     NO_WALLET = 'Wallet undefined',
     NO_REPO = 'Repository undefined',
     NO_BRANCH = 'Branch undefined',
@@ -31,6 +32,7 @@ export enum EGoshError {
     PR_NO_MERGE = 'Nothing to merge',
 
     FILE_EXISTS = 'File already exists',
+    FILE_NOT_EXIST = 'File doest not exist',
     FILE_EMPTY = 'File is empty',
     FILE_BINARY = 'File has binary data',
     FILE_UNMODIFIED = 'File content was not changed',

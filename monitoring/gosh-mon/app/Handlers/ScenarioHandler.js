@@ -206,8 +206,9 @@ class ScenarioHandler extends Handler_1.default {
                 throw e;
         }
     }
-    async erasePaste(elem, text, timeout) {
-        this.say(`--- paste ${(0, Utils_1.limstr)(text, this.textlim)} into ${elem} with erase${(0, Utils_1.ifdef)(' and timeout ', timeout)}`);
+    async erasePaste(elem, text, timeout, secure) {
+        const saystr = secure === true ? '<SECRET>' : (0, Utils_1.limstr)(text, this.textlim);
+        this.say(`--- paste ${saystr} into ${elem} with erase${(0, Utils_1.ifdef)(' and timeout ', timeout)}`);
         const element = await this.find(elem, timeout);
         await element.click();
         // await element!.focus();

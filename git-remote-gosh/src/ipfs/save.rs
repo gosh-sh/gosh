@@ -6,6 +6,7 @@ use tokio_retry::Retry;
 
 #[async_trait]
 impl FileSave for IpfsService {
+    #[instrument(level = "debug", skip(blob))]
     async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String> {
         tracing::debug!("Uploading blob to IPFS");
 
@@ -15,11 +16,17 @@ impl FileSave for IpfsService {
         );
 
         Retry::spawn(self.retry_strategy(), || async {
-            IpfsService::save_blob_retriable(&self.http_client, &url, blob).await
+            IpfsService::save_blob_retriable(&self.http_client, &url, blob)
+                .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
         })
         .await
     }
 
+    #[instrument(level = "debug", skip(path))]
     async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String> {
         tracing::debug!(
             "Uploading file to IPFS: {}",
@@ -32,7 +39,12 @@ impl FileSave for IpfsService {
         );
 
         Retry::spawn(self.retry_strategy(), || async {
-            IpfsService::save_file_retriable(&self.http_client, &url, &path).await
+            IpfsService::save_file_retriable(&self.http_client, &url, &path)
+                .await
+                .map_err(|e| {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    e
+                })
         })
         .await
     }

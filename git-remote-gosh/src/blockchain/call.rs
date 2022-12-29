@@ -1,10 +1,12 @@
 use super::{contract::ContractInfo, CallResult, Everscale};
 use crate::blockchain::{default_callback, BlockchainService};
 use async_trait::async_trait;
+use std::sync::Arc;
 use ton_client::{
     abi::{CallSet, ParamsOfEncodeMessage, Signer},
     processing::{ParamsOfProcessMessage, ResultOfProcessMessage},
 };
+use tracing::Instrument;
 
 #[async_trait]
 pub(super) trait BlockchainCall {
@@ -30,6 +32,13 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
+        tracing::debug!("blockchain call start");
+        tracing::trace!(
+            "contract: {:?}, function: {}, args: {:?}",
+            contract,
+            function_name,
+            args
+        );
         let call_set = match args {
             Some(value) => CallSet::some_with_function_and_input(function_name, value),
             None => CallSet::some_with_function(function_name),
@@ -50,19 +59,23 @@ impl BlockchainCall for Everscale {
             processing_try_index: None,
         };
 
-        let ResultOfProcessMessage {
-            transaction, /* decoded, */
-            ..
-        } = ton_client::processing::process_message(
-            self.client().clone(),
+        let sdk_result = ton_client::processing::process_message(
+            Arc::clone(self.client()),
             ParamsOfProcessMessage {
-                send_events: false,
+                send_events: true,
                 message_encode_params,
             },
             default_callback,
         )
-        .await?;
-
+        .instrument(debug_span!("blockchain_client::process_message").or_current())
+        .await;
+        if let Err(ref e) = sdk_result {
+            tracing::debug!("process_message error: {:#?}", e);
+        }
+        let ResultOfProcessMessage {
+            transaction, /* decoded, */
+            ..
+        } = sdk_result?;
         let call_result: CallResult = serde_json::from_value(transaction)?;
 
         tracing::debug!("trx id: {}", call_result.trx_id);

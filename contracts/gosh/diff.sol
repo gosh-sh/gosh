@@ -26,10 +26,11 @@ struct PauseDiff {
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
     
     uint128 static _index1;
     uint128 static _index2;
+    uint128 _index2max;
     string static _nameCommit;
     address _pubaddr;
     address _rootRepo;
@@ -86,7 +87,7 @@ contract DiffC is Modifiers {
     function getMoney() private {
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
-        if (address(this).balance > 100 ton) { return; }
+        if (address(this).balance > 10 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
     }
@@ -156,6 +157,8 @@ contract DiffC is Modifiers {
             Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1);
             return;
         }
+        if ((_index2 == 0) && (_last != true)) { _index2max = 1e25; }
+        else { _index2max = 0; }
         _entry = true;
         _branchcommit = branchcommit;
         if (_diff.length != 0) { 
@@ -164,7 +167,7 @@ contract DiffC is Modifiers {
             return;
         }
         if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(branch, _branchcommit, _index1);  } 
-        else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
+        else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
         getMoney();
     }
     
@@ -180,7 +183,7 @@ contract DiffC is Modifiers {
             }
             return; 
         }
-        Snapshot(_diff[index].snap).applyDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
+        Snapshot(_diff[index].snap).applyDiff{value : 0.5 ton, flag: 1}(_nameCommit, _diff[index], _index1, _index2);
         this.sendDiff{value: 0.1 ton, flag: 1}(index + 1, branchcommit);
     }
     
@@ -196,7 +199,7 @@ contract DiffC is Modifiers {
         if (isIt == false) { return; }
         if (res != true) { 
             if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1); }
-            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
             return; 
         }
         this.approveDiffFinal{value: 0.2 ton, flag: 1}(true);
@@ -209,32 +212,30 @@ contract DiffC is Modifiers {
         if (res != true) { _isCancel = true; this.cancelDiff{value: 0.1 ton, flag: 1}(0); return; }
         _approved += 1;
         uint256 need = _diff.length;
-        if (_last == false) { need += 1; }
-        if (_approved == need) {
+        if (_approved == need + _index2max) {
             if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
-            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true);  }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
         }
         getMoney();
     }
     
-    function approveDiffDiff(bool res) public senderIs(getDiffAddress(_index2 + 1)){
-        tvm.accept();
+    function approveDiffDiff(bool res, uint128 index, bool last) public senderIs(getDiffAddress(index)) {
         if (res != true) { 
             if (_index2 == 0) { 
                 Commit(_buildCommitAddr(_nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1); 
                 _isCancel = true;
                 this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             }
-            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false); }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
             return; 
         }
         getMoney();
+        if (last == true) { _index2max = index;}
         _approved += 1;
         uint256 need = _diff.length;
-        if (_last == false) { need += 1; }
-        if (_approved == need) {
+        if (_approved == need + _index2max) {
             if (_index2 == 0) { Commit(_buildCommitAddr(_nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
-            else { DiffC(getDiffAddress(_index2 - 1)).approveDiffDiff{value: 0.1 ton, flag: 1}(true); }
+            else { DiffC(getDiffAddress(0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last); }
         }
         getMoney();
     }
@@ -316,7 +317,7 @@ contract DiffC is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
     
     //Getters
@@ -328,8 +329,8 @@ contract DiffC is Modifiers {
         return getDiffAddress(_index2 + 1);
     }
     
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("diff", version);
     }
     
     function getOwner() external view returns(address) {

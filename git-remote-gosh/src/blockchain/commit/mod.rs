@@ -5,6 +5,7 @@ use ton_client::net::ParamsOfQuery;
 pub mod save;
 
 use crate::blockchain::serde_number::NumberU64;
+use std::sync::Arc;
 
 use super::contract::GoshContract;
 
@@ -91,7 +92,7 @@ pub async fn get_set_commit_created_at_time(
         };
 
         let result = ton_client::net::query(
-            context.clone(),
+            Arc::clone(context),
             ParamsOfQuery {
                 query: query.clone(),
                 variables: Some(serde_json::json!({
@@ -128,7 +129,7 @@ pub async fn get_set_commit_created_at_time(
             }
             tracing::debug!("Decoding message {:?}", raw_msg.id);
             let decoded = decode_message_body(
-                context.clone(),
+                Arc::clone(context),
                 ParamsOfDecodeMessageBody {
                     abi: Abi::Json(gosh_abi::REPO.1.to_string()),
                     body: raw_msg.body,

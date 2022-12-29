@@ -7,6 +7,8 @@ pub struct Diff {
     pub commit: String,
     patch: Option<String>,
     pub ipfs: Option<String>,
+    #[serde(rename = "removeIpfs")]
+    pub remove_ipfs: bool,
     #[serde(rename = "sha1")]
     pub modified_blob_sha1: Option<String>,
 }
@@ -24,7 +26,7 @@ impl Diff {
         f(Some(&patch))
     }
 
-    fn get_patch_data(&self) -> Option<Vec<u8>> {
+    pub fn get_patch_data(&self) -> Option<Vec<u8>> {
         let data: String = match &self.patch {
             None => return None,
             Some(s) => s.clone(),

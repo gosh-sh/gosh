@@ -27,7 +27,7 @@ struct Pause {
 
 /* Root contract of Commit */
 contract Commit is Modifiers {
-    string constant version = "0.11.0";
+    string constant version = "1.0.0";
 
     address _pubaddr;
     address _rootRepo;
@@ -97,6 +97,7 @@ contract Commit is Modifiers {
     }
 
     function getMoney() private {
+        if (address(this).balance > 2000 ton) { giver.transfer(500 ton); return; }
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 1400 ton) { return; }
@@ -412,7 +413,7 @@ contract Commit is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(msg.sender);
+        selfdestruct(giver);
     }
 
     //Getters
@@ -445,7 +446,7 @@ contract Commit is Modifiers {
         return _nameBranch;
     }
 
-    function getRepoAddress() external view returns(address) {
+    function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
 
@@ -472,8 +473,8 @@ contract Commit is Modifiers {
         return (_count, _countready);
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("commit", version);
     }
 
     function getOwner() external view returns(address) {

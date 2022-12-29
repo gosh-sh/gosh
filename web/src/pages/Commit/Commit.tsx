@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { getCommitTime, useCommit } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
@@ -7,8 +7,13 @@ import CommitBlobs from './CommitBlobs'
 import Committer from '../../components/Commit/Committer'
 
 const CommitPage = () => {
-    const { daoName, repoName, commitName } = useParams()
-    const { isFetching, commit, blobs } = useCommit(daoName!, repoName!, commitName!)
+    const { daoName, repoName, branchName, commitName } = useParams()
+    const { isFetching, commit, blobs } = useCommit(
+        daoName!,
+        repoName!,
+        branchName!,
+        commitName!,
+    )
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -53,7 +58,23 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    <CommitBlobs blobs={blobs} className="mt-4" />
+                    {branchName !== commit.branch ? (
+                        <div className="mt-5 bg-blue-300 rounded px-4 py-2.5">
+                            <p>This commit is from another branch</p>
+                            <p className="text-sm">
+                                Please, follow this{' '}
+                                <Link
+                                    className="font-bold underline"
+                                    to={`/o/${daoName}/r/${repoName}/commits/${commit.branch}/${commit.name}`}
+                                >
+                                    link
+                                </Link>{' '}
+                                to get commit details
+                            </p>
+                        </div>
+                    ) : (
+                        <CommitBlobs blobs={blobs} className="mt-4" />
+                    )}
                 </>
             )}
         </div>

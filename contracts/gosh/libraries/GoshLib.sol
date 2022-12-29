@@ -8,7 +8,7 @@ pragma ever-solidity >=0.66.0;
 import "../goshwallet.sol";
 
 library GoshLib {
-    string constant versionLib = "0.11.0";
+    string constant versionLib = "1.0.0";
 
     function buildSignatureCode(
         TvmCell originalCode,
@@ -118,6 +118,19 @@ library GoshLib {
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
+    function buildProfileIndexCode(
+        TvmCell originalCode,
+        uint256 pubkey,
+        address versioncontroller,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(pubkey);
+        b.store(versioncontroller);
+        b.store(version);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
 }

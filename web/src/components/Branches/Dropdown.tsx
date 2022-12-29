@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Listbox } from '@headlessui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faCodeBranch, faLock } from '@fortawesome/free-solid-svg-icons'
 import { classNames } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 
@@ -50,7 +50,15 @@ const BranchSelect = (props: TBranchSelectProps) => {
                 <div className="grow items-center justify-start truncate">
                     <FontAwesomeIcon icon={faCodeBranch} size="sm" className="mr-2" />
                     {branch?.name}
+                    {branch?.isProtected && (
+                        <FontAwesomeIcon
+                            className="ml-2 text-black/50"
+                            size="xs"
+                            icon={faLock}
+                        />
+                    )}
                 </div>
+
                 <FontAwesomeIcon icon={faChevronDown} size="xs" />
             </Listbox.Button>
             <Listbox.Options
@@ -89,6 +97,13 @@ const BranchSelect = (props: TBranchSelectProps) => {
                             }}
                         >
                             {item.name}
+                            {item.isProtected && (
+                                <FontAwesomeIcon
+                                    className="ml-2 text-black/70"
+                                    size="sm"
+                                    icon={faLock}
+                                />
+                            )}
                         </Listbox.Option>
                     ))}
                 </div>

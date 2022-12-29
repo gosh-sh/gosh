@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
-import { branchesAtom, branchSelector, daoAtom, treeAtom, treeSelector } from '../store'
+import {
+    branchesAtom,
+    branchSelector,
+    daoAtom,
+    repositoryAtom,
+    treeAtom,
+    treeSelector,
+} from '../store'
 import { TAddress, TDao } from '../types'
 import {
     TBranch,
@@ -14,6 +21,7 @@ import {
     TBranchOperateProgress,
     TCommit,
     TPushProgress,
+    TRepository,
     TRepositoryListItem,
     TTree,
     TTreeItem,
@@ -145,7 +153,7 @@ function useRepoList(dao: string, perPage: number) {
 function useRepo(dao: string, repo: string) {
     const [daoDetails, setDaoDetails] = useRecoilState(daoAtom)
     const [daoAdapter, setDaoAdapter] = useState<IGoshDaoAdapter>()
-    const [repoAdapter, setRepoAdapter] = useState<IGoshRepositoryAdapter>()
+    const [repository, setRepository] = useRecoilState(repositoryAtom)
     const [isFetching, setIsFetching] = useState<boolean>(true)
 
     useEffect(() => {
@@ -157,10 +165,16 @@ function useRepo(dao: string, repo: string) {
 
                 const repoInstance = await daoInstance.getRepository({ name: repo })
                 if (await repoInstance.isDeployed()) {
-                    const details = await daoInstance.getDetails()
+                    const daoDetails = await daoInstance.getDetails()
+                    const repoDetails = await repoInstance.getDetails()
+
                     setDaoAdapter(daoInstance)
-                    setDaoDetails(details)
-                    setRepoAdapter(repoInstance)
+                    setDaoDetails(daoDetails)
+                    setRepository({
+                        isFetching: false,
+                        adapter: repoInstance,
+                        details: repoDetails,
+                    })
                     setIsFetching(false)
                     break
                 }
@@ -170,13 +184,45 @@ function useRepo(dao: string, repo: string) {
         _getRepo()
     }, [dao, repo])
 
+    useEffect(() => {
+        const _getIncomingCommits = async () => {
+            if (!repository.adapter) return
+
+            const incoming = await repository.adapter.getIncomingCommits()
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, commitsIn: incoming },
+                }
+            })
+        }
+
+        _getIncomingCommits()
+        repository.adapter?.subscribeIncomingCommits((incoming) => {
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, commitsIn: incoming },
+                }
+            })
+        })
+
+        return () => {
+            repository.adapter?.unsubscribe()
+        }
+    }, [repository.adapter])
+
     return {
         isFetching,
         dao: {
             adapter: daoAdapter,
             details: daoDetails,
         },
-        adapter: repoAdapter,
+        repository,
     }
 }
 
@@ -251,11 +297,12 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 }
 
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
+    const setRepository = useSetRecoilState(repositoryAtom)
     const { updateBranches } = useBranches(repo)
     const { pushUpgrade } = _usePush(dao, repo)
     const [progress, setProgress] = useState<{
         name?: string
-        type?: 'create' | 'destroy' | '(un)lock'
+        type?: 'create' | 'destroy' | '(un)lock' | 'sethead'
         isFetching: boolean
         details: TBranchOperateProgress
     }>({ isFetching: false, details: {} })
@@ -313,6 +360,25 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         }
     }
 
+    const sethead = async (name: string) => {
+        try {
+            setProgress({ name, type: 'sethead', isFetching: true, details: {} })
+            await repo.setHead(name)
+            setRepository((state) => {
+                const { details } = state
+                if (!details) return state
+                return {
+                    ...state,
+                    details: { ...details, head: name },
+                }
+            })
+        } catch (e) {
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, isFetching: false, details: {} }))
+        }
+    }
+
     const _branchOperateCallback = (params: TBranchOperateProgress) => {
         setProgress((currVal) => {
             const { details } = currVal
@@ -328,14 +394,13 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         })
     }
 
-    return { create, destroy, lock, unlock, progress }
+    return { create, destroy, lock, unlock, sethead, progress }
 }
 
-function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: string) {
+function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string) {
     const [tree, setTree] = useRecoilState(treeAtom)
-
-    const getSubtree = (path?: string) => treeSelector({ type: 'tree', path })
-    const getTreeItems = (path?: string) => treeSelector({ type: 'items', path })
+    const subtree = useRecoilValue(treeSelector({ type: 'tree', path: treepath }))
+    const blobs = useRecoilValue(treeSelector({ type: 'blobs', path: treepath }))
 
     useEffect(() => {
         const _getTree = async () => {
@@ -352,14 +417,14 @@ function useTree(dao: string, repo: string, commit?: TCommit, filterPath?: strin
             setTree(undefined)
             const gosh = GoshAdapterFactory.create(commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            newtree = await adapter.getTree(commit, filterPath)
+            newtree = await adapter.getTree(commit, treepath)
             setTree(newtree)
         }
 
         _getTree()
-    }, [dao, repo, commit?.name, commit?.version, filterPath, setTree])
+    }, [dao, repo, commit?.name, commit?.version, treepath, setTree])
 
-    return { tree, getSubtree, getTreeItems }
+    return { tree, subtree, blobs }
 }
 
 function useBlob(dao: string, repo: string, branch?: string, path?: string) {
@@ -386,6 +451,7 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
             const { content } = await adapter.getBlob({
+                commit: branchData.commit.name,
                 fullpath: `${branchData.name}/${path}`,
             })
             setBlob((state) => ({
@@ -406,7 +472,7 @@ function useCommitList(
     dao: string,
     repo: IGoshRepositoryAdapter,
     branch: string,
-    perPage: number = 20,
+    perPage: number,
 ) {
     const { branch: branchData, updateBranch } = useBranches(repo, branch)
     const [isBranchUpdated, setIsBranchUpdated] = useState<boolean>(false)
@@ -537,7 +603,13 @@ function _useCommit(dao: string, repo: string, commit: string) {
     }
 }
 
-function useCommit(dao: string, repo: string, commit: string, showDiffNum: number = 5) {
+function useCommit(
+    dao: string,
+    repo: string,
+    branch: string,
+    commit: string,
+    showDiffNum: number = 5,
+) {
     const { repository, commit: details } = _useCommit(dao, repo, commit)
     const [blobs, setBlobs] = useState<{
         isFetching: boolean
@@ -562,7 +634,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }))
 
         const { commit, treepath } = blobs.items[index]
-        const diff = await repository.getCommitBlob(treepath, commit)
+        const diff = await repository.getCommitBlob(treepath, branch, commit)
 
         setBlobs((state) => ({
             ...state,
@@ -579,12 +651,16 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
             if (!repository || !details.commit) return
 
             setBlobs({ isFetching: true, items: [] })
-            const blobs = await repository.getCommitBlobs(details.commit)
+            const blobs = await repository.getCommitBlobs(branch, details.commit)
             const state = await Promise.all(
                 blobs.sort().map(async (treepath, i) => {
                     const diff =
                         i < showDiffNum
-                            ? await repository.getCommitBlob(treepath, details.commit!)
+                            ? await repository.getCommitBlob(
+                                  treepath,
+                                  branch,
+                                  details.commit!,
+                              )
                             : { previous: '', current: '' }
                     return {
                         treepath,
@@ -599,7 +675,7 @@ function useCommit(dao: string, repo: string, commit: string, showDiffNum: numbe
         }
 
         _getBlobs()
-    }, [repository, details.commit])
+    }, [repository, branch, details.commit])
 
     return {
         isFetching: details.isFetching,
@@ -619,7 +695,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -683,7 +759,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
     const push = async (
         title: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -707,7 +783,7 @@ function _useMergeRequest(
         isFetching: boolean
         details: TBranchCompareProgress
         items: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
             showDiff: boolean
@@ -758,21 +834,20 @@ function _useMergeRequest(
         setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
         // Compare trees and get added/updated treepath
-        const treeDiff: { treepath: string; exists: boolean }[] = []
+        const treeDiff: string[][] = []
         srcTreeItems
             .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
             .map((srcItem) => {
-                const treepath = getTreeItemFullPath(srcItem)
+                const srcPath = getTreeItemFullPath(srcItem)
                 const dstItem = dstTreeItems
                     .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
                     .find((dstItem) => {
-                        const srcPath = getTreeItemFullPath(srcItem)
                         const dstPath = getTreeItemFullPath(dstItem)
                         return srcPath === dstPath
                     })
 
                 if (dstItem && srcItem.sha1 === dstItem.sha1) return
-                treeDiff.push({ treepath, exists: !!dstItem })
+                treeDiff.push([srcPath, !!dstItem ? srcPath : ''])
             })
         setProgress((state) => {
             const { blobs = {} } = state.details
@@ -789,13 +864,22 @@ function _useMergeRequest(
         const blobDiff = await executeByChunk(
             treeDiff,
             MAX_PARALLEL_READ,
-            async ({ treepath, exists }, index) => {
-                const srcFullPath = `${srcBranch.name}/${treepath}`
-                const srcBlob = await srcRepo.getBlob({ fullpath: srcFullPath })
+            async (treepath, index) => {
+                const [aPath, bPath] = treepath
+                const srcFullPath = `${srcBranch.name}/${aPath}`
+                const srcBlob = await srcRepo.getBlob({
+                    commit: srcBranch.commit.name,
+                    fullpath: srcFullPath,
+                })
 
-                const dstFullPath = `${dstBranch.name}/${treepath}`
-                const dstBlob = exists
-                    ? (await dstRepo.getBlob({ fullpath: dstFullPath })).content
+                const dstFullPath = `${dstBranch.name}/${bPath}`
+                const dstBlob = bPath
+                    ? (
+                          await dstRepo.getBlob({
+                              commit: dstBranch.commit.name,
+                              fullpath: dstFullPath,
+                          })
+                      ).content
                     : ''
 
                 setProgress((state) => {
@@ -811,7 +895,7 @@ function _useMergeRequest(
                 })
 
                 return {
-                    treepath,
+                    treepath: [bPath, aPath],
                     original: dstBlob,
                     modified: srcBlob.content,
                     showDiff: index < showDiffNum,

@@ -31,7 +31,9 @@ interface IGoshAdapter {
     goshroot: IGoshRoot
     gosh: IGosh
 
+    isValidUsername(username: string): TValidationResult
     isValidDaoName(name: string): TValidationResult
+    isValidRepoName(name: string): TValidationResult
     isValidProfile(username: string[]): Promise<TAddress[]>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
@@ -63,6 +65,7 @@ interface IGoshDaoAdapter {
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 
+    getGosh(): IGoshAdapter
     getAddress(): TAddress
     getName(): Promise<string>
     getVersion(): string
@@ -105,7 +108,11 @@ interface IGoshRepositoryAdapter {
         commit: string | TCommit,
         search?: string,
     ): Promise<{ tree: TTree; items: TTreeItem[] }>
-    getBlob(options: { fullpath?: string; address?: TAddress }): Promise<{
+    getBlob(options: {
+        commit?: string
+        fullpath?: string
+        address?: TAddress
+    }): Promise<{
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -113,9 +120,10 @@ interface IGoshRepositoryAdapter {
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     getCommitBlob(
         treepath: string,
+        branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }>
-    getCommitBlobs(commit: string | TCommit): Promise<string[]>
+    getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]>
     getPullRequestBlob(
         item: { treepath: string; index: number },
         commit: string | TCommit,
@@ -132,6 +140,11 @@ interface IGoshRepositoryAdapter {
         commit: string,
         label: string,
     ): Promise<string>
+    getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]>
+    subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ): Promise<void>
+    unsubscribe(): Promise<void>
 
     createBranch(
         name: string,
@@ -146,7 +159,7 @@ interface IGoshRepositoryAdapter {
     push(
         branch: string,
         blobs: {
-            treepath: string
+            treepath: string[]
             original: string | Buffer
             modified: string | Buffer
         }[],
@@ -192,12 +205,14 @@ interface IContract {
     version: string
 
     isDeployed(): Promise<boolean>
+    boc(): Promise<string>
     getMessages(
         variables: {
             msgType: string[]
             node?: string[]
             cursor?: string
             limit?: number
+            allow_latest_inconsistent_data?: boolean
         },
         decode?: boolean,
         all?: boolean,
@@ -213,13 +228,22 @@ interface IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        settings?: { logging?: boolean; retries?: number },
+        settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
 
 interface IGoshRoot extends IContract {
     address: TAddress
+
+    getProfileIndex(options: {
+        address?: TAddress
+        pubkey?: string
+        username?: string
+    }): Promise<IGoshProfileIndex>
+    getProfileIndexes(
+        pubkey: string,
+    ): Promise<{ pubkey: string; name: string; profile: TAddress }[]>
 }
 
 interface IGoshProfile extends IContract {
@@ -250,6 +274,10 @@ interface IGoshProfileDao extends IContract {
 }
 
 interface IGosh extends IContract {
+    address: TAddress
+}
+
+interface IGoshProfileIndex extends IContract {
     address: TAddress
 }
 
@@ -319,6 +347,7 @@ export {
     IGoshProfile,
     IGoshProfileDao,
     IGosh,
+    IGoshProfileIndex,
     IGoshDao,
     IGoshRepository,
     IGoshWallet,
