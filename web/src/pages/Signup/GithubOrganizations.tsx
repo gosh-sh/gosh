@@ -1,5 +1,6 @@
 import { faArrowRightFromBracket, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Transition } from '@headlessui/react'
 import { useCallback, useEffect } from 'react'
 import { classNames } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -44,7 +45,15 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         if (!octokit || !session) return
 
         setGithubOrgs((state) => ({ ...state, isFetching: true }))
-        const { data } = await octokit.request('GET /user/orgs{?per_page,page}', {})
+        const { data, status } = await octokit.request(
+            'GET /user/orgs{?per_page,page}',
+            {},
+        )
+        if (status !== 200) {
+            signoutOAuth()
+            return
+        }
+
         const combined = [
             {
                 id: session.user.id,
@@ -176,11 +185,23 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                 {selected?.length ? selected : 'Select repository'}
                             </div>
 
-                            {item.isOpen && (
+                            <Transition
+                                show={item.isOpen}
+                                enter="transition-transform origin-top duration-200"
+                                enterFrom="scale-y-0"
+                                enterTo="scale-y-100"
+                                leave="transition-transform origin-top duration-200"
+                                leaveFrom="scale-y-100"
+                                leaveTo="scale-y-0"
+                            >
                                 <div className="orgitem__repos">
-                                    <GithubRepositories organization={item} />
+                                    <GithubRepositories
+                                        organization={item}
+                                        isOpen={item.isOpen}
+                                        signoutOAuth={signoutOAuth}
+                                    />
                                 </div>
-                            )}
+                            </Transition>
                         </div>
                     )
                 })}

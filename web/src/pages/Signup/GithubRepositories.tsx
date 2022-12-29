@@ -2,6 +2,7 @@ import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
+import Spinner from '../../components/Spinner'
 import {
     githubRepositoriesAtom,
     githubRepositoriesSelector,
@@ -11,10 +12,12 @@ import GithubEmpty from './GithubEmpty'
 
 type TGithubRepositoriesProps = {
     organization: any
+    isOpen: boolean
+    signoutOAuth(): Promise<void>
 }
 
 const GithubRepositories = (props: TGithubRepositoriesProps) => {
-    const { organization } = props
+    const { isOpen, organization, signoutOAuth } = props
     const setGithubRepos = useSetRecoilState(githubRepositoriesAtom)
     const githubOrgRepos = useRecoilValue(githubRepositoriesSelector(organization.id))
     const octokit = useRecoilValue(octokitSelector)
@@ -33,7 +36,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
     }
 
     const getGithubRepositories = useCallback(async () => {
-        if (!octokit) return
+        if (!octokit || !isOpen) return
 
         setGithubRepos((state) => ({
             ...state,
@@ -44,7 +47,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
             },
         }))
 
-        const { data } = organization.isUser
+        const { data, status } = organization.isUser
             ? await octokit.request(
                   'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
                   {
@@ -59,6 +62,10 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                       type: 'public',
                   },
               )
+        if (status !== 200) {
+            signoutOAuth()
+            return
+        }
 
         setGithubRepos((state) => ({
             ...state,
@@ -88,6 +95,13 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
 
     return (
         <>
+            {githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
+                <div className="p-5 text-sm text-gray-53596d">
+                    <Spinner className="mr-3" />
+                    Loading respositories...
+                </div>
+            )}
+
             {!githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
                 <GithubEmpty />
             )}
