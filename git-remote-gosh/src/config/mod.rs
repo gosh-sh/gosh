@@ -28,7 +28,7 @@ pub struct NetworkConfig {
     endpoints: Vec<String>,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Config {
     #[serde(rename = "ipfs")]

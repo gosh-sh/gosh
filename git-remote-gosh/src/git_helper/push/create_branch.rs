@@ -18,7 +18,7 @@ use super::{
 pub struct CreateBranchOperation<'a, Blockchain> {
     ancestor_commit: ObjectId,
     new_branch: String,
-    context: &'a mut GitHelper<Blockchain>,
+    context: &'a GitHelper<Blockchain>,
 }
 
 impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
@@ -28,7 +28,7 @@ where
     pub fn new(
         ancestor_commit: ObjectId,
         branch_name: impl Into<String>,
-        context: &'a mut GitHelper<Blockchain>,
+        context: &'a GitHelper<Blockchain>,
     ) -> Self
     where
         Blockchain: BlockchainService,
