@@ -4,7 +4,7 @@ use anyhow::format_err;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{prelude::*, Read};
+use std::io::prelude::*;
 use std::path::Path;
 use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -43,7 +43,8 @@ async fn main() -> anyhow::Result<()> {
         let n_args = args.clone();
         get_supported_versions.spawn(
             async move {
-                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_versions").await
+                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_versions")
+                    .await
             }
             .instrument(tracing::debug_span!("tokio::spawn::get_supported_versions").or_current()),
         );
@@ -70,8 +71,12 @@ async fn main() -> anyhow::Result<()> {
     let mut highest = None;
     for helper_path in existing_to_supported_map.keys() {
         tracing::trace!("Run version: {helper_path}");
-        if let Ok((status, versions, _)) =
-            run_binary_with_command(helper_path.to_owned(), args.clone(), "gosh_get_all_repo_versions").await
+        if let Ok((status, versions, _)) = run_binary_with_command(
+            helper_path.to_owned(),
+            args.clone(),
+            "gosh_get_all_repo_versions",
+        )
+        .await
         {
             tracing::trace!("Get versions: {status:?} {versions:?}");
             if versions.len() == 0 {
