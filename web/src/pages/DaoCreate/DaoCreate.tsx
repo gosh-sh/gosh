@@ -1,5 +1,4 @@
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { TextField, TextareaField } from '../../components/Formik'
 import { useNavigate } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
@@ -7,6 +6,7 @@ import { toast } from 'react-toastify'
 import { useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
 import ToastError from '../../components/Error/ToastError'
+import yup from '../../yup-extended'
 
 type TFormValues = {
     name: string
@@ -41,11 +41,8 @@ const DaoCreatePage = () => {
                         members: '',
                     }}
                     onSubmit={onDaoCreate}
-                    validationSchema={Yup.object().shape({
-                        name: Yup.string()
-                            .matches(/^[\w-]+$/, 'Name has invalid characters')
-                            .max(64, 'Max length is 64 characters')
-                            .required('Name is required'),
+                    validationSchema={yup.object().shape({
+                        name: yup.string().daoname().required('Name is required'),
                     })}
                     enableReinitialize
                 >
@@ -85,7 +82,7 @@ const DaoCreatePage = () => {
                                                 e.target.value.toLowerCase(),
                                             ),
                                     }}
-                                    help="Put each @username from new line"
+                                    help="Put each username from new line"
                                 />
                             </div>
 

@@ -12,7 +12,6 @@ use crate::{
         tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
         EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
     },
-    config,
     ipfs::{service::FileSave, IpfsService},
 };
 use tokio_retry::Retry;
@@ -254,6 +253,7 @@ pub async fn is_diff_deployed(
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: anyhow::Result<GetVersionResult> =
         diff_contract.read_state(context, "getVersion", None).await;
+    tracing::trace!("is_diff_deployed result: {:?}", result);
     Ok(result.is_ok())
 }
 

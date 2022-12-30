@@ -75,7 +75,6 @@ import {
     ZERO_COMMIT,
 } from '../../constants'
 import { GoshSmvTokenRoot } from './goshsmvtokenroot'
-import { validateUsername } from '../../validators'
 import { GoshContentSignature } from './goshcontentsignature'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
@@ -104,21 +103,22 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return GoshAdapter_1_0_0.instance
     }
 
+    isValidUsername(username: string): TValidationResult {
+        return this._isValidName(username, 'Username')
+    }
+
     isValidDaoName(name: string): TValidationResult {
-        const matches = name.match(/^[\w-]+$/g)
-        if (!matches || matches[0] !== name) {
-            return { valid: false, reason: 'Name has incorrect symbols' }
-        }
-        if (name.length > 64) {
-            return { valid: false, reason: 'Name is too long (>64)' }
-        }
-        return { valid: true }
+        return this._isValidName(name, 'DAO name')
+    }
+
+    isValidRepoName(name: string): TValidationResult {
+        return this._isValidName(name, 'Repository name')
     }
 
     async isValidProfile(username: string[]): Promise<TAddress[]> {
         return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
-            const { valid, reason } = validateUsername(member)
+            const { valid, reason } = this.isValidUsername(member)
             if (!valid) throw new GoshError(`${member}: ${reason}`)
 
             const profile = await this.getProfile({ username: member })
@@ -146,9 +146,14 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (address) return new GoshProfile(this.client, address)
 
         if (!username) throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
-        const { value0 } = await this.gosh.runLocal('getProfileAddr', {
-            name: username.toLowerCase(),
-        })
+        const { value0 } = await this.gosh.runLocal(
+            'getProfileAddr',
+            {
+                name: username.toLowerCase(),
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshProfile(this.client, value0)
     }
 
@@ -163,9 +168,14 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (address) adapter = new GoshDaoAdapter(this, address)
         else if (!name) throw new GoshError('DAO name is undefined')
         else {
-            const { value0 } = await this.gosh.runLocal('getAddrDao', {
-                name: name.toLowerCase(),
-            })
+            const { value0 } = await this.gosh.runLocal(
+                'getAddrDao',
+                {
+                    name: name.toLowerCase(),
+                },
+                undefined,
+                { useCachedBoc: true },
+            )
             adapter = new GoshDaoAdapter(this, value0)
         }
 
@@ -184,17 +194,25 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
 
         if (!path) throw new GoshError('Repository path is undefined')
         const [dao, name] = path.split('/')
-        const { value0 } = await this.gosh.runLocal('getAddrRepository', { dao, name })
+        const { value0 } = await this.gosh.runLocal(
+            'getAddrRepository',
+            { dao, name },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshRepositoryAdapter(this, value0)
     }
 
     async getRepositoryCodeHash(dao: TAddress): Promise<string> {
-        const { value0 } = await this.gosh.runLocal('getRepoDaoCode', {
-            dao,
-        })
-        const { hash } = await this.client.boc.get_boc_hash({
-            boc: value0,
-        })
+        const { value0 } = await this.gosh.runLocal(
+            'getRepoDaoCode',
+            {
+                dao,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
         return hash
     }
 
@@ -202,9 +220,14 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         const state = Buffer.isBuffer(data)
             ? data.toString('hex')
             : Buffer.from(data).toString('hex')
-        const { value0 } = await this.gosh.runLocal('getHash', {
-            state,
-        })
+        const { value0 } = await this.gosh.runLocal(
+            'getHash',
+            {
+                state,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return value0
     }
 
@@ -214,11 +237,50 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         if (await profile.isDeployed()) return profile
 
         // Deploy profile
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-        await this.gosh.run('deployProfile', { name: username.toLowerCase(), pubkey })
+        await this.gosh.run('deployProfile', {
+            name: username.toLowerCase(),
+            pubkey: pubkey.startsWith('0x') ? pubkey : `0x${pubkey}`,
+        })
         const wait = await whileFinite(async () => await profile.isDeployed())
         if (!wait) throw new GoshError('Deploy profile timeout reached')
         return profile
+    }
+
+    private _isValidName(name: string, field?: string): TValidationResult {
+        field = field || 'Name'
+
+        const matchSymbols = name.match(/^[\w-]+$/g)
+        if (!matchSymbols || matchSymbols[0] !== name) {
+            return { valid: false, reason: `${field} has incorrect symbols` }
+        }
+
+        const matchHyphens = name.match(/-{2,}/g)
+        if (matchHyphens && matchHyphens.length > 0) {
+            return { valid: false, reason: `${field} can not contain consecutive "-"` }
+        }
+
+        const matchUnderscores = name.match(/_{2,}/g)
+        if (matchUnderscores && matchUnderscores.length > 0) {
+            return { valid: false, reason: `${field} can not contain consecutive "_"` }
+        }
+
+        if (name.startsWith('-')) {
+            return { valid: false, reason: `${field} can not start with "-"` }
+        }
+
+        if (name.startsWith('_')) {
+            return { valid: false, reason: `${field} can not start with "_"` }
+        }
+
+        if (name.toLowerCase() !== name) {
+            return { valid: false, reason: `${field} should be lowercase` }
+        }
+
+        if (name.length > 39) {
+            return { valid: false, reason: `${field} is too long (Max length is 39)` }
+        }
+
+        return { valid: true }
     }
 }
 
@@ -253,12 +315,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    getGosh(): IGoshAdapter {
+        return this.gosh
+    }
+
     getAddress(): TAddress {
         return this.dao.address
     }
 
     async getName(): Promise<string> {
-        const { value0 } = await this.dao.runLocal('getNameDao', {})
+        const { value0 } = await this.dao.runLocal('getNameDao', {}, undefined, {
+            useCachedBoc: true,
+        })
         return value0
     }
 
@@ -322,9 +390,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (address) return new GoshRepositoryAdapter(this.gosh, address, auth, config)
         if (!name) throw new GoshError('Repo name undefined')
 
-        const { value0 } = await this.dao.runLocal('getAddrRepository', {
-            name: name.toLowerCase(),
-        })
+        const { value0 } = await this.dao.runLocal(
+            'getAddrRepository',
+            {
+                name: name.toLowerCase(),
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshRepositoryAdapter(this.gosh, value0, auth, config)
     }
 
@@ -350,6 +423,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         prev?: { addr: TAddress; version: string } | undefined,
     ): Promise<IGoshRepositoryAdapter> {
         if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+
+        const { valid, reason } = this.gosh.isValidRepoName(name)
+        if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
@@ -423,10 +499,15 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     private async _getWalletAddress(profile: TAddress, index: number): Promise<TAddress> {
-        const { value0 } = await this.dao.runLocal('getAddrWallet', {
-            pubaddr: profile,
-            index,
-        })
+        const { value0 } = await this.dao.runLocal(
+            'getAddrWallet',
+            {
+                pubaddr: profile,
+                index,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return value0
     }
 
@@ -442,7 +523,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const profiles = []
         for (const key in value0) {
             const profile = `0:${key.slice(2)}`
-            profiles.push({ profile, wallet: value0[key] })
+            profiles.push({ profile, wallet: value0[key].member })
         }
         return profiles
     }
@@ -476,7 +557,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         auth?: { username: string; wallet0: IGoshWallet },
         config?: { maxWalletsWrite: number },
     ) {
-        console.debug('Repo', auth, config)
         this.gosh = gosh
         this.client = gosh.client
         this.repo = new GoshRepository(this.client, address)
@@ -494,7 +574,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getName(): Promise<string> {
         if (!this.name) {
-            const { value0 } = await this.repo.runLocal('getName', {})
+            const { value0 } = await this.repo.runLocal('getName', {}, undefined, {
+                useCachedBoc: true,
+            })
             this.name = value0
         }
         return this.name!
@@ -516,7 +598,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             version: this.repo.version,
             branches: (await this._getBranches()).length,
             head: await this.getHead(),
-            tags: await this.getTags(),
+            commitsIn: [],
         }
     }
 
@@ -839,7 +921,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getTags(): Promise<TTag[]> {
         // Get repo tag code and all tag accounts addresses
-        const code = await this.repo.runLocal('getTagCode', {})
+        const code = await this.repo.runLocal('getTagCode', {}, undefined, {
+            useCachedBoc: true,
+        })
         const codeHash = await this.client.boc.get_boc_hash({ boc: code.value0 })
         const accounts: string[] = await getAllAccounts({
             filters: [`code_hash: {eq:"${codeHash.hash}"}`],
@@ -893,11 +977,97 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit,
                 label,
             },
+            undefined,
+            { useCachedBoc: true },
         )
 
         const instance = new GoshContentSignature(this.client, address)
         const { value0 } = await instance.runLocal('getContent', {})
         return value0
+    }
+
+    async getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]> {
+        // Read limited amount of IntIn repo messages
+        const { messages } = await this.repo.getMessages(
+            {
+                msgType: ['IntIn'],
+                node: ['block_id', 'src', 'dst_transaction {id out_msgs}'],
+                limit: 30,
+                allow_latest_inconsistent_data: true,
+            },
+            true,
+        )
+
+        // Remove all messages from tail until `SendDiff` first occurence
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const { decoded } = messages[i]
+            if (decoded && decoded.name === 'SendDiff') {
+                break
+            }
+            messages.splice(i, 1)
+        }
+
+        // Get successful `SendDiff` messages
+        const sendDiffs = await Promise.all(
+            messages
+                .filter(({ decoded }) => decoded.name === 'SendDiff')
+                .map(async ({ decoded, message }) => {
+                    const { result } = await this.client.net.query_collection({
+                        collection: 'messages',
+                        filter: {
+                            id: { in: message.dst_transaction.out_msgs },
+                        },
+                        result: 'dst_transaction {id aborted status}',
+                    })
+
+                    const txSuccess = result.every(
+                        ({ dst_transaction: tx }) => tx.status === 3 && !tx.aborted,
+                    )
+                    return { decoded, message: { ...message, aborted: !txSuccess } }
+                }),
+        )
+        const incoming = sendDiffs
+            .filter(({ message }) => !message.aborted)
+            .map(({ decoded }) => decoded.value)
+
+        // Get `setComit` or `commitCanceled` messages and remove corresponding
+        // `SendDiff` messages
+        const setCommits = messages.filter(({ decoded }) => {
+            return ['setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+        })
+        for (const { message } of setCommits) {
+            const index = incoming.findIndex(({ commit }) => commit === message.src)
+            incoming.splice(index, 1)
+        }
+
+        return await Promise.all(
+            incoming.map(async (item) => {
+                const commit = await this.getCommit({ address: item.commit })
+                return { ...item, commit }
+            }),
+        )
+    }
+
+    async subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ) {
+        await this.repo.account.subscribeMessages('body msg_type', async (message) => {
+            const decoded = await this.repo.decodeMessageBody(
+                message.body,
+                message.msg_type,
+            )
+            if (
+                decoded &&
+                ['SendDiff', 'setCommit', 'commitCanceled'].indexOf(decoded.name) >= 0
+            ) {
+                const incoming = await this.getIncomingCommits()
+                callback(incoming)
+            }
+        })
+    }
+
+    async unsubscribe() {
+        await this.repo.account.free()
     }
 
     async createBranch(
@@ -969,7 +1139,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get all snapshots from branch and delete
-        const snapCode = await this.repo.runLocal('getSnapCode', { branch: name })
+        const snapCode = await this.repo.runLocal(
+            'getSnapCode',
+            { branch: name },
+            undefined,
+            { useCachedBoc: true },
+        )
         const snapCodeHash = await this.client.boc.get_boc_hash({ boc: snapCode.value0 })
         const accounts = await getAllAccounts({
             filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
@@ -1461,7 +1636,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (address) return new GoshCommit(this.client, address)
 
         if (!name) throw new GoshError('Commit name is undefined')
-        const { value0 } = await this.repo.runLocal('getCommitAddr', { nameCommit: name })
+        const { value0 } = await this.repo.runLocal(
+            'getCommitAddr',
+            { nameCommit: name },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshCommit(this.client, value0)
     }
 
@@ -1473,7 +1653,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (address) return new GoshTree(this.client, address)
 
         if (!name) throw new GoshError('Tree name is undefined')
-        const { value0 } = await this.repo.runLocal('getTreeAddr', { treeName: name })
+        const { value0 } = await this.repo.runLocal(
+            'getTreeAddr',
+            { treeName: name },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshTree(this.client, value0)
     }
 
@@ -1515,11 +1700,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         index1: number,
         index2: number,
     ): Promise<IGoshDiff> {
-        const { value0 } = await this.repo.runLocal('getDiffAddr', {
-            commitName: commit,
-            index1,
-            index2,
-        })
+        const { value0 } = await this.repo.runLocal(
+            'getDiffAddr',
+            {
+                commitName: commit,
+                index1,
+                index2,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return new GoshDiff(this.client, value0)
     }
 
@@ -1530,8 +1720,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     private async _getTag(address: TAddress): Promise<TTag> {
         const tag = new GoshTag(this.client, address)
-        const commit = await tag.runLocal('getCommit', {})
-        const content = await tag.runLocal('getContent', {})
+        const commit = await tag.runLocal('getCommit', {}, undefined, {
+            useCachedBoc: true,
+        })
+        const content = await tag.runLocal('getContent', {}, undefined, {
+            useCachedBoc: true,
+        })
         return {
             commit: commit.value0,
             content: content.value0,
@@ -1542,10 +1736,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         treepath: string,
     ): Promise<TAddress> {
-        const { value0 } = await this.repo.runLocal('getSnapshotAddr', {
-            branch,
-            name: treepath,
-        })
+        const { value0 } = await this.repo.runLocal(
+            'getSnapshotAddr',
+            {
+                branch,
+                name: treepath,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
         return value0
     }
 
@@ -1596,7 +1795,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { value0 } = await this.auth.wallet0.runLocal('getWalletAddr', { index })
+        const { value0 } = await this.auth.wallet0.runLocal(
+            'getWalletAddr',
+            { index },
+            undefined,
+            { useCachedBoc: true },
+        )
         const subwallet = new GoshWallet(this.client, value0, {
             keys: this.auth.wallet0.account.signer.keys,
         })
@@ -2063,7 +2267,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async getEventCodeHash(): Promise<string> {
-        const { value0 } = await this.dao.runLocal('getProposalCode', {})
+        const { value0 } = await this.dao.runLocal('getProposalCode', {}, undefined, {
+            useCachedBoc: true,
+        })
         const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
         return hash
     }
@@ -2202,11 +2408,13 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshDeleteProtectedBranchProposalParams'
         } else if (type === ESmvEventType.PR) {
             fn = 'getGoshSetCommitProposalParams'
+        } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
+            fn = 'getGoshSetConfigDaoProposalParams'
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
 
-        const decoded = await event.runLocal(fn, {})
+        const decoded = await event.runLocal(fn, {}, undefined, { useCachedBoc: true })
         delete decoded.proposalKind
         return decoded
     }

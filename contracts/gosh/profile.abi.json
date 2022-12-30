@@ -7,6 +7,8 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"codeProfileDao","type":"cell"},
+				{"name":"codeProfile","type":"cell"},
+				{"name":"codeIndex","type":"cell"},
 				{"name":"pubkey","type":"uint256"}
 			],
 			"outputs": [
@@ -14,6 +16,17 @@
 		},
 		{
 			"name": "deployedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyedWallet",
 			"inputs": [
 				{"name":"systemcontract","type":"address"},
 				{"name":"goshdao","type":"address"},
@@ -108,11 +121,54 @@
 			]
 		},
 		{
+			"name": "deleteProfileIndexContract",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployProfileIndexContract",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setNewSystemContract",
 			"inputs": [
 				{"name":"systemcontract","type":"address"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getProfileIndexAddr",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProfileIndexCode",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
@@ -187,7 +243,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"name":"m_codeProfileDao","type":"cell"},
+		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_versioncontroller","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_systemcontract","type":"address"},

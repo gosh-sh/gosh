@@ -11,10 +11,12 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "./modifiers/modifiers.sol";
+import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "systemcontract.sol";
 import "goshdao.sol";
 import "profiledao.sol";
+import "profileindex.sol";
 
 struct MessageProfile {
     uint128 index;
@@ -32,7 +34,7 @@ struct MessageProfile {
 
 contract Profile is Modifiers {
     string constant version = "1.0.0";
-    TvmCell m_codeProfileDao;
+    mapping(uint8 => TvmCell) _code;
     
     address static _versioncontroller;
     string static _name;
@@ -55,12 +57,18 @@ contract Profile is Modifiers {
     uint128 timeMoney = 0;
 
     constructor( TvmCell codeProfileDao,
+        TvmCell codeProfile,
+        TvmCell codeIndex,
         uint256 pubkey
-    ) public {
+    ) public internalMsg {
+        require(checkName(_name), ERR_WRONG_NAME);
         _systemcontract = msg.sender;
-        m_codeProfileDao = codeProfileDao;
+        _code[m_ProfileDaoCode] = codeProfileDao;
+        _code[m_ProfileIndexCode] = codeIndex;
+        _code[m_ProfileCode] = codeProfile;
         _owners[pubkey] = 0;
         _index[0] = pubkey;
+        this.deployProfileIndexContract{value: 0.3 ton, flag: 1}(pubkey);
         getMoney();
     }
     
@@ -81,6 +89,10 @@ contract Profile is Modifiers {
     }
     
     function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public pure {
+        systemcontract; goshdao; index; ver;
+    }
+    
+    function destroyedWallet(address systemcontract, address goshdao, uint128 index, string ver) public pure {
         systemcontract; goshdao; index; ver;
     }
     
@@ -178,6 +190,7 @@ contract Profile is Modifiers {
         _index[_custodians] = pubkey;
         _custodians += 1;
         delete _messages;
+        this.deployProfileIndexContract{value: 0.1 ton, flag: 1}(pubkey);
         getMoney();
     }
 
@@ -189,6 +202,7 @@ contract Profile is Modifiers {
         delete _owners[pubkey];
         delete _index[_custodians];
         delete _messages;
+        this.deleteProfileIndexContract{value: 0.1 ton, flag: 1}(pubkey);
         getMoney();
     }
 
@@ -241,7 +255,7 @@ contract Profile is Modifiers {
     
     function _deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) private view  accept  {
         TvmCell s0 = tvm.buildStateInit({
-            code: m_codeProfileDao,
+            code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
             varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
@@ -251,7 +265,7 @@ contract Profile is Modifiers {
 
     function sendMoneyProfileDao(string name, uint128 value) public view {
         TvmCell s0 = tvm.buildStateInit({
-            code: m_codeProfileDao,
+            code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
             varInit: {_name : name, _versioncontroller: _versioncontroller}
         });
@@ -259,6 +273,29 @@ contract Profile is Modifiers {
         require(daoprofile == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         daoprofile.transfer(value);
+    }
+    
+    function deleteProfileIndexContract(uint256 pubkey) public senderIs(address(this)) accept saveMsg {
+        ProfileIndex(_getProfileIndexAddr(pubkey)).destroy{value : 0.2 ton, flag: 1}();
+    }
+    
+    function deployProfileIndexContract(uint256 pubkey) public senderIs(address(this)) accept saveMsg {
+        TvmCell s1 = tvm.buildStateInit({
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, _versioncontroller, version),
+            contr: ProfileIndex,
+            pubkey: tvm.pubkey(),
+            varInit: { _name : _name }
+        });
+        new ProfileIndex {stateInit: s1, value: FEE_DEPLOY_PROFILE_INDEX, wid: 0, flag: 1}(address(this), _code[m_ProfileCode]);
+    }
+    
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
     }
 
     //Money part
@@ -284,6 +321,24 @@ contract Profile is Modifiers {
     }
 
     //Getters
+    function _getProfileIndexAddr(uint256 pubkey) private view returns(address) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, _versioncontroller, version),
+            contr: ProfileIndex,
+            pubkey: tvm.pubkey(),
+            varInit: { _name : _name }
+        });
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }    
+    
+    function getProfileIndexAddr(uint256 pubkey) external view returns(address) {
+        return _getProfileIndexAddr(pubkey);
+    }
+    
+    function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, _versioncontroller, version);
+    }
+    
     function getMessages() external view returns(mapping(uint64 => MessageProfile)){
         return _messages;
     }
@@ -309,7 +364,7 @@ contract Profile is Modifiers {
 
     function getProfileDaoAddr(string name) external view returns(address){
         TvmCell s0 = tvm.buildStateInit({
-            code: m_codeProfileDao,
+            code: _code[m_ProfileDaoCode],
             contr: ProfileDao,
             varInit: {_name : name, _versioncontroller: _versioncontroller}
         });

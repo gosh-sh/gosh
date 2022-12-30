@@ -33,6 +33,12 @@ impl BlockchainCall for Everscale {
         C: ContractInfo + Sync,
     {
         tracing::debug!("blockchain call start");
+        tracing::trace!(
+            "contract: {:?}, function: {}, args: {:?}",
+            contract,
+            function_name,
+            args
+        );
         let call_set = match args {
             Some(value) => CallSet::some_with_function_and_input(function_name, value),
             None => CallSet::some_with_function(function_name),
@@ -56,7 +62,7 @@ impl BlockchainCall for Everscale {
         let sdk_result = ton_client::processing::process_message(
             Arc::clone(self.client()),
             ParamsOfProcessMessage {
-                send_events: false,
+                send_events: true,
                 message_encode_params,
             },
             default_callback,

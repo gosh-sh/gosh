@@ -24,23 +24,27 @@ import RepoReadme from './Readme'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
-    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { daoName, repoName, branchName } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
     const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 
     const getRemoteUrl = (short: boolean): string => {
-        const goshAddress = AppConfig.versions[repo.getVersion()]
+        const goshAddress = AppConfig.versions[repository.details.version]
         const goshstr = short ? shortString(goshAddress) : goshAddress
         return `gosh://${goshstr}/${daoName}/${repoName}`
     }
 
     useEffect(() => {
-        updateBranch(branchName)
-    }, [branchName, updateBranch])
+        if (!branchName) {
+            navigate(`/o/${daoName}/r/${repoName}/tree/${repository.details.head}`)
+        } else {
+            updateBranch(branchName)
+        }
+    }, [daoName, repoName, branchName, repository.details.head, navigate, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
