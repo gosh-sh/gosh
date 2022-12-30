@@ -660,21 +660,19 @@ fn get_list_of_commit_objects(
     for commit in commits.iter().rev() {
         let commit = commit.object()?.into_commit();
         res.push(commit.id.to_string());
-
         let tree = commit.tree()?;
         res.push(tree.id.to_string());
-
-        res.extend(
-            tree.traverse()
-                .breadthfirst
-                .files()?
-                .iter()
-                // IMPORTANT: ignore blobs because later logic skips blobs too
-                // but might change in the future refactorings
-                .filter(|e| !e.mode.is_blob())
-                .into_iter()
-                .map(|e| e.oid.to_string()),
-        );
+        // res.extend(
+        //     tree.traverse()
+        //         .breadthfirst
+        //         .files()?
+        //         .iter()
+        //         // IMPORTANT: ignore blobs because later logic skips blobs too
+        //         // but might change in the future refactorings
+        //         .filter(|e| !e.mode.is_blob())
+        //         .into_iter()
+        //         .map(|e| e.oid.to_string()),
+        // );
     }
     Ok(res)
 }
