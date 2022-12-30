@@ -12,9 +12,13 @@ const BlobUpdatePage = () => {
     const treepath = useParams()['*']
     const navigate = useNavigate()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
-    const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
+    const { push, progress: pushProgress } = usePush(
+        dao.details,
+        repository.adapter,
+        branchName,
+    )
 
     const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${treepath}`
 

@@ -37,7 +37,7 @@ async fn main() -> ExitCode {
 }
 
 async fn main_internal() -> anyhow::Result<()> {
-    let root = tracing::span!(tracing::Level::TRACE, "git-remote-helper");
+    let root = tracing::span!(tracing::Level::INFO, "git-remote-helper");
     let _enter = root.enter();
     let config = git_remote_gosh::config::Config::init()?;
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));

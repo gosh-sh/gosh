@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 set -o pipefail
+. /tmp/util.sh
 
 ### Set during docker run. See Makefile and README.
 ## -- empty --
@@ -58,6 +59,7 @@ TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/cod
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILE_CODE=$(everdev contract dt $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 
@@ -75,9 +77,14 @@ echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 echo "========== Send 2000 tons for deploy VersionController"
 everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
 
+delay 40
+
 # Deploy VersionController
 echo "========== Deploy VersionController"
 everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+
+echo "***** awaiting VersionController deploy *****"
+wait_account_active $VERSIONCONTROLLER_ADDR
 
 # Apply VersionController setters
 echo "========== Run VersionController setters"
@@ -85,6 +92,8 @@ echo "     ====> Run setSystemContractCode"
 everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
 echo "     ====> Run setProfile"
 everdev contract run $VERSIONCONTROLLER_ABI setProfile --input "{\"code\": \"$PROFILE_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setProfileIndex"
+everdev contract run $VERSIONCONTROLLER_ABI setProfileIndex --input "{\"code\": \"$PROFILEINDEX_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileDao"
 everdev contract run $VERSIONCONTROLLER_ABI setProfileDao --input "{\"code\": \"$PROFILEDAO_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
@@ -96,6 +105,10 @@ everdev contract run $VERSIONCONTROLLER_ABI deploySystemContract --input "{\"ver
 echo "========== Get SystemContract address"
 SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
 echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
+
+echo "***** awaiting SystemContract deploy *****"
+wait_account_active $SYSTEMCONTRACT_ADDR
+
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract.addr
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 

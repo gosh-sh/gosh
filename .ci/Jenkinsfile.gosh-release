@@ -6,7 +6,7 @@ pipeline {
     }
 
     stages {
-        stage("Release: Git Helper Snap"){
+        /*stage("Release: Git Helper Snap"){
             agent {
                 node {
                     label 'jenkins-main'
@@ -21,6 +21,19 @@ pipeline {
                         """
                         }
                     }
+                }
+            }
+        }*/
+        stage('Web: deploy prod') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt/giver.keys.json:/opt/giver.keys.json --group-add docker'
+                }
+            }
+            steps {
+                script {
+                    build job: 'deploy-web', parameters: [[$class: 'StringParameterValue', name: 'sha1', value: "${TAG}"]]
                 }
             }
         }

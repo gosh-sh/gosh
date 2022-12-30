@@ -9,9 +9,9 @@ import BranchCommitForm from '../../components/Commit/BranchCommitForm'
 const PullCreatePage = () => {
     const navigate = useNavigate()
     const { daoName, repoName } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const { srcBranch, dstBranch, build, buildProgress, push, pushProgress } =
-        usePullRequest(dao.details, repo)
+        usePullRequest(dao.details, repository.adapter)
     const { isFetching, isEmpty } = buildProgress
 
     const onBuild = async (values: any) => {

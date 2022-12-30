@@ -1,0 +1,12 @@
+{
+    "fmt": {
+        "files": {
+            // disable deno fmt, use prettier for consistency
+            "exclude": ["."]
+        }
+    },
+    "tasks": {
+        "fmt": "npx prettier -w .",
+        "docker": "docker buildx build -t gosh-onboarding ."
+    }
+}

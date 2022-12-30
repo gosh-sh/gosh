@@ -143,6 +143,8 @@ struct GetHeadResult {
 #[derive(Deserialize, Debug)]
 struct GetVersionResult {
     #[serde(rename = "value0")]
+    pub contract_name: String,
+    #[serde(rename = "value1")]
     pub version: String,
 }
 
@@ -349,7 +351,7 @@ async fn run_static(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    tracing::debug!("cb: {:#?}", pe);
+    tracing::debug!("process_message callback: {:#?}", pe);
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -365,6 +367,7 @@ pub async fn get_repo_address(
     let result: GetRepoAddrResult = contract
         .read_state(context, "getAddrRepository", Some(args))
         .await?;
+    tracing::trace!("get_repo_address result: {:?}", result);
     Ok(BlockchainContractAddress::new(result.address))
 }
 
@@ -376,6 +379,7 @@ pub async fn branch_list(
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
+    tracing::trace!("branch_list result: {:?}", result);
     Ok(result)
 }
 
@@ -410,6 +414,7 @@ pub async fn get_head(
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.read_state(context, "getHEAD", None).await?;
+    tracing::trace!("get_head result: {:?}", result);
     Ok(result.head)
 }
 
@@ -477,11 +482,6 @@ pub mod tests {
         );
     }
 
-    #[derive(Deserialize, Debug)]
-    struct GetHashResult {
-        #[serde(rename = "value0")]
-        hash: String,
-    }
 
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {

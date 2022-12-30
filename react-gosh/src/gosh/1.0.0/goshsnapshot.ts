@@ -12,8 +12,10 @@ class GoshSnapshot extends BaseContract implements IGoshSnapshot {
     }
 
     async getName(): Promise<string> {
-        const result = await this.account.runLocal('getName', {})
-        return result.decoded?.output.value0
+        const { value0 } = await this.runLocal('getName', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return value0
     }
 }
 

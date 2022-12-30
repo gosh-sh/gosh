@@ -10,7 +10,6 @@ import AccountLayout from './pages/AccountLayout'
 import DaoLayout from './pages/DaoLayout'
 import DaoSettingsLayout from './pages/DaoSettingsLayout'
 import RepoLayout from './pages/RepoLayout'
-import HomePage from './pages/Home'
 import SettingsPage from './pages/Settings'
 import SignupPage from './pages/Signup'
 import SigninPage from './pages/Signin'
@@ -52,10 +51,10 @@ import { NetworkQueriesProtocol } from '@eversdk/core'
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
-    useEffect(() => {
+    const getAppConfig = () => {
         const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
         const versions = JSON.parse(process.env.REACT_APP_GOSH || '{}')
-        const appconfig = {
+        return {
             goshclient: {
                 network: {
                     endpoints,
@@ -71,8 +70,18 @@ const App = () => {
             ipfs: process.env.REACT_APP_IPFS || '',
             isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
         }
-        AppConfig.setup(appconfig)
+    }
+
+    const initializeApp = async (config: any) => {
+        AppConfig.setup(config)
+        await AppConfig.goshclient.client.version()
         setIsInitialized(true)
+    }
+
+    useEffect(() => {
+        // Make all app initializations
+        const appconfig = getAppConfig()
+        initializeApp(appconfig)
 
         // Register service functions for testing/debugging
         // @ts-ignore
@@ -83,9 +92,9 @@ const App = () => {
             }
 
             const sliced: any = {}
-            Object.keys(versions)
+            Object.keys(appconfig.goshver)
                 .slice(0, num)
-                .forEach((ver) => (sliced[ver] = versions[ver]))
+                .forEach((ver) => (sliced[ver] = appconfig.goshver[ver]))
             AppConfig.setup({ ...appconfig, goshver: sliced })
             return AppConfig.versions
         }
@@ -131,7 +140,16 @@ const App = () => {
             <Header />
             <main className="main grow">
                 <Routes>
-                    <Route path="/" element={<HomePage />} />
+                    <Route
+                        path="/"
+                        element={
+                            process.env.REACT_APP_ISDOCKEREXT === 'true' ? (
+                                <SigninPage />
+                            ) : (
+                                <SignupPage />
+                            )
+                        }
+                    />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
