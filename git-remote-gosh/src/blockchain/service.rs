@@ -147,9 +147,10 @@ pub mod tests {
             // empty
         }
 
-        impl Clone for Everscale {
-            fn clone(&self) -> Self;
-        }
+        // For unknown reason test fails with such clone, need to implement it separately
+        // impl Clone for Everscale {
+        //     fn clone(&self) -> Self;
+        // }
 
         #[async_trait]
         impl DeployBranch for Everscale {
@@ -262,6 +263,11 @@ pub mod tests {
             fn client(&self) -> &EverClient;
             fn root_contract(&self) -> &GoshContract;
             fn repo_contract(&self) -> &GoshContract;
+        }
+    }
+    impl Clone for MockEverscale {
+        fn clone(&self) -> Self {
+            Self::new()
         }
     }
 }

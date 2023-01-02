@@ -5,7 +5,10 @@ import { Combobox } from '@headlessui/react'
 import { Form, Formik } from 'formik'
 import { useEffect, useState } from 'react'
 import { AppConfig } from 'react-gosh'
+import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
 import Spinner from '../../components/Spinner'
+import { getClipboardData } from '../../helpers'
 
 type TSigninPhraseFormProps = {
     onSubmit(values: { words: string[] }): Promise<void>
@@ -30,14 +33,23 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
             value: any,
             shouldValidate?: boolean | undefined,
         ) => void,
+        e?: any,
     ) => {
-        const data = await navigator.clipboard.readText()
-        const words = data.split(' ')
-        for (let i = 0; i < words.length; i++) {
-            if (i > 12) {
-                break
+        const data = await getClipboardData(e)
+        if (data !== null) {
+            const words = data.split(' ')
+            for (let i = 0; i < words.length; i++) {
+                if (i > 11) {
+                    break
+                }
+                setFieldValue(`words.${i}`, words[i])
             }
-            setFieldValue(`words.${i}`, words[i])
+        } else {
+            const error = {
+                title: 'Clipboard unavailable',
+                message: 'Try to use keyboard shortcut to paste data from clipboard',
+            }
+            toast.error(<ToastError error={error} />)
         }
     }
 
@@ -103,7 +115,9 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
                                         onChange={(event) =>
                                             setWordsQuery(event.target.value)
                                         }
-                                        onPaste={() => onPhrasePaste(setFieldValue)}
+                                        onPaste={(e: any) => {
+                                            onPhrasePaste(setFieldValue, e)
+                                        }}
                                         className="phrase-form__word-input"
                                     />
                                     <Combobox.Options className="phrase-form__word-suggestions">
