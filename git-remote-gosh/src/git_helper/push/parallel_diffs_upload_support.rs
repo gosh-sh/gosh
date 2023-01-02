@@ -1,12 +1,13 @@
-use crate::blockchain::BlockchainService;
+use crate::blockchain::{BlockchainService, MAX_ACCOUNTS_ADDRESSES_PER_QUERY, FormatShort};
 use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
+use std::borrow::Borrow;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -170,14 +171,49 @@ impl ParallelDiffsUploadSupport {
         B: BlockchainService + 'static,
     {
         let mut deploymend_results: JoinSet<anyhow::Result<()>> = JoinSet::new();
-        for address in addresses {
+        for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+            let mut waiting_for_addresses = Vec::from(addresses);
             let b = blockchain.clone();
-            let expected_address = address.clone();
             deploymend_results.spawn(
                 async move {
-                    ParallelDiffsUploadSupport::wait_diff_deployed(&b, &expected_address).await
-                }
-                .instrument(debug_span!("tokio::spawn::wait_diff_deployed").or_current()),
+                    let mut iteration = 0;
+                    while !waiting_for_addresses.is_empty() {
+                        iteration += 1;
+                        if iteration > MAX_RETRIES_FOR_DIFFS_TO_APPEAR + 1 {
+                            anyhow::bail!(
+                                "Some contracts didn't appear in time: {}",
+                                waiting_for_addresses.format_short()
+                            );
+                        }
+                        match b.get_contracts_state_raw_data(&waiting_for_addresses, true).await {
+                            Ok(available_bocs) => {
+                                let found_addresses: Vec<BlockchainContractAddress> = available_bocs.into_keys().collect();
+                                let available: HashSet<BlockchainContractAddress> = HashSet::from_iter(
+                                    found_addresses.iter().cloned()
+                                );
+                                waiting_for_addresses.retain(|e| !available.contains(e));
+                                if !waiting_for_addresses.is_empty() {
+                                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                                    tracing::debug!(
+                                        "Addresses {} are not ready yet. iteration {}",
+                                        waiting_for_addresses.format_short(),
+                                        iteration
+                                    );
+                                }
+                            }
+                            Err(ref e) => {
+                                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                                tracing::debug!(
+                                    "State request failed with: {}. iteration {}",
+                                    e,
+                                    iteration
+                                );
+                            }
+                        }
+                    } // While loop
+                    Ok(())
+                } //move
+                .instrument(debug_span!("tokio::spawn::wait_diff_deployed").or_current())
             );
         }
         while let Some(res) = deploymend_results.join_next().await {

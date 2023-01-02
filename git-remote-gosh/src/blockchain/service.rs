@@ -1,4 +1,5 @@
 use super::{
+    get_contracts_blocks,
     branch::DeployBranch,
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
@@ -11,6 +12,7 @@ use super::{
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
 use std::fmt::Debug;
+use std::collections::HashMap;
 
 #[async_trait]
 pub trait BlockchainBranchesService {
@@ -35,6 +37,15 @@ pub trait BlockchainCommitService {
 }
 
 #[async_trait]
+pub trait BlockchainReadContractRawDataService {
+    async fn get_contracts_state_raw_data(
+        &self,
+        addresses: &[BlockchainContractAddress],
+        allow_incomplete_results: bool
+    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
+}
+
+#[async_trait]
 pub trait BlockchainService:
     Debug
     + Clone
@@ -45,6 +56,7 @@ pub trait BlockchainService:
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
+    + BlockchainReadContractRawDataService
     // TODO: fix naming later
     + DeployBranch
     + DeployTree
@@ -102,6 +114,18 @@ impl BlockchainCommitService for Everscale {
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<Option<GoshCommit>> {
         Ok(Some(GoshCommit::load(self.client(), address).await?))
+    }
+}
+
+#[async_trait]
+impl BlockchainReadContractRawDataService for Everscale {
+    #[instrument(level = "debug")]
+    async fn get_contracts_state_raw_data(
+        &self,
+        addresses: &[BlockchainContractAddress],
+        allow_incomplete_results: bool
+    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+        get_contracts_blocks(self.client(), addresses, allow_incomplete_results).await
     }
 }
 
@@ -263,6 +287,14 @@ pub mod tests {
             fn client(&self) -> &EverClient;
             fn root_contract(&self) -> &GoshContract;
             fn repo_contract(&self) -> &GoshContract;
+        }
+        #[async_trait]
+        impl BlockchainReadContractRawDataService for Everscale {
+            async fn get_contracts_state_raw_data(
+                &self,
+                addresses: &[BlockchainContractAddress],
+                allow_incomplete_results: bool
+            ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
         }
     }
     impl Clone for MockEverscale {

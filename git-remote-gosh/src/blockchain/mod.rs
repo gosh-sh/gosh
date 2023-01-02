@@ -26,7 +26,7 @@ use ton_client::{
 };
 
 mod blockchain_contract_address;
-pub use blockchain_contract_address::BlockchainContractAddress;
+pub use blockchain_contract_address::{BlockchainContractAddress, FormatShort};
 pub mod commit;
 mod serde_number;
 pub mod snapshot;
@@ -52,6 +52,8 @@ pub const ZERO_SHA: &str = "0000000000000000000000000000000000000000";
 pub const EMPTY_BLOB_SHA1: &str = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
 pub const EMPTY_BLOB_SHA256: &str =
     "0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7";
+
+pub const MAX_ACCOUNTS_ADDRESSES_PER_QUERY: usize = 255;
 
 static PINNED_CONTRACT_BOCREFS: Lazy<
     Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>,
@@ -167,6 +169,57 @@ impl Clone for Everscale {
             repo_contract: self.repo_contract.clone(),
         }
     }
+}
+
+#[instrument(level = "debug", skip(context, contracts_addresses))]
+async fn get_contracts_blocks(
+    context: &EverClient,
+    contracts_addresses: &[BlockchainContractAddress],
+    allow_incomplete_results: bool
+) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+    if contracts_addresses.is_empty() {
+        return Ok(HashMap::new());
+    }
+    tracing::debug!("internal get_contracts_blocks start");
+    let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
+    for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        let addresses: &[String] = &chunk.iter().map(
+            |e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) }
+        ).collect::<Vec<String>>();
+        let filter = Some(serde_json::json!({
+            "id": {
+                "in": addresses
+            }
+        }));
+        let query_result: Vec<serde_json::Value> = query_collection(
+            Arc::clone(context),
+            ParamsOfQueryCollection {
+                collection: "accounts".to_owned(),
+                filter,
+                result: "[address,boc]".to_owned(),
+                limit: Some(contracts_addresses.len() as u32),
+                order: None,
+            },
+        )
+        .instrument(debug_span!("get_contracts_blocks sdk::query_collection").or_current())
+        .await
+        .map(|r| r.result)?;
+        if !allow_incomplete_results && query_result.len() != contracts_addresses.len() {
+            anyhow::bail!(
+                "Some accounts are missing. Expecting {} boc results while have {}",
+                contracts_addresses.len(),
+                query_result.len()
+            );
+        }
+        for r in query_result.iter() {
+            let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
+            let address = BlockchainContractAddress::new(
+                r["address"].as_str().expect("address must be a string").to_owned()
+            );
+            accounts_bocs.insert(address, boc);
+        }
+    }
+    return Ok(accounts_bocs);
 }
 
 #[instrument(level = "debug", skip(context, contract))]

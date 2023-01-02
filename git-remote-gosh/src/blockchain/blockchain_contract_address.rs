@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 #[allow(dead_code)]
@@ -19,9 +21,30 @@ impl BlockchainContractAddress {
     }
 }
 
+pub trait FormatShort {
+    fn format_short(self) -> String;
+}
+
 impl std::fmt::Display for BlockchainContractAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         write!(f, "<{}>", self.0)
+    }
+}
+
+impl FormatShort for &[BlockchainContractAddress] {
+    fn format_short(self) -> String {
+        return format!(
+            "[{items}{eps}](len:{size})",
+            items = self.chunks(3)
+                .next()
+                .unwrap()
+                .iter()
+                .map(|e|format!("{}", e))
+                .collect::<Vec<String>>()
+                .join(", "),
+            size = self.len(),
+            eps = if self.len() > 3 { "..." } else { "" }
+        );
     }
 }
 
@@ -34,6 +57,12 @@ impl std::convert::Into<BlockchainContractAddress> for &BlockchainContractAddres
 impl std::convert::From<BlockchainContractAddress> for String {
     fn from(address: BlockchainContractAddress) -> String {
         address.0
+    }
+}
+
+impl std::convert::From<&BlockchainContractAddress> for String {
+    fn from(address: &BlockchainContractAddress) -> String {
+        address.0.to_owned()
     }
 }
 
