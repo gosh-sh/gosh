@@ -37,7 +37,7 @@ git push
 for i in {1..5}
 do
   echo mv "$i" "$i$i"
-  mv "$i" "$i$i"
+  git mv "$i" "$i$i"
   cd "$i$i"
 done
 
