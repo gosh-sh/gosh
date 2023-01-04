@@ -148,6 +148,7 @@ pipeline {
                     sh """
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
+                        make build ENV=ci REACT_APP_ISDOCKEREXT=false
                     """
                     dir('web') {     
                         def status = sh(script: "aws s3api head-bucket --bucket ${BUCKET_NAME}", returnStatus: true)
@@ -180,7 +181,7 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 100 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${BUCKET_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 10 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${BUCKET_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }

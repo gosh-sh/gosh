@@ -40,6 +40,12 @@ pipeline {
                             """  
                         }
                     }
+                    timeout(15) {
+                        waitUntil {
+                            def r = sh script: "sleep 10 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${BUCKET_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            return r == 0
+                        }  
+                    }
                 }
             }
             post {
