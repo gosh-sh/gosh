@@ -158,13 +158,6 @@ pipeline {
                     }   
                 }
             }
-            // TEMPORARY | WHILE WEB TESTS ARE DISABLED
-            post {
-                always {
-                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
-                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
-                }
-            }
         }
         stage('Web: wait to be available') {
             agent {
@@ -181,6 +174,13 @@ pipeline {
                             return r == 0
                         }  
                     }
+                }
+            }
+            // TEMPORARY | WHILE WEB TESTS ARE DISABLED
+            post {
+                always {
+                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
+                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
                 }
             }
         }
