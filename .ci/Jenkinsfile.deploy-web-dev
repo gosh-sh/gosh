@@ -22,13 +22,15 @@ pipeline {
         stage('Web: deploy') {
             steps {
                 script {
-                    env.BUCKET_VERSION = env.VERSION.replaceAll("[^a-zA-Z0-9 ]+","-")
+                    env.BUCKET_NAME = 'app-' + env.VERSION.replaceAll("[^a-zA-Z0-9 ]+","-")
                     dir('web') {
-                        sh "aws s3api create-bucket --bucket app-${BUCKET_VERSION} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2"
-                        sh "aws s3 website s3://app-${BUCKET_VERSION} --index-document index.html --error-document error.html"
-                        sh "sed 's/BUCKET_NAME/app-$BUCKET_VERSION/g' ../.ci/s3/policy.json.template > policy.json"
-                        sh "aws s3api put-bucket-policy --bucket app-${BUCKET_VERSION} --policy file://policy.json"
-                        sh "aws s3 sync build/ s3://app-${BUCKET_VERSION}"
+                        sh "aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2"
+                        sh "aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html"
+                        sh "sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json"
+                        sh "aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json"
+                        sh "aws s3 sync build/ s3://${BUCKET_NAME}"
+                        sh "sed 's/BUCKET_NAME/\$BUCKET_NAME/g' ../.ci/nginx/proxy.s3.conf.template > /opt/nginx/${BUCKET_NAME}.conf"
+                        sh "docker restart nginx-test-app-gosh-sh"
                     }
                 }
             }
