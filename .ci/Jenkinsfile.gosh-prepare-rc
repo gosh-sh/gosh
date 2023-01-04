@@ -142,7 +142,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.DOCKER_WEB_CONTAINER_NAME = 'gosh-web-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
+                    env.BUCKET_NAME = 'app-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
@@ -151,9 +151,13 @@ pipeline {
                     """
                     dir('web') {     
                         sh """      
-                        make run ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
-                        sed "s/GOSH_WEB_VERSION/\$DOCKER_WEB_CONTAINER_NAME/g" ../.ci/nginx/proxy.conf.template > /opt/nginx/proxy.conf
-                        docker restart nginx-test-app-gosh-sh
+                            aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2
+                            aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html
+                            sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
+                            aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
+                            aws s3 sync build/ s3://${BUCKET_NAME}
+                            sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/proxy.conf
+                            docker restart nginx-test-app-gosh-sh
                         """  
                     }   
                 }
@@ -170,17 +174,10 @@ pipeline {
                 script {
                     timeout(15) {
                         waitUntil {
-                            def r = sh script: "sleep 100 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            def r = sh script: "sleep 100 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${BUCKET_NAME}.gosh.sh > /dev/null", returnStatus: true
                             return r == 0
                         }  
                     }
-                }
-            }
-            // TEMPORARY | WHILE WEB TESTS ARE DISABLED
-            post {
-                always {
-                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
-                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
                 }
             }
         }
@@ -228,7 +225,7 @@ pipeline {
                                         -e GM_MODE='${tests[i].trim()}' \
                                         -e RUN_NOW=1 \
                                         -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
-                                        -e CONFIG_APPURL=https://${DOCKER_WEB_CONTAINER_NAME}.gosh.sh/ \
+                                        -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
                                         -e CONFIG_REDIS_HOST="" \
                                         -v \$(pwd)/config:/home/node/app/config:ro \
                                         -v \$(pwd)/test-errors:/home/node/app/errors \
@@ -243,10 +240,6 @@ pipeline {
                 failure {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.log"
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
-                }
-                always {
-                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
-                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
                 }
             }
         }*/
