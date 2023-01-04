@@ -150,15 +150,21 @@ pipeline {
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
                     """
                     dir('web') {     
-                        sh """      
-                            aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2
-                            aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html
-                            sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
-                            aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
-                            aws s3 sync build/ s3://${BUCKET_NAME}
-                            sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/proxy.conf
-                            docker restart nginx-test-app-gosh-sh
-                        """  
+                        def status = sh(script: "aws s3api head-bucket --bucket ${BUCKET_NAME}", returnStatus: true)
+                        if (status == 0) {
+                            echo 'Bucket already exists. Just syncing.'
+                            sh "aws s3 sync build/ s3://${BUCKET_NAME}"
+                        } else {
+                            sh """      
+                                aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2
+                                aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html
+                                sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
+                                aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
+                                aws s3 sync build/ s3://${BUCKET_NAME}
+                                sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/proxy.conf
+                                docker restart nginx-test-app-gosh-sh
+                            """  
+                        }
                     }   
                 }
             }
