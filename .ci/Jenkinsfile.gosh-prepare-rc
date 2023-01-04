@@ -146,22 +146,23 @@ pipeline {
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
-                        touch ${DOCKER_WEB_CONTAINER_NAME}.gosh.sh
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
-                        mkdir /opt/${DOCKER_WEB_CONTAINER_NAME} && cp -r web /opt/${DOCKER_WEB_CONTAINER_NAME}/web
                     """
                     dir('web') {     
                         sh """      
-                        if [ `docker ps | grep -o "gosh-web.*" | wc -l` -gt 1 ]; then docker ps | grep -o "gosh-web.*" | while read -r line ; do echo \$line ; done | sort | docker rm -f `head -n 1`; fi                                                    
-                        make run MOUNT_DIR=/opt/${DOCKER_WEB_CONTAINER_NAME}/web ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
-                        echo 'server_names_hash_bucket_size 1024;' > /opt/nginx/proxy.conf
-                        echo 'server { listen 80 default_server; return 404;}' >> /opt/nginx/proxy.conf
-                        docker ps | grep -o "gosh-web.*" | while read -r line ; do sed "s/GOSH_WEB_VERSION/\$line/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf; done
+                        make run ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
+                        sed "s/GOSH_WEB_VERSION/\$DOCKER_WEB_CONTAINER_NAME/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf; done
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
-                    archiveArtifacts artifacts: "${DOCKER_WEB_CONTAINER_NAME}.gosh.sh*"
+                }
+            }
+            // TEMPORARY | WHILE WEB TESTS ARE DISABLED
+            post {
+                always {
+                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
+                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
                 }
             }
         }
@@ -242,6 +243,10 @@ pipeline {
                 failure {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.log"
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
+                }
+                always {
+                    sh "rm -rf /opt/${DOCKER_WEB_CONTAINER_NAME}"
+                    sh "docker rm -f ${DOCKER_WEB_CONTAINER_NAME}"
                 }
             }
         }*/
