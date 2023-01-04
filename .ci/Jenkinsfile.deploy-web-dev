@@ -14,7 +14,7 @@ pipeline {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "#${BUILD_NUMBER}_deploy_${VERSION}"
                     dir('web') {
-                        sh "make build ENV=prod REACT_APP_ISDOCKEREXT=false"
+                        sh "make build ENV=dev REACT_APP_ISDOCKEREXT=false"
                     }
                 }
             }
@@ -22,12 +22,13 @@ pipeline {
         stage('Web: deploy') {
             steps {
                 script {
+                    env.BUCKET_VERSION = env.VERSION.replaceAll("[^a-zA-Z0-9 ]+","-")
                     dir('web') {
-                        sh "aws s3api create-bucket --bucket app-${VERSION} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2"
-                        sh "aws s3 website s3://app-${VERSION} --index-document index.html --error-document error.html"
-                        sh "sed 's/BUCKET_NAME/app-$VERSION/g' ../.ci/s3/policy.json.template > policy.json"
-                        sh "aws s3api put-bucket-policy --bucket s3://app-${VERSION} --policy file://policy.json"
-                        sh 'aws s3 sync build/ s3://app-${VERSION}'
+                        sh "aws s3api create-bucket --bucket app-${BUCKET_VERSION} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2"
+                        sh "aws s3 website s3://app-${BUCKET_VERSION} --index-document index.html --error-document error.html"
+                        sh "sed 's/BUCKET_NAME/app-$BUCKET_VERSION/g' ../.ci/s3/policy.json.template > policy.json"
+                        sh "aws s3api put-bucket-policy --bucket s3://app-${BUCKET_VERSION} --policy file://policy.json"
+                        sh "aws s3 sync build/ s3://app-${BUCKET_VERSION}"
                     }
                 }
             }
