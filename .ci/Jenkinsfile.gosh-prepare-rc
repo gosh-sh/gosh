@@ -152,7 +152,7 @@ pipeline {
                     dir('web') {     
                         sh """      
                         make run ENV=ci REACT_APP_ISDOCKEREXT=false DOCKER_RUN_ARGS='--network test.app.gosh.sh' DOCKER_WEB_CONTAINER_NAME=${DOCKER_WEB_CONTAINER_NAME}
-                        sed "s/GOSH_WEB_VERSION/\$DOCKER_WEB_CONTAINER_NAME/g" ../.ci/nginx/proxy.conf.template >> /opt/nginx/proxy.conf
+                        sed "s/GOSH_WEB_VERSION/\$DOCKER_WEB_CONTAINER_NAME/g" ../.ci/nginx/proxy.conf.template > /opt/nginx/proxy.conf
                         docker restart nginx-test-app-gosh-sh
                         """  
                     }   
