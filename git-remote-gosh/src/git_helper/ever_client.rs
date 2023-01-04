@@ -1,8 +1,4 @@
-use crate::{
-    blockchain::EverClient,
-    config::Config,
-    utilities::env::{parse_env_or, FromEnv},
-};
+use crate::{blockchain::EverClient, config::Config, utilities::env::parse_env_or};
 use std::{env, sync::Arc, time::Duration};
 use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext};
 
