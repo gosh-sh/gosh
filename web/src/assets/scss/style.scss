@@ -645,7 +645,7 @@ for those elements which require gradient border color
     }
 
     &__check {
-        @apply absolute top-0.5 right-0.5;
+        @apply absolute top-0 right-0;
     }
 
     &__description {

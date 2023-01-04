@@ -1,3 +1,4 @@
+pub mod env;
 use crate::{blockchain::BlockchainContractAddress, config::Config};
 
 #[derive(Debug, Clone)]
