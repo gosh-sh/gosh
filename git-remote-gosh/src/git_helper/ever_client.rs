@@ -1,9 +1,13 @@
-use crate::{blockchain::EverClient, config::Config, utilities::env::env_var_as_duration_or};
+use crate::{blockchain::EverClient, config::Config, utilities::env::parse_env_or};
 use std::{env, sync::Arc, time::Duration};
 use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext};
 
 // default timeout for all types of operation (e.g. message_processing, wait_for, query)
 static DEFAULT_BLOCKCHAIN_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+static BLOCKCHAIN_TIMEOUT: &'static str = "GOSH_BLOCKCHAIN_TIMEOUT_SEC";
+static MESSAGE_PROCESSING_TIMEOUT: &'static str = "GOSH_MESSAGE_PROCESSING_TIMEOUT_SEC";
+static WAIT_FOR_TIMEOUT: &'static str = "GOSH_WAIT_FOR_TIMEOUT_SEC";
+static QUERY_TIMEOUT: &'static str = "GOSH_QUERY_TIMEOUT_SEC";
 
 #[instrument(level = "debug")]
 pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClient> {
@@ -14,12 +18,10 @@ pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClien
         .unwrap_or_else(|_| ".git".to_string())
         .to_lowercase();
 
-    let blockchain_timeout =
-        env_var_as_duration_or("GOSH_BLOCKCHAIN_TIMEOUT_SEC", DEFAULT_BLOCKCHAIN_TIMEOUT)?;
-    let message_processing_timeout =
-        env_var_as_duration_or("GOSH_MESSAGE_PROCESSING_TIMEOUT_SEC", blockchain_timeout)?;
-    let wait_for_timeout = env_var_as_duration_or("GOSH_WAIT_FOR_TIMEOUT_SEC", blockchain_timeout)?;
-    let query_timeout = env_var_as_duration_or("GOSH_QUERY_TIMEOUT_SEC", blockchain_timeout)?;
+    let blockchain_timeout = parse_env_or(BLOCKCHAIN_TIMEOUT, DEFAULT_BLOCKCHAIN_TIMEOUT)?;
+    let message_processing_timeout = parse_env_or(MESSAGE_PROCESSING_TIMEOUT, blockchain_timeout)?;
+    let wait_for_timeout = parse_env_or(WAIT_FOR_TIMEOUT, blockchain_timeout)?;
+    let query_timeout = parse_env_or(QUERY_TIMEOUT, blockchain_timeout)?;
 
     let config = ClientConfig {
         network: ton_client::net::NetworkConfig {
