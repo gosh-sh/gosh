@@ -1,20 +1,23 @@
 use crate::{
     abi as gosh_abi,
     blockchain::{
-        call::BlockchainCall, user_wallet::BlockchainUserWalletService, BlockchainContractAddress,
-        Everscale, get_commit_address, contract::{ContractInfo, GoshContract}
+        call::BlockchainCall,
+        contract::{ContractInfo, GoshContract},
+        get_commit_address,
+        user_wallet::BlockchainUserWalletService,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };
 use anyhow::bail;
 use async_trait::async_trait;
 use git_hash::ObjectId;
-use ton_client::abi::{ParamsOfDecodeMessageBody, DecodedMessageBody};
-use ton_client::net::ParamsOfQuery;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
+use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
+use ton_client::net::ParamsOfQuery;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -51,7 +54,6 @@ pub struct Message {
     created_lt: u64,
     bounced: bool,
 }
-
 
 #[cfg_attr(test, mockall::automock)]
 #[async_trait]
@@ -143,21 +145,23 @@ impl BlockchainCommitPusher for Everscale {
         let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);
 
         let mut repo_contract = self.repo_contract.clone();
-        let commit_address =
-            get_commit_address(&self.ever_client, &mut repo_contract, &commit_id.to_string())
-            .await?;
+        let commit_address = get_commit_address(
+            &self.ever_client,
+            &mut repo_contract,
+            &commit_id.to_string(),
+        )
+        .await?;
         let commit_contract = GoshContract::new(commit_address.clone(), gosh_abi::COMMIT);
 
-        let filter = vec!["allCorrect".to_owned(), "cancelCommit".to_owned(), "NotCorrectRepo".to_owned()];
+        let filter = vec![
+            "allCorrect".to_owned(),
+            "cancelCommit".to_owned(),
+            "NotCorrectRepo".to_owned(),
+        ];
         let mut from_lt = 0;
 
         loop {
-            let found = find_messages(
-                self,
-                &commit_contract,
-                &filter,
-                from_lt,
-            ).await?;
+            let found = find_messages(self, &commit_contract, &filter, from_lt).await?;
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
@@ -250,10 +254,7 @@ pub async fn find_messages(
 }
 
 #[instrument(level = "debug", skip(context))]
-pub async fn is_transaction_ok(
-    context: &Everscale,
-    msg_id: &String,
-) -> anyhow::Result<bool> {
+pub async fn is_transaction_ok(context: &Everscale, msg_id: &String) -> anyhow::Result<bool> {
     let query = r#"query($msg_id: String!) {
         transactions(filter: {
           in_msg: { eq: $msg_id }
@@ -276,8 +277,7 @@ pub async fn is_transaction_ok(
     .await
     .map(|r| r.result)?;
 
-    let trx: Vec<TrxInfo> =
-        serde_json::from_value(result["data"]["transactions"].clone())?;
+    let trx: Vec<TrxInfo> = serde_json::from_value(result["data"]["transactions"].clone())?;
 
     let status = trx.len() > 0 && trx[0].status == 3 && trx[0].compute.exit_code == 0;
 

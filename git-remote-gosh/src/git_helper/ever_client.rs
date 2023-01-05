@@ -1,6 +1,13 @@
-use crate::{blockchain::EverClient, config::Config};
-use std::{env, sync::Arc};
+use crate::{blockchain::EverClient, config::Config, utilities::env::parse_env_or};
+use std::{env, sync::Arc, time::Duration};
 use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext};
+
+// default timeout for all types of operation (e.g. message_processing, wait_for, query)
+static DEFAULT_BLOCKCHAIN_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+static BLOCKCHAIN_TIMEOUT: &'static str = "GOSH_BLOCKCHAIN_TIMEOUT_SEC";
+static MESSAGE_PROCESSING_TIMEOUT: &'static str = "GOSH_MESSAGE_PROCESSING_TIMEOUT_SEC";
+static WAIT_FOR_TIMEOUT: &'static str = "GOSH_WAIT_FOR_TIMEOUT_SEC";
+static QUERY_TIMEOUT: &'static str = "GOSH_QUERY_TIMEOUT_SEC";
 
 #[instrument(level = "debug")]
 pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClient> {
@@ -10,6 +17,11 @@ pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClien
     let proto = env::var("GOSH_PROTO")
         .unwrap_or_else(|_| ".git".to_string())
         .to_lowercase();
+
+    let blockchain_timeout = parse_env_or(BLOCKCHAIN_TIMEOUT, DEFAULT_BLOCKCHAIN_TIMEOUT)?;
+    let message_processing_timeout = parse_env_or(MESSAGE_PROCESSING_TIMEOUT, blockchain_timeout)?;
+    let wait_for_timeout = parse_env_or(WAIT_FOR_TIMEOUT, blockchain_timeout)?;
+    let query_timeout = parse_env_or(QUERY_TIMEOUT, blockchain_timeout)?;
 
     let config = ClientConfig {
         network: ton_client::net::NetworkConfig {
@@ -26,9 +38,9 @@ pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClien
             },
             network_retries_count: 5,
             message_retries_count: 10,
-            message_processing_timeout: 220000000,
-            wait_for_timeout: 220000000,
-            query_timeout: 220000000,
+            message_processing_timeout: message_processing_timeout.as_millis().try_into()?,
+            wait_for_timeout: wait_for_timeout.as_millis().try_into()?,
+            query_timeout: query_timeout.as_millis().try_into()?,
             ..Default::default()
         },
         ..Default::default()
