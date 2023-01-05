@@ -186,17 +186,18 @@ async fn get_contracts_blocks(
         let addresses: &[String] = &chunk.iter().map(
             |e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) }
         ).collect::<Vec<String>>();
-        let filter = Some(serde_json::json!({
+        let filter = serde_json::json!({
             "id": {
                 "in": addresses
             }
-        }));
+        });
+        tracing::debug!("Filter: {}", filter.to_string());
         let query_result: Vec<serde_json::Value> = query_collection(
             Arc::clone(context),
             ParamsOfQueryCollection {
                 collection: "accounts".to_owned(),
-                filter,
-                result: "[address,boc]".to_owned(),
+                filter: Some(filter),
+                result: "id boc".to_owned(),
                 limit: Some(contracts_addresses.len() as u32),
                 order: None,
             },
@@ -222,7 +223,7 @@ async fn get_contracts_blocks(
         for r in query_result.iter() {
             let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
             let address = BlockchainContractAddress::new(
-                r["address"].as_str().expect("address must be a string").to_owned()
+                r["id"].as_str().expect("address must be a string").to_owned()
             );
             accounts_bocs.insert(address, boc);
         }
