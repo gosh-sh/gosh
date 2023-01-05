@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4.3
 
-FROM rust:1.65.0-bullseye as tonos-cli
+FROM rust:1.66.0-bullseye as tonos-cli
 WORKDIR /workdir
 RUN git clone --depth 1 --branch v0.28.1 https://github.com/tonlabs/tonos-cli.git tonos-cli
 RUN \
@@ -20,7 +20,7 @@ COPY --link node_modules/@eversdk/lib-web/eversdk.wasm ./
 
 COPY --link --from=tonos-cli /usr/local/cargo/bin/tonos-cli /usr/local/bin/tonos-cli
 
-COPY --link --from=teamgosh/git:3.0.5 /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY --link --from=teamgosh/git:3.0.7 /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 WORKDIR /app/src
 COPY --link src/_deps.ts _deps.ts
