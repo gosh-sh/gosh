@@ -142,7 +142,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.BUCKET_NAME = 'app-' + currentBuild.displayName.replaceAll("[^a-zA-Z0-9 ]+","-")
+                    env.BUCKET_NAME = "app-" + "${BRANCH}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
