@@ -204,12 +204,20 @@ async fn get_contracts_blocks(
         .instrument(debug_span!("get_contracts_blocks sdk::query_collection").or_current())
         .await
         .map(|r| r.result)?;
-        if !allow_incomplete_results && query_result.len() != contracts_addresses.len() {
-            anyhow::bail!(
-                "Some accounts are missing. Expecting {} boc results while have {}",
-                contracts_addresses.len(),
-                query_result.len()
-            );
+        if query_result.len() != contracts_addresses.len() {
+            if !allow_incomplete_results {
+                anyhow::bail!(
+                    "Some accounts are missing. Expecting {} boc results while have {}",
+                    contracts_addresses.len(),
+                    query_result.len()
+                );
+            } else {
+                tracing::debug!(
+                    "Got incomplete result: {} out of {}",
+                    query_result.len(),
+                    contracts_addresses.len()
+                );
+            }
         }
         for r in query_result.iter() {
             let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
@@ -490,7 +498,7 @@ pub mod tests {
 
     impl TestEnv {
         pub fn new() -> Self {
-            let cfg = config::Config::init().unwrap();
+            let cfg = config::Config::default();
             let client = create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
                 config: cfg,
@@ -549,27 +557,6 @@ pub mod tests {
             .await
             .unwrap();
         assert_eq!(PRECALCULATED_HASH_FOR_THE_STRING, format!("0x{}", hash));
-        /*
-        let args = serde_json::json!({
-            "state": hex::encode(sample_string)
-        });
-        let logger = crate::logger::GitHelperLogger::init().ok().unwrap();
-
-        let test_pubkey = "13f63ef393f3fc6c22a7faf629dca64df19ca0388cf1c8dd04c84ddf44d1e742";
-        let test_secret = "80378dc53f9d6d27a69463d9e14a6ec867a08665faba96bec793ffa592b26d64";
-        let contract = crate::blockchain::user_wallet::get_user_wallet(
-            &te.client,
-            &te.gosh,
-            &te.dao,
-            test_pubkey,
-            test_secret
-        ).await.ok().unwrap();
-        let result: GetHashResult = contract
-            .read_state(&te.client, "getHash", Some(args))
-            .await
-            .expect("ok");
-        assert_eq!(result.hash, format!("0x{}", hash));
-        */
     }
 
     // TODO:
