@@ -148,9 +148,9 @@ pipeline {
                     sh """
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
-                        make build ENV=ci REACT_APP_ISDOCKEREXT=false
                     """
                     dir('web') {     
+                        sh "make build ENV=ci REACT_APP_ISDOCKEREXT=false"
                         def status = sh(script: "aws s3api head-bucket --bucket ${BUCKET_NAME}", returnStatus: true)
                         if (status == 0) {
                             echo 'Bucket already exists. Just syncing.'
