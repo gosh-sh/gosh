@@ -1,5 +1,3 @@
-
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 #[allow(dead_code)]
@@ -35,11 +33,12 @@ impl FormatShort for &[BlockchainContractAddress] {
     fn format_short(self) -> String {
         return format!(
             "[{items}{eps}](len:{size})",
-            items = self.chunks(3)
+            items = self
+                .chunks(3)
                 .next()
                 .unwrap()
                 .iter()
-                .map(|e|format!("{}", e))
+                .map(|e| format!("{}", e))
                 .collect::<Vec<String>>()
                 .join(", "),
             size = self.len(),

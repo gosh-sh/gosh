@@ -1,8 +1,8 @@
 use super::{
-    get_contracts_blocks,
     branch::DeployBranch,
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
+    get_contracts_blocks,
     snapshot::save::{DeployDiff, DeployNewSnapshot},
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
@@ -11,8 +11,8 @@ use super::{
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
-use std::fmt::Debug;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[async_trait]
 pub trait BlockchainBranchesService {
@@ -41,7 +41,7 @@ pub trait BlockchainReadContractRawDataService {
     async fn get_contracts_state_raw_data(
         &self,
         addresses: &[BlockchainContractAddress],
-        allow_incomplete_results: bool
+        allow_incomplete_results: bool,
     ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
 }
 
@@ -123,7 +123,7 @@ impl BlockchainReadContractRawDataService for Everscale {
     async fn get_contracts_state_raw_data(
         &self,
         addresses: &[BlockchainContractAddress],
-        allow_incomplete_results: bool
+        allow_incomplete_results: bool,
     ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
         get_contracts_blocks(self.client(), addresses, allow_incomplete_results).await
     }

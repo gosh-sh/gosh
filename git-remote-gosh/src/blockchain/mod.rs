@@ -175,7 +175,7 @@ impl Clone for Everscale {
 async fn get_contracts_blocks(
     context: &EverClient,
     contracts_addresses: &[BlockchainContractAddress],
-    allow_incomplete_results: bool
+    allow_incomplete_results: bool,
 ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
     if contracts_addresses.is_empty() {
         return Ok(HashMap::new());
@@ -183,9 +183,10 @@ async fn get_contracts_blocks(
     tracing::debug!("internal get_contracts_blocks start");
     let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
     for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
-        let addresses: &[String] = &chunk.iter().map(
-            |e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) }
-        ).collect::<Vec<String>>();
+        let addresses: &[String] = &chunk
+            .iter()
+            .map(|e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) })
+            .collect::<Vec<String>>();
         let filter = serde_json::json!({
             "id": {
                 "in": addresses
@@ -223,7 +224,10 @@ async fn get_contracts_blocks(
         for r in query_result.iter() {
             let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
             let address = BlockchainContractAddress::new(
-                r["id"].as_str().expect("address must be a string").to_owned()
+                r["id"]
+                    .as_str()
+                    .expect("address must be a string")
+                    .to_owned(),
             );
             accounts_bocs.insert(address, boc);
         }
@@ -543,7 +547,6 @@ pub mod tests {
             ]
         );
     }
-
 
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
