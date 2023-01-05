@@ -162,7 +162,7 @@ pipeline {
                                 sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
                                 aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
                                 aws s3 sync build/ s3://${BUCKET_NAME}
-                                sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/proxy.conf
+                                sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/s3-proxy.conf
                                 docker restart nginx-test-app-gosh-sh
                             """  
                         }
