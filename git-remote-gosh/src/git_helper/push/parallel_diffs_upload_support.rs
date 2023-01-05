@@ -217,7 +217,7 @@ impl ParallelDiffsUploadSupport {
             );
         }
         while let Some(res) = deploymend_results.join_next().await {
-            res??;
+            let _: () = res??;
         }
         Ok(())
     }
