@@ -17,6 +17,7 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
+				{"name":"codeTask","type":"cell"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
 				{"name":"lockerCode","type":"cell"},

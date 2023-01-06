@@ -67,6 +67,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell codeTree,
         TvmCell codeDiff,
         TvmCell contentSignature,
+        TvmCell codeTask,
         /////////////////////
         TvmCell TokenLockerCode,
         TvmCell SMVPlatformCode,
@@ -88,6 +89,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_SnapshotCode] = codeSnapshot;
         _code[m_TreeCode] = codeTree;
         _code[m_DiffCode] = codeDiff;
+        _code[m_TaskCode] = codeTask;
         /////
         m_TokenLockerCode = TokenLockerCode;
         m_SMVPlatformCode = SMVPlatformCode;
@@ -316,7 +318,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, token, _rootTokenRoot);
         getMoney();

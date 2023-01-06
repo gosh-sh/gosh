@@ -19,6 +19,7 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
+				{"name":"codeTask","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},

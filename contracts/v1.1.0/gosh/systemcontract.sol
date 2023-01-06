@@ -111,6 +111,7 @@ contract SystemContract is Modifiers {
             _code[m_TreeCode],
             _code[m_DiffCode],
             _code[m_contentSignature],
+            _code[m_TaskCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -250,7 +251,12 @@ contract SystemContract is Modifiers {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_CommitCode] = code;
     }
-
+    
+    function setTask(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_TaskCode] = code;
+    }   
+    
     function setSnapshot(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_SnapshotCode] = code;
