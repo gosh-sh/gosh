@@ -1,4 +1,5 @@
 tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
+cpfl = systemcontract profile profiledao profileindex versioncontroller
 KEYS_PATH = ${CURDIR}
 clean:
 	rm -f *.tvc *.abi.json *.code
@@ -6,9 +7,20 @@ clean:
 
 build-contracts:
 # everdev sol compile $$i.sol || exit $$@;
+	for i in $(cpfl); do \
+		cp ../../$$i.sol . || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
 	for i in $(tvcs); do \
 		../../compiler/solc $$i.sol || exit $$@; \
 		../../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
+	for i in $(cpfl); do \
+		mv $$i.sol ../../ || exit $$@; \
+		mv $$i.code ../../ || exit $$@; \
+		mv $$i.tvc ../../ || exit $$@; \
+		mv $$i.abi.json ../../ || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 
