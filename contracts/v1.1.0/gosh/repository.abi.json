@@ -118,7 +118,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"}
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"task","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -131,7 +132,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"}
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"task","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -151,7 +153,8 @@
 				{"name":"nameBranch","type":"string"},
 				{"name":"oldcommit","type":"address"},
 				{"name":"namecommit","type":"string"},
-				{"name":"number","type":"uint128"}
+				{"name":"number","type":"uint128"},
+				{"name":"task","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -194,6 +197,7 @@
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
+				{"name":"task","type":"optional(address)"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [

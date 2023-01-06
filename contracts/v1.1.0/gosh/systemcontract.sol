@@ -95,7 +95,7 @@ contract SystemContract is Modifiers {
             varInit: {_name : name, _versioncontroller: _versionController}
         });
         require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        require(checkName(name), ERR_WRONG_NAME);
+        require(checkNameDao(name), ERR_WRONG_NAME);
         TvmCell s1 = _composeDaoStateInit(name);
         _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
             pubaddr,

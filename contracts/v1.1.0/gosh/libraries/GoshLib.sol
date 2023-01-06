@@ -66,6 +66,20 @@ library GoshLib {
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
     
+    function buildTaskCode(
+        TvmCell originalCode,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(repo);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
     function buildSnapshotCode(
         TvmCell originalCode,
         address repo,

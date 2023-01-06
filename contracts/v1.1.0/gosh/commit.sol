@@ -56,6 +56,7 @@ contract Commit is Modifiers {
     optional(Pause) _saved;
     bool _initupgrade;
     optional(string) _prevversion;
+    optional(address) _task;
 
     uint128 timeMoney = 0;
  
@@ -151,6 +152,7 @@ contract Commit is Modifiers {
         require(_buildCommitAddr(namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
         Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit, _nameBranch);
+        _task = null;
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
 
@@ -167,7 +169,7 @@ contract Commit is Modifiers {
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
 
-    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits, optional(address) task) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
         if (_initupgrade == true) {
@@ -184,6 +186,7 @@ contract Commit is Modifiers {
         require(_number == 0, ERR_PROCCESS_IS_EXIST);
         _number = number;
         _approved = 0;
+        _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits);
         _continueChain = true;
@@ -299,7 +302,7 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number, _task);
             _number = 0;
         }
         else {

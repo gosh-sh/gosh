@@ -75,6 +75,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_ProfileCode = 10;
     uint8 constant m_ProfileDaoCode = 11;
     uint8 constant m_ProfileIndexCode = 12;
+    uint8 constant m_TaskCode = 13;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 50000 ton;
@@ -85,6 +86,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_BRANCH = 1.4 ton;
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
+    uint128 constant FEE_DEPLOY_TASK = 9 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
     uint128 constant FEE_DEPLOY_WALLET = 1000 ton;
@@ -171,11 +173,61 @@ abstract contract Modifiers is ReplayProtection {
         if (bStr.length > 39) { return false; }
         for (uint i = 0; i < bStr.length; i++) {
             bool onecheck = false;
-            if ((uint8(bStr[i]) >= 90) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 97) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
             if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
             if (i != 0) {
+            	if ((uint8(bStr[i]) == 95) && (uint8(bStr[i - 1]) != 95)) {  onecheck = true; }
             	if ((uint8(bStr[i]) == 45) && (uint8(bStr[i - 1]) != 45)) {  onecheck = true; }
             }
+            if (onecheck == false) { return false; }
+        }
+        return true;
+    }
+    
+    function checkNameDao(string name) internal pure returns(bool) {
+        bytes bStr = bytes(name);
+        if (bStr.length == 0) { return false; }
+        if (bStr.length > 39) { return false; }
+        for (uint i = 0; i < bStr.length; i++) {
+            bool onecheck = false;
+            if ((uint8(bStr[i]) >= 97) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
+            if (i != 0) {
+            	if ((uint8(bStr[i]) == 95) && (uint8(bStr[i - 1]) != 95)) {  onecheck = true; }
+            	if ((uint8(bStr[i]) == 45) && (uint8(bStr[i - 1]) != 45)) {  onecheck = true; }
+            }
+            if (onecheck == false) { return false; }
+        }
+        return true;
+    }
+    
+    function checkNameRepo(string name) internal pure returns(bool) {
+        bytes bStr = bytes(name);
+        if (bStr.length == 0) { return false; }
+        if (bStr.length > 100) { return false; }
+        for (uint i = 0; i < bStr.length; i++) {
+            bool onecheck = false;
+            if ((uint8(bStr[i]) >= 97) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
+            if (uint8(bStr[i]) == 95) {  onecheck = true; }
+            if (uint8(bStr[i]) == 46) {  onecheck = true; }
+            if (uint8(bStr[i]) == 45) {  onecheck = true; }
+            if (onecheck == false) { return false; }
+        }
+        return true;
+    }
+    
+    function checkNameBranch(string name) internal pure returns(bool) {
+        bytes bStr = bytes(name);
+        if (bStr.length == 0) { return false; }
+        if (bStr.length > 100) { return false; }
+        for (uint i = 0; i < bStr.length; i++) {
+            bool onecheck = false;
+            if ((uint8(bStr[i]) >= 97) && (uint8(bStr[i]) <= 122)) { onecheck = true; }
+            if ((uint8(bStr[i]) >= 48) && (uint8(bStr[i]) <= 57)) {  onecheck = true; }
+            if (uint8(bStr[i]) == 95) {  onecheck = true; }
+            if (uint8(bStr[i]) == 46) {  onecheck = true; }
+            if (uint8(bStr[i]) == 45) {  onecheck = true; }
             if (onecheck == false) { return false; }
         }
         return true;

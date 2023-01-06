@@ -15,6 +15,7 @@ import "commit.sol";
 import "diff.sol";
 import "tag.sol";
 import "systemcontract.sol";
+import "task.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "profile.sol";
@@ -374,7 +375,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(checkName(nameRepo), ERR_WRONG_NAME);
+        require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         address[] emptyArr;
         if (previous.hasValue() == false) {
             _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
@@ -489,14 +490,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commit,
         uint128 numberChangedFiles,
-        uint128 numberCommits
+        uint128 numberCommits,
+        optional(address) task
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
-        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits);
+        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task);
         tvm.accept();
         _saveMsg();
         getMoney();
@@ -516,7 +518,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(checkName(newName), ERR_WRONG_NAME);
+        require(checkNameBranch(newName), ERR_WRONG_NAME);
         address repo = _buildRepositoryAddr(repoName);
         Repository(repo).deployBranch{
             value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
@@ -577,6 +579,51 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }(_pubaddr, _index);
         getMoney();
     }
+    
+    //Task part
+    function deployTask(
+        string repoName,
+        string nametask
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        new Task{
+            stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, repo, _systemcontract, _goshdao, _code[m_WalletCode], _index);
+        getMoney();
+    }
+    
+    function readyTask(
+        string repoName,
+        string nametask,
+        address commit
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        Task(taskaddr).Ready{value:0.3 ton}(commit, _index);
+        getMoney();
+    }
+    
+    function notreadyTask(
+        string repoName,
+        string nametask
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        Task(taskaddr).notReady{value:0.3 ton}(_index);
+        getMoney();
+    }
 
     //Tree part
     function deployTree(
@@ -616,9 +663,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         address commit,
         uint128 numberChangedFiles,
-        uint128 numberCommits
+        uint128 numberCommits,
+        optional(address) task
     ) internal view  {
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, _index);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, _index);
     }
 
     //SMV part
@@ -636,7 +684,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
-        uint128 num_clients
+        uint128 num_clients,
+        optional(address) task
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
@@ -644,7 +693,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits);
+        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients);
@@ -715,11 +764,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits) =
-                    s.decode(string, string, string, uint128, uint128);
+                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(address) task) =
+                    s.decode(string, string, string, uint128, uint128, optional(address));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
-                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.71 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits);
+                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
@@ -823,6 +872,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getWalletAddress() external view returns(address) {
         return _pubaddr;
+    }
+    
+    function getTaskAddr(string nametask, string repoName) external view returns(address) {       
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        return taskaddr;
     }
 
     function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {

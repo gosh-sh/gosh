@@ -12,6 +12,7 @@ pragma AbiHeader time;
 import "commit.sol";
 import "goshwallet.sol";
 import "tag.sol";
+import "task.sol";
 import "snapshot.sol";
 import "./libraries/GoshLib.sol";
 import "./modifiers/modifiers.sol";
@@ -154,17 +155,17 @@ contract Repository is Modifiers{
     }
 
     //Diff part
-    function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits) public view senderIs(address(this)){
+    function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits, optional(address) task) public view senderIs(address(this)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits, task);
     }
 
-    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits) public view accept {
+    function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits, optional(address) task) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits);
+        Commit(commit).SendDiff{value: 0.5 ton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, _Branches[tvm.hash(branch)].commitversion, number, numberCommits, task);
     }
 
     //Selfdestruct
@@ -174,7 +175,7 @@ contract Repository is Modifiers{
     }
 
     //Setters
-    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number) public senderIs(getCommitAddr(namecommit)) {
+    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number, optional(address) task) public senderIs(getCommitAddr(namecommit)) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
@@ -183,6 +184,9 @@ contract Repository is Modifiers{
             return;
         }
         _Branches[tvm.hash(nameBranch)] = Item(nameBranch, getCommitAddr(namecommit), version);
+        if (task.hasValue()){
+            Task(task.get()).isReady{value: 0.1 ton}(getCommitAddr(namecommit));
+        }
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
@@ -221,12 +225,12 @@ contract Repository is Modifiers{
         delete _protectedBranch[tvm.hash(branch)];
     }
 
-    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, uint128 index) public view {
+    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, optional(address) task, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch[tvm.hash(branch)] == false) {
-            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits);
+            this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits, task);
             return;
         }
     }
