@@ -65,6 +65,13 @@ struct ConfigGrant {
     uint128 manager;
 }
 
+struct ConfigCommit {
+    address task;
+    address pubaddrassign;
+    address pubaddrreview;
+    address pubaddrmanager;
+}
+
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.1.0";
     

@@ -493,7 +493,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
-        optional(address) task
+        optional(ConfigCommit) task
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
@@ -668,7 +668,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
-        optional(address) task
+        optional(ConfigCommit) task
     ) internal view  {
        Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, _index);
     }
@@ -768,8 +768,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(address) task) =
-                    s.decode(string, string, string, uint128, uint128, optional(address));
+                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task) =
+                    s.decode(string, string, string, uint128, uint128, optional(ConfigCommit));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
                 Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);

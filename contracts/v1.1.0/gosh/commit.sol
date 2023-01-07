@@ -56,7 +56,7 @@ contract Commit is Modifiers {
     optional(Pause) _saved;
     bool _initupgrade;
     optional(string) _prevversion;
-    optional(address) _task;
+    optional(ConfigCommit) _task;
 
     uint128 timeMoney = 0;
  
@@ -169,7 +169,7 @@ contract Commit is Modifiers {
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
 
-    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits, optional(address) task) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
         if (_initupgrade == true) {

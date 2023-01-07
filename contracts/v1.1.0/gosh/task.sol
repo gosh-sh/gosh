@@ -25,9 +25,9 @@ contract Task is Modifiers{
     address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
-    address[] _candidates;
-    
+    ConfigCommit[] _candidates;   
     ConfigGrant _grant;
+    uint128 _indexFinal;
     
     constructor(
         address pubaddr, 
@@ -54,7 +54,7 @@ contract Task is Modifiers{
         _grant = grant;
     } 
     
-    function isReady(address commit) public senderIs(_repo) {
+    function isReady(ConfigCommit commit) public senderIs(_repo) {
         require(_ready == false, ERR_TASK_COMPLETED);
         _candidates.push(commit);
     } 
@@ -64,7 +64,7 @@ contract Task is Modifiers{
        require(index1 < _candidates.length, ERR_TASK_COMPLETED);
        checkAccess(_pubaddr, msg.sender, index2);
         _ready = true;
-        _commit = _candidates[index1];
+        _indexFinal = index1;
     }
     
     function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
@@ -90,8 +90,8 @@ contract Task is Modifiers{
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, address, address[], bool, ConfigGrant) {
-        return (_nametask, _pubaddr, _repo, _candidates, _ready, _grant);
+    function getStatus() external view returns(string, address, address, ConfigCommit[], ConfigGrant, bool, uint128) {
+        return (_nametask, _pubaddr, _repo, _candidates, _grant, _ready, _indexFinal);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);
