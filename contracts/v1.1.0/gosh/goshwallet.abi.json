@@ -246,7 +246,7 @@
 				{"name":"commit","type":"string"},
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"address"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"address[]"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]

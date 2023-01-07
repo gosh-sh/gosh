@@ -67,7 +67,7 @@ struct ConfigGrant {
 
 struct ConfigCommit {
     address task;
-    address pubaddrassign;
+    address[] pubaddrassign;
     address pubaddrreview;
     address pubaddrmanager;
 }
