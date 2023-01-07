@@ -345,6 +345,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
     
+    function _getWalletAddrPub(address pubaddr, uint128 index) internal view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(_pubaddr, index);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
     function _getWalletTokenConfig() internal view returns(uint128) {
         return DEFAULT_DAO_BALANCE;
     }
@@ -653,6 +658,27 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_pseudoDAOBalance += grant;
         getMoney();
     }     
+    
+    function sendToken(
+        address pubaddr,
+        uint128 grant
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE); 
+        require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= grant;
+        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton}(_pubaddr, _index, grant);
+        getMoney();
+    }    
+    
+    function receiveToken(
+        address pubaddr,
+        uint128 index,
+        uint128 grant
+    ) public senderIs(_getWalletAddrPub(pubaddr, index)) accept saveMsg {
+        m_pseudoDAOBalance += grant;
+        getMoney();
+    }   
     
     function getTaskAddr(string nametask, address repo) private view returns(address) {      
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
