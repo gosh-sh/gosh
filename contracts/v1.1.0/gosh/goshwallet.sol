@@ -656,7 +656,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).destroy{value:0.4 ton}(_index);
+        Task(taskaddr).destroySmv{value:0.4 ton}(_index);
         getMoney();
     }
     
