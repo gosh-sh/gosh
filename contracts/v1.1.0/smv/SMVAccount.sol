@@ -37,6 +37,7 @@ contract SMVAccount is Modifiers, ISMVAccount /* , TokenWalletOwner */ {
 uint256 /* static */ nonce;
 
 uint128 public m_pseudoDAOBalance;
+uint128 public m_pseudoDAOVoteBalance;
 address m_tokenRoot;
 TvmCell m_tokenWalletCode;
 
@@ -80,6 +81,7 @@ modifier check_locker {
 }
 
 uint128 DEFAULT_DAO_BALANCE;
+uint128 DEFAULT_DAO_VOTE_BALANCE;
 uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
@@ -129,6 +131,7 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
                                             stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot);
     //GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, DEFAULT_DAO_BALANCE, _index);
     m_pseudoDAOBalance = DEFAULT_DAO_BALANCE;
+    m_pseudoDAOVoteBalance = DEFAULT_DAO_BALANCE;
 }
 
 /* function onTokenWalletDeployed(address wallet) external view check_token_root
@@ -210,9 +213,11 @@ function lockVoting (uint128 amount) public /* onlyOwnerPubkey(_access.get()) */
         tvm.accept();
     }
 
-    if (amount == 0) {amount = m_pseudoDAOBalance;}
+    if (amount == 0) {
+        amount = math.min(m_pseudoDAOBalance, m_pseudoDAOVoteBalance);
+    }
 
-    if ((amount > 0) && (amount <= m_pseudoDAOBalance))
+    if ((amount > 0) && (amount <= m_pseudoDAOBalance) && (amount <= m_pseudoDAOVoteBalance))
     {
         /* TvmCell empty; */
         /* ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
@@ -220,12 +225,14 @@ function lockVoting (uint128 amount) public /* onlyOwnerPubkey(_access.get()) */
         //ISMVTokenLocker(tip3VotingLocker).lockVoting{value: 2*SMVConstants.ACTION_FEE, flag: 1} (amount);
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
         m_pseudoDAOBalance = m_pseudoDAOBalance - amount;
+        m_pseudoDAOVoteBalance -= amount;
     }
 }
 
 function returnDAOBalance (uint128 amount) external override check_locker
 {
     m_pseudoDAOBalance += amount;
+    m_pseudoDAOVoteBalance += amount;
 }
 
 function acceptUnlock (uint128 amount) external override check_locker

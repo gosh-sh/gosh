@@ -12,7 +12,6 @@
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
-				{"name":"smv","type":"bool"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -31,15 +30,6 @@
 			"name": "isReady",
 			"inputs": [
 				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"commit","type":"tuple"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "confirm",
-			"inputs": [
-				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -72,14 +62,6 @@
 			]
 		},
 		{
-			"name": "destroySmv",
-			"inputs": [
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getStatus",
 			"inputs": [
 			],
@@ -90,8 +72,7 @@
 				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value3","type":"tuple[]"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"value4","type":"tuple"},
 				{"name":"value5","type":"bool"},
-				{"name":"value6","type":"uint128"},
-				{"name":"value7","type":"bool"}
+				{"name":"value6","type":"uint128"}
 			]
 		},
 		{
@@ -133,7 +114,6 @@
 		{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"_candidates","type":"tuple[]"},
 		{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"_grant","type":"tuple"},
 		{"name":"_indexFinal","type":"uint128"},
-		{"name":"_step","type":"uint128"},
-		{"name":"_smv","type":"bool"}
+		{"name":"_step","type":"uint128"}
 	]
 }

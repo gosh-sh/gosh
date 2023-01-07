@@ -301,36 +301,6 @@
 			]
 		},
 		{
-			"name": "deployTask",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"},
-				{"name":"smv","type":"bool"},
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "confirmTask",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroyTask",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "askGrantToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -411,6 +381,17 @@
 			"inputs": [
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForTaskDeploy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -766,6 +747,14 @@
 			]
 		},
 		{
+			"name": "m_pseudoDAOVoteBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_pseudoDAOVoteBalance","type":"uint128"}
+			]
+		},
+		{
 			"name": "lockerTip3Wallet",
 			"inputs": [
 			],
@@ -816,6 +805,7 @@
 		{"name":"_index","type":"uint128"},
 		{"name":"nonce","type":"uint256"},
 		{"name":"m_pseudoDAOBalance","type":"uint128"},
+		{"name":"m_pseudoDAOVoteBalance","type":"uint128"},
 		{"name":"m_tokenRoot","type":"address"},
 		{"name":"m_tokenWalletCode","type":"cell"},
 		{"name":"lockerTip3Wallet","type":"address"},
@@ -836,6 +826,7 @@
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
 		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
+		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
