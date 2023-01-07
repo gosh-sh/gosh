@@ -305,6 +305,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametask","type":"string"},
+				{"name":"smv","type":"bool"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
 			],
 			"outputs": [
@@ -380,6 +381,17 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForTask",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"index","type":"uint128"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [

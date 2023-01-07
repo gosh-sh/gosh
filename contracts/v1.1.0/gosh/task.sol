@@ -28,6 +28,7 @@ contract Task is Modifiers{
     ConfigGrant _grant;
     uint128 _indexFinal;
     uint128 _step;
+    bool _smv;
     
     constructor(
         address pubaddr, 
@@ -36,6 +37,7 @@ contract Task is Modifiers{
         address goshdao,
         TvmCell WalletCode,
         ConfigGrant grant,
+        bool smv,
         uint128 index) public onlyOwner {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
@@ -45,6 +47,7 @@ contract Task is Modifiers{
         _repo = repo;
         _pubaddr = pubaddr;
         _grant = grant;
+        _smv = smv;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
     }
     
@@ -60,6 +63,16 @@ contract Task is Modifiers{
     } 
     
     function confirm(uint128 index1, uint128 index2) public {
+       require(_ready == false, ERR_TASK_COMPLETED);
+       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
+       require(_smv == false, ERR_NEED_SMV);
+       checkAccess(_pubaddr, msg.sender, index2);
+        _ready = true;
+        _indexFinal = index1;
+        _step = _grant.assign /  _candidates[_indexFinal].size;
+    }
+    
+    function confirmSmv(uint128 index1, uint128 index2) public {
        require(_ready == false, ERR_TASK_COMPLETED);
        require(index1 < _candidates.length, ERR_TASK_COMPLETED);
        checkAccess(_pubaddr, msg.sender, index2);
@@ -134,8 +147,8 @@ contract Task is Modifiers{
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, address, ConfigCommit[], ConfigGrant, bool, uint128) {
-        return (_nametask, _pubaddr, _repo, _candidates, _grant, _ready, _indexFinal);
+    function getStatus() external view returns(string, address, address, ConfigCommit[], ConfigGrant, bool, uint128, bool) {
+        return (_nametask, _pubaddr, _repo, _candidates, _grant, _ready, _indexFinal, _smv);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);

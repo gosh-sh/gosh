@@ -115,29 +115,32 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_PROFILE_INDEX = 3 ton;
     
     //SMV configuration
-    uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant SETCOMMIT_PROPOSAL_DURATION = 1 weeks;
 
-    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant ADD_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
 
-    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 1 minutes;
+    uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION = 1 weeks;
 
-    uint32 constant SET_TOMBSTONE_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant SET_TOMBSTONE_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant SET_TOMBSTONE_PROPOSAL_DURATION  = 1 weeks;
 
-    uint32 constant DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant DEPLOY_WALLET_DAO_PROPOSAL_DURATION  = 1 weeks;
 
-    uint32 constant DELETE_WALLET_DAO_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant DELETE_WALLET_DAO_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant DELETE_WALLET_DAO_PROPOSAL_DURATION  = 1 weeks; 
 
-    uint32 constant SET_UPGRADE_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant SET_UPGRADE_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant SET_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
 
-    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER  = 1 minutes;
+    uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant CHANGE_TOKEN_CONFIG_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant TASK_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant TASK_PROPOSAL_DURATION  = 1 weeks; 
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -148,6 +151,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
     uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
+    uint256 constant TASK_PROPOSAL_KIND = 9;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
