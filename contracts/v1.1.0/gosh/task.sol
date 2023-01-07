@@ -113,7 +113,6 @@ contract Task is Modifiers{
         if (_grant.manager != 0) { return; }
         TvmCell s1 = _composeWalletStateInit(_pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
-        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.assign);
         selfdestruct(addr);
     }
     
