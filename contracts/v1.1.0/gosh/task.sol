@@ -25,6 +25,9 @@ contract Task is Modifiers{
     address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
+    address[] _candidates;
+    
+    ConfigGrant _grant;
     
     constructor(
         address pubaddr, 
@@ -32,6 +35,7 @@ contract Task is Modifiers{
         address goshaddr,
         address goshdao,
         TvmCell WalletCode,
+        ConfigGrant grant,
         uint128 index) public onlyOwner {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
@@ -40,29 +44,27 @@ contract Task is Modifiers{
         _goshdao = goshdao;
         _repo = repo;
         _pubaddr = pubaddr;
+        _grant = grant;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
     }
     
-    function isReady(address commit) public senderIs(_repo) {
-        _commit = commit;
-        _ready = true;
+    function setConfig(ConfigGrant grant, uint128 index) public {
+        require(_ready == false, ERR_TASK_COMPLETED);
+        checkAccess(_pubaddr, msg.sender, index);
+        _grant = grant;
     } 
     
-    function notReady(uint128 index) public {
-       checkAccess(_pubaddr, msg.sender, index);
-        _ready = false;
-        _commit = null;
-    }
+    function isReady(address commit) public senderIs(_repo) {
+        require(_ready == false, ERR_TASK_COMPLETED);
+        _candidates.push(commit);
+    } 
     
-    function Ready(address commit, uint128 index) public {
-       checkAccess(_pubaddr, msg.sender, index);
+    function confirm(uint128 index1, uint128 index2) public {
+       require(_ready == false, ERR_TASK_COMPLETED);
+       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
+       checkAccess(_pubaddr, msg.sender, index2);
         _ready = true;
-        _commit = commit;
-    }
-    
-    function confirm(uint128 index) public view {
-       checkAccess(_pubaddr, msg.sender, index);
-       //TODO
+        _commit = _candidates[index1];
     }
     
     function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
@@ -88,8 +90,8 @@ contract Task is Modifiers{
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, address, optional(address), bool) {
-        return (_nametask, _pubaddr, _repo, _commit, _ready);
+    function getStatus() external view returns(string, address, address, address[], bool, ConfigGrant) {
+        return (_nametask, _pubaddr, _repo, _candidates, _ready, _grant);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);

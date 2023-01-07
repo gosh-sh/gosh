@@ -304,26 +304,28 @@
 			"name": "deployTask",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"}
+				{"name":"nametask","type":"string"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "readyTask",
+			"name": "confirmTask",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametask","type":"string"},
-				{"name":"commit","type":"address"}
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "notreadyTask",
+			"name": "setTaskConfig",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"}
+				{"name":"nametask","type":"string"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
 			],
 			"outputs": [
 			]

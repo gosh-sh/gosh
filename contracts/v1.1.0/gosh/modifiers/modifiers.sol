@@ -59,6 +59,12 @@ struct GlobalConfig {
         address goshAddr;
 }
 
+struct ConfigGrant {
+    uint128 assign;
+    uint128 review;
+    uint128 manager;
+}
+
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.1.0";
     
