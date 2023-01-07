@@ -67,13 +67,19 @@ struct ConfigGrant {
 
 struct ConfigCommit {
     address task;
-    address[] pubaddrassign;
+    uint128 size;
+    mapping(address => bool) pubaddrassign;
     address pubaddrreview;
     address pubaddrmanager;
 }
 
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.1.0";
+    
+    //Task  constant
+    uint8 constant m_assign = 1;
+    uint8 constant m_review = 2;
+    uint8 constant m_manager = 3;
     
     //TvmCell constants
     uint8 constant m_RepositoryCode = 1;

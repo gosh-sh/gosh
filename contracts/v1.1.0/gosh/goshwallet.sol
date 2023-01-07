@@ -589,10 +589,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         ConfigGrant grant
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(grant.assign + grant.review + grant.manager <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        m_pseudoDAOBalance -= grant.assign + grant.review + grant.manager;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(_pubaddr, repo, _systemcontract, _goshdao, _code[m_WalletCode], grant, _index);
@@ -612,6 +614,24 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         Task(taskaddr).confirm{value:0.3 ton}(index, _index);
         getMoney();
+    }
+    
+    function grantToken(
+        string nametask,
+        address repo,
+        uint128 grant
+    ) public senderIs(getTaskAddr(nametask, repo)) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        m_pseudoDAOBalance += grant;
+        getMoney();
+    }     
+    
+    function getTaskAddr(string nametask, address repo) private view returns(address) {      
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        return taskaddr;
     }
     
     function setTaskConfig(

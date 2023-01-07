@@ -65,4 +65,8 @@ abstract contract Errors {
     uint constant ERR_CONTRACT_BAD_VERSION = 254;  
     uint constant ERR_NOT_ALONE = 255;   
     uint constant ERR_TASK_COMPLETED = 256;   
+    uint constant ERR_TASK_NOT_COMPLETED = 257;   
+    uint constant ERR_ASSIGN_NOT_EXIST = 258; 
+    uint constant ERR_REVIEW_NOT_EXIST = 259; 
+    uint constant ERR_MANAGER_NOT_EXIST = 260; 
 }

@@ -29,7 +29,7 @@
 		{
 			"name": "isReady",
 			"inputs": [
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"address[]"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"commit","type":"tuple"}
+				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"commit","type":"tuple"}
 			],
 			"outputs": [
 			]
@@ -39,6 +39,16 @@
 			"inputs": [
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrant",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"typegrant","type":"uint128"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -60,7 +70,7 @@
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"address"},
 				{"name":"value2","type":"address"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"address[]"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value3","type":"tuple[]"},
+				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value3","type":"tuple[]"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"value4","type":"tuple"},
 				{"name":"value5","type":"bool"},
 				{"name":"value6","type":"uint128"}
@@ -98,13 +108,13 @@
 		{"name":"_nametask","type":"string"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_repo","type":"address"},
-		{"name":"_commit","type":"optional(address)"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"address[]"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"_candidates","type":"tuple[]"},
+		{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"_candidates","type":"tuple[]"},
 		{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"_grant","type":"tuple"},
-		{"name":"_indexFinal","type":"uint128"}
+		{"name":"_indexFinal","type":"uint128"},
+		{"name":"_step","type":"uint128"}
 	]
 }
