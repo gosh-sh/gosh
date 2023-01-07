@@ -141,8 +141,26 @@ contract Task is Modifiers{
     }
     
     //Selfdestruct
-    function destroy(address pubaddr, uint128 index) public {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(uint128 index) public {
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(_ready == false, ERR_TASK_COMPLETED);
+        require(_smv == false, ERR_NEED_SMV);
+        TvmCell s1 = _composeWalletStateInit(_pubaddr, 0);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        if (_grant.review != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.review); }
+        if (_grant.manager != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.manager); }
+        if (_grant.assign != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.assign); }
+        selfdestruct(giver);
+    }
+    
+    function destroySmv(uint128 index) public {
+        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(_ready == false, ERR_TASK_COMPLETED);
+        TvmCell s1 = _composeWalletStateInit(_pubaddr, 0);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        if (_grant.review != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.review); }
+        if (_grant.manager != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.manager); }
+        if (_grant.assign != 0) { GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.assign); }
         selfdestruct(giver);
     }
     

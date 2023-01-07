@@ -632,6 +632,34 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function destroyTask(
+        string repoName,
+        string nametask
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        Task(taskaddr).destroy{value:0.4 ton}(_index);
+        getMoney();
+    }
+    
+    function _destroyTask(
+        string repoName,
+        string nametask
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        Task(taskaddr).destroy{value:0.4 ton}(_index);
+        getMoney();
+    }
+    
     function askGrantToken(
         string repoName,
         string nametask,
@@ -787,12 +815,27 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, repoName, taskName, index, now);
         TvmCell c = proposalBuilder.toCell();
-
         _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients);
-
         getMoney();
     }
 
+    function startProposalForTaskDestroy(
+        string taskName,
+        string repoName,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, repoName, taskName, now);
+        TvmCell c = proposalBuilder.toCell();
+        _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients);
+        getMoney();
+    }
+    
     function startProposalForDeleteProtectedBranch(
         string repoName,
         string branchName,
@@ -880,7 +923,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TASK_PROPOSAL_KIND) {
                 (string taskName, string repoName, uint128 index) = s.decode(string, string, uint128);
                 _confirmTask(taskName, repoName, index);
-            }        
+            }  else
+            if (kind == TASK_DESTROY_PROPOSAL_KIND) {
+                (string taskName, string repoName) = s.decode(string, string);
+                _destroyTask(taskName, repoName);
+            }           
         }
     }
 

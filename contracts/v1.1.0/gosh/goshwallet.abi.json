@@ -322,6 +322,15 @@
 			]
 		},
 		{
+			"name": "destroyTask",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "askGrantToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -392,6 +401,16 @@
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
 				{"name":"index","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForTaskDestroy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [

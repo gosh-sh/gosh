@@ -141,6 +141,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant TASK_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant TASK_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant TASK_DESTROY_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant TASK_DESTROY_PROPOSAL_DURATION  = 1 weeks; 
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -152,6 +155,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
     uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
     uint256 constant TASK_PROPOSAL_KIND = 9;
+    uint256 constant TASK_DESTROY_PROPOSAL_KIND = 10;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
