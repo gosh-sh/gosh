@@ -616,6 +616,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function askGrantToken(
+        string repoName,
+        string nametask,
+        uint128 typegrant
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE); 
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, typegrant, _index);
+        getMoney();
+    }   
+    
     function grantToken(
         string nametask,
         address repo,
