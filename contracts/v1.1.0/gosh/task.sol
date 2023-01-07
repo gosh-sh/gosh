@@ -76,7 +76,7 @@ contract Task is Modifiers{
             _grant.assign -= _step;
             TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
             address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _grant.assign /  _candidates[_indexFinal].size);
+            GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _step);
             delete _candidates[_indexFinal].pubaddrassign[pubaddr];
             checkempty();
             return;

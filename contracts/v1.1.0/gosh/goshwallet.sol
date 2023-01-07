@@ -636,8 +636,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo,
         uint128 grant
     ) public senderIs(getTaskAddr(nametask, repo)) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
         m_pseudoDAOBalance += grant;
         getMoney();
     }     
