@@ -95,6 +95,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_ProfileDaoCode = 11;
     uint8 constant m_ProfileIndexCode = 12;
     uint8 constant m_TaskCode = 13;
+    uint8 constant m_DaoTokenWalletCode = 14;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 50000 ton;
@@ -106,6 +107,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
     uint128 constant FEE_DEPLOY_TASK = 9 ton;
+    uint128 constant FEE_DEPLOY_DAO_TOKEN_WALLET = 200 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
     uint128 constant FEE_DEPLOY_WALLET = 1000 ton;

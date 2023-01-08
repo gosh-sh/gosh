@@ -112,6 +112,7 @@ contract SystemContract is Modifiers {
             _code[m_DiffCode],
             _code[m_contentSignature],
             _code[m_TaskCode],
+            _code[m_DaoTokenWalletCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -256,6 +257,11 @@ contract SystemContract is Modifiers {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TaskCode] = code;
     }   
+    
+    function setDaoTokenWallet(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_DaoTokenWalletCode] = code;
+    }  
     
     function setSnapshot(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);

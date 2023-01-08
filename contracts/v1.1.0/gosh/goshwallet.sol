@@ -16,6 +16,7 @@ import "diff.sol";
 import "tag.sol";
 import "systemcontract.sol";
 import "task.sol";
+import "daotokenwallet.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "profile.sol";
@@ -67,6 +68,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell codeDiff,
         TvmCell contentSignature,
         TvmCell codeTask,
+        TvmCell codedaoTokenWallet,
         uint128 limit_wallets,
         optional(uint256) access,
         //added for SMV
@@ -94,6 +96,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
         _code[m_TaskCode] = codeTask;
+        _code[m_DaoTokenWalletCode] = codedaoTokenWallet;
         _access = access;
         _limit_wallets = limit_wallets;
         ///////////////////
@@ -119,7 +122,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         getMoney();
@@ -325,7 +328,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -701,6 +704,36 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         Task(taskaddr).setConfig{value:0.3 ton}(grant, _index);
         getMoney();
     }
+    
+    function sendTokenTW(
+        uint128 grant
+    ) public  onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        m_pseudoDAOBalance -= grant;
+        DaoTokenWallet(_getTWAddr(_pubaddr)).getTokenWallet{value: 0.3 ton} (grant);
+        getMoney();
+    }
+    
+    function receiveTokenTW(
+        uint128 grant
+    ) public  senderIs(_getTWAddr(_pubaddr)) accept saveMsg {
+        m_pseudoDAOBalance += grant;
+        getMoney();
+    }
+
+    function _getTWAddr(address  pubaddr) internal view returns(address) {
+        TvmCell s1 = _composeDaoTokenWalletStateInit(pubaddr);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _composeDaoTokenWalletStateInit(address pubaddr) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_DaoTokenWalletCode], pubaddr, version);
+        TvmCell _contract = tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshWallet,
+            varInit: {_goshdao: _goshdao}
+        });
+        return _contract;
+    }
 
     //Tree part
     function deployTree(
@@ -958,7 +991,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Selfdestruct
-    function destroy() public view senderIs(_goshdao) {
+    function destroy() public view senderIs(_goshdao) { //TODO
         this.destroyWalletAll{value : 0.2 ton, flag: 1}();
     }
 
@@ -1041,6 +1074,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getWalletAddr(uint128 index) external view returns(address) {
         return _getWalletAddr(index);
+    }
+    
+    function getDaoTokenWalletAddr(address pubaddr) external view returns(address) {
+        return _getTWAddr(pubaddr);
     }
 
     function getWalletOwner() external view returns(address) {

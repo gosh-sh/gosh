@@ -37,6 +37,20 @@ library GoshLib {
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
+    
+    function buildTaskWalletCode(
+        TvmCell originalCode,
+        address pubaddr,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(pubaddr);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
 
     function buildRepositoryCode(
         TvmCell originalCode,
