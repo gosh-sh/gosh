@@ -655,6 +655,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(getTaskAddr(nametask, repo)) accept saveMsg {
         m_pseudoDAOVoteBalance += grant;
         m_pseudoDAOBalance += grant;
+        GoshDao(_goshdao).addVoteToken{value: 0.1 ton}(_pubaddr, _index, grant);
         getMoney();
     }
 

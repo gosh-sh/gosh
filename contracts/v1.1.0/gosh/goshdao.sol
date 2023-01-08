@@ -294,6 +294,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             empty
         );
     }
+    
+    function addVoteToken (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        _wallets[keyaddr].count += grant;
+    }
 
 
     function deployWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {

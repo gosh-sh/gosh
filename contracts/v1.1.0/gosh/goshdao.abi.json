@@ -199,6 +199,16 @@
 			]
 		},
 		{
+			"name": "addVoteToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployWallets",
 			"inputs": [
 				{"name":"pubmem","type":"address[]"},
