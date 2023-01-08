@@ -96,6 +96,14 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "getAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(uint256)"}
+			]
 		}
 	],
 	"data": [

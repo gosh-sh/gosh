@@ -148,4 +148,10 @@ contract DaoTokenWallet is Modifiers{
     function getOwner() external view returns(address) {
         return _pubaddr;
     }
+    
+    
+
+    function getAccess() external view returns(optional(uint256)) {
+        return _access;
+    }
 }
