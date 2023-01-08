@@ -346,7 +346,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function _getWalletAddrPub(address pubaddr, uint128 index) internal view returns(address) {
-        TvmCell s1 = _composeWalletStateInit(_pubaddr, index);
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
     
