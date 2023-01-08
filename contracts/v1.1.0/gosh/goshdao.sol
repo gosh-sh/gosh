@@ -286,7 +286,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deployTokenWallet(address pubaddr) public {
+    function deployDaoTokenWallet(address pubaddr) public {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         TvmCell s1 = _composedaoTokenWalletStateInit(pubaddr);

@@ -177,7 +177,7 @@
 			]
 		},
 		{
-			"name": "deployTokenWallet",
+			"name": "deployDaoTokenWallet",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
 			],
