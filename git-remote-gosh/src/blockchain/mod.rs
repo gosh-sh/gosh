@@ -66,7 +66,7 @@ pub enum GoshBlobBitFlags {
     Ipfs = 4,
 }
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {
