@@ -105,6 +105,17 @@ where
         let local_git_dir = env::var("GIT_DIR")?;
         let local_repository = Arc::new(git_repository::open(&local_git_dir)?);
         tracing::info!("Opening repo at {}", local_git_dir);
+        let mut cache = CacheProxy::new();
+        let cache_str = config.use_cache();
+        if let Some(cache_address) = cache_str {
+            if cache_address.starts_with("memcache://") {
+                let namespace = ":".to_owned() + &String::from(&repo_addr);
+                let memcache = crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
+                cache.set_memcache(memcache);
+            } else {
+                anyhow::bail!("Unknown caching address specified: {}", cache_address);
+            }
+        }
 
         Ok(Self {
             config,
@@ -114,7 +125,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            cache: Arc::new(CacheProxy::new())
+            cache: Arc::new(cache)
         })
     }
 

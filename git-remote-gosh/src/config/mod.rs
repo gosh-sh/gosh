@@ -11,6 +11,8 @@ mod defaults;
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
 pub const SET_COMMIT_TIMEOUT: &u64 = &180; // in secs
 
+const USE_CACHE_ENV_VARIABLE_NAME: &str = "GOSH_USE_CACHE";
+
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
     pub pubkey: String,
@@ -93,6 +95,10 @@ impl Config {
         let config_file = std::fs::File::open(config_path)?;
         let config_reader = BufReader::new(config_file);
         Self::load(config_reader)
+    }
+
+    pub fn use_cache(&self) -> Option<String> {
+        env::var(USE_CACHE_ENV_VARIABLE_NAME).ok()
     }
 
     #[instrument(level = "debug")]

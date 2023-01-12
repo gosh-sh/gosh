@@ -43,4 +43,9 @@ impl CacheProxy {
             subject: CacheSubject::NoCache
         };
     }
+
+    pub fn set_memcache(&mut self, memcache: Memcached) {
+        self.subject = CacheSubject::Memcached(memcache);
+    }
+
 }

@@ -42,3 +42,4 @@ impl CacheKey for &git_hash::ObjectId {
 
 pub mod proxy;
 pub mod memcached_impl;
+
