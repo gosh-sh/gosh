@@ -13,11 +13,14 @@ use std::{
 
 use tokio_retry::Retry;
 use tracing::Instrument;
+use crate::cache::Cache;
 
 use super::is_going_to_ipfs;
 use tokio::{sync::Semaphore, task::JoinSet};
 
 use super::utilities::retry::default_retry_strategy;
+
+const MARKER_FLAG: u32 = 1u32;
 
 #[instrument(level = "debug", skip(context))]
 async fn construct_tree_node(
@@ -83,6 +86,9 @@ pub async fn push_tree(
         if visited.contains(&tree_id) {
             continue;
         }
+        if context.cache.get(&tree_id).await == Some(MARKER_FLAG) {
+            continue;
+        }
         visited.insert(tree_id);
         let mut buffer: Vec<u8> = Vec::new();
         let entry_ref_iter = context
@@ -108,12 +114,13 @@ pub async fn push_tree(
         let network = context.remote.network.clone();
         let dao_addr = context.dao_addr.clone();
         let repo = context.remote.repo.clone();
+        let cache = context.cache.clone();
 
         let permit = push_semaphore.clone().acquire_owned().await?;
         handlers.spawn(
             async move {
                 let res = Retry::spawn(default_retry_strategy(), || async {
-                    inner_deploy_tree(
+                    let _: () = inner_deploy_tree(
                         &blockchain,
                         &network,
                         &dao_addr,
@@ -121,7 +128,9 @@ pub async fn push_tree(
                         &tree_id,
                         &tree_nodes,
                     )
-                    .await
+                    .await?;
+                    cache.put(&tree_id,  MARKER_FLAG);
+                    Ok(())
                 })
                 .await
                 .map_err(|e| {

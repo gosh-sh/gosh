@@ -1,7 +1,6 @@
 use async_trait::async_trait;
-use crate::cache::Cache;
 use crate::cache::memcached_impl::Memcached;
-use crate::cache::Cacheable;
+use crate::cache::{Cache, Cacheable, CacheKey};
 
 pub struct CacheProxy {
     subject: CacheSubject
@@ -14,24 +13,24 @@ enum CacheSubject {
 
 #[async_trait]
 impl Cache for CacheProxy {
-    async fn put<TKey, TValue>(&mut self, key: TKey, value: TValue)
+    async fn put<TKey, TValue>(&self, key: TKey, value: TValue)
     where
         TValue: Cacheable,
-        TKey: Into<String> + Send
+        TKey: CacheKey
     {
         use CacheSubject::*;
-        match &mut self.subject {
+        match &self.subject {
             NoCache => return,
             Memcached(memcached) => return memcached.put::<TKey, TValue>(key, value).await
         }
     }
-    async fn get<TKey, TValue>(&mut self, key: TKey) -> Option<TValue>
+    async fn get<TKey, TValue>(&self, key: TKey) -> Option<TValue>
     where
         TValue: Cacheable,
-        TKey: Into<String> + Send
+        TKey: CacheKey
     {
         use CacheSubject::*;
-        match &mut self.subject {
+        match &self.subject {
             NoCache => return None,
             Memcached(memcached) => return memcached.get::<TKey, TValue>(key).await
         }
