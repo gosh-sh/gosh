@@ -79,7 +79,7 @@ const SignupPage = () => {
         }
     }, [location.search, navigate])
 
-    if (persist.pin) return <Navigate to="/a/orgs" />
+    if (persist.pin && !step) return <Navigate to="/a/orgs" />
     return (
         <div className="container">
             {oAuthSession.isLoading && (

@@ -45,32 +45,32 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         if (!octokit || !session) return
 
         setGithubOrgs((state) => ({ ...state, isFetching: true }))
-        const { data, status } = await octokit.request(
-            'GET /user/orgs{?per_page,page}',
-            {},
-        )
-        if (status !== 200) {
-            signoutOAuth()
+        try {
+            const { data } = await octokit.request('GET /user/orgs{?per_page,page}', {})
+            const combined = [
+                {
+                    id: session.user.id,
+                    login: session.user.user_metadata.user_name,
+                    avatar_url: session.user.user_metadata.avatar_url,
+                    isUser: true,
+                    isOpen: false,
+                },
+                ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
+            ]
+            setGithubOrgs((state) => {
+                const items = combined.map((item: any) => {
+                    const exists = state.items.find(
+                        (curr: any) => curr.login === item.login,
+                    )
+                    return exists || item
+                })
+                return { items, isFetching: false }
+            })
+        } catch (e: any) {
+            console.error(e.message)
+            await signoutOAuth()
             return
         }
-
-        const combined = [
-            {
-                id: session.user.id,
-                login: session.user.user_metadata.user_name,
-                avatar_url: session.user.user_metadata.avatar_url,
-                isUser: true,
-                isOpen: false,
-            },
-            ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
-        ]
-        setGithubOrgs((state) => {
-            const items = combined.map((item: any) => {
-                const exists = state.items.find((curr: any) => curr.login === item.login)
-                return exists || item
-            })
-            return { items, isFetching: false }
-        })
     }, [octokit, session, setGithubOrgs, signoutOAuth])
 
     useEffect(() => {

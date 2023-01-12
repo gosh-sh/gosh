@@ -475,9 +475,10 @@ for those elements which require gradient border color
 
     &__btn-signout {
         @apply flex flex-nowrap items-center
-            px-3 py-2
+            py-2
             w-full
-            rounded-lg;
+            rounded-lg
+            transition-all;
 
         &-slide {
             @apply grow
@@ -503,7 +504,7 @@ for those elements which require gradient border color
         }
 
         &:hover {
-            @apply bg-gray-50;
+            @apply px-3 bg-gray-50;
 
             .aside-step__btn-signout-user {
                 @apply -translate-x-full w-0;

@@ -1,5 +1,4 @@
 import { GoshAdapterFactory } from 'react-gosh'
-import { IGoshAdapter } from 'react-gosh/dist/gosh/interfaces'
 import * as yup from 'yup'
 import { AnyObject, Maybe } from 'yup/lib/types'
 
@@ -29,12 +28,13 @@ yup.addMethod<yup.StringSchema>(yup.string, 'daoname', function () {
     })
 })
 
-yup.addMethod<yup.StringSchema>(yup.string, 'reponame', function (gosh: IGoshAdapter) {
-    return this.test('test-daoname', 'Invalid repository name', function (value) {
+yup.addMethod<yup.StringSchema>(yup.string, 'reponame', function () {
+    return this.test('test-reponame', 'Invalid repository name', function (value) {
         if (!value) {
             return true
         }
 
+        const gosh = GoshAdapterFactory.createLatest()
         const { path, createError } = this
         const { valid, reason } = gosh.isValidRepoName(value)
         return valid ? true : createError({ path, message: reason })
@@ -49,7 +49,7 @@ declare module 'yup' {
     > extends yup.BaseSchema<TType, TContext, TOut> {
         username(): StringSchema<TType, TContext>
         daoname(): StringSchema<TType, TContext>
-        reponame(gosh: IGoshAdapter): StringSchema<TType, TContext>
+        reponame(): StringSchema<TType, TContext>
     }
 }
 
