@@ -107,11 +107,13 @@ where
         tracing::info!("Opening repo at {}", local_git_dir);
         let mut cache = CacheProxy::new();
         let cache_str = config.use_cache();
+        tracing::debug!("cache address: {:?}", cache_str);
         if let Some(cache_address) = cache_str {
             if cache_address.starts_with("memcache://") {
                 let namespace = ":".to_owned() + &String::from(&repo_addr);
                 let memcache = crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
                 cache.set_memcache(memcache);
+                tracing::debug!("using memcache service. namespace: {}", namespace);
             } else {
                 anyhow::bail!("Unknown caching address specified: {}", cache_address);
             }
