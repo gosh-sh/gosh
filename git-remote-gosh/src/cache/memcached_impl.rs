@@ -11,19 +11,31 @@ pub struct Memcached {
 
 #[async_trait]
 impl Cache for Memcached {
-    async fn put<TKey, TValue>(&mut self, key: TKey, value: TValue) -> bool
+    async fn put<TKey, TValue>(&mut self, key: TKey, value: TValue)
     where
         TValue: Cacheable,
         TKey: Into<String> + Send
     {
-        todo!();
+        let key: String = key.into();
+        let result: std::result::Result<(), memcache::MemcacheError> = self.client.set(&key, value, 0);
+        if let Err(e) = result {
+            tracing::trace!("Caching error (set): {}", e);
+        }
     }
     async fn get<TKey, TValue>(&mut self, key: TKey) -> Option<TValue>
     where
         TValue: Cacheable,
         TKey: Into<String> + Send
     {
-        todo!();
+        let key: String = key.into();
+        let result: Result<Option<TValue>, memcache::MemcacheError> = self.client.get(&key);
+        match result {
+            Ok(r) => return r,
+            Err(e) => {
+                tracing::trace!("Caching error (get): {}", e);
+                return None
+            }
+        }
     }
 }
 

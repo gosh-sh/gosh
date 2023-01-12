@@ -14,14 +14,14 @@ enum CacheSubject {
 
 #[async_trait]
 impl Cache for CacheProxy {
-    async fn put<TKey, TValue>(&mut self, key: TKey, value: TValue) -> bool
+    async fn put<TKey, TValue>(&mut self, key: TKey, value: TValue)
     where
         TValue: Cacheable,
         TKey: Into<String> + Send
     {
         use CacheSubject::*;
         match &mut self.subject {
-            NoCache => return false,
+            NoCache => return,
             Memcached(memcached) => return memcached.put::<TKey, TValue>(key, value).await
         }
     }
