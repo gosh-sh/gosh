@@ -66,7 +66,7 @@ pub enum GoshBlobBitFlags {
     Ipfs = 4,
 }
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {
@@ -417,7 +417,10 @@ async fn run_static(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    tracing::debug!("process_message callback: {:#?}", pe);
+    // TODO: improve formatting for potentially unlimited structs/enums
+    let mut pe_str = format!("{:#?}", pe);
+    pe_str.truncate(200);
+    tracing::trace!("process_message callback: {}", pe_str);
 }
 
 #[instrument(level = "debug", skip(context))]

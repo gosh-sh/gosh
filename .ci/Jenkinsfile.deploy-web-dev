@@ -1,0 +1,58 @@
+pipeline {
+    agent {
+        node {
+            label 'jenkins-main'
+        }
+    }
+    parameters {
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
+    }
+    stages {
+        stage('Web: build') {     
+            steps {
+                script {
+                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
+                    currentBuild.displayName = "#${BUILD_NUMBER}_deploy_${VERSION}"
+                    dir('web') {
+                        sh "make build ENV=dev REACT_APP_ISDOCKEREXT=false"
+                    }
+                }
+            }
+        }
+        stage('Web: deploy') {
+            steps {
+                script {
+                    env.BUCKET_NAME = 'app-' + env.VERSION.replaceAll("[^a-zA-Z0-9 ]+","-")
+                    dir('web') {
+                        def status = sh(script: "aws s3api head-bucket --bucket ${BUCKET_NAME}", returnStatus: true)
+                        if (status == 0) {
+                            echo 'Bucket already exists. Just syncing.'
+                            sh "aws s3 sync build/ s3://${BUCKET_NAME}"
+                        } else {
+                            sh """      
+                                aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2
+                                aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html
+                                sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
+                                aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
+                                aws s3 sync build/ s3://${BUCKET_NAME}
+                                sed "s/BUCKET_NAME/\$BUCKET_NAME/g" ../.ci/nginx/proxy.s3.conf.template >> /opt/nginx/s3-proxy.conf
+                                docker restart nginx-test-app-gosh-sh
+                            """  
+                        }
+                    }
+                    timeout(15) {
+                        waitUntil {
+                            def r = sh script: "sleep 10 && curl -s --retry-connrefused --retry 100 --retry-delay 5 https://${BUCKET_NAME}.gosh.sh > /dev/null", returnStatus: true
+                            return r == 0
+                        }  
+                    }
+                }
+            }
+            post {
+                always {
+                    cleanWs()
+                }
+            }
+        }
+    }
+}
