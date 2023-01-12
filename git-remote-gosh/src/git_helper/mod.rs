@@ -16,6 +16,7 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::cache::proxy::CacheProxy;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -35,6 +36,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
+    cache: Arc<CacheProxy>
 }
 
 #[derive(Deserialize, Debug)]
@@ -112,6 +114,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
+            cache: Arc::new(CacheProxy::new())
         })
     }
 
@@ -289,6 +292,8 @@ pub mod tests {
         // let local_git_dir = env::var("GIT_DIR").unwrap();
         let local_repository = Arc::new(repo);
 
+        let cache = Arc::new(CacheProxy::new());
+
         GitHelper {
             config,
             file_provider,
@@ -297,6 +302,7 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
+            cache
         }
     }
 }

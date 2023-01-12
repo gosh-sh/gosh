@@ -25,8 +25,10 @@ extern crate diffy;
 extern crate lru;
 
 pub extern crate anyhow;
+extern crate memcache;
 
 pub mod abi;
+pub mod cache;
 pub mod blockchain;
 pub mod config;
 pub mod git_helper;
