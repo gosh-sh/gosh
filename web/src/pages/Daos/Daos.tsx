@@ -24,7 +24,7 @@ const DaosPage = () => {
         const _getGithubData = async () => {
             const { data } = await supabase
                 .from('users')
-                .select(`*, github (updated_at, github_url)`)
+                .select(`*, github (updated_at, gosh_url)`)
                 .eq('gosh_username', user.username)
             if (!data?.length) return
 
@@ -33,7 +33,9 @@ const DaosPage = () => {
             for (const item of row.github) {
                 if (item.updated_at) continue
 
-                const [dao, repo] = item.github_url.slice(1).split('/')
+                const splitted = item.gosh_url.split('/')
+                const dao = splitted[splitted.length - 2]
+                const repo = splitted[splitted.length - 1]
                 if (Object.keys(imported).indexOf(dao) < 0) {
                     imported[dao] = []
                 }

@@ -18,6 +18,7 @@ import yup from '../../yup-extended'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { useNavigate } from 'react-router-dom'
+import { validateOnboardingDao, validateOnboardingRepo } from '../Onboarding/helpers'
 
 type TGoshSignupUsernameProps = {
     phrase: string[]
@@ -95,8 +96,28 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
             // Deploy GOSH account
             await signup({ phrase: seed, username })
-            await signoutOAuth()
-            setStep({ index: 4, data: { username, email: session.user.email } })
+
+            // Validate onboarding data
+            const validationResult = await Promise.all(
+                githubReposSelected.map(async ([_, goshUrl]) => {
+                    const parts = goshUrl.split('/')
+                    const daoName = parts[parts.length - 2]
+                    const repoName = parts[parts.length - 1]
+
+                    const daoValidation = await validateOnboardingDao(daoName)
+                    if (!daoValidation.valid) {
+                        return false
+                    }
+
+                    const repoValidation = await validateOnboardingRepo(daoName, repoName)
+                    if (!repoValidation.valid) {
+                        return false
+                    }
+
+                    return true
+                }),
+            )
+            const isAllValid = validationResult.every((r) => !!r)
 
             // Create PIN-code
             setModal({
@@ -105,7 +126,18 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                 element: (
                     <PinCodeModal
                         phrase={seed}
-                        onUnlock={() => navigate('/a/orgs', { replace: true })}
+                        onUnlock={async () => {
+                            if (isAllValid) {
+                                await signoutOAuth()
+                            }
+                            setStep({
+                                index: 4,
+                                data: { username, email: session.user.email },
+                            })
+                            navigate(isAllValid ? '/a/orgs' : '/onboarding', {
+                                replace: true,
+                            })
+                        }}
                     />
                 ),
             })
