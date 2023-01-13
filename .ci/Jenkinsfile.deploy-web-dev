@@ -31,7 +31,7 @@ pipeline {
                         } else {
                             sh """      
                                 aws s3api create-bucket --bucket ${BUCKET_NAME} --region eu-west-2 --acl public-read --create-bucket-configuration LocationConstraint=eu-west-2
-                                aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document error.html
+                                aws s3 website s3://${BUCKET_NAME} --index-document index.html --error-document index.html
                                 sed 's/BUCKET_NAME/${BUCKET_NAME}/g' ../.ci/s3/policy.json.template > policy.json
                                 aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://policy.json
                                 aws s3 sync build/ s3://${BUCKET_NAME}
