@@ -25,8 +25,8 @@ mockall = '^0'
 [dependencies]
 anyhow = '^1.0'
 async-trait = '^0'
-base64 = '^0.13.1'
-base64-serde = '^0'
+base64 = '^0.21.0'
+base64-serde = '^0.7.0'
 bytes = '^1'
 cached = {version = '^0.38.0', features = ['default']}
 derive_builder = '^0.11'
