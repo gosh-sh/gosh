@@ -16,6 +16,7 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::cache::proxy::CacheProxy;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -35,6 +36,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
+    cache: Arc<CacheProxy>
 }
 
 #[derive(Deserialize, Debug)]
@@ -103,6 +105,19 @@ where
         let local_git_dir = env::var("GIT_DIR")?;
         let local_repository = Arc::new(git_repository::open(&local_git_dir)?);
         tracing::info!("Opening repo at {}", local_git_dir);
+        let mut cache = CacheProxy::new();
+        let cache_str = config.use_cache();
+        tracing::debug!("cache address: {:?}", cache_str);
+        if let Some(cache_address) = cache_str {
+            if cache_address.starts_with("memcache://") {
+                let namespace = ":".to_owned() + &String::from(&repo_addr);
+                let memcache = crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
+                cache.set_memcache(memcache);
+                tracing::debug!("using memcache service. namespace: {}", namespace);
+            } else {
+                anyhow::bail!("Unknown caching address specified: {}", cache_address);
+            }
+        }
 
         Ok(Self {
             config,
@@ -112,6 +127,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
+            cache: Arc::new(cache)
         })
     }
 
@@ -289,6 +305,8 @@ pub mod tests {
         // let local_git_dir = env::var("GIT_DIR").unwrap();
         let local_repository = Arc::new(repo);
 
+        let cache = Arc::new(CacheProxy::new());
+
         GitHelper {
             config,
             file_provider,
@@ -297,6 +315,7 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
+            cache
         }
     }
 }
