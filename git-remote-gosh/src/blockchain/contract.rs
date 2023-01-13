@@ -1,9 +1,24 @@
 use super::{BlockchainContractAddress, EverClient, GetVersionResult};
-use crate::blockchain::{run_local, run_static};
+use crate::blockchain::{run_local, run_static, get_account_data};
 use async_trait::async_trait;
 use serde::{de, Deserialize};
 use std::fmt::Debug;
 use ton_client::{abi::Abi, crypto::KeyPair};
+
+enum AccountType {
+    Uninit,
+    Active,
+    Frozen,
+    NonExistent,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ContractStatus {
+    #[serde(rename = "acc_type")]
+    status: u32,
+    #[serde(with = "ton_sdk::json_helper::uint")]
+    balance: u64,
+}
 
 pub trait ContractInfo: Debug {
     fn get_abi(&self) -> &ton_client::abi::Abi;
@@ -38,6 +53,8 @@ pub trait ContractRead: Debug {
     ) -> anyhow::Result<T>
     where
         for<'de> T: Deserialize<'de>;
+
+    async fn load_account(&self, client: &EverClient) -> anyhow::Result<ContractStatus>;
 }
 
 #[async_trait]
@@ -134,6 +151,11 @@ impl GoshContract {
         tracing::trace!("get_version result: {:?}", result);
         Ok(result.version)
     }
+
+    pub async fn is_active(&self, context: &EverClient) -> anyhow::Result<bool> {
+        let ContractStatus { status, .. } = self.load_account(context).await?;
+        Ok(status == 1)
+    }
 }
 
 impl ContractInfo for GoshContract {
@@ -164,6 +186,12 @@ impl ContractRead for GoshContract {
         // TODO: this log can be very long, but the value is JSON and can't be shorten. Consider logging it after deserializing.
         // tracing::trace!("run_local result: {:?}", result);
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
+    }
+
+    async fn load_account(&self, client: &EverClient) -> anyhow::Result<ContractStatus> {
+        let result = get_account_data(client, self).await?;
+
+        Ok(serde_json::from_value::<ContractStatus>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 }
 
@@ -200,6 +228,15 @@ mod tests {
             });
             serde_json::from_value::<T>(v).map_err(|e| anyhow::Error::from(e))
         }
+
+        async fn load_account(&self, context: &EverClient) -> anyhow::Result<ContractStatus> {
+            let contract_status = ContractStatus {
+                status: 1,
+                balance: 10000000000,
+            };
+
+            Ok(contract_status)
+        }
     }
 
     #[tokio::test]
@@ -217,5 +254,10 @@ mod tests {
             BlockchainContractAddress::new(format!("0:{:64}", 0))
         );
         assert_eq!(result.branch.version, "commit_version");
+
+        let ContractStatus { status, balance } = contract.load_account(&client).await.unwrap();
+
+        assert_eq!(status, 1);
+        assert_eq!(balance, 10000000000);
     }
 }

@@ -10,7 +10,7 @@ pub mod inner_calls;
 mod inner_state;
 mod state;
 pub use inner_state::UserWalletsMirrorsInnerState;
-pub use state::UserWalletMirrors;
+pub use state::{UserWalletMirrors, WalletError};
 pub type UserWallet = Arc<UserWalletMirrors>;
 
 static _USER_WALLET: Lazy<UserWallet> = Lazy::new(|| Arc::new(UserWalletMirrors::new()));
@@ -31,6 +31,7 @@ impl BlockchainUserWalletService for Everscale {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }
+
     #[instrument(level = "debug", skip(self))]
     async fn user_wallet(
         &self,

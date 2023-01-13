@@ -2,11 +2,12 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA},
+    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA, user_wallet::WalletError},
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
+use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
@@ -19,7 +20,7 @@ use tokio::{
     sync::Semaphore,
     task::{JoinError, JoinSet},
 };
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
 pub mod create_branch;
@@ -317,26 +318,40 @@ where
             let branch_name = remote_branch_name.to_owned().clone();
 
             let permit = push_semaphore.acquire_owned().await?;
+
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    true
+                }
+            };
+
             push_handlers.spawn(
                 async move {
-                    let res = Retry::spawn(default_retry_strategy(), || async {
-                        blockchain
-                            .push_commit(
-                                &object_id,
-                                &branch_name,
-                                &tree_addr,
-                                &remote,
-                                &dao_addr,
-                                &raw_commit,
-                                &*parents,
-                            )
-                            .await
-                            .map_err(|e| {
-                                tracing::warn!("Attempt failed with {:#?}", e);
-                                e
-                            })
-                    })
+                    let res = RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            blockchain
+                                .push_commit(
+                                    &object_id,
+                                    &branch_name,
+                                    &tree_addr,
+                                    &remote,
+                                    &dao_addr,
+                                    &raw_commit,
+                                    &*parents,
+                                )
+                                .await
+                                // .map_err(|e| {
+                                //     tracing::warn!("Attempt failed with {:#?}", e);
+                                //     e
+                                // })
+                        },
+                        condition,
+                    )
                     .await;
+
                     drop(permit);
                     res
                 }
@@ -543,10 +558,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("obj join-hanlder: {}", e);
+                    bail!("obj join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("obj inner: {}", e)
+                    bail!("obj inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -556,10 +571,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("snapshots join-hanlder: {}", e);
+                    bail!("snapshots join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("snapshots inner: {}", e)
+                    bail!("snapshots inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }

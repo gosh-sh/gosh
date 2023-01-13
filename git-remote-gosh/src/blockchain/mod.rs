@@ -19,7 +19,7 @@ pub use service::*;
 use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
-    net::{query_collection, ParamsOfQueryCollection},
+    net::{query_collection, ParamsOfQueryCollection, ParamsOfQuery},
     processing::ProcessingEvent,
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
@@ -414,6 +414,40 @@ async fn run_static(
     .map(|r| r.output.unwrap())?;
 
     Ok(result)
+}
+
+#[instrument(level = "debug", skip(context))]
+pub async fn get_account_data(
+    context: &EverClient,
+    contract: &GoshContract
+) -> anyhow::Result<serde_json::Value> {
+    let query = r#"query($address: String!){
+        blockchain {
+          account(address: $address) {
+            info {
+              acc_type balance
+            }
+          }
+        }
+    }"#
+    .to_owned();
+
+    let result = ton_client::net::query(
+        Arc::clone(context),
+        ParamsOfQuery {
+            query: query.clone(),
+            variables: Some(serde_json::json!({
+                "address": contract.address,
+            })),
+            ..Default::default()
+        },
+    )
+    .await
+    .map(|r| r.result)?;
+
+    let extracted_data = &result["data"]["blockchain"]["account"]["info"];
+
+    Ok(extracted_data.clone())
 }
 
 async fn default_callback(pe: ProcessingEvent) {

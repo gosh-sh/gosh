@@ -3,10 +3,11 @@ use crate::blockchain::user_wallet::inner_calls;
 use crate::blockchain::{BlockchainContractAddress, BlockchainService, GoshContract};
 
 use std::ops::Deref;
-
 use std::sync::atomic::{AtomicU64, Ordering};
-
 use std::vec::Vec;
+
+use anyhow::bail;
+use thiserror::Error;
 
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
@@ -16,9 +17,17 @@ use super::inner_calls::{
     get_number_of_user_wallet_mirrors_deployed, get_user_wallet,
     get_user_wallet_config_max_number_of_mirrors,
 };
-use super::inner_state::{TWalletMirrorIndex, UserWalletsMirrorsInnerState};
+use super::inner_state::{TWalletMirrorIndex, UserWalletsMirrorsInnerState, Wallet};
 
 const WALLET_CONTRACTS_PARALLELISM: usize = 100usize;
+
+#[derive(Error, Debug)]
+pub enum WalletError {
+    #[error("there is no zero wallet")]
+    ZeroWalletNotExists,
+    #[error("operation failed. retrying...")]
+    Other(anyhow::Error),
+}
 
 pub struct UserWalletContractRef<'a> {
     mirrors: &'a UserWalletMirrors,
@@ -78,12 +87,22 @@ impl UserWalletMirrors {
         }
     }
 
-    pub async fn is_zero_wallet_ready(&self) -> bool {
-        self.inner
+    pub async fn find_zero_wallet(&self) -> Option<Wallet> {
+        let inner_state = self.inner
             .read()
-            .await
-            .wallets()
-            .contains_key(&UserWalletMirrors::ZERO_WALLET_INDEX)
+            .await;
+
+        inner_state.wallets()
+            .get(&UserWalletMirrors::ZERO_WALLET_INDEX).cloned()
+    }
+
+    pub async fn is_zero_wallet_ready(&self) -> bool {
+        let zero_wallet = self.find_zero_wallet().await;
+
+        match zero_wallet {
+            Some(Wallet::Contract(_)) => true,
+            _ => false
+        }
     }
 
     pub async fn is_mirrors_ready(&self) -> bool {
@@ -98,25 +117,18 @@ impl UserWalletMirrors {
     ) -> anyhow::Result<()> {
         // read lock
         {
-            if self.is_zero_wallet_ready().await {
-                return Ok(());
-            }
+            match self.find_zero_wallet().await {
+                Some(Wallet::Contract(_)) => return Ok(()),
+                Some(Wallet::NonExistent(_)) => bail!(WalletError::ZeroWalletNotExists),
+                None => ()
+            };
         }
 
         // write lock
         {
-            let mut inner_state = self.inner.write().await;
-            if inner_state
-                .wallets()
-                .contains_key(&UserWalletMirrors::ZERO_WALLET_INDEX)
-            {
-                return Ok(());
-            }
             let wallet_config = blockchain.wallet_config().clone().ok_or(anyhow::anyhow!(
                 "user wallet config does not exist or invalid"
             ))?;
-
-            tracing::debug!("init_zero_wallet before zero_user_wallet");
             let zero_contract: GoshContract = inner_calls::get_user_wallet(
                 blockchain,
                 blockchain.root_contract(),
@@ -125,8 +137,16 @@ impl UserWalletMirrors {
                 0,
             )
             .await?;
+
+            let is_active = zero_contract.is_active(&blockchain.client()).await?;
+
+            let mut inner_state = self.inner.write().await;
             *inner_state = UserWalletsMirrorsInnerState::new(
-                zero_contract,
+                if is_active {
+                    Wallet::Contract(zero_contract)
+                } else {
+                    Wallet::NonExistent(zero_contract.address)
+                },
                 blockchain.root_contract().to_owned(),
                 dao_address.to_owned(),
                 wallet_config.to_owned(),
@@ -151,8 +171,13 @@ impl UserWalletMirrors {
             }
             tracing::debug!("inner wallets state {:#?}", inner_state.wallets());
 
-            let zero_wallet =
-                { inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone() };
+            let zero_wallet = if let Wallet::Contract(zero_wallet) 
+                = inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone()
+            {
+                zero_wallet
+            } else {
+                bail!(WalletError::ZeroWalletNotExists)
+            };
             let available_mirrors_count =
                 get_number_of_user_wallet_mirrors_deployed(blockchain, &zero_wallet).await?;
             for i in 0..available_mirrors_count {
@@ -216,7 +241,13 @@ impl UserWalletMirrors {
                 min_used_wallet_usage = usage;
             }
         }
-        let contract = inner_state.wallets()[&min_used_wallet_index].clone();
+        let contract = if let Wallet::Contract(contract)
+            = inner_state.wallets()[&min_used_wallet_index].clone()
+        {
+            contract
+        } else {
+            bail!(WalletError::ZeroWalletNotExists)
+        };
         self.acquisitions[min_used_wallet_index as usize].fetch_add(1, Ordering::SeqCst);
         Ok(UserWalletContractRef::new(
             self,
