@@ -336,23 +336,33 @@ where
     B: BlockchainService,
 {
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
-    Retry::spawn(default_retry_strategy(), || async {
-        blockchain
-            .deploy_new_snapshot(
-                &wallet,
-                repo_addr.clone(),
-                branch_name.clone(),
-                "".to_string(),
-                file_path.clone(),
-                "".to_string(),
-            )
-            .await
-            .map_err(|e| {
-                tracing::debug!(
-                    "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                );
-                e
-            })
-    })
+
+    let condition = |e: &anyhow::Error| {
+        if e.is::<WalletError>() {
+            false
+        } else {
+            tracing::debug!(
+                "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
+            );
+            true
+        }
+    };
+
+    RetryIf::spawn(
+        default_retry_strategy(),
+        || async {
+            blockchain
+                .deploy_new_snapshot(
+                    &wallet,
+                    repo_addr.clone(),
+                    branch_name.clone(),
+                    "".to_string(),
+                    file_path.clone(),
+                    "".to_string(),
+                )
+                .await
+        },
+        condition
+    )
     .await
 }

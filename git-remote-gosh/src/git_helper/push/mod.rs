@@ -323,6 +323,7 @@ where
                 if e.is::<WalletError>() {
                     false
                 } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
                     true
                 }
             };
@@ -343,10 +344,6 @@ where
                                     &*parents,
                                 )
                                 .await
-                                // .map_err(|e| {
-                                //     tracing::warn!("Attempt failed with {:#?}", e);
-                                //     e
-                                // })
                         },
                         condition,
                     )
