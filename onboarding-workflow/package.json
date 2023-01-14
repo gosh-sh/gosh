@@ -1,5 +1,6 @@
 {
     "dependencies": {
-        "@eversdk/lib-web": "^1.39.0"
+        "@eversdk/lib-web": "^1.39.0",
+        "react-gosh": "file:../react-gosh/react-gosh-1.0.0.tgz"
     }
 }

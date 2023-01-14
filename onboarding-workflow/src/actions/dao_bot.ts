@@ -7,6 +7,9 @@ import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 import { createGoshRepoProducer } from '../queues/mod.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { waitForAccountActive, waitForWalletAccess } from './account.ts'
+import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
+
+const gosh = GoshAdapterFactory.createLatest()
 
 export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
@@ -30,6 +33,21 @@ export async function initDaoBot(dao_bot: DaoBot) {
 
     if (!dao_bot.profile_gosh_address) {
         throw new Error(`Dao bot has no profile`)
+    }
+
+    // Validate DAO name
+    const daoValidated = gosh.isValidDaoName(dao_bot.dao_name)
+    if (!daoValidated.valid) {
+        // TODO:
+        // 1. Mark this DAO/repo entry for user as ignore=true?
+        // 2. Send notification email for user
+        console.log(
+            'DAO name has validation errors',
+            dao_bot.dao_name,
+            'bot_profile_addr',
+            bot_profile_addr,
+        )
+        throw new Error('DAO name has validation errors')
     }
 
     const dao_addr = await getAddrDao(dao_bot.dao_name)
@@ -56,7 +74,9 @@ export async function initDaoBot(dao_bot: DaoBot) {
             bot_profile_addr,
         )
         throw new Error(`DAO exists but account is not a member of DAO`)
-        // TODO mark such DAO in DB
+        // TODO:
+        // 1. mark such DAO in DB
+        // 2. send notification email
     }
 
     // ensure wallet has access

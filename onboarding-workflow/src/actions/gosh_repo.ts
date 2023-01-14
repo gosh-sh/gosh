@@ -11,6 +11,9 @@ import {
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { getRepoNameFromUrl } from '../utils/gosh_repo.ts'
 import { waitForAccountActive } from './account.ts'
+import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
+
+const gosh = GoshAdapterFactory.createLatest()
 
 export async function initializeGoshRepo(github_id: string) {
     const github = await getGithubWithDaoBot(github_id)
@@ -26,6 +29,21 @@ export async function initializeGoshRepo(github_id: string) {
     }
     if (!dao_bot.profile_gosh_address) {
         throw new Error('Dao bot has no profile')
+    }
+
+    // Validate repository name
+    const repoValidated = gosh.isValidRepoName(repo_name)
+    if (!repoValidated.valid) {
+        // TODO:
+        // 1. Mark this DAO/repo entry for user as ignore=true?
+        // 2. Send notification email for user
+        console.log(
+            'Repository name has validation errors',
+            repo_name,
+            'DAO name',
+            dao_bot.dao_name,
+        )
+        throw new Error('Repository name has validation errors')
     }
 
     const dao_addr = await getAddrDao(dao_bot.dao_name)
