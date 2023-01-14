@@ -30,8 +30,8 @@ enum BlobDst {
 }
 
 #[instrument(
-    level = "debug",
-    skip(blockchain, diff, original_snapshot_content, new_snapshot_content)
+    level = "info",
+    skip_all
 )]
 pub async fn push_diff<'a, B>(
     blockchain: &B,
@@ -53,6 +53,7 @@ pub async fn push_diff<'a, B>(
 where
     B: BlockchainService,
 {
+    tracing::trace!("push_diff: repo_name={repo_name}, dao_address={dao_address}, remote_network={remote_network}, ipfs_endpoint={ipfs_endpoint}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
     let mut repo_contract = blockchain.repo_contract().clone();
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
@@ -103,16 +104,8 @@ where
 }
 
 #[instrument(
-    level = "debug",
-    skip(
-        blockchain,
-        repo_name,
-        ipfs_endpoint,
-        original_snapshot_content,
-        diff,
-        new_snapshot_content,
-        wallet
-    )
+    level = "info",
+    skip_all
 )]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
@@ -132,8 +125,9 @@ pub async fn inner_push_diff(
     diff: &[u8],
     new_snapshot_content: &Vec<u8>,
 ) -> anyhow::Result<()> {
+    tracing::trace!("inner_push_diff: snapshot_addr={snapshot_addr}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let diff = compress_zstd(diff, None)?;
-    tracing::debug!("compressed to {} size", diff.len());
+    tracing::trace!("compressed to {} size", diff.len());
 
     let ipfs_client = build_ipfs(ipfs_endpoint)?;
     let is_previous_oversized = is_going_to_ipfs(original_snapshot_content);
@@ -147,11 +141,11 @@ pub async fn inner_push_diff(
                 BlobDst::Patch(hex::encode(diff))
             }
         } else {
-            tracing::debug!("inner_push_diff->save_data_to_ipfs");
+            tracing::trace!("inner_push_diff->save_data_to_ipfs");
             let ipfs = save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                 .await
                 .map_err(|e| {
-                    tracing::debug!("save_data_to_ipfs error: {:#?}", e);
+                    tracing::trace!("save_data_to_ipfs error: {:#?}", e);
                     e
                 })?;
             BlobDst::Ipfs(ipfs)
@@ -214,7 +208,7 @@ pub async fn inner_push_diff(
     };
 
     if diff.ipfs.is_some() {
-        tracing::debug!("push_diff: {:?}", diff);
+        tracing::trace!("push_diff: {:?}", diff);
     } else {
         tracing::trace!("push_diff: {:?}", diff);
     }
@@ -235,9 +229,9 @@ pub async fn inner_push_diff(
     Ok(())
 }
 
-#[instrument(level = "debug", skip(ipfs_client, content))]
+#[instrument(level = "info", skip_all)]
 async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
-    tracing::debug!("Uploading blob to IPFS");
+    tracing::trace!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
     let content = base64::encode(&content);
     let content = content.as_bytes().to_vec();
@@ -245,11 +239,12 @@ async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow:
     ipfs_client.save_blob(&content).await
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn is_diff_deployed(
     context: &EverClient,
     contract_address: &BlockchainContractAddress,
 ) -> anyhow::Result<bool> {
+    tracing::trace!("is_diff_deployed: contract_address={contract_address}");
     let diff_contract = GoshContract::new(contract_address, gosh_abi::DIFF);
     let result: anyhow::Result<GetVersionResult> =
         diff_contract.read_state(context, "getVersion", None).await;
@@ -257,13 +252,14 @@ pub async fn is_diff_deployed(
     Ok(result.is_ok())
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn diff_address(
     context: &EverClient,
     repo_contract: &mut GoshContract,
     last_commit_id: &git_hash::ObjectId,
     diff_coordinate: &PushDiffCoordinate,
 ) -> anyhow::Result<BlockchainContractAddress> {
+    tracing::trace!("diff_address: repo_contract.address={}, last_commit_id={last_commit_id}, diff_coordinate={diff_coordinate:?}", repo_contract.address);
     let params = serde_json::json!({
         "commitName": last_commit_id.to_string(),
         "index1": diff_coordinate.index_of_parallel_thread,
@@ -275,7 +271,7 @@ pub async fn diff_address(
     Ok(result.address)
 }
 
-#[instrument(level = "debug", skip(blockchain, file_provider, original_content))]
+#[instrument(level = "info", skip_all)]
 pub async fn push_new_branch_snapshot(
     blockchain: &impl BlockchainService,
     file_provider: &IpfsService,
@@ -287,16 +283,17 @@ pub async fn push_new_branch_snapshot(
     file_path: &str,
     original_content: &[u8],
 ) -> anyhow::Result<()> {
+    tracing::trace!("push_new_branch_snapshot: remote_network={remote_network}, dao_addr={dao_addr}, repo_addr={repo_addr}, commit_id={commit_id}, branch_name={branch_name}, file_path={file_path}");
     let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
-    tracing::debug!("compressed to {} size", content.len());
+    tracing::trace!("compressed to {} size", content.len());
 
     let (content, ipfs) = if is_going_to_ipfs(&content) {
-        tracing::debug!("push_new_branch_snapshot->save_data_to_ipfs");
+        tracing::trace!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&file_provider, original_content)
                 .await
                 .map_err(|e| {
-                    tracing::debug!("save_data_to_ipfs error: {}", e);
+                    tracing::trace!("save_data_to_ipfs error: {}", e);
                     e
                 })?,
         );
@@ -319,11 +316,11 @@ pub async fn push_new_branch_snapshot(
         )
         .await?;
 
-    // tracing::debug!("deployNewSnapshot result: {:?}", result);
+    // tracing::trace!("deployNewSnapshot result: {:?}", result);
     Ok(())
 }
 
-#[instrument(level = "debug", skip(blockchain))]
+#[instrument(level = "info", skip_all)]
 pub async fn push_initial_snapshot<B>(
     blockchain: B,
     repo_addr: BlockchainContractAddress,
@@ -335,6 +332,7 @@ pub async fn push_initial_snapshot<B>(
 where
     B: BlockchainService,
 {
+    tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     Retry::spawn(default_retry_strategy(), || async {
         blockchain
@@ -348,7 +346,7 @@ where
             )
             .await
             .map_err(|e| {
-                tracing::debug!(
+                tracing::trace!(
                     "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
                 );
                 e

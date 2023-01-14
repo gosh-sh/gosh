@@ -69,14 +69,15 @@ struct Messages {
 
 impl DiffMessagesIterator {
     #[instrument(
-        level = "debug",
-        skip(snapshot_address),
+        level = "info",
+        skip_all,
         name = "new_DiffMessagesIterator"
     )]
     pub fn new(
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
     ) -> Self {
+        tracing::trace!("new_DiffMessagesIterator: repo_contract.address={}", repo_contract.address);
         Self {
             repo_contract: repo_contract.clone(),
             buffer: vec![],
@@ -85,7 +86,7 @@ impl DiffMessagesIterator {
         }
     }
 
-    #[instrument(level = "debug", skip(client))]
+    #[instrument(level = "info", skip_all)]
     pub async fn next(&mut self, client: &EverClient) -> anyhow::Result<Option<DiffMessage>> {
         while !self.is_buffer_ready() && self.next.is_some() {
             self.try_load_next_chunk(client).await?;
@@ -148,7 +149,7 @@ impl DiffMessagesIterator {
         })
     }
 
-    #[instrument(level = "debug", skip(client))]
+    #[instrument(level = "info", skip_all)]
     async fn try_load_next_chunk(&mut self, client: &EverClient) -> anyhow::Result<()> {
         tracing::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
@@ -218,14 +219,14 @@ impl DiffMessagesIterator {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     fn is_buffer_ready(&self) -> bool {
         self.buffer_cursor < self.buffer.len()
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     fn try_take_next_item(&mut self) -> Option<DiffMessage> {
-        tracing::debug!("try_take_next_item = {:?}", self);
+        tracing::trace!("try_take_next_item = {:?}", self);
         if self.buffer_cursor >= self.buffer.len() {
             return None;
         }
@@ -235,13 +236,14 @@ impl DiffMessagesIterator {
     }
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn load_messages_to(
     context: &EverClient,
     address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
 ) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
+    tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
     let mut subsequent_page_info: Option<String> = None;
     let query = r#"query($addr: String!, $before: String){
       blockchain {
@@ -283,7 +285,7 @@ pub async fn load_messages_to(
         subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
-    tracing::debug!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
     for elem in edges.edges.iter().rev() {
         let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
@@ -294,7 +296,7 @@ pub async fn load_messages_to(
             continue;
         }
 
-        tracing::debug!("Decoding message {:?}", raw_msg.id);
+        tracing::trace!("Decoding message {:?}", raw_msg.id);
         let decoding_result = decode_message_body(
             Arc::clone(context),
             ParamsOfDecodeMessageBody {
@@ -307,8 +309,8 @@ pub async fn load_messages_to(
         .await;
 
         if let Err(ref e) = decoding_result {
-            tracing::debug!("decode_message_body error: {:#?}", e);
-            tracing::debug!("undecoded message: {:#?}", raw_msg);
+            tracing::trace!("decode_message_body error: {:#?}", e);
+            tracing::trace!("undecoded message: {:#?}", raw_msg);
             continue;
         }
 
@@ -325,7 +327,7 @@ pub async fn load_messages_to(
         }
     }
 
-    tracing::debug!("Passed {} message(s)", messages.len());
+    tracing::trace!("Passed {} message(s)", messages.len());
     let oldest_timestamp = match messages.len() {
         0 => None,
         n => Some(messages[n - 1].created_at),

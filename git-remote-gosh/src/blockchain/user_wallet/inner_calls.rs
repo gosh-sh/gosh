@@ -32,7 +32,7 @@ struct GetWalletMirrorsCountResult {
     pub number_of_wallets: NumberU64,
 }
 
-#[instrument(level = "debug", skip(blockchain))]
+#[instrument(level = "info", skip_all)]
 pub(super) async fn get_number_of_user_wallet_mirrors_deployed<B, C>(
     blockchain: &B,
     wallet: &C,
@@ -41,11 +41,12 @@ where
     B: BlockchainService + BlockchainCall,
     C: ContractRead + ContractInfo + Sync,
 {
+    tracing::trace!("get_number_of_user_wallet_mirrors_deployed: wallet={wallet:?}");
     let result: GetWalletMirrorsCountResult = wallet
         .read_state(blockchain.client(), "getWalletsCount", None)
         .await
         .map_err(|e| {
-            tracing::debug!("get_number_of_user_wallet_mirrors_deployed error: {}", e);
+            tracing::trace!("get_number_of_user_wallet_mirrors_deployed error: {}", e);
             e
         })?;
     tracing::trace!(
@@ -55,7 +56,7 @@ where
     Ok(Into::<u64>::into(result.number_of_wallets) - 1)
 }
 
-#[instrument(level = "debug", skip(blockchain))]
+#[instrument(level = "info", skip_all)]
 pub(super) async fn get_user_wallet(
     blockchain: &impl BlockchainService,
     gosh_root: &GoshContract,
@@ -63,6 +64,7 @@ pub(super) async fn get_user_wallet(
     wallet: &UserWalletConfig,
     user_wallet_index: u64,
 ) -> anyhow::Result<GoshContract> {
+    tracing::trace!("get_user_wallet: gosh_root.address={}, dao_address={dao_address}, wallet={wallet:?}, user_wallet_index={user_wallet_index}", gosh_root.address);
     let UserWalletConfig {
         pubkey,
         secret,
@@ -80,7 +82,7 @@ pub(super) async fn get_user_wallet(
         )
         .await
         .map_err(|e| {
-            tracing::debug!("getProfileAddr error: {}", e);
+            tracing::trace!("getProfileAddr error: {}", e);
             e
         })?;
     let dao_contract = GoshContract::new(dao_address, abi::DAO);
@@ -93,7 +95,7 @@ pub(super) async fn get_user_wallet(
         .run_static(blockchain.client(), "getAddrWallet", Some(params))
         .await
         .map_err(|e| {
-            tracing::debug!("getAddrWallet error: {}", e);
+            tracing::trace!("getAddrWallet error: {}", e);
             e
         })?;
     let user_wallet_address = result.address;
@@ -104,7 +106,7 @@ pub(super) async fn get_user_wallet(
     Ok(contract)
 }
 
-#[instrument(level = "debug", skip(blockchain))]
+#[instrument(level = "info", skip_all)]
 pub(super) async fn get_user_wallet_config_max_number_of_mirrors<B, C>(
     blockchain: &B,
     user_wallet_contract: &C,
@@ -113,6 +115,7 @@ where
     B: BlockchainService + BlockchainCall,
     C: ContractRead + ContractInfo + Sync,
 {
+    tracing::trace!("get_user_wallet_config_max_number_of_mirrors: user_wallet_contract={user_wallet_contract:?}");
     let result: GetConfigResult = user_wallet_contract
         .read_state(blockchain.client(), "getConfig", None)
         .await?;
