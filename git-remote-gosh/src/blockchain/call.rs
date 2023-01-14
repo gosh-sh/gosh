@@ -22,7 +22,7 @@ pub(super) trait BlockchainCall {
 
 #[async_trait]
 impl BlockchainCall for Everscale {
-    #[instrument(level = "debug", skip(self, contract))]
+    #[instrument(level = "info", skip_all)]
     async fn call<C>(
         &self,
         contract: &C,
@@ -32,10 +32,10 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
-        tracing::debug!("blockchain call start");
+        tracing::trace!("blockchain call start");
         tracing::trace!(
-            "contract: {:?}, function: {}, args: {:?}",
-            contract,
+            "contract.address: {:?}, function: {}, args: {:?}",
+            contract.get_address().clone(),
             function_name,
             args
         );
@@ -67,10 +67,10 @@ impl BlockchainCall for Everscale {
             },
             default_callback,
         )
-        .instrument(debug_span!("blockchain_client::process_message").or_current())
+        .instrument(info_span!("blockchain_client::process_message").or_current())
         .await;
         if let Err(ref e) = sdk_result {
-            tracing::debug!("process_message error: {:#?}", e);
+            tracing::trace!("process_message error: {:#?}", e);
         }
         let ResultOfProcessMessage {
             transaction, /* decoded, */
@@ -78,7 +78,7 @@ impl BlockchainCall for Everscale {
         } = sdk_result?;
         let call_result: CallResult = serde_json::from_value(transaction)?;
 
-        tracing::debug!("trx id: {}", call_result.trx_id);
+        tracing::trace!("trx id: {}", call_result.trx_id);
 
         Ok(call_result)
     }

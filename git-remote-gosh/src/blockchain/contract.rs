@@ -114,7 +114,7 @@ impl GoshContract {
         }
     }
 
-    #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn run_static<T>(
         &self,
         context: &EverClient,
@@ -150,7 +150,7 @@ impl ContractInfo for GoshContract {
 
 #[async_trait]
 impl ContractRead for GoshContract {
-    #[instrument(level = "debug", skip(self, client))]
+    #[instrument(level = "info", skip_all)]
     async fn read_state<T>(
         &self,
         client: &EverClient,

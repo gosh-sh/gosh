@@ -33,8 +33,9 @@ pub struct ParallelDiff {
 
 impl ParallelDiff {
     #[instrument(
-        level = "debug",
-        skip(original_snapshot_content, diff, new_snapshot_content)
+        level = "info",
+        skip_all,
+        name = "new_ParallelDiff"
     )]
     pub fn new(
         commit_id: git_hash::ObjectId,
@@ -45,6 +46,7 @@ impl ParallelDiff {
         diff: Vec<u8>,
         new_snapshot_content: Vec<u8>,
     ) -> Self {
+        tracing::trace!("new_ParallelDiff: commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}");
         Self {
             commit_id,
             branch_name,
@@ -73,7 +75,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    #[instrument(level = "debug", skip(self, context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn push_dangling(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -109,7 +111,7 @@ impl ParallelDiffsUploadSupport {
                         )
                         .await
                     }
-                    .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
+                    .instrument(info_span!("tokio::spawn::push_diff").or_current()),
                 );
             }
             let mut repo_contract = context.blockchain.repo_contract().clone();
@@ -120,7 +122,7 @@ impl ParallelDiffsUploadSupport {
                 diff_coordinates,
             )
             .await?;
-            tracing::debug!(
+            tracing::trace!(
                 "diff_contract_address <commit: {}, coord: {:?}>: {}",
                 self.last_commit_id,
                 diff_coordinates,
@@ -139,7 +141,7 @@ impl ParallelDiffsUploadSupport {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
-        tracing::debug!(
+        tracing::trace!(
             "Expecting the following diff contracts to be deployed: {:?}",
             self.expecting_deployed_contacts_addresses
         );
@@ -161,7 +163,7 @@ impl ParallelDiffsUploadSupport {
         .await
     }
 
-    #[instrument(level = "debug", skip(blockchain))]
+    #[instrument(level = "info", skip_all)]
     async fn wait_contracts_deployed<B>(
         blockchain: &B,
         addresses: &[BlockchainContractAddress],
@@ -169,6 +171,7 @@ impl ParallelDiffsUploadSupport {
     where
         B: BlockchainService + 'static,
     {
+        tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
         let mut deploymend_results: JoinSet<anyhow::Result<()>> = JoinSet::new();
         for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
             let mut waiting_for_addresses = Vec::from(addresses);
@@ -196,7 +199,7 @@ impl ParallelDiffsUploadSupport {
                                 waiting_for_addresses.retain(|e| !available.contains(e));
                                 if !waiting_for_addresses.is_empty() {
                                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                                    tracing::debug!(
+                                    tracing::trace!(
                                         "Addresses {} are not ready yet. iteration {}",
                                         waiting_for_addresses.format_short(),
                                         iteration
@@ -205,7 +208,7 @@ impl ParallelDiffsUploadSupport {
                             }
                             Err(ref e) => {
                                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                                tracing::debug!(
+                                tracing::trace!(
                                     "State request failed with: {}. iteration {}",
                                     e,
                                     iteration
@@ -215,7 +218,7 @@ impl ParallelDiffsUploadSupport {
                     } // While loop
                     Ok(())
                 } //move
-                .instrument(debug_span!("tokio::spawn::wait_diff_deployed").or_current()),
+                .instrument(info_span!("tokio::spawn::wait_diff_deployed").or_current()),
             );
         }
         while let Some(res) = deploymend_results.join_next().await {
@@ -224,7 +227,7 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(blockchain))]
+    #[instrument(level = "info", skip_all)]
     async fn wait_diff_deployed<B>(
         blockchain: &B,
         expecting_address: &BlockchainContractAddress,
@@ -232,6 +235,7 @@ impl ParallelDiffsUploadSupport {
     where
         B: BlockchainService,
     {
+        tracing::trace!("wait_diff_deployed: expecting_address={expecting_address}");
         for iteration in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
             let is_diff_deployed_result =
                 is_diff_deployed(blockchain.client(), expecting_address).await;
@@ -242,7 +246,7 @@ impl ParallelDiffsUploadSupport {
                 Ok(false) => {
                     //TODO: replace with web-socket listen
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                    tracing::debug!(
+                    tracing::trace!(
                         "diff {} is not ready yet. iteration {}",
                         expecting_address,
                         iteration
@@ -250,7 +254,7 @@ impl ParallelDiffsUploadSupport {
                 }
                 Err(ref e) => {
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                    tracing::debug!(
+                    tracing::trace!(
                         "Is diff deployed failed with: {}. iteration {}",
                         e,
                         iteration
@@ -264,7 +268,7 @@ impl ParallelDiffsUploadSupport {
         );
     }
 
-    #[instrument(level = "debug", skip(self, context, diff))]
+    #[instrument(level = "info", skip_all)]
     pub async fn push(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -307,15 +311,16 @@ impl ParallelDiffsUploadSupport {
                         )
                         .await
                     }
-                    .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
+                    .instrument(info_span!("tokio::spawn::push_diff").or_current()),
                 );
             }
         }
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     fn next_diff(&mut self, file_path: &str) -> PushDiffCoordinate {
+        tracing::trace!("next_diff: file_path={file_path}");
         if !self.parallels.contains_key(file_path) {
             self.parallels
                 .insert(file_path.to_string(), self.next_parallel_index);

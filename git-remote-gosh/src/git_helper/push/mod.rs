@@ -57,7 +57,7 @@ impl<Blockchain> GitHelper<Blockchain>
 where
     Blockchain: BlockchainService + 'static,
 {
-    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
+    #[instrument(level = "info", skip_all)]
     async fn push_blob_update(
         &mut self,
         file_path: &str,
@@ -68,6 +68,7 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_blob_update: file_path={file_path}, original_blob_id={original_blob_id}, next_state_blob_id={next_state_blob_id}, commit_id={commit_id}, branch_name={branch_name}");
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
             Some(original_blob_id),
@@ -89,13 +90,8 @@ where
     }
 
     #[instrument(
-        level = "debug",
-        skip(
-            self,
-            statistics,
-            parallel_diffs_upload_support,
-            parallel_snapshot_uploads
-        )
+        level = "info",
+        skip_all
     )]
     async fn push_new_blob(
         &mut self,
@@ -108,6 +104,7 @@ where
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
         {
+            tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}");
             let blockchain = self.blockchain.clone();
             let repo_address = self.repo_addr.clone();
             let dao_addr = self.dao_addr.clone();
@@ -127,7 +124,7 @@ where
                     )
                     .await
                 }
-                .instrument(debug_span!("tokio::spawn::push_initial_snapshot").or_current()),
+                .instrument(info_span!("tokio::spawn::push_initial_snapshot").or_current()),
             );
         }
 
@@ -149,7 +146,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
+    #[instrument(level = "info", skip_all)]
     async fn push_blob_remove(
         &mut self,
         file_path: &str,
@@ -159,6 +156,7 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_blob_remove: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}");
         let file_diff =
             utilities::generate_blob_diff(&self.local_repository().objects, Some(blob_id), None)
                 .await?;
@@ -176,8 +174,9 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
+        tracing::trace!("tree_root_for_commit: commit_id={commit_id}");
         let mut buffer: Vec<u8> = Vec::new();
         return self
             .local_repository()
@@ -192,8 +191,9 @@ where
             .tree();
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     fn get_parent_id(&self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
+        tracing::trace!("get_parent_id: commit_id={commit_id}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -214,12 +214,13 @@ where
         Ok(parent_id)
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     async fn find_ancestor_commit_in_remote_repo(
         &self,
         remote_branch_name: &str,
         remote_commit_addr: BlockchainContractAddress,
     ) -> anyhow::Result<(String, Option<ObjectId>)> {
+        tracing::trace!("find_ancestor_commit_in_remote_repo: remote_branch_name={remote_branch_name}, remote_commit_addr={remote_commit_addr}");
         let is_protected = self
             .blockchain
             .is_branch_protected(&self.repo_addr, remote_branch_name)
@@ -250,16 +251,8 @@ where
     }
 
     #[instrument(
-        level = "debug",
-        skip(
-            self,
-            statistics,
-            parallel_diffs_upload_support,
-            parallel_snapshot_uploads,
-            push_semaphore,
-            push_handlers,
-            parents_of_commits
-        )
+        level = "info",
+        skip_all
     )]
     async fn push_commit_object<'a>(
         &mut self,
@@ -275,6 +268,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -340,7 +334,7 @@ where
                     drop(permit);
                     res
                 }
-                .instrument(debug_span!("tokio::spawn::push_commit").or_current()),
+                .instrument(info_span!("tokio::spawn::push_commit").or_current()),
             );
         }
 
@@ -392,7 +386,7 @@ where
     }
 
     // find ancestor commit
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
         // Note:
         // Here is the problem. We have file snapshot per branch per path.
@@ -486,7 +480,7 @@ where
         let mut statistics = PushBlobStatistics::new();
 
         let latest_commit_id = latest_commit.object()?.id;
-        tracing::debug!("latest commit id {latest_commit_id}");
+        tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         // iterate through the git objects list and push them
@@ -588,15 +582,16 @@ where
         Ok(result_ok)
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
+        tracing::trace!("push: refs={refs}");
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
             [remote_ref] => delete_remote_ref(remote_ref).await?,
             [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
-        tracing::debug!("push ref result: {result}");
+        tracing::trace!("push ref result: {result}");
         Ok(result)
     }
 }
@@ -605,8 +600,9 @@ async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
     Ok("delete ref ok".to_owned())
 }
 
-#[instrument(level = "debug", skip(m))]
+#[instrument(level = "info", skip_all)]
 fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
+    tracing::trace!("calculate_left_distance: from={from}, till={till}");
     if from == till {
         return 1u64;
     }
