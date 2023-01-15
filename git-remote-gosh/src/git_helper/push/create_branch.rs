@@ -50,7 +50,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn preinit_branch(&mut self) -> anyhow::Result<()> {
         let wallet = self
             .context
@@ -69,7 +69,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let all_files: Vec<recorder::Entry> = {
             self.context
@@ -150,7 +150,7 @@ where
                     )
                     .await
                 }
-                .instrument(debug_span!("tokio::spawn::push_new_branch_snapshot").or_current()),
+                .instrument(info_span!("tokio::spawn::push_new_branch_snapshot").or_current()),
             );
         }
         while let Some(finished_task) = snapshot_handlers.join_next().await {
@@ -160,7 +160,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn wait_branch_ready(&mut self) -> anyhow::Result<()> {
         // Ensure repository contract state
         // Ping Sergey Horelishev for details
@@ -171,7 +171,7 @@ where
     /// Run create branch operation.
     /// Returns false if it was a branch from a commit
     /// and true if it was the first ever branch
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     pub async fn run(&mut self) -> anyhow::Result<bool> {
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;

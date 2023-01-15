@@ -70,12 +70,13 @@ pub trait BlockchainService:
 
 #[async_trait]
 impl BlockchainBranchesService for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn is_branch_protected(
         &self,
         repository_address: &BlockchainContractAddress,
         branch_name: &str,
     ) -> anyhow::Result<bool> {
+        tracing::trace!("is_branch_protected: repository_address={repository_address}, branch_name={branch_name}");
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
 
         let params = serde_json::json!({ "branch": branch_name });
@@ -86,12 +87,13 @@ impl BlockchainBranchesService for Everscale {
         Ok(result.is_ok)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn remote_rev_parse(
         &self,
         repository_address: &BlockchainContractAddress,
         rev: &str,
     ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
+        tracing::trace!("remote_rev_parse: repository_address={repository_address}, rev={rev}");
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
         let args = serde_json::json!({ "name": rev });
         let result: GetAddrBranchResult = contract
@@ -108,18 +110,19 @@ impl BlockchainBranchesService for Everscale {
 
 #[async_trait]
 impl BlockchainCommitService for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn get_commit_by_addr(
         &self,
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<Option<GoshCommit>> {
+        tracing::trace!("get_commit_by_addr: address={address}");
         Ok(Some(GoshCommit::load(self.client(), address).await?))
     }
 }
 
 #[async_trait]
 impl BlockchainReadContractRawDataService for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn get_contracts_state_raw_data(
         &self,
         addresses: &[BlockchainContractAddress],

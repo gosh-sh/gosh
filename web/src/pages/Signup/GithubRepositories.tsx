@@ -47,40 +47,42 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
             },
         }))
 
-        const { data, status } = organization.isUser
-            ? await octokit.request(
-                  'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
-                  {
-                      visibility: 'public',
-                      affiliation: 'owner',
-                  },
-              )
-            : await octokit.request(
-                  'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
-                  {
-                      org: organization.login,
-                      type: 'public',
-                  },
-              )
-        if (status !== 200) {
-            signoutOAuth()
+        try {
+            const { data } = organization.isUser
+                ? await octokit.request(
+                      'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
+                      {
+                          visibility: 'public',
+                          affiliation: 'owner',
+                      },
+                  )
+                : await octokit.request(
+                      'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
+                      {
+                          org: organization.login,
+                          type: 'public',
+                      },
+                  )
+
+            setGithubRepos((state) => ({
+                ...state,
+                [organization.id]: {
+                    ...state[organization.id],
+                    items: data.map((item: any) => {
+                        const exists = state[organization.id].items.find(
+                            (a) => a.id === item.id,
+                        )
+                        if (exists) return exists
+                        return { ...item, isSelected: false }
+                    }),
+                    isFetching: false,
+                },
+            }))
+        } catch (e: any) {
+            console.error(e.message)
+            await signoutOAuth()
             return
         }
-
-        setGithubRepos((state) => ({
-            ...state,
-            [organization.id]: {
-                ...state[organization.id],
-                items: data.map((item: any) => {
-                    const exists = state[organization.id].items.find(
-                        (a) => a.id === item.id,
-                    )
-                    if (exists) return exists
-                    return { ...item, isSelected: false }
-                }),
-                isFetching: false,
-            },
-        }))
     }, [
         octokit,
         organization.id,

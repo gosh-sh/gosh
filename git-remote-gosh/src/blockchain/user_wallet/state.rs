@@ -169,7 +169,7 @@ impl UserWalletMirrors {
                     return Ok(());
                 }
             }
-            tracing::debug!("inner wallets state {:#?}", inner_state.wallets());
+            tracing::trace!("inner wallets state {:#?}", inner_state.wallets());
 
             let zero_wallet = if let Wallet::Contract(zero_wallet) 
                 = inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone()
@@ -193,7 +193,7 @@ impl UserWalletMirrors {
                     .await;
                     match get_mirror_result {
                         Err(e) => {
-                            tracing::debug!("Error in get_user_wallet: {}", e);
+                            tracing::trace!("Error in get_user_wallet: {}", e);
                         }
                         Ok(mirror) => {
                             self.inner.write().await.add(wallet_index, mirror);

@@ -14,3 +14,4 @@ set -o pipefail
 ./09-ipfs_onchain_transition.test.sh
 ./10-ensure_blobs_onchain.test.sh
 ./11-git_submodules.test.sh
+./12-clone_tree_with_rename.sh

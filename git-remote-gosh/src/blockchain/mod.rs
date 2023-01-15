@@ -171,16 +171,17 @@ impl Clone for Everscale {
     }
 }
 
-#[instrument(level = "debug", skip(context, contracts_addresses))]
+#[instrument(level = "trace", skip_all)]
 async fn get_contracts_blocks(
     context: &EverClient,
     contracts_addresses: &[BlockchainContractAddress],
     allow_incomplete_results: bool,
 ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+    tracing::trace!("get_contracts_blocks: allow_incomplete_results={allow_incomplete_results}");
     if contracts_addresses.is_empty() {
         return Ok(HashMap::new());
     }
-    tracing::debug!("internal get_contracts_blocks start");
+    tracing::trace!("internal get_contracts_blocks start");
     let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
     for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
         let addresses: &[String] = &chunk
@@ -192,7 +193,7 @@ async fn get_contracts_blocks(
                 "in": addresses
             }
         });
-        tracing::debug!("Filter: {}", filter.to_string());
+        tracing::trace!("Filter: {}", filter.to_string());
         let query_result: Vec<serde_json::Value> = query_collection(
             Arc::clone(context),
             ParamsOfQueryCollection {
@@ -203,7 +204,7 @@ async fn get_contracts_blocks(
                 order: None,
             },
         )
-        .instrument(debug_span!("get_contracts_blocks sdk::query_collection").or_current())
+        .instrument(info_span!("get_contracts_blocks sdk::query_collection").or_current())
         .await
         .map(|r| r.result)?;
         if query_result.len() != contracts_addresses.len() {
@@ -214,7 +215,7 @@ async fn get_contracts_blocks(
                     query_result.len()
                 );
             } else {
-                tracing::debug!(
+                tracing::trace!(
                     "Got incomplete result: {} out of {}",
                     query_result.len(),
                     contracts_addresses.len()
@@ -235,14 +236,15 @@ async fn get_contracts_blocks(
     return Ok(accounts_bocs);
 }
 
-#[instrument(level = "debug", skip(context, contract))]
+#[instrument(level = "info", skip_all)]
 async fn run_local(
     context: &EverClient,
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
-    tracing::debug!("internal run_local start");
+    tracing::trace!("internal run_local start");
+    tracing::trace!("read_state: function_name={function_name}, args={args:?}");
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));
@@ -256,7 +258,7 @@ async fn run_local(
             order: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::query_collection").or_current())
+    .instrument(info_span!("run_local sdk::query_collection").or_current())
     .await
     .map(|r| r.result)?;
 
@@ -284,7 +286,7 @@ async fn run_local(
             processing_try_index: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::encode_message").or_current())
+    .instrument(info_span!("run_local sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
 
@@ -299,7 +301,7 @@ async fn run_local(
             return_updated_account: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::run_tvm").or_current())
+    .instrument(info_span!("run_local sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;
@@ -307,7 +309,7 @@ async fn run_local(
     Ok(result)
 }
 
-#[instrument(level = "debug", skip(context, contract))]
+#[instrument(level = "info", skip_all)]
 async fn run_static(
     context: &EverClient,
     contract: &GoshContract,
@@ -315,6 +317,7 @@ async fn run_static(
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
     // Read lock
+    tracing::trace!("run_static: function_name={function_name}, args={args:?}");
     let boc_ref = {
         PINNED_CONTRACT_BOCREFS
             .read()
@@ -346,7 +349,7 @@ async fn run_static(
                 order: None,
             },
         )
-        .instrument(debug_span!("run_static sdk::query_collection").or_current())
+        .instrument(info_span!("run_static sdk::query_collection").or_current())
         .await
         .map(|r| r.result)?;
 
@@ -393,7 +396,7 @@ async fn run_static(
             processing_try_index: None,
         },
     )
-    .instrument(debug_span!("run_static sdk::encode_message").or_current())
+    .instrument(info_span!("run_static sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
@@ -408,7 +411,7 @@ async fn run_static(
             return_updated_account: None,
         },
     )
-    .instrument(debug_span!("run_static sdk::run_tvm").or_current())
+    .instrument(info_span!("run_static sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;
@@ -451,16 +454,20 @@ pub async fn get_account_data(
 }
 
 async fn default_callback(pe: ProcessingEvent) {
-    tracing::debug!("process_message callback: {:#?}", pe);
+    // TODO: improve formatting for potentially unlimited structs/enums
+    let mut pe_str = format!("{:#?}", pe);
+    pe_str.truncate(200);
+    tracing::trace!("process_message callback: {}", pe_str);
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn get_repo_address(
     context: &EverClient,
     gosh_root_addr: &BlockchainContractAddress,
     dao: &str,
     repo: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
+    tracing::trace!("get_repo_address: gosh_root_addr={gosh_root_addr}, dao={dao}, repo={repo}");
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
@@ -471,11 +478,12 @@ pub async fn get_repo_address(
     Ok(BlockchainContractAddress::new(result.address))
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn branch_list(
     context: &EverClient,
     repo_addr: &BlockchainContractAddress,
 ) -> anyhow::Result<GetAllAddressResult> {
+    tracing::trace!("branch_list: repo_addr={repo_addr}");
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
@@ -483,12 +491,13 @@ pub async fn branch_list(
     Ok(result)
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn get_commit_address(
     context: &EverClient,
     repo_contract: &mut impl ContractStatic,
     sha: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
+    tracing::trace!("get_commit_address: repo_contract={repo_contract:?}, sha={sha}");
     let result: GetCommitAddrResult = repo_contract
         .static_method(
             context,
@@ -499,11 +508,12 @@ pub async fn get_commit_address(
     Ok(result.address)
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn get_commit_by_addr(
     context: &EverClient,
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<Option<GoshCommit>> {
+    tracing::trace!("get_commit_by_addr: address={address}");
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }

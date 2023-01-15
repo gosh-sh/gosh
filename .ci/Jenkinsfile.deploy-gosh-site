@@ -12,7 +12,7 @@ pipeline {
                 }
                 script {
                     dir('gosh-site') {
-                        sh "export PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} && npm i && npm run build"
+                        sh "export PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} && CI=false npm i && npm run build"
                     }
                 }
             }
