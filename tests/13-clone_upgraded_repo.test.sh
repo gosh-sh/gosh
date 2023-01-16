@@ -5,10 +5,10 @@ set -o pipefail
 
 GOSH_PATH=../contracts/gosh
 TESTS_PATH=../../tests
-REPO_NAME=repo12
-DAO_NAME=dao-test-12
-NEW_REPO_PATH=repo12_v2
-CONTROL_REPO_PATH=repo12_control
+REPO_NAME=repo13
+DAO_NAME=dao-test-13
+NEW_REPO_PATH=repo13_v2
+CONTROL_REPO_PATH=repo13_control
 OLD_VERSION=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 NEW_VERSION=9999.0.0
 
@@ -17,7 +17,7 @@ if [ $OLD_VERSION = $NEW_VERSION ]; then
   exit 1
 fi
 
-echo "Test 12 old version: $OLD_VERSION"
+echo "Test 13 old version: $OLD_VERSION"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -25,7 +25,7 @@ echo "Test 12 old version: $OLD_VERSION"
 [ -d $CONTROL_REPO_PATH ] && rm -rf $CONTROL_REPO_PATH
 
 # *deploy new DAO that will be upgraded
-DAO_NAME="dao-test12_$TEST_INDEX"
+DAO_NAME="dao-test13_$TEST_INDEX"
 echo "DAO_NAME=$DAO_NAME"
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS deployDao \
   "{\"systemcontract\":\"$SYSTEM_CONTRACT_ADDR\", \"name\":\"$DAO_NAME\", \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
@@ -46,7 +46,7 @@ sleep 10
 GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 echo $GRANTED_PUBKEY
 
-echo "***** repo12 deploy *****"
+echo "***** repo13 deploy *****"
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -83,7 +83,7 @@ echo "***** Upgrade gosh version *****"
 cd ..
 cd $GOSH_PATH
 
-sed -i "s/$OLD_VERSION/$NEW_VERSION/" *.sol
+sed -i "s/version = \"$OLD_VERSION/version = \"$NEW_VERSION/" *.sol
 
 CUR_VERSION=$(grep -r 'string constant version' systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 if [ $CUR_VERSION != $NEW_VERSION ]; then
@@ -137,7 +137,7 @@ echo "NEW_WALLET_ADDR=$NEW_WALLET_ADDR"
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
   "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$NEW_WALLET_ADDR\"}"
 
-echo "***** new repo12 deploy *****"
+echo "***** new repo13 deploy *****"
 tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $NEW_WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $NEW_SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -178,7 +178,7 @@ echo "GOOD VERSION"
 echo "***** Revert sol files *****"
 cd ..
 cd $GOSH_PATH
-sed -i "s/$NEW_VERSION/$OLD_VERSION/" *.sol
+sed -i "s/version = \"$NEW_VERSION/version = \"$OLD_VERSION/" *.sol
 make build
 
 cd $TESTS_PATH

@@ -18,7 +18,7 @@ echo "TEST INDEX $TEST_INDEX"
 echo "NETWORK=$NETWORK" > env.env
 
 tonos-cli config --url $NETWORK
-set -x
+
 # Should exist VersionConrtroler and SystemContract contracts
 
 export SYSTEM_CONTRACT_ADDR=`cat ../contracts/gosh/SystemContract.addr`

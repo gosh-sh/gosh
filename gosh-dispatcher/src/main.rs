@@ -23,8 +23,7 @@ pub const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // TODO: return initial level to 1 after debug
-    set_log_verbosity(5);
+    set_log_verbosity(1);
 
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     eprintln!("Dispatcher git-remote-gosh v{version}");

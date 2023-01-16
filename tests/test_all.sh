@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-if [ $LOCAL_TEST = TRUE ]; then
+if [ $DEPLOY_LOCAL = TRUE ]; then
   #https://github.com/tonlabs/evernode-se#how-to-change-the-blockchain-configuration
 #  docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 \
 #       -v /home/user/GOSH/dev/gosh/tests/node_se_scripts/blockchain.conf.json:/ton-node/blockchain.conf.json \
@@ -13,7 +13,7 @@ if [ $LOCAL_TEST = TRUE ]; then
   ./node_se_scripts/deploy.sh
 fi
 
-export TEST_INDEX="${TEST_INDEX:-0}"
+export TEST_INDEX="${TEST_INDEX:-$RANDOM}"
 
 . set-vars.sh
 . build_remote.sh
@@ -29,4 +29,4 @@ export TEST_INDEX="${TEST_INDEX:-0}"
 ./10-ensure_blobs_onchain.test.sh
 ./11-git_submodules.test.sh
 ./12-clone_tree_with_rename.sh
-./12-clone_upgraded_repo.test.sh
+./13-clone_upgraded_repo.test.sh
