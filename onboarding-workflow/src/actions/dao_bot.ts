@@ -1,5 +1,5 @@
 import { DaoBot, updateDaoBot } from '../db/dao_bot.ts'
-import { getGithubsForClone, Github } from '../db/github.ts'
+import { getGithubsForClone, Github, updateGithubByDaoBot } from '../db/github.ts'
 import { hasAccess, isAccountActive } from '../eversdk/account.ts'
 import { deployDao, getAddrDao, isDaoMember, turnOnDao } from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
@@ -8,6 +8,7 @@ import { createGoshRepoProducer } from '../queues/mod.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { waitForAccountActive, waitForWalletAccess } from './account.ts'
 import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
+import { getDb } from '../db/db.ts'
 
 const gosh = GoshAdapterFactory.createLatest()
 
@@ -38,9 +39,10 @@ export async function initDaoBot(dao_bot: DaoBot) {
     // Validate DAO name
     const daoValidated = gosh.isValidDaoName(dao_bot.dao_name)
     if (!daoValidated.valid) {
-        // TODO:
-        // 1. Mark this DAO/repo entry for user as ignore=true?
-        // 2. Send notification email for user
+        // Mark `github` row as `ignore` until error is resolved
+        await updateGithubByDaoBot(dao_bot.id, { ignore: true })
+
+        // TODO: Send notification email for user
         console.log(
             'DAO name has validation errors',
             dao_bot.dao_name,
@@ -67,6 +69,10 @@ export async function initDaoBot(dao_bot: DaoBot) {
     }
 
     if (!(await isDaoMember(dao_addr, bot_profile_addr))) {
+        // Mark `github` row as `ignore` until error is resolved
+        await updateGithubByDaoBot(dao_bot.id, { ignore: true })
+
+        // TODO: Send notification email
         console.log(
             'DAO exists but account is not a member of DAO',
             dao_addr,
@@ -74,9 +80,6 @@ export async function initDaoBot(dao_bot: DaoBot) {
             bot_profile_addr,
         )
         throw new Error(`DAO exists but account is not a member of DAO`)
-        // TODO:
-        // 1. mark such DAO in DB
-        // 2. send notification email
     }
 
     // ensure wallet has access

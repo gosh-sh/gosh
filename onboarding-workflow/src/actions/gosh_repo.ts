@@ -34,9 +34,10 @@ export async function initializeGoshRepo(github_id: string) {
     // Validate repository name
     const repoValidated = gosh.isValidRepoName(repo_name)
     if (!repoValidated.valid) {
-        // TODO:
-        // 1. Mark this DAO/repo entry for user as ignore=true?
-        // 2. Send notification email for user
+        // Mark `github` row as `ignore` until error is resolved
+        await updateGithub(github_id, { ignore: true })
+
+        // TODO: Send notification email for user
         console.log(
             'Repository name has validation errors',
             repo_name,
