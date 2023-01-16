@@ -18,6 +18,7 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::cache::proxy::CacheProxy;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -38,6 +39,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
+    cache: Arc<CacheProxy>
 }
 
 #[derive(Deserialize, Debug)]
@@ -84,13 +86,14 @@ where
         .await
     }
 
-    #[instrument(level = "debug", skip(blockchain))]
+    #[instrument(level = "info", skip_all)]
     async fn build(
         config: Config,
         url: &str,
         blockchain: Blockchain,
         file_provider: FileProvider,
     ) -> anyhow::Result<Self> {
+        tracing::trace!("build: config={config:?}, url={url}");
         // TODO: remove duplicate logic
         let remote = Remote::new(url, &config)?;
         let ever_client = create_client(&config, &remote.network)?;
@@ -112,6 +115,19 @@ where
         let local_git_dir = env::var("GIT_DIR")?;
         let local_repository = Arc::new(git_repository::open(&local_git_dir)?);
         tracing::info!("Opening repo at {}", local_git_dir);
+        let mut cache = CacheProxy::new();
+        let cache_str = config.use_cache();
+        tracing::debug!("cache address: {:?}", cache_str);
+        if let Some(cache_address) = cache_str {
+            if cache_address.starts_with("memcache://") {
+                let namespace = ":".to_owned() + &String::from(&repo_addr);
+                let memcache = crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
+                cache.set_memcache(memcache);
+                tracing::debug!("using memcache service. namespace: {}", namespace);
+            } else {
+                anyhow::bail!("Unknown caching address specified: {}", cache_address);
+            }
+        }
 
         Ok(Self {
             config,
@@ -121,6 +137,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
+            cache: Arc::new(cache)
         })
     }
 
@@ -228,8 +245,9 @@ where
         Ok(vec![format!("{}", tombstone.tombstone), "".to_string()])
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
+        tracing::trace!("list: for_push={for_push}");
         let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
@@ -288,7 +306,7 @@ async fn build_blockchain(
     let local_git_repository = git_repository::open(&local_git_dir)?;
     tracing::info!("Opening repo at {}", local_git_dir);
 
-    tracing::debug!("Searching for a wallet at {}", &remote.network);
+    tracing::trace!("Searching for a wallet at {}", &remote.network);
     blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
     Ok(blockchain_builder.build()?)
@@ -296,8 +314,9 @@ async fn build_blockchain(
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
-#[instrument(level = "debug", skip(config))]
+#[instrument(level = "info", skip_all)]
 pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
+    tracing::trace!("run: url={url}");
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
@@ -315,10 +334,10 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             if is_batching_operation_in_progress {
                 is_batching_operation_in_progress = false;
                 for line in batch_response.clone() {
-                    tracing::debug!("[batched] < {line}");
+                    tracing::trace!("[batched] < {line}");
                     stdout.write_all(format!("{line}\n").as_bytes()).await?;
                 }
-                tracing::debug!("[batched] < {line}");
+                tracing::trace!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
                 continue;
             } else {
@@ -331,8 +350,8 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        tracing::debug!("Line: {line}");
-        tracing::debug!(
+        tracing::trace!("Line: {line}");
+        tracing::trace!(
             "> {} {} {}",
             cmd.unwrap(),
             arg1.unwrap_or(""),
@@ -365,7 +384,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
         for line in response {
-            tracing::debug!("[{msg}] < {line}");
+            tracing::trace!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
     }
@@ -402,6 +421,8 @@ pub mod tests {
         // let local_git_dir = env::var("GIT_DIR").unwrap();
         let local_repository = Arc::new(repo);
 
+        let cache = Arc::new(CacheProxy::new());
+
         GitHelper {
             config,
             file_provider,
@@ -410,6 +431,7 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
+            cache
         }
     }
 }

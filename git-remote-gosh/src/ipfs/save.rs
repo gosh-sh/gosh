@@ -6,9 +6,9 @@ use tokio_retry::Retry;
 
 #[async_trait]
 impl FileSave for IpfsService {
-    #[instrument(level = "debug", skip(blob))]
+    #[instrument(level = "info", skip_all)]
     async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String> {
-        tracing::debug!("Uploading blob to IPFS");
+        tracing::trace!("Uploading blob to IPFS");
 
         let url = format!(
             "{}/api/v0/add?pin=true&quiet=true",
@@ -26,9 +26,9 @@ impl FileSave for IpfsService {
         .await
     }
 
-    #[instrument(level = "debug", skip(path))]
+    #[instrument(level = "info", skip_all)]
     async fn save_file(&self, path: impl AsRef<Path> + Send + Sync) -> anyhow::Result<String> {
-        tracing::debug!(
+        tracing::trace!(
             "Uploading file to IPFS: {}",
             path.as_ref().to_string_lossy()
         );

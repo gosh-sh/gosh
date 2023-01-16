@@ -50,7 +50,7 @@ where
         Ok(object_id)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {

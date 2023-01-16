@@ -56,7 +56,7 @@ impl DeployTree for Everscale {
             ipfs: None, // !!!
         };
         let wallet_contract = wallet.take_one().await?;
-        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
             .call(
                 wallet_contract.deref(),
@@ -67,7 +67,7 @@ impl DeployTree for Everscale {
             .map(|_| ());
         drop(wallet_contract);
         if let Err(ref e) = result {
-            tracing::debug!("deploy_tree_error: {}", e);
+            tracing::trace!("deploy_tree_error: {}", e);
         }
         result
     }

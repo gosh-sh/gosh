@@ -26,11 +26,12 @@ pub struct BlobsRebuildingPlan {
     snapshot_address_to_blob_sha: HashMap<BlockchainContractAddress, HashSet<ObjectId>>,
 }
 
-#[instrument(level = "debug", skip(ipfs_client))]
+#[instrument(level = "info", skip_all)]
 async fn load_data_from_ipfs(
     ipfs_client: &impl FileLoad,
     ipfs_address: &str,
 ) -> anyhow::Result<Vec<u8>> {
+    tracing::trace!("load_data_from_ipfs: ipfs_address={ipfs_address}");
     let ipfs_data = ipfs_client.load(ipfs_address).await?;
     let compressed_data = base64::decode(&ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
@@ -51,12 +52,13 @@ async fn write_git_data<'a>(
     Ok(object_id)
 }
 
-#[instrument(level = "debug", skip(obj))]
+#[instrument(level = "info", skip_all)]
 async fn write_git_object(
     repo: &mut git_repository::Repository,
     obj: impl git_object::WriteTo,
 ) -> anyhow::Result<git_hash::ObjectId> {
     tracing::info!("Writing git object");
+    tracing::trace!("write_git_object: repo={repo:?}");
     let store = &mut repo.objects;
     // It should refresh once even if the refresh mode is never, just to initialize the index
     //store.refresh_never();
@@ -99,7 +101,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
     )
     .await?;
-    // tracing::debug!("restored_snapshots: {:#?}", current_snapshot_state);
+    // tracing::trace!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
@@ -145,7 +147,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .await?
                 .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.")
         };
-        tracing::debug!("got message: {:?}", message);
+        tracing::trace!("got message: {:?}", message);
 
         let blob_data: Vec<u8> = if message.diff.remove_ipfs {
             let data = match message.diff.get_patch_data() {
@@ -231,7 +233,7 @@ impl BlobsRebuildingPlan {
         }
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     pub fn mark_blob_to_restore(
         &mut self,
         appeared_at_snapshot_address: BlockchainContractAddress,
@@ -255,13 +257,14 @@ impl BlobsRebuildingPlan {
         tracing::info!("new state: {:?}", self.snapshot_address_to_blob_sha);
     }
 
-    #[instrument(level = "debug", skip(es_client))]
+    #[instrument(level = "info", skip_all)]
     async fn restore_snapshot_blob(
         es_client: &EverClient,
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
+        tracing::trace!("restore_snapshot_blob: ipfs_endpoint={ipfs_endpoint}, repo={repo:?}, snapshot_address={snapshot_address}");
         let ipfs_client = build_ipfs(ipfs_endpoint)?;
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         tracing::info!("Loaded a snapshot: {:?}", snapshot);
@@ -273,7 +276,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.next_content,
                 &snapshot.next_ipfs,
             )
-            .instrument(debug_span!("convert_next_snapshot_into_blob").or_current())
+            .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -286,7 +289,7 @@ impl BlobsRebuildingPlan {
                 &snapshot.current_content,
                 &snapshot.current_ipfs,
             )
-            .instrument(debug_span!("convert_current_snapshot_into_blob").or_current())
+            .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
@@ -351,7 +354,7 @@ impl BlobsRebuildingPlan {
                         if result.is_ok() || attempt > FETCH_MAX_TRIES {
                             break result;
                         } else {
-                            tracing::debug!(
+                            tracing::trace!(
                                 "restore_a_set_of_blobs_from_a_known_snapshot <{:#?}> error {:?}",
                                 snapshot_address_clone,
                                 result.unwrap_err()
@@ -363,7 +366,7 @@ impl BlobsRebuildingPlan {
                     result.map_err(|e| anyhow::Error::from(e))
                 }
                 .instrument(
-                    debug_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
+                    info_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
                         .or_current(),
                 ),
             ));

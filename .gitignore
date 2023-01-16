@@ -23,3 +23,5 @@ SafeMultisigWallet.abi.json
 contracts/gosh/updatever.sh
 
 package-lock.json
+deno.lock
+

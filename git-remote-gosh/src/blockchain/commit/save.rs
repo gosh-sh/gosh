@@ -81,7 +81,7 @@ pub trait BlockchainCommitPusher {
 
 #[async_trait]
 impl BlockchainCommitPusher for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn push_commit(
         &self,
         commit_id: &ObjectId,
@@ -101,21 +101,22 @@ impl BlockchainCommitPusher for Everscale {
             tree_addr: tree_addr.clone(),
             upgrade: false,
         };
-        tracing::debug!("deployCommit params: {:?}", args);
+        tracing::trace!("push_commit: dao_addr={dao_addr}");
+        tracing::trace!("deployCommit params: {:?}", args);
 
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::to_value(args)?;
         let wallet_contract = wallet.take_one().await?;
-        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
             .call(wallet_contract.deref(), "deployCommit", Some(params))
             .await?;
         drop(wallet_contract);
-        tracing::debug!("deployCommit result: {:?}", result);
+        tracing::trace!("deployCommit result: {:?}", result);
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     async fn notify_commit(
         &self,
         commit_id: &ObjectId,
@@ -125,6 +126,7 @@ impl BlockchainCommitPusher for Everscale {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
     ) -> anyhow::Result<()> {
+        tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}");
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::json!({
             "repoName": remote.repo.clone(),
@@ -134,12 +136,12 @@ impl BlockchainCommitPusher for Everscale {
             "numberCommits": number_of_commits,
         });
         let wallet_contract = wallet.take_one().await?;
-        tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
             .call(wallet_contract.deref(), "setCommit", Some(params))
             .await?;
         drop(wallet_contract);
-        tracing::debug!("setCommit trx id: {:?}", result.trx_id);
+        tracing::trace!("setCommit trx id: {:?}", result.trx_id);
 
         let start = Instant::now();
         let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);
@@ -183,13 +185,14 @@ impl BlockchainCommitPusher for Everscale {
     }
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn find_messages(
     context: &Everscale,
     contract: &GoshContract,
     filter: &Vec<String>,
     from_lt: u64,
 ) -> anyhow::Result<(Option<DecodedMessageBody>, u64)> {
+    tracing::trace!("find_messages: contract.address={}, filter={filter:?}, from_lt={from_lt}", contract.address);
     let query = r#"query($contract: String!, $from: String) {
         messages(filter: {
             dst: { eq: $contract },
@@ -234,13 +237,13 @@ pub async fn find_messages(
         .await;
 
         if let Err(ref e) = decoding_result {
-            tracing::debug!("decode_message_body error: {:#?}", e);
-            tracing::debug!("undecoded message: {:#?}", message);
+            tracing::trace!("decode_message_body error: {:#?}", e);
+            tracing::trace!("undecoded message: {:#?}", message);
             continue;
         }
 
         let decoded = decoding_result?;
-        tracing::debug!("... decoded message: {:#?}", decoded);
+        tracing::trace!("... decoded message: {:#?}", decoded);
 
         if filter.contains(&decoded.name) {
             let trx_status = is_transaction_ok(context, &message.id).await?;
@@ -253,8 +256,9 @@ pub async fn find_messages(
     Ok((None, last_lt))
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn is_transaction_ok(context: &Everscale, msg_id: &String) -> anyhow::Result<bool> {
+    tracing::trace!("is_transaction_ok: msg_id={msg_id}");
     let query = r#"query($msg_id: String!) {
         transactions(filter: {
           in_msg: { eq: $msg_id }

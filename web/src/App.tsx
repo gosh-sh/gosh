@@ -37,6 +37,7 @@ import GotoPage from './pages/Goto'
 import EventsPage from './pages/Events'
 import EventPage from './pages/Event'
 import NotFoundPage from './pages/404'
+import OnboardingPage from './pages/Onboarding'
 
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
@@ -153,6 +154,7 @@ const App = () => {
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
+                    <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/a/signin" element={<SigninPage />} />
                     <Route path="/a/signup" element={<SignupPage />} />
                     <Route path="/a" element={<ProtectedLayout />}>

@@ -1,5 +1,6 @@
 import { faArrowRightFromBracket, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Transition } from '@headlessui/react'
 import { useCallback, useEffect } from 'react'
 import { classNames } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -44,25 +45,33 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         if (!octokit || !session) return
 
         setGithubOrgs((state) => ({ ...state, isFetching: true }))
-        const { data } = await octokit.request('GET /user/orgs{?per_page,page}', {})
-        const combined = [
-            {
-                id: session.user.id,
-                login: session.user.user_metadata.user_name,
-                avatar_url: session.user.user_metadata.avatar_url,
-                isUser: true,
-                isOpen: false,
-            },
-            ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
-        ]
-        setGithubOrgs((state) => {
-            const items = combined.map((item: any) => {
-                const exists = state.items.find((curr: any) => curr.login === item.login)
-                return exists || item
+        try {
+            const { data } = await octokit.request('GET /user/orgs{?per_page,page}', {})
+            const combined = [
+                {
+                    id: session.user.id,
+                    login: session.user.user_metadata.user_name,
+                    avatar_url: session.user.user_metadata.avatar_url,
+                    isUser: true,
+                    isOpen: false,
+                },
+                ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
+            ]
+            setGithubOrgs((state) => {
+                const items = combined.map((item: any) => {
+                    const exists = state.items.find(
+                        (curr: any) => curr.login === item.login,
+                    )
+                    return exists || item
+                })
+                return { items, isFetching: false }
             })
-            return { items, isFetching: false }
-        })
-    }, [octokit, session, setGithubOrgs])
+        } catch (e: any) {
+            console.error(e.message)
+            await signoutOAuth()
+            return
+        }
+    }, [octokit, session, setGithubOrgs, signoutOAuth])
 
     useEffect(() => {
         getGithubOrganizations()
@@ -176,11 +185,23 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                 {selected?.length ? selected : 'Select repository'}
                             </div>
 
-                            {item.isOpen && (
+                            <Transition
+                                show={item.isOpen}
+                                enter="transition-transform origin-top duration-200"
+                                enterFrom="scale-y-0"
+                                enterTo="scale-y-100"
+                                leave="transition-transform origin-top duration-200"
+                                leaveFrom="scale-y-100"
+                                leaveTo="scale-y-0"
+                            >
                                 <div className="orgitem__repos">
-                                    <GithubRepositories organization={item} />
+                                    <GithubRepositories
+                                        organization={item}
+                                        isOpen={item.isOpen}
+                                        signoutOAuth={signoutOAuth}
+                                    />
                                 </div>
-                            )}
+                            </Transition>
                         </div>
                     )
                 })}

@@ -4,9 +4,13 @@ pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
+use opentelemetry_otlp::WithExportConfig;
 use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
+use tracing_subscriber::fmt::format::FmtSpan;
+
+use crate::utilities::env::parse_env;
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 
@@ -28,6 +32,9 @@ impl LogService {
         let (console_layer, console_layer_handle) = reload::Layer::new(
             tracing_subscriber::fmt::layer()
                 .compact()
+                .with_file(false)
+                .with_target(false)
+                .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
                 .with_thread_ids(true)
                 .with_ansi(false)
                 .with_writer(std::io::stderr)
@@ -44,11 +51,7 @@ impl LogService {
         // config otel layer
         // TODO: add #[cfg(feature=..)] support
         if telemetry::do_init_opentelemetry() {
-            let level = if let Ok(trace_verbosity) = env::var(OPENTELEMETRY_FILTER_LEVEL) {
-                u8::from_str(&trace_verbosity).unwrap_or(5)
-            } else {
-                5
-            };
+            let level: u8 = parse_env(OPENTELEMETRY_FILTER_LEVEL).unwrap_or(5);
             let otel_layer = tracing_opentelemetry::layer()
                 .with_location(true)
                 .with_threads(true)

@@ -40,10 +40,7 @@ const RepoCreatePage = () => {
                     initialValues={{ name: '' }}
                     onSubmit={onRepoCreate}
                     validationSchema={yup.object().shape({
-                        name: yup
-                            .string()
-                            .reponame(dao.adapter.getGosh())
-                            .required('Name is required'),
+                        name: yup.string().reponame().required('Name is required'),
                     })}
                 >
                     {({ isSubmitting, setFieldValue }) => (
