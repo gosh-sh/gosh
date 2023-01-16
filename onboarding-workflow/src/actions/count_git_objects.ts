@@ -1,12 +1,15 @@
 import BeeQueue from '../../../../../../.cache/deno/npm/registry.npmjs.org/bee-queue/1.5.0/index.d.ts'
 import { getDb } from '../db/db.ts'
 import { getGithubWithDaoBot } from '../db/github.ts'
-import {
+import type {
     CreateLargeGoshRepoRequest,
-    createMediumGoshRepoProducer,
     CreateMediumGoshRepoRequest,
-    createSmallGoshRepoProducer,
     CreateSmallGoshRepoRequest,
+} from '../queues/mod.ts'
+import {
+    createLargeGoshRepoProducer,
+    createMediumGoshRepoProducer,
+    createSmallGoshRepoProducer,
 } from '../queues/mod.ts'
 
 export async function countGitObjects(github_id: string) {
@@ -68,7 +71,7 @@ export async function countGitObjects(github_id: string) {
     } else if (number_of_git_objects < 15000) {
         producer = createMediumGoshRepoProducer()
     } else {
-        producer = createSmallGoshRepoProducer()
+        producer = createLargeGoshRepoProducer()
     }
 
     console.log('Schedule upload repository', github.id)
