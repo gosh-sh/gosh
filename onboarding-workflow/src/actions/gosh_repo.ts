@@ -10,6 +10,7 @@ import {
 } from '../eversdk/gosh_repo.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { getRepoNameFromUrl } from '../utils/gosh_repo.ts'
+import { runWithTimeout } from '../utils/timeout.ts'
 import { waitForAccountActive } from './account.ts'
 
 export async function initializeGoshRepo(github_id: string) {
@@ -36,11 +37,14 @@ export async function initializeGoshRepo(github_id: string) {
     console.log('wallet_addr', wallet_addr)
 
     if (!(await isAccountActive(repo_addr))) {
-        // ignore errors
         try {
-            await deployRepository(repo_name, wallet_addr, dao_bot.seed)
-        } catch (_err) {
-            // ignore errors
+            await runWithTimeout(
+                3 * 60 * 1000, // 2 minutes
+                deployRepository(repo_name, wallet_addr, dao_bot.seed),
+            )
+        } catch (err) {
+            console.log('Error whlie deployRepository github_id', github_id)
+            throw err
         }
         await waitForAccountActive(repo_addr)
     }
