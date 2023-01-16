@@ -4,7 +4,7 @@ import { hasAccess, isAccountActive } from '../eversdk/account.ts'
 import { deployDao, getAddrDao, isDaoMember, turnOnDao } from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
 import { getAddrWallet } from '../eversdk/gosh_repo.ts'
-import { createGoshRepoProducer } from '../queues/mod.ts'
+import { countGitObjectsProducer } from '../queues/mod.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { waitForAccountActive, waitForWalletAccess } from './account.ts'
 import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
@@ -105,12 +105,10 @@ export async function initDaoBot(dao_bot: DaoBot) {
     const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
         console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
-        // TODO: more logs
-        createGoshRepoProducer()
+        countGitObjectsProducer()
             .createJob({
                 github_id: github.id,
             })
-            // deduplication
             .retries(5)
             .setId(github.id)
             .save()

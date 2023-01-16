@@ -3,7 +3,10 @@ import { getRedisClient } from '../redis/mod.ts'
 import {
     CHECK_ACCOUNT_QUEUE,
     CHECK_WALLET_ACCESS_QUEUE,
-    CREATE_GOSH_REPO_QUEUE,
+    COUNT_GIT_OBJECTS_QUEUE,
+    CREATE_SMALL_GOSH_REPO_QUEUE,
+    CREATE_MEDIUM_GOSH_REPO_QUEUE,
+    CREATE_LARGE_GOSH_REPO_QUEUE,
 } from './constants.ts'
 
 const defaultProducerSettings = {
@@ -55,12 +58,60 @@ export function checkWalletAccessConsumer(settings?: Queue.QueueSettings) {
     return defaultConsumer<CheckWalletAccessRequest>(CHECK_WALLET_ACCESS_QUEUE, settings)
 }
 
-export type CreateGoshRepoRequest = { github_id: string }
+export type CreateSmallGoshRepoRequest = { github_id: string }
 
-export function createGoshRepoProducer(settings?: Queue.QueueSettings) {
-    return defaultProducer<CreateGoshRepoRequest>(CREATE_GOSH_REPO_QUEUE, settings)
+export function createSmallGoshRepoProducer(settings?: Queue.QueueSettings) {
+    return defaultProducer<CreateSmallGoshRepoRequest>(
+        CREATE_SMALL_GOSH_REPO_QUEUE,
+        settings,
+    )
 }
 
-export function createGoshRepoConsumer(settings?: Queue.QueueSettings) {
-    return defaultConsumer<CreateGoshRepoRequest>(CREATE_GOSH_REPO_QUEUE, settings)
+export function createSmallGoshRepoConsumer(settings?: Queue.QueueSettings) {
+    return defaultConsumer<CreateSmallGoshRepoRequest>(
+        CREATE_SMALL_GOSH_REPO_QUEUE,
+        settings,
+    )
+}
+
+export type CreateMediumGoshRepoRequest = { github_id: string }
+
+export function createMediumGoshRepoProducer(settings?: Queue.QueueSettings) {
+    return defaultProducer<CreateMediumGoshRepoRequest>(
+        CREATE_MEDIUM_GOSH_REPO_QUEUE,
+        settings,
+    )
+}
+
+export function createMediumGoshRepoConsumer(settings?: Queue.QueueSettings) {
+    return defaultConsumer<CreateMediumGoshRepoRequest>(
+        CREATE_MEDIUM_GOSH_REPO_QUEUE,
+        settings,
+    )
+}
+
+export type CreateLargeGoshRepoRequest = { github_id: string }
+
+export function createLargeGoshRepoProducer(settings?: Queue.QueueSettings) {
+    return defaultProducer<CreateLargeGoshRepoRequest>(
+        CREATE_LARGE_GOSH_REPO_QUEUE,
+        settings,
+    )
+}
+
+export function createLargeGoshRepoConsumer(settings?: Queue.QueueSettings) {
+    return defaultConsumer<CreateLargeGoshRepoRequest>(
+        CREATE_LARGE_GOSH_REPO_QUEUE,
+        settings,
+    )
+}
+
+export type CountGitObject = { github_id: string }
+
+export function countGitObjectsProducer(settings?: Queue.QueueSettings) {
+    return defaultProducer<CountGitObject>(COUNT_GIT_OBJECTS_QUEUE, settings)
+}
+
+export function countGitObjectsConsumer(settings?: Queue.QueueSettings) {
+    return defaultConsumer<CountGitObject>(COUNT_GIT_OBJECTS_QUEUE, settings)
 }

@@ -62,13 +62,14 @@ struct SetCommitArgs {
     num_of_files: NumberU64,
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn get_set_commit_created_at_time(
     context: &EverClient,
     repo_contract: &mut GoshContract,
     commit_id: &str,
     branch_name: &str,
 ) -> anyhow::Result<u64> {
+    tracing::trace!("get_set_commit_created_at_time: repo_contract_address={}, commit_id={commit_id}, branch_name={branch_name}", repo_contract.address);
     let mut created_at = 0u64;
     let mut cursor: Option<String> = None;
     let query = r#"query($repo_address: String!, $after: String){
@@ -113,7 +114,7 @@ pub async fn get_set_commit_created_at_time(
             None
         };
 
-        tracing::debug!(
+        tracing::trace!(
             "Loaded {} message(s) to repo contract {}",
             messages.edges.len(),
             repo_contract.address
@@ -127,7 +128,7 @@ pub async fn get_set_commit_created_at_time(
             if raw_msg.status != 5 || raw_msg.bounced || raw_msg.src != expected_src {
                 continue;
             }
-            tracing::debug!("Decoding message {:?}", raw_msg.id);
+            tracing::trace!("Decoding message {:?}", raw_msg.id);
             let decoded = decode_message_body(
                 Arc::clone(context),
                 ParamsOfDecodeMessageBody {
@@ -139,11 +140,11 @@ pub async fn get_set_commit_created_at_time(
             )
             .await?;
 
-            tracing::debug!("Decoded message `{}`", decoded.name);
+            tracing::trace!("Decoded message `{}`", decoded.name);
             if decoded.name == "setCommit" {
                 let value = decoded.value.unwrap();
                 let args: SetCommitArgs = serde_json::from_value(value)?;
-                tracing::debug!("branch name: {}", args.branch);
+                tracing::trace!("branch name: {}", args.branch);
                 if args.branch == branch_name && args.commit_id == commit_id {
                     created_at = raw_msg.created_at;
                     break;
@@ -154,7 +155,7 @@ pub async fn get_set_commit_created_at_time(
             break;
         }
     }
-    tracing::debug!("set_commit' created_at: {created_at}");
+    tracing::trace!("set_commit' created_at: {created_at}");
     Ok(created_at)
 }
 

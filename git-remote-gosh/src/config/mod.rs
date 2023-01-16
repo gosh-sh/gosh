@@ -101,8 +101,9 @@ impl Config {
         env::var(USE_CACHE_ENV_VARIABLE_NAME).ok()
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
+        tracing::trace!("find_network_endpoints: network={network}");
         let network_config = self.networks.get(network);
         match network_config {
             None => defaults::NETWORK_ENDPOINTS
@@ -121,7 +122,7 @@ impl Config {
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        tracing::debug!("Networks: {:?}", self.networks);
+        tracing::trace!("Networks: {:?}", self.networks);
         self.networks
             .get(network)
             .and_then(|network_config| network_config.user_wallet.as_ref())

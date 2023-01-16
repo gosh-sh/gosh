@@ -41,7 +41,6 @@ export interface Database {
                     created_at: string
                     sent_at: string | null
                     subject: string
-                    is_welcome: boolean
                     content: string
                     html: string
                     mail_to: string | null
@@ -52,7 +51,6 @@ export interface Database {
                     created_at?: string
                     sent_at?: string | null
                     subject: string
-                    is_welcome?: boolean
                     content: string
                     html: string
                     mail_to?: string | null
@@ -63,7 +61,6 @@ export interface Database {
                     created_at?: string
                     sent_at?: string | null
                     subject?: string
-                    is_welcome?: boolean
                     content?: string
                     html?: string
                     mail_to?: string | null
@@ -80,6 +77,7 @@ export interface Database {
                     dao_bot: string | null
                     updated_at: string | null
                     ignore: boolean
+                    objects: number | null
                 }
                 Insert: {
                     id?: string
@@ -90,6 +88,7 @@ export interface Database {
                     dao_bot?: string | null
                     updated_at?: string | null
                     ignore?: boolean
+                    objects?: number | null
                 }
                 Update: {
                     id?: string
@@ -100,6 +99,7 @@ export interface Database {
                     dao_bot?: string | null
                     updated_at?: string | null
                     ignore?: boolean
+                    objects?: number | null
                 }
             }
             test: {

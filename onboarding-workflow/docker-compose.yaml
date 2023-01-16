@@ -119,7 +119,22 @@ services:
     command: >
       deno run -A ./src/consumers/check_wallet_access.ts
 
-  consumer_create_gosh_repo:
+  consumer_count_git_objects:
+    image: gosh-onboarding
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/consumers/count_git_objects.ts
+
+  consumer_create_large_gosh_repo:
     image: gosh-onboarding
     restart: always
     depends_on:
@@ -134,4 +149,38 @@ services:
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
-      deno run -A ./src/consumers/create_gosh_repo.ts
+      deno run -A ./src/consumers/create_large_gosh_repo.ts
+
+  consumer_create_medium_gosh_repo:
+    image: gosh-onboarding
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - './logs:/tmp/logs'
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/consumers/create_medium_gosh_repo.ts
+
+  consumer_create_small_gosh_repo:
+    image: gosh-onboarding
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - './logs:/tmp/logs'
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/consumers/create_small_gosh_repo.ts

@@ -4,9 +4,11 @@ pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
+use opentelemetry_otlp::WithExportConfig;
 use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
+use tracing_subscriber::fmt::format::FmtSpan;
 
 use crate::utilities::env::parse_env;
 
@@ -30,6 +32,9 @@ impl LogService {
         let (console_layer, console_layer_handle) = reload::Layer::new(
             tracing_subscriber::fmt::layer()
                 .compact()
+                .with_file(false)
+                .with_target(false)
+                .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
                 .with_thread_ids(true)
                 .with_ansi(false)
                 .with_writer(std::io::stderr)

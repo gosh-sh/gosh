@@ -116,7 +116,7 @@ impl UserWalletMirrors {
                 "user wallet config does not exist or invalid"
             ))?;
 
-            tracing::debug!("init_zero_wallet before zero_user_wallet");
+            tracing::trace!("init_zero_wallet before zero_user_wallet");
             let zero_contract: GoshContract = inner_calls::get_user_wallet(
                 blockchain,
                 blockchain.root_contract(),
@@ -149,7 +149,7 @@ impl UserWalletMirrors {
                     return Ok(());
                 }
             }
-            tracing::debug!("inner wallets state {:#?}", inner_state.wallets());
+            tracing::trace!("inner wallets state {:#?}", inner_state.wallets());
 
             let zero_wallet =
                 { inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone() };
@@ -168,7 +168,7 @@ impl UserWalletMirrors {
                     .await;
                     match get_mirror_result {
                         Err(e) => {
-                            tracing::debug!("Error in get_user_wallet: {}", e);
+                            tracing::trace!("Error in get_user_wallet: {}", e);
                         }
                         Ok(mirror) => {
                             self.inner.write().await.add(wallet_index, mirror);

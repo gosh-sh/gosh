@@ -9,12 +9,13 @@ pub struct GenerateBlobDiffResult {
     pub after_patch: Vec<u8>,
 }
 
-#[instrument(level = "debug", skip(odb))]
+#[instrument(level = "info", skip_all)]
 pub async fn generate_blob_diff(
     odb: &OdbHandle,
     blob_id_from: Option<&ObjectId>,
     blob_id_to: Option<&ObjectId>,
 ) -> anyhow::Result<GenerateBlobDiffResult> {
+    tracing::trace!("generate_blob_diff: blob_id_from={blob_id_from:?}, blob_id_to={blob_id_to:?}");
     let mut blob_from_buffer: Vec<u8> = Vec::new();
     let mut blob_to_buffer: Vec<u8> = Vec::new();
     let prev_content = match blob_id_from {

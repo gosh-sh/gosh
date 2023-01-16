@@ -1,11 +1,11 @@
 import { GOSH_DAO_ABI, GOSH_WALLET_ABI } from './abi.ts'
-import { tonosCli } from '../shortcuts.ts'
+import { goshCli } from '../shortcuts.ts'
 
 export async function getAddrRepository(
     repo_name: string,
     dao_addr: string,
 ): Promise<string> {
-    const { value0: profile_addr } = await tonosCli(
+    const { value0: profile_addr } = await goshCli(
         'run',
         '--abi',
         GOSH_DAO_ABI,
@@ -20,7 +20,7 @@ export async function getAddrWallet(
     user_profile_addr: string,
     dao_addr: string,
 ): Promise<string> {
-    const { value0: profile_addr } = await tonosCli(
+    const { value0: profile_addr } = await goshCli(
         'run',
         '--abi',
         GOSH_DAO_ABI,
@@ -39,7 +39,7 @@ export async function deployRepository(
     wallet_addr: string,
     seed: string,
 ): Promise<string> {
-    const { value0: profile_addr } = await tonosCli(
+    const { value0: profile_addr } = await goshCli(
         'call',
         '--abi',
         GOSH_WALLET_ABI,

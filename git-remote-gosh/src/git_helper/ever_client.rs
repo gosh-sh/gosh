@@ -9,8 +9,9 @@ static MESSAGE_PROCESSING_TIMEOUT: &'static str = "GOSH_MESSAGE_PROCESSING_TIMEO
 static WAIT_FOR_TIMEOUT: &'static str = "GOSH_WAIT_FOR_TIMEOUT_SEC";
 static QUERY_TIMEOUT: &'static str = "GOSH_QUERY_TIMEOUT_SEC";
 
-#[instrument(level = "debug")]
+#[instrument(level = "info", skip_all)]
 pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClient> {
+    tracing::trace!("create_client: config={config:?}, network={network}");
     let endpoints = config
         .find_network_endpoints(network)
         .expect("Unknown network");

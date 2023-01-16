@@ -22,11 +22,12 @@ use super::utilities::retry::default_retry_strategy;
 
 const MARKER_FLAG: u32 = 1u32;
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 async fn construct_tree_node(
     context: &mut GitHelper<impl BlockchainService>,
     e: &EntryRef<'_>,
 ) -> anyhow::Result<(String, TreeNode)> {
+    tracing::trace!("construct_tree_node: e={e:?}");
     let mut buffer = vec![];
     use git_object::tree::EntryMode::*;
     let content_hash = match e.mode {
@@ -72,7 +73,7 @@ async fn construct_tree_node(
     Ok((format!("0x{}", key), tree_node))
 }
 
-#[instrument(level = "debug", skip(context, visited, push_semaphore))]
+#[instrument(level = "info", skip_all)]
 pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
@@ -80,6 +81,7 @@ pub async fn push_tree(
     handlers: &mut JoinSet<anyhow::Result<()>>,
     push_semaphore: Arc<Semaphore>,
 ) -> anyhow::Result<()> {
+    tracing::trace!("push_tree: tree_id={tree_id}");
     let mut to_deploy = VecDeque::new();
     to_deploy.push_back(*tree_id);
     while let Some(tree_id) = to_deploy.pop_front() {
@@ -140,13 +142,13 @@ pub async fn push_tree(
                 drop(permit);
                 res
             }
-            .instrument(debug_span!("tokio::spawn::inner_deploy_tree").or_current()),
+            .instrument(info_span!("tokio::spawn::inner_deploy_tree").or_current()),
         );
     }
     Ok(())
 }
 
-#[instrument(level = "debug", skip(blockchain, tree_nodes))]
+#[instrument(level = "info", skip_all)]
 async fn inner_deploy_tree(
     blockchain: &impl BlockchainService,
     remote_network: &str,
@@ -155,6 +157,7 @@ async fn inner_deploy_tree(
     tree_id: &ObjectId,
     tree_nodes: &HashMap<String, TreeNode>,
 ) -> anyhow::Result<()> {
+    tracing::trace!("inner_deploy_tree: remote_network={remote_network}, dao_addr={dao_addr}, remote_repo={remote_repo}, tree_id={tree_id}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     blockchain
         .deploy_tree(

@@ -1,4 +1,4 @@
-import { tonosCli } from '../shortcuts.ts'
+import { goshCli } from '../shortcuts.ts'
 import { GOSH_WALLET_ABI } from './abi.ts'
 
 type Account = {
@@ -13,7 +13,7 @@ type Account = {
 
 export async function getAccount(addr: string): Promise<Account | null> {
     try {
-        const data = await tonosCli('account', addr)
+        const data = await goshCli('account', addr)
         if (addr in data) {
             return data[addr]
         }
@@ -31,7 +31,7 @@ export async function isAccountActive(addr: string): Promise<boolean> {
 
 export async function getAccess(wallet_addr: string): Promise<string | null> {
     try {
-        const { value0: granted_pubkey } = await tonosCli(
+        const { value0: granted_pubkey } = await goshCli(
             'run',
             '--abi',
             GOSH_WALLET_ABI,

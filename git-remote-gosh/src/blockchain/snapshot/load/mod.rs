@@ -91,13 +91,14 @@ struct GetSnapshotFilePath {
 }
 
 impl Snapshot {
-    #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn calculate_address(
         context: &EverClient,
         repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
+        tracing::trace!("calculate_address: repo_contract.address={}, branch_name={branch_name}, file_path={file_path}", repo_contract.address);
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
@@ -108,14 +109,15 @@ impl Snapshot {
         Ok(result.address)
     }
 
-    #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn get_file_path(
         context: &EverClient,
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<String> {
+        tracing::trace!("get_file_path: address={address}");
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.read_state(context, "getName", None).await?;
-        tracing::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
+        tracing::trace!("received file path `{result:?}` for snapshot {snapshot:?}",);
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;
         path = path
