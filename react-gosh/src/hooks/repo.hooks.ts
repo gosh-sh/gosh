@@ -21,7 +21,6 @@ import {
     TBranchOperateProgress,
     TCommit,
     TPushProgress,
-    TRepository,
     TRepositoryListItem,
     TTree,
     TTreeItem,
@@ -703,6 +702,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         message?: string,
         tags?: string,
         parent?: string,
+        task?: TAddress,
     ) => {
         if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
         if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
@@ -711,15 +711,12 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         await pushUpgrade(branchData.name, name, version)
 
         message = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(
-            branchData.name,
-            blobs,
-            message,
-            isPullRequest,
+        await repo.push(branchData.name, blobs, message, isPullRequest, {
             tags,
-            parent,
-            pushCallback,
-        )
+            branchParent: parent,
+            task,
+            callback: pushCallback,
+        })
         !isPullRequest && (await updateBranch(branchData.name))
     }
 
@@ -765,8 +762,9 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
         }[],
         message?: string,
         tags?: string,
+        task?: TAddress,
     ) => {
-        await _push(title, blobs, false, message, tags)
+        await _push(title, blobs, false, message, tags, undefined, task)
     }
 
     return { push, progress }

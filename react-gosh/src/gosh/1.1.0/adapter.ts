@@ -80,9 +80,10 @@ import { GoshContentSignature } from './goshcontentsignature'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
 import { GoshSmvClient } from './goshsmvclient'
+import { GoshTask } from './goshtask'
 
-class GoshAdapter_1_0_0 implements IGoshAdapter {
-    private static instance: GoshAdapter_1_0_0
+class GoshAdapter_1_1_0 implements IGoshAdapter {
+    private static instance: GoshAdapter_1_1_0
     private auth?: { username: string; keys: KeyPair }
 
     static version: string = '1.0.0'
@@ -97,11 +98,11 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_1_0_0 {
-        if (!GoshAdapter_1_0_0.instance) {
-            GoshAdapter_1_0_0.instance = new GoshAdapter_1_0_0(goshroot, goshaddr)
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_1_1_0 {
+        if (!GoshAdapter_1_1_0.instance) {
+            GoshAdapter_1_1_0.instance = new GoshAdapter_1_1_0(goshroot, goshaddr)
         }
-        return GoshAdapter_1_0_0.instance
+        return GoshAdapter_1_1_0.instance
     }
 
     isValidUsername(username: string): TValidationResult {
@@ -1226,11 +1227,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         optional: {
             tags?: string
             branchParent?: string
+            task?: TAddress
             callback?: IPushCallback
         },
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        const { tags, branchParent, callback } = optional
+        const { tags, branchParent, task, callback } = optional
 
         const taglist = tags ? tags.split(' ') : []
         const cb: IPushCallback = (params) => callback && callback(params)
@@ -1307,14 +1309,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
-            await this._setCommit(branch, commitHash, blobsData.length)
+            await this._setCommit(branch, commitHash, blobsData.length, task)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
             })
             if (!wait) throw new GoshError('Push timeout reached')
         } else {
-            await this._startProposalForSetCommit(branch, commitHash, blobsData.length)
+            await this._startProposalForSetCommit(
+                branch,
+                commitHash,
+                blobsData.length,
+                task,
+            )
         }
         cb({ completed: true })
     }
@@ -1374,19 +1381,44 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getTask(name: string): Promise<IGoshTask> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+
+        const { value0 } = await this.auth.wallet0.runLocal('getTaskAddr', {
+            repoName: await this.getName(),
+            nametask: name,
+        })
+        console.debug('Task address', value0)
+        const task = new GoshTask(this.client, value0)
+
+        const data = await task.runLocal('getStatus', {})
+        console.debug('Task data', data)
+
+        return task
     }
 
     async createTask(name: string): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        await this.auth.wallet0.run('deployTask', {
+            repoName: await this.getName(),
+            nametask: name,
+        })
     }
 
     async setTaskReady(name: string, commit: TAddress): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        await this.auth.wallet0.run('readyTask', {
+            repoName: await this.getName(),
+            nametask: name,
+            commit,
+        })
     }
 
     async setTaskNotReady(name: string): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        await this.auth.wallet0.run('notreadyTask', {
+            repoName: await this.getName(),
+            nametask: name,
+        })
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
@@ -1959,6 +1991,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
+        task?: TAddress,
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1968,6 +2001,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
+            task,
         })
     }
 
@@ -1975,6 +2009,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
+        task?: TAddress,
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -1986,6 +2021,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             numberChangedFiles: numBlobs,
             numberCommits: 1,
             num_clients: smvClientsCount,
+            task,
         })
     }
 
@@ -2456,4 +2492,4 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 }
 
-export { GoshAdapter_1_0_0 }
+export { GoshAdapter_1_1_0 }

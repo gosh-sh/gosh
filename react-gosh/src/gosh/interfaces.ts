@@ -165,9 +165,12 @@ interface IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        tags?: string,
-        branchParent?: string,
-        callback?: IPushCallback,
+        optional: {
+            tags?: string
+            branchParent?: string
+            task?: TAddress
+            callback?: IPushCallback
+        },
     ): Promise<void>
     pushUpgrade(data: TUpgradeData): Promise<void>
 
@@ -177,6 +180,11 @@ interface IGoshRepositoryAdapter {
         label: string,
         content: string,
     ): Promise<void>
+
+    getTask(name: string): Promise<IGoshTask>
+    createTask(name: string): Promise<void>
+    setTaskReady(name: string, commit: TAddress): Promise<void>
+    setTaskNotReady(name: string): Promise<void>
 }
 
 interface IGoshSmvAdapter {
@@ -317,6 +325,10 @@ interface IGoshTag extends IContract {
     address: TAddress
 }
 
+interface IGoshTask extends IContract {
+    address: TAddress
+}
+
 interface IGoshContentSignature extends IContract {
     address: TAddress
 }
@@ -356,6 +368,7 @@ export {
     IGoshSnapshot,
     IGoshTree,
     IGoshTag,
+    IGoshTask,
     IGoshContentSignature,
     IGoshSmvProposal,
     IGoshSmvLocker,
