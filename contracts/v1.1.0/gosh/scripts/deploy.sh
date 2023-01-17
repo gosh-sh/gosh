@@ -10,7 +10,7 @@ SIGNER="__gosh" # will be created automatically
 GIVER_SIGNER="__giver" # will be created automatically
 GOSH_PATH="../../gosh"
 SMV_PATH="../../smv"
-VERSIONCONTROLLER_ABI="$GOSH_PATH/versioncontroller.abi.json"
+VERSIONCONTROLLER_ABI="$GOSH_PATH/../../versioncontroller.abi.json"
 SYSTEMCONTRACT_ABI="$GOSH_PATH/systemcontract.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
 
@@ -32,7 +32,7 @@ seed=`cat $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT| grep -o '".*"' | tr -d '"
 everdev signer add $SIGNER "$seed"
 
 # Prepare giver
-GIVER_ABI="../../multisig/MultisigWallet.abi.json"
+GIVER_ABI="../../../multisig/MultisigWallet.abi.json"
 GIVER_ADDR=`cat /tmp/Giver.addr`
 GIVER_SEED=`cat /tmp/Giver.seed`
 everdev signer add $GIVER_SIGNER "$GIVER_SEED"
@@ -57,9 +57,10 @@ DAO_CODE=$(everdev contract dt $GOSH_PATH/goshdao.tvc | tr -d ' ",' | sed -n '/c
 TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILE_CODE=$(everdev contract dt $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+TASK_CODE=$(everdev contract dt $GOSH_PATH/task.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 
 # ############################################################
@@ -142,6 +143,8 @@ echo "     ====> Run setTree"
 everdev contract run $SYSTEMCONTRACT_ABI setTree --input "{\"code\":\"$TREE_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setTag"
 everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTask"
+everdev contract run $SYSTEMCONTRACT_ABI setTask --input "{\"code\":\"$TASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"
