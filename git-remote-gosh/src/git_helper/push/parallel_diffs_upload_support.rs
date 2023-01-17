@@ -5,6 +5,7 @@ use crate::git_helper::GitHelper;
 
 use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
+use anyhow::bail;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 
@@ -148,10 +149,10 @@ impl ParallelDiffsUploadSupport {
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
-                    panic!("diffs joih-handler: {}", e);
+                    bail!("diffs joih-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("diffs inner: {}", e);
+                    bail!("diffs inner: {}", e);
                 }
                 Ok(Ok(_)) => {}
             }

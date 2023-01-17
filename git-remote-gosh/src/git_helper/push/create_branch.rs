@@ -1,12 +1,12 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{blockchain::branch::DeployBranch, git_helper::GitHelper};
+use crate::{blockchain::{branch::DeployBranch, user_wallet::WalletError}, git_helper::GitHelper};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 use tokio::task::{JoinError, JoinSet};
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
 use super::{
@@ -118,27 +118,36 @@ where
             let new_branch = self.new_branch.clone();
             let full_path = entry.filepath.to_string();
 
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    true
+                }
+            };
+
             snapshot_handlers.spawn(
                 async move {
-                    Retry::spawn(default_retry_strategy(), || async {
-                        tracing::trace!("attempt to push a new snapshot");
-                        push_new_branch_snapshot(
-                            &blockchain,
-                            &file_provider,
-                            &remote_network,
-                            &dao_addr,
-                            &repo_addr,
-                            &ancestor_commit,
-                            &new_branch,
-                            &full_path,
-                            &content,
-                        )
-                        .await
-                        .map_err(|e| {
-                            tracing::warn!("Attempt failed with {:#?}", e);
-                            e
-                        })
-                    })
+                    RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            tracing::debug!("attempt to push a new snapshot");
+                            push_new_branch_snapshot(
+                                &blockchain,
+                                &file_provider,
+                                &remote_network,
+                                &dao_addr,
+                                &repo_addr,
+                                &ancestor_commit,
+                                &new_branch,
+                                &full_path,
+                                &content,
+                            )
+                            .await
+                        },
+                        condition
+                    )
                     .await
                 }
                 .instrument(info_span!("tokio::spawn::push_new_branch_snapshot").or_current()),

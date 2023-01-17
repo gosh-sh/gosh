@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService},
+    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService, user_wallet::WalletError},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -11,7 +11,7 @@ use std::{
     sync::Arc,
 };
 
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 use crate::cache::Cache;
 
@@ -119,26 +119,34 @@ pub async fn push_tree(
         let cache = context.cache.clone();
 
         let permit = push_semaphore.clone().acquire_owned().await?;
+
+        let condition = |e: &anyhow::Error| {
+            if e.is::<WalletError>() {
+                false
+            } else {
+                tracing::warn!("Attempt failed with {:#?}", e);
+                true
+            }
+        };
+
         handlers.spawn(
             async move {
-                let res = Retry::spawn(default_retry_strategy(), || async {
-                    let _: () = inner_deploy_tree(
-                        &blockchain,
-                        &network,
-                        &dao_addr,
-                        &repo,
-                        &tree_id,
-                        &tree_nodes,
-                    )
-                    .await?;
-                    cache.put(&tree_id,  MARKER_FLAG);
-                    Ok(())
-                })
-                .await
-                .map_err(|e| {
-                    tracing::warn!("Attempt failed with {:#?}", e);
-                    e
-                });
+                let res = RetryIf::spawn(
+                    default_retry_strategy(),
+                    || async {
+                        inner_deploy_tree(
+                            &blockchain,
+                            &network,
+                            &dao_addr,
+                            &repo,
+                            &tree_id,
+                            &tree_nodes,
+                        )
+                        .await
+                    },
+                    condition
+                )
+                .await;
                 drop(permit);
                 res
             }
