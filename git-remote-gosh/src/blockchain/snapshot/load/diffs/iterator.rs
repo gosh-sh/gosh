@@ -68,16 +68,15 @@ struct Messages {
 }
 
 impl DiffMessagesIterator {
-    #[instrument(
-        level = "info",
-        skip_all,
-        name = "new_DiffMessagesIterator"
-    )]
+    #[instrument(level = "info", skip_all, name = "new_DiffMessagesIterator")]
     pub fn new(
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
     ) -> Self {
-        tracing::trace!("new_DiffMessagesIterator: repo_contract.address={}", repo_contract.address);
+        tracing::trace!(
+            "new_DiffMessagesIterator: repo_contract.address={}",
+            repo_contract.address
+        );
         Self {
             repo_contract: repo_contract.clone(),
             buffer: vec![],

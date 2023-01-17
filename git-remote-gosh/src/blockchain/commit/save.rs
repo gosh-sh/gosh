@@ -192,7 +192,10 @@ pub async fn find_messages(
     filter: &Vec<String>,
     from_lt: u64,
 ) -> anyhow::Result<(Option<DecodedMessageBody>, u64)> {
-    tracing::trace!("find_messages: contract.address={}, filter={filter:?}, from_lt={from_lt}", contract.address);
+    tracing::trace!(
+        "find_messages: contract.address={}, filter={filter:?}, from_lt={from_lt}",
+        contract.address
+    );
     let query = r#"query($contract: String!, $from: String) {
         messages(filter: {
             dst: { eq: $contract },

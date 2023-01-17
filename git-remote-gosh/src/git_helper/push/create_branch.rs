@@ -1,6 +1,9 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{blockchain::{branch::DeployBranch, user_wallet::WalletError}, git_helper::GitHelper};
+use crate::{
+    blockchain::{branch::DeployBranch, user_wallet::WalletError},
+    git_helper::GitHelper,
+};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
@@ -146,7 +149,7 @@ where
                             )
                             .await
                         },
-                        condition
+                        condition,
                     )
                     .await
                 }

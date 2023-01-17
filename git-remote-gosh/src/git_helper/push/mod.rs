@@ -2,7 +2,10 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA, user_wallet::WalletError},
+    blockchain::{
+        get_commit_address, user_wallet::WalletError, BlockchainContractAddress, BlockchainService,
+        ZERO_SHA,
+    },
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
@@ -90,10 +93,7 @@ where
         Ok(())
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -251,10 +251,7 @@ where
         ))
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
