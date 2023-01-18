@@ -31,6 +31,7 @@ DAO_ABI=../contracts/gosh/goshdao.abi.json
 
 # generate user keys
 SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
+echo $SEED > user.seed
 DAO_KEYS=test.keys.json
 tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')

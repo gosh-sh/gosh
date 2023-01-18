@@ -128,6 +128,8 @@ pipeline {
                     dir('contracts/gosh') {
                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
                 archiveArtifacts artifacts: 'contracts/gosh/*.seed'
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
@@ -142,8 +144,6 @@ pipeline {
             steps {
                 script {
                     env.BUCKET_NAME = "app-" + "${BRANCH}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
@@ -209,9 +209,10 @@ pipeline {
                         }
                     }
                 }
+                archiveArtifacts artifacts: 'tests/*.seed'
             }
         }
-        /*stage('Tests: Web') {
+        stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -223,21 +224,19 @@ pipeline {
                     dir('monitoring/gosh-mon') {   
                         sh "cp config/credentials.yml.template config/credentials.yml"
                         sh "docker build -t gosh-mon ."
-                        def tests = sh(script: 'cat config/scripts/app.yml | cut -c 3- | tr -d \'^M\' | sed -n \'/:/!p\'', returnStdout: true).trim().split('\n')
-                        for (int i = 0; i < tests.length; i++) {
-                            stage("Test ${tests[i]}") {
-                                sh """
-                                    docker run --rm \
-                                        -e GM_MODE='${tests[i].trim()}' \
-                                        -e RUN_NOW=1 \
-                                        -e CONFIG_SEED="\$(tonos-cli -j genphrase | jq .phrase | tr -d '\"\n')" \
-                                        -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
-                                        -e CONFIG_REDIS_HOST="" \
-                                        -v \$(pwd)/config:/home/node/app/config:ro \
-                                        -v \$(pwd)/test-errors:/home/node/app/errors \
-                                        gosh-mon
-                                """
-                            }
+                        stage("Test web") {
+                            sh """
+                                docker run --rm \
+                                    -e GM_MODE='app-setup' \
+                                    -e RUN_NOW=1 \
+                                    -e CONFIG_SEED="\$(cat ../../tests/user.seed)" \
+                                    -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
+                                    -e CONFIG_REDIS_HOST="" \
+                                    -e USERNAME=user1 \
+                                    -v \$(pwd)/config:/home/node/app/config:ro \
+                                    -v \$(pwd)/test-errors:/home/node/app/errors \
+                                    gosh-mon
+                            """
                         }
                     }   
                 }
@@ -248,7 +247,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
         /*stage("Prerelease: Git Helper Snap"){
             agent {
                 node {
