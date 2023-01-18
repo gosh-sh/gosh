@@ -7,6 +7,12 @@ enum EBlobFlag {
     IPFS = 4,
 }
 
+enum ETaskGrant {
+    ASSING = 1,
+    REVIEW = 2,
+    MANAGER = 3,
+}
+
 type TRepository = {
     address: TAddress
     name: string
@@ -123,6 +129,13 @@ type TBranchOperateProgress = {
     completed?: boolean
 }
 
+type TTaskCommitConfig = {
+    task: TAddress
+    profileAssign: { [key: TAddress]: boolean }
+    profileReview: TAddress
+    profileManager: TAddress
+}
+
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -133,6 +146,7 @@ interface ITBranchOperateCallback {
 
 export {
     EBlobFlag,
+    ETaskGrant,
     TRepository,
     TRepositoryListItem,
     TTree,
@@ -146,6 +160,7 @@ export {
     TPushProgress,
     TBranchCompareProgress,
     TBranchOperateProgress,
+    TTaskCommitConfig,
     IPushCallback,
     ITBranchOperateCallback,
 }

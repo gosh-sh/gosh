@@ -22,6 +22,7 @@ import {
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
+    ETaskGrant,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1377,15 +1378,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createTask(name: string): Promise<void> {
+    async createTask(
+        name: string,
+        config: { assign: number; review: number; manager: number },
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async setTaskReady(name: string, commit: TAddress): Promise<void> {
+    async confirmTask(name: string, index: number): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async setTaskNotReady(name: string): Promise<void> {
+    async grantTask(name: string, type: ETaskGrant): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

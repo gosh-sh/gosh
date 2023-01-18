@@ -22,6 +22,7 @@ import {
     TCommit,
     TPushProgress,
     TRepositoryListItem,
+    TTaskCommitConfig,
     TTree,
     TTreeItem,
 } from '../types/repo.types'
@@ -702,7 +703,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         message?: string,
         tags?: string,
         parent?: string,
-        task?: TAddress,
+        task?: TTaskCommitConfig,
     ) => {
         if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
         if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
@@ -762,7 +763,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
         }[],
         message?: string,
         tags?: string,
-        task?: TAddress,
+        task?: TTaskCommitConfig,
     ) => {
         await _push(title, blobs, false, message, tags, undefined, task)
     }

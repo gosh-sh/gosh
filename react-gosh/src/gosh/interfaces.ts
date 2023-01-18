@@ -15,12 +15,14 @@ import {
     TValidationResult,
 } from '../types'
 import {
+    ETaskGrant,
     IPushCallback,
     ITBranchOperateCallback,
     TBranch,
     TCommit,
     TRepository,
     TTag,
+    TTaskCommitConfig,
     TTree,
     TTreeItem,
     TUpgradeData,
@@ -168,7 +170,7 @@ interface IGoshRepositoryAdapter {
         optional: {
             tags?: string
             branchParent?: string
-            task?: TAddress
+            task?: TTaskCommitConfig
             callback?: IPushCallback
         },
     ): Promise<void>
@@ -182,9 +184,12 @@ interface IGoshRepositoryAdapter {
     ): Promise<void>
 
     getTask(name: string): Promise<IGoshTask>
-    createTask(name: string): Promise<void>
-    setTaskReady(name: string, commit: TAddress): Promise<void>
-    setTaskNotReady(name: string): Promise<void>
+    createTask(
+        name: string,
+        config: { assign: number; review: number; manager: number },
+    ): Promise<void>
+    confirmTask(name: string, index: number): Promise<void>
+    grantTask(name: string, type: ETaskGrant): Promise<void>
 }
 
 interface IGoshSmvAdapter {

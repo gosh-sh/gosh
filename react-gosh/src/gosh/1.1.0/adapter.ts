@@ -22,6 +22,8 @@ import {
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
+    ETaskGrant,
+    TTaskCommitConfig,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1227,7 +1229,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         optional: {
             tags?: string
             branchParent?: string
-            task?: TAddress
+            task?: TTaskCommitConfig
             callback?: IPushCallback
         },
     ): Promise<void> {
@@ -1396,28 +1398,33 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return task
     }
 
-    async createTask(name: string): Promise<void> {
+    async createTask(
+        name: string,
+        config: { assign: number; review: number; manager: number },
+    ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         await this.auth.wallet0.run('deployTask', {
             repoName: await this.getName(),
             nametask: name,
+            grant: config,
         })
     }
 
-    async setTaskReady(name: string, commit: TAddress): Promise<void> {
+    async confirmTask(name: string, index: number): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        await this.auth.wallet0.run('readyTask', {
+        await this.auth.wallet0.run('confirmTask', {
             repoName: await this.getName(),
             nametask: name,
-            commit,
+            index,
         })
     }
 
-    async setTaskNotReady(name: string): Promise<void> {
+    async grantTask(name: string, type: ETaskGrant): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        await this.auth.wallet0.run('notreadyTask', {
+        await this.auth.wallet0.run('askGrantToken', {
             repoName: await this.getName(),
             nametask: name,
+            typegrant: type,
         })
     }
 
@@ -1991,7 +1998,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
-        task?: TAddress,
+        task?: TTaskCommitConfig,
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -2001,7 +2008,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
-            task,
+            task: this._generateTaskCommitConfig(task),
         })
     }
 
@@ -2009,7 +2016,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
-        task?: TAddress,
+        task?: TTaskCommitConfig,
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -2021,8 +2028,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             numberChangedFiles: numBlobs,
             numberCommits: 1,
             num_clients: smvClientsCount,
-            task,
+            task: this._generateTaskCommitConfig(task),
         })
+    }
+
+    private _generateTaskCommitConfig(config?: TTaskCommitConfig) {
+        if (!config) {
+            return undefined
+        }
+
+        const { task, profileAssign, profileReview, profileManager } = config
+        return {
+            task,
+            size: Object.keys(profileAssign).length,
+            pubaddrassign: profileAssign,
+            pubaddrreview: profileReview,
+            pubaddrmanager: profileManager,
+        }
     }
 
     private async _runMultiwallet<Input, Output>(
