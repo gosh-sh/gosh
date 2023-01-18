@@ -10,7 +10,6 @@ const RemoteReadHandler_1 = __importDefault(require("./Handlers/RemoteReadHandle
 const RemoteWriteHandler_1 = __importDefault(require("./Handlers/RemoteWriteHandler"));
 const AppRotateHandler_1 = __importDefault(require("./Handlers/AppRotateHandler"));
 const SeedReadHandler_1 = __importDefault(require("./Handlers/SeedReadHandler"));
-const RootCheckHandler_1 = __importDefault(require("./Handlers/RootCheckHandler"));
 const AppSetupHandler_1 = __importDefault(require("./Handlers/AppSetupHandler"));
 const ScriptHandler_1 = __importDefault(require("./Handlers/ScriptHandler"));
 const RMonitorHandler_1 = __importDefault(require("./Handlers/RMonitorHandler"));
@@ -26,7 +25,6 @@ function selectHandler(type, silent) {
         case 'remote-write': return new RemoteWriteHandler_1.default();
         case 'app-rotate': return new AppRotateHandler_1.default();
         case 'seed-read': return new SeedReadHandler_1.default();
-        case 'root-check': return new RootCheckHandler_1.default();
         case 'app-setup': return new AppSetupHandler_1.default();
         case 'script': return new ScriptHandler_1.default();
         case 'rsmq-monitor': return new RMonitorHandler_1.default();
