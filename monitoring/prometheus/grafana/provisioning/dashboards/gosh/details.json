@@ -211,7 +211,7 @@
             "spanNulls": false
           },
           "mappings": [],
-          "max": 600,
+          "max": 1200,
           "min": 300,
           "thresholds": {
             "mode": "absolute",
@@ -282,7 +282,7 @@
             "spanNulls": false
           },
           "mappings": [],
-          "max": 1200,
+          "max": 3600,
           "min": 600,
           "thresholds": {
             "mode": "absolute",
@@ -926,7 +926,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "yellow",
@@ -1029,7 +1030,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "yellow",
@@ -1132,7 +1134,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "yellow",
@@ -1237,7 +1240,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           }
@@ -1328,7 +1332,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           }
@@ -1425,7 +1430,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "purple"
+                "color": "purple",
+                "value": null
               },
               {
                 "color": "green",
@@ -1504,7 +1510,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "purple"
+                "color": "purple",
+                "value": null
               },
               {
                 "color": "green",
@@ -1581,7 +1588,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "purple"
+                "color": "purple",
+                "value": null
               },
               {
                 "color": "green",
@@ -1653,6 +1661,6 @@
   "timezone": "",
   "title": "Gosh Monitoring dev details",
   "uid": "iuvtNY_7k",
-  "version": 18,
+  "version": 19,
   "weekStart": ""
 }
