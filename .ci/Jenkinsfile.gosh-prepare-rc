@@ -128,6 +128,8 @@ pipeline {
                     dir('contracts/gosh') {
                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
                 archiveArtifacts artifacts: 'contracts/gosh/*.seed'
                 archiveArtifacts artifacts: 'contracts/gosh/*.addr'
@@ -142,11 +144,10 @@ pipeline {
             steps {
                 script {
                     env.BUCKET_NAME = "app-" + "${BRANCH}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                     sh """
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
+                        cat web/.env.ci
                     """
                     dir('web') {     
                         sh "make build ENV=ci REACT_APP_ISDOCKEREXT=false"
