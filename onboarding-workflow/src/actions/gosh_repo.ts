@@ -12,9 +12,10 @@ import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { getRepoNameFromUrl } from '../utils/gosh_repo.ts'
 import { runWithTimeout } from '../utils/timeout.ts'
 import { waitForAccountActive } from './account.ts'
-import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
-
-const gosh = GoshAdapterFactory.createLatest()
+import { getDb } from '../db/db.ts'
+import { getUserByIdOrFail } from '../db/auth/users.ts'
+import { emailOnboardingRename } from './emails/onboarding_rename.ts'
+import { isValidName } from '../utils/validate_name.ts'
 
 export async function initializeGoshRepo(github_id: string) {
     const github = await getGithubWithDaoBot(github_id)
@@ -33,12 +34,29 @@ export async function initializeGoshRepo(github_id: string) {
     }
 
     // Validate repository name
-    const repoValidated = gosh.isValidRepoName(repo_name)
-    if (!repoValidated.valid) {
+    if (!isValidName(repo_name)) {
         // Mark `github` row as `ignore` until error is resolved
         await updateGithub(github_id, { ignore: true })
 
-        // TODO: Send notification email for user
+        const { data: githubs, error } = await getDb()
+            .from('github')
+            .select('*, users(auth_user)')
+            .eq('dao_bot', dao_bot.id)
+
+        if (error) {
+            console.log('DB error', error)
+            throw new Error(`DB error ${error.message}`)
+        }
+
+        const auth_user_ids = githubs
+            .filter((github) => !!github.users && !Array.isArray(github.users))
+            .map((github) => (github.users! as { auth_user: string }).auth_user)
+
+        for (const auth_user_id of auth_user_ids) {
+            const auth_user = await getUserByIdOrFail(auth_user_id)
+            await emailOnboardingRename(auth_user)
+        }
+
         console.log(
             'Repository name has validation errors',
             repo_name,

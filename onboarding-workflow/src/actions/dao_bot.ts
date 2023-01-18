@@ -7,10 +7,10 @@ import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 import { countGitObjectsProducer } from '../queues/mod.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { waitForAccountActive, waitForWalletAccess } from './account.ts'
-import { GoshAdapterFactory } from '../../node_modules/react-gosh/dist/gosh/factories.js'
 import { getDb } from '../db/db.ts'
-
-const gosh = GoshAdapterFactory.createLatest()
+import { emailOnboardingRename } from './emails/onboarding_rename.ts'
+import { getUserByIdOrFail } from '../db/auth/users.ts'
+import { isValidName } from '../utils/validate_name.ts'
 
 export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
@@ -37,12 +37,29 @@ export async function initDaoBot(dao_bot: DaoBot) {
     }
 
     // Validate DAO name
-    const daoValidated = gosh.isValidDaoName(dao_bot.dao_name)
-    if (!daoValidated.valid) {
+    if (!isValidName(dao_bot.dao_name)) {
         // Mark `github` row as `ignore` until error is resolved
         await updateGithubByDaoBot(dao_bot.id, { ignore: true })
 
-        // TODO: Send notification email for user
+        const { data: githubs, error } = await getDb()
+            .from('github')
+            .select('*, users(auth_user)')
+            .eq('dao_bot', dao_bot.id)
+
+        if (error) {
+            console.log('DB error', error)
+            throw new Error(`DB error ${error.message}`)
+        }
+
+        const auth_user_ids = githubs
+            .filter((github) => !!github.users && !Array.isArray(github.users))
+            .map((github) => (github.users! as { auth_user: string }).auth_user)
+
+        for (const auth_user_id of auth_user_ids) {
+            const auth_user = await getUserByIdOrFail(auth_user_id)
+            await emailOnboardingRename(auth_user)
+        }
+
         console.log(
             'DAO name has validation errors',
             dao_bot.dao_name,
