@@ -7,9 +7,28 @@ https://grafana.gosh.sh {
             path /api/frontend-metrics
         }
     }
+    @forbidden2 {
+        path /api/search* /api/dashboards/tags
+        path /api/ruler/* /api/alertmanager/*
+        path /api/alert-notifiers /api/alert*
+        path /api/prometheus/PBFA97CFB590B2093/api/v1/rules
+    }
+    @forbidden3 {
+        path /api/prometheus/grafana/api/v1/rules
+        not query dashboard_uid=4XsgA0pVk
+    }
     respond @forbidden "Method not allowed" 405 {
         close
     }
+    respond @forbidden2 "Access not allowed" 403 {
+        close
+    }
+    respond @forbidden3 "Access not allowed" 403 {
+        close
+    }
+    redir /metrics /
+    redir /login /
+    redir /user/* /
     reverse_proxy gosh-grafana:3000 {
         header_up X-Real-IP {http.request.remote.host}
         header_up X-Forwarded-Port {http.request.port}
@@ -67,8 +86,8 @@ https://pushgateway.monitoring.gosh.sh {
 }
 
 https://next-app.monitoring.gosh.sh {
-    reverse_proxy http://gooosh.matusevich.pro {
-        header_up Host gooosh.matusevich.pro
+    reverse_proxy http://gosh.matusevich.pro {
+        header_up Host v3-0-0-dev.gosh.matusevich.pro
         header_up X-Real-IP {http.request.remote.host}
         header_up X-Forwarded-Port {http.request.port}
         header_up X-Forwarded-Proto {http.request.scheme}
@@ -76,8 +95,8 @@ https://next-app.monitoring.gosh.sh {
 }
 
 https://gmlogs.monitoring.gosh.sh {
-    basicauth {
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+    basicauth { 
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
     }
     reverse_proxy gosh-mon-nginx {
         header_up X-Real-IP {http.request.remote.host}
