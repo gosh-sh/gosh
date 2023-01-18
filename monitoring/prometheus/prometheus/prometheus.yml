@@ -76,6 +76,11 @@ scrape_configs:
     static_configs:
       - targets: ['gosh-mon-redis-exporter:9121']
 
+  - job_name: 'supa-exp'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['supa-exp:9789']
+
 alerting:
   alertmanagers:
   - scheme: http
