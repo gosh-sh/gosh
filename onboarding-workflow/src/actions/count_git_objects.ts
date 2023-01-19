@@ -1,4 +1,3 @@
-import BeeQueue from '../../../../../../.cache/deno/npm/registry.npmjs.org/bee-queue/1.5.0/index.d.ts'
 import { getDb } from '../db/db.ts'
 import { getGithubWithDaoBot } from '../db/github.ts'
 import type {
@@ -61,11 +60,7 @@ export async function countGitObjects(github_id: string) {
 
     // EXPLANATION: we split repos to 3 buckets by size: small | medium | large
     // TODO: more logs
-    let producer: BeeQueue<
-        | CreateSmallGoshRepoRequest
-        | CreateMediumGoshRepoRequest
-        | CreateLargeGoshRepoRequest
-    >
+    let producer
     if (number_of_git_objects < 1500) {
         producer = createSmallGoshRepoProducer()
     } else if (number_of_git_objects < 15000) {
