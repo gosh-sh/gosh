@@ -281,6 +281,20 @@ function getGoshUpgradeDaoProposalParams () external view
     (proposalKind, newversion, description) = s.decode(uint256, string, string);
 }
 
+function getGoshConfirmTaskProposalParams () external view
+         returns( uint256  proposalKind, string reponame, string taskname)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, reponame, taskname) = s.decode(uint256, string, string);
+}
+
+function getGoshDestroyTaskProposalParams () external view
+         returns( uint256  proposalKind, string reponame, string taskname)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, reponame, taskname) = s.decode(uint256, string, string);
+}
+
 
 ////////////////////////////////////
 
