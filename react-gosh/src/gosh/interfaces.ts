@@ -186,10 +186,12 @@ interface IGoshRepositoryAdapter {
     getTask(name: string): Promise<IGoshTask>
     createTask(
         name: string,
+        isProposal: boolean,
         config: { assign: number; review: number; manager: number },
     ): Promise<void>
-    confirmTask(name: string, index: number): Promise<void>
+    confirmTask(name: string, index: number, isProposal: boolean): Promise<void>
     grantTask(name: string, type: ETaskGrant): Promise<void>
+    deleteTask(name: string, isProposal: boolean): Promise<void>
 }
 
 interface IGoshSmvAdapter {

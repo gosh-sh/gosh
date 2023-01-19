@@ -1380,16 +1380,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async createTask(
         name: string,
+        isProposal: boolean,
         config: { assign: number; review: number; manager: number },
     ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async confirmTask(name: string, index: number): Promise<void> {
+    async confirmTask(name: string, index: number, isProposal: boolean): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
     async grantTask(name: string, type: ETaskGrant): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTask(name: string, isProposal: boolean): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

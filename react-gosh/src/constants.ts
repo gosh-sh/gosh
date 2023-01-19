@@ -12,4 +12,6 @@ export const SmvEventTypes: { [key: number]: string } = {
     6: 'Remove DAO member(s)',
     7: 'Upgrade DAO',
     8: 'Change DAO config',
+    9: 'Confirm task',
+    10: 'Delete task',
 }

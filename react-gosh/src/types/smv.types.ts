@@ -8,6 +8,8 @@ enum ESmvEventType {
     DAO_MEMBER_DELETE = 6,
     DAO_UPGRADE = 7,
     DAO_CONFIG_CHANGE = 8,
+    TASK_CONFIRM = 9,
+    TASK_DELETE = 10,
 }
 
 type TSmvDetails = {

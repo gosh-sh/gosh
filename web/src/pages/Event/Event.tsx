@@ -14,6 +14,8 @@ import BranchEvent from './BranchEvent'
 import MemberEvent from './MemberEvent'
 import DaoUpgradeEvent from './DaoUpgradeEvent'
 import ToastError from '../../components/Error/ToastError'
+import TaskConfirmEvent from './TaskConfirmEvent'
+import TaskDeleteEvent from './TaskDeleteEvent'
 
 type TFormValues = {
     approve: string
@@ -197,6 +199,12 @@ const EventPage = () => {
                     )}
                     {event?.type.kind === ESmvEventType.DAO_UPGRADE && (
                         <DaoUpgradeEvent daoName={daoName} event={event} />
+                    )}
+                    {event?.type.kind === ESmvEventType.TASK_CONFIRM && (
+                        <TaskConfirmEvent daoName={daoName} event={event} />
+                    )}
+                    {event?.type.kind === ESmvEventType.TASK_DELETE && (
+                        <TaskDeleteEvent daoName={daoName} event={event} />
                     )}
                 </div>
             )}
