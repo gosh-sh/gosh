@@ -19,7 +19,6 @@ Cargo.lock
 *.addr
 *.network
 SafeMultisigWallet.abi.json
-contracts/gosh/updatever.sh
 
 package-lock.json
 deno.lock
