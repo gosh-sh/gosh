@@ -10,8 +10,8 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     let exit_code = match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("Error: {e}");
-            tracing::error!("{e:?}");
+            eprintln!("error: {e}");
+            tracing::debug!("{e:?}");
             ExitCode::FAILURE
         }
     };
