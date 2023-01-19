@@ -224,19 +224,24 @@ pipeline {
                     dir('monitoring/gosh-mon') {   
                         sh "cp config/credentials.yml.template config/credentials.yml"
                         sh "docker build -t gosh-mon ."
-                        sh """
-                            docker run --rm \
-                                -e GM_MODE='app-setup' \
-                                -e RUN_NOW=1 \
-                                -e CONFIG_SEED="\$(cat ../../tests/user.seed)" \
-                                -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
-                                -e CONFIG_REDIS_HOST="" \
-                                -e USERNAME=user1 \
-                                -v \$(pwd)/config:/home/node/app/config:ro \
-                                -v \$(pwd)/test-errors:/home/node/app/errors \
-                                gosh-mon
-                        """
-                    }   
+                        def tests = webTestsList()
+                        for (int i = 0; i < tests.length; i++) {
+                            stage("Test ${tests[i]}") {
+                                sh """
+                                    docker run --rm \
+                                        -e GM_MODE='${tests[i].trim()}' \
+                                        -e RUN_NOW=1 \
+                                        -e CONFIG_SEED=""\$(cat ../../tests/user.seed)" \
+                                        -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
+                                        -e CONFIG_REDIS_HOST="" \
+                                        -e CONFIG_USERNAME=user1 \
+                                        -v \$(pwd)/config:/home/node/app/config:ro \
+                                        -v \$(pwd)/test-errors:/home/node/app/errors \
+                                        gosh-mon
+                                """
+                            }
+                        }
+                    }
                 }
             }
             post {
@@ -358,4 +363,8 @@ def runParallel(args) {
         """
     }
   }]}
+}
+
+def webTestsList() {
+  return "app-setup,app-small-read,app-small-write,app-large-read,app-large-write".split(",")
 }
