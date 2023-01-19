@@ -35,6 +35,35 @@ export interface Database {
                     initialized_at?: string | null
                 }
             }
+            dao_invite: {
+                Row: {
+                    id: string
+                    created_at: string | null
+                    sender_email: string | null
+                    dao_name: string | null
+                    recipient_email: string | null
+                    is_recipient_sent: boolean | null
+                    sender_username: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string | null
+                    sender_email?: string | null
+                    dao_name?: string | null
+                    recipient_email?: string | null
+                    is_recipient_sent?: boolean | null
+                    sender_username?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string | null
+                    sender_email?: string | null
+                    dao_name?: string | null
+                    recipient_email?: string | null
+                    is_recipient_sent?: boolean | null
+                    sender_username?: string | null
+                }
+            }
             emails: {
                 Row: {
                     id: string
@@ -130,6 +159,7 @@ export interface Database {
                     gosh_pubkey: string
                     auth_user: string | null
                     onboarded_at: string | null
+                    email: string | null
                 }
                 Insert: {
                     id?: string
@@ -138,6 +168,7 @@ export interface Database {
                     gosh_pubkey: string
                     auth_user?: string | null
                     onboarded_at?: string | null
+                    email?: string | null
                 }
                 Update: {
                     id?: string
@@ -146,6 +177,7 @@ export interface Database {
                     gosh_pubkey?: string
                     auth_user?: string | null
                     onboarded_at?: string | null
+                    email?: string | null
                 }
             }
         }
