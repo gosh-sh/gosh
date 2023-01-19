@@ -58,10 +58,11 @@ impl DeployTree for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(
+            .ff_call(
                 wallet_contract.deref(),
                 "deployTree",
                 Some(serde_json::to_value(params)?),
+                None,
             )
             .await
             .map(|_| ());

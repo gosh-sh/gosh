@@ -14,7 +14,7 @@ use crate::{
     },
     ipfs::{service::FileSave, IpfsService},
 };
-use tokio_retry::{Retry, RetryIf};
+use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
 
 use super::is_going_to_ipfs;

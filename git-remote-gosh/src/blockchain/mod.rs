@@ -95,6 +95,13 @@ struct CallResult {
 }
 
 #[derive(Deserialize, Debug)]
+struct FFCallResult {
+    shard_block_id: String,
+    message_id: String,
+    sending_endpoints: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
@@ -455,9 +462,9 @@ pub async fn get_account_data(
 
 async fn default_callback(pe: ProcessingEvent) {
     // TODO: improve formatting for potentially unlimited structs/enums
-    let mut pe_str = format!("{:#?}", pe);
-    pe_str.truncate(200);
-    tracing::trace!("process_message callback: {}", pe_str);
+    // let mut pe_str = format!("{:#?}", pe);
+    // pe_str.truncate(200);
+    tracing::trace!("process_message callback: {:#?}", pe);
 }
 
 #[instrument(level = "info", skip_all)]

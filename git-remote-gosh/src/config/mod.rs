@@ -10,6 +10,7 @@ mod defaults;
 
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
 pub const SET_COMMIT_TIMEOUT: &u64 = &180; // in secs
+pub const DEPLOY_CONTRACT_TIMEOUT: &u64 = &180; // in secs
 
 const USE_CACHE_ENV_VARIABLE_NAME: &str = "GOSH_USE_CACHE";
 
