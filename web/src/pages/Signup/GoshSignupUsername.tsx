@@ -4,6 +4,7 @@ import { useRecoilValue, useSetRecoilState } from 'recoil'
 import {
     githubRepositoriesSelectedSelector,
     oAuthSessionAtom,
+    publicEmailAtom,
     signupStepAtom,
 } from '../../store/signup.state'
 import { TextField } from '../../components/Formik'
@@ -30,6 +31,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const { session } = useRecoilValue(oAuthSessionAtom)
+    const isPublicEmail = useRecoilValue(publicEmailAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
     const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
@@ -47,13 +49,19 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
         return data
     }
 
-    const createDbUser = async (username: string, pubkey: string, authUserId: string) => {
+    const createDbUser = async (
+        username: string,
+        pubkey: string,
+        authUserId: string,
+        email: string | null,
+    ) => {
         const { data, error } = await supabase
             .from('users')
             .insert({
                 gosh_username: username,
                 gosh_pubkey: `0x${pubkey}`,
                 auth_user: authUserId,
+                email,
             })
             .select()
             .single()
@@ -79,7 +87,12 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             // Get or create DB user
             let dbUser = await getDbUser(username)
             if (!dbUser) {
-                dbUser = await createDbUser(username, keypair.public, session.user.id)
+                dbUser = await createDbUser(
+                    username,
+                    keypair.public,
+                    session.user.id,
+                    isPublicEmail ? session.user.email || null : null,
+                )
             }
 
             // Save auto clone repositories
