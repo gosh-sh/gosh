@@ -226,8 +226,7 @@ for those elements which require gradient border color
     @apply relative
         rounded-3px
         bg-gray-050a15/3
-        transition
-        pointer-events-none;
+        transition;
 
     &::after {
         @extend .gradient-border-after;

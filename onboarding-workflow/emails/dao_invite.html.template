@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-        <title></title>
+        <title>You were invited to DAO</title>
 
         <link
             href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -40,10 +40,10 @@
                         <tr>
                             <td align="center" valign="top">
                                 <img
-                                    src="https://gosh.sh/email/v3-0-5/header-rename.png"
+                                    src="https://gosh.sh/email/v3-0-5/header-dao-invite.png"
                                     width="100%"
                                     border="0"
-                                    alt="All Good"
+                                    alt="You were invited to DAO"
                                     style="
                                         margin: 0;
                                         padding: 0;
@@ -74,18 +74,26 @@
                                         color: #050a15;
                                     "
                                 >
-                                    Houston, we have a problem
+                                    User
+                                    <span style="color: #40b3ff">
+                                        {{ sender_username }}
+                                    </span>
+                                    has invited you to join their DAO
                                 </h1>
                                 <p style="max-width: 21.875rem">
-                                    We have detected some name conflicts in your
-                                    repositories.
+                                    Become a member of the
+                                    <b style="color: #40b3ff">{{ dao_name }}</b> DAO on
+                                    GOSH
                                 </p>
                                 <p style="max-width: 21.875rem">
-                                    Please follow the link below to rename your GOSH
-                                    repositories to continue.
+                                    Vote, contribute, and earn tokens — with security and
+                                    decentralization guaranteed
+                                </p>
+                                <p style="max-width: 21.875rem">
+                                    Join now to start building
                                 </p>
                                 <a
-                                    href="https://app.gosh.sh/onboarding"
+                                    href="https://app.gosh.sh/a/signup"
                                     target="_blank"
                                     style="
                                         display: block;
@@ -125,7 +133,6 @@
                                             >
                                                 <img
                                                     src="https://gosh.sh/email/v3-0-5/social-telegram.png"
-                                                    alt=""
                                                     width="40"
                                                     border="0"
                                                     alt="Telegram"
@@ -146,7 +153,6 @@
                                             >
                                                 <img
                                                     src="https://gosh.sh/email/v3-0-5/social-twitter.png"
-                                                    alt=""
                                                     width="40"
                                                     border="0"
                                                     alt="Twitter"
@@ -170,7 +176,6 @@
                                                     alt="Youtube"
                                                     width="40"
                                                     border="0"
-                                                    alt=""
                                                     style="
                                                         margin: 0;
                                                         padding: 0;
@@ -194,7 +199,6 @@
                                                     alt="Blog"
                                                     width="40"
                                                     border="0"
-                                                    alt=""
                                                     style="
                                                         margin: 0;
                                                         padding: 0;

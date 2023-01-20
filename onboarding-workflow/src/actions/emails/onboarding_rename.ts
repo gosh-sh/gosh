@@ -1,17 +1,10 @@
+import nunjucks from 'npm:nunjucks'
 import { getDb, User } from '../../db/db.ts'
 import { INTENT_ONBOARDING_RENAME } from './constants.ts'
 
 const EMAIL_SUBJECT = 'Houston, we have a problem!'
-const EMAIL_HTML_FILE = 'emails/onboarding_rename.html'
-const EMAIL_TEXT = `\
-We have detected some name conflicts in your
-repositories.
-
-Please follow the link below to rename your GOSH
-repositories to continue.
-
-START BUILDING https://app.gosh.sh/onboarding
-`
+const EMAIL_HTML_FILE = 'emails/onboarding_rename.html.template'
+const EMAIL_TEXT_FILE = 'emails/onboarding_rename.text.template'
 
 export async function emailOnboardingRename(user: User) {
     if (!user.email) {
@@ -21,7 +14,8 @@ export async function emailOnboardingRename(user: User) {
     }
 
     const mail_to = user.email.trim()
-    const mail_html = new TextDecoder().decode(Deno.readFileSync(EMAIL_HTML_FILE))
+    const mail_html = nunjucks.render(EMAIL_HTML_FILE)
+    const mail_text = nunjucks.render(EMAIL_TEXT_FILE)
 
     // TODO: should be done via DB constraint
     const { data: emails, error } = await getDb()
@@ -44,7 +38,7 @@ export async function emailOnboardingRename(user: User) {
             .insert({
                 mail_to: mail_to,
                 subject: EMAIL_SUBJECT,
-                content: EMAIL_TEXT,
+                content: mail_text,
                 html: mail_html,
                 intent: INTENT_ONBOARDING_RENAME,
             })

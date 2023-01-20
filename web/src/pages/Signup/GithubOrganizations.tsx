@@ -11,6 +11,7 @@ import {
     githubRepositoriesSelectedSelector,
     oAuthSessionAtom,
     octokitSelector,
+    publicEmailAtom,
     signupStepAtom,
 } from '../../store/signup.state'
 import GithubEmpty from './GithubEmpty'
@@ -23,6 +24,7 @@ type TGithubOrganizationsProps = {
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { signoutOAuth } = props
     const { session } = useRecoilValue(oAuthSessionAtom)
+    const [isPublicEmail, setIsPublicEmail] = useRecoilState(publicEmailAtom)
     const [githubOrgs, setGithubOrgs] = useRecoilState(githubOrganizationsAtom)
     const githubRepos = useRecoilValue(githubRepositoriesAtom)
     const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
@@ -107,6 +109,24 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         &nbsp;create your DAO on GOSH
                     </span>
                 </p>
+
+                <div className="mt-8">
+                    <label className="flex flex-nowrap items-center gap-x-3">
+                        <div>
+                            <input
+                                type="checkbox"
+                                checked={isPublicEmail}
+                                onChange={() => {
+                                    setIsPublicEmail(!isPublicEmail)
+                                }}
+                            />
+                        </div>
+                        <div className="text-sm leading-normal">
+                            I agree that other users will be able to find me by email{' '}
+                            {session?.user.email}
+                        </div>
+                    </label>
+                </div>
 
                 <button
                     type="button"
