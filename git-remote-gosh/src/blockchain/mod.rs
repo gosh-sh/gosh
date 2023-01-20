@@ -19,7 +19,7 @@ pub use service::*;
 use ton_client::{
     abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
     boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
-    net::{query_collection, ParamsOfQueryCollection, ParamsOfQuery},
+    net::{query_collection, ParamsOfQuery, ParamsOfQueryCollection},
     processing::ProcessingEvent,
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
@@ -429,7 +429,7 @@ async fn run_static(
 #[instrument(level = "debug", skip(context))]
 pub async fn get_account_data(
     context: &EverClient,
-    contract: &GoshContract
+    contract: &GoshContract,
 ) -> anyhow::Result<serde_json::Value> {
     let query = r#"query($address: String!){
         blockchain {
@@ -460,11 +460,77 @@ pub async fn get_account_data(
     Ok(extracted_data.clone())
 }
 
+fn processing_event_to_string(pe: ProcessingEvent) -> String {
+    match pe {
+        ProcessingEvent::WillSend {
+            shard_block_id,
+            message_id,
+            message,
+        } => format!(
+            "\nWillSend: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::DidSend {
+            shard_block_id,
+            message_id,
+            message,
+        } => format!(
+            "\nDidSend: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::SendFailed {
+            shard_block_id,
+            message_id,
+            message,
+            error,
+        } => format!(
+            "\nSendFailed: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n\t\
+error: \"{error}\"\n}}"
+        ),
+        ProcessingEvent::WillFetchNextBlock {
+            shard_block_id,
+            message_id,
+            message,
+        } => format!(
+            "\nWillFetchNextBlock: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::FetchNextBlockFailed {
+            shard_block_id,
+            message_id,
+            message,
+            error,
+        } => format!(
+            "\nFetchNextBlockFailed: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n\t\
+error: \"{error}\"\n}}"
+        ),
+        ProcessingEvent::MessageExpired {
+            message_id,
+            message,
+            error,
+        } => format!(
+            "\nMessageExpired: {{\n\t\
+error: \"{error}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+
+        _ => format!("{:#?}", pe),
+    }
+}
+
 async fn default_callback(pe: ProcessingEvent) {
-    // TODO: improve formatting for potentially unlimited structs/enums
-    // let mut pe_str = format!("{:#?}", pe);
-    // pe_str.truncate(200);
-    tracing::trace!("process_message callback: {:#?}", pe);
+    // TODO: improve formatting for potentially unlimited structs/enums. Need to clarify Remp json field
+    tracing::trace!(
+        "process_message callback: {}",
+        processing_event_to_string(pe)
+    );
 }
 
 #[instrument(level = "info", skip_all)]

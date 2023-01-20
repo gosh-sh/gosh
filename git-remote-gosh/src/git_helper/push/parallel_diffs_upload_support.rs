@@ -3,9 +3,9 @@ use crate::blockchain::{BlockchainService, FormatShort, MAX_ACCOUNTS_ADDRESSES_P
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
+use anyhow::bail;
 use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
-use anyhow::bail;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 
@@ -33,11 +33,7 @@ pub struct ParallelDiff {
 }
 
 impl ParallelDiff {
-    #[instrument(
-        level = "info",
-        skip_all,
-        name = "new_ParallelDiff"
-    )]
+    #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
         commit_id: git_hash::ObjectId,
         branch_name: String,

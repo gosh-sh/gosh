@@ -29,10 +29,7 @@ enum BlobDst {
     SetContent(String),
 }
 
-#[instrument(
-    level = "info",
-    skip_all
-)]
+#[instrument(level = "info", skip_all)]
 pub async fn push_diff<'a, B>(
     blockchain: &B,
     repo_name: &str,
@@ -106,16 +103,13 @@ where
             )
             .await
         },
-        condition
+        condition,
     )
     .await?;
     Ok(())
 }
 
-#[instrument(
-    level = "info",
-    skip_all
-)]
+#[instrument(level = "info", skip_all)]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
@@ -348,9 +342,7 @@ where
         if e.is::<WalletError>() {
             false
         } else {
-            tracing::debug!(
-                "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-            );
+            tracing::debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
             true
         }
     };
@@ -369,7 +361,7 @@ where
                 )
                 .await
         },
-        condition
+        condition,
     )
     .await
 }

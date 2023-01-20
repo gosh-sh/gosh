@@ -4,6 +4,7 @@ use std::env;
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -16,7 +17,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::cache::proxy::CacheProxy;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -36,7 +36,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
-    cache: Arc<CacheProxy>
+    cache: Arc<CacheProxy>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -112,7 +112,8 @@ where
         if let Some(cache_address) = cache_str {
             if cache_address.starts_with("memcache://") {
                 let namespace = ":".to_owned() + &String::from(&repo_addr);
-                let memcache = crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
+                let memcache =
+                    crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
                 cache.set_memcache(memcache);
                 tracing::debug!("using memcache service. namespace: {}", namespace);
             } else {
@@ -128,7 +129,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            cache: Arc::new(cache)
+            cache: Arc::new(cache),
         })
     }
 
@@ -318,7 +319,7 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
-            cache
+            cache,
         }
     }
 }

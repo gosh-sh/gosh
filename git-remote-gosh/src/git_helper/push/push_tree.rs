@@ -1,5 +1,8 @@
 use crate::{
-    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService, user_wallet::WalletError},
+    blockchain::{
+        tree::TreeNode, tvm_hash, user_wallet::WalletError, BlockchainContractAddress,
+        BlockchainService,
+    },
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -11,9 +14,9 @@ use std::{
     sync::Arc,
 };
 
+use crate::cache::Cache;
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-use crate::cache::Cache;
 
 use super::is_going_to_ipfs;
 use tokio::{sync::Semaphore, task::JoinSet};
@@ -144,7 +147,7 @@ pub async fn push_tree(
                         )
                         .await
                     },
-                    condition
+                    condition,
                 )
                 .await;
                 drop(permit);
