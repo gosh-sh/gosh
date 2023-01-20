@@ -10,7 +10,12 @@ import {
 } from '../eversdk/gosh_repo.ts'
 import { getBotNameByDaoName } from '../utils/dao_bot.ts'
 import { getRepoNameFromUrl } from '../utils/gosh_repo.ts'
+import { runWithTimeout } from '../utils/timeout.ts'
 import { waitForAccountActive } from './account.ts'
+import { getDb } from '../db/db.ts'
+import { getUserByIdOrFail } from '../db/auth/users.ts'
+import { emailOnboardingRename } from './emails/onboarding_rename.ts'
+import { isValidName } from '../utils/validate_name.ts'
 
 export async function initializeGoshRepo(github_id: string) {
     const github = await getGithubWithDaoBot(github_id)
@@ -28,6 +33,39 @@ export async function initializeGoshRepo(github_id: string) {
         throw new Error('Dao bot has no profile')
     }
 
+    // Validate repository name
+    if (!isValidName(repo_name)) {
+        // Mark `github` row as `ignore` until error is resolved
+        await updateGithub(github_id, { ignore: true })
+
+        const { data: githubs, error } = await getDb()
+            .from('github')
+            .select('*, users(auth_user)')
+            .eq('dao_bot', dao_bot.id)
+
+        if (error) {
+            console.log('DB error', error)
+            throw new Error(`DB error ${error.message}`)
+        }
+
+        const auth_user_ids = githubs
+            .filter((github) => !!github.users && !Array.isArray(github.users))
+            .map((github) => (github.users! as { auth_user: string }).auth_user)
+
+        for (const auth_user_id of auth_user_ids) {
+            const auth_user = await getUserByIdOrFail(auth_user_id)
+            await emailOnboardingRename(auth_user)
+        }
+
+        console.log(
+            'Repository name has validation errors',
+            repo_name,
+            'DAO name',
+            dao_bot.dao_name,
+        )
+        throw new Error('Repository name has validation errors')
+    }
+
     const dao_addr = await getAddrDao(dao_bot.dao_name)
     console.log('dao_addr', dao_addr)
     const repo_addr = await getAddrRepository(repo_name, dao_addr)
@@ -36,11 +74,14 @@ export async function initializeGoshRepo(github_id: string) {
     console.log('wallet_addr', wallet_addr)
 
     if (!(await isAccountActive(repo_addr))) {
-        // ignore errors
         try {
-            await deployRepository(repo_name, wallet_addr, dao_bot.seed)
-        } catch (_err) {
-            // ignore errors
+            await runWithTimeout(
+                3 * 60 * 1000, // 2 minutes
+                deployRepository(repo_name, wallet_addr, dao_bot.seed),
+            )
+        } catch (err) {
+            console.log('Error whlie deployRepository github_id', github_id)
+            throw err
         }
         await waitForAccountActive(repo_addr)
     }

@@ -35,13 +35,41 @@ export interface Database {
                     initialized_at?: string | null
                 }
             }
+            dao_invite: {
+                Row: {
+                    id: string
+                    created_at: string | null
+                    sender_email: string | null
+                    dao_name: string | null
+                    recipient_email: string | null
+                    is_recipient_sent: boolean | null
+                    sender_username: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string | null
+                    sender_email?: string | null
+                    dao_name?: string | null
+                    recipient_email?: string | null
+                    is_recipient_sent?: boolean | null
+                    sender_username?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string | null
+                    sender_email?: string | null
+                    dao_name?: string | null
+                    recipient_email?: string | null
+                    is_recipient_sent?: boolean | null
+                    sender_username?: string | null
+                }
+            }
             emails: {
                 Row: {
                     id: string
                     created_at: string
                     sent_at: string | null
                     subject: string
-                    is_welcome: boolean
                     content: string
                     html: string
                     mail_to: string | null
@@ -52,7 +80,6 @@ export interface Database {
                     created_at?: string
                     sent_at?: string | null
                     subject: string
-                    is_welcome?: boolean
                     content: string
                     html: string
                     mail_to?: string | null
@@ -63,7 +90,6 @@ export interface Database {
                     created_at?: string
                     sent_at?: string | null
                     subject?: string
-                    is_welcome?: boolean
                     content?: string
                     html?: string
                     mail_to?: string | null
@@ -80,6 +106,7 @@ export interface Database {
                     dao_bot: string | null
                     updated_at: string | null
                     ignore: boolean
+                    objects: number | null
                 }
                 Insert: {
                     id?: string
@@ -90,6 +117,7 @@ export interface Database {
                     dao_bot?: string | null
                     updated_at?: string | null
                     ignore?: boolean
+                    objects?: number | null
                 }
                 Update: {
                     id?: string
@@ -100,6 +128,7 @@ export interface Database {
                     dao_bot?: string | null
                     updated_at?: string | null
                     ignore?: boolean
+                    objects?: number | null
                 }
             }
             test: {
@@ -130,6 +159,7 @@ export interface Database {
                     gosh_pubkey: string
                     auth_user: string | null
                     onboarded_at: string | null
+                    email: string | null
                 }
                 Insert: {
                     id?: string
@@ -138,6 +168,7 @@ export interface Database {
                     gosh_pubkey: string
                     auth_user?: string | null
                     onboarded_at?: string | null
+                    email?: string | null
                 }
                 Update: {
                     id?: string
@@ -146,6 +177,7 @@ export interface Database {
                     gosh_pubkey?: string
                     auth_user?: string | null
                     onboarded_at?: string | null
+                    email?: string | null
                 }
             }
         }

@@ -4,11 +4,11 @@ pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
-use opentelemetry_otlp::WithExportConfig;
+
 use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 use tracing::metadata::LevelFilter;
-use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
 use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::{layer::SubscriberExt, reload, util::SubscriberInitExt, EnvFilter, Layer};
 
 use crate::utilities::env::parse_env;
 

@@ -20,10 +20,10 @@ export async function runBash({
     return { status, stdout, stderr }
 }
 
-export async function tonosCli(...args: string[]) {
-    const cmd = ['tonos-cli', '-j', ...args]
+export async function goshCli(...args: string[]) {
+    const cmd = ['gosh-cli', '-j', ...args]
     const display_cmd = cmd.map((x) => `'${x}'`).join(' ')
-    console.debug(`tonos cli: ${display_cmd}`)
+    console.debug(`gosh cli: ${display_cmd}`)
     const p = Deno.run({
         cmd,
         stderr: 'piped',

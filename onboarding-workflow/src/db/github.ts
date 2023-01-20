@@ -63,3 +63,13 @@ export async function getGithubWithDaoBot(id: string): Promise<Github> {
     }
     throw new Error(`Github ${id} not found`)
 }
+
+export async function updateGithubByDaoBot(
+    bot_id: string,
+    update: GithubUpdate,
+): Promise<void> {
+    const { error } = await getDb().from('github').update(update).eq('dao_bot', bot_id)
+    if (error) {
+        throw new Error(`Update 'github' by dao bot id error (${error.message})`)
+    }
+}

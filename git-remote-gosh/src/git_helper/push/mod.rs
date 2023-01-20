@@ -2,11 +2,15 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA},
+    blockchain::{
+        get_commit_address, user_wallet::WalletError, BlockchainContractAddress, BlockchainService,
+        ZERO_SHA,
+    },
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
+use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
@@ -19,7 +23,7 @@ use tokio::{
     sync::Semaphore,
     task::{JoinError, JoinSet},
 };
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
 pub mod create_branch;
@@ -89,10 +93,7 @@ where
         Ok(())
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -250,10 +251,7 @@ where
         ))
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -311,26 +309,37 @@ where
             let branch_name = remote_branch_name.to_owned().clone();
 
             let permit = push_semaphore.acquire_owned().await?;
+
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    true
+                }
+            };
+
             push_handlers.spawn(
                 async move {
-                    let res = Retry::spawn(default_retry_strategy(), || async {
-                        blockchain
-                            .push_commit(
-                                &object_id,
-                                &branch_name,
-                                &tree_addr,
-                                &remote,
-                                &dao_addr,
-                                &raw_commit,
-                                &*parents,
-                            )
-                            .await
-                            .map_err(|e| {
-                                tracing::warn!("Attempt failed with {:#?}", e);
-                                e
-                            })
-                    })
+                    let res = RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            blockchain
+                                .push_commit(
+                                    &object_id,
+                                    &branch_name,
+                                    &tree_addr,
+                                    &remote,
+                                    &dao_addr,
+                                    &raw_commit,
+                                    &*parents,
+                                )
+                                .await
+                        },
+                        condition,
+                    )
                     .await;
+
                     drop(permit);
                     res
                 }
@@ -537,10 +546,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("obj join-hanlder: {}", e);
+                    bail!("obj join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("obj inner: {}", e)
+                    bail!("obj inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -550,10 +559,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("snapshots join-hanlder: {}", e);
+                    bail!("snapshots join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("snapshots inner: {}", e)
+                    bail!("snapshots inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }

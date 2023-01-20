@@ -264,10 +264,11 @@ const OnboardingPage = () => {
 
             // Update prepared items in database
             for (const item of prepared) {
+                const { id, gosh_url } = item
                 const { error } = await supabase
                     .from('github')
-                    .update(item)
-                    .eq('id', item.id)
+                    .update({ gosh_url, ignore: false })
+                    .eq('id', id)
                 if (error) {
                     throw new GoshError(error.message)
                 }
