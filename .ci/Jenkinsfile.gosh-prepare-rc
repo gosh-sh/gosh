@@ -366,5 +366,5 @@ def runParallel(args) {
 }
 
 def webTestsList() {
-  return "app-setup,app-small-read,app-small-write,app-large-read,app-large-write".split(",")
+  return "app-setup,app-small-write,app-small-read,app-large-write,app-large-read".split(",")
 }
