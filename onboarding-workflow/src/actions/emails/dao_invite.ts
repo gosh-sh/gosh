@@ -3,8 +3,8 @@ import { getDb } from '../../db/db.ts'
 import { INTENT_DAO_INVITE } from './constants.ts'
 
 const EMAIL_SUBJECT = 'You were invited to DAO'
-const EMAIL_HTML_FILE = 'emails/dao_invite.html'
-const EMAIL_TEXT_FILE = 'emails/dao_invite.txt'
+const EMAIL_HTML_FILE = 'emails/dao_invite.html.template'
+const EMAIL_TEXT_FILE = 'emails/dao_invite.text.template'
 
 export async function emailDaoInvite(params: {
     dao_name: string

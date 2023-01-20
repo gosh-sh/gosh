@@ -3,8 +3,8 @@ import { getDb, User } from '../../db/db.ts'
 import { INTENT_WELCOME_HIGH_DEMAND } from './constants.ts'
 
 const EMAIL_SUBJECT = 'Hello and Welcome'
-const EMAIL_HTML_FILE = 'emails/welcome_high_demand.html'
-const EMAIL_TEXT_FILE = 'emails/welcome_high_demand.txt'
+const EMAIL_HTML_FILE = 'emails/welcome_high_demand.html.template'
+const EMAIL_TEXT_FILE = 'emails/welcome_high_demand.text.template'
 
 export async function emailWelcomeHighDemand(user: User) {
     if (!user.email) {

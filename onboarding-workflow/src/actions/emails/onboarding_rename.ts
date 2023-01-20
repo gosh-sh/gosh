@@ -3,8 +3,8 @@ import { getDb, User } from '../../db/db.ts'
 import { INTENT_ONBOARDING_RENAME } from './constants.ts'
 
 const EMAIL_SUBJECT = 'Houston, we have a problem!'
-const EMAIL_HTML_FILE = 'emails/onboarding_rename.html'
-const EMAIL_TEXT_FILE = 'emails/onboarding_rename.txt'
+const EMAIL_HTML_FILE = 'emails/onboarding_rename.html.template'
+const EMAIL_TEXT_FILE = 'emails/onboarding_rename.text.template'
 
 export async function emailOnboardingRename(user: User) {
     if (!user.email) {

@@ -3,8 +3,8 @@ import { getDb, User } from '../../db/db.ts'
 import { INTENT_ONBOARDING_FINISHED } from './constants.ts'
 
 const EMAIL_SUBJECT = 'Welcome to GOSH!'
-const EMAIL_HTML_FILE = 'emails/onboarding_finished.html'
-const EMAIL_TEXT_FILE = 'emails/onboarding_finished.txt'
+const EMAIL_HTML_FILE = 'emails/onboarding_finished.html.template'
+const EMAIL_TEXT_FILE = 'emails/onboarding_finished.text.template'
 
 export async function emailOnboardingFinished(user: User) {
     if (!user.email) {
