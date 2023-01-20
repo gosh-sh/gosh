@@ -31,6 +31,11 @@ export const signupStepAtom = atom<{ index: number; data?: any } | undefined>({
     default: undefined,
 })
 
+export const publicEmailAtom = atom<boolean>({
+    key: 'OnboardingPublicEmail',
+    default: true,
+})
+
 export const octokitSelector = selector({
     key: 'SignupOctokitSelector',
     get: ({ get }) => {

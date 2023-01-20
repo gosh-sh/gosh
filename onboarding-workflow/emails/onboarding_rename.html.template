@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-        <title></title>
+        <title>Houston, we have a problem!</title>
 
         <link
             href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -40,10 +40,10 @@
                         <tr>
                             <td align="center" valign="top">
                                 <img
-                                    src="https://gosh.sh/email/v3-0-5/header-onboarded.png"
+                                    src="https://gosh.sh/email/v3-0-5/header-rename.png"
                                     width="100%"
                                     border="0"
-                                    alt="All Good"
+                                    alt="Rename required"
                                     style="
                                         margin: 0;
                                         padding: 0;
@@ -74,18 +74,18 @@
                                         color: #050a15;
                                     "
                                 >
-                                    Good news!
+                                    Houston, we have a problem
                                 </h1>
                                 <p style="max-width: 21.875rem">
-                                    Your repositories have been successfully uploaded to
-                                    GOSH
+                                    We have detected some name conflicts in your
+                                    repositories.
                                 </p>
                                 <p style="max-width: 21.875rem">
-                                    Your DAO has been set up for you, and you're now all
-                                    set to build consensus around your code
+                                    Please follow the link below to rename your GOSH
+                                    repositories to continue.
                                 </p>
                                 <a
-                                    href="https://app.gosh.sh/a/signin"
+                                    href="https://app.gosh.sh/onboarding"
                                     target="_blank"
                                     style="
                                         display: block;
@@ -125,7 +125,6 @@
                                             >
                                                 <img
                                                     src="https://gosh.sh/email/v3-0-5/social-telegram.png"
-                                                    alt=""
                                                     width="40"
                                                     border="0"
                                                     alt="Telegram"
@@ -146,7 +145,6 @@
                                             >
                                                 <img
                                                     src="https://gosh.sh/email/v3-0-5/social-twitter.png"
-                                                    alt=""
                                                     width="40"
                                                     border="0"
                                                     alt="Twitter"
@@ -170,7 +168,6 @@
                                                     alt="Youtube"
                                                     width="40"
                                                     border="0"
-                                                    alt=""
                                                     style="
                                                         margin: 0;
                                                         padding: 0;
@@ -194,7 +191,6 @@
                                                     alt="Blog"
                                                     width="40"
                                                     border="0"
-                                                    alt=""
                                                     style="
                                                         margin: 0;
                                                         padding: 0;
