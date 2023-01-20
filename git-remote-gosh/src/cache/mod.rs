@@ -18,10 +18,8 @@ pub trait Cache {
         TKey: CacheKey;
 }
 
-pub trait Cacheable :
-    memcache::ToMemcacheValue<memcache::Stream>
-    + memcache::FromMemcacheValue
-    + Send
+pub trait Cacheable:
+    memcache::ToMemcacheValue<memcache::Stream> + memcache::FromMemcacheValue + Send
 {
 }
 
@@ -40,6 +38,5 @@ impl CacheKey for &git_hash::ObjectId {
     }
 }
 
-pub mod proxy;
 pub mod memcached_impl;
-
+pub mod proxy;

@@ -88,12 +88,12 @@ impl UserWalletMirrors {
     }
 
     pub async fn find_zero_wallet(&self) -> Option<Wallet> {
-        let inner_state = self.inner
-            .read()
-            .await;
+        let inner_state = self.inner.read().await;
 
-        inner_state.wallets()
-            .get(&UserWalletMirrors::ZERO_WALLET_INDEX).cloned()
+        inner_state
+            .wallets()
+            .get(&UserWalletMirrors::ZERO_WALLET_INDEX)
+            .cloned()
     }
 
     pub async fn is_zero_wallet_ready(&self) -> bool {
@@ -101,7 +101,7 @@ impl UserWalletMirrors {
 
         match zero_wallet {
             Some(Wallet::Contract(_)) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -120,7 +120,7 @@ impl UserWalletMirrors {
             match self.find_zero_wallet().await {
                 Some(Wallet::Contract(_)) => return Ok(()),
                 Some(Wallet::NonExistent(_)) => bail!(WalletError::ZeroWalletNotExists),
-                None => ()
+                None => (),
             };
         }
 
@@ -171,8 +171,8 @@ impl UserWalletMirrors {
             }
             tracing::trace!("inner wallets state {:#?}", inner_state.wallets());
 
-            let zero_wallet = if let Wallet::Contract(zero_wallet) 
-                = inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone()
+            let zero_wallet = if let Wallet::Contract(zero_wallet) =
+                inner_state.wallets()[&UserWalletMirrors::ZERO_WALLET_INDEX].clone()
             {
                 zero_wallet
             } else {
@@ -241,8 +241,8 @@ impl UserWalletMirrors {
                 min_used_wallet_usage = usage;
             }
         }
-        let contract = if let Wallet::Contract(contract)
-            = inner_state.wallets()[&min_used_wallet_index].clone()
+        let contract = if let Wallet::Contract(contract) =
+            inner_state.wallets()[&min_used_wallet_index].clone()
         {
             contract
         } else {
