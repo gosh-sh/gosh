@@ -95,6 +95,13 @@ struct CallResult {
 }
 
 #[derive(Deserialize, Debug)]
+struct FFCallResult {
+    shard_block_id: String,
+    message_id: String,
+    sending_endpoints: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
@@ -459,6 +466,7 @@ fn processing_event_to_string(pe: ProcessingEvent) -> String {
             shard_block_id,
             message_id,
             message,
+            ..
         } => format!(
             "\nWillSend: {{\n\t\
 shard_block_id: \"{shard_block_id}\",\n\t\
@@ -468,6 +476,7 @@ message_id: \"{message_id}\"\n}}"
             shard_block_id,
             message_id,
             message,
+            ..
         } => format!(
             "\nDidSend: {{\n\t\
 shard_block_id: \"{shard_block_id}\",\n\t\
@@ -478,6 +487,7 @@ message_id: \"{message_id}\"\n}}"
             message_id,
             message,
             error,
+            ..
         } => format!(
             "\nSendFailed: {{\n\t\
 shard_block_id: \"{shard_block_id}\",\n\t\
@@ -488,6 +498,7 @@ error: \"{error}\"\n}}"
             shard_block_id,
             message_id,
             message,
+            ..
         } => format!(
             "\nWillFetchNextBlock: {{\n\t\
 shard_block_id: \"{shard_block_id}\",\n\t\
@@ -498,22 +509,19 @@ message_id: \"{message_id}\"\n}}"
             message_id,
             message,
             error,
+            ..
         } => format!(
-            "\nFetchNextBlockFailed: {{\n\t\
-shard_block_id: \"{shard_block_id}\",\n\t\
-message_id: \"{message_id}\"\n\t\
-error: \"{error}\"\n}}"
+            "\nFetchNextBlockFailed: {{\n\tshard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n\terror: \"{error}\"\n}}"
         ),
         ProcessingEvent::MessageExpired {
             message_id,
             message,
             error,
+            ..
         } => format!(
-            "\nMessageExpired: {{\n\t\
-error: \"{error}\",\n\t\
-message_id: \"{message_id}\"\n}}"
+            "\nMessageExpired: {{\n\terror: \"{error}\",\n\tmessage_id: \"{message_id}\"\n}}"
         ),
-
         _ => format!("{:#?}", pe),
     }
 }
