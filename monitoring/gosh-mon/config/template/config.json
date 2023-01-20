@@ -4,6 +4,7 @@
   "networks": {
     "${prim_network}": {
       "user-wallet": {
+        "profile": "${profile}",
         "pubkey": "${pubkey}",
         "secret": "${secret}"
       },

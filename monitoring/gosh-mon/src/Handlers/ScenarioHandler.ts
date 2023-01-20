@@ -1,13 +1,18 @@
 import Handler from "../Handler";
 import {
-    Browser, BrowserContext, Page,
-    BrowserLaunchArgumentOptions, LaunchOptions, BrowserConnectOptions, PuppeteerLifeCycleEvent
+    Browser,
+    BrowserConnectOptions,
+    BrowserLaunchArgumentOptions,
+    CDPSession,
+    ElementHandle,
+    LaunchOptions,
+    Page,
+    PuppeteerLifeCycleEvent
 } from "puppeteer";
 import {MetricsMap} from "../PrometheusFormatter";
 import {ifdef, iftrue, limstr, niso, now, nowms} from "../Utils";
-import {writeFileSync} from "fs";
+import fs, {writeFileSync} from "fs";
 import {setTimeout} from 'timers/promises';
-import fs from "fs";
 import glob from "glob-promise";
 import path from "path";
 import {performance} from "perf_hooks";
@@ -24,7 +29,8 @@ export default abstract class ScenarioHandler extends Handler {
     private readonly textlim = 50;
 
     protected browser!: Browser;
-    protected context!: BrowserContext;
+    // protected context!: BrowserContext;
+    protected session!: CDPSession;
     protected page!: Page;
 
     protected started: number = 0;
@@ -80,13 +86,15 @@ export default abstract class ScenarioHandler extends Handler {
             args.args?.push('--start-maximized');
         }
         this.browser = await puppeteer.launch(args);
-        this.context = this.browser.defaultBrowserContext();
+        // this.context = this.browser.defaultBrowserContext();
         // @ts-ignore Safety measure
         this.page = null;
         this.stepsDone = 0;
         this.log = [];
+        this.session = await this.browser.target().createCDPSession();
         // Enable clipboard read and write
-        await this.context["_connection"].send('Browser.grantPermissions', {
+        // @ts-ignore
+        await this.session.send('Browser.grantPermissions', {
             permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
         });
     }
@@ -147,21 +155,24 @@ export default abstract class ScenarioHandler extends Handler {
         await this.page.close();
     }
 
-    protected async copy(): Promise<string> {
+    protected async getClipboard(): Promise<string> {
         // @ts-ignore navigator is internal to page function
         return await this.page.evaluate(() => navigator.clipboard.readText());
     }
 
-    protected async paste(text: string, ctrlv: boolean = true, clear: boolean = true): Promise<void> {
+    protected async setClipboard(text: string): Promise<void> {
         // @ts-ignore navigator is internal to page function
         await this.page.evaluate((text) => navigator.clipboard.writeText(text), text);
+    }
+
+    protected async paste(text: string, ctrlv: boolean = true, clear: boolean = true): Promise<void> {
+        await this.setClipboard(text);
         if (ctrlv) {
             await this.page.keyboard.down('ControlLeft');
             await this.page.keyboard.press('KeyV');
             await this.page.keyboard.up('ControlLeft');
             if (clear) {
-                // @ts-ignore navigator is internal to page function
-                await this.page.evaluate(() => navigator.clipboard.writeText(''));
+                await this.setClipboard('');
             }
         }
     }
@@ -173,16 +184,18 @@ export default abstract class ScenarioHandler extends Handler {
         await this.page.keyboard.press('Backspace');
     }
 
-    protected async find(elem: string, timeout?: number) {
+    protected async find(elem: string, timeout?: number): Promise<ElementHandle | null> {
         // this.say(`    find ${elem}${ifdef(' with timeout ', timeout)}`);
         const timeoutArg = timeout ? {timeout: timeout} : {};
+        // @ts-ignore
         return elem.startsWith('/') ?
             await this.page.waitForXPath(elem, timeoutArg) :
             await this.page.waitForSelector(elem, timeoutArg);
     }
 
-    protected async findMultipleNow(elem: string) {
+    protected async findMultipleNow(elem: string): Promise<ElementHandle[]> {
         // this.say(`    find ${elem} immediately`);
+        // @ts-ignore
         return elem.startsWith('/') ?
             await this.page.$x(elem) :
             await this.page.$$(elem);
