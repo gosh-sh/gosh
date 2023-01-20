@@ -122,8 +122,8 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                             />
                         </div>
                         <div className="text-sm leading-normal">
-                            I agree that other users will be able to find me by email{' '}
-                            {session?.user.email}
+                            Enable other GOSH users to find me by email{' '}
+                            {session?.user.email} (optional)
                         </div>
                     </label>
                 </div>
