@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4.3
+# syntax=docker/dockerfile:1.5.1
 
 FROM denoland/deno:debian-1.29.4
 RUN apt update && apt install -y jq ca-certificates git libssl1.1 libc6
@@ -8,7 +8,7 @@ COPY --link node_modules/@eversdk/lib-web/index.js ./
 COPY --link node_modules/@eversdk/lib-web/eversdk.wasm ./
 
 COPY --link --from=teamgosh/gosh-cli:0.2.0 /usr/local/bin/gosh-cli /usr/local/bin/gosh-cli
-COPY --link --from=teamgosh/git:3.0.7 /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY --link --from=teamgosh/git:3.0.9 /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 WORKDIR /app/src
 COPY --link src/_deps.ts _deps.ts
