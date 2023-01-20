@@ -1,18 +1,10 @@
+import nunjucks from 'npm:nunjucks'
 import { getDb, User } from '../../db/db.ts'
 import { INTENT_WELCOME_HIGH_DEMAND } from './constants.ts'
 
 const EMAIL_SUBJECT = 'Hello and Welcome'
 const EMAIL_HTML_FILE = 'emails/welcome_high_demand.html'
-const EMAIL_TEXT = `\
-Thank you for joining GOSH
-
-Due to very high demand we would like to ask you to wait
-while your repositories migrate, the process could take a couple of hours
-— we will notify you once they are ready so that you can get to work
-
-Kindly,
-The GOSH team
-`
+const EMAIL_TEXT_FILE = 'emails/welcome_high_demand.txt'
 
 export async function emailWelcomeHighDemand(user: User) {
     if (!user.email) {
@@ -22,6 +14,8 @@ export async function emailWelcomeHighDemand(user: User) {
     }
 
     const mail_to = user.email.trim()
+    const mail_html = nunjucks.render(EMAIL_HTML_FILE)
+    const mail_text = nunjucks.render(EMAIL_TEXT_FILE)
 
     // TODO: should be done via DB constraint
     // deduplicate
@@ -40,13 +34,12 @@ export async function emailWelcomeHighDemand(user: User) {
 
     if (emails.length === 0) {
         console.log(`Try create ${INTENT_WELCOME_HIGH_DEMAND} email ${mail_to}`)
-        const mail_html = new TextDecoder().decode(Deno.readFileSync(EMAIL_HTML_FILE))
         await getDb()
             .from('emails')
             .insert({
                 mail_to: mail_to,
                 subject: EMAIL_SUBJECT,
-                content: EMAIL_TEXT,
+                content: mail_text,
                 html: mail_html,
                 intent: INTENT_WELCOME_HIGH_DEMAND,
             })
