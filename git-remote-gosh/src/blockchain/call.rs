@@ -31,7 +31,7 @@ pub(super) trait BlockchainCall {
     where
         C: ContractInfo + Sync;
 
-    async fn ff_call<C>(
+    async fn send_message<C>(
         &self,
         contract: &C,
         function_name: &str,
@@ -106,7 +106,7 @@ impl BlockchainCall for Everscale {
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn ff_call<C>(
+    async fn send_message<C>(
         &self,
         contract: &C,
         function_name: &str,

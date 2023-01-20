@@ -119,7 +119,7 @@ impl BlockchainCommitPusher for Everscale {
         ).await?;
 
         let result = self
-            .ff_call(wallet_contract.deref(), "deployCommit", Some(params), Some(expected_address))
+            .send_message(wallet_contract.deref(), "deployCommit", Some(params), Some(expected_address))
             .await?;
         drop(wallet_contract);
         tracing::trace!("deployCommit result: {:?}", result);
@@ -148,7 +148,7 @@ impl BlockchainCommitPusher for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .ff_call(wallet_contract.deref(), "setCommit", Some(params), None)
+            .send_message(wallet_contract.deref(), "setCommit", Some(params), None)
             .await?;
         drop(wallet_contract);
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
