@@ -3,6 +3,8 @@ pragma AbiHeader time;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
+import "../gosh/modifiers/modifiers.sol";
+
 import "Libraries/SMVErrors.sol";
 import "External/tip3/interfaces/ITokenRoot.sol";
 
@@ -12,7 +14,7 @@ import "Interfaces/IVotingResultRecipient.sol";
 
 import "LockableBase.sol";
 
-abstract contract SMVProposalBase is LockableBase, ISMVProposal  {
+abstract contract SMVProposalBase is Modifiers, LockableBase, ISMVProposal  {
 
 uint256 public propId;
 uint32  creationTime;
@@ -293,6 +295,13 @@ function getGoshDestroyTaskProposalParams () external view
 {
     TvmSlice s = propData.toSlice();
     (proposalKind, reponame, taskname) = s.decode(uint256, string, string);
+}
+
+function getGoshDeployTaskProposalParams () external view
+         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, reponame, taskname, grant) = s.decode(uint256, string, string, ConfigGrant);
 }
 
 

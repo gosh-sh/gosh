@@ -141,6 +141,37 @@
 			]
 		},
 		{
+			"name": "getGoshConfirmTaskProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDestroyTaskProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeployTaskProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}
@@ -391,8 +422,10 @@
 	],
 	"fields": [
 		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
 		{"name":"platformCodeHash","type":"uint256"},
