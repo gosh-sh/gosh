@@ -7,7 +7,7 @@ enum EBlobFlag {
     IPFS = 4,
 }
 
-enum ETaskGrant {
+enum ETaskBounty {
     ASSING = 1,
     REVIEW = 2,
     MANAGER = 3,
@@ -146,7 +146,7 @@ interface ITBranchOperateCallback {
 
 export {
     EBlobFlag,
-    ETaskGrant,
+    ETaskBounty,
     TRepository,
     TRepositoryListItem,
     TTree,

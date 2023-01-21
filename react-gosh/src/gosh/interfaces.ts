@@ -15,7 +15,7 @@ import {
     TValidationResult,
 } from '../types'
 import {
-    ETaskGrant,
+    ETaskBounty,
     IPushCallback,
     ITBranchOperateCallback,
     TBranch,
@@ -94,6 +94,8 @@ interface IGoshDaoAdapter {
     deleteMember(username: string[]): Promise<void>
 
     upgrade(version: string, description?: string): Promise<void>
+
+    sendTokens(profile: TAddress, amount: number): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -186,12 +188,11 @@ interface IGoshRepositoryAdapter {
     getTask(name: string): Promise<IGoshTask>
     createTask(
         name: string,
-        isProposal: boolean,
         config: { assign: number; review: number; manager: number },
     ): Promise<void>
-    confirmTask(name: string, index: number, isProposal: boolean): Promise<void>
-    grantTask(name: string, type: ETaskGrant): Promise<void>
-    deleteTask(name: string, isProposal: boolean): Promise<void>
+    confirmTask(name: string, index: number): Promise<void>
+    receiveTaskBounty(name: string, type: ETaskBounty): Promise<void>
+    deleteTask(name: string): Promise<void>
 }
 
 interface IGoshSmvAdapter {

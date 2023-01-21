@@ -22,8 +22,8 @@ import {
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
-    ETaskGrant,
     TTaskCommitConfig,
+    ETaskBounty,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -491,6 +491,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             description: description ?? `Upgrade DAO to version ${version}`,
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async sendTokens(profile: string, amount: number): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+        await this.wallet.run('sendToken', { pubaddr: profile, grant: amount })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -1400,35 +1407,36 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async createTask(
         name: string,
-        isProposal: boolean,
         config: { assign: number; review: number; manager: number },
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        await this.auth.wallet0.run('deployTask', {
-            repoName: await this.getName(),
-            nametask: name,
-            grant: config,
-            smv: isProposal,
-        })
-    }
-
-    async confirmTask(name: string, index: number, isProposal: boolean): Promise<void> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        if (!isProposal) {
-            await this.auth.wallet0.run('confirmTask', {
-                repoName: await this.getName(),
-                nametask: name,
-                index,
-            })
-        } else {
-            await this._startProposalForConfirmTask(name, index)
-        }
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForTaskDeploy', {
+            repoName: await this.getName(),
+            taskName: name,
+            grant: config,
+            num_clients: smvClientsCount,
+        })
     }
 
-    async grantTask(name: string, type: ETaskGrant): Promise<void> {
+    async confirmTask(name: string, index: number): Promise<void> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForTask', {
+            repoName: await this.getName(),
+            taskName: name,
+            index,
+            num_clients: smvClientsCount,
+        })
+    }
+
+    async receiveTaskBounty(name: string, type: ETaskBounty): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         await this.auth.wallet0.run('askGrantToken', {
             repoName: await this.getName(),
@@ -1437,19 +1445,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async deleteTask(name: string, isProposal: boolean): Promise<void> {
+    async deleteTask(name: string): Promise<void> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        if (!isProposal) {
-            await this.auth.wallet0.run('destroyTask', {
-                repoName: await this.getName(),
-                nametask: name,
-            })
-        } else {
-            await this._startProposalForDeleteTask(name)
-        }
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForTaskDestroy', {
+            repoName: await this.getName(),
+            taskName: name,
+            num_clients: smvClientsCount,
+        })
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
@@ -2056,32 +2062,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    private async _startProposalForConfirmTask(
-        name: string,
-        index: number,
-    ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet0.run('startProposalForTask', {
-            repoName: await this.getName(),
-            taskName: name,
-            index,
-            num_clients: smvClientsCount,
-        })
-    }
-
-    private async _startProposalForDeleteTask(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet0.run('startProposalForTaskDestroy', {
-            repoName: await this.getName(),
-            taskName: name,
-            num_clients: smvClientsCount,
-        })
-    }
-
     private _generateTaskCommitConfig(config?: TTaskCommitConfig) {
         if (!config) {
             return undefined
@@ -2542,6 +2522,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshConfirmTaskProposalParams'
         } else if (type === ESmvEventType.TASK_DELETE) {
             fn = 'getGoshDestroyTaskProposalParams'
+        } else if (type === ESmvEventType.TASK_CREATE) {
+            fn = 'getGoshDeployTaskProposalParams'
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }

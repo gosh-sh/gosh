@@ -10,6 +10,7 @@ enum ESmvEventType {
     DAO_CONFIG_CHANGE = 8,
     TASK_CONFIRM = 9,
     TASK_DELETE = 10,
+    TASK_CREATE = 11,
 }
 
 type TSmvDetails = {

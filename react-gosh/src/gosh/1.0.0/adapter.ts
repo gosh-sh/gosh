@@ -22,7 +22,7 @@ import {
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
-    ETaskGrant,
+    ETaskBounty,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -489,6 +489,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             description: description ?? `Upgrade DAO to version ${version}`,
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async sendTokens(profile: string, amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -1380,21 +1384,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async createTask(
         name: string,
-        isProposal: boolean,
         config: { assign: number; review: number; manager: number },
     ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async confirmTask(name: string, index: number, isProposal: boolean): Promise<void> {
+    async confirmTask(name: string, index: number): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async grantTask(name: string, type: ETaskGrant): Promise<void> {
+    async receiveTaskBounty(name: string, type: ETaskBounty): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTask(name: string, isProposal: boolean): Promise<void> {
+    async deleteTask(name: string): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
