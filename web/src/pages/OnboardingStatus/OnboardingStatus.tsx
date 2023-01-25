@@ -7,7 +7,7 @@ import { toast } from 'react-toastify'
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
 import ToastError from '../../components/Error/ToastError'
 import Spinner from '../../components/Spinner'
-import { supabase } from '../../helpers'
+import { signoutOAuthSupabase, singinOAuthSupabase, supabase } from '../../helpers'
 import { OAuthSessionAtom } from '../../store/onboarding.state'
 import ListEmpty from '../Onboarding/components/ListEmpty'
 import DaoListItem from './DaoListItem'
@@ -47,14 +47,7 @@ const OnboardingStatusPage = () => {
 
     const signinOAuth = async () => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'github',
-                options: {
-                    redirectTo: document.location.href,
-                    scopes: 'read:user read:org',
-                },
-            })
-            if (error) throw new GoshError(error.message)
+            await singinOAuthSupabase('github', document.location.href)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -63,8 +56,7 @@ const OnboardingStatusPage = () => {
 
     const signoutOAuth = async () => {
         try {
-            const { error } = await supabase.auth.signOut()
-            if (error) throw new GoshError(error.message)
+            await signoutOAuthSupabase()
             resetOAuthSession()
             setOnboarding((state) => ({ ...state, redirectTo: undefined }))
             setOnboardingData({ isFetching: false, items: [] })
