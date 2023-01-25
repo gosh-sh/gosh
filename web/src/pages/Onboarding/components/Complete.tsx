@@ -1,24 +1,19 @@
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useResetRecoilState } from 'recoil'
-import githubgosh from '../../assets/images/githubgosh.svg'
-import { signupStepAtom } from '../../store/signup.state'
+import { useRecoilValue, useResetRecoilState } from 'recoil'
+import { onboardingDataAtom } from '../../../store/onboarding.state'
+import githubgosh from '../../../assets/images/githubgosh.svg'
 
-type TGoshSignupCompleteProps = {
-    username: string
-    email: string
-}
-
-const GoshSignupComplete = (props: TGoshSignupCompleteProps) => {
-    const { username, email } = props
-    const signupStepReset = useResetRecoilState(signupStepAtom)
+const OnboardingComplete = () => {
+    const { username, email } = useRecoilValue(onboardingDataAtom)
+    const onboardingReset = useResetRecoilState(onboardingDataAtom)
 
     return (
         <div className="signup signup--complete">
             <button
                 type="button"
                 className="signup__dismiss-btn"
-                onClick={signupStepReset}
+                onClick={onboardingReset}
             >
                 <FontAwesomeIcon icon={faTimes} size="lg" />
             </button>
@@ -43,4 +38,4 @@ const GoshSignupComplete = (props: TGoshSignupCompleteProps) => {
     )
 }
 
-export default GoshSignupComplete
+export default OnboardingComplete

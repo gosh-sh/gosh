@@ -1,39 +1,34 @@
 import { Field, Form, Formik } from 'formik'
 import { AppConfig, GoshError, useUser } from 'react-gosh'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
-import {
-    githubRepositoriesSelectedSelector,
-    oAuthSessionAtom,
-    publicEmailAtom,
-    signupStepAtom,
-} from '../../store/signup.state'
-import { TextField } from '../../components/Formik'
-import Spinner from '../../components/Spinner'
-import { SignupProgress } from './SignupProgress'
-import { supabase } from '../../helpers'
-import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
-import yup from '../../yup-extended'
-import { appModalStateAtom } from '../../store/app.state'
-import PinCodeModal from '../../components/Modal/PinCode'
-import { useNavigate } from 'react-router-dom'
-import { validateOnboardingDao, validateOnboardingRepo } from '../Onboarding/helpers'
+import yup from '../../../yup-extended'
+import { validateOnboardingDao, validateOnboardingRepo } from '../helpers'
+import { supabase } from '../../../helpers'
+import PinCodeModal from '../../../components/Modal/PinCode'
+import { TextField } from '../../../components/Formik'
+import Spinner from '../../../components/Spinner'
+import { SignupProgress } from '../../Signup/components/SignupProgress'
+import { appModalStateAtom } from '../../../store/app.state'
+import {
+    OAuthSessionAtom,
+    onboardingDataAtom,
+    repositoriesCheckedSelector,
+} from '../../../store/onboarding.state'
+import { toast } from 'react-toastify'
+import ToastError from '../../../components/Error/ToastError'
 
-type TGoshSignupUsernameProps = {
-    phrase: string[]
+type TUsernameProps = {
     signoutOAuth(): Promise<void>
 }
 
-const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
-    const { phrase, signoutOAuth } = props
-    const navigate = useNavigate()
+const Username = (props: TUsernameProps) => {
+    const { signoutOAuth } = props
+    const { session } = useRecoilValue(OAuthSessionAtom)
+    const [{ phrase, isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
+    const repositories = useRecoilValue(repositoriesCheckedSelector)
     const setModal = useSetRecoilState(appModalStateAtom)
-    const { session } = useRecoilValue(oAuthSessionAtom)
-    const isPublicEmail = useRecoilValue(publicEmailAtom)
-    const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
-    const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
 
     const getDbUser = async (username: string) => {
@@ -71,6 +66,10 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
         return data
     }
 
+    const onBackClick = () => {
+        setOnboarding((state) => ({ ...state, step: 'phrase' }))
+    }
+
     const onFormSubmit = async (values: { username: string }) => {
         try {
             if (!session) {
@@ -91,17 +90,22 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                     username,
                     keypair.public,
                     session.user.id,
-                    isPublicEmail ? session.user.email || null : null,
+                    isEmailPublic ? session.user.email || null : null,
                 )
             }
 
             // Save auto clone repositories
+            const goshAddress = Object.values(AppConfig.versions).reverse()[0]
+            const goshProtocol = `gosh://${goshAddress}`
             const { error } = await supabase.from('github').insert(
-                githubReposSelected.map(([githubUrl, goshUrl]) => ({
-                    user_id: dbUser.id,
-                    github_url: githubUrl,
-                    gosh_url: goshUrl,
-                })),
+                repositories.map((item) => {
+                    const { daoName, name } = item
+                    return {
+                        user_id: dbUser.id,
+                        github_url: `/${daoName}/${name}`,
+                        gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
+                    }
+                }),
             )
             if (error) {
                 throw new GoshError(error.message)
@@ -112,17 +116,18 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
             // Validate onboarding data
             const validationResult = await Promise.all(
-                githubReposSelected.map(async ([_, goshUrl]) => {
-                    const parts = goshUrl.split('/')
-                    const daoName = parts[parts.length - 2]
-                    const repoName = parts[parts.length - 1]
+                repositories.map(async (item) => {
+                    const daoName = item.daoName.toLowerCase()
+                    const repoName = item.name.toLowerCase()
 
                     const daoValidation = await validateOnboardingDao(daoName)
+                    console.debug(daoName, daoValidation)
                     if (!daoValidation.valid) {
                         return false
                     }
 
                     const repoValidation = await validateOnboardingRepo(daoName, repoName)
+                    console.debug(repoName, repoValidation)
                     if (!repoValidation.valid) {
                         return false
                     }
@@ -143,13 +148,13 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                             if (isAllValid) {
                                 await signoutOAuth()
                             }
-                            setStep({
-                                index: 4,
-                                data: { username, email: session.user.email },
-                            })
-                            navigate(isAllValid ? '/a/orgs' : '/onboarding', {
-                                replace: true,
-                            })
+                            setOnboarding((state) => ({
+                                ...state,
+                                step: 'complete',
+                                username,
+                                email: session.user.email!,
+                                redirectTo: isAllValid ? '/a/orgs' : '/onboarding/status',
+                            }))
                         }}
                     />
                 ),
@@ -165,7 +170,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
                     <div className="aside-step__btn-back">
-                        <button type="button" onClick={() => setStep({ index: 2 })}>
+                        <button type="button" onClick={onBackClick}>
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </button>
                     </div>
@@ -239,4 +244,4 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     )
 }
 
-export default GoshSignupUsername
+export default Username

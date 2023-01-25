@@ -3,7 +3,7 @@ import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames } from 'react-gosh'
 import Spinner from '../../components/Spinner'
-import { TOnboardingRepo } from './Onboarding'
+import { TOnboardingRepo } from './OnboardingStatus'
 
 type TRepoListItemProps = {
     item: TOnboardingRepo

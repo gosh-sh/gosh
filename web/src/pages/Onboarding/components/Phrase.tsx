@@ -10,21 +10,15 @@ import { Field, Form, Formik } from 'formik'
 import { useCallback, useEffect, useState } from 'react'
 import { AppConfig, EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
-import { useSetRecoilState } from 'recoil'
+import { useRecoilState } from 'recoil'
 import * as Yup from 'yup'
-import ToastError from '../../components/Error/ToastError'
-import { SwitchField } from '../../components/Formik'
-import Spinner from '../../components/Spinner'
-import { signupStepAtom } from '../../store/signup.state'
+import ToastError from '../../../components/Error/ToastError'
+import { SwitchField } from '../../../components/Formik'
+import Spinner from '../../../components/Spinner'
+import { onboardingDataAtom } from '../../../store/onboarding.state'
 
-type TGoshSignupPhraseProps = {
-    phrase: string[]
-    setPhrase: React.Dispatch<React.SetStateAction<string[]>>
-}
-
-const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
-    const { phrase, setPhrase } = props
-    const setStep = useSetRecoilState(signupStepAtom)
+const Phrase = () => {
+    const [{ phrase }, setOnboarding] = useRecoilState(onboardingDataAtom)
     const [wordsList, setWordsList] = useState<string[]>([])
     const [wordsQuery, setWordsQuery] = useState('')
 
@@ -38,8 +32,12 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
 
     const setRandomPhrase = useCallback(async () => {
         const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
-        setPhrase(phrase.split(' '))
-    }, [setPhrase])
+        setOnboarding((state) => ({ ...state, phrase: phrase.split(' ') }))
+    }, [setOnboarding])
+
+    const onBackClick = () => {
+        setOnboarding((state) => ({ ...state, step: 'organizations' }))
+    }
 
     const onFormSubmit = async (values: { words: string[] }) => {
         try {
@@ -50,8 +48,7 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
             if (!valid) {
                 throw new GoshError(EGoshError.PHRASE_INVALID)
             }
-            setPhrase(words)
-            setStep({ index: 3 })
+            setOnboarding((state) => ({ ...state, step: 'username' }))
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -78,7 +75,7 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
                     <div className="aside-step__btn-back">
-                        <button type="button" onClick={() => setStep({ index: 1 })}>
+                        <button type="button" onClick={onBackClick}>
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </button>
                     </div>
@@ -210,4 +207,4 @@ const GoshSignupPhrase = (props: TGoshSignupPhraseProps) => {
     )
 }
 
-export default GoshSignupPhrase
+export default Phrase

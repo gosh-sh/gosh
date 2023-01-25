@@ -3,81 +3,95 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Transition } from '@headlessui/react'
 import { useCallback, useEffect } from 'react'
 import { classNames } from 'react-gosh'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import Spinner from '../../components/Spinner'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import Spinner from '../../../components/Spinner'
 import {
-    githubOrganizationsAtom,
-    githubRepositoriesAtom,
-    githubRepositoriesSelectedSelector,
-    oAuthSessionAtom,
+    OAuthSessionAtom,
     octokitSelector,
-    publicEmailAtom,
-    signupStepAtom,
-} from '../../store/signup.state'
-import GithubEmpty from './GithubEmpty'
-import GithubRepositories from './GithubRepositories'
+    onboardingDataAtom,
+    organizationsSelector,
+    repositoriesCheckedSelector,
+} from '../../../store/onboarding.state'
+import ListEmpty from './ListEmpty'
+import Repositories from './Repositories'
 
-type TGithubOrganizationsProps = {
+type TOrganizationsProps = {
     signoutOAuth(): Promise<void>
 }
 
-const GithubOrganizations = (props: TGithubOrganizationsProps) => {
+const Organizations = (props: TOrganizationsProps) => {
     const { signoutOAuth } = props
-    const { session } = useRecoilValue(oAuthSessionAtom)
-    const [isPublicEmail, setIsPublicEmail] = useRecoilState(publicEmailAtom)
-    const [githubOrgs, setGithubOrgs] = useRecoilState(githubOrganizationsAtom)
-    const githubRepos = useRecoilValue(githubRepositoriesAtom)
-    const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
+    const { session } = useRecoilValue(OAuthSessionAtom)
+    const [{ isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
+    const [organizations, setOrganizations] = useRecoilState(organizationsSelector)
     const octokit = useRecoilValue(octokitSelector)
-    const setStep = useSetRecoilState(signupStepAtom)
+    const repositoriesChecked = useRecoilValue(repositoriesCheckedSelector)
 
-    const toggleOrganization = (id: number) => {
-        setGithubOrgs((state) => {
-            const { items } = state
-            return {
-                ...state,
-                items: items.map((item) => {
-                    return item.id === id ? { ...item, isOpen: !item.isOpen } : item
-                }),
-            }
-        })
+    const onPublicEmailChange = () => {
+        setOnboarding((state) => ({ ...state, isPublicEmail: !state.isEmailPublic }))
     }
 
-    const getGithubOrganizations = useCallback(async () => {
+    const onOrganizationClick = (id: number | string) => {
+        setOrganizations((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                return item.id === id ? { ...item, isOpen: !item.isOpen } : item
+            }),
+        }))
+    }
+
+    const onContinueClick = () => {
+        setOnboarding((state) => ({ ...state, step: 'phrase' }))
+    }
+
+    const getOrganizations = useCallback(async () => {
         if (!octokit || !session) return
 
-        setGithubOrgs((state) => ({ ...state, isFetching: true }))
+        setOrganizations((state) => ({ ...state, isFetching: true }))
         try {
             const { data } = await octokit.request('GET /user/orgs{?per_page,page}', {})
             const combined = [
                 {
                     id: session.user.id,
-                    login: session.user.user_metadata.user_name,
-                    avatar_url: session.user.user_metadata.avatar_url,
+                    name: session.user.user_metadata.user_name,
+                    avatar: session.user.user_metadata.avatar_url,
+                    description: '',
                     isUser: true,
                     isOpen: false,
                 },
-                ...data.map((item: any) => ({ ...item, isUser: false, isOpen: false })),
+                ...data.map((item: any) => {
+                    const { id, login, avatar_url, description } = item
+                    return {
+                        id,
+                        name: login,
+                        avatar: avatar_url,
+                        description,
+                        isUser: false,
+                        isOpen: false,
+                    }
+                }),
             ]
-            setGithubOrgs((state) => {
-                const items = combined.map((item: any) => {
-                    const exists = state.items.find(
-                        (curr: any) => curr.login === item.login,
-                    )
-                    return exists || item
-                })
-                return { items, isFetching: false }
-            })
+            setOrganizations((state) => ({
+                ...state,
+                items: combined.map((item: any) => {
+                    const found = state.items.find((i) => i.id === item.id)
+                    if (found) {
+                        return { ...found, ...item }
+                    }
+                    return { ...item, repositories: { items: [], isFetching: false } }
+                }),
+                isFetching: false,
+            }))
         } catch (e: any) {
             console.error(e.message)
             await signoutOAuth()
             return
         }
-    }, [octokit, session, setGithubOrgs, signoutOAuth])
+    }, [octokit, session, setOrganizations, signoutOAuth])
 
     useEffect(() => {
-        getGithubOrganizations()
-    }, [getGithubOrganizations])
+        getOrganizations()
+    }, [])
 
     if (!session) return null
     return (
@@ -115,10 +129,8 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         <div>
                             <input
                                 type="checkbox"
-                                checked={isPublicEmail}
-                                onChange={() => {
-                                    setIsPublicEmail(!isPublicEmail)
-                                }}
+                                checked={isEmailPublic}
+                                onChange={onPublicEmailChange}
                             />
                         </div>
                         <div className="text-sm leading-normal">
@@ -131,8 +143,8 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 <button
                     type="button"
                     className="aside-step__btn-upload"
-                    onClick={() => setStep({ index: 2 })}
-                    disabled={!githubReposSelected.length}
+                    onClick={onContinueClick}
+                    disabled={!repositoriesChecked.length}
                 >
                     Upload
                 </button>
@@ -141,10 +153,10 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 <div className="signup__reload-items">
                     <button
                         type="button"
-                        disabled={githubOrgs.isFetching}
-                        onClick={getGithubOrganizations}
+                        disabled={organizations.isFetching}
+                        onClick={getOrganizations}
                     >
-                        {githubOrgs.isFetching ? (
+                        {organizations.isFetching ? (
                             <Spinner size="xs" className="icon" />
                         ) : (
                             <FontAwesomeIcon icon={faRotateRight} className="icon" />
@@ -153,14 +165,16 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                     </button>
                 </div>
 
-                {!githubOrgs?.isFetching && !githubOrgs?.items.length && <GithubEmpty />}
+                {!organizations.isFetching && !organizations.items.length && (
+                    <ListEmpty />
+                )}
 
-                {githubOrgs.items.map((item, index) => {
-                    const selected = githubRepos[item.id]?.items
-                        .filter((item) => item.isSelected)
-                        .map((item, index) => (
+                {organizations.items.map((item, index) => {
+                    const selected = item.repositories.items
+                        .filter((r) => r.isSelected)
+                        .map((r, index) => (
                             <span key={index} className="orgitem__repo">
-                                {item.name}
+                                {r.name}
                             </span>
                         ))
 
@@ -169,15 +183,15 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                             <div
                                 className="orgitem__main"
                                 onClick={() => {
-                                    toggleOrganization(item.id)
+                                    onOrganizationClick(item.id)
                                 }}
                             >
                                 <div className="orgitem__media">
-                                    <img src={item.avatar_url} alt="" />
+                                    <img src={item.avatar} alt="Avatar" />
                                 </div>
                                 <div className="orgitem__content">
                                     <div className="orgitem__header">
-                                        <div className="orgitem__title">{item.login}</div>
+                                        <div className="orgitem__title">{item.name}</div>
                                         <div
                                             className={classNames(
                                                 'orgitem__arrow',
@@ -215,7 +229,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                 leaveTo="scale-y-0"
                             >
                                 <div className="orgitem__repos">
-                                    <GithubRepositories
+                                    <Repositories
                                         organization={item}
                                         isOpen={item.isOpen}
                                         signoutOAuth={signoutOAuth}
@@ -230,4 +244,4 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     )
 }
 
-export default GithubOrganizations
+export default Organizations
