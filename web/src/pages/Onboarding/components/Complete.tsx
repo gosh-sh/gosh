@@ -1,12 +1,17 @@
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useRecoilValue, useResetRecoilState } from 'recoil'
+import { useRecoilState, useResetRecoilState } from 'recoil'
 import { onboardingDataAtom } from '../../../store/onboarding.state'
 import githubgosh from '../../../assets/images/githubgosh.svg'
+import { useEffect } from 'react'
 
 const OnboardingComplete = () => {
-    const { username, email } = useRecoilValue(onboardingDataAtom)
+    const [{ username, email }, setOnboarding] = useRecoilState(onboardingDataAtom)
     const onboardingReset = useResetRecoilState(onboardingDataAtom)
+
+    useEffect(() => {
+        setOnboarding((state) => ({ ...state, redirectTo: undefined }))
+    }, [setOnboarding])
 
     return (
         <div className="signup signup--complete">
