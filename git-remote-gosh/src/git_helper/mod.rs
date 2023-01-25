@@ -65,7 +65,7 @@ mod fmt;
 
 pub fn supported_contract_versions() -> anyhow::Result<Vec<String>> {
     Ok(env!("BUILD_SUPPORTED_VERSIONS")
-        .replace(['[', ']', '\"'], "")
+        .replace(['[', ']', '\"', ' '], "")
         .split(',')
         .map(|s| s.to_string())
         .collect::<Vec<String>>())
