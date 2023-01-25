@@ -50,7 +50,6 @@ install: copy_abi clear_screen
 
 .PHONY: install_for_test
 install_for_test: copy_abi clear_screen
-	cargo clean
 	GOSH_SUPPORTED_CONTRACT_VERSIONS=[1.0.0,9998.0.0,9999.0.0] cargo install --path .
 
 .PHONY: test
