@@ -17,7 +17,10 @@ export const OAuthSessionAtom = atom<{
 
 export const onboardingDataAtom = atom<{
     step?: 'signin' | 'invites' | 'organizations' | 'phrase' | 'username' | 'complete'
-    invites: TOnboardingInvite[]
+    invites: {
+        items: TOnboardingInvite[]
+        isFetching: boolean
+    }
     organizations: {
         items: TOnboardingOrganization[]
         isFetching: boolean
@@ -30,7 +33,7 @@ export const onboardingDataAtom = atom<{
 }>({
     key: 'OnboardingDataAtom',
     default: {
-        invites: [],
+        invites: { items: [], isFetching: false },
         organizations: { items: [], isFetching: false },
         phrase: [],
         email: '',
@@ -103,4 +106,20 @@ export const repositoriesSelector = selectorFamily<
                 },
             }))
         },
+})
+
+export const daoInvitesSelector = selector<{
+    items: TOnboardingInvite[]
+    isFetching: boolean
+}>({
+    key: 'DaoInvitesSelector',
+    get: ({ get }) => {
+        return get(onboardingDataAtom).invites
+    },
+    set: ({ set }, value) => {
+        set(onboardingDataAtom, (state) => ({
+            ...state,
+            invites: value as any,
+        }))
+    },
 })

@@ -9,7 +9,7 @@ import ToastError from '../../components/Error/ToastError'
 import Spinner from '../../components/Spinner'
 import { signoutOAuthSupabase, singinOAuthSupabase, supabase } from '../../helpers'
 import { OAuthSessionAtom } from '../../store/onboarding.state'
-import ListEmpty from '../Onboarding/components/ListEmpty'
+import GithubListEmpty from '../Onboarding/components/GithubListEmpty'
 import DaoListItem from './DaoListItem'
 import { validateOnboardingDao, validateOnboardingRepo } from '../Onboarding/helpers'
 import Profile from './Profile'
@@ -326,7 +326,7 @@ const OnboardingStatusPage = () => {
                     </div>
 
                     {!onboardingData.isFetching && !onboardingData?.items.length && (
-                        <ListEmpty />
+                        <GithubListEmpty />
                     )}
 
                     {onboardingData.items.map((item, index) => (

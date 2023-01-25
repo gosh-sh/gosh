@@ -7,10 +7,11 @@ import ToastError from '../../components/Error/ToastError'
 import Spinner from '../../components/Spinner'
 import { signoutOAuthSupabase, singinOAuthSupabase, supabase } from '../../helpers'
 import { OAuthSessionAtom, onboardingDataAtom } from '../../store/onboarding.state'
-import Organizations from './components/Organizations'
-import Phrase from './components/Phrase'
+import GithubOrganizations from './components/GithubOrganizations'
+import GoshPhrase from './components/GoshPhrase'
 import SigninOAuth from './components/SigninOAuth'
-import Username from './components/Username'
+import GoshUsername from './components/GoshUsername'
+import GoshDaoInvites from './components/GoshDaoInvites'
 
 const OnboardingPage = () => {
     const location = useLocation()
@@ -59,7 +60,7 @@ const OnboardingPage = () => {
                 if (!session) {
                     return { ...state, step: 'signin' }
                 }
-                return { ...state, step: state.step || 'organizations' }
+                return { ...state, step: state.step || 'invites' }
             })
         }
     }, [oauth, data.redirectTo, setData])
@@ -92,11 +93,12 @@ const OnboardingPage = () => {
             )}
 
             {data.step === 'signin' && <SigninOAuth signinOAuth={signinOAuth} />}
+            {data.step === 'invites' && <GoshDaoInvites signoutOAuth={signoutOAuth} />}
             {data.step === 'organizations' && (
-                <Organizations signoutOAuth={signoutOAuth} />
+                <GithubOrganizations signoutOAuth={signoutOAuth} />
             )}
-            {data.step === 'phrase' && <Phrase />}
-            {data.step === 'username' && <Username signoutOAuth={signoutOAuth} />}
+            {data.step === 'phrase' && <GoshPhrase />}
+            {data.step === 'username' && <GoshUsername signoutOAuth={signoutOAuth} />}
         </div>
     )
 }

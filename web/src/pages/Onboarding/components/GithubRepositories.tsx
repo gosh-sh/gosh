@@ -8,15 +8,15 @@ import {
     TOnboardingOrganization,
     TOnboardingRepository,
 } from '../../../store/onboarding.types'
-import ListEmpty from './ListEmpty'
+import GithubListEmpty from './GithubListEmpty'
 
-type TRepositoriesProps = {
+type TGithubRepositoriesProps = {
     organization: TOnboardingOrganization
     isOpen: boolean
     signoutOAuth(): Promise<void>
 }
 
-const Repositories = (props: TRepositoriesProps) => {
+const GithubRepositories = (props: TGithubRepositoriesProps) => {
     const { isOpen, organization, signoutOAuth } = props
     const octokit = useRecoilValue(octokitSelector)
     const [repositories, setRepositories] = useRecoilState(
@@ -100,7 +100,9 @@ const Repositories = (props: TRepositoriesProps) => {
                 </div>
             )}
 
-            {!repositories.isFetching && !repositories.items.length && <ListEmpty />}
+            {!repositories.isFetching && !repositories.items.length && (
+                <GithubListEmpty />
+            )}
 
             {repositories.items.map((item, index) => (
                 <div
@@ -131,4 +133,4 @@ const Repositories = (props: TRepositoriesProps) => {
     )
 }
 
-export default Repositories
+export default GithubRepositories

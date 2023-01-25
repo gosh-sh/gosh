@@ -12,22 +12,25 @@ import Spinner from '../../../components/Spinner'
 import { SignupProgress } from '../../Signup/components/SignupProgress'
 import { appModalStateAtom } from '../../../store/app.state'
 import {
+    daoInvitesSelector,
     OAuthSessionAtom,
     onboardingDataAtom,
     repositoriesCheckedSelector,
 } from '../../../store/onboarding.state'
 import { toast } from 'react-toastify'
 import ToastError from '../../../components/Error/ToastError'
+import { EDaoInviteStatus } from '../../../store/onboarding.types'
 
-type TUsernameProps = {
+type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
 }
 
-const Username = (props: TUsernameProps) => {
+const GoshUsername = (props: TGoshUsernameProps) => {
     const { signoutOAuth } = props
     const { session } = useRecoilValue(OAuthSessionAtom)
     const [{ phrase, isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
     const repositories = useRecoilValue(repositoriesCheckedSelector)
+    const { items: invites } = useRecoilValue(daoInvitesSelector)
     const setModal = useSetRecoilState(appModalStateAtom)
     const { signup, signupProgress } = useUser()
 
@@ -111,6 +114,22 @@ const Username = (props: TUsernameProps) => {
                 throw new GoshError(error.message)
             }
 
+            // Update DAO invites status
+            for (const invite of invites) {
+                const { error } = await supabase
+                    .from('dao_invite')
+                    .update({
+                        recipient_user: dbUser.id,
+                        recipient_status: invite.accepted
+                            ? EDaoInviteStatus.ACCEPTED
+                            : EDaoInviteStatus.REJECTED,
+                    })
+                    .eq('id', invite.id)
+                if (error) {
+                    throw new GoshError(error.message)
+                }
+            }
+
             // Deploy GOSH account
             await signup({ phrase: seed, username })
 
@@ -121,13 +140,11 @@ const Username = (props: TUsernameProps) => {
                     const repoName = item.name.toLowerCase()
 
                     const daoValidation = await validateOnboardingDao(daoName)
-                    console.debug(daoName, daoValidation)
                     if (!daoValidation.valid) {
                         return false
                     }
 
                     const repoValidation = await validateOnboardingRepo(daoName, repoName)
-                    console.debug(repoName, repoValidation)
                     if (!repoValidation.valid) {
                         return false
                     }
@@ -244,4 +261,4 @@ const Username = (props: TUsernameProps) => {
     )
 }
 
-export default Username
+export default GoshUsername

@@ -17,7 +17,7 @@ import { SwitchField } from '../../../components/Formik'
 import Spinner from '../../../components/Spinner'
 import { onboardingDataAtom } from '../../../store/onboarding.state'
 
-const Phrase = () => {
+const GoshPhrase = () => {
     const [{ phrase }, setOnboarding] = useRecoilState(onboardingDataAtom)
     const [wordsList, setWordsList] = useState<string[]>([])
     const [wordsQuery, setWordsQuery] = useState('')
@@ -207,4 +207,4 @@ const Phrase = () => {
     )
 }
 
-export default Phrase
+export default GoshPhrase

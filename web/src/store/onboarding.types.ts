@@ -1,3 +1,10 @@
+export enum EDaoInviteStatus {
+    ACCEPTED = 'accepted',
+    REJECTED = 'rejected',
+    REVOKED = 'revoked',
+    INVITED = 'invited',
+}
+
 export type TOnboardingOrganization = {
     id: string
     name: string
@@ -21,7 +28,7 @@ export type TOnboardingRepository = {
 }
 
 export type TOnboardingInvite = {
-    senderUsername: string
+    id: string
     daoName: string
-    accepted: boolean
+    accepted: boolean | null
 }

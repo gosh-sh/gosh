@@ -1,4 +1,4 @@
-const ListEmpty = () => {
+const GithubListEmpty = () => {
     return (
         <div className="signup__norepos">
             <p className="signup__norepos-title">Nothing to show</p>
@@ -9,4 +9,4 @@ const ListEmpty = () => {
     )
 }
 
-export default ListEmpty
+export default GithubListEmpty

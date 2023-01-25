@@ -1,4 +1,4 @@
-import { faArrowRightFromBracket, faRotateRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Transition } from '@headlessui/react'
 import { useCallback, useEffect } from 'react'
@@ -6,24 +6,26 @@ import { classNames } from 'react-gosh'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import Spinner from '../../../components/Spinner'
 import {
+    daoInvitesSelector,
     OAuthSessionAtom,
     octokitSelector,
     onboardingDataAtom,
     organizationsSelector,
     repositoriesCheckedSelector,
 } from '../../../store/onboarding.state'
-import ListEmpty from './ListEmpty'
-import Repositories from './Repositories'
+import GithubListEmpty from './GithubListEmpty'
+import GithubRepositories from './GithubRepositories'
 
-type TOrganizationsProps = {
+type TGithubOrganizationsProps = {
     signoutOAuth(): Promise<void>
 }
 
-const Organizations = (props: TOrganizationsProps) => {
+const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { signoutOAuth } = props
     const { session } = useRecoilValue(OAuthSessionAtom)
     const [{ isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
     const [organizations, setOrganizations] = useRecoilState(organizationsSelector)
+    const { items: invites } = useRecoilValue(daoInvitesSelector)
     const octokit = useRecoilValue(octokitSelector)
     const repositoriesChecked = useRecoilValue(repositoriesCheckedSelector)
 
@@ -38,6 +40,10 @@ const Organizations = (props: TOrganizationsProps) => {
                 return item.id === id ? { ...item, isOpen: !item.isOpen } : item
             }),
         }))
+    }
+
+    const onBackClick = () => {
+        setOnboarding((state) => ({ ...state, step: 'invites' }))
     }
 
     const onContinueClick = () => {
@@ -98,23 +104,12 @@ const Organizations = (props: TOrganizationsProps) => {
         <div className="signup signup--organizations">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <button
-                        type="button"
-                        className="aside-step__btn-signout"
-                        onClick={signoutOAuth}
-                    >
-                        <div className="aside-step__btn-signout-slide">
-                            <span className="aside-step__btn-signout-user">
-                                Hey, {session.user.user_metadata.name}
-                            </span>
-                            <span className="aside-step__btn-signout-text">Sign out</span>
-                        </div>
-                        <FontAwesomeIcon
-                            icon={faArrowRightFromBracket}
-                            size="lg"
-                            className="aside-step__btn-signout-icon"
-                        />
-                    </button>
+                    <div className="aside-step__btn-back">
+                        <button type="button" onClick={onBackClick}>
+                            <FontAwesomeIcon icon={faArrowLeft} />
+                        </button>
+                    </div>
+                    <span className="aside-step__title">Back</span>
                 </div>
 
                 <p className="aside-step__text">
@@ -148,6 +143,19 @@ const Organizations = (props: TOrganizationsProps) => {
                 >
                     Upload
                 </button>
+
+                {!repositoriesChecked.length &&
+                    !!invites.filter((i) => i.accepted === true).length && (
+                        <div className="text-center mt-4">
+                            <button
+                                type="button"
+                                className="btn text-gray-53596d hover:text-black"
+                                onClick={onContinueClick}
+                            >
+                                Skip this step
+                            </button>
+                        </div>
+                    )}
             </div>
             <div className="signup__content">
                 <div className="signup__reload-items">
@@ -166,7 +174,7 @@ const Organizations = (props: TOrganizationsProps) => {
                 </div>
 
                 {!organizations.isFetching && !organizations.items.length && (
-                    <ListEmpty />
+                    <GithubListEmpty />
                 )}
 
                 {organizations.items.map((item, index) => {
@@ -229,7 +237,7 @@ const Organizations = (props: TOrganizationsProps) => {
                                 leaveTo="scale-y-0"
                             >
                                 <div className="orgitem__repos">
-                                    <Repositories
+                                    <GithubRepositories
                                         organization={item}
                                         isOpen={item.isOpen}
                                         signoutOAuth={signoutOAuth}
@@ -244,4 +252,4 @@ const Organizations = (props: TOrganizationsProps) => {
     )
 }
 
-export default Organizations
+export default GithubOrganizations
