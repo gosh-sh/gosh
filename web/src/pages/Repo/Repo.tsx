@@ -21,6 +21,7 @@ import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
 import RepoReadme from './Readme'
+import { onExternalLinkClick } from '../../helpers'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
@@ -161,6 +162,13 @@ const RepoPage = () => {
                                             <a
                                                 href="https://docs.gosh.sh/working-with-gosh/git-remote-helper/"
                                                 target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => {
+                                                    onExternalLinkClick(
+                                                        e,
+                                                        'https://docs.gosh.sh/working-with-gosh/git-remote-helper/',
+                                                    )
+                                                }}
                                             >
                                                 How to setup git remote helper?
                                             </a>
