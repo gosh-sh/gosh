@@ -45,8 +45,8 @@ async fn main_internal() -> anyhow::Result<()> {
     tracing::info!("git-remote-gosh v{version}");
     eprintln!("git-remote-gosh v{version}");
     if let Some(first_arg) = args().nth(1) {
-        if first_arg == "supported_versions" {
-            println!("Supported versions: {:?}", supported_contract_versions());
+        if first_arg == "supported_contract_versions" {
+            println!("Supported contract versions: {:?}", supported_contract_versions());
             exit(0);
         }
 
