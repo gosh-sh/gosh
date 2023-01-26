@@ -3,11 +3,13 @@ use std::io;
 use std::io::BufRead;
 
 fn get_version_from_solidity_source() -> Vec<String> {
-    if let Ok(version_source) = File::open("../contracts/gosh/systemcontract.sol") {
-        for line in io::BufReader::new(version_source).lines() {
-            if let Ok(line) = line {
-                if line.contains("string constant version = ") {
-                    return vec![line.trim_start_matches(|c| c != '"').trim_end_matches(|c| c != '"').replace(['\"'], "").to_string()];
+    if let Ok(contracts_path) = std::env::var("CONTRACTS_DIR") {
+        if let Ok(version_source) = File::open(contracts_path + "/systemcontract.sol") {
+            for line in io::BufReader::new(version_source).lines() {
+                if let Ok(line) = line {
+                    if line.contains("string constant version = ") {
+                        return vec![line.trim_start_matches(|c| c != '"').trim_end_matches(|c| c != '"').replace(['\"'], "").to_string()];
+                    }
                 }
             }
         }
@@ -16,6 +18,8 @@ fn get_version_from_solidity_source() -> Vec<String> {
 }
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=CONTRACTS_DIR");
+    println!("cargo:rerun-if-changed=.cargo/config.toml");
     println!("cargo:rerun-if-env-changed=GOSH_SUPPORTED_CONTRACT_VERSIONS");
     let mut supported_versions = get_version_from_solidity_source();
 
