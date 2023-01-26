@@ -259,7 +259,7 @@ function unlockVoting (uint128 amount) external onlyOwnerPubkey(_access.get())
     _saveMsg();
 }
  */
-function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  onlyOwnerPubkey(_access.get())
+function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -275,7 +275,7 @@ function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platfo
     require(clientCode.depth() == clientCodeDepth, SMVErrors.error_not_my_code_depth);
  */    tvm.accept();
     _saveMsg();
-
+    note;
     TvmBuilder staticBuilder;
     uint8 platformType = 0;
     staticBuilder.store(platformType, tip3VotingLocker, platform_id, platformCodeHash, platformCodeDepth);

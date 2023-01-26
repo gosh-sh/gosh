@@ -270,6 +270,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
     }
     
+    function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        (int8 _, uint256 keyaddr) = pub.unpack();
+        _;
+        require(_wallets.prev(keyaddr).hasValue() == false, ERR_NOT_ALONE);
+        require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
+        getMoney();
+        if (typeF == ALONE_DEPLOY_REPO) { GoshWallet(msg.sender).deployRepositoryDao{value:0.2 ton}(nameRepo, previous); return; }
+    }
+    
     function deployWalletPrivate(address[] pubaddrdeploy) private {
         this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
         getMoney();
@@ -286,7 +296,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function deployDaoTokenWallet(address pubaddr) public {
+    function deployDaoTokenWallet(address pubaddr) public accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         TvmCell s1 = _composedaoTokenWalletStateInit(pubaddr);
@@ -445,6 +455,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getAddrWallet(address pubaddr, uint128 index) external view returns(address) {
         TvmCell s1 = _composeWalletStateInit(pubaddr, index);
         return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getaddrTW(address pubaddr) external view returns(address) {
+        return _getTWAddr(pubaddr);
     }
     
     function getDaoTokenConfig() external view returns(uint128) {

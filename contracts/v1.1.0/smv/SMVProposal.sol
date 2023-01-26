@@ -169,7 +169,7 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
 function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount) external override check_external_client(_locker,_platform_id)
 {
     require(msg.value >= SMVConstants.PROPOSAL_VOTING_FEE, SMVErrors.error_balance_too_low);
-
+    
     tvm.accept();
 
     if (/* (proposalBusy) || */ (now < startTime) || (now >= finishTime) || (votingResult.hasValue()) )

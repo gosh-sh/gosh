@@ -133,6 +133,15 @@
 			]
 		},
 		{
+			"name": "AloneDeployRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
@@ -182,10 +191,20 @@
 			]
 		},
 		{
-			"name": "deployRepository",
+			"name": "deployRepositoryDao",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForDeployRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -724,7 +743,8 @@
 				{"name":"platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]
