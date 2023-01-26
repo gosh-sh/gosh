@@ -1,8 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { AppConfig, GoshError, useUser } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import yup from '../../../yup-extended'
 import { validateOnboardingDao, validateOnboardingRepo } from '../helpers'
 import { supabase } from '../../../helpers'
@@ -20,6 +18,7 @@ import {
 import { toast } from 'react-toastify'
 import ToastError from '../../../components/Error/ToastError'
 import { EDaoInviteStatus } from '../../../store/onboarding.types'
+import PreviousStep from './PreviousStep'
 
 type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
@@ -69,6 +68,30 @@ const GoshUsername = (props: TGoshUsernameProps) => {
         return data
     }
 
+    const createDbGithubRecord = async (item: {
+        user_id: string
+        github_url: string
+        gosh_url: string
+    }) => {
+        const { user_id, github_url, gosh_url } = item
+        const { count, error } = await supabase
+            .from('github')
+            .select('*', { count: 'exact' })
+            .eq('user_id', user_id)
+            .eq('github_url', github_url)
+            .eq('gosh_url', gosh_url)
+        if (error) {
+            throw new Error(error.message)
+        }
+
+        if (!count) {
+            const { error } = await supabase.from('github').insert(item)
+            if (error) {
+                throw new Error(error.message)
+            }
+        }
+    }
+
     const onBackClick = () => {
         setOnboarding((state) => ({ ...state, step: 'phrase' }))
     }
@@ -100,18 +123,13 @@ const GoshUsername = (props: TGoshUsernameProps) => {
             // Save auto clone repositories
             const goshAddress = Object.values(AppConfig.versions).reverse()[0]
             const goshProtocol = `gosh://${goshAddress}`
-            const { error } = await supabase.from('github').insert(
-                repositories.map((item) => {
-                    const { daoName, name } = item
-                    return {
-                        user_id: dbUser.id,
-                        github_url: `/${daoName}/${name}`,
-                        gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
-                    }
-                }),
-            )
-            if (error) {
-                throw new GoshError(error.message)
+            for (const item of repositories) {
+                const { daoName, name } = item
+                await createDbGithubRecord({
+                    user_id: dbUser.id,
+                    github_url: `/${daoName}/${name}`,
+                    gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
+                })
             }
 
             // Update DAO invites status
@@ -119,7 +137,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                 const { error } = await supabase
                     .from('dao_invite')
                     .update({
-                        recipient_user: dbUser.id,
+                        recipient_username: username,
                         recipient_status: invite.accepted
                             ? EDaoInviteStatus.ACCEPTED
                             : EDaoInviteStatus.REJECTED,
@@ -186,12 +204,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
         <div className="signup signup--username">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <div className="aside-step__btn-back">
-                        <button type="button" onClick={onBackClick}>
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </button>
-                    </div>
-                    <span className="aside-step__title">Back</span>
+                    <PreviousStep onClick={onBackClick} />
                 </div>
                 <p className="aside-step__text">Choose a short nickname</p>
                 <p className="aside-step__text-secondary">or create a new one</p>

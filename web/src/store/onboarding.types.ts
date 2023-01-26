@@ -2,7 +2,7 @@ export enum EDaoInviteStatus {
     ACCEPTED = 'accepted',
     REJECTED = 'rejected',
     REVOKED = 'revoked',
-    INVITED = 'invited',
+    PROPOSAL_CREATED = 'proposal_created',
 }
 
 export type TOnboardingOrganization = {

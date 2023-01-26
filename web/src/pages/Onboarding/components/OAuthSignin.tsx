@@ -1,8 +1,8 @@
-type TSigninOAuthProps = {
+type TOAuthSigninProps = {
     signinOAuth(): Promise<void>
 }
 
-const SigninOAuth = (props: TSigninOAuthProps) => {
+const OAuthSignin = (props: TOAuthSigninProps) => {
     const { signinOAuth } = props
 
     return (
@@ -35,4 +35,4 @@ const SigninOAuth = (props: TSigninOAuthProps) => {
     )
 }
 
-export default SigninOAuth
+export default OAuthSignin

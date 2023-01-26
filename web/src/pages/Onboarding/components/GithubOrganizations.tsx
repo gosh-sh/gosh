@@ -1,4 +1,4 @@
-import { faArrowLeft, faRotateRight } from '@fortawesome/free-solid-svg-icons'
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Transition } from '@headlessui/react'
 import { useCallback, useEffect } from 'react'
@@ -13,8 +13,10 @@ import {
     organizationsSelector,
     repositoriesCheckedSelector,
 } from '../../../store/onboarding.state'
-import GithubListEmpty from './GithubListEmpty'
+import ListEmpty from './ListEmpty'
 import GithubRepositories from './GithubRepositories'
+import OAuthProfile from './OAuthProfile'
+import PreviousStep from './PreviousStep'
 
 type TGithubOrganizationsProps = {
     signoutOAuth(): Promise<void>
@@ -104,12 +106,11 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         <div className="signup signup--organizations">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <div className="aside-step__btn-back">
-                        <button type="button" onClick={onBackClick}>
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </button>
-                    </div>
-                    <span className="aside-step__title">Back</span>
+                    {!invites.length ? (
+                        <OAuthProfile onSignout={signoutOAuth} />
+                    ) : (
+                        <PreviousStep onClick={onBackClick} />
+                    )}
                 </div>
 
                 <p className="aside-step__text">
@@ -174,7 +175,9 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 </div>
 
                 {!organizations.isFetching && !organizations.items.length && (
-                    <GithubListEmpty />
+                    <ListEmpty>
+                        You should have at least one organization on GitHub
+                    </ListEmpty>
                 )}
 
                 {organizations.items.map((item, index) => {

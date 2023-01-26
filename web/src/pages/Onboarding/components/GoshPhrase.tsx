@@ -1,9 +1,4 @@
-import {
-    faArrowLeft,
-    faExclamation,
-    faTimes,
-    faRotateRight,
-} from '@fortawesome/free-solid-svg-icons'
+import { faExclamation, faTimes, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Combobox } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
@@ -16,6 +11,7 @@ import ToastError from '../../../components/Error/ToastError'
 import { SwitchField } from '../../../components/Formik'
 import Spinner from '../../../components/Spinner'
 import { onboardingDataAtom } from '../../../store/onboarding.state'
+import PreviousStep from './PreviousStep'
 
 const GoshPhrase = () => {
     const [{ phrase }, setOnboarding] = useRecoilState(onboardingDataAtom)
@@ -74,12 +70,7 @@ const GoshPhrase = () => {
         <div className="signup signup--phrase">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <div className="aside-step__btn-back">
-                        <button type="button" onClick={onBackClick}>
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </button>
-                    </div>
-                    <span className="aside-step__title">Back</span>
+                    <PreviousStep onClick={onBackClick} />
                 </div>
 
                 <p className="aside-step__text">Let's set up your GOSH account</p>

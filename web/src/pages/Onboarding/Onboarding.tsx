@@ -9,7 +9,7 @@ import { signoutOAuthSupabase, singinOAuthSupabase, supabase } from '../../helpe
 import { OAuthSessionAtom, onboardingDataAtom } from '../../store/onboarding.state'
 import GithubOrganizations from './components/GithubOrganizations'
 import GoshPhrase from './components/GoshPhrase'
-import SigninOAuth from './components/SigninOAuth'
+import OAuthSignin from './components/OAuthSignin'
 import GoshUsername from './components/GoshUsername'
 import GoshDaoInvites from './components/GoshDaoInvites'
 
@@ -92,7 +92,7 @@ const OnboardingPage = () => {
                 </div>
             )}
 
-            {data.step === 'signin' && <SigninOAuth signinOAuth={signinOAuth} />}
+            {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
             {data.step === 'invites' && <GoshDaoInvites signoutOAuth={signoutOAuth} />}
             {data.step === 'organizations' && (
                 <GithubOrganizations signoutOAuth={signoutOAuth} />

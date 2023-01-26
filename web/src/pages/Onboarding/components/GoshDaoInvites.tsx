@@ -1,4 +1,4 @@
-import { faArrowRightFromBracket, faRotateRight } from '@fortawesome/free-solid-svg-icons'
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
 import { classNames } from 'react-gosh'
@@ -10,9 +10,12 @@ import {
     OAuthSessionAtom,
     onboardingDataAtom,
 } from '../../../store/onboarding.state'
-import GithubListEmpty from './GithubListEmpty'
+import ListEmpty from './ListEmpty'
 import emptylogo from '../../../assets/images/emptylogo.svg'
 import { TOnboardingInvite } from '../../../store/onboarding.types'
+import OAuthProfile from './OAuthProfile'
+import { toast } from 'react-toastify'
+import ToastError from '../../../components/Error/ToastError'
 
 type TGoshDaoInvitesProps = {
     signoutOAuth(): Promise<void>
@@ -24,9 +27,9 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
     const setOnboarding = useSetRecoilState(onboardingDataAtom)
     const [invites, setInvites] = useRecoilState(daoInvitesSelector)
 
-    const onContinueClick = () => {
+    const onContinueClick = useCallback(() => {
         setOnboarding((state) => ({ ...state, step: 'organizations' }))
-    }
+    }, [setOnboarding])
 
     const onChangeStatusClick = (status: boolean, item: TOnboardingInvite) => {
         setInvites((state) => ({
@@ -50,25 +53,33 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
             .from('dao_invite')
             .select('id, dao_name')
             .eq('recipient_email', session.user.email)
-            .in('recipient_status', [null, ''])
+            .is('recipient_status', null)
         if (error) {
             console.error(error.message)
+            toast.error(<ToastError error={error.message} />)
             return
         }
-        if (data) {
-            setInvites((state) => ({
-                ...state,
-                items: data.map((item) => {
-                    const found = state.items.find((i) => i.id === item.id)
-                    if (found) {
-                        return found
-                    }
-                    return { id: item.id, daoName: item.dao_name, accepted: null }
-                }),
-                isFetching: false,
-            }))
+
+        // If there are no invites, go to next step automatically
+        if (!data || !data.length) {
+            setInvites({ items: [], isFetching: false })
+            onContinueClick()
+            return
         }
-    }, [session, setInvites])
+
+        // Set fetched invites to state
+        setInvites((state) => ({
+            ...state,
+            items: data.map((item) => {
+                const found = state.items.find((i) => i.id === item.id)
+                if (found) {
+                    return found
+                }
+                return { id: item.id, daoName: item.dao_name, accepted: null }
+            }),
+            isFetching: false,
+        }))
+    }, [session, setInvites, onContinueClick])
 
     useEffect(() => {
         getDaoInvites()
@@ -79,23 +90,7 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
         <div className="signup signup--organizations">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <button
-                        type="button"
-                        className="aside-step__btn-signout"
-                        onClick={signoutOAuth}
-                    >
-                        <div className="aside-step__btn-signout-slide">
-                            <span className="aside-step__btn-signout-user">
-                                Hey, {session.user.user_metadata.name}
-                            </span>
-                            <span className="aside-step__btn-signout-text">Sign out</span>
-                        </div>
-                        <FontAwesomeIcon
-                            icon={faArrowRightFromBracket}
-                            size="lg"
-                            className="aside-step__btn-signout-icon"
-                        />
-                    </button>
+                    <OAuthProfile onSignout={signoutOAuth} />
                 </div>
 
                 <p className="aside-step__text">
@@ -127,7 +122,9 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
                     </button>
                 </div>
 
-                {!invites.isFetching && !invites.items.length && <GithubListEmpty />}
+                {!invites.isFetching && !invites.items.length && (
+                    <ListEmpty>You have no pending invites to DAOs on GOSH</ListEmpty>
+                )}
 
                 {invites.items.map((item, index) => {
                     return (

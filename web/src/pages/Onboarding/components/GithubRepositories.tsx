@@ -8,7 +8,7 @@ import {
     TOnboardingOrganization,
     TOnboardingRepository,
 } from '../../../store/onboarding.types'
-import GithubListEmpty from './GithubListEmpty'
+import ListEmpty from './ListEmpty'
 
 type TGithubRepositoriesProps = {
     organization: TOnboardingOrganization
@@ -101,7 +101,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
             )}
 
             {!repositories.isFetching && !repositories.items.length && (
-                <GithubListEmpty />
+                <ListEmpty>You should have at least one repository on GitHub</ListEmpty>
             )}
 
             {repositories.items.map((item, index) => (
