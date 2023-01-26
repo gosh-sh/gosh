@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.5.1
+# syntax=docker/dockerfile:1.5
 
 FROM denoland/deno:debian-1.29.4
 RUN apt update && apt install -y jq ca-certificates git libssl1.1 libc6
