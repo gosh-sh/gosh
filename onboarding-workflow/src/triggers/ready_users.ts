@@ -1,4 +1,3 @@
-import * as dotenv from 'https://deno.land/x/dotenv@v3.2.0/mod.ts'
 import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
 import { getDb } from '../db/db.ts'
 import { emailOnboardingFinished } from '../actions/emails/onboarding_finished.ts'
@@ -10,8 +9,6 @@ import {
 } from '../eversdk/dao.ts'
 import { calculateProfileAddr } from '../eversdk/dao_bot.ts'
 import { getAddrWallet } from '../eversdk/gosh_repo.ts'
-
-dotenv.config({ export: true })
 
 // TODO: sub on "all daos are ready"
 // -- drop view if exists view_ready_users;
