@@ -25,7 +25,6 @@ pub mod ever_client;
 mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
-static SUPPORTED_CONTRACT_VERSIONS_LIST: [&str; 1] = ["1.0.0"];
 
 #[derive(Clone)]
 pub struct GitHelper<
@@ -63,6 +62,14 @@ mod push;
 mod list;
 
 mod fmt;
+
+pub fn supported_contract_versions() -> anyhow::Result<Vec<String>> {
+    Ok(env!("BUILD_SUPPORTED_VERSIONS")
+        .replace(['[', ']', '\"', ' '], "")
+        .split(',')
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>())
+}
 
 impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
 where
@@ -146,14 +153,6 @@ where
         let mut caps = CAPABILITIES_LIST.map(&String::from).to_vec();
         caps.push("".to_owned());
         Ok(caps)
-    }
-
-    async fn supported_contract_versions(&self) -> anyhow::Result<Vec<String>> {
-        let mut versions = SUPPORTED_CONTRACT_VERSIONS_LIST.map(&String::from).to_vec();
-        #[cfg(feature = "for_test")]
-        versions.push("9999.0.0".to_owned());
-        versions.push("".to_owned());
-        Ok(versions)
     }
 
     async fn get_repo_version(&self) -> anyhow::Result<Vec<String>> {
@@ -379,7 +378,9 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions().await?,
             (Some("gosh_supported_contract_versions"), None, None) => {
-                helper.supported_contract_versions().await?
+                let mut versions = supported_contract_versions()?;
+                versions.push("".to_string());
+                versions
             }
             (None, None, None) => return Ok(()),
             _ => Err(anyhow::anyhow!("unknown command"))?,
