@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4.2
+# syntax=docker/dockerfile:1.5
 
 ARG GOSH_GIT_IMAGE=teamgosh/git
 
