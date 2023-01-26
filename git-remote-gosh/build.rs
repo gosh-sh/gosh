@@ -7,10 +7,9 @@ fn get_version_from_solidity_source() -> Vec<String> {
     let version_source = File::open(&contracts_path).expect(&format!("Failed to open file: {}", &contracts_path));
 
     for line in io::BufReader::new(version_source).lines() {
-        if let Ok(line) = line {
-            if line.contains("string constant version = ") {
-                return vec![line.trim_start_matches(|c| c != '"').trim_end_matches(|c| c != '"').replace(['\"'], "").to_string()];
-            }
+        let line = line.expect(&format!("Failed to read line from {}",  &contracts_path));
+        if line.contains("string constant version = ") {
+            return vec![line.trim_start_matches(|c| c != '"').trim_end_matches(|c| c != '"').replace(['\"'], "").to_string()];
         }
     }
 
