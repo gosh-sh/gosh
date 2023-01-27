@@ -38,7 +38,7 @@ library GoshLib {
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
     
-    function buildTaskWalletCode(
+    function buildTokenWalletCode(
         TvmCell originalCode,
         address pubaddr,
         string version

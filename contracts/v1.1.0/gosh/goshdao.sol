@@ -179,10 +179,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function _composedaoTokenWalletStateInit(address pubaddr) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_DaoTokenWalletCode], pubaddr, version);
+        TvmCell deployCode = GoshLib.buildTokenWalletCode(_code[m_DaoTokenWalletCode], pubaddr, version);
         TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
-            contr: GoshWallet,
+            contr: DaoTokenWallet,
             varInit: {_goshdao: address(this)}
         });
         return _contract;

@@ -87,10 +87,10 @@ contract DaoTokenWallet is Modifiers{
     }
     
     function _composeTokenWalletStateInit(address pubaddr) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_DaoTokenWalletCode], pubaddr, version);
+        TvmCell deployCode = GoshLib.buildTokenWalletCode(_code[m_DaoTokenWalletCode], pubaddr, version);
         TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
-            contr: GoshWallet,
+            contr: DaoTokenWallet,
             varInit: {_goshdao: _goshdao}
         });
         return _contract;
