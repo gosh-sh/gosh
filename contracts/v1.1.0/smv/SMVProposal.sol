@@ -305,17 +305,17 @@ function getGoshDeployTaskProposalParams () external view
 }
 
 function getGoshDeployRepoProposalParams () external view
-         returns( string repoName, optional(AddrVersion) previous)
+         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous)
 {
     TvmSlice s = propData.toSlice();
-    (string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));
+    (uint256  proposalKind, string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));
 }
 
 function getGoshAddTokenProposalParams () external view
-         returns( address pubaddr, uint128 grant)
+         returns(uint256  proposalKind,  address pubaddr, uint128 grant)
 {
     TvmSlice s = propData.toSlice();
-    (address pubaddr, uint128 grant) = s.decode(address, uint128);
+    (uint256  proposalKind, address pubaddr, uint128 grant) = s.decode(address, uint128);
 }
 
 ////////////////////////////////////
