@@ -276,6 +276,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
             GoshWallet(getAddrWalletIn(pub, 0)).addRegularToken{value:0.2 ton}(token);
             return; 
         }
+        if (typeF == ALONE_MINT_TOKEN) {
+            _reserve += token;
+            return;
+        }
+    }
+    
+    function mintReserve (uint128 token, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+        _reserve += token;
     }
     
     function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {

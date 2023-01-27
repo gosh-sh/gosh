@@ -141,6 +141,14 @@
 			]
 		},
 		{
+			"name": "AloneMintDaoReserve",
+			"inputs": [
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "AloneAddVoteTokenDao",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
@@ -161,6 +169,15 @@
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForMintToken",
+			"inputs": [
+				{"name":"token","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]

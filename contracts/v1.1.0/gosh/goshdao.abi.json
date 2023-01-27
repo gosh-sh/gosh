@@ -157,6 +157,16 @@
 			]
 		},
 		{
+			"name": "mintReserve",
+			"inputs": [
+				{"name":"token","type":"uint128"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "isAloneDeploy",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},

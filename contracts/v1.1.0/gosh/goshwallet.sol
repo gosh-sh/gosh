@@ -243,6 +243,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(0, pubaddr, _pubaddr, _index, ALONE_DEPLOY_WALLET);
     }
     
+    function AloneMintDaoReserve(uint128 token) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        MemberToken[] pubaddr;
+        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(token, pubaddr, _pubaddr, _index, ALONE_MINT_TOKEN);
+    }
+    
     function AloneAddVoteTokenDao(uint128 grant) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -267,6 +276,30 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         GoshDao(_goshdao).isAloneDeploy{value: 0.13 ton, flag: 1}(nameRepo, previous, _pubaddr, _index, ALONE_DEPLOY_REPO);
+    }
+    
+    function startProposalForMintToken(
+        uint128 token,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, token);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+    
+    function _mintToken(uint128 grant) private view {
+        GoshDao(_goshdao).mintReserve{value:0.1 ton}(grant, _pubaddr, _index);
     }
     
     function startProposalForAddToken(
@@ -1078,6 +1111,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == ADD_VOTE_TOKEN_PROPOSAL_KIND) {
                 (address pubaddr, uint128 grant) = s.decode(address, uint128);
                 _addToken(pubaddr, grant);
+            }  else
+            if (kind == MINT_TOKEN_PROPOSAL_KIND) {
+                (uint128 grant) = s.decode(uint128);
+                _mintToken(grant);
             }
         }
     }
