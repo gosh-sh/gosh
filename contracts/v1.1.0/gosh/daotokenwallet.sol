@@ -46,7 +46,7 @@ contract DaoTokenWallet is Modifiers{
         _access = access;
     }
     
-    function getTokenWallet(uint128 grant) public  senderIs(_getWalletAddr(0)) accept {
+    function getTokenWallet(uint128 grant) public  senderIs(_getWalletAddr(uint128(0))) accept {
         _balance += grant;
     }
     
@@ -149,7 +149,13 @@ contract DaoTokenWallet is Modifiers{
         return _pubaddr;
     }
     
+    function getGoshdao() external view returns(address) {
+        return _goshdao;
+    }
     
+    function getWalletAddr() external view returns(address) {
+        return _getWalletAddr(uint128(0));
+    }
 
     function getAccess() external view returns(optional(uint256)) {
         return _access;

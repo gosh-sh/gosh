@@ -98,6 +98,22 @@
 			]
 		},
 		{
+			"name": "getGoshdao",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getWalletAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getAccess",
 			"inputs": [
 			],
