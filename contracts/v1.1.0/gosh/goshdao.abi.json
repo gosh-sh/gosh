@@ -43,8 +43,7 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
-				{"name":"token","type":"uint128"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -136,16 +135,6 @@
 			]
 		},
 		{
-			"name": "upgradeTokens",
-			"inputs": [
-				{"name":"newvalue","type":"uint128"},
-				{"name":"pub","type":"address"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -158,8 +147,8 @@
 		{
 			"name": "isAlone",
 			"inputs": [
-				{"name":"config","type":"uint128"},
-				{"name":"pubaddr","type":"address[]"},
+				{"name":"token","type":"uint128"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"typeF","type":"uint128"}
@@ -199,7 +188,7 @@
 		{
 			"name": "deployWallet",
 			"inputs": [
-				{"name":"pubaddrdeploy","type":"address[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -239,7 +228,18 @@
 			]
 		},
 		{
-			"name": "deployWallets",
+			"name": "addVoteTokenPub",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletsConst",
 			"inputs": [
 				{"name":"pubmem","type":"address[]"},
 				{"name":"index","type":"uint128"}
@@ -248,9 +248,18 @@
 			]
 		},
 		{
-			"name": "deployWalletsOut",
+			"name": "deployWallets",
 			"inputs": [
-				{"name":"pubmem","type":"address[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletsOutMember",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -292,14 +301,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getDaoTokenConfig",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
 			]
 		},
 		{
@@ -389,8 +390,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint128"},
-				{"name":"value1","type":"uint128"}
+				{"name":"value0","type":"uint128"}
 			]
 		},
 		{
@@ -547,7 +547,7 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
-		{"name":"saveaddr","type":"optional(address[])"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"saveind","type":"optional(uint128)"}
 	]
 }

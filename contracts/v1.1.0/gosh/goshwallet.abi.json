@@ -135,15 +135,15 @@
 		{
 			"name": "AloneDeployWalletDao",
 			"inputs": [
-				{"name":"pubaddr","type":"address[]"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "AloneSetConfigDao",
+			"name": "AloneAddTokenDao",
 			"inputs": [
-				{"name":"newtoken","type":"uint128"}
+				{"name":"grant","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -158,18 +158,19 @@
 			]
 		},
 		{
-			"name": "startProposalForDeployWalletDao",
+			"name": "startProposalForAddToken",
 			"inputs": [
-				{"name":"pubaddr","type":"address[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"token","type":"uint128"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "startProposalForChangeTokenConfig",
+			"name": "startProposalForDeployWalletDao",
 			"inputs": [
-				{"name":"tokenforperson","type":"uint128"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -351,6 +352,14 @@
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteToken",
+			"inputs": [
 				{"name":"grant","type":"uint128"}
 			],
 			"outputs": [

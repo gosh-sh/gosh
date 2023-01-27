@@ -235,21 +235,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function AloneDeployWalletDao(address[] pubaddr) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+    function AloneDeployWalletDao(MemberToken[] pubaddr) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(0, pubaddr, _pubaddr, _index, ALONE_DEPLOY_WALLET);
     }
-
-    function AloneSetConfigDao(uint128 newtoken) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+    
+    function AloneAddTokenDao(uint128 grant) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
-        address[] pubaddr;
-        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(newtoken, pubaddr, _pubaddr, _index, ALONE_SET_CONFIG);
+        MemberToken[] pubaddr;
+        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(grant, pubaddr, _pubaddr, _index, ALONE_ADD_TOKEN);
     }
     
     function AloneDeployRepository(string nameRepo, optional(AddrVersion) previous) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
@@ -259,9 +259,30 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         GoshDao(_goshdao).isAloneDeploy{value: 0.13 ton, flag: 1}(nameRepo, previous, _pubaddr, _index, ALONE_DEPLOY_REPO);
     }
+    
+    function startProposalForAddToken(
+        address pubaddr,
+        uint128 token,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = ADD_TOKEN_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, pubaddr, token);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, ADD_TOKEN_PROPOSAL_START_AFTER, ADD_TOKEN_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
 
     function startProposalForDeployWalletDao(
-        address[] pubaddr,
+        MemberToken[] pubaddr,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -276,27 +297,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients);
-
-        getMoney();
-    }
-
-    function startProposalForChangeTokenConfig(
-        uint128 tokenforperson,
-        uint128 num_clients
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        TvmBuilder proposalBuilder;
-        uint256 proposalKind = CHANGE_TOKEN_CONFIG_PROPOSAL_KIND;
-
-        proposalBuilder.store(proposalKind, tokenforperson);
-        TvmCell c = proposalBuilder.toCell();
-
-        _startProposalForOperation(c, CHANGE_TOKEN_CONFIG_PROPOSAL_START_AFTER, CHANGE_TOKEN_CONFIG_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
@@ -330,11 +330,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	GoshDao(_goshdao).upgradeDao{value : 0.1 ton, flag : 1}(newversion, description, _pubaddr, _index);
     }
 
-    function _upgradeConfig(uint128 value) private view {
-    	GoshDao(_goshdao).upgradeTokens{value : 0.1 ton, flag : 1}(value, _pubaddr, _index);
-    }
-
-    function _deployWalletDao(address[] pubaddr) private view {
+    function _deployWalletDao(MemberToken[] pubaddr) private view {
         GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
     }
 
@@ -723,6 +719,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).addVoteToken{value: 0.1 ton}(_pubaddr, _index, grant);
         getMoney();
     }
+    
+    function addVoteToken(
+        uint128 grant
+    ) public senderIs(_goshdao) accept saveMsg {
+        m_pseudoDAOVoteBalance += grant;
+        m_pseudoDAOBalance += grant;
+        getMoney();
+    }
 
     function sendToken(
         address pubaddr,
@@ -745,6 +749,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function _addToken(
+        address pubaddr,
+        uint128 token
+    ) private view {
+        GoshDao(_goshdao).addVoteTokenPub{value: 0.1 ton}(pubaddr, _pubaddr, _index, token);
+    }
+    
     function getTaskAddr(string nametask, address repo) private view returns(address) {
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
@@ -1020,7 +1031,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
-                (address[] pubaddr) = s.decode(address[]);
+                (MemberToken[] pubaddr) = s.decode(MemberToken[]);
                 _deployWalletDao(pubaddr);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
@@ -1032,10 +1043,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 (string newversion, string description) = s.decode(string, string);
                 _upgradeDao(newversion, description);
             } else
-            if (kind == CHANGE_TOKEN_CONFIG_PROPOSAL_KIND) {
-                (uint128 newtokennumber) = s.decode(uint128);
-                _upgradeConfig(newtokennumber);
-            }  else
             if (kind == TASK_PROPOSAL_KIND) {
                 (string taskName, string repoName, uint128 index) = s.decode(string, string, uint128);
                 _confirmTask(taskName, repoName, index);
@@ -1051,6 +1058,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
                 (string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));
                 _deployRepository(repoName, previous);
+            }  else
+            if (kind == ADD_TOKEN_PROPOSAL_KIND) {
+                (address pubaddr, uint128 grant) = s.decode(address, uint128);
+                _addToken(pubaddr, grant);
             }
         }
     }

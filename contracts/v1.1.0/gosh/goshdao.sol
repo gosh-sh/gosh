@@ -51,7 +51,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool _tombstone = false;
     
     uint128 timeMoney = 0;
-    optional(address[]) saveaddr;
+    optional(MemberToken[]) saveaddr;
     optional(uint128) saveind;
     
     constructor(
@@ -110,22 +110,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _previous = previous; 
             GoshDao(_previous.get()).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
         }
-        else { this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, 0); }
+        else { this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, 0); }
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        GoshDao(msg.sender).getPreviousInfo1{value: 0.1 ton, flag: 1}(_wallets, _tokenforperson);
+        GoshDao(msg.sender).getPreviousInfo1{value: 0.1 ton, flag: 1}(_wallets);
     }
     
-    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets, uint128 token) public internalMsg {
+    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets) public view internalMsg {
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
         uint256 zero;
-        _tokenforperson = token;
         this.returnWallets{value: 0.1 ton}(zero, wallets);
     }
     
@@ -134,7 +133,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (res.hasValue()) {
             MemberToken pub;
             (key, pub) = res.get();
-            deployWalletIn(address.makeAddrStd(0, key), pub.count);
+            deployWalletIn(pub);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
         getMoney();
@@ -244,11 +243,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _tombstone = true;
         SystemContract(_systemcontract).upgradeDao1{value : 0.1 ton, flag: 1}(_nameDao, newversion);
     }
-    
-    function upgradeTokens(uint128 newvalue, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
-        getMoney();
-        _tokenforperson = newvalue;
-    }
 
     //Wallet part
     function setTombstone(address pub, uint128 index, string description) public senderIs(getAddrWalletIn(pub, index))  accept {
@@ -259,15 +253,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
     }
     
-    function isAlone (uint128 config, address[] pubaddr, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
         require(_wallets.prev(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         getMoney();
-        if (typeF == ALONE_SET_CONFIG) { _tokenforperson = config; return; }
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
+        if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token); return; }
     }
     
     function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
@@ -280,7 +274,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (typeF == ALONE_DEPLOY_REPO) { GoshWallet(msg.sender).deployRepositoryDao{value:0.2 ton}(nameRepo, previous); return; }
     }
     
-    function deployWalletPrivate(address[] pubaddrdeploy) private {
+    function deployWalletPrivate(MemberToken[] pubaddrdeploy) private {
         this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
         getMoney();
     }
@@ -309,7 +303,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
         
-    function deployWallet(address[] pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
+    function deployWallet(MemberToken[] pubaddrdeploy, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index)) {
         require(_tombstone == false, ERR_TOMBSTONE);
         tvm.accept();
         this.deployWallets{value: 0.1 ton, flag: 1}(pubaddrdeploy, 0);
@@ -349,25 +343,28 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _;
         _wallets[keyaddr].count += grant;
     }
-
-
-    function deployWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
-        tvm.accept();
-        getMoney();
-        if (address(this).balance < 100 ton) { saveaddr = pubmem; saveind = index; return; }
-        if (index >= pubmem.length) { return; }
-        deployWalletIn(pubmem[index], _tokenforperson);
-        index += 1;
-        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+ 
+    function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {
+        (int8 _, uint256 keyaddr) = pub.unpack();
+        _;
+        GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
+        _wallets[keyaddr].count += grant;
     }
     
-    function deployWalletIn(address pubaddr, uint128 token) private {
+    function deployWalletsConst(address[] pubmem, uint128 index) public senderIs(address(this)) {
+        tvm.accept();
+        getMoney();
+        if (index >= pubmem.length) { return; }
+        deployWalletInConst(pubmem[index]);
+        index += 1;
+        this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, index);
+    }
+    
+    function deployWalletInConst(address pubaddr) private {
         tvm.accept();
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        (int8 _, uint256 keyaddr) = pubaddr.unpack();
-        _;
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, token);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
         }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
@@ -375,18 +372,46 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, token, _rootTokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
+        getMoney();
+    }
+
+    function deployWallets(MemberToken[] pubmem, uint128 index) public senderIs(address(this)) {
+        tvm.accept();
+        getMoney();
+        if (address(this).balance < 100 ton) { saveaddr = pubmem; saveind = index; return; }
+        if (index >= pubmem.length) { return; }
+        deployWalletIn(pubmem[index]);
+        index += 1;
+        this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, index);
+    }
+    
+    function deployWalletIn(MemberToken pubaddr) private {
+        tvm.accept();
+        TvmCell s1 = _composeWalletStateInit(pubaddr.member, 0);
+        _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
+        (int8 _, uint256 keyaddr) = pubaddr.member.unpack();
+        _;
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
+        new GoshWallet {
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
+        }(  _pubaddr, pubaddr.member, _nameDao, _code[m_CommitCode], 
+            _code[m_RepositoryCode],
+            _code[m_WalletCode],
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
+            m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
+            m_SMVClientCode, m_SMVProposalCode, pubaddr.count, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
         getMoney();
     }
     
-    function deployWalletsOut(address[] pubmem, uint128 index) public accept {
+    function deployWalletsOutMember(MemberToken[] pubmem, uint128 index) public accept saveMsg {
         getMoney();
         if (address(this).balance < 100 ton) { saveaddr = pubmem; saveind = index; return; }
         if (index >= pubmem.length) { return; }
-        deployWalletOut(pubmem[index]);
+        deployWalletOut(pubmem[index].member);
         index += 1;
-        this.deployWalletsOut{value: 0.1 ton, flag: 1}(pubmem, index);
+        this.deployWalletsOutMember{value: 0.1 ton, flag: 1}(pubmem, index);
     }
     
     function deployWalletOut(address pubaddr) private {
@@ -486,10 +511,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _getTWAddr(pubaddr);
     }
     
-    function getDaoTokenConfig() external view returns(uint128) {
-        return _tokenforperson;
-    }
-
     function getWalletCode() external view returns(TvmCell) {
         return _code[m_WalletCode];
     }
@@ -543,8 +564,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return _nameDao;
     }
     
-    function getConfig() external view returns(uint128, uint128) {
-        return (_limit_wallets, _tokenforperson);
+    function getConfig() external view returns(uint128) {
+        return (_limit_wallets);
     }
 
     function getVersion() external pure returns(string, string) {
