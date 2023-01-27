@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.4.2
-
 # Base builder ---------------------------
 FROM --platform=$BUILDPLATFORM rust:1.66-bullseye as rust-builder
 
@@ -35,11 +33,26 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
 # amd64 build ----------------------------
 FROM --platform=$BUILDPLATFORM rust-builder AS build-amd64
 
+# build dispatcher
 RUN \
     --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/target,id=target_amd64 \
-    --mount=type=bind,target=./ \
+    --mount=type=bind,source=./,target=./ \
+    --mount=type=bind,source=../resources/,target=/contracts/gosh \
+    cd gosh-dispatcher &&\
+    cargo install \
+    --path ./ \
+    --target x86_64-unknown-linux-gnu \
+    --target-dir=/target
+
+# build remote
+RUN \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/target,id=target_amd64 \
+    --mount=type=bind,source=./,target=./ \
+    --mount=type=bind,source=../resources/,target=/contracts/gosh \
     cargo install \
     --path ./ \
     --target x86_64-unknown-linux-gnu \
@@ -48,31 +61,47 @@ RUN \
 # arm64 build ----------------------------
 FROM --platform=$BUILDPLATFORM rust-builder AS build-arm64
 
+# build dispatcher
 RUN \
     --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/target,id=target_arm64 \
-    --mount=type=bind,target=./ \
+    --mount=type=bind,source=./,target=./ \
+    --mount=type=bind,source=../resources/,target=/contracts/gosh \
+    cd gosh-dispatcher &&\
     cargo install \
     --path ./ \
     --target aarch64-unknown-linux-gnu \
-    --target-dir=/target &&\
+    --target-dir=/target
+
+# build remote
+RUN \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/target,id=target_arm64 \
+    --mount=type=bind,source=./,target=./ \
+    --mount=type=bind,source=../resources/,target=/contracts/gosh \
+    cargo install \
+    --path ./ \
+    --target aarch64-unknown-linux-gnu \
+    --target-dir=/target
 
 FROM debian:bullseye-slim as final-base
 RUN apt-get update && apt-get install -yq --no-install-recommends git libssl1.1 libc6 ca-certificates
 
 FROM --platform=amd64 final-base as final-amd64
-COPY --from=build-amd64 --link /usr/local/cargo/bin/git-remote-gosh_v1_0_0 /usr/local/bin/git-remote-gosh_v1_0_0
+ARG REMOTE_VERSION
 COPY --from=build-amd64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY --from=build-amd64 --link /usr/local/cargo/bin/$REMOTE_VERSION /usr/local/bin/$REMOTE_VERSION
 
 FROM --platform=arm64 final-base as final-arm64
-COPY --from=build-arm64 --link /usr/local/cargo/bin/git-remote-gosh_v1_0_0 /usr/local/bin/git-remote-gosh_v1_0_0
+ARG REMOTE_VERSION
 COPY --from=build-arm64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY --from=build-arm64 --link /usr/local/cargo/bin/$REMOTE_VERSION /usr/local/bin/$REMOTE_VERSION
 
 FROM final-${TARGETARCH}
 # ENV GOSH_TRACE=1
 WORKDIR /workdir
-ARG REMOTE_VERSION
 RUN echo $REMOTE_VERSION > dispatcher.ini
 ENV GOSH_INI_PATH=/workdir/dispatcher.ini
 ENTRYPOINT [ "git" ]

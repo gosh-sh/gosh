@@ -78,12 +78,15 @@ pipeline {
                 retry(3) {
                     script {
                         if (!params.ONLYWEB) {
+                            env.REMOTE_VERSION = sh script: 'grep -r "name = \'git-remote-gosh_v" Cargo.toml | sed "s/name = \'//i" | sed "s/\'//i"', returnStdout: true
                             dir('git-remote-gosh') {
                                 sh "make prepare-builder DOCKER_BUILDER_ARGS='--driver-opt network=host'"
                                 sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
                                 sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
-                                sh 'cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64'
-                                sh 'cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64'
+                                sh "cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64"
+                                sh "cp linux_amd64/usr/local/bin/${REMOTE_VERSION} ./${REMOTE_VERSION}-amd64"
+                                sh "cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64"
+                                sh "cp linux_arm64/usr/local/bin/${REMOTE_VERSION} ./${REMOTE_VERSION}-arm64"
                             }
                         }
                     }
@@ -287,12 +290,16 @@ pipeline {
                     if (!params.ONLYWEB) {
                         archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
                         archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
+                        archiveArtifacts artifacts: "git-remote-gosh/${REMOTE_VERSION}-amd64"
+                        archiveArtifacts artifacts: "git-remote-gosh/${REMOTE_VERSION}-arm64"
                         if (!params.DRYRUN && !params.ONLYWEB) {
                             dir('.ci/scripts') {
                                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                                     sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/${REMOTE_VERSION}-amd64'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/${REMOTE_VERSION}-arm64'
                                 }
                             }
                         }

@@ -2,6 +2,7 @@
 target/
 log/
 resources/*.abi.json
+resources/*.sol
 
 .DS_Store
 *.log

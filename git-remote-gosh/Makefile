@@ -76,6 +76,7 @@ prepare-builder: qemu ## prepare docker buildx builder
 .PHONY: bench
 bench: copy_abi prepare-builder
 	@echo === build + publish
+	cp -r ../contracts/gosh/systemcontract.sol ./resources/
 	${DOCKER_BUILDX} \
 		--progress=${PROGRESS} \
 		--platform ${PLATFORM} \
@@ -88,6 +89,7 @@ bench: copy_abi prepare-builder
 .PHONY: publish
 publish: copy_abi prepare-builder
 	@echo === build + publish
+	cp -r ../contracts/gosh/systemcontract.sol ./resources/
 	${DOCKER_BUILDX} \
 		--push \
 		--progress=${PROGRESS} \
