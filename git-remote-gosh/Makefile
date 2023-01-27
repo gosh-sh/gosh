@@ -1,7 +1,7 @@
 DOCKER              ?= docker
 DOCKER_BUILDER_NAME ?= public-gosh-builder
 PLATFORM            ?= linux/amd64,linux/arm64
-PROGRESS            ?= auto
+PROGRESS            ?= linear
 # PROGRESS            ?= plain
 DOCKER_BUILDX       ?= ${DOCKER} buildx --builder ${DOCKER_BUILDER_NAME} build
 
@@ -12,6 +12,7 @@ TARGET_ARCH := "x86_64-unknown-linux-gnu"
 
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | tr / _)
+REMOTE_VERSION := $(shell grep -r "name = 'git-remote-gosh_v" Cargo.toml | sed "s/name = '//i" | sed "s/'//i")
 
 IMAGE_NAME := teamgosh/git
 # use current branch if not set
@@ -80,7 +81,7 @@ bench: copy_abi prepare-builder
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
 		${DOCKER_BUILDX_ARGS} \
-		\
+		--build-arg REMOTE_VERSION=${REMOTE_VERSION} \
 		-f Dockerfile \
 		.
 
@@ -93,6 +94,7 @@ publish: copy_abi prepare-builder
 		--platform ${PLATFORM} \
 		-t ${FULL_IMAGE_NAME} \
 		${DOCKER_BUILDX_ARGS} \
+		--build-arg REMOTE_VERSION=${REMOTE_VERSION} \
 		\
 		-f Dockerfile \
 		.
