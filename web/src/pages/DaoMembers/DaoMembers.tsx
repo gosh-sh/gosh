@@ -151,14 +151,14 @@ const DaoMembersPage = () => {
                 </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-6">
+            <div className="mt-6 flex flex-wrap items-start gap-y-6 gap-x-4">
                 <div
                     id="create-member-anchor"
-                    className="basis-full lg:basis-5/12 border rounded-xl p-5 md:p-8"
+                    className="border rounded-xl p-5 md:p-8 basis-full lg:basis-5/12"
                 >
                     <DaoMemberForm dao={dao.adapter} getDaoInvites={getDaoInvites} />
                 </div>
-                <div className="grow border rounded-xl overflow-hidden">
+                <div className="border rounded-xl overflow-hidden grow lg:basis-6/12">
                     <DaoMemberInvites
                         dao={dao.adapter}
                         invites={invites}

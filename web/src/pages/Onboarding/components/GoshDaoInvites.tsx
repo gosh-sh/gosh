@@ -94,7 +94,7 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
                 </div>
 
                 <p className="aside-step__text">
-                    Checkout your pending invites to DAOs on GOSH
+                    Accept or decline invitations to the DAO
                 </p>
 
                 <button
@@ -103,7 +103,7 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
                     onClick={onContinueClick}
                     disabled={!!invites.items.filter((i) => i.accepted === null).length}
                 >
-                    Continue
+                    Next step
                 </button>
             </div>
             <div className="signup__content">
@@ -139,29 +139,17 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
                                             {item.daoName}
                                         </div>
                                     </div>
-                                    <div className="orgitem__description text-right">
+                                    <div className="orgitem__description flex gap-4 mt-3">
                                         <button
                                             type="button"
                                             className={classNames(
-                                                'btn text-green-800 mr-4 px-2 py-1',
-                                                'hover:bg-green-800 hover:text-white',
-                                                item.accepted === true
-                                                    ? 'bg-green-800 !text-white'
-                                                    : null,
-                                            )}
-                                            onClick={() => {
-                                                onChangeStatusClick(true, item)
-                                            }}
-                                        >
-                                            Accept
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={classNames(
-                                                'btn text-rose-600 px-2 py-1',
-                                                'hover:bg-rose-600 hover:text-white',
+                                                'block grow',
+                                                'border rounded-lg py-1 px-6',
+                                                'text-sm text-rose-600',
+                                                'bg-gray-fafafd',
+                                                'hover:bg-rose-50',
                                                 item.accepted === false
-                                                    ? 'bg-rose-600 !text-white'
+                                                    ? '!bg-rose-600 !text-white border-transparent'
                                                     : null,
                                             )}
                                             onClick={() => {
@@ -169,6 +157,24 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
                                             }}
                                         >
                                             Reject
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={classNames(
+                                                'block grow',
+                                                'border rounded-lg py-1 px-6',
+                                                'text-sm text-green-600',
+                                                'bg-gray-fafafd',
+                                                'hover:bg-green-50',
+                                                item.accepted === true
+                                                    ? '!bg-green-600 !text-white border-transparent'
+                                                    : null,
+                                            )}
+                                            onClick={() => {
+                                                onChangeStatusClick(true, item)
+                                            }}
+                                        >
+                                            Accept
                                         </button>
                                     </div>
                                 </div>

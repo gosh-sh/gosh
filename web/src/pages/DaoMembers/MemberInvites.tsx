@@ -79,6 +79,8 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                 ...state,
                 items: state.items.filter((i) => i.id !== item.id),
             }))
+
+            toast.success('Proposal created')
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -97,7 +99,9 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                 <table className="w-full">
                     <thead>
                         <tr className="text-gray-7c8db5 text-left text-xs">
-                            <th className="font-normal w-1/2">Invited user</th>
+                            <th className="font-normal w-1/2 whitespace-nowrap">
+                                Invited user
+                            </th>
                             <th className="font-normal px-3">Status</th>
                             <th></th>
                         </tr>
@@ -113,21 +117,26 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
 
                         {invites.items.map((item, index) => (
                             <tr key={index}>
-                                <td className="py-2">{item.recipientUsername}</td>
+                                <td className="py-2 text-sm">{item.recipientUsername}</td>
                                 <td className="py-2 px-3 text-gray-7c8db5 font-light text-sm">
                                     {item.recipientStatus || 'pending'}
                                 </td>
-                                <td className="py-2">
+                                <td className="py-2 text-right">
                                     {!item.recipientStatus && (
                                         <button
                                             type="button"
                                             className={classNames(
-                                                'btn text-sm text-rose-600/60',
-                                                'hover:text-rose-600 disabled:text-rose-600/20',
+                                                'whitespace-nowrap',
+                                                'border rounded-lg py-1 px-6 text-sm text-black',
+                                                'hover:bg-gray-fafafd',
+                                                'disabled:pointer-events-none disabled:opacity-60',
                                             )}
                                             disabled={item.isFetching}
                                             onClick={() => onInviteRevoke(item)}
                                         >
+                                            {item.isFetching && (
+                                                <Spinner size="sm" className="mr-2" />
+                                            )}
                                             Revoke
                                         </button>
                                     )}
@@ -136,13 +145,18 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                                         <button
                                             type="button"
                                             className={classNames(
-                                                'btn text-sm text-green-800/60',
-                                                'hover:text-green-800 disabled:text-green-800/20',
+                                                'whitespace-nowrap',
+                                                'border rounded-lg py-1 px-6 text-sm text-green-600',
+                                                'hover:text-white hover:bg-green-600 hover:border-transparent',
+                                                'disabled:pointer-events-none disabled:opacity-60',
                                             )}
                                             disabled={item.isFetching}
                                             onClick={() => onInviteProposalCreate(item)}
                                         >
-                                            Proposal
+                                            {item.isFetching && (
+                                                <Spinner size="sm" className="mr-2" />
+                                            )}
+                                            Create proposal
                                         </button>
                                     )}
                                 </td>
