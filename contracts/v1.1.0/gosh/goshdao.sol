@@ -365,6 +365,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
         }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
