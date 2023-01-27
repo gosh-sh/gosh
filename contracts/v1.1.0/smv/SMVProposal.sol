@@ -311,7 +311,7 @@ function getGoshDeployRepoProposalParams () external view
     (uint256  proposalKind, string repoName, optional(AddrVersion) previous) = s.decode(uint256, string, optional(AddrVersion));
 }
 
-function getGoshAddTokenProposalParams () external view
+function getGoshAddVoteTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant)
 {
     TvmSlice s = propData.toSlice();

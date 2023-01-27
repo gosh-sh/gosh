@@ -403,6 +403,15 @@
 			]
 		},
 		{
+			"name": "getTokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"}
+			]
+		},
+		{
 			"name": "getOwner",
 			"inputs": [
 			],
@@ -548,6 +557,8 @@
 		{"name":"_tombstone","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
-		{"name":"saveind","type":"optional(uint128)"}
+		{"name":"saveind","type":"optional(uint128)"},
+		{"name":"_reserve","type":"uint128"},
+		{"name":"_allbalance","type":"uint128"}
 	]
 }

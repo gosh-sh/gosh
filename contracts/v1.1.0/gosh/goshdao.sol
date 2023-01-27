@@ -54,6 +54,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     optional(MemberToken[]) saveaddr;
     optional(uint128) saveind;
     
+    uint128 _reserve = 0;
+    uint128 _allbalance = 0;
+    
     constructor(
         address pubaddr, 
         address profiledao,
@@ -133,6 +136,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (res.hasValue()) {
             MemberToken pub;
             (key, pub) = res.get();
+            _reserve += pub.count;
             deployWalletIn(pub);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
@@ -261,10 +265,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         getMoney();
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
-        if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; 
+        if (typeF == ALONE_ADD_VOTE_TOKEN) {
+            require(_reserve >= token, ERR_LOW_TOKEN_RESERVE);
+            _wallets[keyaddr].count += token; 
             GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token);
             return; 
-       }
+        }
+        if (typeF == ALONE_ADD_TOKEN) { 
+            require(_reserve >= token, ERR_LOW_TOKEN_RESERVE);
+            GoshWallet(getAddrWalletIn(pub, 0)).addRegularToken{value:0.2 ton}(token);
+            return; 
+        }
     }
     
     function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
@@ -380,6 +391,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
+        _allbalance += _tokenforperson;
         getMoney();
     }
 
@@ -395,6 +407,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function deployWalletIn(MemberToken pubaddr) private {
         tvm.accept();
+        require(_reserve >= pubaddr.count, ERR_LOW_TOKEN_RESERVE);
+        _reserve -= pubaddr.count;
+        _allbalance += pubaddr.count;
         TvmCell s1 = _composeWalletStateInit(pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         (int8 _, uint256 keyaddr) = pubaddr.member.unpack();
@@ -578,6 +593,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     function getVersion() external pure returns(string, string) {
         return ("goshdao", version);
+    }
+        
+    function getTokenBalance() external view returns(uint128, uint128) {
+        return (_reserve, _allbalance);
     }
         
     function getOwner() external view returns(address) {

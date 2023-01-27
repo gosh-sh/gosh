@@ -141,6 +141,14 @@
 			]
 		},
 		{
+			"name": "AloneAddVoteTokenDao",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "AloneAddTokenDao",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
@@ -359,6 +367,14 @@
 		},
 		{
 			"name": "addVoteToken",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addRegularToken",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
 			],
