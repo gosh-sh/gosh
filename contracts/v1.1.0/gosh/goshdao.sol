@@ -263,7 +263,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
         if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; 
             GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token);
-            _requestMint(getAddrWalletIn(pub, 0), token);
             return; 
        }
     }
@@ -341,26 +340,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         );
     }
     
-    function _requestMint (address recipient, uint128 mint_amount) private view
-    {
-        tvm.accept();
-        TvmCell empty;
-        ITokenRoot(_rootTokenRoot).mint{value: 10 ton}(
-            mint_amount,
-            recipient,
-            0,
-            this,
-            true,
-            empty
-        );
-    }
-    
     function addVoteToken (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
         _wallets[keyaddr].count += grant;
-        _requestMint(getAddrWalletIn(pubaddr, 0), grant);
     }
  
     function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
@@ -368,7 +352,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
         GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
-        _requestMint(getAddrWalletIn(pub, 0), grant);
         _wallets[keyaddr].count += grant;
     }
     
@@ -427,7 +410,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
         GoshWallet(_lastAccountAddress).addVoteToken{value:0.2 ton}(pubaddr.count);
-        _requestMint(_lastAccountAddress, pubaddr.count);
         getMoney();
     }
     
