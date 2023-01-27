@@ -303,7 +303,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         new DaoTokenWallet {
             stateInit: s1, value: FEE_DEPLOY_DAO_TOKEN_WALLET, wid: 0
-        }(  _pubaddr, pubaddr, _nameDao, 
+        }(  _systemcontract, _pubaddr, pubaddr, _nameDao, 
             _code[m_WalletCode],
             _code[m_DaoTokenWalletCode],  null);
         getMoney();

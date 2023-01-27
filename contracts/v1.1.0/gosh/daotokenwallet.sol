@@ -21,6 +21,7 @@ contract DaoTokenWallet is Modifiers{
 
     address static _goshdao;
     address _rootpubaddr;
+    address _systemcontract;
     address _pubaddr;
     string _nameDao;
     mapping(uint8 => TvmCell) _code;
@@ -30,6 +31,7 @@ contract DaoTokenWallet is Modifiers{
     uint128 timeMoney = 0;
     
    constructor(
+        address systemcontract,
         address rootpubaddr,
         address pubaddr,
         string nameDao,
@@ -38,6 +40,7 @@ contract DaoTokenWallet is Modifiers{
         optional(uint256) access
     ) public onlyOwner {
         tvm.accept();
+        _systemcontract = systemcontract;
         _nameDao = nameDao;
         _rootpubaddr = rootpubaddr;
         _code[m_WalletCode] = WalletCode;
@@ -112,7 +115,7 @@ contract DaoTokenWallet is Modifiers{
         TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_goshdao: _goshdao, _index: index}
+            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contract;
     }

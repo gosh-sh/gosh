@@ -6,6 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"systemcontract","type":"address"},
 				{"name":"rootpubaddr","type":"address"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameDao","type":"string"},
@@ -135,6 +136,7 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
+		{"name":"_systemcontract","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_code","type":"map(uint8,cell)"},
