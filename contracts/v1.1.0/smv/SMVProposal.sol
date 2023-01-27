@@ -304,6 +304,19 @@ function getGoshDeployTaskProposalParams () external view
     (proposalKind, reponame, taskname, grant) = s.decode(uint256, string, string, ConfigGrant);
 }
 
+function getGoshDeployRepoProposalParams () external view
+         returns( string repoName, optional(AddrVersion) previous)
+{
+    TvmSlice s = propData.toSlice();
+    (string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));
+}
+
+function getGoshAddTokenProposalParams () external view
+         returns( address pubaddr, uint128 grant)
+{
+    TvmSlice s = propData.toSlice();
+    (address pubaddr, uint128 grant) = s.decode(address, uint128);
+}
 
 ////////////////////////////////////
 

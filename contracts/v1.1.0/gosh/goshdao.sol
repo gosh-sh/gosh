@@ -261,7 +261,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         getMoney();
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
-        if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token); return; }
+        if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; 
+            GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token);
+            return; 
+       }
     }
     
     function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
