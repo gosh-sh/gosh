@@ -15,6 +15,7 @@ pub static COMMIT: Abi = abi!("commit.abi.json");
 pub static SNAPSHOT: Abi = abi!("snapshot.abi.json");
 pub static TREE: Abi = abi!("tree.abi.json");
 pub static DIFF: Abi = abi!("diff.abi.json");
+pub static TAG: Abi = abi!("tag.abi.json");
 
 #[derive(serde::Serialize)]
 struct GetCommitAddrArgs {
