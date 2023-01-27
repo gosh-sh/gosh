@@ -207,7 +207,7 @@ pipeline {
                                 mkdir /home/jenkins/bin
                                 cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
                                 cp -r ../git-remote-gosh/${REMOTE_VERSION}-amd64 /home/jenkins/bin/${REMOTE_VERSION} && chmod +x /home/jenkins/bin/${REMOTE_VERSION}
-                                nkdir -p /home/jenkins/.gosh/
+                                mkdir -p /home/jenkins/.gosh/
                                 echo ${REMOTE_VERSION} > /home/jenkins/.gosh/dispatcher.ini
                                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                 ./set-vars.sh http://local-evernode.gosh.sh
