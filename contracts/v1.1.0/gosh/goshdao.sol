@@ -263,6 +263,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
         if (typeF == ALONE_ADD_TOKEN) { _wallets[keyaddr].count += token; 
             GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token);
+            _requestMint(getAddrWalletIn(pub, 0), token);
             return; 
        }
     }
@@ -327,6 +328,20 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     function requestMint (address recipient, address pubaddr, uint128 mint_amount, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, index))
+    {
+        tvm.accept();
+        TvmCell empty;
+        ITokenRoot(_rootTokenRoot).mint{value: 10 ton}(
+            mint_amount,
+            recipient,
+            0,
+            this,
+            true,
+            empty
+        );
+    }
+    
+    function _requestMint (address recipient, uint128 mint_amount) private view
     {
         tvm.accept();
         TvmCell empty;
@@ -407,8 +422,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
-            m_SMVClientCode, m_SMVProposalCode, pubaddr.count, _rootTokenRoot);
+            m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
+        GoshWallet(_lastAccountAddress).addVoteToken{value:0.2 ton}(pubaddr.count);
+        _requestMint(_lastAccountAddress, pubaddr.count);
         getMoney();
     }
     
