@@ -53,7 +53,7 @@ contract DaoTokenWallet is Modifiers{
         _balance += grant;
     }
     
-    function sendTokenWallet(uint128 grant) public  onlyOwnerPubkeyOptional(_access) accept {
+    function sendTokenWallet(uint128 grant) public  onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 10 ton, ERR_TOO_LOW_BALANCE);
         require(_balance >= grant, ERR_LOW_VALUE);
         GoshWallet(_getWalletAddr(0)).receiveTokenTW{value: 0.1 ton}(grant);
@@ -64,7 +64,7 @@ contract DaoTokenWallet is Modifiers{
         _balance += grant;
     }
     
-    function sendTokenTW(address pubaddr, uint128 grant) public  onlyOwnerPubkeyOptional(_access) accept {
+    function sendTokenTW(address pubaddr, uint128 grant) public  onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 10 ton, ERR_TOO_LOW_BALANCE);
         require(_balance >= grant, ERR_LOW_VALUE);
         DaoTokenWallet(_getTWAddr(pubaddr)).getTokenTW{value: 0.1 ton}(_pubaddr, grant);
