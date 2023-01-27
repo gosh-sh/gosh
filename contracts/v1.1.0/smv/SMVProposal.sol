@@ -263,10 +263,10 @@ function getGoshDeleteProtectedBranchProposalParams () external view
 }
 
 function getGoshDeployWalletDaoProposalParams () external view
-         returns( uint256  proposalKind, address[] pubaddr)
+         returns( uint256  proposalKind, MemberToken[] pubaddr)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, pubaddr) = s.decode(uint256, address[]);
+    (proposalKind, pubaddr) = s.decode(uint256, MemberToken[]);
 }
 
 function getGoshDeleteWalletDaoProposalParams () external view
