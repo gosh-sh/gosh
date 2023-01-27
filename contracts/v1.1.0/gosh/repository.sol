@@ -108,6 +108,7 @@ contract Repository is Modifiers{
         tvm.accept();
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(_protectedBranch[tvm.hash(name)] == false, ERR_BRANCH_PROTECTED);
         delete _Branches[tvm.hash(name)];
     }
 

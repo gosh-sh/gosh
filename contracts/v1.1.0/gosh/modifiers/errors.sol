@@ -70,4 +70,5 @@ abstract contract Errors {
     uint constant ERR_REVIEW_NOT_EXIST = 259; 
     uint constant ERR_MANAGER_NOT_EXIST = 260; 
     uint constant ERR_NEED_SMV = 261;
+    uint constant ERR_BRANCH_PROTECTED = 262;
 }
