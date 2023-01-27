@@ -268,11 +268,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (typeF == ALONE_ADD_VOTE_TOKEN) {
             require(_reserve >= token, ERR_LOW_TOKEN_RESERVE);
             _wallets[keyaddr].count += token; 
+            _allbalance += token;
+            _reserve -= token;
             GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(token);
             return; 
         }
         if (typeF == ALONE_ADD_TOKEN) { 
             require(_reserve >= token, ERR_LOW_TOKEN_RESERVE);
+            _reserve -= token;
             GoshWallet(getAddrWalletIn(pub, 0)).addRegularToken{value:0.2 ton}(token);
             return; 
         }
@@ -363,15 +366,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
+        require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         _wallets[keyaddr].count += grant;
+        _reserve -= grant;
+        _allbalance += grant;
     }
  
     function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
     {
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
+        require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
         _wallets[keyaddr].count += grant;
+        _reserve -= grant;
+        _allbalance += grant;
     }
     
     function deployWalletsConst(address[] pubmem, uint128 index) public senderIs(address(this)) {
