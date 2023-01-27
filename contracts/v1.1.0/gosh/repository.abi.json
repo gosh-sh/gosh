@@ -390,6 +390,7 @@
 		{"name":"_head","type":"string"},
 		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"_Branches","type":"map(uint256,tuple)"},
 		{"name":"_protectedBranch","type":"map(uint256,bool)"},
-		{"name":"_ready","type":"bool"}
+		{"name":"_ready","type":"bool"},
+		{"name":"_limited","type":"bool"}
 	]
 }

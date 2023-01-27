@@ -32,6 +32,7 @@ contract Repository is Modifiers{
     mapping(uint256 => Item) _Branches;
     mapping(uint256 => bool) _protectedBranch;
     bool _ready = false;
+    bool _limited = true;
 
     constructor(
         address pubaddr,

@@ -98,6 +98,22 @@
 			]
 		},
 		{
+			"name": "setLimitedWallet",
+			"inputs": [
+				{"name":"decision","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForLimited",
+			"inputs": [
+				{"name":"decision","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForUpgradeDao",
 			"inputs": [
 				{"name":"newversion","type":"string"},
@@ -902,6 +918,7 @@
 		{"name":"_walletcounter","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_tombstone","type":"bool"},
+		{"name":"_limited","type":"bool"},
 		{"name":"timeMoney","type":"uint128"}
 	]
 }

@@ -376,6 +376,31 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, token, _rootTokenRoot);
+        GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
+        getMoney();
+    }
+    
+    function deployWalletsOut(address[] pubmem, uint128 index) public accept {
+        getMoney();
+        if (address(this).balance < 100 ton) { saveaddr = pubmem; saveind = index; return; }
+        if (index >= pubmem.length) { return; }
+        deployWalletOut(pubmem[index]);
+        index += 1;
+        this.deployWalletsOut{value: 0.1 ton, flag: 1}(pubmem, index);
+    }
+    
+    function deployWalletOut(address pubaddr) private {
+        tvm.accept();
+        TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
+        _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
+        new GoshWallet {
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
+        }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+            _code[m_RepositoryCode],
+            _code[m_WalletCode],
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
+            m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
+            m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         getMoney();
     }
     
@@ -383,7 +408,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (int8 _, uint256 keyaddr) = pubaddrdeploy.unpack();
         _;
         require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST); 
-        GoshWallet(_wallets[keyaddr].member).destroy{value : 0.2 ton}();
+        GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(true);
         delete _wallets[keyaddr];
         getMoney();
     }
