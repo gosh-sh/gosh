@@ -360,6 +360,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
         _wallets[keyaddr].count += grant;
+        _requestMint(getAddrWalletIn(pubaddr, 0), grant);
     }
  
     function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
@@ -367,6 +368,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
         GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
+        _requestMint(getAddrWalletIn(pub, 0), grant);
         _wallets[keyaddr].count += grant;
     }
     
