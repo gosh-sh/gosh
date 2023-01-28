@@ -1,4 +1,5 @@
 import { createClient, Provider } from '@supabase/supabase-js'
+import { AppConfig } from 'react-gosh'
 import { GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 
@@ -22,6 +23,14 @@ const getClipboardData = async (event?: any): Promise<string | null> => {
     }
 
     return null
+}
+
+const onExternalLinkClick = (e: any, url: string) => {
+    if (!AppConfig.dockerclient) {
+        return
+    }
+    e.preventDefault()
+    AppConfig.dockerclient.host.openExternal(url)
 }
 
 const singinOAuthSupabase = async (provider: Provider, redirectTo: string) => {
@@ -84,5 +93,6 @@ export {
     singinOAuthSupabase,
     signoutOAuthSupabase,
     getClipboardData,
+    onExternalLinkClick,
     ToastOptionsShortcuts,
 }
