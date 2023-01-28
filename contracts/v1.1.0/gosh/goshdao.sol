@@ -130,7 +130,24 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        GoshDao(msg.sender).getPreviousInfo1{value: 0.1 ton, flag: 1}(_wallets);
+        TvmBuilder b;
+        b.store(version, _wallets, _hashtag, _reserve, _allbalance, _totalsupply);
+        TvmCell a = b.toCell();
+        GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(a);
+    }
+    
+    function getPreviousInfoVersion(TvmCell a) public internalMsg {
+        require(_previous.hasValue() == true, ERR_FIRST_DAO);
+        require(_previous.get() == msg.sender, ERR_WRONG_DAO);
+        tvm.accept();
+        TvmSlice b = a.toSlice();
+        string ver = b.decode(string);
+        if (ver == "1.1.0"){
+            mapping(uint256 => MemberToken) wallets;
+            (wallets, _hashtag, _reserve, _allbalance, _totalsupply) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128);
+            uint256 zero;
+            this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets);
+        }
     }
     
     function getPreviousInfo1(mapping(uint256 => MemberToken) wallets) public view internalMsg {
@@ -139,6 +156,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         uint256 zero;
         this.returnWallets{value: 0.1 ton}(zero, wallets);
+    }
+    
+    function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets) public internalMsg senderIs(address(this)) accept {
+        if (ver == "1.1.0"){
+            optional(uint256, MemberToken) res = wallets.next(key);
+            if (res.hasValue()) {
+            	MemberToken pub;
+            	(key, pub) = res.get();
+            	_reserve += pub.count;
+            	_allbalance -= pub.count;
+            	deployWalletIn(pub);
+                this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets);
+            }
+        }
+        getMoney();
     }
     
     function returnWallets(uint256 key, mapping(uint256 => MemberToken) wallets) public internalMsg senderIs(address(this)) accept {

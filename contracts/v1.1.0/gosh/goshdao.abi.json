@@ -43,8 +43,26 @@
 			]
 		},
 		{
+			"name": "getPreviousInfoVersion",
+			"inputs": [
+				{"name":"a","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getPreviousInfo1",
 			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWalletsVersion",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"key","type":"uint256"},
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
