@@ -136,7 +136,7 @@
 		{
 			"name": "AloneDeployDaoTag",
 			"inputs": [
-				{"name":"tag","type":"string"}
+				{"name":"tag","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -229,14 +229,6 @@
 		{
 			"name": "destroyWallet",
 			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroyObject",
-			"inputs": [
-				{"name":"obj","type":"address"}
 			],
 			"outputs": [
 			]
@@ -380,6 +372,14 @@
 			]
 		},
 		{
+			"name": "destroyDaoTag",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "askGrantToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -488,7 +488,16 @@
 		{
 			"name": "startProposalForAddDaoTag",
 			"inputs": [
-				{"name":"tag","type":"string"},
+				{"name":"tag","type":"string[]"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForDestroyDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [

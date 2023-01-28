@@ -240,7 +240,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     
 
-    function AloneDeployDaoTag(string tag) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+    function AloneDeployDaoTag(string[] tag) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -254,7 +254,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
-        string zero;
+        string[] zero;
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(0, pubaddr, _pubaddr, _index, zero, ALONE_DEPLOY_WALLET);
     }
     
@@ -264,7 +264,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         MemberToken[] pubaddr;
-        string zero;
+        string[] zero;
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(token, pubaddr, _pubaddr, _index, zero, ALONE_MINT_TOKEN);
     }
     
@@ -274,7 +274,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         MemberToken[] pubaddr;
-        string zero;
+        string[] zero;
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(grant, pubaddr, _pubaddr, _index, zero, ALONE_ADD_VOTE_TOKEN);
     }
     
@@ -284,7 +284,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         MemberToken[] pubaddr;
-        string zero;
+        string[] zero;
         GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(grant, pubaddr, _pubaddr, _index, zero, ALONE_ADD_TOKEN);
     }
     
@@ -459,11 +459,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         SystemContract(_systemcontract).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
 
+/*
     function destroyObject(address obj) public onlyOwnerPubkeyOptional(_access)  accept view {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Object(obj).destroy{value : 0.2 ton, flag: 1}(_pubaddr, _index);
     }
+*/
 
     //Repository part
     function deployRepositoryDao(string nameRepo, optional(AddrVersion) previous) public senderIs(_goshdao) accept {
@@ -728,6 +730,29 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }(_pubaddr, _systemcontract, daotag, _code[m_WalletCode], _index);
         getMoney();
     }
+    
+    function destroyDaoTag(
+        string daotag
+    ) public senderIs(_goshdao) accept saveMsg {
+        _destroyDaoTag(daotag);
+        getMoney();
+    }
+    
+    function _destroyDaoTag(
+        string daotag
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        DaoTag(_getdaotagaddr(daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        getMoney();
+    }
+    
+    function _getdaotagaddr(string daotag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: _goshdao}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
 
     //Task part
     function _deployTask(
@@ -976,7 +1001,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startProposalForAddDaoTag(
-        string tag,
+        string[] tag,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);       
@@ -990,6 +1015,25 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+    
+    function startProposalForDestroyDaoTag(
+        string[] tag,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);       
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, tag, now);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
@@ -1177,8 +1221,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _mintToken(grant);
             }  else
             if (kind == DAOTAG_PROPOSAL_KIND) {
-                (string tag) = s.decode(string);
-                _deployDaoTag(tag);
+                (string[] tag) = s.decode(string[]);
+                GoshDao(_goshdao).smvdeploytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+            }  else
+            if (kind == DAOTAG_DESTROY_PROPOSAL_KIND) {
+                (string[] tag) = s.decode(string[]);
+                GoshDao(_goshdao).smvdestroytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }
         }
     }

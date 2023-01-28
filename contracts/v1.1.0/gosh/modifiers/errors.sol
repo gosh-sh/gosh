@@ -74,4 +74,5 @@ abstract contract Errors {
     uint constant ERR_WALLET_LIMITED = 263;
     uint constant ERR_LOW_TOKEN_RESERVE = 264;
     uint constant ERR_LOW_TOKEN = 265;
+    uint constant ERR_TOO_MANY_TAGS = 266;
 }

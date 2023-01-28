@@ -18,6 +18,7 @@ import "commit.sol";
 import "profiledao.sol";
 import "snapshot.sol";
 import "daotokenwallet.sol";
+import "daotag.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
@@ -27,6 +28,8 @@ import "../smv/SMVProposal.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "1.1.0";
 
+    uint128 _limittag = 3;
+    uint128 _counttag = 0;
     address[] _volunteersnap;
     address[] _volunteerdiff;
     address static _systemcontract;
@@ -36,7 +39,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     optional(address) _previous;
     mapping(uint256 => MemberToken) _wallets;
     mapping(uint8 => TvmCell) _code;
-    
+    mapping(uint256 => string) _hashtag;
     uint128 _tokenforperson = 20;
     uint128 _limit_wallets;
     //added for SMV
@@ -57,6 +60,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     uint128 _reserve = 0;
     uint128 _allbalance = 0;
+    uint128 _totalsupply = 0;
     
     constructor(
         address pubaddr, 
@@ -264,7 +268,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
     }
     
-    function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, string tag, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, string[] tag, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
@@ -290,9 +294,37 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _reserve += token;
             return;
         }
-        if (typeF == ALONE_DAOTAG) {            
-            GoshWallet(getAddrWalletIn(pub, 0)).deployDaoTag{value:0.2 ton}(tag);
+        if (typeF == ALONE_DAOTAG) {   
+            require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);    
+            for (uint8 t = 0; t < tag.length; t++){     
+                if (_hashtag.exists(tvm.hash(tag[t]))){ continue; }
+                _counttag++;
+                _hashtag[tvm.hash(tag[t])] = tag[t];
+            	GoshWallet(getAddrWalletIn(pub, 0)).deployDaoTag{value:0.2 ton}(tag[t]);
+            	
+            }
             return;
+        }
+    }
+    
+    function smvdeploytag (address pub, uint128 index, string[] tag) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
+            _counttag++;
+            _hashtag[tvm.hash(tag[t])] = tag[t];
+            GoshWallet(getAddrWalletIn(pub, 0)).deployDaoTag{value:0.2 ton}(tag[t]);   	
+        }
+    }
+    
+    function smvdestroytag (address pub, uint128 index, string[] tag) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t])) == false) { continue; }
+            _counttag--;
+            delete _hashtag[tvm.hash(tag[t])];
+            GoshWallet(getAddrWalletIn(pub, 0)).destroyDaoTag{value:0.2 ton}(tag[t]);   	
         }
     }
     
@@ -532,6 +564,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
     
+    
+    
+    function _getdaotagaddr(string daotag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: address(this)}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
     //Fallback/Receive
     receive() external {
         if (msg.sender == _systemcontract) {
@@ -551,6 +591,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
+         
+    function getDaoTagAddr(string daotag) private view returns(address) {
+        
+        return _getdaotagaddr(daotag);
     }
     
     function getAddrWallet(address pubaddr, uint128 index) external view returns(address) {

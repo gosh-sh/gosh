@@ -159,8 +159,28 @@
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"name":"tag","type":"string"},
+				{"name":"tag","type":"string[]"},
 				{"name":"typeF","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdeploytag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdestroytag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -555,6 +575,8 @@
 		{"name":"_rootpubkey","type":"uint256"},
 		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
 		{"name":"lastWalletDeployed","type":"address"},
+		{"name":"_limittag","type":"uint128"},
+		{"name":"_counttag","type":"uint128"},
 		{"name":"_volunteersnap","type":"address[]"},
 		{"name":"_volunteerdiff","type":"address[]"},
 		{"name":"_systemcontract","type":"address"},
@@ -564,6 +586,7 @@
 		{"name":"_previous","type":"optional(address)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
@@ -578,6 +601,7 @@
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"saveind","type":"optional(uint128)"},
 		{"name":"_reserve","type":"uint128"},
-		{"name":"_allbalance","type":"uint128"}
+		{"name":"_allbalance","type":"uint128"},
+		{"name":"_totalsupply","type":"uint128"}
 	]
 }

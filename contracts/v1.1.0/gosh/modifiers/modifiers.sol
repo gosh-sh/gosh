@@ -166,6 +166,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant DAOTAG_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant DAOTAG_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant DAOTAG_DESTROY_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant DAOTAG_DESTROY_PROPOSAL_DURATION  = 1 weeks; 
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -184,6 +187,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant ADD_TOKEN_PROPOSAL_KIND = 14;
     uint256 constant MINT_TOKEN_PROPOSAL_KIND = 15;
     uint256 constant DAOTAG_PROPOSAL_KIND = 16;
+    uint256 constant DAOTAG_DESTROY_PROPOSAL_KIND = 17;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
@@ -192,6 +196,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant ALONE_ADD_VOTE_TOKEN = 5;
     uint128 constant ALONE_MINT_TOKEN = 6;
     uint128 constant ALONE_DAOTAG = 7;
+    uint128 constant ALONE_DAOTAG_DESTROY = 8;
     
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     
