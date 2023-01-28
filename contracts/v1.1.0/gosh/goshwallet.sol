@@ -804,7 +804,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function addVoteToken(
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
-        m_pseudoDAOVoteBalance += grant;
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, grant, _index);
         getMoney();
     }
