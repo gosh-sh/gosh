@@ -113,7 +113,7 @@ function onCodeUpgrade (address goshdao,
     }
 }
 
-function onContinueAction(uint128 t) external check_token_root
+function onContinueAction(uint128 t) external senderIs(_goshdao) accept
 {
     totalSupply = t;
 
