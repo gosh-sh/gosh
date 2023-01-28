@@ -204,6 +204,15 @@
 			]
 		},
 		{
+			"name": "isDeleteSnap",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getContentAddress",
 			"inputs": [
 				{"name":"commit","type":"string"},

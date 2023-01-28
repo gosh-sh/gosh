@@ -152,11 +152,11 @@ library GoshLib {
     function buildDaoTagCode(
         TvmCell originalCode,
         string tag,
-        string version
+        address versionc
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(tag);
-        b.store(version);
+        b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);

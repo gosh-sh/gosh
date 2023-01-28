@@ -41,7 +41,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     string constant version = "1.1.0";
-
+    address _versionController;
     address static _systemcontract;
     address _rootpubaddr;
     string _nameDao;
@@ -58,6 +58,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 timeMoney = 0;
 
     constructor(
+        address versionController,
         address rootpubaddr,
         address pubaddr,
         string nameDao,
@@ -86,6 +87,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
                         proposalCode.depth(), tokenforperson, _tip3Root
     ) {
+        _versionController = versionController;
         _rootpubaddr = rootpubaddr;
         _nameDao = nameDao;
         _code[m_WalletCode] = WalletCode;
@@ -122,7 +124,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 5 ton, wid: 0
-        }(  _rootpubaddr, _pubaddr, _nameDao,
+        }(  _versionController, _rootpubaddr, _pubaddr, _nameDao,
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -410,7 +412,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 60 ton, wid: 0
-        }(  _rootpubaddr, _pubaddr, _nameDao,
+        }(  _versionController, _rootpubaddr, _pubaddr, _nameDao,
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -537,7 +539,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Snapshot(snap).destroy{
-            value: 0.1 ton, bounce: true, flag: 1
+            value: 0.4 ton, bounce: true, flag: 1
         }(_pubaddr, _index);
         getMoney();
     }
@@ -726,7 +728,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, version);
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: _goshdao}});
         new DaoTag{
             stateInit: s1, value: FEE_DEPLOY_DAO_TAG, wid: 0, bounce: true, flag: 1
@@ -752,7 +754,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function _getdaotagaddr(string daotag) private view returns(address){        
-        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, version);
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: _goshdao}});
         return address.makeAddrStd(0, tvm.hash(s1));
     }

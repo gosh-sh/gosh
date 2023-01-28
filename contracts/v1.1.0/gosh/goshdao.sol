@@ -28,6 +28,7 @@ import "../smv/SMVProposal.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "1.1.0";
 
+    address _versionController;
     uint128 _limittag = 3;
     uint128 _counttag = 0;
     address[] _volunteersnap;
@@ -63,6 +64,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     uint128 _totalsupply = 0;
     
     constructor(
+        address versionController,
         address pubaddr, 
         address profiledao,
         string name, 
@@ -90,6 +92,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         optional(address) previous) public TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_systemcontract) {
         tvm.accept();
         _profiledao = profiledao;
+        _versionController = versionController;
         _pubaddr = pubaddr;
         _nameDao = name;
         _limit_wallets = limit_wallets;
@@ -445,7 +448,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
@@ -479,7 +482,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _pubaddr, pubaddr.member, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
@@ -505,7 +508,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
@@ -569,7 +572,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     
     function _getdaotagaddr(string daotag) private view returns(address){        
-        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, version);
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: address(this)}});
         return address.makeAddrStd(0, tvm.hash(s1));
     }

@@ -6,6 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"versionController","type":"address"},
 				{"name":"rootpubaddr","type":"address"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameDao","type":"string"},
@@ -986,6 +987,7 @@
 		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
 		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
 		{"name":"_lockedBalance","type":"uint128"},
+		{"name":"_versionController","type":"address"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},

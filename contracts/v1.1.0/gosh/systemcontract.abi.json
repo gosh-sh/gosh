@@ -321,6 +321,15 @@
 			]
 		},
 		{
+			"name": "getDaoTagCode",
+			"inputs": [
+				{"name":"hashtag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}

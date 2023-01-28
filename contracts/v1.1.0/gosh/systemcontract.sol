@@ -98,6 +98,7 @@ contract SystemContract is Modifiers {
         require(checkNameDao(name), ERR_WRONG_NAME);
         TvmCell s1 = _composeDaoStateInit(name);
         _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
+            _versionController,
             pubaddr,
             msg.sender,
             name,
@@ -349,6 +350,10 @@ contract SystemContract is Modifiers {
         });
         return address(tvm.hash(s0));
     }   
+    
+    function getDaoTagCode(string hashtag) external view returns(TvmCell) {
+        return GoshLib.buildDaoTagCode(_code[m_DaoTagCode], hashtag, _versionController);
+    }
 
     function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
         return GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);

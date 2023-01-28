@@ -252,6 +252,18 @@ contract Repository is Modifiers{
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
+    
+    function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(_getSnapshotAddr(branch, name)){
+        tvm.accept();
+        require(_Branches.exists(tvm.hash(branch)) == false, ERR_BRANCH_EXIST);
+        Snapshot(msg.sender).destroyfinal{value:0.1 ton}();
+    }
+    
+    function _getSnapshotAddr(string branch, string name) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), branch, version);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+        return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
 
     //Getters
     function getContentAddress(string commit, string label) external view returns(address) {

@@ -85,6 +85,13 @@
 			]
 		},
 		{
+			"name": "destroyfinal",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getSnapshot",
 			"inputs": [
 			],
