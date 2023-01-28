@@ -29,14 +29,15 @@ modifier check_proposal {
   _ ;
 }
 
-function onCodeUpgrade (uint256 _platform_id, 
+function onCodeUpgrade (address goshdao,
+                        uint256 _platform_id, 
                         uint128 amountToLock,
                         uint128 totalVotes, 
                         TvmCell staticCell, 
                         TvmCell inputCell) internal override
 {
     tvm.resetStorage();
-
+    _goshdao = goshdao;
     initialized = false;
     votes[true] = votes[false] = 0;
     leftBro.reset();

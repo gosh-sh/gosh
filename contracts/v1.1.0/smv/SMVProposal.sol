@@ -64,7 +64,8 @@ modifier check_token_root {
     _ ;
 }
 
-function onCodeUpgrade (uint256 _platform_id,
+function onCodeUpgrade (address goshdao,
+			uint256 _platform_id,
                         uint128 amountToLock,
                         uint128 /* totalVotes */,
                         TvmCell staticCell,
@@ -72,6 +73,7 @@ function onCodeUpgrade (uint256 _platform_id,
 {
     tvm.resetStorage();
 
+    _goshdao = goshdao;
     initialized = true;
     votingResult.reset();
     leftBro.reset();
