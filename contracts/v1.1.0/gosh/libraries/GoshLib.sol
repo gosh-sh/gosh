@@ -149,6 +149,20 @@ library GoshLib {
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
     
+    function buildDaoTagCode(
+        TvmCell originalCode,
+        string tag,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(tag);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
     function buildProfileIndexCode(
         TvmCell originalCode,
         uint256 pubkey,

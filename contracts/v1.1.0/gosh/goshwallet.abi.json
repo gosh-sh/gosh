@@ -19,6 +19,7 @@
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaoTokenWallet","type":"cell"},
+				{"name":"codedaotag","type":"cell"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
 				{"name":"lockerCode","type":"cell"},
@@ -128,6 +129,14 @@
 			"inputs": [
 				{"name":"description","type":"string"},
 				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneDeployDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string"}
 			],
 			"outputs": [
 			]
@@ -363,6 +372,14 @@
 			]
 		},
 		{
+			"name": "deployDaoTag",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "askGrantToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -464,6 +481,15 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"task","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForAddDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string"},
+				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -950,6 +976,7 @@
 		{"name":"_access","type":"optional(uint256)"},
 		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
 		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
+		{"name":"_lockedBalance","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_rootpubaddr","type":"address"},
 		{"name":"_nameDao","type":"string"},

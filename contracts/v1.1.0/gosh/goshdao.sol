@@ -73,6 +73,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell contentSignature,
         TvmCell codeTask,
         TvmCell codedaoTokenWallet,
+        TvmCell codedaotag,
         /////////////////////
         TvmCell TokenLockerCode,
         TvmCell SMVPlatformCode,
@@ -96,6 +97,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_DiffCode] = codeDiff;
         _code[m_TaskCode] = codeTask;
         _code[m_DaoTokenWalletCode] = codedaoTokenWallet;
+        _code[m_DaoTagCode] = codedaotag;
         /////
         m_TokenLockerCode = TokenLockerCode;
         m_SMVPlatformCode = SMVPlatformCode;
@@ -257,7 +259,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
     }
     
-    function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, string tag, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
@@ -281,6 +283,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         if (typeF == ALONE_MINT_TOKEN) {
             _reserve += token;
+            return;
+        }
+        if (typeF == ALONE_DAOTAG) {            
+            GoshWallet(getAddrWalletIn(pub, 0)).deployDaoTag{value:0.2 ton}(tag);
             return;
         }
     }
@@ -404,7 +410,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
@@ -437,7 +443,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _pubaddr, pubaddr.member, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
@@ -463,7 +469,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTokenWalletCode], _code[m_DaoTagCode], _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         getMoney();

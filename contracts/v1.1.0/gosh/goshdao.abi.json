@@ -21,6 +21,7 @@
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaoTokenWallet","type":"cell"},
+				{"name":"codedaotag","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},
@@ -151,6 +152,7 @@
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string"},
 				{"name":"typeF","type":"uint128"}
 			],
 			"outputs": [

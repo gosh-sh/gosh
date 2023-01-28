@@ -83,6 +83,8 @@ modifier check_locker {
 uint128 DEFAULT_DAO_BALANCE;
 uint128 DEFAULT_DAO_VOTE_BALANCE;
 uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
+    
+uint128 _lockedBalance = 0;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
@@ -226,6 +228,7 @@ function lockVoting (uint128 amount) public /* onlyOwnerPubkey(_access.get()) */
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
         m_pseudoDAOBalance = m_pseudoDAOBalance - amount;
         m_pseudoDAOVoteBalance -= amount;
+        _lockedBalance += amount;
     }
 }
 
@@ -237,6 +240,7 @@ function returnDAOBalance (uint128 amount) external override check_locker
 
 function acceptUnlock (uint128 amount) external override check_locker
 {   
+    _lockedBalance -= amount;
     GoshDao(_goshdao).requestBurn {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
 }
 

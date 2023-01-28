@@ -209,6 +209,7 @@ contract Repository is Modifiers{
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         if (_protectedBranch[tvm.hash(branch)] == true) { return; }
         _addProtectedBranch(branch);
     }

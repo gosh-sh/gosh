@@ -332,6 +332,13 @@ function getGoshMintTokenProposalParams () external view
     (uint256  proposalKind, uint128 grant) = s.decode(uint256, uint128);
 }
 
+function getGoshDaoTagProposalParams () external view
+         returns(uint256  proposalKind,  string daotag)
+{
+    TvmSlice s = propData.toSlice();
+    (uint256  proposalKind, string daotag) = s.decode(uint256, string);
+}
+
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}
