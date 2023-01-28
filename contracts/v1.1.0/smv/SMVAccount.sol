@@ -130,7 +130,7 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
     
     tip3VotingLocker = new SMVTokenLocker { value: SMVConstants.LOCKER_INIT_VALUE +
                                                    SMVConstants.ACTION_FEE,
-                                            stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot);
+                                            stateInit:_stateInit } (platformCodeHash, platformCodeDepth, m_tokenWalletCode, m_tokenRoot, _goshdao);
     //GoshDao(_goshdao).requestMint {value: SMVConstants.EPSILON_FEE} (address(this), _pubaddr, DEFAULT_DAO_BALANCE, _index);
     m_pseudoDAOBalance = DEFAULT_DAO_BALANCE;
     m_pseudoDAOVoteBalance = DEFAULT_DAO_BALANCE;

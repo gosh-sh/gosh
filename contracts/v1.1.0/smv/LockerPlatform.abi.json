@@ -6,6 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"goshdao","type":"address"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"amountToLock","type":"uint128"},
 				{"name":"totalVotes","type":"uint128"},

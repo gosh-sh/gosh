@@ -9,7 +9,8 @@
 				{"name":"_platformCodeHash","type":"uint256"},
 				{"name":"_platformCodeDepth","type":"uint16"},
 				{"name":"_m_walletCode","type":"cell"},
-				{"name":"_m_tokenRoot","type":"address"}
+				{"name":"_m_tokenRoot","type":"address"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 			]
@@ -277,6 +278,7 @@
 		{"name":"m_tokenWallet","type":"address"},
 		{"name":"m_tokenBalance","type":"uint128"},
 		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"_goshdao","type":"address"},
 		{"name":"smvAccount","type":"address"},
 		{"name":"lockerBusy","type":"bool"},
 		{"name":"platformPerformActionFailed","type":"bool"},

@@ -17,18 +17,19 @@ uint256 public static platform_id;
 }
  */
 //(clientCode, amountToLock, total_votes, staticCell, _inputCell)
-constructor ( TvmCell clientCode, uint128 amountToLock, uint128 totalVotes, TvmCell staticCell, TvmCell inputCell) public /* check_locker */
+constructor ( address goshdao, TvmCell clientCode, uint128 amountToLock, uint128 totalVotes, TvmCell staticCell, TvmCell inputCell) public /* check_locker */
 {
     require(platform_id == tvm.hash(staticCell));
     tvm.accept();
 
     tvm.setcode (clientCode);
     tvm.setCurrentCode (clientCode);
-    onCodeUpgrade (platform_id,  amountToLock, totalVotes, staticCell, inputCell);
+    onCodeUpgrade (goshdao, platform_id,  amountToLock, totalVotes, staticCell, inputCell);
 }
 
 
-function onCodeUpgrade(uint256 /* _platform_id */, 
+function onCodeUpgrade(address /* goshdao */,
+                       uint256 /* _platform_id */, 
                        uint128 /* amountToLock */, 
                        uint128 /* totalVotes */, 
                        TvmCell /* staticCell */, 

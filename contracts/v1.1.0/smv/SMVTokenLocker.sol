@@ -21,6 +21,7 @@ import "TokenWalletOwner.sol";
 
 contract SMVTokenLocker is ISMVTokenLocker , TokenWalletOwner , IAcceptTokensBurnCallback {
 
+address _goshdao;
 address public static smvAccount;
 
 bool public lockerBusy;
@@ -102,15 +103,16 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
 
     new LockerPlatform {/* bounce: false, */
                         value: deployFee + actionValue,
-                        stateInit: _stateInit } (clientCode, amountToLock, m_tokenBalance, staticCell, _inputCell);
+                        stateInit: _stateInit } (_goshdao, clientCode, amountToLock, m_tokenBalance, staticCell, _inputCell);
     m_num_clients ++;
 }
 
-constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_walletCode, address _m_tokenRoot) public check_account
+constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_walletCode, address _m_tokenRoot, address goshdao) public check_account
 {
     require(address(this).balance >= SMVConstants.LOCKER_INIT_VALUE, SMVErrors.error_balance_too_low);
     tvm.accept();
-
+    
+    _goshdao = goshdao;
     lockerBusy = false;
     m_tokenWalletCode = _m_walletCode;
     m_tokenRoot = _m_tokenRoot;
@@ -278,7 +280,7 @@ TvmCell public m_tokenWalletCode; */
     TvmBuilder b;
     TvmBuilder b1;
 
-    b1.store(m_tokenRoot, m_tokenWallet, m_tokenBalance);
+    b1.store(_goshdao, m_tokenRoot, m_tokenWallet, m_tokenBalance);
     b1.storeRef(m_tokenWalletCode);
 
 /* address public static smvAccount;
