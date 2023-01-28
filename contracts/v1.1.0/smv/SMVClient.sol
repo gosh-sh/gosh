@@ -114,8 +114,9 @@ function _performAction () internal
     }
 } 
 
-function performAction (uint128 amountToLock, uint128 total_votes_, TvmCell inputCell) external override check_locker
+function performAction (uint128 amountToLock, uint128 total_votes_, TvmCell inputCell, address goshdao) external override check_locker
 {
+    _goshdao = goshdao;
     currentAmount = amountToLock;
     total_votes = total_votes_;
     currentCell = inputCell;

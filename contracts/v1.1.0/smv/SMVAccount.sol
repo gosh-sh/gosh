@@ -294,7 +294,7 @@ function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platfo
                              8*SMVConstants.ACTION_FEE, flag: 1 }
                     (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
                                     SMVConstants.CLIENT_INIT_VALUE +
-                                    SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE);
+                                    SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao);
 }
 
 function getPlatfotmId (uint256 propId, uint8 platformType, address _tip3VotingLocker) public view returns (uint256)
@@ -344,7 +344,7 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
                     {value:  SMVConstants.PROPOSAL_INIT_VALUE + num_clients*SMVConstants.CLIENT_LIST_FEE +
                              8*SMVConstants.ACTION_FEE, flag: 1 }
                     (m_SMVPlatformCode, m_SMVProposalCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
-                             SMVConstants.PROPOSAL_INIT_VALUE + 5*SMVConstants.ACTION_FEE);
+                             SMVConstants.PROPOSAL_INIT_VALUE + 5*SMVConstants.ACTION_FEE, _goshdao);
 
 }
 

@@ -80,6 +80,13 @@
 			]
 		},
 		{
+			"name": "asktotalSupply",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyTW",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

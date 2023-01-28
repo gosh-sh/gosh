@@ -23,6 +23,7 @@ uint256 public static platform_id;
 
 
 //LockableBase data
+address _goshdao;
 uint256 platformCodeHash;
 uint16 platformCodeDepth;
 optional (address) public leftBro;
@@ -227,7 +228,7 @@ function _reserve(uint128 min, uint128 def) internal pure returns(uint128)
 } */
 
 function amount_locked () virtual public view returns(uint128);
-function performAction (uint128 amountToLock, uint128 total_votes, TvmCell inputCell) virtual external;
+function performAction (uint128 amountToLock, uint128 total_votes, TvmCell inputCell, address goshdao) virtual external;
 function onCodeUpgrade (uint256 _platform_id, 
                         uint128 amountToLock,
                         uint128 totalVotes, 

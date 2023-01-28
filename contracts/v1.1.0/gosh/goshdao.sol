@@ -20,6 +20,7 @@ import "snapshot.sol";
 import "daotokenwallet.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
+import "../smv/SMVProposal.sol";
 
 
 /* Root contract of gosh */
@@ -169,6 +170,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (address(this).balance < 2000) { _volunteersnap.push(msg.sender); getMoney(); return; }
         msg.sender.transfer(1000 ton);
         getMoney();
+    }
+    
+    function asktotalSupply() public view minValue(0.2 ton) accept {
+        SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton}(_allbalance);
     }
     
     function sendMoneyTW(address pubaddr, uint128 grant) public senderIs(_getTWAddr(pubaddr)) {

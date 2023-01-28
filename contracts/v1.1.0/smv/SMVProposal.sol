@@ -4,6 +4,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "../gosh/modifiers/modifiers.sol";
+import "../gosh/goshdao.sol";
 
 import "Libraries/SMVErrors.sol";
 import "External/tip3/interfaces/ITokenRoot.sol";
@@ -132,12 +133,13 @@ function onContinueAction(uint128 t) external check_token_root
 
 function do_action() internal override
 {
-    ITokenRoot(tokenRoot).totalSupply {value: SMVConstants.ACTION_FEE, flag: 1, callback:SMVProposalBase.onContinueAction} ();
+    GoshDao(_goshdao).asktotalSupply {value: 0.25 ton, flag: 1} ();
 }
 
 //this prevents hang when creating the same proposal
-function performAction (uint128 /* amountToLock */, uint128 /* total_votes */, TvmCell /* inputCell */) external override check_locker
+function performAction (uint128 /* amountToLock */, uint128 /* total_votes */, TvmCell /* inputCell */, address goshdao) external override check_locker
 {
+    _goshdao = goshdao;
     optional (address) emptyAddress;
     optional (uint128) emptyValue;
     uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
@@ -308,35 +310,35 @@ function getGoshDeployRepoProposalParams () external view
          returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous)
 {
     TvmSlice s = propData.toSlice();
-    (uint256  proposalKind, string repoName, optional(AddrVersion) previous) = s.decode(uint256, string, optional(AddrVersion));
+    (proposalKind, repoName, previous) = s.decode(uint256, string, optional(AddrVersion));
 }
 
 function getGoshAddVoteTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant)
 {
     TvmSlice s = propData.toSlice();
-    (uint256  proposalKind, address pubaddr, uint128 grant) = s.decode(uint256, address, uint128);
+    (proposalKind, pubaddr, grant) = s.decode(uint256, address, uint128);
 }
 
 function getGoshAddTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant)
 {
     TvmSlice s = propData.toSlice();
-    (uint256  proposalKind, address pubaddr, uint128 grant) = s.decode(uint256, address, uint128);
+    (proposalKind, pubaddr, grant) = s.decode(uint256, address, uint128);
 }
 
 function getGoshMintTokenProposalParams () external view
          returns(uint256  proposalKind,  uint128 grant)
 {
     TvmSlice s = propData.toSlice();
-    (uint256  proposalKind, uint128 grant) = s.decode(uint256, uint128);
+    (proposalKind, grant) = s.decode(uint256, uint128);
 }
 
 function getGoshDaoTagProposalParams () external view
          returns(uint256  proposalKind,  string daotag)
 {
     TvmSlice s = propData.toSlice();
-    (uint256  proposalKind, string daotag) = s.decode(uint256, string);
+    (proposalKind, daotag) = s.decode(uint256, string);
 }
 
 ////////////////////////////////////

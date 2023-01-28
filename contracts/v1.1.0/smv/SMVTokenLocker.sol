@@ -65,7 +65,7 @@ modifier check_client (uint256 platform_id) {
   _ ;
 }
 
-function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell, uint128 deployFee) external override check_account
+function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amountToLock, TvmCell staticCell, TvmCell inputCell, uint128 deployFee, address goshdao) external override check_account
 {
     require(!lockerBusy, SMVErrors.error_locker_busy);
     require(address(this).balance >= SMVConstants.LOCKER_MIN_BALANCE +
@@ -98,7 +98,7 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     uint128 actionValue = (msg.value - deployFee - SMVConstants.ACTION_FEE)/2;
     address platform = address.makeAddrStd(address(this).wid, tvm.hash(_stateInit));
 
-    LockableBase(platform).performAction{value: actionValue, flag:1}(amountToLock, m_tokenBalance, _inputCell);
+    LockableBase(platform).performAction{value: actionValue, flag:1}(amountToLock, m_tokenBalance, _inputCell, goshdao);
 
     new LockerPlatform {/* bounce: false, */
                         value: deployFee + actionValue,
