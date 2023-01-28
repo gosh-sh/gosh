@@ -427,6 +427,22 @@
 			]
 		},
 		{
+			"name": "getVersions",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,string)"}
+			]
+		},
+		{
+			"name": "getTags",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,string)"}
+			]
+		},
+		{
 			"name": "isMember",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
@@ -608,6 +624,7 @@
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
+		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},

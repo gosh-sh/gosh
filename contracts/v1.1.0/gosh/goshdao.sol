@@ -41,6 +41,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => MemberToken) _wallets;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => string) _hashtag;
+    mapping(uint256 => string) _versions;
     uint128 _tokenforperson = 20;
     uint128 _limit_wallets;
     //added for SMV
@@ -131,7 +132,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
         TvmBuilder b;
-        b.store(version, _wallets, _hashtag, _reserve, _allbalance, _totalsupply);
+        b.store(version, _wallets, _hashtag, _reserve, _allbalance, _totalsupply, _versions);
         TvmCell a = b.toCell();
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(a);
     }
@@ -144,17 +145,20 @@ contract GoshDao is Modifiers, TokenRootOwner {
         string ver = b.decode(string);
         if (ver == "1.1.0"){
             mapping(uint256 => MemberToken) wallets;
-            (wallets, _hashtag, _reserve, _allbalance, _totalsupply) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128);
+            (wallets, _hashtag, _reserve, _allbalance, _totalsupply, _versions) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string));
+            _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets);
         }
     }
     
-    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets) public view internalMsg {
+    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets) public internalMsg {
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
         uint256 zero;
+        _versions[tvm.hash(version)] = version;
+        _versions[tvm.hash("1.0.0")] = "1.0.0";
         this.returnWallets{value: 0.1 ton}(zero, wallets);
     }
     
@@ -685,6 +689,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function getWalletsFull() external view returns(mapping(uint256 => MemberToken)) {
         return _wallets;
+    }
+    
+    function getVersions() external view returns(mapping(uint256 => string)) {
+        return _versions;
+    }
+    
+    function getTags() external view returns(mapping(uint256 => string)) {
+        return _hashtag;
     }
     
     function isMember(address pubaddr) external view returns(bool) {
