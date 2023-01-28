@@ -339,6 +339,9 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
     inputBuilder.storeRef(t.toCell());
 
     uint128 amount = DEFAULT_PROPOSAL_VALUE; //get from Config
+    TvmSlice s = propData.toSlice();
+    (uint256 proposalKind) = s.decode(uint256);
+    if (proposalKind == SETCOMMIT_PROPOSAL_KIND) { amount = 0; }
 
     ISMVTokenLocker(tip3VotingLocker).startPlatform
                     {value:  SMVConstants.PROPOSAL_INIT_VALUE + num_clients*SMVConstants.CLIENT_LIST_FEE +
