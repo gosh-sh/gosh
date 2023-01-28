@@ -144,6 +144,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             MemberToken pub;
             (key, pub) = res.get();
             _reserve += pub.count;
+            _totalsupply += pub.count;
             deployWalletIn(pub);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
@@ -452,6 +453,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(false);
         _allbalance += _tokenforperson;
+        _totalsupply += _tokenforperson;
         getMoney();
     }
 
@@ -668,8 +670,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return ("goshdao", version);
     }
         
-    function getTokenBalance() external view returns(uint128, uint128) {
-        return (_reserve, _allbalance);
+    function getTokenBalance() external view returns(uint128, uint128, uint128) {
+        return (_reserve, _allbalance, _totalsupply);
     }
         
     function getOwner() external view returns(address) {
