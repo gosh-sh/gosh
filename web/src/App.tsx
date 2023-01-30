@@ -148,9 +148,9 @@ const App = () => {
                             <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
                         </div>
                         <div>
-                            Due to the high load, some services may not work properly.
+                            Due to high demand, some services may not function optimally.
                             <br />
-                            You can check the status on twitter:{' '}
+                            Check status updates on{' '}
                             <a
                                 href="https://twitter.com/gosh_shell"
                                 target="_blank"
@@ -163,11 +163,10 @@ const App = () => {
                                     )
                                 }}
                             >
-                                @gosh_shell
+                                Twitter
                             </a>
                             <br />
-                            We will send email notice as well. Sorry for the
-                            inconvenience.
+                            Notice will be sent via email. Sorry for any inconvenience.
                         </div>
                     </div>
                 </div>
