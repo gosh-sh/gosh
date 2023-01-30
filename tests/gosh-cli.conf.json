@@ -1,0 +1,34 @@
+{
+  "config": {
+    "wc": 0,
+    "addr": null,
+    "method": null,
+    "parameters": null,
+    "wallet": null,
+    "pubkey": null,
+    "abi_path": null,
+    "keys_path": null,
+    "retries": 0,
+    "timeout": 40000,
+    "message_processing_timeout": 40000,
+    "out_of_sync_threshold": 15,
+    "is_json": false,
+    "depool_fee": 0.5,
+    "lifetime": 40,
+    "no_answer": true,
+    "balance_in_tons": false,
+    "local_run": false,
+    "async_call": false,
+    "debug_fail": "None",
+    "global_timeout": 300,
+    "project_id": null,
+    "access_key": null,
+    "endpoints": [
+      "http://0.0.0.0",
+      "http://127.0.0.1",
+      "http://localhost"
+    ]
+  },
+  "aliases": {},
+  "path": "/home/user/GOSH/dev/gosh/tests/gosh-cli.conf.json"
+}
