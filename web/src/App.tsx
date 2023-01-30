@@ -42,12 +42,14 @@ import OnboardingPage from './pages/Onboarding'
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
-import { ToastOptionsShortcuts } from './helpers'
+import { onExternalLinkClick, ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
 import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -140,6 +142,35 @@ const App = () => {
         <div className="wrapper">
             <Header />
             <main className="main grow">
+                <div className="container">
+                    <div className="flex flex-nowrap items-start border border-yellow-500 rounded-lg mt-6 p-5 bg-yellow-50 gap-x-3">
+                        <div className="text-yellow-500">
+                            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+                        </div>
+                        <div>
+                            Due to high demand, some services may not function optimally.
+                            <br />
+                            Check status updates on{' '}
+                            <a
+                                href="https://twitter.com/gosh_shell"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-semibold"
+                                onClick={(e) => {
+                                    onExternalLinkClick(
+                                        e,
+                                        'https://twitter.com/gosh_shell',
+                                    )
+                                }}
+                            >
+                                Twitter
+                            </a>
+                            <br />
+                            Notice will be sent via email. Sorry for any inconvenience.
+                        </div>
+                    </div>
+                </div>
+
                 <Routes>
                     <Route
                         path="/"
