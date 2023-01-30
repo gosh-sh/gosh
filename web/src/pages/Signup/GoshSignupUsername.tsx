@@ -235,8 +235,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                                             />
                                         </div>
                                         <div className="text-sm">
-                                            Service is temporarily unavailable. Please try
-                                            again later.
+                                            Service unavailable, please try again later.
                                         </div>
                                     </div>
                                 </div>
