@@ -48,6 +48,8 @@ import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
 import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -140,6 +142,30 @@ const App = () => {
         <div className="wrapper">
             <Header />
             <main className="main grow">
+                <div className="container">
+                    <div className="flex flex-nowrap items-start border border-yellow-500 rounded-lg mt-6 p-5 bg-yellow-50 gap-x-3">
+                        <div className="text-yellow-500">
+                            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+                        </div>
+                        <div>
+                            Due to the high load, some services may not work properly.
+                            <br />
+                            You can check the status on twitter:{' '}
+                            <a
+                                href="https://twitter.com/gosh_shell"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-semibold"
+                            >
+                                @gosh_shell
+                            </a>
+                            <br />
+                            We will send email notice as well. Sorry for the
+                            inconvenience.
+                        </div>
+                    </div>
+                </div>
+
                 <Routes>
                     <Route
                         path="/"
