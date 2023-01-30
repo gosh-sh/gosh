@@ -46,7 +46,7 @@ build: copy_abi clear_screen
 
 .PHONY: install
 install: copy_abi clear_screen
-	cargo install --path .
+	GOSH_BUILD_VERSION=`git describe --tags` cargo install --path .
 
 .PHONY: test
 test: copy_abi clear_screen
