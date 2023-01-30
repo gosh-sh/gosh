@@ -42,7 +42,7 @@ import OnboardingPage from './pages/Onboarding'
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
-import { ToastOptionsShortcuts } from './helpers'
+import { onExternalLinkClick, ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
@@ -156,6 +156,12 @@ const App = () => {
                                 target="_blank"
                                 rel="noreferrer"
                                 className="font-semibold"
+                                onClick={(e) => {
+                                    onExternalLinkClick(
+                                        e,
+                                        'https://twitter.com/gosh_shell',
+                                    )
+                                }}
                             >
                                 @gosh_shell
                             </a>
