@@ -10,17 +10,13 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-GOSH_PATH=../contracts/gosh
-TESTS_PATH=../../tests
-REPO_NAME=upgrade_repo02
-DAO_NAME="dao-upgrade-test02_$RANDOM"
-NEW_REPO_PATH=upgrade_repo02_v2
-CONTROL_REPO_PATH=upgrade_repo02_control
+REPO_NAME=upgrade_repo02_2
+DAO_NAME="dao-upgrade-test02_2_$RANDOM"
+NEW_REPO_PATH=upgrade_repo02_2_v2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
-[ -d $CONTROL_REPO_PATH ] && rm -rf $CONTROL_REPO_PATH
 
 # deploy new DAO that will be upgraded
 echo "DAO_NAME=$DAO_NAME"
@@ -43,7 +39,7 @@ sleep 10
 GRANTED_PUBKEY=$(gosh-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 echo $GRANTED_PUBKEY
 
-echo "***** repo02 deploy *****"
+echo "***** repo02_2 deploy *****"
 gosh-cli -j call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -111,7 +107,7 @@ echo "NEW_WALLET_ADDR=$NEW_WALLET_ADDR"
 gosh-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
   "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$NEW_WALLET_ADDR\"}"
 
-echo "***** new repo02 deploy *****"
+echo "***** new repo02_2 deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $NEW_WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -122,6 +118,16 @@ sleep 3
 
 export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
+
+
+echo "***** check old dir after upgrade *****"
+cd $REPO_NAME
+git fetch
+echo new_ver > 1.txt
+git add 1.txt
+git commit -m test2
+git push
+cd ..
 
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $NEW_REPO_PATH
@@ -135,11 +141,6 @@ if [ $cur_ver != "new_ver" ]; then
   exit 1
 fi
 echo "GOOD VERSION"
-
-echo new_ver > 1.txt
-git add 1.txt
-git commit -m test2
-git push
 
 cd ..
 

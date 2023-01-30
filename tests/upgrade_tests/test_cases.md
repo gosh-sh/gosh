@@ -14,12 +14,17 @@ Steps:
 1) Deploy DAO `dao01`
 2) Deploy repo `repo01` with current version and obtain link to the repository: <link>
 3) Clone repo using the <link>
-4) Push file with content `data01`
+4) Push file with content `old_ver`
 5) Upgrade GOSH to test version `9999.0.0`
 6) Upgrade DAO `dao01` to test version `9999.0.0` with proposal
-7) Deploy repo with the same name `repo01`, test version `9999.0.0` and `previous` argument set to `null` - Should Fail!
+7) Deploy repo with the same name `repo01`, test version `9999.0.0` and `previous` argument set to `null`
+8) Obtain new link to the repository: <new_link>
+9) Clone repo using the <new_link>
+10) Push file with content `new_ver`
+11) Clone repo using the <old_link>
+12) Check that cloned repo contains file with content equal to `new_ver`
 
-## 2. Clone upgraded repo
+## 2.1 Clone upgraded repo
 Description:
 Test checks that repo could be upgraded saving commits with old version and that dispatcher chooses the latest
 repository version to clone.
@@ -35,9 +40,25 @@ Steps:
 8) Obtain new link to the repository: <new_link>
 9) Clone repo using the <new_link>
 10) Check that cloned repo contains file with content equal to `old_ver`
-11) Change file content to `new_ver`
-12) Clone repo using the <old_link>
-13) Check that cloned repo contains file with content equal to `new_ver`
+11) Change file content to `new_ver` and push
+
+## 2.2 Push to the repo after upgrade
+Description:
+Test checks that after repo upgrade current working directory can still be used to work with a new version of the repo.
+
+Steps:
+1) Deploy DAO `dao02_2`
+2) Deploy repo `repo02_2` with current version and obtain link to the repository <old_link> and repo address <old_address>
+3) Clone repo using the <old_link>
+4) Push file with content `old_ver`
+5) Upgrade GOSH with test version `9999.0.0`
+6) Upgrade DAO `dao02_2` to test version `9999.0.0` with proposal
+7) Deploy repo with the same name `repo02_2`, test version `9999.0.0` and `previous` argument set to <old_address>
+8) Obtain new link to the repository: <new_link>
+9) Change the file content in the old working directory to `new_ver`
+10) Push a commit to the repo
+11) Clone repo using the <new_link>
+12) Check that cloned repo contains file with content equal to `new_ver`
 
 ## 3. Create branch from parent version
 Description:
