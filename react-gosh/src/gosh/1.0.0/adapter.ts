@@ -1979,15 +1979,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get/deploy wallets
         if (this.subwallets.length !== this.config.maxWalletsWrite) {
             const { value0 } = await this.auth.wallet0.runLocal('getWalletsCount', {})
+            const counter = parseInt(value0)
             const subwallets = await Promise.all(
-                Array.from(new Array(+value0)).map(async (_, index) => {
+                Array.from(new Array(counter)).map(async (_, index) => {
                     if (index === 0) return this.auth!.wallet0
                     return await this._getSubwallet(index)
                 }),
             )
             this.subwallets = subwallets.filter((item) => !!item) as IGoshWallet[]
 
-            if (+value0 < this.config.maxWalletsWrite) {
+            if (counter < this.config.maxWalletsWrite) {
                 this.auth.wallet0.run('deployWallet', {})
             }
         }
