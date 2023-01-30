@@ -10,8 +10,8 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo05a
-DAO_NAME="dao-upgrade-test05a_$RANDOM"
+REPO_NAME=upgrade_repo05b
+DAO_NAME="dao-upgrade-test05b_$RANDOM"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -48,7 +48,7 @@ cd ..
 echo "Upgrade DAO"
 upgrade_DAO
 
-echo "***** new repo05a deploy *****"
+echo "***** new repo05b deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)

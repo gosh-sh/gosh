@@ -10,8 +10,8 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo05a
-DAO_NAME="dao-upgrade-test05a_$RANDOM"
+REPO_NAME=upgrade_repo06a
+DAO_NAME="dao-upgrade-test06a_$RANDOM"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -32,13 +32,13 @@ git add 1.txt
 git commit -m test
 git push
 
-echo "***** Create parent branch *****"
-git checkout -b parent_branch
+echo "***** Create grandparent branch *****"
+git checkout -b grandparent_branch
 
-echo parent > 1.txt
+echo grandparent > 1.txt
 git add 1.txt
 git commit -m test
-git push --set-upstream origin parent_branch
+git push --set-upstream origin grandparent_branch
 
 echo "***** Switch back to main *****"
 git checkout main
@@ -48,10 +48,32 @@ cd ..
 echo "Upgrade DAO"
 upgrade_DAO
 
-echo "***** new repo05a deploy *****"
+echo "***** new repo06a deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+echo "***** awaiting repo deploy *****"
+wait_account_active $REPO_ADDR
+sleep 3
+
+cd $REPO_NAME
+echo "**** Fetch repo *****"
+git fetch
+echo middle_ver > 2.txt
+git add 2.txt
+git commit -m test2
+git push
+
+cd ..
+
+echo "Upgrade DAO 2"
+upgrade_DAO 2
+
+echo "***** new repo06a deploy *****"
+gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION2\"}}" || exit 1
+REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_2 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
@@ -72,11 +94,11 @@ if [ $cur_ver != "main" ]; then
 fi
 echo "GOOD CONTENT"
 
-echo "**** Merge parent branch *****"
-git merge parent_branch
+echo "**** Merge grandparent branch *****"
+git merge grandparent_branch
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "parent" ]; then
+if [ $cur_ver != "grandparent" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
