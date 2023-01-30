@@ -14,7 +14,7 @@ import { supabase } from '../../helpers'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import yup from '../../yup-extended'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
@@ -223,21 +223,10 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                                 </div>
 
                                 <div className="nickname-form__submit">
-                                    <button type="submit" disabled={isSubmitting || true}>
+                                    <button type="submit" disabled={isSubmitting}>
                                         {isSubmitting && <Spinner size={'lg'} />}
                                         Create account
                                     </button>
-                                    <div className="flex flex-nowrap items-start border border-yellow-500 rounded-lg mt-6 p-5 bg-yellow-50 gap-x-2">
-                                        <div className="text-yellow-500">
-                                            <FontAwesomeIcon
-                                                icon={faExclamationTriangle}
-                                                size="lg"
-                                            />
-                                        </div>
-                                        <div className="text-sm">
-                                            Service unavailable, please try again later.
-                                        </div>
-                                    </div>
                                 </div>
                             </Form>
                         )}
