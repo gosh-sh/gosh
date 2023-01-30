@@ -79,7 +79,6 @@ git commit -m test2
 git push
 
 echo "***** create branch heading to old commit *****"
-#git checkout -b branch_name <commit-hash or HEAD~3>
 git checkout -b parent_branch $GRANDPARENT_COMMIT_ID
 cur_ver=$(cat 1.txt)
 if [ $cur_ver != "grandparent" ]; then

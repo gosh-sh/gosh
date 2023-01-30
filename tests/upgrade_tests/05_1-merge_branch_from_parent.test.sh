@@ -10,8 +10,8 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo03
-DAO_NAME="dao-upgrade-test03_$RANDOM"
+REPO_NAME=upgrade_repo05a
+DAO_NAME="dao-upgrade-test05a_$RANDOM"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -25,22 +25,30 @@ echo "REPO_LINK=$REPO_LINK"
 echo "***** cloning old version repo *****"
 git clone $REPO_LINK
 
-
 cd $REPO_NAME
-# push 1 file
 echo "***** Pushing file to the repo *****"
-echo old_ver > 1.txt
+echo main > 1.txt
 git add 1.txt
 git commit -m test
 git push
-PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
+
+echo "***** Create parent branch *****"
+git checkout -b parent_branch
+
+echo parent > 1.txt
+git add 1.txt
+git commit -m test
+git push --set-upstream origin parent_branch
+
+echo "***** Switch back to main *****"
+git checkout main
 
 cd ..
 
 echo "Upgrade DAO"
 upgrade_DAO
 
-echo "***** new repo03 deploy *****"
+echo "***** new repo05a deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -52,24 +60,27 @@ sleep 3
 cd $REPO_NAME
 echo "**** Fetch repo *****"
 git fetch
-echo new_ver > 1.txt
+echo new_ver > 2.txt
 git add 1.txt
 git commit -m test2
 git push
 
-echo "***** create branch heading to old commit *****"
-git checkout -b parent_branch $PARENT_COMMIT_ID
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "old_ver" ]; then
-  echo "WRONG VERSION"
+if [ $cur_ver != "main" ]; then
+  echo "WRONG CONTENT"
   exit 1
 fi
-echo "GOOD VERSION"
+echo "GOOD CONTENT"
 
-echo branch > 1.txt
-git add 1.txt
-git commit -m test2
-git push
+echo "**** Merge parent branch *****"
+git merge parent_branch
+
+cur_ver=$(cat 1.txt)
+if [ $cur_ver != "parent" ]; then
+  echo "WRONG CONTENT"
+  exit 1
+fi
+echo "GOOD CONTENT"
 
 cd ..
 
