@@ -10,9 +10,9 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo02
-DAO_NAME="dao-upgrade-test02_$RANDOM"
-NEW_REPO_PATH=upgrade_repo02_v2
+REPO_NAME=upgrade_repo02_2
+DAO_NAME="dao-upgrade-test02_2_$RANDOM"
+NEW_REPO_PATH=upgrade_repo02_2_v2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -50,7 +50,7 @@ cd ..
 echo "Upgrade DAO"
 upgrade_DAO
 
-echo "***** new repo02 deploy *****"
+echo "***** new repo02_2 deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -62,6 +62,16 @@ sleep 3
 export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
+
+echo "***** check old dir after upgrade *****"
+cd $REPO_NAME
+git fetch
+echo new_ver > 1.txt
+git add 1.txt
+git commit -m test2
+git push
+cd ..
+
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $NEW_REPO_PATH
 
@@ -69,16 +79,11 @@ echo "***** push to new version *****"
 cd $NEW_REPO_PATH
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "old_ver" ]; then
+if [ $cur_ver != "new_ver" ]; then
   echo "WRONG VERSION"
   exit 1
 fi
 echo "GOOD VERSION"
-
-echo new_ver > 1.txt
-git add 1.txt
-git commit -m test2
-git push
 
 cd ..
 
