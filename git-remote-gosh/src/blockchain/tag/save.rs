@@ -52,7 +52,7 @@ pub trait Tagging {
 
 #[async_trait]
 impl Tagging for Everscale {
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip_all)]
     async fn deploy_tag(
         &self,
         wallet: &UserWallet,
@@ -93,7 +93,7 @@ impl Tagging for Everscale {
         result
     }
 
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip_all)]
     async fn delete_tag(
         &self,
         wallet: &UserWallet,

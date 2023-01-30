@@ -29,7 +29,7 @@ pub enum TagObject {
     Annotated(Annotated),
 }
 
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "trace", skip_all)]
 pub async fn get_content(context: &EverClient, address: &BlockchainContractAddress) -> anyhow::Result<TagObject> {
     let tag_contract = GoshContract::new(address, crate::abi::TAG);
     let GetTagContentResult { content }

@@ -27,7 +27,7 @@ build-contracts-docker:
 
 generate-docker:
 	docker run --rm \
-        --network="host" \
+		--network="host" \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		-e GIVER_SEED_FILE_OUT="Giver.seed" \
 		-e GIVER_NETWORK_FILE_OUT="Giver.network" \
