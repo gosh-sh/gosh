@@ -10,7 +10,6 @@ use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
-use git_remote_gosh::logger::set_log_verbosity;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 use version_compare::Version;
@@ -23,7 +22,6 @@ pub const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    set_log_verbosity(1);
 
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     eprintln!("Dispatcher git-remote-gosh v{version}");
