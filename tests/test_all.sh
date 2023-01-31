@@ -27,7 +27,9 @@ fi
 ./10-ensure_blobs_onchain.test.sh
 ./11-git_submodules.test.sh
 ./12-clone_tree_with_rename.sh
+./13_push_protected_branch.test.sh
 
+# TODO: proposals have delay 1 minute, for tests need to set it to 1 second
 # upgrade tests.   Failing tests have ignore argument
 ./upgrade_tests/set_up.sh
 ./upgrade_tests/01-clone_rewritten_repo.test.sh
@@ -36,6 +38,8 @@ fi
 ./upgrade_tests/03-branch_from_parent.test.sh ignore
 ./upgrade_tests/04-branch_from_grandparent.test.sh ignore
 ./upgrade_tests/05_1-merge_branch_from_parent.test.sh ignore
+./upgrade_tests/06_1-merge_branch_from_grandparent.test.sh ignore
+./upgrade_tests/07-branch_from_unrelated_commit.test.sh ignore
 
 ./clean.sh
 echo "All tests passed"

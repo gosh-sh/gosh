@@ -85,7 +85,7 @@ git add 1.txt
 git commit -m test2
 git push
 
-RES=$(git checkout -b parent_branch $PARENT_COMMIT_ID)
+git checkout -b parent_branch $PARENT_COMMIT_ID || true
 if [ $? = 0 ]; then
   echo "Branch created from wrong commit id"
   exit 1

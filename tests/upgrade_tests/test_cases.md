@@ -129,14 +129,13 @@ Steps:
 4) Push a commit to the repo and get <commit_id_0>
 5) Create a branch `parent_branch` heading to the <commit_id_0>
 6) Checkout the `parent_branch`
-7) Protect the `parent_branch`
-8) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
+7) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
+8) Protect the `parent_branch`
 9) Checkout the `main` branch
 10) Upgrade DAO `dao05a` and repo `repo05a` to the test version `9999.0.0`
 11) Push a commit to the repo without changing the file `test_05a.txt`
 12) Checkout the `parent_branch`
-13) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
-14) Merge branch `parent_branch` to the `main` branch
+13) Merge branch `parent_branch` to the `main` branch
 
 ## 5.3. Merge branch from parent version with both branch protection
 Description:
