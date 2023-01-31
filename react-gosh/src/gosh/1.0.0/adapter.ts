@@ -1789,7 +1789,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return snapshot
     }
 
-    private async _getSubwallet(index: number): Promise<IGoshWallet | null> {
+    private async _getSubwallet(index: number): Promise<IGoshWallet> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         if (this.auth.wallet0.account.signer.type !== 'Keys') {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -1806,7 +1806,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         if (!(await subwallet.isDeployed())) {
-            return null
+            throw new GoshError(`Wallet with index "${index}" is not deployed`)
         }
 
         return subwallet
@@ -1983,7 +1983,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const subwallets = await Promise.all(
                 Array.from(new Array(counter)).map(async (_, index) => {
                     if (index === 0) return this.auth!.wallet0
-                    return await this._getSubwallet(index)
+                    try {
+                        return await this._getSubwallet(index)
+                    } catch (e: any) {
+                        console.warn(e.message)
+                        return null
+                    }
                 }),
             )
             this.subwallets = subwallets.filter((item) => !!item) as IGoshWallet[]
