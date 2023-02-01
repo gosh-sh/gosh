@@ -31,7 +31,8 @@
 				{"name":"amountToLock","type":"uint128"},
 				{"name":"staticCell","type":"cell"},
 				{"name":"inputCell","type":"cell"},
-				{"name":"deployFee","type":"uint128"}
+				{"name":"deployFee","type":"uint128"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 			]

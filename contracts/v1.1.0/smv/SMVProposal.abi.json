@@ -24,7 +24,8 @@
 			"inputs": [
 				{"name":"value0","type":"uint128"},
 				{"name":"value1","type":"uint128"},
-				{"name":"value2","type":"cell"}
+				{"name":"value2","type":"cell"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 			]
@@ -118,7 +119,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
 			]
 		},
 		{
@@ -169,6 +170,54 @@
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
+			]
+		},
+		{
+			"name": "getGoshDeployRepoProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			]
+		},
+		{
+			"name": "getGoshAddVoteTokenProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			]
+		},
+		{
+			"name": "getGoshAddTokenProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			]
+		},
+		{
+			"name": "getGoshMintTokenProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"grant","type":"uint128"}
+			]
+		},
+		{
+			"name": "getGoshDaoTagProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"daotag","type":"string"}
 			]
 		},
 		{
@@ -428,6 +477,7 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
+		{"name":"_goshdao","type":"address"},
 		{"name":"platformCodeHash","type":"uint256"},
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"leftBro","type":"optional(address)"},

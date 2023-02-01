@@ -229,6 +229,7 @@
 		{"name":"m_lockerCode","type":"cell"},
 		{"name":"_access","type":"optional(uint256)"},
 		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
-		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"}
+		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
+		{"name":"_lockedBalance","type":"uint128"}
 	]
 }

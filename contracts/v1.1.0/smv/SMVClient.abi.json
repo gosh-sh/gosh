@@ -25,7 +25,8 @@
 			"inputs": [
 				{"name":"amountToLock","type":"uint128"},
 				{"name":"total_votes_","type":"uint128"},
-				{"name":"inputCell","type":"cell"}
+				{"name":"inputCell","type":"cell"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 			]
@@ -223,6 +224,7 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
+		{"name":"_goshdao","type":"address"},
 		{"name":"platformCodeHash","type":"uint256"},
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"leftBro","type":"optional(address)"},
