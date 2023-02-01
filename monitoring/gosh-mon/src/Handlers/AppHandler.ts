@@ -23,8 +23,11 @@ export default abstract class AppHandler extends GoshHandler {
             AppHandler.indexSteps, //-----------------------------------------------------------------------------------
             'remove footer',           () => this.removeFooter(), // not a step, utility function
             'click signin',            () => this.click(`//a[${ac_hrefs('/a/signin')}]`),
-            'input seed',              () => this.pasteInto("//textarea[@name='phrase']", this.seed, undefined, undefined, true),
-            'input username',          () => this.pasteInto("//input[@name='username']", this.username, 50, true),
+            // 'input seed',              () => this.pasteInto("//textarea[@name='phrase']", this.seed, undefined, undefined, true),
+            'copy seed to clipboard',  () => this.setClipboard(this.seed),
+            'click paste icon',        () => this.click('svg.fa-paste'),
+            'clear clipboard',         () => this.setClipboard(''),
+            // 'input username',          () => this.pasteInto("//input[@name='username']", this.username, 50, true),
             'click sign in',           () => this.click("//button[contains(., 'Sign in') and @type='submit']"),
             'wait 100ms',              () => this.wait(100),
             'input pin code',          () => this.type("//input[@type='password' and @placeholder='PIN code']", "1111"),

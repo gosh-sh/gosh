@@ -1,4 +1,4 @@
-use crate::blockchain::user_wallet::UserWallet;
+use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     },
     ipfs::{service::FileSave, IpfsService},
 };
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
 
 use super::is_going_to_ipfs;
@@ -29,10 +29,7 @@ enum BlobDst {
     SetContent(String),
 }
 
-#[instrument(
-    level = "info",
-    skip_all
-)]
+#[instrument(level = "info", skip_all)]
 pub async fn push_diff<'a, B>(
     blockchain: &B,
     repo_name: &str,
@@ -75,38 +72,44 @@ where
     let diff_coordinate = diff_coordinate.clone();
     let last_commit_id = *last_commit_id;
 
-    Retry::spawn(default_retry_strategy(), || async {
-        inner_push_diff(
-            &blockchain,
-            repo_name.to_string(),
-            snapshot_addr.clone(),
-            wallet.clone(),
-            &ipfs_endpoint,
-            &commit_id,
-            &branch_name,
-            &blob_id,
-            &file_path,
-            &diff_coordinate,
-            &last_commit_id,
-            is_last,
-            &original_snapshot_content,
-            &diff,
-            &new_snapshot_content,
-        )
-        .await
-        .map_err(|e| {
+    let condition = |e: &anyhow::Error| {
+        if e.is::<WalletError>() {
+            false
+        } else {
             tracing::warn!("Attempt failed with {:#?}", e);
-            e
-        })
-    })
+            true
+        }
+    };
+
+    RetryIf::spawn(
+        default_retry_strategy(),
+        || async {
+            inner_push_diff(
+                &blockchain,
+                repo_name.to_string(),
+                snapshot_addr.clone(),
+                wallet.clone(),
+                &ipfs_endpoint,
+                &commit_id,
+                &branch_name,
+                &blob_id,
+                &file_path,
+                &diff_coordinate,
+                &last_commit_id,
+                is_last,
+                &original_snapshot_content,
+                &diff,
+                &new_snapshot_content,
+            )
+            .await
+        },
+        condition,
+    )
     .await?;
     Ok(())
 }
 
-#[instrument(
-    level = "info",
-    skip_all
-)]
+#[instrument(level = "info", skip_all)]
 pub async fn inner_push_diff(
     blockchain: &impl BlockchainService,
     repo_name: String,
@@ -334,23 +337,31 @@ where
 {
     tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
-    Retry::spawn(default_retry_strategy(), || async {
-        blockchain
-            .deploy_new_snapshot(
-                &wallet,
-                repo_addr.clone(),
-                branch_name.clone(),
-                "".to_string(),
-                file_path.clone(),
-                "".to_string(),
-            )
-            .await
-            .map_err(|e| {
-                tracing::trace!(
-                    "inner_push_snapshot error <branch: {branch_name}, path: {file_path}>"
-                );
-                e
-            })
-    })
+
+    let condition = |e: &anyhow::Error| {
+        if e.is::<WalletError>() {
+            false
+        } else {
+            tracing::debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
+            true
+        }
+    };
+
+    RetryIf::spawn(
+        default_retry_strategy(),
+        || async {
+            blockchain
+                .deploy_new_snapshot(
+                    &wallet,
+                    repo_addr.clone(),
+                    branch_name.clone(),
+                    "".to_string(),
+                    file_path.clone(),
+                    "".to_string(),
+                )
+                .await
+        },
+        condition,
+    )
     .await
 }

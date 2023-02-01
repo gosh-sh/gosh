@@ -28,8 +28,8 @@ pub extern crate anyhow;
 extern crate memcache;
 
 pub mod abi;
-pub mod cache;
 pub mod blockchain;
+pub mod cache;
 pub mod config;
 pub mod git_helper;
 pub mod ipfs;

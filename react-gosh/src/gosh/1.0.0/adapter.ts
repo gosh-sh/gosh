@@ -2010,14 +2010,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get/deploy wallets
         if (this.subwallets.length !== this.config.maxWalletsWrite) {
-            this.subwallets = await Promise.all(
-                Array.from(new Array(this.config.maxWalletsWrite)).map(
-                    async (_, index) => {
-                        if (index === 0) return this.auth!.wallet0
+            const { value0 } = await this.auth.wallet0.runLocal('getWalletsCount', {})
+            const counter = parseInt(value0)
+            const subwallets = await Promise.all(
+                Array.from(new Array(counter)).map(async (_, index) => {
+                    if (index === 0) return this.auth!.wallet0
+                    try {
                         return await this._getSubwallet(index)
-                    },
-                ),
+                    } catch (e: any) {
+                        console.warn(e.message)
+                        return null
+                    }
+                }),
             )
+            this.subwallets = subwallets.filter((item) => !!item) as IGoshWallet[]
+
+            if (counter < this.config.maxWalletsWrite) {
+                this.auth.wallet0.run('deployWallet', {})
+            }
         }
 
         // Split array for chunks for each wallet

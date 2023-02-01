@@ -33,7 +33,8 @@ export default abstract class GoshHandler extends ScenarioHandler {
         const eset = this.use_envs;
         if (eset !== 'disabled') {
             try {
-                const res = await fetch(this.appurl + '/envs.json');
+                const appurl = this.appurl.endsWith('/') ? this.appurl : this.appurl + '/';
+                const res = await fetch(appurl + 'envs.json');
                 const jr = await res.json();
                 let gosh = jr.gosh;
                 if (gosh && gosh.startsWith('{')) {
@@ -67,12 +68,22 @@ export default abstract class GoshHandler extends ScenarioHandler {
     }
 
     protected async processFileContents(contents?: string): Promise<number> {
-        const fileContents: string = contents ?? await this.copy();
+        const fileContents: string = contents ?? await this.getClipboard();
         if (this.large) {
             const lines: string[] = fileContents.split('\n').map(v => v.trimEnd());
             const readTail = lines.slice(2).join('');
-            if (readTail !== GoshHandler.makeTail(lines[0]))
+            const expected = GoshHandler.makeTail(lines[0], false, this.large_sha1_cnt);
+            if (readTail !== expected) {
+                const shorter = function(s: string) {
+                    if (s.length < 500) return `${s} (length: ${s.length})`;
+                    return `${s.substring(0, 500)}.....${s.substring(s.length - 500)} (length: ${s.length})`;
+                }
+                this.say('Read file contents do not match the expected');
+                this.say('Expc: ' + shorter(expected));
+                this.say('Read: ' + shorter(readTail));
+                this.say('Lin0: ' + shorter(lines[0]));
                 throw new TypeError('Data tail is corrupted');
+            }
             return Number.parseInt(lines[0]);
         } else {
             return Number.parseInt(fileContents.trim());

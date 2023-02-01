@@ -38,6 +38,7 @@ import EventsPage from './pages/Events'
 import EventPage from './pages/Event'
 import NotFoundPage from './pages/404'
 import OnboardingPage from './pages/Onboarding'
+import OnboardingStatusPage from './pages/OnboardingStatus'
 
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
@@ -147,14 +148,17 @@ const App = () => {
                             process.env.REACT_APP_ISDOCKEREXT === 'true' ? (
                                 <SigninPage />
                             ) : (
-                                <SignupPage />
+                                <Navigate to="onboarding" replace />
                             )
                         }
                     />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
-                    <Route path="/onboarding" element={<OnboardingPage />} />
+                    <Route path="/onboarding">
+                        <Route index element={<OnboardingPage />} />
+                        <Route path="status" element={<OnboardingStatusPage />} />
+                    </Route>
                     <Route path="/a/signin" element={<SigninPage />} />
                     <Route path="/a/signup" element={<SignupPage />} />
                     <Route path="/a" element={<ProtectedLayout />}>

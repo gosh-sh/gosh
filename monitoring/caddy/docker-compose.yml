@@ -16,7 +16,7 @@ services:
       - "443:443"
     volumes:
       - ./caddy:/etc/caddy
-      - /mnt/data/caddy:/data
+      - ./data:/data
       - ./www:/var/www
     environment:
       - ADMIN_USER=${ADMIN_USER}

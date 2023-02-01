@@ -1,0 +1,21 @@
+version: '2.2'
+
+services:
+
+  supa-exp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supa-exp
+    restart: "unless-stopped"
+    expose: [9789]
+    ports: ["127.0.0.1:9789:9789"]
+    volumes:
+      - ./config:/home/node/app/config:ro
+    networks:
+      gosh-monitoring:
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring

@@ -2,11 +2,15 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA},
+    blockchain::{
+        get_commit_address, user_wallet::WalletError, BlockchainContractAddress, BlockchainService,
+        ZERO_SHA,
+    },
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
+use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
@@ -19,7 +23,7 @@ use tokio::{
     sync::Semaphore,
     task::{JoinError, JoinSet},
 };
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
 pub mod create_branch;
@@ -28,6 +32,10 @@ mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
 mod push_tree;
+mod push_tag;
+use push_tag::push_tag;
+mod delete_tag;
+use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
 
@@ -89,10 +97,7 @@ where
         Ok(())
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -250,10 +255,7 @@ where
         ))
     }
 
-    #[instrument(
-        level = "info",
-        skip_all
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -311,26 +313,37 @@ where
             let branch_name = remote_branch_name.to_owned().clone();
 
             let permit = push_semaphore.acquire_owned().await?;
+
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    true
+                }
+            };
+
             push_handlers.spawn(
                 async move {
-                    let res = Retry::spawn(default_retry_strategy(), || async {
-                        blockchain
-                            .push_commit(
-                                &object_id,
-                                &branch_name,
-                                &tree_addr,
-                                &remote,
-                                &dao_addr,
-                                &raw_commit,
-                                &*parents,
-                            )
-                            .await
-                            .map_err(|e| {
-                                tracing::warn!("Attempt failed with {:#?}", e);
-                                e
-                            })
-                    })
+                    let res = RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            blockchain
+                                .push_commit(
+                                    &object_id,
+                                    &branch_name,
+                                    &tree_addr,
+                                    &remote,
+                                    &dao_addr,
+                                    &raw_commit,
+                                    &*parents,
+                                )
+                                .await
+                        },
+                        condition,
+                    )
                     .await;
+
                     drop(permit);
                     res
                 }
@@ -386,7 +399,7 @@ where
     }
 
     // find ancestor commit
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip_all)]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
         // Note:
         // Here is the problem. We have file snapshot per branch per path.
@@ -395,14 +408,9 @@ where
         // This led to a problem that some files were copied from one place to another
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
-        tracing::info!("push_ref {} : {}", local_ref, remote_ref);
-        fn get_branch_name(_ref: &str) -> anyhow::Result<&str> {
-            let mut iter = _ref.rsplit('/');
-            iter.next()
-                .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
-        }
-        let local_branch_name: &str = get_branch_name(local_ref)?;
-        let remote_branch_name: &str = get_branch_name(remote_ref)?;
+        tracing::debug!("push_ref {} : {}", local_ref, remote_ref);
+        let local_branch_name: &str = get_ref_name(local_ref)?;
+        let remote_branch_name: &str = get_ref_name(remote_ref)?;
 
         // 1. Check if branch exists and ready in the blockchain
 
@@ -537,10 +545,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("obj join-hanlder: {}", e);
+                    bail!("obj join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("obj inner: {}", e)
+                    bail!("obj inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -550,10 +558,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("snapshots join-hanlder: {}", e);
+                    bail!("snapshots join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("snapshots inner: {}", e)
+                    bail!("snapshots inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -582,22 +590,100 @@ where
         Ok(result_ok)
     }
 
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip(self))]
+    async fn push_ref_tag(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
+        tracing::debug!("push_tag {} : {}", local_ref, remote_ref);
+        let tag_name: &str = get_ref_name(local_ref)?;
+
+        let commit_id = self
+            .local_repository()
+            .find_reference(tag_name)?
+            .into_fully_peeled_id()?
+            .detach();
+
+        let mut buffer: Vec<u8> = Vec::new();
+        let ref_obj = self
+            .local_repository()
+            .refs
+            .try_find(local_ref)?
+            .expect("Tag should exists");
+
+        let tag_content = if commit_id.to_string() != ref_obj.target.id().to_string() {
+            let tag_obj = self
+                .local_repository()
+                .objects
+                .try_find(ref_obj.target.id(), &mut buffer)?
+                .unwrap();
+            format!(
+                "id {}\n{}",
+                ref_obj.target.id().to_string(),
+                String::from_utf8(tag_obj.data.to_vec())?
+            )
+        } else {
+            format!("tag {tag_name}\nobject {commit_id}\n")
+        };
+
+        let blockchain = self.blockchain.clone();
+        let remote_network = self.remote.network.clone();
+        let dao_addr = self.dao_addr.clone();
+        let repo_name = self.remote.repo.clone();
+
+        push_tag(
+            &self.blockchain,
+            &remote_network,
+            &dao_addr,
+            &repo_name,
+            tag_name,
+            &commit_id,
+            &tag_content
+        ).await?;
+
+        let result_ok = format!("ok {remote_ref}\n");
+        Ok(result_ok)
+    }
+
+    #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
-        tracing::trace!("push: refs={refs}");
+        tracing::debug!("push: refs={refs}");
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
-            [remote_ref] => delete_remote_ref(remote_ref).await?,
-            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
+            ["", remote_tag] if remote_tag.starts_with("refs/tags") =>
+                self.delete_remote_tag(remote_tag).await?,
+            ["", remote_ref] =>
+                delete_remote_ref(remote_ref).await?,
+            [local_tag, remote_tag] if local_tag.starts_with("refs/tags") =>
+                self.push_ref_tag(local_tag, remote_tag).await?,
+            [local_ref, remote_ref] =>
+                self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
-        tracing::trace!("push ref result: {result}");
+        tracing::debug!("push ref result: {result}");
         Ok(result)
+    }
+
+    async fn delete_remote_tag(&mut self, remote_ref: &str) -> anyhow::Result<String> {
+        tracing::debug!("delete_remote_tag {remote_ref}");
+        let tag_name: &str = get_ref_name(remote_ref)?;
+
+        let blockchain = self.blockchain.clone();
+        let remote_network = self.remote.network.clone();
+        let dao_addr = self.dao_addr.clone();
+        let repo_name = self.remote.repo.clone();
+
+        delete_tag(&blockchain, &remote_network, &dao_addr, &repo_name, &tag_name).await?;
+
+        Ok(format!("ok {remote_ref}\n"))
     }
 }
 
+fn get_ref_name(_ref: &str) -> anyhow::Result<&str> {
+    let mut iter = _ref.rsplit('/');
+    iter.next()
+        .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
+}
+
 async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
-    Ok("delete ref ok".to_owned())
+    Ok("deleted remote ref".to_owned())
 }
 
 #[instrument(level = "info", skip_all)]

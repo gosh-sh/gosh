@@ -3,6 +3,7 @@ use crate::blockchain::{BlockchainService, FormatShort, MAX_ACCOUNTS_ADDRESSES_P
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
+use anyhow::bail;
 use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
 use tokio::task::JoinSet;
@@ -32,11 +33,7 @@ pub struct ParallelDiff {
 }
 
 impl ParallelDiff {
-    #[instrument(
-        level = "info",
-        skip_all,
-        name = "new_ParallelDiff"
-    )]
+    #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
         commit_id: git_hash::ObjectId,
         branch_name: String,
@@ -148,10 +145,10 @@ impl ParallelDiffsUploadSupport {
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
-                    panic!("diffs joih-handler: {}", e);
+                    bail!("diffs joih-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("diffs inner: {}", e);
+                    bail!("diffs inner: {}", e);
                 }
                 Ok(Ok(_)) => {}
             }
