@@ -4,6 +4,7 @@ use super::{
     contract::ContractRead,
     get_contracts_blocks,
     snapshot::save::{DeployDiff, DeployNewSnapshot},
+    tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
     BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
@@ -62,6 +63,7 @@ pub trait BlockchainService:
     + DeployTree
     + DeployDiff
     + DeployNewSnapshot
+    + Tagging
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
@@ -226,6 +228,26 @@ pub mod tests {
                 commit_id: String,
                 file_path: String,
                 content: String,
+            ) -> anyhow::Result<()>;
+        }
+
+        #[async_trait]
+        impl Tagging for Everscale {
+            async fn deploy_tag(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                tag_name: String,
+                commit_id: String,
+                content: String,
+                commit_address: BlockchainContractAddress,
+            ) -> anyhow::Result<()>;
+
+            async fn delete_tag(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                tag_name: String,
             ) -> anyhow::Result<()>;
         }
 
