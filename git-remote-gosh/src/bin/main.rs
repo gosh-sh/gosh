@@ -1,7 +1,7 @@
 use git_remote_gosh::anyhow;
 use git_remote_gosh::logger::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
-use std::process::{ExitCode};
+use std::process::ExitCode;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -48,4 +48,3 @@ async fn main_internal() -> anyhow::Result<()> {
     git_remote_gosh::git_helper::run(config, &url).await?;
     Ok(())
 }
-
