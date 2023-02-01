@@ -1,8 +1,8 @@
-type TGoshSignupStartProps = {
+type TOAuthSigninProps = {
     signinOAuth(): Promise<void>
 }
 
-const GoshSignupStart = (props: TGoshSignupStartProps) => {
+const OAuthSignin = (props: TOAuthSigninProps) => {
     const { signinOAuth } = props
 
     return (
@@ -35,4 +35,4 @@ const GoshSignupStart = (props: TGoshSignupStartProps) => {
     )
 }
 
-export default GoshSignupStart
+export default OAuthSignin

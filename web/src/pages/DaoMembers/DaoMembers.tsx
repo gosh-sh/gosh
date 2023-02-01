@@ -6,16 +6,70 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import DaoMemberForm from './MemberForm'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
+import DaoMemberInvites from './MemberInvites'
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '../../helpers'
+import { EDaoInviteStatus } from '../../store/onboarding.types'
+
+export type TDaoInvite = {
+    id: string
+    recipientEmail: string
+    recipientStatus: string | null
+    recipientUsername: string
+    isFetching: boolean
+}
 
 const DaoMembersPage = () => {
     const { daoName } = useParams()
     const navigate = useNavigate()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const deleteDaoMember = useDaoMemberDelete(dao.adapter)
     const { items, isFetching, search, setSearch, getItemDetails } = useDaoMemberList(
         dao.adapter,
         0,
     )
-    const deleteDaoMember = useDaoMemberDelete(dao.adapter)
+    const [invites, setInvites] = useState<{
+        items: TDaoInvite[]
+        isFetching: boolean
+    }>({
+        items: [],
+        isFetching: false,
+    })
+
+    const getDaoInvites = useCallback(async () => {
+        setInvites((state) => ({ ...state, isFetching: true }))
+        try {
+            const { data, error } = await supabase
+                .from('dao_invite')
+                .select(`id,recipient_email,recipient_status,recipient_username`)
+                .eq('dao_name', daoName)
+                .or(
+                    [
+                        'recipient_status.is.null',
+                        `recipient_status.eq.${EDaoInviteStatus.ACCEPTED}`,
+                    ].join(','),
+                )
+            if (error) {
+                throw new Error(error.message)
+            }
+
+            setInvites((state) => ({
+                ...state,
+                items: (data || []).map((item) => ({
+                    id: item.id,
+                    recipientEmail: item.recipient_email,
+                    recipientStatus: item.recipient_status,
+                    recipientUsername: item.recipient_username || item.recipient_email,
+                    isFetching: false,
+                })),
+            }))
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        } finally {
+            setInvites((state) => ({ ...state, isFetching: false }))
+        }
+    }, [daoName])
 
     const onMemberDelete = async (username: string) => {
         if (window.confirm('Delete member?')) {
@@ -28,6 +82,10 @@ const DaoMembersPage = () => {
             }
         }
     }
+
+    useEffect(() => {
+        getDaoInvites()
+    }, [getDaoInvites])
 
     return (
         <>
@@ -93,12 +151,20 @@ const DaoMembersPage = () => {
                 </div>
             </div>
 
-            <div className="mt-6 flex">
+            <div className="mt-6 flex flex-wrap items-start gap-y-6 gap-x-4">
                 <div
                     id="create-member-anchor"
-                    className="basis-full md:basis-1/2 border rounded-xl p-5 md:p-8"
+                    className="border rounded-xl p-5 md:p-8 basis-full lg:basis-5/12"
                 >
-                    <DaoMemberForm dao={dao.adapter} />
+                    <DaoMemberForm dao={dao.adapter} getDaoInvites={getDaoInvites} />
+                </div>
+                <div className="border rounded-xl overflow-hidden grow lg:basis-6/12">
+                    <DaoMemberInvites
+                        dao={dao.adapter}
+                        invites={invites}
+                        setInvites={setInvites}
+                        getDaoInvites={getDaoInvites}
+                    />
                 </div>
             </div>
         </>

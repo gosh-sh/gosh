@@ -1,39 +1,36 @@
 import { Field, Form, Formik } from 'formik'
 import { AppConfig, GoshError, useUser } from 'react-gosh'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import yup from '../../../yup-extended'
+import { validateOnboardingDao, validateOnboardingRepo } from '../helpers'
+import { supabase } from '../../../helpers'
+import PinCodeModal from '../../../components/Modal/PinCode'
+import { TextField } from '../../../components/Formik'
+import Spinner from '../../../components/Spinner'
+import { SignupProgress } from '../../Signup/components/SignupProgress'
+import { appModalStateAtom } from '../../../store/app.state'
 import {
-    githubRepositoriesSelectedSelector,
-    oAuthSessionAtom,
-    publicEmailAtom,
-    signupStepAtom,
-} from '../../store/signup.state'
-import { TextField } from '../../components/Formik'
-import Spinner from '../../components/Spinner'
-import { SignupProgress } from './SignupProgress'
-import { supabase } from '../../helpers'
+    daoInvitesSelector,
+    OAuthSessionAtom,
+    onboardingDataAtom,
+    repositoriesCheckedSelector,
+} from '../../../store/onboarding.state'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
-import yup from '../../yup-extended'
-import { appModalStateAtom } from '../../store/app.state'
-import PinCodeModal from '../../components/Modal/PinCode'
-import { useNavigate } from 'react-router-dom'
-import { validateOnboardingDao, validateOnboardingRepo } from '../Onboarding/helpers'
+import ToastError from '../../../components/Error/ToastError'
+import { EDaoInviteStatus } from '../../../store/onboarding.types'
+import PreviousStep from './PreviousStep'
 
-type TGoshSignupUsernameProps = {
-    phrase: string[]
+type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
 }
 
-const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
-    const { phrase, signoutOAuth } = props
-    const navigate = useNavigate()
+const GoshUsername = (props: TGoshUsernameProps) => {
+    const { signoutOAuth } = props
+    const { session } = useRecoilValue(OAuthSessionAtom)
+    const [{ phrase, isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
+    const repositories = useRecoilValue(repositoriesCheckedSelector)
+    const { items: invites } = useRecoilValue(daoInvitesSelector)
     const setModal = useSetRecoilState(appModalStateAtom)
-    const { session } = useRecoilValue(oAuthSessionAtom)
-    const isPublicEmail = useRecoilValue(publicEmailAtom)
-    const githubReposSelected = useRecoilValue(githubRepositoriesSelectedSelector)
-    const setStep = useSetRecoilState(signupStepAtom)
     const { signup, signupProgress } = useUser()
 
     const getDbUser = async (username: string) => {
@@ -71,6 +68,34 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
         return data
     }
 
+    const createDbGithubRecord = async (item: {
+        user_id: string
+        github_url: string
+        gosh_url: string
+    }) => {
+        const { user_id, github_url, gosh_url } = item
+        const { count, error } = await supabase
+            .from('github')
+            .select('*', { count: 'exact' })
+            .eq('user_id', user_id)
+            .eq('github_url', github_url)
+            .eq('gosh_url', gosh_url)
+        if (error) {
+            throw new Error(error.message)
+        }
+
+        if (!count) {
+            const { error } = await supabase.from('github').insert(item)
+            if (error) {
+                throw new Error(error.message)
+            }
+        }
+    }
+
+    const onBackClick = () => {
+        setOnboarding((state) => ({ ...state, step: 'phrase' }))
+    }
+
     const onFormSubmit = async (values: { username: string }) => {
         try {
             if (!session) {
@@ -91,20 +116,36 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                     username,
                     keypair.public,
                     session.user.id,
-                    isPublicEmail ? session.user.email || null : null,
+                    isEmailPublic ? session.user.email || null : null,
                 )
             }
 
             // Save auto clone repositories
-            const { error } = await supabase.from('github').insert(
-                githubReposSelected.map(([githubUrl, goshUrl]) => ({
+            const goshAddress = Object.values(AppConfig.versions).reverse()[0]
+            const goshProtocol = `gosh://${goshAddress}`
+            for (const item of repositories) {
+                const { daoName, name } = item
+                await createDbGithubRecord({
                     user_id: dbUser.id,
-                    github_url: githubUrl,
-                    gosh_url: goshUrl,
-                })),
-            )
-            if (error) {
-                throw new GoshError(error.message)
+                    github_url: `/${daoName}/${name}`,
+                    gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
+                })
+            }
+
+            // Update DAO invites status
+            for (const invite of invites) {
+                const { error } = await supabase
+                    .from('dao_invite')
+                    .update({
+                        recipient_username: username,
+                        recipient_status: invite.accepted
+                            ? EDaoInviteStatus.ACCEPTED
+                            : EDaoInviteStatus.REJECTED,
+                    })
+                    .eq('id', invite.id)
+                if (error) {
+                    throw new GoshError(error.message)
+                }
             }
 
             // Deploy GOSH account
@@ -112,10 +153,9 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
 
             // Validate onboarding data
             const validationResult = await Promise.all(
-                githubReposSelected.map(async ([_, goshUrl]) => {
-                    const parts = goshUrl.split('/')
-                    const daoName = parts[parts.length - 2]
-                    const repoName = parts[parts.length - 1]
+                repositories.map(async (item) => {
+                    const daoName = item.daoName.toLowerCase()
+                    const repoName = item.name.toLowerCase()
 
                     const daoValidation = await validateOnboardingDao(daoName)
                     if (!daoValidation.valid) {
@@ -143,13 +183,13 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
                             if (isAllValid) {
                                 await signoutOAuth()
                             }
-                            setStep({
-                                index: 4,
-                                data: { username, email: session.user.email },
-                            })
-                            navigate(isAllValid ? '/a/orgs' : '/onboarding', {
-                                replace: true,
-                            })
+                            setOnboarding((state) => ({
+                                ...state,
+                                step: 'complete',
+                                username,
+                                email: session.user.email!,
+                                redirectTo: isAllValid ? '/a/orgs' : '/onboarding/status',
+                            }))
                         }}
                     />
                 ),
@@ -164,12 +204,7 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
         <div className="signup signup--username">
             <div className="signup__aside signup__aside--step aside-step">
                 <div className="aside-step__header">
-                    <div className="aside-step__btn-back">
-                        <button type="button" onClick={() => setStep({ index: 2 })}>
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </button>
-                    </div>
-                    <span className="aside-step__title">Back</span>
+                    <PreviousStep onClick={onBackClick} />
                 </div>
                 <p className="aside-step__text">Choose a short nickname</p>
                 <p className="aside-step__text-secondary">or create a new one</p>
@@ -239,4 +274,4 @@ const GoshSignupUsername = (props: TGoshSignupUsernameProps) => {
     )
 }
 
-export default GoshSignupUsername
+export default GoshUsername
