@@ -28,6 +28,7 @@ fi
 ./11-git_submodules.test.sh
 ./12-clone_tree_with_rename.sh
 ./13_push_protected_branch.test.sh
+./14_pull_request_details.test.sh
 
 # TODO: proposals have delay 1 minute, for tests need to set it to 1 second
 # upgrade tests.   Failing tests have ignore argument
