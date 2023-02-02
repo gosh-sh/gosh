@@ -263,7 +263,7 @@ Test checks that tag exists after repo upgrade, commit id should be the same.
 Steps:
 1) Deploy DAO `dao08` and repo `repo08` with the current version
 2) Push a commit to the repo and get <commit_id_0>
-3) Push tag `relesae` to the last commit
+3) Push tag `release` to the last commit
 4) Push a commit to the repo
 5) Upgrade DAO `dao08` and repo `repo08` to the test version `9999.0.0`
 6) Push a commit to the repo
@@ -277,7 +277,7 @@ Test checks that after repo upgrade tag from the last version can be deleted and
 Steps:
 1) Deploy DAO `dao09` and repo `repo09` with the current version
 2) Push a commit to the repo
-3) Push tag `relesae` to the last commit
+3) Push tag `release` to the last commit
 4) Push a commit to the repo
 5) Upgrade DAO `dao09` and repo `repo09` to the test version `9999.0.0`
 6) Push a commit to the repo and get <commit_id_0>
