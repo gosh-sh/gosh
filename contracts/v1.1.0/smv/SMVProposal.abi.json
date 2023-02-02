@@ -81,7 +81,8 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"}
+				{"name":"commit","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -91,7 +92,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -100,7 +102,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"token","type":"uint128"}
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -110,7 +113,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -119,7 +123,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -128,7 +133,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -138,7 +144,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"newversion","type":"string"},
-				{"name":"description","type":"string"}
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -148,7 +155,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"reponame","type":"string"},
-				{"name":"taskname","type":"string"}
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -158,7 +166,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"reponame","type":"string"},
-				{"name":"taskname","type":"string"}
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -170,7 +179,8 @@
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
-				{"name":"lock","type":"uint128"}
+				{"name":"lock","type":"uint128"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -180,7 +190,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
-				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -190,7 +201,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"pubaddr","type":"address"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -200,7 +212,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"pubaddr","type":"address"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -209,7 +222,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -218,7 +232,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"daotag","type":"string[]"}
+				{"name":"daotag","type":"string[]"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -226,7 +241,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"proposalKind","type":"uint256"}
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{

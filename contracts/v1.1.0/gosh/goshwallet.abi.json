@@ -121,6 +121,7 @@
 			"inputs": [
 				{"name":"newversion","type":"string"},
 				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -130,6 +131,7 @@
 			"name": "startProposalForSetTombstoneDao",
 			"inputs": [
 				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -195,6 +197,7 @@
 			"name": "startProposalForMintToken",
 			"inputs": [
 				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -203,6 +206,7 @@
 		{
 			"name": "startProposalForAllowMint",
 			"inputs": [
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -213,6 +217,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -222,6 +227,7 @@
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -231,6 +237,7 @@
 			"name": "startProposalForDeleteWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -264,6 +271,7 @@
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -480,6 +488,7 @@
 				{"name":"commit","type":"string"},
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"task","type":"optional(address)"}
 			],
@@ -490,6 +499,7 @@
 			"name": "startProposalForAddDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -499,6 +509,7 @@
 			"name": "startProposalForDestroyDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -509,6 +520,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -520,6 +532,7 @@
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
 				{"name":"index","type":"uint128"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -530,6 +543,7 @@
 			"inputs": [
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -542,6 +556,7 @@
 				{"name":"repoName","type":"string"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
 				{"name":"lock","type":"uint128"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [
@@ -552,6 +567,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [

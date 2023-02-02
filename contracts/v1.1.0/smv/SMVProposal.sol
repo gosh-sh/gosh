@@ -239,115 +239,115 @@ function getGoshProposalKind() external view returns( uint256  proposalKind)
 }
 
 function getGoshSetCommitProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName,  string commit)
+         returns( uint256  proposalKind,  string repoName, string  branchName,  string commit, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind,  repoName,  branchName,  commit) = s.decode(uint256, string, string, string);
+    (proposalKind,  repoName,  branchName,  commit, comment) = s.decode(uint256, string, string, string, string);
 }
 
 function getGoshAddProtectedBranchProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName)
+         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
+    (proposalKind,  repoName,  branchName, comment) = s.decode(uint256, string, string, string);
 }
 
 function getGoshSetConfigDaoProposalParams () external view
-         returns( uint256  proposalKind,  uint128 token)
+         returns( uint256  proposalKind,  uint128 token, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, token) = s.decode(uint256, uint128);
+    (proposalKind, token, comment) = s.decode(uint256, uint128, string);
 }
 
 function getGoshDeleteProtectedBranchProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName)
+         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind,  repoName,  branchName) = s.decode(uint256, string, string);
+    (proposalKind,  repoName,  branchName, comment) = s.decode(uint256, string, string, string);
 }
 
 function getGoshDeployWalletDaoProposalParams () external view
-         returns( uint256  proposalKind, MemberToken[] pubaddr)
+         returns( uint256  proposalKind, MemberToken[] pubaddr, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, pubaddr) = s.decode(uint256, MemberToken[]);
+    (proposalKind, pubaddr, comment) = s.decode(uint256, MemberToken[], string);
 }
 
 function getGoshDeleteWalletDaoProposalParams () external view
-         returns( uint256  proposalKind, address[] pubaddr)
+         returns( uint256  proposalKind, address[] pubaddr, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, pubaddr) = s.decode(uint256, address[]);
+    (proposalKind, pubaddr, comment) = s.decode(uint256, address[], string);
 }
 
 function getGoshUpgradeDaoProposalParams () external view
-         returns( uint256  proposalKind, string newversion, string description)
+         returns( uint256  proposalKind, string newversion, string description, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, newversion, description) = s.decode(uint256, string, string);
+    (proposalKind, newversion, description, comment) = s.decode(uint256, string, string, string);
 }
 
 function getGoshConfirmTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname)
+         returns( uint256  proposalKind, string reponame, string taskname, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, reponame, taskname) = s.decode(uint256, string, string);
+    (proposalKind, reponame, taskname, comment) = s.decode(uint256, string, string, string);
 }
 
 function getGoshDestroyTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname)
+         returns( uint256  proposalKind, string reponame, string taskname, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, reponame, taskname) = s.decode(uint256, string, string);
+    (proposalKind, reponame, taskname, comment) = s.decode(uint256, string, string, string);
 }
 
 function getGoshDeployTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, uint128 lock)
+         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, uint128 lock, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, reponame, taskname, grant, lock) = s.decode(uint256, string, string, ConfigGrant, uint128);
+    (proposalKind, reponame, taskname, grant, lock, comment) = s.decode(uint256, string, string, ConfigGrant, uint128, string);
 }
 
 function getGoshDeployRepoProposalParams () external view
-         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous)
+         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, repoName, previous) = s.decode(uint256, string, optional(AddrVersion));
+    (proposalKind, repoName, previous, comment) = s.decode(uint256, string, optional(AddrVersion), string);
 }
 
 function getGoshAddVoteTokenProposalParams () external view
-         returns(uint256  proposalKind,  address pubaddr, uint128 grant)
+         returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, pubaddr, grant) = s.decode(uint256, address, uint128);
+    (proposalKind, pubaddr, grant, comment) = s.decode(uint256, address, uint128, string);
 }
 
 function getGoshAddTokenProposalParams () external view
-         returns(uint256  proposalKind,  address pubaddr, uint128 grant)
+         returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, pubaddr, grant) = s.decode(uint256, address, uint128);
+    (proposalKind, pubaddr, grant, comment) = s.decode(uint256, address, uint128, string);
 }
 
 function getGoshMintTokenProposalParams () external view
-         returns(uint256  proposalKind,  uint128 grant)
+         returns(uint256  proposalKind,  uint128 grant, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, grant) = s.decode(uint256, uint128);
+    (proposalKind, grant, comment) = s.decode(uint256, uint128, string);
 }
 
 function getGoshDaoTagProposalParams () external view
-         returns(uint256  proposalKind,  string[] daotag)
+         returns(uint256  proposalKind,  string[] daotag, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, daotag) = s.decode(uint256, string[]);
+    (proposalKind, daotag, comment) = s.decode(uint256, string[], string);
 }
 
 function getAllowMintProposalParams () external view
-         returns(uint256  proposalKind)
+         returns(uint256  proposalKind, string comment)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind) = s.decode(uint256);
+    (proposalKind, comment) = s.decode(uint256, string);
 }
 
 ////////////////////////////////////

@@ -210,13 +210,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForUpgradeDao(
         string newversion,
         string description,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, newversion, description, now);
+        proposalBuilder.store(proposalKind, newversion, description, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients);
@@ -226,6 +227,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function startProposalForSetTombstoneDao(
         string description,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -233,7 +235,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, description, now);
+        proposalBuilder.store(proposalKind, description, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients);
@@ -310,6 +312,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function startProposalForMintToken(
         uint128 token,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -320,7 +323,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, token, now);
+        proposalBuilder.store(proposalKind, token, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients);
@@ -329,6 +332,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startProposalForAllowMint(
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -339,7 +343,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = ALLOW_MINT_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, now);
+        proposalBuilder.store(proposalKind, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients);
@@ -354,6 +358,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForAddToken(
         address pubaddr,
         uint128 token,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -364,7 +369,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = ADD_VOTE_TOKEN_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, pubaddr, token, now);
+        proposalBuilder.store(proposalKind, pubaddr, token, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients);
@@ -374,6 +379,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function startProposalForDeployWalletDao(
         MemberToken[] pubaddr,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -386,7 +392,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, pubaddr, now);
+        proposalBuilder.store(proposalKind, pubaddr, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients);
@@ -396,6 +402,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function startProposalForDeleteWalletDao(
         address[] pubaddr,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -407,7 +414,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, pubaddr, now);
+        proposalBuilder.store(proposalKind, pubaddr, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients);
@@ -527,6 +534,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeployRepository(
         string nameRepo, 
         optional(AddrVersion) previous,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
@@ -537,7 +545,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, nameRepo, previous, now);
+        proposalBuilder.store(proposalKind, nameRepo, previous, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DEPLOY_REPO_PROPOSAL_START_AFTER, DEPLOY_REPO_PROPOSAL_DURATION, num_clients);
@@ -982,6 +990,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
+        string comment,
         uint128 num_clients,
         optional(address) task
     ) public onlyOwnerPubkeyOptional(_access)  {
@@ -994,7 +1003,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, now);
+        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients);
@@ -1004,6 +1013,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function startProposalForAddDaoTag(
         string[] tag,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);       
@@ -1013,7 +1023,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, tag, now);
+        proposalBuilder.store(proposalKind, tag, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients);
@@ -1023,6 +1033,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function startProposalForDestroyDaoTag(
         string[] tag,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);       
@@ -1032,7 +1043,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, tag, now);
+        proposalBuilder.store(proposalKind, tag, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients);
@@ -1043,6 +1054,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForAddProtectedBranch(
         string repoName,
         string branchName,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1052,7 +1064,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, now);
+        proposalBuilder.store(proposalKind, repoName, branchName, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
@@ -1064,6 +1076,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string taskName,
         string repoName,
         uint128 index,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1073,7 +1086,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, index, now);
+        proposalBuilder.store(proposalKind, repoName, taskName, index, comment, now);
         TvmCell c = proposalBuilder.toCell();
         _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients);
         getMoney();
@@ -1082,6 +1095,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForTaskDestroy(
         string taskName,
         string repoName,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1091,7 +1105,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, now);
+        proposalBuilder.store(proposalKind, repoName, taskName, comment, now);
         TvmCell c = proposalBuilder.toCell();
         _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients);
         getMoney();
@@ -1103,6 +1117,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         ConfigGrant grant,
         uint128 lock,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1112,7 +1127,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, grant, lock, now);
+        proposalBuilder.store(proposalKind, repoName, taskName, grant, lock, comment, now);
         TvmCell c = proposalBuilder.toCell();
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients);
         getMoney();
@@ -1121,6 +1136,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeleteProtectedBranch(
         string repoName,
         string branchName,
+        string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1130,7 +1146,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, now);
+        proposalBuilder.store(proposalKind, repoName, branchName, comment, now);
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
