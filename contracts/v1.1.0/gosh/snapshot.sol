@@ -275,7 +275,7 @@ contract Snapshot is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public view minValue(0.3 ton) accept {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).isDeleteSnap{value: 0.1 ton} (_branch, _name);
+        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton} (_branch, _name);
     }
     
     function destroyfinal() public senderIs(_rootRepo) {
