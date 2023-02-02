@@ -196,14 +196,6 @@
 			]
 		},
 		{
-			"name": "setDaoTokenWallet",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "setSnapshot",
 			"inputs": [
 				{"name":"code","type":"cell"}

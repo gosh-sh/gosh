@@ -21,7 +21,6 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
-				{"name":"codedaoTokenWallet","type":"cell"},
 				{"name":"codedaotag","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
@@ -101,15 +100,6 @@
 		{
 			"name": "asktotalSupply",
 			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyTW",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"grant","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -236,14 +226,6 @@
 			]
 		},
 		{
-			"name": "deployDaoTokenWallet",
-			"inputs": [
-				{"name":"pubaddr","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployWallet",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
@@ -356,15 +338,6 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getaddrTW",
-			"inputs": [
-				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

@@ -1,4 +1,4 @@
-tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex task daotokenwallet daotag
+tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex task daotag
 cpfl = profile profiledao profileindex versioncontroller daotag
 KEYS_PATH = ${CURDIR}
 clean:
