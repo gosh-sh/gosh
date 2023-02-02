@@ -331,7 +331,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
-    function startProposalForAllowMint(
+    function startProposalForNotAllowMint(
         string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) {
@@ -1072,7 +1072,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function startProposalForTask(
+    function startProposalForTaskConfirm(
         string taskName,
         string repoName,
         uint128 index,

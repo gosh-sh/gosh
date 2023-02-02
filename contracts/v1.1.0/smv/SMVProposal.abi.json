@@ -237,7 +237,7 @@
 			]
 		},
 		{
-			"name": "getAllowMintProposalParams",
+			"name": "getNotAllowMintProposalParams",
 			"inputs": [
 			],
 			"outputs": [

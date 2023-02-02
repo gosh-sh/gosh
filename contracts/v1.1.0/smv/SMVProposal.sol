@@ -343,7 +343,7 @@ function getGoshDaoTagProposalParams () external view
     (proposalKind, daotag, comment) = s.decode(uint256, string[], string);
 }
 
-function getAllowMintProposalParams () external view
+function getNotAllowMintProposalParams () external view
          returns(uint256  proposalKind, string comment)
 {
     TvmSlice s = propData.toSlice();

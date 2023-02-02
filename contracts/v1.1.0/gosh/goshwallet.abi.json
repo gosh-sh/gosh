@@ -204,7 +204,7 @@
 			]
 		},
 		{
-			"name": "startProposalForAllowMint",
+			"name": "startProposalForNotAllowMint",
 			"inputs": [
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"}
@@ -527,7 +527,7 @@
 			]
 		},
 		{
-			"name": "startProposalForTask",
+			"name": "startProposalForTaskConfirm",
 			"inputs": [
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
