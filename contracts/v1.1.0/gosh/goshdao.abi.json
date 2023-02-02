@@ -343,6 +343,15 @@
 			]
 		},
 		{
+			"name": "getDaoTagAddr",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getAddrWallet",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

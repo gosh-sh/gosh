@@ -195,8 +195,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
     
-    function setLimitedWallet(bool decision) public senderIs(_goshdao)  accept saveMsg {
+    function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
         _limited = decision;
+        _limit_wallets = limitwallet;
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForLimited{value : 0.1 ton, flag: 1}(decision);
     }
@@ -412,7 +413,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 60 ton, wid: 0
-        }(  _versionController, _rootpubaddr, _pubaddr, _nameDao,
+        }(  _versionController,_rootpubaddr, _pubaddr, _nameDao,
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
