@@ -9,7 +9,8 @@ import { faDocker } from '@fortawesome/free-brands-svg-icons'
 import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
-import { AppConfig, useUser } from 'react-gosh'
+import { useUser } from 'react-gosh'
+import { onExternalLinkClick } from '../../helpers'
 
 const Header = () => {
     const user = useUser()
@@ -78,12 +79,7 @@ const Header = () => {
                                 rel="noreferrer"
                                 className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                                 onClick={(e) => {
-                                    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-                                        e.preventDefault()
-                                        AppConfig.dockerclient?.host.openExternal(
-                                            'https://blog.gosh.sh/',
-                                        )
-                                    }
+                                    onExternalLinkClick(e, 'https://blog.gosh.sh/')
                                 }}
                             >
                                 <FontAwesomeIcon icon={faBlog} size="lg" />
@@ -96,12 +92,7 @@ const Header = () => {
                                 rel="noreferrer"
                                 className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                                 onClick={(e) => {
-                                    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-                                        e.preventDefault()
-                                        AppConfig.dockerclient?.host.openExternal(
-                                            'https://t.me/gosh_sh',
-                                        )
-                                    }
+                                    onExternalLinkClick(e, 'https://t.me/gosh_sh')
                                 }}
                             >
                                 <FontAwesomeIcon icon={faPaperPlane} size="lg" />

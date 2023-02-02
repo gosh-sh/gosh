@@ -16,6 +16,7 @@ import { Transition } from '@headlessui/react'
 
 type TDaoMemberFormProps = {
     dao: IGoshDaoAdapter
+    getDaoInvites(): Promise<void>
 }
 
 type TInvitationSentProps = {
@@ -56,7 +57,7 @@ const InvitationSent = (props: TInvitationSentProps) => {
 }
 
 const DaoMemberForm = (props: TDaoMemberFormProps) => {
-    const { dao } = props
+    const { dao, getDaoInvites } = props
     const { daoName } = useParams()
     const { user } = useUser()
     const createDaoMember = useDaoMemberCreate(dao)
@@ -202,6 +203,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 if (error) {
                     throw new GoshError(error.message)
                 }
+                await getDaoInvites()
             }
 
             // Add existing profiles to DAO

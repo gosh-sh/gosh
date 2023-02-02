@@ -165,10 +165,10 @@ class RemoteHandler extends GoshHandler_1.default {
             'ensure .gosh dir', /* 0*/ () => this.ensureDir('../.gosh'),
             'request envs', /* 1*/ () => this.requestEnvs(),
             'config template', /* 2*/ () => this.copyTemplFile('config/template/config.json', '../.gosh/config.json', {
-                'pubkey': this.pubkey, 'secret': this.secret, 'ipfs_address': this.ipfs_address,
-                'prim_network': this.prim_network, 'conf_endpoint': this.conf_endpoint.replaceAll(',', '", "')
+                'pubkey': this.pubkey, 'secret': this.secret, 'ipfs_address': this.ipfs_address, 'profile': this.username,
+                'prim_network': this.prim_network, 'conf_endpoint': this.conf_endpoint.replaceAll(',', '", "'),
             }),
-            'random wait', () => this.nodeWait(this.getRandomInt(1000, 5000)),
+            'random wait', () => this.nodeWait(process.env.ONESHOT_DEBUG === undefined ? this.getRandomInt(1000, 10000) : 1),
             'query release', /* 3*/ async () => {
                 // https://github.com/<organization>/<repository>.git
                 const split = this.gosh_repo_url.split('/');

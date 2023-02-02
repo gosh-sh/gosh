@@ -35,7 +35,7 @@ class Application {
             next();
         });
         this.express.get('/', (req, res) => {
-            res.send(`<h1>Everscale monitoring: ${name}</h1><a href="/metrics">Prometheus metrics</a>\n`);
+            res.send(`<h1>Monitoring: ${name}</h1><a href="/metrics">Prometheus metrics</a>\n`);
         });
         this.express.get('/metrics', async (req, res) => {
             res.send(await this.process());
@@ -50,7 +50,7 @@ class Application {
         }
         else
             this.express.listen(port, () => {
-                console.log(`Everscale monitoring service ${this.service.serviceName()} started on port ${port}`);
+                console.log(`Monitoring service ${this.service.serviceName()} started on port ${port}`);
             });
     }
     async process() {

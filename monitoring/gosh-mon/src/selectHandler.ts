@@ -6,7 +6,6 @@ import RemoteReadHandler from "./Handlers/RemoteReadHandler";
 import RemoteWriteHandler from "./Handlers/RemoteWriteHandler";
 import AppRotateHandler from "./Handlers/AppRotateHandler";
 import SeedReadHandler from "./Handlers/SeedReadHandler";
-import RootCheckHandler from "./Handlers/RootCheckHandler";
 import AppSetupHandler from "./Handlers/AppSetupHandler";
 import ScriptHandler from "./Handlers/ScriptHandler";
 import RMonitorHandler from "./Handlers/RMonitorHandler";
@@ -25,7 +24,6 @@ export default function selectHandler(type: HandlerType, silent?: boolean): Gosh
         case 'remote-write': return new RemoteWriteHandler();
         case   'app-rotate': return new AppRotateHandler();
         case    'seed-read': return new SeedReadHandler();
-        case   'root-check': return new RootCheckHandler();
         case    'app-setup': return new AppSetupHandler();
         case       'script': return new ScriptHandler();
         case 'rsmq-monitor': return new RMonitorHandler();

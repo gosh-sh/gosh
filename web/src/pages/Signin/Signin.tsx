@@ -2,12 +2,13 @@ import { useSetRecoilState } from 'recoil'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
-import { AppConfig, useUser } from 'react-gosh'
+import { useUser } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { useEffect, useState } from 'react'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
+import { onExternalLinkClick } from '../../helpers'
 
 const SigninPage = () => {
     const navigate = useNavigate()
@@ -84,10 +85,7 @@ const SigninPage = () => {
                                     href="https://app.gosh.sh/"
                                     className="ml-1 text-blue-1e7aec underline"
                                     onClick={(e) => {
-                                        e.preventDefault()
-                                        AppConfig.dockerclient?.host.openExternal(
-                                            'https://app.gosh.sh/',
-                                        )
+                                        onExternalLinkClick(e, 'https://app.gosh.sh/')
                                     }}
                                 >
                                     app.gosh.sh

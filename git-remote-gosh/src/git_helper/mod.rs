@@ -4,6 +4,7 @@ use std::env;
 
 use serde_json::Value;
 use std::sync::Arc;
+use anyhow::bail;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::cache::proxy::CacheProxy;
@@ -245,12 +246,17 @@ where
         Ok(vec![format!("{}", tombstone.tombstone), "".to_string()])
     }
 
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip_all)]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
-        tracing::trace!("list: for_push={for_push}");
+        tracing::debug!("list: for_push={for_push}");
         let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
+            let tags = list::get_tags(&self.blockchain.client(), &self.repo_addr).await?;
+            match tags {
+                None => (),
+                Some(mut list) => ref_list.append(&mut list),
+            };
             let head = get_head(&self.blockchain.client(), &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
@@ -260,8 +266,8 @@ where
                 ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()));
             }
         }
-        tracing::trace!("list: {:?}", ref_list);
         ref_list.push("".to_owned());
+        tracing::debug!("list: {:?}", ref_list);
         Ok(ref_list)
     }
 
@@ -326,18 +332,24 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
 
     // Note: we assume git client will work correctly and will terminate this batch
     // with an empty line prior the next operation
-    let mut is_batching_operation_in_progress = false;
+    let mut is_batching_push_in_progress = false;
+    let mut is_batching_fetch_in_progress = false;
 
     let mut batch_response: Vec<String> = Vec::new();
     while let Some(line) = lines.next_line().await? {
         if line.is_empty() {
-            if is_batching_operation_in_progress {
-                is_batching_operation_in_progress = false;
+            if is_batching_push_in_progress {
+                is_batching_push_in_progress = false;
                 for line in batch_response.clone() {
-                    tracing::trace!("[batched] < {line}");
+                    tracing::debug!("[batched] < {line}");
                     stdout.write_all(format!("{line}\n").as_bytes()).await?;
                 }
-                tracing::trace!("[batched] < {line}");
+                tracing::debug!("[batched] < {line}");
+                stdout.write_all("\n".as_bytes()).await?;
+                continue;
+            } else if is_batching_fetch_in_progress {
+                is_batching_fetch_in_progress = false;
+                tracing::debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
                 continue;
             } else {
@@ -351,7 +363,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let arg2 = iter.next();
         let msg = line.clone();
         tracing::trace!("Line: {line}");
-        tracing::trace!(
+        tracing::debug!(
             "> {} {} {}",
             cmd.unwrap(),
             arg1.unwrap_or(""),
@@ -361,15 +373,15 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => {
-                is_batching_operation_in_progress = true;
+                is_batching_push_in_progress = true;
                 let push_result = helper.push(ref_arg).await?;
                 batch_response.push(push_result);
                 vec![]
             }
             (Some("fetch"), Some(sha), Some(name)) => {
-                is_batching_operation_in_progress = true;
+                is_batching_fetch_in_progress = true;
                 helper.fetch(sha, name).await?;
-                vec![]
+                continue
             }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
@@ -386,7 +398,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             _ => Err(anyhow::anyhow!("unknown command"))?,
         };
         for line in response {
-            tracing::trace!("[{msg}] < {line}");
+            tracing::debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
         }
     }

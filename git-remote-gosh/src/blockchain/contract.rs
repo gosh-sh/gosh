@@ -54,7 +54,7 @@ pub trait ContractRead: Debug {
     where
         for<'de> T: Deserialize<'de>;
 
-    async fn load_account(&self, client: &EverClient) -> anyhow::Result<ContractStatus>;
+    async fn load_account(&self, client: &EverClient) -> anyhow::Result<Option<ContractStatus>>;
 }
 
 #[async_trait]
@@ -153,8 +153,10 @@ impl GoshContract {
     }
 
     pub async fn is_active(&self, context: &EverClient) -> anyhow::Result<bool> {
-        let ContractStatus { status, .. } = self.load_account(context).await?;
-        Ok(status == 1)
+        match self.load_account(context).await? {
+            None => Ok(false),
+            Some(v) => Ok(v.status == 1),
+        }
     }
 }
 
@@ -188,10 +190,16 @@ impl ContractRead for GoshContract {
         Ok(serde_json::from_value::<T>(result).map_err(|e| anyhow::Error::from(e))?)
     }
 
-    async fn load_account(&self, client: &EverClient) -> anyhow::Result<ContractStatus> {
+    async fn load_account(&self, client: &EverClient) -> anyhow::Result<Option<ContractStatus>> {
         let result = get_account_data(client, self).await?;
 
-        Ok(serde_json::from_value::<ContractStatus>(result).map_err(|e| anyhow::Error::from(e))?)
+        if result.is_null() {
+            Ok(None)
+        } else {
+            let result: ContractStatus
+                = serde_json::from_value(result).map_err(|e| anyhow::Error::from(e))?;
+            Ok(Some(result))
+        }
     }
 }
 
@@ -229,13 +237,15 @@ mod tests {
             serde_json::from_value::<T>(v).map_err(|e| anyhow::Error::from(e))
         }
 
-        async fn load_account(&self, context: &EverClient) -> anyhow::Result<ContractStatus> {
+        async fn load_account(&self, context: &EverClient)
+            -> anyhow::Result<Option<ContractStatus>>
+        {
             let contract_status = ContractStatus {
                 status: 1,
                 balance: 10000000000,
             };
 
-            Ok(contract_status)
+            Ok(Some(contract_status))
         }
     }
 
@@ -255,7 +265,11 @@ mod tests {
         );
         assert_eq!(result.branch.version, "commit_version");
 
-        let ContractStatus { status, balance } = contract.load_account(&client).await.unwrap();
+        let ContractStatus { status, balance } = contract
+            .load_account(&client)
+            .await
+            .unwrap()
+            .unwrap();
 
         assert_eq!(status, 1);
         assert_eq!(balance, 10000000000);

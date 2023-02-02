@@ -1,13 +1,35 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Handler_1 = __importDefault(require("../Handler"));
 const Utils_1 = require("../Utils");
-const fs_1 = require("fs");
+const fs_1 = __importStar(require("fs"));
 const promises_1 = require("timers/promises");
-const fs_2 = __importDefault(require("fs"));
 const glob_promise_1 = __importDefault(require("glob-promise"));
 const path_1 = __importDefault(require("path"));
 const perf_hooks_1 = require("perf_hooks");
@@ -59,13 +81,15 @@ class ScenarioHandler extends Handler_1.default {
             args.args?.push('--start-maximized');
         }
         this.browser = await puppeteer.launch(args);
-        this.context = this.browser.defaultBrowserContext();
+        // this.context = this.browser.defaultBrowserContext();
         // @ts-ignore Safety measure
         this.page = null;
         this.stepsDone = 0;
         this.log = [];
+        this.session = await this.browser.target().createCDPSession();
         // Enable clipboard read and write
-        await this.context["_connection"].send('Browser.grantPermissions', {
+        // @ts-ignore
+        await this.session.send('Browser.grantPermissions', {
             permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
         });
     }
@@ -112,20 +136,22 @@ class ScenarioHandler extends Handler_1.default {
     async closePage() {
         await this.page.close();
     }
-    async copy() {
+    async getClipboard() {
         // @ts-ignore navigator is internal to page function
         return await this.page.evaluate(() => navigator.clipboard.readText());
     }
-    async paste(text, ctrlv = true, clear = true) {
+    async setClipboard(text) {
         // @ts-ignore navigator is internal to page function
         await this.page.evaluate((text) => navigator.clipboard.writeText(text), text);
+    }
+    async paste(text, ctrlv = true, clear = true) {
+        await this.setClipboard(text);
         if (ctrlv) {
             await this.page.keyboard.down('ControlLeft');
             await this.page.keyboard.press('KeyV');
             await this.page.keyboard.up('ControlLeft');
             if (clear) {
-                // @ts-ignore navigator is internal to page function
-                await this.page.evaluate(() => navigator.clipboard.writeText(''));
+                await this.setClipboard('');
             }
         }
     }
@@ -138,12 +164,14 @@ class ScenarioHandler extends Handler_1.default {
     async find(elem, timeout) {
         // this.say(`    find ${elem}${ifdef(' with timeout ', timeout)}`);
         const timeoutArg = timeout ? { timeout: timeout } : {};
+        // @ts-ignore
         return elem.startsWith('/') ?
             await this.page.waitForXPath(elem, timeoutArg) :
             await this.page.waitForSelector(elem, timeoutArg);
     }
     async findMultipleNow(elem) {
         // this.say(`    find ${elem} immediately`);
+        // @ts-ignore
         return elem.startsWith('/') ?
             await this.page.$x(elem) :
             await this.page.$$(elem);
@@ -241,13 +269,13 @@ class ScenarioHandler extends Handler_1.default {
     async removeFiles(fileglob) {
         const files = await (0, glob_promise_1.default)(fileglob);
         for (let f of files)
-            if (fs_2.default.existsSync(f))
-                fs_2.default.unlinkSync(f);
+            if (fs_1.default.existsSync(f))
+                fs_1.default.unlinkSync(f);
     }
     async moveAway(fileglob, dest) {
         const files = await (0, glob_promise_1.default)(fileglob);
         for (let f of files)
-            fs_2.default.renameSync(f, dest + path_1.default.basename(f));
+            fs_1.default.renameSync(f, dest + path_1.default.basename(f));
     }
     async dumpToFile(fname, add, final = true) {
         this.maybeFlush();
@@ -262,10 +290,10 @@ class ScenarioHandler extends Handler_1.default {
     archiveLog(fname, archpath, archfname) {
         this.mkdirs(archpath);
         this.app.cleanupLogs(archpath, this.arch_clean_old_s, this.arch_clean_file_cnt, this.arch_clean_total_mb);
-        if (fs_2.default.existsSync(`${fname}.log`))
-            fs_2.default.copyFileSync(`${fname}.log`, `${archpath}/${archfname}.log`);
-        if (fs_2.default.existsSync(`${fname}.png`))
-            fs_2.default.copyFileSync(`${fname}.png`, `${archpath}/${archfname}.png`);
+        if (fs_1.default.existsSync(`${fname}.log`))
+            fs_1.default.copyFileSync(`${fname}.log`, `${archpath}/${archfname}.log`);
+        if (fs_1.default.existsSync(`${fname}.png`))
+            fs_1.default.copyFileSync(`${fname}.png`, `${archpath}/${archfname}.png`);
     }
     async doSteps(...steps) {
         this.say(`::: short timeout ${this.timeout_ms}, long timeout ${this.longtimeout_ms}`);
@@ -420,9 +448,9 @@ class ScenarioHandler extends Handler_1.default {
     }
     async finally() {
         if (this.logger_file) {
-            fs_2.default.closeSync(this.logger_file);
+            fs_1.default.closeSync(this.logger_file);
             const res = (this.stepsDone === 100) ? 'OK' : this.stepsDone.toString();
-            fs_2.default.renameSync(this.log_path_templ.replace('{}', '-busy'), this.log_path_templ.replace('{}', `-res${res}`));
+            fs_1.default.renameSync(this.log_path_templ.replace('{}', '-busy'), this.log_path_templ.replace('{}', `-res${res}`));
         }
         if (this.browser) {
             await this.page.close();
@@ -439,17 +467,17 @@ class ScenarioHandler extends Handler_1.default {
         this.log_path_templ = path;
         console.log(`Logging to file ${path}`);
         if (this.logger_file)
-            fs_2.default.closeSync(this.logger_file);
-        this.logger_file = fs_2.default.openSync(path.replace('{}', '-busy'), 'w');
+            fs_1.default.closeSync(this.logger_file);
+        this.logger_file = fs_1.default.openSync(path.replace('{}', '-busy'), 'w');
         return this;
     }
     maybeFlush() {
         if (this.logger_file)
-            fs_2.default.fsyncSync(this.logger_file);
+            fs_1.default.fsyncSync(this.logger_file);
     }
     say(msg, loud = false, logonly = false) {
         if (this.logger_file) {
-            fs_2.default.writeSync(this.logger_file, (0, Utils_1.niso)() + ' ' + msg + '\n', null, 'utf-8');
+            fs_1.default.writeSync(this.logger_file, (0, Utils_1.niso)() + ' ' + msg + '\n', null, 'utf-8');
         }
         else {
             this.log.push((0, Utils_1.niso)() + ' ' + msg);

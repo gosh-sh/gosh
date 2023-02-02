@@ -1,7 +1,7 @@
 import emptylogo from '../../assets/images/emptylogo.svg'
 import { Transition } from '@headlessui/react'
 import RepoListItem from './RepoListItem'
-import { TOnboardingDao } from './Onboarding'
+import { TOnboardingDao } from './OnboardingStatus'
 import { classNames } from 'react-gosh'
 import Spinner from '../../components/Spinner'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

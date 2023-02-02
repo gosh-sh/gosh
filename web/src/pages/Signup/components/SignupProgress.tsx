@@ -1,5 +1,5 @@
 import { TUserSignupProgress } from 'react-gosh'
-import { UILog, UILogItem } from '../../components/UILog'
+import { UILog, UILogItem } from '../../../components/UILog'
 
 type TSignupProgressProps = {
     progress: TUserSignupProgress
