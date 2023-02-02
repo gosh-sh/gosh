@@ -55,7 +55,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     bool _flag = false;
     bool _tombstone = false;
-    bool _allowMint = true;
+    bool public _allowMint = true;
     
     uint128 timeMoney = 0;
     optional(MemberToken[]) saveaddr;
@@ -572,6 +572,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(repo, _systemcontract, address(this), _code[m_WalletCode], grant, lock);
         getMoney();
+    }
+    
+    function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(getTaskAddr(nametask, repo)) accept {
+        _reserve += token;
+    }
+    
+    function getTaskAddr(string nametask, address repo) private view returns(address) {
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        return taskaddr;
     }
     
     function deleteWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {

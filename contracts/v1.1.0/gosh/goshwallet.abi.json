@@ -194,7 +194,7 @@
 			]
 		},
 		{
-			"name": "startProposalForMintToken",
+			"name": "startProposalForMintDaoReserve",
 			"inputs": [
 				{"name":"token","type":"uint128"},
 				{"name":"comment","type":"string"},

@@ -348,6 +348,16 @@
 			]
 		},
 		{
+			"name": "returnTaskToken",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deleteWallets",
 			"inputs": [
 				{"name":"pubmem","type":"address[]"},
@@ -604,6 +614,14 @@
 			],
 			"outputs": [
 				{"name":"_lastAccountAddress","type":"address"}
+			]
+		},
+		{
+			"name": "_allowMint",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_allowMint","type":"bool"}
 			]
 		}
 	],

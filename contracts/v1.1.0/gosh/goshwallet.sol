@@ -310,7 +310,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).isAloneDeploy{value: 0.13 ton, flag: 1}(nameRepo, previous, _pubaddr, _index, ALONE_DEPLOY_REPO);
     }
     
-    function startProposalForMintToken(
+    function startProposalForMintDaoReserve(
         uint128 token,
         string comment,
         uint128 num_clients

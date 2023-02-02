@@ -12,6 +12,7 @@ pragma AbiHeader time;
 import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
+import "goshdao.sol";
 
 /* Root contract of task */
 contract Task is Modifiers{
@@ -116,6 +117,7 @@ contract Task is Modifiers{
         if (_grant.manager != 0) { return; }
         TvmCell s1 = _composeWalletStateInit(_pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _grant.assign + _grant.review + _grant.manager);
         selfdestruct(addr);
     }
     
@@ -134,6 +136,7 @@ contract Task is Modifiers{
     function destroy(uint128 index) public {
         require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
+        GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _grant.assign + _grant.review + _grant.manager);
         selfdestruct(giver);
     }
     
