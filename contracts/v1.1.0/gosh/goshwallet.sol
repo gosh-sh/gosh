@@ -407,7 +407,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployWalletIn() public senderIs(address(this))  accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        if (_walletcounter >= _limit_wallets) { return; }
+        if (_walletcounter >= _limit_wallets) { 
+            GoshWallet(_getWalletAddr(_index + 1)).askForLimited{value : 0.1 ton, flag: 1}(_limited);
+            return; 
+        }
         if (_index != 0) { return; }
         _walletcounter += 1;
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
