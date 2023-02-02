@@ -945,6 +945,14 @@
 			"outputs": [
 				{"name":"lastVoteResult","type":"optional(bool)"}
 			]
+		},
+		{
+			"name": "_limited",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_limited","type":"bool"}
+			]
 		}
 	],
 	"data": [

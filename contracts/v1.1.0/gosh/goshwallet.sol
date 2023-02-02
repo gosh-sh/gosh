@@ -53,7 +53,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 _limit_wallets;
 
     bool _tombstone = false;
-    bool _limited = true;
+    bool public _limited = true;
 
     uint128 timeMoney = 0;
 
