@@ -343,6 +343,13 @@ function getGoshDaoTagProposalParams () external view
     (proposalKind, daotag) = s.decode(uint256, string[]);
 }
 
+function getAllowMintProposalParams () external view
+         returns(uint256  proposalKind)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind) = s.decode(uint256);
+}
+
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}

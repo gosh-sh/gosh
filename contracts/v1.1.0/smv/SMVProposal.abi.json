@@ -222,6 +222,14 @@
 			]
 		},
 		{
+			"name": "getAllowMintProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}

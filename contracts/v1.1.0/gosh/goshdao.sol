@@ -55,6 +55,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     bool _flag = false;
     bool _tombstone = false;
+    bool _allowMint = true;
     
     uint128 timeMoney = 0;
     optional(MemberToken[]) saveaddr;
@@ -307,6 +308,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             return; 
         }
         if (typeF == ALONE_MINT_TOKEN) {
+            require(_allowMint == true, ERR_NOT_ALLOW_MINT);
             _reserve += token;
             _totalsupply += token;
             return;
@@ -322,6 +324,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
             }
             return;
         }
+        if (typeF == ALONE_ALLOW_MINT) {   
+            _allowMint = false;
+            return;
+        }
+    }
+    
+    function smvnotallowmint (address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        _allowMint = false;
     }
     
     function smvdeploytag (address pub, uint128 index, string[] tag) public senderIs(getAddrWalletIn(pub, index))  accept {
@@ -346,6 +357,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function mintReserve (uint128 token, address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_allowMint == true, ERR_NOT_ALLOW_MINT);
         _reserve += token;
         _totalsupply += token;
     }

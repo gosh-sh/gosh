@@ -136,6 +136,13 @@
 			]
 		},
 		{
+			"name": "AloneNotAllowMint",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "AloneDeployDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"}
@@ -188,6 +195,14 @@
 			"name": "startProposalForMintToken",
 			"inputs": [
 				{"name":"token","type":"uint128"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForAllowMint",
+			"inputs": [
 				{"name":"num_clients","type":"uint128"}
 			],
 			"outputs": [

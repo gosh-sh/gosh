@@ -242,6 +242,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     
+    function AloneNotAllowMint() public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        MemberToken[] pubaddr;
+        string[] zero;
+        GoshDao(_goshdao).isAlone{value: 0.13 ton, flag: 1}(0, pubaddr, _pubaddr, _index, zero, ALONE_ALLOW_MINT);
+    }
 
     function AloneDeployDaoTag(string[] tag) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -315,6 +324,25 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+    
+    function startProposalForAllowMint(
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        _saveMsg();
+
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = ALLOW_MINT_PROPOSAL_KIND;
+
+        proposalBuilder.store(proposalKind, now);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
@@ -1202,6 +1230,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DAOTAG_DESTROY_PROPOSAL_KIND) {
                 (string[] tag) = s.decode(string[]);
                 GoshDao(_goshdao).smvdestroytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+            }  else
+            if (kind == ALLOW_MINT_PROPOSAL_KIND) {
+               GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }
         }
     }

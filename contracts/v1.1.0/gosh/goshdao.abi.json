@@ -175,6 +175,15 @@
 			]
 		},
 		{
+			"name": "smvnotallowmint",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "smvdeploytag",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -640,6 +649,7 @@
 		{"name":"_lastAccountAddress","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_tombstone","type":"bool"},
+		{"name":"_allowMint","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"saveind","type":"optional(uint128)"},
