@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
         let n_args = args.clone();
         get_supported_versions.spawn(
             async move {
-                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_versions")
+                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_version")
                     .await
             }
             .instrument(tracing::debug_span!("tokio::spawn::get_supported_versions").or_current()),
@@ -55,11 +55,11 @@ async fn main() -> anyhow::Result<()> {
         tracing::trace!("Task result: {task_result:?}");
         if let Ok((_exec_res, versions, helper_path)) = task_result {
             if !versions.is_empty() {
+                let versions = versions.iter().map(|ver| ver.replace('\"', "")).collect::<Vec<String>>();
                 existing_to_supported_map.insert(helper_path.to_string(), versions);
             }
         }
     }
-
     tracing::trace!("existing: {existing_to_supported_map:?}");
     if existing_to_supported_map.is_empty() {
         return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to ini file"));

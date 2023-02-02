@@ -5,7 +5,7 @@ use std::env::args;
 use std::process::{exit, ExitCode};
 use std::time::Duration;
 use tokio::time::sleep;
-use git_remote_gosh::git_helper::supported_contract_versions;
+use git_remote_gosh::git_helper::supported_contract_version;
 
 fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     let exit_code = match result {
@@ -45,11 +45,10 @@ async fn main_internal() -> anyhow::Result<()> {
     tracing::info!("git-remote-gosh v{version}");
     eprintln!("git-remote-gosh v{version}");
     if let Some(first_arg) = args().nth(1) {
-        if first_arg == "supported_contract_versions" {
-            println!("Supported contract versions: {:?}", supported_contract_versions());
+        if first_arg == "supported_contract_version" {
+            println!("Supported contract version: {}", supported_contract_version()?);
             exit(0);
         }
-
     }
     let url = args().nth(2).ok_or(anyhow::anyhow!(
         "Wrong args for git-remote call\nRequired: <name> <url>"

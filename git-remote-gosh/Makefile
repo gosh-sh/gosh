@@ -48,10 +48,16 @@ build: copy_abi clear_screen
 .PHONY: install
 install: copy_abi clear_screen
 	cargo install --path .
+	./scripts/set_version.sh
 
 .PHONY: install_for_test
 install_for_test: copy_abi clear_screen
-	GOSH_SUPPORTED_CONTRACT_VERSIONS=[1.0.0,9998.0.0,9999.0.0] cargo install --path .
+	cargo install --path .
+	./scripts/set_version.sh
+	GOSH_SUPPORTED_CONTRACT_VERSION=9998.0.0 cargo install --path .
+	./scripts/set_version.sh
+	GOSH_SUPPORTED_CONTRACT_VERSION=9999.0.0 cargo install --path .
+	./scripts/set_version.sh
 
 .PHONY: test
 test: copy_abi clear_screen
