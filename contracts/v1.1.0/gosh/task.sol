@@ -28,6 +28,8 @@ contract Task is Modifiers{
     ConfigGrant _grant;
     uint128 _indexFinal;
     uint128 _step;
+    uint128 _locktime = 0;
+    uint128 _lock = 0;
     
     constructor(
         address pubaddr, 
@@ -36,9 +38,11 @@ contract Task is Modifiers{
         address goshdao,
         TvmCell WalletCode,
         ConfigGrant grant,
+        uint128 locktime,
         uint128 index) public onlyOwner {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
+        _lock = now + locktime;
         _code[m_WalletCode] = WalletCode;
         _systemcontract = goshaddr;
         _goshdao = goshdao;
@@ -66,10 +70,12 @@ contract Task is Modifiers{
         _ready = true;
         _indexFinal = index1;
         _step = _grant.assign /  _candidates[_indexFinal].size;
+        _locktime = now + _lock;
     }
     
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public {
         require(_ready == true, ERR_TASK_NOT_COMPLETED);
+        require(now >= _locktime, ERR_NOT_READY);
         checkAccess(pubaddr, msg.sender, index);
         if (m_assign == typegrant) {
             require(_candidates[_indexFinal].pubaddrassign.exists(pubaddr), ERR_ASSIGN_NOT_EXIST);

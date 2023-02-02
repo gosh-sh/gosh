@@ -302,10 +302,10 @@ function getGoshDestroyTaskProposalParams () external view
 }
 
 function getGoshDeployTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant)
+         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, uint128 lock)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, reponame, taskname, grant) = s.decode(uint256, string, string, ConfigGrant);
+    (proposalKind, reponame, taskname, grant, lock) = s.decode(uint256, string, string, ConfigGrant, uint128);
 }
 
 function getGoshDeployRepoProposalParams () external view

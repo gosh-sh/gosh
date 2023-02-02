@@ -75,4 +75,5 @@ abstract contract Errors {
     uint constant ERR_LOW_TOKEN_RESERVE = 264;
     uint constant ERR_LOW_TOKEN = 265;
     uint constant ERR_TOO_MANY_TAGS = 266;
+    uint constant ERR_NOT_READY = 267;
 }
