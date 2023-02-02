@@ -6,14 +6,12 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"pubaddr","type":"address"},
 				{"name":"repo","type":"address"},
 				{"name":"goshaddr","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
-				{"name":"locktime","type":"uint128"},
-				{"name":"index","type":"uint128"}
+				{"name":"locktime","type":"uint128"}
 			],
 			"outputs": [
 			]

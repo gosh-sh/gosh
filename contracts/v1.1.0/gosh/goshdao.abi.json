@@ -258,6 +258,16 @@
 			]
 		},
 		{
+			"name": "addVoteTokenTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addVoteToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -311,6 +321,19 @@
 				{"name":"pubmem","type":"address[]"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
+				{"name":"lock","type":"uint128"}
 			],
 			"outputs": [
 			]

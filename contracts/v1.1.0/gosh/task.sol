@@ -32,14 +32,13 @@ contract Task is Modifiers{
     uint128 _lock = 0;
     
     constructor(
-        address pubaddr, 
         address repo,    
         address goshaddr,
         address goshdao,
         TvmCell WalletCode,
         ConfigGrant grant,
-        uint128 locktime,
-        uint128 index) public onlyOwner {
+        uint128 locktime
+        ) public senderIs(goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         _lock = now + locktime;
@@ -47,9 +46,7 @@ contract Task is Modifiers{
         _systemcontract = goshaddr;
         _goshdao = goshdao;
         _repo = repo;
-        _pubaddr = pubaddr;
         _grant = grant;
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
     }
     
     function setConfig(ConfigGrant grant, uint128 index) public {

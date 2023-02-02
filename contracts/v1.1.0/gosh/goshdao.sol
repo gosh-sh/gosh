@@ -18,6 +18,7 @@ import "commit.sol";
 import "profiledao.sol";
 import "snapshot.sol";
 import "daotag.sol";
+import "task.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
@@ -409,6 +410,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         );
     }
     
+    function addVoteTokenTask (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+        require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
+        _wallets[keyaddr].count += grant;
+        _allbalance += grant;
+    }
+    
     function addVoteToken (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
@@ -533,6 +543,25 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
+    function deployTask(
+        address pubaddr,
+        uint128 index,
+        string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 lock
+    ) public senderIs(getAddrWalletIn(pubaddr, index)) accept saveMsg {
+        require(_reserve >= grant.assign + grant.review + grant.manager, ERR_LOW_TOKEN_RESERVE);
+        _reserve -= grant.assign + grant.review + grant.manager;
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        new Task{
+            stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
+        }(repo, _systemcontract, address(this), _code[m_WalletCode], grant, lock);
+        getMoney();
+    }
+    
     function deleteWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
         tvm.accept();
         if (index >= pubmem.length) { return; }
@@ -549,6 +578,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
             varInit: {_systemcontract : _systemcontract, _goshdao: address(this), _index: index}
         });
         return _contract;
+    }
+    
+    function _buildRepositoryAddr(string name) private view returns (address) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            _code[m_RepositoryCode], _systemcontract, address(this), version
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: { _name: name }
+        })));
     }
     
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {
