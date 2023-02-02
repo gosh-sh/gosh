@@ -29,8 +29,8 @@ contract Task is Modifiers{
     ConfigGrant _grant;
     uint128 _indexFinal;
     uint128 _step;
-    uint128 _locktime = 0;
-    uint128 _lock = 0;
+    uint128 public _locktime = 0;
+    uint128 public _lock = 0;
     
     constructor(
         address repo,    
@@ -42,7 +42,7 @@ contract Task is Modifiers{
         ) public senderIs(goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
-        _lock = now + locktime;
+        _lock = locktime;
         _code[m_WalletCode] = WalletCode;
         _systemcontract = goshaddr;
         _goshdao = goshdao;

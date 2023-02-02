@@ -90,6 +90,22 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "_locktime",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_locktime","type":"uint128"}
+			]
+		},
+		{
+			"name": "_lock",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_lock","type":"uint128"}
+			]
 		}
 	],
 	"data": [
