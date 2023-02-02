@@ -20,6 +20,7 @@
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaotag","type":"cell"},
+				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
 				{"name":"lockerCode","type":"cell"},
@@ -922,6 +923,14 @@
 			]
 		},
 		{
+			"name": "_versions",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_versions","type":"map(uint256,string)"}
+			]
+		},
+		{
 			"name": "_limited",
 			"inputs": [
 			],
@@ -981,6 +990,7 @@
 		{"name":"_last_time","type":"uint128"},
 		{"name":"_walletcounter","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
+		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"_limited","type":"bool"},
 		{"name":"timeMoney","type":"uint128"}

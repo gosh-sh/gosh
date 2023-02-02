@@ -33,6 +33,7 @@ contract Repository is Modifiers{
     mapping(uint256 => bool) _protectedBranch;
     bool _ready = false;
     bool _limited = true;
+    mapping(uint256 => string) public _versions;
 
     constructor(
         address pubaddr,
@@ -47,11 +48,13 @@ contract Repository is Modifiers{
         TvmCell codeTree,
         TvmCell codeDiff,
         TvmCell contentSignature,
+        mapping(uint256 => string) versions,
         uint128 index,
         optional(AddrVersion) previousversion
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
+        _versions = versions;
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
         _systemcontract = rootgosh;
