@@ -337,10 +337,10 @@ function getGoshMintTokenProposalParams () external view
 }
 
 function getGoshDaoTagProposalParams () external view
-         returns(uint256  proposalKind,  string daotag)
+         returns(uint256  proposalKind,  string[] daotag)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind, daotag) = s.decode(uint256, string);
+    (proposalKind, daotag) = s.decode(uint256, string[]);
 }
 
 ////////////////////////////////////

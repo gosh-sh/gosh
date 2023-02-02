@@ -217,7 +217,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"daotag","type":"string"}
+				{"name":"daotag","type":"string[]"}
 			]
 		},
 		{
