@@ -1,11 +1,11 @@
 use git_remote_gosh::anyhow;
+use git_remote_gosh::git_helper::supported_contract_version;
 use git_remote_gosh::logger::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::env::args;
 use std::process::{exit, ExitCode};
 use std::time::Duration;
 use tokio::time::sleep;
-use git_remote_gosh::git_helper::supported_contract_version;
 
 fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     let exit_code = match result {
@@ -46,7 +46,10 @@ async fn main_internal() -> anyhow::Result<()> {
     eprintln!("git-remote-gosh v{version}");
     if let Some(first_arg) = args().nth(1) {
         if first_arg == "supported_contract_version" {
-            println!("Supported contract version: {}", supported_contract_version()?);
+            println!(
+                "Supported contract version: {}",
+                supported_contract_version()?
+            );
             exit(0);
         }
     }
