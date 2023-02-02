@@ -332,6 +332,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         if (typeF == ALONE_MINT_TOKEN) {
             _reserve += token;
+            _totalsupply += token;
             return;
         }
         if (typeF == ALONE_DAOTAG) {   
