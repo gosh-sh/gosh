@@ -1,6 +1,6 @@
 use clap::{Arg, Command};
 use git_remote_gosh::anyhow;
-use git_remote_gosh::git_helper::supported_contract_versions;
+use git_remote_gosh::git_helper::supported_contract_version;
 use git_remote_gosh::logger::set_log_verbosity;
 use opentelemetry::global::shutdown_tracer_provider;
 use std::process::ExitCode;
@@ -50,16 +50,16 @@ async fn main_internal() -> anyhow::Result<()> {
         .arg(Arg::new("name"))
         .arg(Arg::new("url"))
         .subcommand(
-            Command::new("supported_contract_versions")
-                .about("Get list of supported contract versions"),
+            Command::new("supported_contract_version")
+                .about("Get list of supported contract version"),
         )
         .get_matches();
 
     match matches.subcommand() {
-        Some(("supported_contract_versions", _)) => {
+        Some(("supported_contract_version", _)) => {
             println!(
-                "Supported contract versions: {:?}",
-                supported_contract_versions()
+                "Supported contract version: {}",
+                supported_contract_version()?
             );
         }
         _ => {

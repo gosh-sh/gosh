@@ -10,10 +10,15 @@ use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
-use git_remote_gosh::logger::set_log_verbosity;
 use tokio::task::JoinSet;
+use tracing::level_filters::LevelFilter;
 use tracing::Instrument;
 use version_compare::Version;
+
+use tracing_subscriber::fmt;
+use tracing_subscriber::fmt::format::FmtSpan;
+
+use std::str::FromStr;
 
 #[cfg(target_family = "unix")]
 pub const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
@@ -21,10 +26,11 @@ pub const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
 #[cfg(target_family = "windows")]
 pub const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
 
+const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    set_log_verbosity(1);
-
+    set_up_logger();
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     eprintln!("Dispatcher git-remote-gosh v{version}");
 
@@ -42,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
         let n_args = args.clone();
         get_supported_versions.spawn(
             async move {
-                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_versions")
+                run_binary_with_command(helper_path, n_args, "gosh_supported_contract_version")
                     .await
             }
             .instrument(tracing::debug_span!("tokio::spawn::get_supported_versions").or_current()),
@@ -57,11 +63,14 @@ async fn main() -> anyhow::Result<()> {
         tracing::trace!("Task result: {task_result:?}");
         if let Ok((_exec_res, versions, helper_path)) = task_result {
             if !versions.is_empty() {
+                let versions = versions
+                    .iter()
+                    .map(|ver| ver.replace('\"', ""))
+                    .collect::<Vec<String>>();
                 existing_to_supported_map.insert(helper_path.to_string(), versions);
             }
         }
     }
-
     tracing::trace!("existing: {existing_to_supported_map:?}");
     if existing_to_supported_map.is_empty() {
         return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to ini file"));
@@ -190,4 +199,22 @@ fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
         .collect();
     tracing::trace!("git-remote-gosh versions from ini: {res:?}");
     Ok(res)
+}
+
+fn set_up_logger() {
+    if let Ok(trace_verbosity) = std::env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
+        if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
+            let builder = fmt()
+                .with_file(false)
+                .with_target(false)
+                .with_ansi(false)
+                .with_writer(std::io::stderr)
+                .with_max_level(LevelFilter::TRACE)
+                .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE);
+            let my_subscriber = builder.finish();
+
+            tracing::subscriber::set_global_default(my_subscriber)
+                .expect("setting tracing default failed");
+        }
+    }
 }
