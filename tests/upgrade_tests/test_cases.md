@@ -265,12 +265,14 @@ Test checks that tag exists after repo upgrade, commit id should be the same.
 Steps:
 1) Deploy DAO `dao08` and repo `repo08` with the current version
 2) Push a commit to the repo and get <commit_id_0>
-3) Push tag `release` to the last commit
-4) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
 5) Upgrade DAO `dao08` and repo `repo08` to the test version `9999.0.0`
-6) Push a commit to the repo
+6) Upgrade tags
+7) Fetch the repo
+8) Make sure the `release` tag is present
+9) Retag the last commit with `release` tag
 7) Push tag `release` to the last commit - Should fail
-8) Check that tag `release` exists and it's commit is equal to <commit_id_0>
 
 ## 9. Delete tag after upgrade
 Description:
@@ -279,9 +281,23 @@ Test checks that after repo upgrade tag from the last version can be deleted and
 Steps:
 1) Deploy DAO `dao09` and repo `repo09` with the current version
 2) Push a commit to the repo
-3) Push tag `release` to the last commit
-4) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
 5) Upgrade DAO `dao09` and repo `repo09` to the test version `9999.0.0`
-6) Push a commit to the repo and get <commit_id_0>
-7) Delete tag `release`
-8) Push tag heading to the <commit_id_0>
+6) Upgrade tags
+7) Fetch the repo
+8) Make sure the `release` tag is present
+9) Delete the `release` tag
+
+## 10. Check tags after upgrade
+Description:
+Test checks that after upgrading the repo, all tags are missing in the latest version of the repo
+
+Steps:
+1) Deploy DAO `dao10` and repo `repo10` with the current version
+2) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
+5) Upgrade DAO `dao10` and repo `repo10` to the test version `9999.0.0`
+6) Fetch the repo
+7) Check list of fetched tags - Should be empty
