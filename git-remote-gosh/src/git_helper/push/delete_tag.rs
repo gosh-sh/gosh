@@ -12,11 +12,7 @@ pub async fn delete_tag(
     let wallet = blockchain.user_wallet(dao_addr, remote_network).await?;
 
     blockchain
-        .delete_tag(
-            &wallet,
-            repo_name.to_owned(),
-            tag_name.to_owned(),
-        )
+        .delete_tag(&wallet, repo_name.to_owned(), tag_name.to_owned())
         .await?;
 
     Ok(())

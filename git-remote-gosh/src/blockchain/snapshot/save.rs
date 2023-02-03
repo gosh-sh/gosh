@@ -135,7 +135,7 @@ impl DeployDiff for Everscale {
                 wallet_contract.deref(),
                 "deployDiff",
                 Some(serde_json::to_value(args)?),
-                None
+                None,
             )
             .await?;
         drop(wallet_contract);

@@ -1,11 +1,12 @@
 use crate::{
     abi as gosh_abi,
     blockchain::{
+        self,
         call::BlockchainCall,
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale, self,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };
@@ -112,14 +113,16 @@ impl BlockchainCommitPusher for Everscale {
         // let mut repo_contract = self.repo_contract.clone();
         let repo_contract = &mut self.repo_contract.clone();
         let commit = commit_id.clone().to_string();
-        let expected_address = blockchain::get_commit_address(
-            &self.ever_client,
-            repo_contract,
-            &commit
-        ).await?;
+        let expected_address =
+            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit).await?;
 
         let result = self
-            .send_message(wallet_contract.deref(), "deployCommit", Some(params), Some(expected_address))
+            .send_message(
+                wallet_contract.deref(),
+                "deployCommit",
+                Some(params),
+                Some(expected_address),
+            )
             .await?;
         drop(wallet_contract);
         tracing::trace!("deployCommit result: {:?}", result);

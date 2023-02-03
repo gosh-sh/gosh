@@ -1,23 +1,19 @@
 use super::{
-    contract::ContractInfo,
-    Everscale,
-    BlockchainContractAddress,
-    CallResult,
-    SendMessageResult,
-};
-use crate::blockchain::{default_callback, BlockchainService, GoshContract};
-use async_trait::async_trait;
-use std::{sync::Arc, time::{Instant, Duration}};
-use ton_client::{
-    abi::{CallSet, ParamsOfEncodeMessage, Signer, ResultOfEncodeMessage},
-    processing::{
-        ParamsOfSendMessage,
-        ResultOfSendMessage,
-        ParamsOfProcessMessage,
-        ResultOfProcessMessage,
-    },
+    contract::ContractInfo, BlockchainContractAddress, CallResult, Everscale, SendMessageResult,
 };
 pub use crate::abi as gosh_abi;
+use crate::blockchain::{default_callback, BlockchainService, GoshContract};
+use async_trait::async_trait;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use ton_client::{
+    abi::{CallSet, ParamsOfEncodeMessage, ResultOfEncodeMessage, Signer},
+    processing::{
+        ParamsOfProcessMessage, ParamsOfSendMessage, ResultOfProcessMessage, ResultOfSendMessage,
+    },
+};
 use tracing::Instrument;
 
 #[async_trait]
@@ -147,10 +143,14 @@ impl BlockchainCall for Everscale {
                 signer,
                 deploy_set: None,
                 processing_try_index: None,
-            })
-            .await?;
+            },
+        )
+        .await?;
 
-        tracing::trace!("sending message ({message_id}) to {}", contract.get_address());
+        tracing::trace!(
+            "sending message ({message_id}) to {}",
+            contract.get_address()
+        );
         let ResultOfSendMessage {
             shard_block_id,
             sending_endpoints,

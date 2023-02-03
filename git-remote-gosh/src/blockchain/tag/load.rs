@@ -1,6 +1,5 @@
 use crate::blockchain::{
-    contract::ContractRead,
-    BlockchainContractAddress, contract::GoshContract, EverClient
+    contract::ContractRead, contract::GoshContract, BlockchainContractAddress, EverClient,
 };
 
 #[derive(Deserialize, Debug)]
@@ -30,10 +29,14 @@ pub enum TagObject {
 }
 
 #[instrument(level = "trace", skip_all)]
-pub async fn get_content(context: &EverClient, address: &BlockchainContractAddress) -> anyhow::Result<TagObject> {
+pub async fn get_content(
+    context: &EverClient,
+    address: &BlockchainContractAddress,
+) -> anyhow::Result<TagObject> {
     let tag_contract = GoshContract::new(address, crate::abi::TAG);
-    let GetTagContentResult { content }
-        = tag_contract.read_state(&context, "getContent", None).await?;
+    let GetTagContentResult { content } = tag_contract
+        .read_state(&context, "getContent", None)
+        .await?;
 
     let mut iter = content.splitn(2, '\n');
     let head = iter.next().unwrap();
@@ -41,9 +44,10 @@ pub async fn get_content(context: &EverClient, address: &BlockchainContractAddre
         // lightweight tag: "tag <TAG_NAME>\nobject <COMMIT_ID>\n"
         let tag_name = head.split(' ').nth(1).unwrap();
         let commit_id = iter.next().unwrap().split(' ').nth(1).unwrap();
-        TagObject::Lightweight(
-            Lightweight { name: tag_name.to_owned(), commit_id: commit_id.to_owned() }
-        )
+        TagObject::Lightweight(Lightweight {
+            name: tag_name.to_owned(),
+            commit_id: commit_id.to_owned(),
+        })
     } else {
         // annotated tag: "id <TAG_ID>\nobject <COMMIT_ID>\ntype commit\ntag <TAG_NAME>\n..."
         let tag_id = head.split(' ').nth(1).unwrap();
@@ -51,14 +55,12 @@ pub async fn get_content(context: &EverClient, address: &BlockchainContractAddre
         let mut content_iter = content.split('\n');
         let commit_id = content_iter.next().unwrap().split(' ').nth(1).unwrap();
         let tag_name = content_iter.nth(1).unwrap().split(' ').nth(1).unwrap();
-        TagObject::Annotated(
-            Annotated {
-                name: tag_name.to_owned(),
-                id: tag_id.to_owned(),
-                commit_id: commit_id.to_owned(),
-                content: content.as_bytes().to_vec(),
-            }
-        )
+        TagObject::Annotated(Annotated {
+            name: tag_name.to_owned(),
+            id: tag_id.to_owned(),
+            commit_id: commit_id.to_owned(),
+            content: content.as_bytes().to_vec(),
+        })
     };
 
     Ok(tag)

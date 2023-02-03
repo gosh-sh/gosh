@@ -4,7 +4,7 @@ use std::env;
 
 use serde_json::Value;
 use std::sync::Arc;
-use anyhow::bail;
+
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::cache::proxy::CacheProxy;
@@ -377,7 +377,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
                 helper.fetch(sha, name).await?;
-                continue
+                continue;
             }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,

@@ -3,9 +3,8 @@ use std::ops::Deref;
 use async_trait::async_trait;
 
 use crate::blockchain::{
-    contract::ContractInfo,
+    call::BlockchainCall, contract::ContractInfo, user_wallet::UserWallet,
     BlockchainContractAddress, Everscale,
-    call::BlockchainCall, user_wallet::UserWallet
 };
 
 #[derive(Serialize, Debug)]
@@ -103,7 +102,10 @@ impl Tagging for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
-        let params = DeleteTagParams { repo_name, tag_name };
+        let params = DeleteTagParams {
+            repo_name,
+            tag_name,
+        };
         tracing::debug!("deleteTag params: {:?}", params);
 
         let result = self
@@ -111,7 +113,7 @@ impl Tagging for Everscale {
                 wallet_contract.deref(),
                 "deleteTag",
                 Some(serde_json::to_value(params)?),
-                None
+                None,
             )
             .await
             .map(|_| ());
