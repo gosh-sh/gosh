@@ -114,7 +114,7 @@ struct CallResult {
 }
 
 #[derive(Deserialize, Debug)]
-struct FFCallResult {
+struct SendMessageResult {
     shard_block_id: String,
     message_id: String,
     sending_endpoints: Vec<String>,

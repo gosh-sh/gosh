@@ -3,7 +3,7 @@ use super::{
     Everscale,
     BlockchainContractAddress,
     CallResult,
-    FFCallResult,
+    SendMessageResult,
 };
 use crate::blockchain::{default_callback, BlockchainService, GoshContract};
 use async_trait::async_trait;
@@ -37,7 +37,7 @@ pub(super) trait BlockchainCall {
         function_name: &str,
         args: Option<serde_json::Value>,
         expected_address: Option<BlockchainContractAddress>,
-    ) -> anyhow::Result<FFCallResult>
+    ) -> anyhow::Result<SendMessageResult>
     where
         C: ContractInfo + Sync;
 }
@@ -112,7 +112,7 @@ impl BlockchainCall for Everscale {
         function_name: &str,
         args: Option<serde_json::Value>,
         expected_address: Option<BlockchainContractAddress>,
-    ) -> anyhow::Result<FFCallResult>
+    ) -> anyhow::Result<SendMessageResult>
     where
         C: ContractInfo + Sync,
     {
@@ -187,7 +187,7 @@ impl BlockchainCall for Everscale {
             }
         }
 
-        let call_result = FFCallResult {
+        let call_result = SendMessageResult {
             shard_block_id,
             message_id,
             sending_endpoints,
