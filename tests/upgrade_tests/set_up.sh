@@ -46,7 +46,7 @@ cd ../gosh
 sed -i "s/version = \"$CUR_VERSION/version = \"$TEST_VERSION1/" *.sol
 sed -i 's/1 minutes/1 seconds/' modifiers/modifiers.sol
 proposal_period=$(cat modifiers/modifiers.sol | grep SET_UPGRADE_PROPOSAL_START_AFTER | cut -d '=' -f 2)
-if [ $proposal_period != " 1 seconds;" ]; then
+if [ "$proposal_period" != " 1 seconds;" ]; then
   echo "Failed to change proposal period"
   exit 1
 fi

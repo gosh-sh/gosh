@@ -3,8 +3,10 @@
 This file describes test cases for git-remote-gosh and gosh-dispatcher.
 
 ## Preliminary actions
-1) Compile git-remote-version with feature `for_test`
-2) Deploy GOSH of the current version
+1) Compile git-remote-version by calling `make install_for_test`
+2) Compile gosh-dispatcher
+3) Compile gosh-cli
+4) Deploy GOSH of the current version
 
 ## 1. Upgrade repo without link to the previous
 Description:
