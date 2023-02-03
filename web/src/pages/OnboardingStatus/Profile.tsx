@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Form, Formik } from 'formik'
 import { useRecoilValue } from 'recoil'
 import Spinner from '../../components/Spinner'
-import { oAuthSessionAtom } from '../../store/signup.state'
-import { TOnboardingDao } from './Onboarding'
+import { OAuthSessionAtom } from '../../store/onboarding.state'
+import { TOnboardingDao } from './OnboardingStatus'
 
 type TProfileProps = {
     data: TOnboardingDao[]
@@ -15,7 +15,7 @@ type TProfileProps = {
 
 const Profile = (props: TProfileProps) => {
     const { data, signinOAuth, signoutOAuth, onSubmit } = props
-    const oAuthSession = useRecoilValue(oAuthSessionAtom)
+    const oAuthSession = useRecoilValue(OAuthSessionAtom)
 
     const isDataValid = data
         .map((item) => {

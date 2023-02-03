@@ -1,3 +1,3 @@
 export * from './Signup'
-export * from './SignupProgress'
+export * from './components/SignupProgress'
 export { default } from './Signup'

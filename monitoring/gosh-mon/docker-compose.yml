@@ -20,11 +20,17 @@ services:
       gosh-monitoring: { }
     entrypoint: ["/redis_exporter", "-redis.addr", "gosh-mon-redis"]
 
-# app.gosh.sh
-  gosh-mon-app-sm-rd: &service
+  _goshmon_image_build:
+    image: goshmon_image
+    command: [ 'echo', 'build completed' ]
     build:
       context: .
       dockerfile: Dockerfile
+
+# app.gosh.sh
+  gosh-mon-app-sm-rd: &service
+    image: goshmon_image
+    depends_on: ["_goshmon_image_build"]
     container_name: gosh-mon-app-sm-rd
     init: true
     restart: "unless-stopped"
@@ -55,25 +61,25 @@ services:
 
 # next:
 
-  gosh-mon-next-app-sm-rd:
-    <<: *service
-    container_name: gosh-mon-next-app-sm-rd
-    environment: [ "GM_MODE=app-small-read-next" ]
-
-  gosh-mon-next-app-sm-wr:
-    <<: *service
-    container_name: gosh-mon-next-app-sm-wr
-    environment: [ "GM_MODE=app-small-write-next" ]
-
-  gosh-mon-next-app-la-rd:
-    <<: *service
-    container_name: gosh-mon-next-app-la-rd
-    environment: [ "GM_MODE=app-large-read-next" ]
-
-  gosh-mon-next-app-la-wr:
-    <<: *service
-    container_name: gosh-mon-next-app-la-wr
-    environment: [ "GM_MODE=app-large-write-next" ]
+#  gosh-mon-next-app-sm-rd:
+#    <<: *service
+#    container_name: gosh-mon-next-app-sm-rd
+#    environment: [ "GM_MODE=app-small-read-next" ]
+#
+#  gosh-mon-next-app-sm-wr:
+#    <<: *service
+#    container_name: gosh-mon-next-app-sm-wr
+#    environment: [ "GM_MODE=app-small-write-next" ]
+#
+#  gosh-mon-next-app-la-rd:
+#    <<: *service
+#    container_name: gosh-mon-next-app-la-rd
+#    environment: [ "GM_MODE=app-large-read-next" ]
+#
+#  gosh-mon-next-app-la-wr:
+#    <<: *service
+#    container_name: gosh-mon-next-app-la-wr
+#    environment: [ "GM_MODE=app-large-write-next" ]
 
 # git-remote-gosh
   gosh-mon-rem-sm-rd:
@@ -112,41 +118,41 @@ services:
       - "./errors:/home/node/app/errors"
       - "gm-rem-la-wr-data:/home/node/app/data"
 
-  gosh-mon-next-rem-sm-rd:
-    <<: *service
-    container_name: gosh-mon-next-rem-sm-rd
-    environment: ["GM_MODE=rem-small-read-next", "REVQ_MODE=producer"]
-    volumes:
-      - "./config:/home/node/app/config:ro"
-      - "./errors:/home/node/app/errors"
-      - "gm-next-rem-sm-rd-data:/home/node/app/data"
-
-  gosh-mon-next-rem-sm-wr:
-    <<: *service
-    container_name: gosh-mon-next-rem-sm-wr
-    environment: ["GM_MODE=rem-small-write-next", "REVQ_MODE=producer"]
-    volumes:
-      - "./config:/home/node/app/config:ro"
-      - "./errors:/home/node/app/errors"
-      - "gm-next-rem-sm-wr-data:/home/node/app/data"
-
-  gosh-mon-next-rem-la-rd:
-    <<: *service
-    container_name: gosh-mon-next-rem-la-rd
-    environment: ["GM_MODE=rem-large-read-next", "REVQ_MODE=producer"]
-    volumes:
-      - "./config:/home/node/app/config:ro"
-      - "./errors:/home/node/app/errors"
-      - "gm-next-rem-la-rd-data:/home/node/app/data"
-
-  gosh-mon-next-rem-la-wr:
-    <<: *service
-    container_name: gosh-mon-next-rem-la-wr
-    environment: ["GM_MODE=rem-large-write-next", "REVQ_MODE=producer"]
-    volumes:
-      - "./config:/home/node/app/config:ro"
-      - "./errors:/home/node/app/errors"
-      - "gm-next-rem-la-wr-data:/home/node/app/data"
+#  gosh-mon-next-rem-sm-rd:
+#    <<: *service
+#    container_name: gosh-mon-next-rem-sm-rd
+#    environment: ["GM_MODE=rem-small-read-next", "REVQ_MODE=producer"]
+#    volumes:
+#      - "./config:/home/node/app/config:ro"
+#      - "./errors:/home/node/app/errors"
+#      - "gm-next-rem-sm-rd-data:/home/node/app/data"
+#
+#  gosh-mon-next-rem-sm-wr:
+#    <<: *service
+#    container_name: gosh-mon-next-rem-sm-wr
+#    environment: ["GM_MODE=rem-small-write-next", "REVQ_MODE=producer"]
+#    volumes:
+#      - "./config:/home/node/app/config:ro"
+#      - "./errors:/home/node/app/errors"
+#      - "gm-next-rem-sm-wr-data:/home/node/app/data"
+#
+#  gosh-mon-next-rem-la-rd:
+#    <<: *service
+#    container_name: gosh-mon-next-rem-la-rd
+#    environment: ["GM_MODE=rem-large-read-next", "REVQ_MODE=producer"]
+#    volumes:
+#      - "./config:/home/node/app/config:ro"
+#      - "./errors:/home/node/app/errors"
+#      - "gm-next-rem-la-rd-data:/home/node/app/data"
+#
+#  gosh-mon-next-rem-la-wr:
+#    <<: *service
+#    container_name: gosh-mon-next-rem-la-wr
+#    environment: ["GM_MODE=rem-large-write-next", "REVQ_MODE=producer"]
+#    volumes:
+#      - "./config:/home/node/app/config:ro"
+#      - "./errors:/home/node/app/errors"
+#      - "gm-next-rem-la-wr-data:/home/node/app/data"
 
 # auxillary
 
@@ -154,11 +160,6 @@ services:
     <<: *service
     container_name: gosh-mon-seed-read
     environment: ["GM_MODE=seed-read"]
-
-  gosh-mon-root-check:
-    <<: *service
-    container_name: gosh-mon-root-check
-    environment: ["GM_MODE=root-check"]
 
 # serve errors directory
 
@@ -183,10 +184,10 @@ services:
 #    init: true
 #    restart: "no"
 #    environment:
-#      - GM_MODE=rem-small-read-next
+#      - GM_MODE=rem-large-write
 #      - ONESHOT_DEBUG=2
-#      - CONFIG_PULL_VERBOSITY=4
-#      - CONFIG_PUSH_VERBOSITY=4
+##      - CONFIG_PULL_VERBOSITY=4
+##      - CONFIG_PUSH_VERBOSITY=4
 #    volumes:
 #      - ./config:/home/node/app/config:ro
 #      - gm-test-data:/home/node/app/data
@@ -205,7 +206,7 @@ volumes:
   gm-rem-la-rd-data:
   gm-rem-la-wr-data:
   gm-test-data:
-  gm-next-rem-sm-rd-data:
-  gm-next-rem-sm-wr-data:
-  gm-next-rem-la-rd-data:
-  gm-next-rem-la-wr-data:
+#  gm-next-rem-sm-rd-data:
+#  gm-next-rem-sm-wr-data:
+#  gm-next-rem-la-rd-data:
+#  gm-next-rem-la-wr-data:

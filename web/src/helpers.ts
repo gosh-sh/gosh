@@ -1,4 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, Provider } from '@supabase/supabase-js'
+import { AppConfig } from 'react-gosh'
+import { GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 
 const supabase = createClient(
@@ -21,6 +23,34 @@ const getClipboardData = async (event?: any): Promise<string | null> => {
     }
 
     return null
+}
+
+const onExternalLinkClick = (e: any, url: string) => {
+    if (!AppConfig.dockerclient) {
+        return
+    }
+    e.preventDefault()
+    AppConfig.dockerclient.host.openExternal(url)
+}
+
+const singinOAuthSupabase = async (provider: Provider, redirectTo: string) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+            redirectTo,
+            scopes: 'read:user read:org',
+        },
+    })
+    if (error) {
+        throw new GoshError(error.message)
+    }
+}
+
+const signoutOAuthSupabase = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+        throw new GoshError(error.message)
+    }
 }
 
 /**
@@ -58,4 +88,11 @@ const ToastOptionsShortcuts = {
     },
 }
 
-export { supabase, getClipboardData, ToastOptionsShortcuts }
+export {
+    supabase,
+    singinOAuthSupabase,
+    signoutOAuthSupabase,
+    getClipboardData,
+    onExternalLinkClick,
+    ToastOptionsShortcuts,
+}

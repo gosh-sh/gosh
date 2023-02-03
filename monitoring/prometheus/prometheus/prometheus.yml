@@ -37,7 +37,7 @@ scrape_configs:
     scrape_interval: 15s
     static_configs:
       - targets: ['trcnt-stat:9123']
-      
+
   - job_name: 'wallet-mon'
     scrape_interval: 15s
     static_configs:
@@ -45,30 +45,37 @@ scrape_configs:
 
   - job_name: 'gosh-mon-read'
     scrape_interval: 60s
-    scrape_timeout: 50s
+    scrape_timeout: 59s
     static_configs:
       - targets:
           - 'gosh-mon-app-sm-rd:9600'
           - 'gosh-mon-app-la-rd:9600'
           - 'gosh-mon-rem-sm-rd:9600'
           - 'gosh-mon-rem-la-rd:9600'
+#          - 'gosh-mon-next-app-sm-rd:9600'
+#          - 'gosh-mon-next-app-la-rd:9600'
+#          - 'gosh-mon-next-rem-sm-rd:9600'
+#          - 'gosh-mon-next-rem-la-rd:9600'
 
   - job_name: 'gosh-mon-write'
     scrape_interval: 300s
-    scrape_timeout: 290s
+    scrape_timeout: 299s
     static_configs:
       - targets:
           - 'gosh-mon-app-sm-wr:9600'
           - 'gosh-mon-app-la-wr:9600'
           - 'gosh-mon-rem-sm-wr:9600'
           - 'gosh-mon-rem-la-wr:9600'
+#          - 'gosh-mon-next-app-sm-wr:9600'
+#          - 'gosh-mon-next-app-la-wr:9600'
+#          - 'gosh-mon-next-rem-sm-wr:9600'
+#          - 'gosh-mon-next-rem-la-wr:9600'
 
   - job_name: 'gosh-mon-aux'
     scrape_interval: 60s
     scrape_timeout: 50s
     static_configs:
       - targets:
-          - 'gosh-mon-root-check:9600'
           - 'gosh-mon-seed-read:9600'
 
   - job_name: 'gosh-mon-redis'
@@ -76,11 +83,14 @@ scrape_configs:
     static_configs:
       - targets: ['gosh-mon-redis-exporter:9121']
 
+  - job_name: 'supa-exp'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['supa-exp:9789']
+
 alerting:
   alertmanagers:
   - scheme: http
     static_configs:
     - targets:
       - 'gosh-alertmanager:9093'
-
-

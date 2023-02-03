@@ -19,7 +19,7 @@ impl Remote {
 
 fn deconstruct_remote(input: &str, config: &Config) -> anyhow::Result<Remote> {
     let malformed_err = format!(
-        "The following URL is malformed:\n\t{input}\nThe URL must be in the following format: gosh::<network>://<account>@<repository>"
+        "The following URL is malformed:\n\t{input}\nThe URL must be in the following format: gosh::<network>://<system_account>/<DAO_name>/<repository_name>"
     );
 
     let mut splitted_url = input.split("://");

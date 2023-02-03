@@ -11,6 +11,12 @@ const fs_1 = __importDefault(require("fs"));
 const Utils_1 = require("./Utils");
 const redis_smq_monitor_1 = require("redis-smq-monitor");
 class Application {
+    setInterval(interval) {
+        this.interval = interval;
+    }
+    setDebug(debug) {
+        this.debug = debug;
+    }
     constructor() {
         this.interval = 50;
         this.lastFetched = 0;
@@ -29,12 +35,6 @@ class Application {
         this.app = (0, express_1.default)();
         this.baseHandlerFactory = this.handlerFactory = (silent) => new DummyHandler_1.default();
         this.promformatter = new PrometheusFormatter_1.default();
-    }
-    setInterval(interval) {
-        this.interval = interval;
-    }
-    setDebug(debug) {
-        this.debug = debug;
     }
     async inquiry(debug = false, cli = false) {
         const handler = this.handlerFactory().setApplication(this).setDebug(this.debug || debug);

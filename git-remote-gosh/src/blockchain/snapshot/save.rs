@@ -131,10 +131,11 @@ impl DeployDiff for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(
+            .send_message(
                 wallet_contract.deref(),
                 "deployDiff",
                 Some(serde_json::to_value(args)?),
+                None
             )
             .await?;
         drop(wallet_contract);
@@ -180,10 +181,11 @@ impl DeployNewSnapshot for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(
+            .send_message(
                 wallet_contract.deref(),
                 "deployNewSnapshot",
                 Some(serde_json::to_value(args)?),
+                None,
             )
             .await
             .map(|_| ());

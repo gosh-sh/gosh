@@ -3,8 +3,10 @@
 This file describes test cases for git-remote-gosh and gosh-dispatcher.
 
 ## Preliminary actions
-1) Compile git-remote-version with feature `for_test`
-2) Deploy GOSH of the current version
+1) Compile git-remote-version by calling `make install_for_test`
+2) Compile gosh-dispatcher
+3) Compile gosh-cli
+4) Deploy GOSH of the current version
 
 ## 1. Upgrade repo without link to the previous
 Description:
@@ -14,12 +16,17 @@ Steps:
 1) Deploy DAO `dao01`
 2) Deploy repo `repo01` with current version and obtain link to the repository: <link>
 3) Clone repo using the <link>
-4) Push file with content `data01`
+4) Push file with content `old_ver`
 5) Upgrade GOSH to test version `9999.0.0`
 6) Upgrade DAO `dao01` to test version `9999.0.0` with proposal
-7) Deploy repo with the same name `repo01`, test version `9999.0.0` and `previous` argument set to `null` - Should Fail!
+7) Deploy repo with the same name `repo01`, test version `9999.0.0` and `previous` argument set to `null`
+8) Obtain new link to the repository: <new_link>
+9) Clone repo using the <new_link>
+10) Push file with content `new_ver`
+11) Clone repo using the <old_link>
+12) Check that cloned repo contains file with content equal to `new_ver`
 
-## 2. Clone upgraded repo
+## 2.1 Clone upgraded repo
 Description:
 Test checks that repo could be upgraded saving commits with old version and that dispatcher chooses the latest
 repository version to clone.
@@ -35,9 +42,25 @@ Steps:
 8) Obtain new link to the repository: <new_link>
 9) Clone repo using the <new_link>
 10) Check that cloned repo contains file with content equal to `old_ver`
-11) Change file content to `new_ver`
-12) Clone repo using the <old_link>
-13) Check that cloned repo contains file with content equal to `new_ver`
+11) Change file content to `new_ver` and push
+
+## 2.2 Push to the repo after upgrade
+Description:
+Test checks that after repo upgrade current working directory can still be used to work with a new version of the repo.
+
+Steps:
+1) Deploy DAO `dao02_2`
+2) Deploy repo `repo02_2` with current version and obtain link to the repository <old_link> and repo address <old_address>
+3) Clone repo using the <old_link>
+4) Push file with content `old_ver`
+5) Upgrade GOSH with test version `9999.0.0`
+6) Upgrade DAO `dao02_2` to test version `9999.0.0` with proposal
+7) Deploy repo with the same name `repo02_2`, test version `9999.0.0` and `previous` argument set to <old_address>
+8) Obtain new link to the repository: <new_link>
+9) Change the file content in the old working directory to `new_ver`
+10) Push a commit to the repo
+11) Clone repo using the <new_link>
+12) Check that cloned repo contains file with content equal to `new_ver`
 
 ## 3. Create branch from parent version
 Description:
@@ -108,14 +131,13 @@ Steps:
 4) Push a commit to the repo and get <commit_id_0>
 5) Create a branch `parent_branch` heading to the <commit_id_0>
 6) Checkout the `parent_branch`
-7) Protect the `parent_branch`
-8) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
+7) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
+8) Protect the `parent_branch`
 9) Checkout the `main` branch
 10) Upgrade DAO `dao05a` and repo `repo05a` to the test version `9999.0.0`
 11) Push a commit to the repo without changing the file `test_05a.txt`
 12) Checkout the `parent_branch`
-13) Change the content of the file `test_05a.txt` and push it to the branch `parent_branch`
-14) Merge branch `parent_branch` to the `main` branch
+13) Merge branch `parent_branch` to the `main` branch
 
 ## 5.3. Merge branch from parent version with both branch protection
 Description:
@@ -243,12 +265,14 @@ Test checks that tag exists after repo upgrade, commit id should be the same.
 Steps:
 1) Deploy DAO `dao08` and repo `repo08` with the current version
 2) Push a commit to the repo and get <commit_id_0>
-3) Push tag `relesae` to the last commit
-4) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
 5) Upgrade DAO `dao08` and repo `repo08` to the test version `9999.0.0`
-6) Push a commit to the repo
+6) Upgrade tags
+7) Fetch the repo
+8) Make sure the `release` tag is present
+9) Retag the last commit with `release` tag
 7) Push tag `release` to the last commit - Should fail
-8) Check that tag `release` exists and it's commit is equal to <commit_id_0>
 
 ## 9. Delete tag after upgrade
 Description:
@@ -257,9 +281,23 @@ Test checks that after repo upgrade tag from the last version can be deleted and
 Steps:
 1) Deploy DAO `dao09` and repo `repo09` with the current version
 2) Push a commit to the repo
-3) Push tag `relesae` to the last commit
-4) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
 5) Upgrade DAO `dao09` and repo `repo09` to the test version `9999.0.0`
-6) Push a commit to the repo and get <commit_id_0>
-7) Delete tag `release`
-8) Push tag heading to the <commit_id_0>
+6) Upgrade tags
+7) Fetch the repo
+8) Make sure the `release` tag is present
+9) Delete the `release` tag
+
+## 10. Check tags after upgrade
+Description:
+Test checks that after upgrading the repo, all tags are missing in the latest version of the repo
+
+Steps:
+1) Deploy DAO `dao10` and repo `repo10` with the current version
+2) Push a commit to the repo
+3) Set a `release` tag for the last commit
+4) Push the tag to the repo
+5) Upgrade DAO `dao10` and repo `repo10` to the test version `9999.0.0`
+6) Fetch the repo
+7) Check list of fetched tags - Should be empty

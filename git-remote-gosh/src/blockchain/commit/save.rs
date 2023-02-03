@@ -5,7 +5,7 @@ use crate::{
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale,
+        BlockchainContractAddress, Everscale, self,
     },
     utilities::Remote,
 };
@@ -95,7 +95,7 @@ impl BlockchainCommitPusher for Everscale {
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
             branch_name: branch.to_string(),
-            commit_id: commit_id.to_string(),
+            commit_id: commit_id.clone().to_string(),
             raw_commit: raw_commit.to_owned(),
             parents: parents.to_owned(),
             tree_addr: tree_addr.clone(),
@@ -108,8 +108,18 @@ impl BlockchainCommitPusher for Everscale {
         let params = serde_json::to_value(args)?;
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+
+        // let mut repo_contract = self.repo_contract.clone();
+        let repo_contract = &mut self.repo_contract.clone();
+        let commit = commit_id.clone().to_string();
+        let expected_address = blockchain::get_commit_address(
+            &self.ever_client,
+            repo_contract,
+            &commit
+        ).await?;
+
         let result = self
-            .call(wallet_contract.deref(), "deployCommit", Some(params))
+            .send_message(wallet_contract.deref(), "deployCommit", Some(params), Some(expected_address))
             .await?;
         drop(wallet_contract);
         tracing::trace!("deployCommit result: {:?}", result);
@@ -138,10 +148,10 @@ impl BlockchainCommitPusher for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(wallet_contract.deref(), "setCommit", Some(params))
+            .send_message(wallet_contract.deref(), "setCommit", Some(params), None)
             .await?;
         drop(wallet_contract);
-        tracing::trace!("setCommit trx id: {:?}", result.trx_id);
+        tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
         let start = Instant::now();
         let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);

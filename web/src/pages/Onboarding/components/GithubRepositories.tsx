@@ -1,52 +1,44 @@
 import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
-import Spinner from '../../components/Spinner'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import Spinner from '../../../components/Spinner'
+import { octokitSelector, repositoriesSelector } from '../../../store/onboarding.state'
 import {
-    githubRepositoriesAtom,
-    githubRepositoriesSelector,
-    octokitSelector,
-} from '../../store/signup.state'
-import GithubEmpty from './GithubEmpty'
+    TOnboardingOrganization,
+    TOnboardingRepository,
+} from '../../../store/onboarding.types'
+import ListEmpty from './ListEmpty'
 
 type TGithubRepositoriesProps = {
-    organization: any
+    organization: TOnboardingOrganization
     isOpen: boolean
     signoutOAuth(): Promise<void>
 }
 
 const GithubRepositories = (props: TGithubRepositoriesProps) => {
     const { isOpen, organization, signoutOAuth } = props
-    const setGithubRepos = useSetRecoilState(githubRepositoriesAtom)
-    const githubOrgRepos = useRecoilValue(githubRepositoriesSelector(organization.id))
     const octokit = useRecoilValue(octokitSelector)
+    const [repositories, setRepositories] = useRecoilState(
+        repositoriesSelector(organization.id),
+    )
 
-    const onRepositoryCheck = (id: number) => {
-        setGithubRepos((state) => ({
+    const onRepositoryClick = (item: TOnboardingRepository) => {
+        setRepositories((state) => ({
             ...state,
-            [organization.id]: {
-                ...state[organization.id],
-                items: state[organization.id].items.map((item) => {
-                    if (item.id !== id) return item
-                    return { ...item, isSelected: !item.isSelected }
-                }),
-            },
+            items: state.items.map((s) => {
+                if (s.id !== item.id) {
+                    return s
+                }
+                return { ...item, isSelected: !item.isSelected }
+            }),
         }))
     }
 
-    const getGithubRepositories = useCallback(async () => {
+    const getRepositories = useCallback(async () => {
         if (!octokit || !isOpen) return
 
-        setGithubRepos((state) => ({
-            ...state,
-            [organization.id]: {
-                ...state[organization.id],
-                items: state[organization.id]?.items || [],
-                isFetching: true,
-            },
-        }))
-
+        setRepositories((state) => ({ ...state, isFetching: true }))
         try {
             const { data } = organization.isUser
                 ? await octokit.request(
@@ -59,24 +51,27 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                 : await octokit.request(
                       'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
                       {
-                          org: organization.login,
+                          org: organization.name,
                           type: 'public',
                       },
                   )
 
-            setGithubRepos((state) => ({
+            const items = data.map((item: any) => ({
+                daoName: organization.name,
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                updatedAt: item.updated_at,
+            }))
+            setRepositories((state) => ({
                 ...state,
-                [organization.id]: {
-                    ...state[organization.id],
-                    items: data.map((item: any) => {
-                        const exists = state[organization.id].items.find(
-                            (a) => a.id === item.id,
-                        )
-                        if (exists) return exists
-                        return { ...item, isSelected: false }
-                    }),
-                    isFetching: false,
-                },
+                items: items.map((item: any) => {
+                    const found = state.items.find((i) => i.id === item.id)
+                    if (found) {
+                        return { ...found, ...item }
+                    }
+                    return { ...item, isSelected: false }
+                }),
             }))
         } catch (e: any) {
             console.error(e.message)
@@ -85,36 +80,35 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
         }
     }, [
         octokit,
-        organization.id,
-        organization.login,
+        organization.name,
         organization.isUser,
-        setGithubRepos,
+        setRepositories,
         isOpen,
         signoutOAuth,
     ])
 
     useEffect(() => {
-        getGithubRepositories()
-    }, [getGithubRepositories])
+        getRepositories()
+    }, [])
 
     return (
         <>
-            {githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
+            {repositories.isFetching && !repositories.items.length && (
                 <div className="p-5 text-sm text-gray-53596d">
                     <Spinner className="mr-3" />
                     Loading respositories...
                 </div>
             )}
 
-            {!githubOrgRepos?.isFetching && !githubOrgRepos?.items.length && (
-                <GithubEmpty />
+            {!repositories.isFetching && !repositories.items.length && (
+                <ListEmpty>You should have at least one repository on GitHub</ListEmpty>
             )}
 
-            {githubOrgRepos?.items.map((item, index) => (
+            {repositories.items.map((item, index) => (
                 <div
                     key={index}
                     className="signup__repoitem repoitem"
-                    onClick={() => onRepositoryCheck(item.id)}
+                    onClick={() => onRepositoryClick(item)}
                 >
                     <div className="repoitem__header">
                         <FontAwesomeIcon icon={faHardDrive} className="repoitem__icon" />
@@ -131,7 +125,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                     <p className="repoitem__description">{item.description}</p>
 
                     <p className="repoitem__secondary">
-                        Updated on {new Date(item.updated_at).toLocaleDateString()}
+                        Updated on {new Date(item.updatedAt).toLocaleDateString()}
                     </p>
                 </div>
             ))}

@@ -13,8 +13,6 @@ if [ $DEPLOY_LOCAL = TRUE ]; then
   ./node_se_scripts/deploy.sh
 fi
 
-export TEST_INDEX="${TEST_INDEX:-$RANDOM}"
-
 . set-vars.sh
 . build_remote.sh
 ./01-clone_empty_repo.test.sh
@@ -29,6 +27,23 @@ export TEST_INDEX="${TEST_INDEX:-$RANDOM}"
 ./10-ensure_blobs_onchain.test.sh
 ./11-git_submodules.test.sh
 ./12-clone_tree_with_rename.sh
+./13_push_protected_branch.test.sh
+./14_pull_request_details.test.sh
 
-# upgrade tests
-#./upgrade_tests/01-clone_upgraded_repo.test.sh
+# TODO: proposals have delay 1 minute, for tests need to set it to 1 second
+# upgrade tests.   Failing tests have ignore argument
+./upgrade_tests/set_up.sh
+./upgrade_tests/01-clone_rewritten_repo.test.sh
+./upgrade_tests/02_1-clone_upgraded_repo.test.sh ignore
+./upgrade_tests/02_2-push_after_upgrade.test.sh ignore
+./upgrade_tests/03-branch_from_parent.test.sh ignore
+./upgrade_tests/04-branch_from_grandparent.test.sh ignore
+./upgrade_tests/05_1-merge_branch_from_parent.test.sh ignore
+./upgrade_tests/06_1-merge_branch_from_grandparent.test.sh ignore
+./upgrade_tests/07-branch_from_unrelated_commit.test.sh ignore
+./upgrade_tests/08-tagging_after_upgrade.test.sh ignore
+./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
+./upgrade_tests/10-tagless_after_upgrade.test.sh ignore
+
+./clean.sh
+echo "All tests passed"

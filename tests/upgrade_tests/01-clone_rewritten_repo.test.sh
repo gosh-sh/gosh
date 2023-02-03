@@ -1,0 +1,95 @@
+#!/bin/bash
+set -e 
+set -o pipefail
+. ./util.sh
+
+set -x
+
+if [ "$1" = "ignore" ]; then
+  echo "Test $0 ignored"
+  exit 0
+fi
+
+REPO_NAME=upgrade_repo01
+DAO_NAME="dao-upgrade-test01_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo01_v2
+CONTROL_REPO_PATH=upgrade_repo01_control
+
+# delete folders
+[ -d $REPO_NAME ] && rm -rf $REPO_NAME
+[ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
+[ -d $CONTROL_REPO_PATH ] && rm -rf $CONTROL_REPO_PATH
+
+# deploy new DAO that will be upgraded
+deploy_DAO_and_repo
+
+export OLD_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
+echo "OLD_LINK=$OLD_LINK"
+
+echo "***** cloning old version repo *****"
+git clone $OLD_LINK
+
+# check
+cd $REPO_NAME
+REPO_STATUS=1
+if git status | grep 'No commits yet'; then
+    REPO_STATUS=0
+fi
+
+if [ $REPO_STATUS != 0 ]; then
+  exit $REPO_STATUS
+fi
+
+# push 1 file
+echo "***** Pushing file to old repo *****"
+echo old_ver > 1.txt
+git add 1.txt
+git commit -m test
+git push
+
+cd ..
+
+echo "Upgrade DAO"
+upgrade_DAO
+
+echo "***** new repo01 deploy *****"
+gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+echo "***** awaiting repo deploy *****"
+wait_account_active $REPO_ADDR
+sleep 3
+
+export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+echo "NEW_LINK=$NEW_LINK"
+
+echo "***** cloning repo with new link *****"
+git clone $NEW_LINK $NEW_REPO_PATH
+
+echo "***** push to new version *****"
+cd $NEW_REPO_PATH
+echo new_ver > 1.txt
+git add 1.txt
+git commit -m test2
+git push
+
+cd ../
+
+echo "***** cloning repo with old link *****"
+git clone $OLD_LINK $CONTROL_REPO_PATH
+
+
+echo "***** check repo *****"
+cd $CONTROL_REPO_PATH
+
+cur_ver=$(cat 1.txt)
+if [ $cur_ver != "new_ver" ]; then
+  echo "WRONG VERSION"
+  exit 1
+fi
+echo "GOOD VERSION"
+
+cd ..
+
+echo "TEST SUCCEEDED"

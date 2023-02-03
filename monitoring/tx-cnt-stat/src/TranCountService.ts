@@ -7,6 +7,7 @@ import Dict = NodeJS.Dict;
 export default class TranCountService extends Service {
 
     protected _values: (string|number)[] = [];
+    protected _codehash: Dict<string> = {};
 
     serviceName(): string {
         return "tx-cnt";
@@ -21,19 +22,22 @@ export default class TranCountService extends Service {
         const t = now();
         m.set('updated', t);
         for (let [k, v] of Object.entries(d)) {
-            m.set(`res{range="${k}"}`, v!);
+            if (k.startsWith('codehash-'))
+                m.set(`chres{tag="${k.substring(9)}"}`, v!);
+            else
+                m.set(`res{range="${k}"}`, v!);
         }
     }
 
     protected async queryInformation(client: TonClient, name: string, p: PerfFun): Promise<Dict<string>> {
-        const query = this.makeQueries(this._values);
+        const query = this.makeQueries(this._values, this._codehash);
         const result = await p('query', client.net.query({
             query: 'query { ' + query.join(' ') + ' }'
         }));
-        return this.collectData(this._values, result);
+        return this.collectData(this._values, this._codehash, result);
     }
 
-    protected makeQueries(values: any[]): string[] {
+    protected makeQueries(values: any[], codehashes: Dict<string>): string[] {
         let query = [];
         const mkval = function(x: any): string {
             const s = x.toString();
@@ -66,15 +70,23 @@ export default class TranCountService extends Service {
             }
             query.push(`r${vk}:aggregateMessages(filter:{value:{ge:"${min_value}",le:"${max_value}"}}) `);
         }
+        for (let [key, val] of Object.entries(codehashes)) {
+            const vk = key.replaceAll('-', '_').replaceAll('.', '_');
+            query.push(`c${vk}:aggregateAccounts(filter: {code_hash:{eq:"${val}"}})`);
+        }
         return query;
     }
 
-    protected collectData(values: any[], result: any): Dict<string> {
+    protected collectData(values: any[], codehashes: Dict<string>, result: any): Dict<string> {
         const res: Dict<string> = {};
         for (let value_spec of values) {
             const vs = value_spec.toString();
             const vk = this.specReplace(vs);
             res[vs] = result['r'+vk][0];
+        }
+        for (let [key, val] of Object.entries(codehashes)) {
+            const vk = key.replaceAll('-', '_').replaceAll('.', '_');
+            res['codehash-' + key] = result['c'+vk][0];
         }
         return res;
     }
