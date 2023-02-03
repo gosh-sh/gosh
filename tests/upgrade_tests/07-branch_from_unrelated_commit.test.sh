@@ -11,7 +11,7 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=upgrade_repo07
-DAO_NAME="dao-upgrade-test07_$RANDOM"
+DAO_NAME="dao-upgrade-test07_$(date +%s)"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

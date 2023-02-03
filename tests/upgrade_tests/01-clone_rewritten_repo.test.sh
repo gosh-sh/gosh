@@ -11,7 +11,7 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=upgrade_repo01
-DAO_NAME="dao-upgrade-test01_$RANDOM"
+DAO_NAME="dao-upgrade-test01_$(date +%s)"
 NEW_REPO_PATH=upgrade_repo01_v2
 CONTROL_REPO_PATH=upgrade_repo01_control
 

@@ -11,7 +11,7 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=upgrade_repo09
-DAO_NAME="dao-upgrade-test09_$RANDOM"
+DAO_NAME="dao-upgrade-test09_$(date +%s)"
 TAG_NAME=release
 
 # delete folders
@@ -31,7 +31,7 @@ cd $REPO_NAME
 echo "***** Pushing file to the repo *****"
 date +%s > last
 git add last
-git commit -m "added `last`"
+git commit -m "added 'last'"
 git push
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
@@ -65,11 +65,6 @@ if [ $FETCHED_TAG != $TAG_NAME ]; then
     echo "ERR: expected tag is missing (`$FETCHED_TAG` != `$TAG_NAME`)"
     exit 1
 fi
-
-date +%s > last
-git add last
-git commit -m "updated `last`"
-git push
 
 git tag -d $TAG_NAME
 git push origin :refs/tags/$TAG_NAME

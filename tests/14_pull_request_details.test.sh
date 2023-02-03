@@ -11,7 +11,7 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=repo14
-DAO_NAME="dao-test14_$RANDOM"
+DAO_NAME="dao-test14_$(date +%s)"
 BRANCH_NAME=tester
 
 # delete folders

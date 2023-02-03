@@ -11,7 +11,7 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=upgrade_repo08
-DAO_NAME="dao-upgrade-test08_$RANDOM"
+DAO_NAME="dao-upgrade-test08_$(date +%s)"
 TAG_NAME=release
 
 # delete folders
@@ -31,7 +31,7 @@ cd $REPO_NAME
 echo "***** Pushing file to the repo *****"
 date +%s > last
 git add last
-git commit -m "added `last`"
+git commit -m "added 'last'"
 git push
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
@@ -68,7 +68,7 @@ fi
 
 date +%s > last
 git add last
-git commit -m "updated `last`"
+git commit -m "updated 'last'"
 git push
 
 git tag -d $TAG_NAME
