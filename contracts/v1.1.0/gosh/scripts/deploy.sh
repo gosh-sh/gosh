@@ -61,7 +61,6 @@ TASK_CODE=$(everdev contract dt $GOSH_PATH/task.tvc | tr -d ' ",' | sed -n '/cod
 PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-DAO_WALLET_CODE=$(everdev contract dt $GOSH_PATH/daotokenwallet.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 DAO_TAG_CODE=$(everdev contract dt $GOSH_PATH/../../daotag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 
@@ -147,8 +146,6 @@ echo "     ====> Run setTag"
 everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setTask"
 everdev contract run $SYSTEMCONTRACT_ABI setTask --input "{\"code\":\"$TASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setDaoTokenWallet"
-everdev contract run $SYSTEMCONTRACT_ABI setDaoTokenWallet --input "{\"code\":\"$DAO_WALLET_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setDaoTag"
 everdev contract run $SYSTEMCONTRACT_ABI setDaoTag --input "{\"code\":\"$DAO_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
