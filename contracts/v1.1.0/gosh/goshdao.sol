@@ -441,6 +441,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         } else {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
+            require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             require(grant[index] <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
             _wallets[keyaddr].count -= grant[index];
             _allbalance -= grant[index];
