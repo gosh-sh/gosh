@@ -225,6 +225,17 @@
 			]
 		},
 		{
+			"name": "startProposalForAddVoteToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForAddToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

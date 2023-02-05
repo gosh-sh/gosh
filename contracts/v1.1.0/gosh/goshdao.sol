@@ -470,6 +470,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += grant;
     }
     
+    function addRegularTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {
+        require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
+        GoshWallet(getAddrWalletIn(pub, 0)).addRegularToken{value:0.2 ton}(grant);
+        _reserve -= grant;
+    }
+    
     function deployWalletsConst(address[] pubmem, uint128 index) public senderIs(address(this)) {
         tvm.accept();
         getMoney();

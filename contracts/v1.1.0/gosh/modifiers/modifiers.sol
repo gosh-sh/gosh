@@ -190,7 +190,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant TASK_DEPLOY_PROPOSAL_KIND = 11;
     uint256 constant DEPLOY_REPO_PROPOSAL_KIND = 12;
     uint256 constant ADD_VOTE_TOKEN_PROPOSAL_KIND = 13;
-    uint256 constant ADD_TOKEN_PROPOSAL_KIND = 14;
+    uint256 constant ADD_REGULAR_TOKEN_PROPOSAL_KIND = 14;
     uint256 constant MINT_TOKEN_PROPOSAL_KIND = 15;
     uint256 constant DAOTAG_PROPOSAL_KIND = 16;
     uint256 constant DAOTAG_DESTROY_PROPOSAL_KIND = 17;
