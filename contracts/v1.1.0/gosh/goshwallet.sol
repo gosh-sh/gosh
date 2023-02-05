@@ -50,9 +50,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 _last_time = 0;
     uint128 _walletcounter = 1;
     uint128 _limit_wallets;
+    uint128 public _totalDoubt = 0;
     mapping(uint256 => string) public _versions;
 
-    bool _tombstone = false;
+    bool public _tombstone = false;
     bool public _limited = true;
 
     uint128 timeMoney = 0;
@@ -221,6 +222,26 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell c = proposalBuilder.toCell();
 
         _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients);
+
+        getMoney();
+    }
+    
+    function startProposalForChangeAllowance(
+        address pubaddr,
+        bool increase,
+        uint128 grant,
+        string comment,
+        uint128 num_clients
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        TvmBuilder proposalBuilder;
+        uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
+        proposalBuilder.store(proposalKind, pubaddr, increase, grant, comment, now);
+        TvmCell c = proposalBuilder.toCell();
+
+        _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients);
 
         getMoney();
     }
@@ -495,6 +516,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Money part
     function getMoney() private {
+        if (_totalDoubt <= m_pseudoDAOVoteBalance) {
+            m_pseudoDAOVoteBalance -= _totalDoubt;
+        } else {
+            _totalDoubt -= m_pseudoDAOVoteBalance;
+            m_pseudoDAOVoteBalance = 0;
+        }
         if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
         if (_flag == true) { return; }
         if (address(this).balance > 20000 ton) { return; }
@@ -874,6 +901,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function addDoubt(
+        uint128 grant
+    ) public senderIs(_goshdao) accept saveMsg {
+        _totalDoubt += grant;
+        getMoney();
+    }
+    
+    function addAllowance(
+        uint128 grant
+    ) public senderIs(_goshdao) accept saveMsg {
+        m_pseudoDAOVoteBalance += grant;
+        getMoney();
+    }
+    
     function addRegularToken(
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
@@ -1250,6 +1291,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             }  else
             if (kind == ALLOW_MINT_PROPOSAL_KIND) {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
+            }  else
+            if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
+               (address pubaddr, bool increase, uint128 grant) = s.decode(address, bool, uint128);
+               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
             }
         }
     }

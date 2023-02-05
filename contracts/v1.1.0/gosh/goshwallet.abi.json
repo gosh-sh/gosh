@@ -128,6 +128,18 @@
 			]
 		},
 		{
+			"name": "startProposalForChangeAllowance",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"increase","type":"bool"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForSetTombstoneDao",
 			"inputs": [
 				{"name":"description","type":"string"},
@@ -426,6 +438,22 @@
 		},
 		{
 			"name": "addVoteToken",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addDoubt",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addAllowance",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
 			],
@@ -944,11 +972,27 @@
 			]
 		},
 		{
+			"name": "_totalDoubt",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_totalDoubt","type":"uint128"}
+			]
+		},
+		{
 			"name": "_versions",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"_versions","type":"map(uint256,string)"}
+			]
+		},
+		{
+			"name": "_tombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_tombstone","type":"bool"}
 			]
 		},
 		{
@@ -1011,6 +1055,7 @@
 		{"name":"_last_time","type":"uint128"},
 		{"name":"_walletcounter","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
+		{"name":"_totalDoubt","type":"uint128"},
 		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"_limited","type":"bool"},

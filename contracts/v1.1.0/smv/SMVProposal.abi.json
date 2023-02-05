@@ -246,6 +246,18 @@
 			]
 		},
 		{
+			"name": "getChangeAllowancetProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"increase","type":"bool"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}

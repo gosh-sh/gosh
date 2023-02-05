@@ -267,6 +267,18 @@
 			]
 		},
 		{
+			"name": "changeAllowance",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"increase","type":"bool"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addVoteTokenTask",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

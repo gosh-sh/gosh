@@ -350,6 +350,13 @@ function getNotAllowMintProposalParams () external view
     (proposalKind, comment) = s.decode(uint256, string);
 }
 
+function getChangeAllowancetProposalParams () external view
+         returns(uint256  proposalKind, address pubaddr, bool increase, uint128 grant, string comment)
+{
+    TvmSlice s = propData.toSlice();
+    (proposalKind, pubaddr, increase, grant, comment) = s.decode(uint256, address, bool, uint128, string);
+}
+
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}

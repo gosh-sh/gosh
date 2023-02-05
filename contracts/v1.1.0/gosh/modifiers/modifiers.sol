@@ -172,6 +172,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant ALLOW_MINT_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant ALLOW_MINT_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant CHANGE_ALLOWANCE_PROPOSAL_START_AFTER = 10 seconds;
+    uint32 constant CHANGE_ALLOWANCE_PROPOSAL_DURATION = 1 weeks;
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -192,6 +195,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DAOTAG_PROPOSAL_KIND = 16;
     uint256 constant DAOTAG_DESTROY_PROPOSAL_KIND = 17;
     uint256 constant ALLOW_MINT_PROPOSAL_KIND = 18;
+    uint256 constant CHANGE_ALLOWANCE_PROPOSAL_KIND = 19;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
