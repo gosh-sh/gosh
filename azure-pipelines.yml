@@ -14,10 +14,8 @@ strategy:
 pool:
   vmImage: $(imageName)
 
-jobs:
-- job: rust-build
-  steps: 
-  - bash: |
+steps:
+- script: |
     mkdir -p ./resources \
     cp ../contracts/gosh/*.abi.json ./resources/ \
     cargo build --release
