@@ -322,7 +322,7 @@ function getGoshAddVoteTokenProposalParams () external view
     (proposalKind, pubaddr, grant, comment) = s.decode(uint256, address, uint128, string);
 }
 
-function getGoshAddTokenProposalParams () external view
+function getGoshAddRegularTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
     TvmSlice s = propData.toSlice();

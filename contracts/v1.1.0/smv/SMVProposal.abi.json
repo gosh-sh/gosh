@@ -206,7 +206,7 @@
 			]
 		},
 		{
-			"name": "getGoshAddTokenProposalParams",
+			"name": "getGoshAddRegularTokenProposalParams",
 			"inputs": [
 			],
 			"outputs": [
