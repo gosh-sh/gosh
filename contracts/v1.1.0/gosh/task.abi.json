@@ -17,15 +17,6 @@
 			]
 		},
 		{
-			"name": "setConfig",
-			"inputs": [
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "isReady",
 			"inputs": [
 				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"commit","type":"tuple"}
@@ -36,6 +27,7 @@
 		{
 			"name": "confirmSmv",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"}
 			],
@@ -55,6 +47,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -67,11 +60,10 @@
 			"outputs": [
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"address"},
-				{"name":"value2","type":"address"},
-				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value3","type":"tuple[]"},
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"value4","type":"tuple"},
-				{"name":"value5","type":"bool"},
-				{"name":"value6","type":"uint128"}
+				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value2","type":"tuple[]"},
+				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"value3","type":"tuple"},
+				{"name":"value4","type":"bool"},
+				{"name":"value5","type":"uint128"}
 			]
 		},
 		{
@@ -81,14 +73,6 @@
 			"outputs": [
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
-			]
-		},
-		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -120,7 +104,6 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"_nametask","type":"string"},
-		{"name":"_pubaddr","type":"address"},
 		{"name":"_repo","type":"address"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_systemcontract","type":"address"},

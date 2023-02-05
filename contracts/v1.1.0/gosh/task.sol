@@ -19,7 +19,6 @@ contract Task is Modifiers{
     string constant version = "1.1.0";
     
     string static _nametask;
-    address _pubaddr;
     address _repo;
     bool _ready = false;
     address _systemcontract;
@@ -49,22 +48,22 @@ contract Task is Modifiers{
         _repo = repo;
         _grant = grant;
     }
-    
+ /*   
     function setConfig(ConfigGrant grant, uint128 index) public {
         require(_ready == false, ERR_TASK_COMPLETED);
         checkAccess(_pubaddr, msg.sender, index);
         _grant = grant;
     } 
-    
+ */   
     function isReady(ConfigCommit commit) public senderIs(_repo) {
         require(_ready == false, ERR_TASK_COMPLETED);
         _candidates.push(commit);
     } 
     
-    function confirmSmv(uint128 index1, uint128 index2) public {
+    function confirmSmv(address pubaddr, uint128 index1, uint128 index2) public {
        require(_ready == false, ERR_TASK_COMPLETED);
        require(index1 < _candidates.length, ERR_TASK_COMPLETED);
-       checkAccess(_pubaddr, msg.sender, index2);
+       checkAccess(pubaddr, msg.sender, index2);
         _ready = true;
         _indexFinal = index1;
         _step = _grant.assign /  _candidates[_indexFinal].size;
@@ -115,10 +114,8 @@ contract Task is Modifiers{
         if (_candidates[_indexFinal].pubaddrassign.empty() == false) { return; }
         if (_grant.review != 0) { return; }
         if (_grant.manager != 0) { return; }
-        TvmCell s1 = _composeWalletStateInit(_pubaddr, 0);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _grant.assign + _grant.review + _grant.manager);
-        selfdestruct(addr);
+        selfdestruct(giver);
     }
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
@@ -133,22 +130,18 @@ contract Task is Modifiers{
     
     //Selfdestruct
     
-    function destroy(uint128 index) public {
-        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+    function destroy(address pubaddr, uint128 index) public {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _grant.assign + _grant.review + _grant.manager);
         selfdestruct(giver);
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, address, ConfigCommit[], ConfigGrant, bool, uint128) {
-        return (_nametask, _pubaddr, _repo, _candidates, _grant, _ready, _indexFinal);
+    function getStatus() external view returns(string, address, ConfigCommit[], ConfigGrant, bool, uint128) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);
-    }
-    
-    function getOwner() external view returns(address) {
-        return _pubaddr;
     }
 }

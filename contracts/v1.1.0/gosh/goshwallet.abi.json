@@ -460,16 +460,6 @@
 			]
 		},
 		{
-			"name": "setTaskConfig",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"nametask","type":"string"},
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},
