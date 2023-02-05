@@ -189,6 +189,14 @@
 			"outputs": [
 				{"name":"lastVoteResult","type":"optional(bool)"}
 			]
+		},
+		{
+			"name": "_totalDoubt",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_totalDoubt","type":"uint128"}
+			]
 		}
 	],
 	"data": [
@@ -230,6 +238,7 @@
 		{"name":"_access","type":"optional(uint256)"},
 		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
 		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
-		{"name":"_lockedBalance","type":"uint128"}
+		{"name":"_lockedBalance","type":"uint128"},
+		{"name":"_totalDoubt","type":"uint128"}
 	]
 }

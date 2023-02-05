@@ -85,6 +85,7 @@ uint128 DEFAULT_DAO_VOTE_BALANCE;
 uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
     
 uint128 _lockedBalance = 0;
+uint128 public _totalDoubt = 0;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
@@ -236,6 +237,12 @@ function returnDAOBalance (uint128 amount) external override check_locker
 {
     m_pseudoDAOBalance += amount;
     m_pseudoDAOVoteBalance += amount;
+    if (_totalDoubt <= m_pseudoDAOVoteBalance) {
+        m_pseudoDAOVoteBalance -= _totalDoubt;
+    } else {
+        _totalDoubt -= m_pseudoDAOVoteBalance;
+        m_pseudoDAOVoteBalance = 0;
+    }
 }
 
 function acceptUnlock (uint128 amount) external override check_locker
