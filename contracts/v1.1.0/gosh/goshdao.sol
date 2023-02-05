@@ -602,17 +602,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 balance = 0;    
         for (uint128 i = 0; i < grant.assign.length; i++){
             balance += grant.assign[i].grant;
-            if (i != 0) { require(grant.assign[i].lock >= grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
+            if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }
         for (uint128 i = 0; i < grant.review.length; i++){
             balance += grant.review[i].grant;
-            if (i != 0) { require(grant.review[i].lock >= grant.review[i - 1].lock, ERR_WRONG_LOCK); }
+            if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }
         for (uint128 i = 0; i < grant.manager.length; i++){
             balance += grant.manager[i].grant;
-            if (i != 0) { require(grant.manager[i].lock >= grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
+            if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
         }
         require(_reserve >= balance, ERR_LOW_TOKEN_RESERVE);
