@@ -911,7 +911,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo,
         uint128 grant
     ) public senderIs(getTaskAddr(nametask, repo)) accept saveMsg {
-        m_pseudoDAOVoteBalance += grant;
         GoshDao(_goshdao).addVoteTokenTask{value: 0.1 ton}(_pubaddr, _index, grant);
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, grant, _index);
         getMoney();
@@ -920,7 +919,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function addVoteToken(
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
-        m_pseudoDAOVoteBalance += grant;
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, grant, _index);
         getMoney();
     }
