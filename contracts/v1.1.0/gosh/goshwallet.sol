@@ -227,15 +227,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startProposalForChangeAllowance(
-        address pubaddr,
-        bool increase,
-        uint128 grant,
+        address[] pubaddr,
+        bool[] increase,
+        uint128[] grant,
         string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
+        require(pubaddr.length == increase.length, ERR_DIFFERENT_COUNT);
+        require(pubaddr.length == grant.length, ERR_DIFFERENT_COUNT);
         TvmBuilder proposalBuilder;
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
         proposalBuilder.store(proposalKind, pubaddr, increase, grant, comment, now);
@@ -1326,7 +1328,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }  else
             if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (address pubaddr, bool increase, uint128 grant) = s.decode(address, bool, uint128);
+               (address[] pubaddr, bool[] increase, uint128[] grant) = s.decode(address[], bool[], uint128[]);
                GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
             }
         }

@@ -422,22 +422,29 @@ contract GoshDao is Modifiers, TokenRootOwner {
         );
     }
     
-    function changeAllowance (address pubaddrs, uint128 index, address pubaddr, bool increase, uint128 grant) public senderIs(getAddrWalletIn(pubaddrs, index))  accept
+    function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(getAddrWalletIn(pubaddrs, index))  accept
     {
-        if (increase == true) {
-            (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, 0);
+    }
+    
+    function changeAllowanceIn (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= grant.length) { return; }
+        if (increase[index] == true) {
+            (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
-            _wallets[keyaddr].count += grant;
-            _allbalance += grant;
-            GoshWallet(msg.sender).addAllowance{value: 0.1 ton}(grant);
+            _wallets[keyaddr].count += grant[index];
+            _allbalance += grant[index];
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.1 ton}(grant[index]);
         } else {
-            (int8 _, uint256 keyaddr) = pubaddr.unpack();
+            (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
-            require(grant <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
-            _wallets[keyaddr].count -= grant;
-            _allbalance -= grant;
-            GoshWallet(msg.sender).addDoubt{value: 0.1 ton}(grant);
+            require(grant[index] <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
+            _wallets[keyaddr].count -= grant[index];
+            _allbalance -= grant[index];
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
+        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, index + 1);
     }
     
     function addVoteTokenTask (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept

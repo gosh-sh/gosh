@@ -251,9 +251,9 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address"},
-				{"name":"increase","type":"bool"},
-				{"name":"grant","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"}
 			]
 		},

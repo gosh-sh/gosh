@@ -77,4 +77,5 @@ abstract contract Errors {
     uint constant ERR_TOO_MANY_TAGS = 266;
     uint constant ERR_NOT_READY = 267;
     uint constant ERR_NOT_ALLOW_MINT = 268;
+    uint constant ERR_DIFFERENT_COUNT = 269;
 }
