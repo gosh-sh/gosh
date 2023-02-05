@@ -541,6 +541,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getMoney() private {
         if (_totalDoubt <= m_pseudoDAOVoteBalance) {
             m_pseudoDAOVoteBalance -= _totalDoubt;
+            _totalDoubt = 0;
         } else {
             _totalDoubt -= m_pseudoDAOVoteBalance;
             m_pseudoDAOVoteBalance = 0;
