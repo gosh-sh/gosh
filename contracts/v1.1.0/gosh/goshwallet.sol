@@ -853,12 +853,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _deployTask(
         string repoName,
         string nametask,
-        ConfigGrant grant,
-        uint128 lock
+        ConfigGrant grant
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton}(_pubaddr, _index, repoName, nametask, grant, lock);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton}(_pubaddr, _index, repoName, nametask, grant);
         getMoney();
     }
 
@@ -1187,18 +1186,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string taskName,
         string repoName,
         ConfigGrant grant,
-        uint128 lock,
         string comment,
         uint128 num_clients
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
+        require(grant.assign.length <= 6, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.review.length <= 6, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.manager.length <= 6, ERR_TOO_MANY_VESTING_TIME);
         tvm.accept();
         _saveMsg();
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, grant, lock, comment, now);
+        proposalBuilder.store(proposalKind, repoName, taskName, grant, comment, now);
         TvmCell c = proposalBuilder.toCell();
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients);
         getMoney();
@@ -1295,8 +1296,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (string taskName, string repoName, ConfigGrant grant, uint128 lock) = s.decode(string, string, ConfigGrant, uint128);
-                _deployTask(taskName, repoName, grant, lock);
+                (string taskName, string repoName, ConfigGrant grant) = s.decode(string, string, ConfigGrant);
+                _deployTask(taskName, repoName, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
                 (string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));

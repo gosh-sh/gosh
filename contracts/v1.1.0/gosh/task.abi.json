@@ -10,8 +10,8 @@
 				{"name":"goshaddr","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"grant","type":"tuple"},
-				{"name":"locktime","type":"uint128"}
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -61,7 +61,7 @@
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"address"},
 				{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"value2","type":"tuple[]"},
-				{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"value3","type":"tuple"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"value3","type":"tuple"},
 				{"name":"value4","type":"bool"},
 				{"name":"value5","type":"uint128"}
 			]
@@ -81,14 +81,6 @@
 			],
 			"outputs": [
 				{"name":"_locktime","type":"uint128"}
-			]
-		},
-		{
-			"name": "_lock",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"_lock","type":"uint128"}
 			]
 		}
 	],
@@ -110,10 +102,18 @@
 		{"name":"_goshdao","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"components":[{"name":"task","type":"address"},{"name":"size","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"_candidates","type":"tuple[]"},
-		{"components":[{"name":"assign","type":"uint128"},{"name":"review","type":"uint128"},{"name":"manager","type":"uint128"}],"name":"_grant","type":"tuple"},
+		{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"_grant","type":"tuple"},
 		{"name":"_indexFinal","type":"uint128"},
-		{"name":"_step","type":"uint128"},
 		{"name":"_locktime","type":"uint128"},
-		{"name":"_lock","type":"uint128"}
+		{"name":"_fullAssign","type":"uint128"},
+		{"name":"_fullReview","type":"uint128"},
+		{"name":"_fullManager","type":"uint128"},
+		{"name":"_assigners","type":"map(address,uint128)"},
+		{"name":"_assignfull","type":"uint128"},
+		{"name":"_assigncomplete","type":"uint128"},
+		{"name":"_allassign","type":"bool"},
+		{"name":"_allreview","type":"bool"},
+		{"name":"_allmanager","type":"bool"},
+		{"name":"_balance","type":"uint128"}
 	]
 }

@@ -59,10 +59,14 @@ struct GlobalConfig {
         address goshAddr;
 }
 
+struct ConfigPair {
+    uint128 grant;
+    uint128 lock;
+}
 struct ConfigGrant {
-    uint128 assign;
-    uint128 review;
-    uint128 manager;
+    ConfigPair[] assign;
+    ConfigPair[] review;
+    ConfigPair[] manager;
 }
 
 struct ConfigCommit {

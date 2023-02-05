@@ -78,4 +78,7 @@ abstract contract Errors {
     uint constant ERR_NOT_READY = 267;
     uint constant ERR_NOT_ALLOW_MINT = 268;
     uint constant ERR_DIFFERENT_COUNT = 269;
+    uint constant ERR_TOO_MANY_VESTING_TIME = 270;
+    uint constant ERR_ZERO_GRANT = 271;
+    uint constant ERR_WRONG_LOCK = 272;
 }
