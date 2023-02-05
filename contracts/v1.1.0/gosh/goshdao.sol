@@ -291,6 +291,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _;
         require(_wallets.prev(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
+        require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
         getMoney();
         if (typeF == ALONE_DEPLOY_WALLET) { deployWalletPrivate(pubaddr); return; }
         if (typeF == ALONE_ADD_VOTE_TOKEN) {
@@ -433,6 +434,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (increase[index] == true) {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
+            require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.1 ton}(grant[index]);
@@ -451,6 +453,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
+        require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
         require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
@@ -460,6 +463,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
+        require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
         require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         _wallets[keyaddr].count += grant;
         _reserve -= grant;
@@ -470,6 +474,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
+        require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
         require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
         _wallets[keyaddr].count += grant;
