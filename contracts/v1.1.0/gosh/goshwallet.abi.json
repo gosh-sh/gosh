@@ -236,7 +236,7 @@
 			]
 		},
 		{
-			"name": "startProposalForAddToken",
+			"name": "startProposalForAddRegularToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},

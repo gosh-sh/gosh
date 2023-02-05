@@ -400,7 +400,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
-    function startProposalForAddToken(
+    function startProposalForAddRegularToken(
         address pubaddr,
         uint128 token,
         string comment,
