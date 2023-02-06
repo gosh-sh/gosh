@@ -600,18 +600,51 @@ contract GoshDao is Modifiers, TokenRootOwner {
         string nametask,
         ConfigGrant grant
     ) public senderIs(getAddrWalletIn(pubaddr, index)) accept saveMsg {
-        uint128 balance = 0;    
-        for (uint128 i = 0; i < grant.assign.length; i++){
+        uint128 balance = 0; 
+        this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+     }   
+     
+     function calculateBalanceAssign(string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 balance,
+        uint128 index) public pure senderIs(address(this)) accept {
+        uint128 check = 0;
+        for (uint128 i = index; i < grant.assign.length; i++){
+            check += 1;
+            if (check == 6) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
-        }
-        for (uint128 i = 0; i < grant.review.length; i++){
+        }       
+        this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+     }
+     
+     function calculateBalanceReview(string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 balance,
+        uint128 index) public pure senderIs(address(this)) accept {
+        uint128 check = 0;
+        for (uint128 i = index; i < grant.review.length; i++){
+            check += 1;
+            if (check == 6) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
-        }
-        for (uint128 i = 0; i < grant.manager.length; i++){
+        }       
+        this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+      }
+      
+      function calculateBalanceManager(string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 balance,
+        uint128 index) public senderIs(address(this)) accept {
+        uint128 check = 0;
+        for (uint128 i = index; i < grant.manager.length; i++){
+            check += 1;
+            if (check == 6) { this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
