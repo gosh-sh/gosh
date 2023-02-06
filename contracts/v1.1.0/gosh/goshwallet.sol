@@ -215,10 +215,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, newversion, description, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, newversion, description, comment, now);
 
         _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients);
 
@@ -237,10 +235,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         require(pubaddr.length == increase.length, ERR_DIFFERENT_COUNT);
         require(pubaddr.length == grant.length, ERR_DIFFERENT_COUNT);
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, pubaddr, increase, grant, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, comment, now);
 
         _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients);
 
@@ -255,10 +251,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, description, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, description, comment, now);
 
         _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients);
 
@@ -342,11 +336,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
-
-        proposalBuilder.store(proposalKind, token, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, token, comment, now);
 
         _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients);
 
@@ -362,11 +353,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = ALLOW_MINT_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, comment, now);
 
         _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients);
 
@@ -388,11 +377,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = ADD_VOTE_TOKEN_PROPOSAL_KIND;
 
-        proposalBuilder.store(proposalKind, pubaddr, token, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, now);
 
         _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients);
 
@@ -410,11 +397,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
-
-        proposalBuilder.store(proposalKind, pubaddr, token, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, now);
 
         _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients);
 
@@ -433,11 +417,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
-
-        proposalBuilder.store(proposalKind, pubaddr, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
 
         _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients);
 
@@ -455,11 +436,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
-
-        proposalBuilder.store(proposalKind, pubaddr, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
 
         _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients);
 
@@ -594,10 +572,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, nameRepo, previous, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, nameRepo, previous, comment, now);
 
         _startProposalForOperation(c, DEPLOY_REPO_PROPOSAL_START_AFTER, DEPLOY_REPO_PROPOSAL_DURATION, num_clients);
 
@@ -1071,10 +1047,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, now);
 
         _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients);
 
@@ -1091,10 +1065,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, tag, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, tag, comment, now);
 
         _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients);
 
@@ -1111,10 +1083,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, tag, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, tag, comment, now);
 
         _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients);
 
@@ -1154,10 +1124,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, index, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, index, comment, now);
         _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients);
         getMoney();
     }
@@ -1173,10 +1141,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, now);
         _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients);
         getMoney();
     }
@@ -1214,10 +1180,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, branchName, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, now);
 
         _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
 
@@ -1249,83 +1213,83 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task) =
-                    s.decode(string, string, string, uint128, uint128, optional(ConfigCommit));
+                (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task,) =
+                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), uint128));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
                 Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string repoName, string branchName) = s.decode(string, string);
+                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint128));
                 Repository(_buildRepositoryAddr(repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string repoName, string branchName) = s.decode(string, string);
+                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint128));
                 Repository(_buildRepositoryAddr(repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (string description) = s.decode(string);
+                (, string description,) = abi.decode(propData,(uint256, string, uint128));
                 _setTombstoneDao(description);
             } else
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
-                (MemberToken[] pubaddr) = s.decode(MemberToken[]);
+                (, MemberToken[] pubaddr,) = abi.decode(propData,(uint256, MemberToken[], uint128));
                 _deployWalletDao(pubaddr);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (address[] pubaddr) = s.decode(address[]);
+                (, address[] pubaddr,) = abi.decode(propData,(uint256, address[], uint128));
                 _deleteWalletDao(pubaddr);
             } else
             if (kind == SET_UPGRADE_PROPOSAL_KIND) {
-                (string newversion, string description) = s.decode(string, string);
+                (, string newversion, string description,) = abi.decode(propData,(uint256, string, string, uint128));
                 _upgradeDao(newversion, description);
             } else
             if (kind == TASK_PROPOSAL_KIND) {
-                (string taskName, string repoName, uint128 index) = s.decode(string, string, uint128);
+                (, string taskName, string repoName, uint128 index,) = abi.decode(propData,(uint256, string, string, uint128, uint128));
                 _confirmTask(taskName, repoName, index);
             }  else
             if (kind == TASK_DESTROY_PROPOSAL_KIND) {
-                (string taskName, string repoName) = s.decode(string, string);
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint128));
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (string taskName, string repoName, ConfigGrant grant) = s.decode(string, string, ConfigGrant);
+                (, string taskName, string repoName, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, ConfigGrant, uint128));
                 _deployTask(taskName, repoName, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
-                (string repoName, optional(AddrVersion) previous) = s.decode(string, optional(AddrVersion));
+                (, string repoName, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, optional(AddrVersion), uint128));
                 _deployRepository(repoName, previous);
             }  else
             if (kind == ADD_VOTE_TOKEN_PROPOSAL_KIND) {
-                (address pubaddr, uint128 grant) = s.decode(address, uint128);
+                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint128));
                 _addToken(pubaddr, grant);
             }  else
             if (kind == ADD_REGULAR_TOKEN_PROPOSAL_KIND) {
-                (address pubaddr, uint128 grant) = s.decode(address, uint128);
+                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint128));
                 _addTokenRegular(pubaddr, grant);
             }  else
             if (kind == MINT_TOKEN_PROPOSAL_KIND) {
-                (uint128 grant) = s.decode(uint128);
+                (, uint128 grant,) = abi.decode(propData,(uint256, uint128, uint128));
                 _mintToken(grant);
             }  else
             if (kind == DAOTAG_PROPOSAL_KIND) {
-                (string[] tag) = s.decode(string[]);
+                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint128));
                 GoshDao(_goshdao).smvdeploytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == DAOTAG_DESTROY_PROPOSAL_KIND) {
-                (string[] tag) = s.decode(string[]);
+                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint128));
                 GoshDao(_goshdao).smvdestroytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == ALLOW_MINT_PROPOSAL_KIND) {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }  else
             if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (address[] pubaddr, bool[] increase, uint128[] grant) = s.decode(address[], bool[], uint128[]);
+               (, address[] pubaddr, bool[] increase, uint128[] grant,) = abi.decode(propData,(uint256, address[], bool[], uint128[], uint128));
                GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
             }
         }
