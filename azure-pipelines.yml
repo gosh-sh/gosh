@@ -28,7 +28,7 @@ steps:
     choco install protoc
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   
-- script: |
+- bash: |
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
     cargo build --release
