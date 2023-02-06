@@ -1191,13 +1191,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        require(grant.assign.length <= 6, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.review.length <= 6, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.manager.length <= 6, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.assign.length <= 200, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.review.length <= 200, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.manager.length <= 200, ERR_TOO_MANY_VESTING_TIME);
         tvm.accept();
         _saveMsg();
 
-        TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, grant, comment, now);
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients);
@@ -1295,7 +1294,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (uint256 data, string taskName, string repoName, ConfigGrant grant) = abi.decode(propData, (uint256, string, string, ConfigGrant));
+                (string taskName, string repoName, ConfigGrant grant) = s.decode(string, string, ConfigGrant);
                 _deployTask(taskName, repoName, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
