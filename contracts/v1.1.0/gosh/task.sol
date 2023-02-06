@@ -78,7 +78,7 @@ contract Task is Modifiers{
         _ready = true;
         _indexFinal = index1;
         _locktime = now;
-        _assignfull = _candidates[_indexFinal].size;
+        _assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
     }
     
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {

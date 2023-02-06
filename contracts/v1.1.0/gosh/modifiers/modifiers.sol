@@ -71,7 +71,6 @@ struct ConfigGrant {
 
 struct ConfigCommit {
     address task;
-    uint128 size;
     mapping(address => bool) pubaddrassign;
     address pubaddrreview;
     address pubaddrmanager;
