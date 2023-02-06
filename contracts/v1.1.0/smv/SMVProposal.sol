@@ -281,9 +281,9 @@ function getGoshUpgradeDaoProposalParams () external view
 }
 
 function getGoshConfirmTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+         returns( uint256  proposalKind, string reponame, string taskname, uint128 index, string comment)
 {
-    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
+    (proposalKind, reponame, taskname, index, comment, ) = abi.decode(propData, (uint256, string, string, uint128, string, uint32));
 }
 
 function getGoshDestroyTaskProposalParams () external view

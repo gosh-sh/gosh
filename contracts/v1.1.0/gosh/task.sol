@@ -37,6 +37,9 @@ contract Task is Modifiers{
     bool _allassign = false;
     bool _allreview = false;
     bool _allmanager = false;
+    uint128 _lastassign = 0;
+    uint128 _lastreview = 0;
+    uint128 _lastmanager = 0;
     uint128 _balance;
     
     constructor(
@@ -78,64 +81,89 @@ contract Task is Modifiers{
         _assignfull = _candidates[_indexFinal].size;
     }
     
-    function getGrant(address pubaddr, uint128 typegrant, uint128 index) public {
+    function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
         require(_ready == true, ERR_TASK_NOT_COMPLETED);
         require(now >= _locktime, ERR_NOT_READY);
-        checkAccess(pubaddr, msg.sender, index);
+        checkAccess(pubaddr, msg.sender, index); 
+        tvm.accept();
         if (m_assign == typegrant) {
             require(_candidates[_indexFinal].pubaddrassign.exists(pubaddr), ERR_ASSIGN_NOT_EXIST);
-            for (uint128 i = 0; i < _grant.assign.length; i++){
-                if (now >= _grant.assign[i].lock + _locktime) { 
-                    _fullAssign += _grant.assign[i].grant; 
-                    _grant.assign[i].grant = 0; 
-                    if (i == _grant.assign.length - 1) { _allassign = true; } 
-                } else { break; }
-            }
-            uint128 diff = _fullAssign / _assignfull - _assigners[pubaddr];
-            _balance -= diff;
-            if (diff == 0) { return; }
-            _assigners[pubaddr] = _fullAssign / _assignfull;
-            if ((_allassign == true) && (diff != 0)) { _assigncomplete += 1; }
-            TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
-            address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, diff);
-            checkempty();
-            return;
+            this.getGrantAssign{value: 0.2 ton}(pubaddr);
         }
         if (m_review == typegrant) {
             require(_candidates[_indexFinal].pubaddrreview == pubaddr, ERR_REVIEW_NOT_EXIST);
-            _fullReview = 0;
-            for (uint128 i = 0; i < _grant.review.length; i++){
-                if (now >= _grant.review[i].lock + _locktime) { 
-                    _fullReview += _grant.review[i].grant; 
-                    _grant.review[i].grant = 0; 
-                    if (i == _grant.review.length - 1) { _allreview = true; } 
-                } else { break; }
-            }
-            _balance -= _fullReview;
-            TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
-            address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullReview);
-            checkempty();
-            return;
+            this.getGrantReview{value: 0.2 ton}(pubaddr);
         }
         if (m_manager == typegrant) {
             require(_candidates[_indexFinal].pubaddrmanager == pubaddr, ERR_MANAGER_NOT_EXIST);
-            _fullManager = 0;
-            for (uint128 i = 0; i < _grant.manager.length; i++){
-                if (now >= _grant.manager[i].lock + _locktime) { 
-                    _fullReview += _grant.manager[i].grant; 
-                    _grant.manager[i].grant = 0; 
-                    if (i == _grant.manager.length - 1) { _allmanager = true; } 
-                } else { break; }
-            }
-            _balance -= _fullManager;
-            TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
-            address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullManager);
-            checkempty();
-            return;
+            this.getGrantManager{value: 0.2 ton}(pubaddr);
         }    
+    }
+    
+    function getGrantAssign(address pubaddr) public senderIs(address(this)) {
+        uint128 check = 0;
+        for (uint128 i = _lastassign; i < _grant.assign.length; i++){
+            check += 1;
+            if (check == 6) { this.getGrantAssign{value: 0.2 ton}(pubaddr); }
+            if (now >= _grant.assign[i].lock + _locktime) { 
+                _fullAssign += _grant.assign[i].grant; 
+                _grant.assign[i].grant = 0; 
+                _lastassign = i + 1;
+                if (i == _grant.assign.length - 1) { _allassign = true; } 
+            } else { break; }
+        }
+        uint128 diff = _fullAssign / _assignfull - _assigners[pubaddr];
+        _balance -= diff;
+        if (diff == 0) { return; }
+        _assigners[pubaddr] = _fullAssign / _assignfull;
+        if ((_allassign == true) && (diff != 0)) { _assigncomplete += 1; }
+        TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, diff);
+        checkempty();
+        return;
+    }
+    
+    function getGrantReview(address pubaddr) public senderIs(address(this)) {
+        uint128 check = 0;
+        for (uint128 i = _lastreview; i < _grant.review.length; i++){
+            check += 1;
+            if (check == 6) { this.getGrantReview{value: 0.2 ton}(pubaddr); }
+            if (now >= _grant.review[i].lock + _locktime) { 
+                _fullReview += _grant.review[i].grant; 
+                _grant.review[i].grant = 0; 
+                _lastreview = i + 1;
+                if (i == _grant.review.length - 1) { _allreview = true; } 
+            } else { break; }
+        }
+        _balance -= _fullReview;
+        TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullReview);
+        _fullReview = 0;
+        checkempty();
+        return;
+    }
+    
+    function getGrantManager(address pubaddr) public senderIs(address(this)) {
+        uint128 check = 0;
+        for (uint128 i = _lastmanager; i < _grant.manager.length; i++){
+            check += 1;
+            if (check == 6) { this.getGrantManager{value: 0.2 ton}(pubaddr); }
+            if (now >= _grant.manager[i].lock + _locktime) { 
+                _fullReview += _grant.manager[i].grant; 
+                _grant.manager[i].grant = 0; 
+                _lastmanager = i + 1;
+                if (i == _grant.manager.length - 1) { _allmanager = true; } 
+            } else { break; }
+        }
+        _balance -= _fullManager;
+        TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullManager);
+        _fullManager = 0;
+        checkempty();
+        return;
     }
     
     function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
@@ -151,6 +179,7 @@ contract Task is Modifiers{
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
         selfdestruct(giver);
     }
+    
     
     function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);

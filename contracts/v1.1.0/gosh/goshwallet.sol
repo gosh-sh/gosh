@@ -1213,8 +1213,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task,) =
-                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), uint32));
+                (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task, , ) =
+                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
                 Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);

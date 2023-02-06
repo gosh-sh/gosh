@@ -45,6 +45,30 @@
 			]
 		},
 		{
+			"name": "getGrantAssign",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantReview",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantManager",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -114,6 +138,9 @@
 		{"name":"_allassign","type":"bool"},
 		{"name":"_allreview","type":"bool"},
 		{"name":"_allmanager","type":"bool"},
+		{"name":"_lastassign","type":"uint128"},
+		{"name":"_lastreview","type":"uint128"},
+		{"name":"_lastmanager","type":"uint128"},
 		{"name":"_balance","type":"uint128"}
 	]
 }
