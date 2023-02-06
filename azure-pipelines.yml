@@ -61,7 +61,7 @@ steps:
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 # Set correct toolchain
-- script: |
+- bash: |
     rustup default $RUSTUP_TOOLCHAIN
     rustup update $RUSTUP_TOOLCHAIN
   env:
