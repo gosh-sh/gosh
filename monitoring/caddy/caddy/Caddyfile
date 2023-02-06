@@ -7,29 +7,13 @@ https://grafana.gosh.sh {
             path /api/frontend-metrics
         }
     }
-    @forbidden2 {
-        path /api/search* /api/dashboards/tags
-        path /api/ruler/* /api/alertmanager/*
-        path /api/alert-notifiers /api/alert*
-        path /api/prometheus/PBFA97CFB590B2093/api/v1/rules
-    }
-    @forbidden3 {
-        path /api/prometheus/grafana/api/v1/rules
-        not query dashboard_uid=4XsgA0pVk
-    }
     respond @forbidden "Method not allowed" 405 {
-        close
-    }
-    respond @forbidden2 "Access not allowed" 403 {
-        close
-    }
-    respond @forbidden3 "Access not allowed" 403 {
         close
     }
     redir /metrics /
     redir /login /
     redir /user/* /
-    reverse_proxy gosh-grafana:3000 {
+    reverse_proxy gosh-public-grafana:3000 {
         header_up X-Real-IP {http.request.remote.host}
         header_up X-Forwarded-Port {http.request.port}
         header_up X-Forwarded-Proto {http.request.scheme}
@@ -41,9 +25,10 @@ https://monitoring.gosh.sh {
 }
 
 https://grafana.monitoring.gosh.sh {
-    basicauth {
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
-    }
+#    basicauth {
+#        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+#    }
+    redir /metrics /
     reverse_proxy gosh-grafana:3000 {
         header_up X-Real-IP {http.request.remote.host}
         header_up X-Forwarded-Port {http.request.port}
@@ -51,6 +36,20 @@ https://grafana.monitoring.gosh.sh {
         header_up -Authorization
     }
 }
+
+https://pubgraf.monitoring.gosh.sh {
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+    }
+    redir /metrics /
+    reverse_proxy gosh-public-grafana:3000 {
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Forwarded-Proto {http.request.scheme}
+        header_up -Authorization
+    }
+}
+
 
 https://prometheus.monitoring.gosh.sh {
     basicauth { 
