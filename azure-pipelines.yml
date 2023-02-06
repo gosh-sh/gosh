@@ -16,6 +16,6 @@ pool:
 
 steps:
 - script: |
-    mkdir -p ./resources \
-    cp ../contracts/gosh/*.abi.json ./resources/ \
+    mkdir -p ./resources
+    cp ../contracts/gosh/*.abi.json ./resources/
     cargo build --release
