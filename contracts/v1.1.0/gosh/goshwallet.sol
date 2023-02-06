@@ -1214,82 +1214,82 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task,) =
-                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), uint128));
+                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), uint32));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
                 Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint128));
+                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
                 Repository(_buildRepositoryAddr(repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint128));
+                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
                 Repository(_buildRepositoryAddr(repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string description,) = abi.decode(propData,(uint256, string, uint128));
+                (, string description,) = abi.decode(propData,(uint256, string, uint32));
                 _setTombstoneDao(description);
             } else
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
-                (, MemberToken[] pubaddr,) = abi.decode(propData,(uint256, MemberToken[], uint128));
+                (, MemberToken[] pubaddr,) = abi.decode(propData,(uint256, MemberToken[], uint32));
                 _deployWalletDao(pubaddr);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, address[] pubaddr,) = abi.decode(propData,(uint256, address[], uint128));
+                (, address[] pubaddr,) = abi.decode(propData,(uint256, address[], uint32));
                 _deleteWalletDao(pubaddr);
             } else
             if (kind == SET_UPGRADE_PROPOSAL_KIND) {
-                (, string newversion, string description,) = abi.decode(propData,(uint256, string, string, uint128));
+                (, string newversion, string description,) = abi.decode(propData,(uint256, string, string, uint32));
                 _upgradeDao(newversion, description);
             } else
             if (kind == TASK_PROPOSAL_KIND) {
-                (, string taskName, string repoName, uint128 index,) = abi.decode(propData,(uint256, string, string, uint128, uint128));
+                (, string taskName, string repoName, uint128 index,) = abi.decode(propData,(uint256, string, string, uint128, uint32));
                 _confirmTask(taskName, repoName, index);
             }  else
             if (kind == TASK_DESTROY_PROPOSAL_KIND) {
-                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint128));
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, ConfigGrant, uint128));
+                (, string taskName, string repoName, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, ConfigGrant, uint32));
                 _deployTask(taskName, repoName, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
-                (, string repoName, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, optional(AddrVersion), uint128));
+                (, string repoName, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, optional(AddrVersion), uint32));
                 _deployRepository(repoName, previous);
             }  else
             if (kind == ADD_VOTE_TOKEN_PROPOSAL_KIND) {
-                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint128));
+                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint32));
                 _addToken(pubaddr, grant);
             }  else
             if (kind == ADD_REGULAR_TOKEN_PROPOSAL_KIND) {
-                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint128));
+                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint32));
                 _addTokenRegular(pubaddr, grant);
             }  else
             if (kind == MINT_TOKEN_PROPOSAL_KIND) {
-                (, uint128 grant,) = abi.decode(propData,(uint256, uint128, uint128));
+                (, uint128 grant,) = abi.decode(propData,(uint256, uint128, uint32));
                 _mintToken(grant);
             }  else
             if (kind == DAOTAG_PROPOSAL_KIND) {
-                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint128));
+                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint32));
                 GoshDao(_goshdao).smvdeploytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == DAOTAG_DESTROY_PROPOSAL_KIND) {
-                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint128));
+                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint32));
                 GoshDao(_goshdao).smvdestroytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == ALLOW_MINT_PROPOSAL_KIND) {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }  else
             if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (, address[] pubaddr, bool[] increase, uint128[] grant,) = abi.decode(propData,(uint256, address[], bool[], uint128[], uint128));
+               (, address[] pubaddr, bool[] increase, uint128[] grant,) = abi.decode(propData,(uint256, address[], bool[], uint128[], uint32));
                GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
             }
         }
