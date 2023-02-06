@@ -1,6 +1,3 @@
-parameters:
-  rust: 1.66.0
-
 trigger:
 - azure-pipelines
 
@@ -40,7 +37,7 @@ steps:
     curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain $RUSTUP_TOOLCHAIN
     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
   env:
-    RUSTUP_TOOLCHAIN: ${{parameters.rust}}
+    RUSTUP_TOOLCHAIN: 1.66.0
   displayName: "Install rust (*nix)"
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 # Windows.
@@ -50,7 +47,7 @@ steps:
     set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
   env:
-    RUSTUP_TOOLCHAIN: ${{parameters.rust}}
+    RUSTUP_TOOLCHAIN: 1.66.0
   displayName: "Install rust (windows)"
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
