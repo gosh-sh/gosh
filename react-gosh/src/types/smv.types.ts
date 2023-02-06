@@ -1,7 +1,7 @@
 import { IGoshSmvAdapter } from '../gosh/interfaces'
 
 enum ESmvEventType {
-    PR = 1,
+    PULL_REQUEST = 1,
     BRANCH_LOCK = 2,
     BRANCH_UNLOCK = 3,
     DAO_MEMBER_ADD = 5,
@@ -11,10 +11,18 @@ enum ESmvEventType {
     TASK_CONFIRM = 9,
     TASK_DELETE = 10,
     TASK_CREATE = 11,
+    REPO_CREATE = 12,
+    DAO_TOKEN_VOTING_ADD = 13,
+    DAO_TOKEN_REGULAR_ADD = 14,
+    DAO_TOKEN_MINT = 15,
+    DAO_TAG_ADD = 16,
+    DAO_TAG_REMOVE = 17,
+    DAO_TOKEN_MINT_DISABLE = 18,
+    DAO_ALLOWANCE_CHANGE = 19,
 }
 
 type TSmvDetails = {
-    balance: number
+    smvBalance: number
     smvAvailable: number
     smvLocked: number
     isLockerBusy: boolean
@@ -30,14 +38,14 @@ type TSmvEventMinimal = {
         completed: boolean
         accepted: boolean
     }
-}
-
-type TSmvEvent = TSmvEventMinimal & {
     time: {
         start: number
         finish: number
         finishReal: number
     }
+}
+
+type TSmvEvent = TSmvEventMinimal & {
     data: any
     votes: {
         yes: number
@@ -47,13 +55,8 @@ type TSmvEvent = TSmvEventMinimal & {
     }
 }
 
-type TSmvEventListItem = Omit<TSmvEvent, 'time' | 'data' | 'votes'> & {
+type TSmvEventListItem = Omit<TSmvEvent, 'data' | 'votes'> & {
     adapter: IGoshSmvAdapter
-    time?: {
-        start: number
-        finish: number
-        finishReal: number
-    }
     data?: any
     votes?: {
         yes: number

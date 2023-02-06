@@ -6,43 +6,61 @@ type TDao = {
     address: TAddress
     name: string
     version: string
-    members: { profile: TAddress; wallet: TAddress }[]
-    supply: number
+    members: TDaoMember[]
+    supply: TDaoSupplyDetails
     owner: TAddress
+    isMintOn: boolean
+    isAuthenticated: boolean
     isAuthOwner: boolean
     isAuthMember: boolean
-    isAuthenticated: boolean
+    isAuthLimited?: boolean
 }
 
 type TDaoListItem = Omit<
     TDao,
-    'members' | 'supply' | 'owner' | 'isAuthOwner' | 'isAuthMember' | 'isAuthenticated'
+    | 'members'
+    | 'supply'
+    | 'owner'
+    | 'isMintOn'
+    | 'isAuthOwner'
+    | 'isAuthMember'
+    | 'isAuthenticated'
 > & {
     adapter: IGoshDaoAdapter
     members?: { profile: TAddress; wallet: TAddress }[]
-    supply?: number
+    supply?: TDaoSupplyDetails
     owner?: TAddress
+    isMintOn?: boolean
     isAuthOwner?: boolean
     isAuthMember?: boolean
     isAuthenticated?: boolean
     isLoadDetailsFired?: boolean
 }
 
+type TDaoSupplyDetails = {
+    reserve: number
+    voting: number
+    total: number
+}
+
 type TDaoCreateProgress = {
     isFetching: boolean
     isDaoDeployed?: boolean
+    isDaoAuthorized?: boolean
+    isTokenSetup?: boolean
+    isRepositoryDeployed?: boolean
+    isTagsDeployed?: boolean
+    isBlobsDeployed?: boolean
 }
 
-type TDaoMemberDetails = {
-    name: string
+type TDaoMember = {
     profile: TAddress
     wallet: TAddress
-    smvBalance: number
+    allowance?: number
 }
 
-type TDaoMemberListItem = Omit<TDaoMemberDetails, 'smvBalance'> & {
-    smvBalance?: number
-    isLoadDetailsFired?: boolean
+type TDaoMemberDetails = TDaoMember & {
+    name: string
 }
 
 type TWalletDetails = {
@@ -58,7 +76,8 @@ export {
     TDao,
     TDaoListItem,
     TDaoCreateProgress,
+    TDaoMember,
     TDaoMemberDetails,
-    TDaoMemberListItem,
+    TDaoSupplyDetails,
     TWalletDetails,
 }

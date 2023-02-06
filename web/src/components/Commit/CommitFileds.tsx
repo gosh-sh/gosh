@@ -21,7 +21,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
 
     return (
         <div className={classNames(className)}>
-            <h3 className="text-lg font-semibold mb-2">Commit data</h3>
+            <h3 className="text-lg font-medium mb-2">Commit data</h3>
             <div>
                 <Field
                     name="title"

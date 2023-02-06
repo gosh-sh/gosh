@@ -15,4 +15,12 @@ export const SmvEventTypes: { [key: number]: string } = {
     9: 'Confirm task',
     10: 'Delete task',
     11: 'Create task',
+    12: 'Create repository',
+    13: 'SMV token add',
+    14: 'Token add',
+    15: 'Token mint',
+    16: 'Add DAO tag',
+    17: 'Remove DAO tag',
+    18: 'Disable minting DAO tokens',
+    19: 'Change DAO member(s) allowance',
 }

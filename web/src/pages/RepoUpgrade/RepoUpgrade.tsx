@@ -1,11 +1,11 @@
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import Spinner from '../../components/Spinner'
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { useRepoUpgrade } from 'react-gosh'
+import yup from '../../yup-extended'
+import { Button } from '../../components/Form'
 
 type TFormValues = {
     version: string
@@ -13,7 +13,6 @@ type TFormValues = {
 
 const RepoUpgradePage = () => {
     const navigate = useNavigate()
-    const { daoName } = useParams()
     const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const { versions, upgrade: upgradeRepository } = useRepoUpgrade(
         dao.adapter,
@@ -23,7 +22,11 @@ const RepoUpgradePage = () => {
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
             await upgradeRepository(dao.details.name, values.version)
-            navigate(`/o/${daoName}`)
+            if (dao.details.version === '1.0.0') {
+                navigate(`/o/${dao.details.name}`)
+            } else {
+                navigate(`/o/${dao.details.name}/events`)
+            }
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -36,7 +39,7 @@ const RepoUpgradePage = () => {
             <p className="mb-3">Upgrade repository to newer version</p>
 
             {!versions?.length && (
-                <p className="text-rose-600">
+                <p className="text-rose-600 mb-2">
                     Repository can not be upgraded: repository version equals to DAO
                     version
                 </p>
@@ -47,8 +50,8 @@ const RepoUpgradePage = () => {
                     version: versions ? versions[0] : '',
                 }}
                 onSubmit={onDaoUpgrade}
-                validationSchema={Yup.object().shape({
-                    version: Yup.string().required('Version is required'),
+                validationSchema={yup.object().shape({
+                    version: yup.string().required('Version is required'),
                 })}
                 enableReinitialize
             >
@@ -58,7 +61,7 @@ const RepoUpgradePage = () => {
                             <Field
                                 name="version"
                                 component={'select'}
-                                className="px-2 py-2 rounded-md border focus:outline-none"
+                                className="px-2 py-1 rounded-md border focus:outline-none"
                                 disabled={isSubmitting || !versions?.length}
                             >
                                 {versions?.map((version, index) => (
@@ -69,14 +72,13 @@ const RepoUpgradePage = () => {
                             </Field>
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
-                            className="btn btn--body px-3 py-2"
                             disabled={isSubmitting || !versions?.length}
+                            isLoading={isSubmitting}
                         >
-                            {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                             Upgrade
-                        </button>
+                        </Button>
                     </Form>
                 )}
             </Formik>

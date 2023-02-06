@@ -15,21 +15,11 @@
 html,
 body,
 #root {
-    @apply h-full
-        bg-white
-        text-black
-        font-body;
+    @apply h-full bg-white text-black font-body;
 }
 
 .wrapper {
-    /* background-image: url('../images/bg.png'); */
-    @apply bg-right-top
-        bg-no-repeat
-        bg-cover
-        bg-fixed
-        min-h-full
-        flex
-        flex-col;
+    @apply h-full min-h-full flex flex-col;
 }
 
 .container {
@@ -49,6 +39,81 @@ body,
     /* Chrome, Safari and Opera */
     &::-webkit-scrollbar {
         display: none;
+    }
+}
+
+.checkbox-custom {
+    @apply block relative pl-9 cursor-pointer text-sm leading-6;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    &.disabled {
+        @apply text-gray-53596d;
+    }
+
+    input {
+        @apply absolute opacity-0 cursor-pointer h-0 w-0;
+    }
+
+    .checkmark {
+        @apply absolute top-0 left-0 h-6 w-6
+            border rounded border-gray-7c8db5;
+
+        &::after {
+            @apply absolute hidden
+                top-[5px] left-[9px] w-[5px] h-[10px]
+                border-white border-0 border-r-2 border-b-2
+                rotate-45;
+            content: '';
+        }
+    }
+
+    &:hover input ~ .checkmark {
+        @apply bg-gray-100;
+    }
+
+    input:checked ~ .checkmark {
+        @apply bg-blue-348eff border-transparent;
+
+        &::after {
+            @apply block;
+        }
+    }
+
+    input:disabled ~ .checkmark {
+        @apply bg-gray-d6e4ee;
+    }
+}
+
+.slider-custom {
+    @apply w-full flex flex-nowrap items-center gap-x-6 font-medium;
+
+    input {
+        @apply appearance-none outline-none
+            w-full h-0.5
+            bg-gray-e6edff opacity-70 transition-opacity;
+    }
+
+    input:hover {
+        @apply opacity-100;
+    }
+
+    input::-webkit-slider-thumb {
+        @apply appearance-none cursor-pointer
+            w-6 h-6 rounded-full;
+        background: url('../images/slider-thumb.png');
+    }
+
+    input::-moz-range-thumb {
+        @apply appearance-none cursor-pointer
+            w-6 h-6 bg-gray-7c8db5 rounded-full;
+        background: url('../images/slider-thumb.png');
+    }
+
+    input:disabled {
+        @apply opacity-50;
     }
 }
 

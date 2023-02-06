@@ -1,8 +1,12 @@
-import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { useOutletContext, useParams } from 'react-router-dom'
 import { useRepoList } from 'react-gosh'
 import RepoListItem from './RepoListItem'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import Spinner from '../../components/Spinner'
+import { Button, ButtonLink, Input } from '../../components/Form'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import Loader from '../../components/Loader'
+import classNames from 'classnames'
 
 const DaoRepositoriesPage = () => {
     const { daoName } = useParams()
@@ -19,46 +23,40 @@ const DaoRepositoriesPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
 
     return (
-        <div className="bordered-block px-7 py-8">
-            <h3 className="font-semibold text-base mb-4">Repositories</h3>
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-                <div className="input grow">
-                    <input
-                        type="search"
-                        autoComplete="off"
-                        placeholder="Search repository..."
-                        className="element !py-1.5"
-                        value={search}
-                        disabled={isFetching}
-                        onChange={(event) => setSearch(event.target.value)}
-                    />
-                </div>
+        <div>
+            <h3 className="text-xl font-medium mb-4">Repositories</h3>
 
-                {dao?.details.isAuthMember && (
-                    <Link
-                        className="btn btn--body px-4 py-1.5 !font-normal text-center w-full sm:w-auto"
-                        to={`/o/${daoName}/repos/create`}
-                    >
-                        New repository
-                    </Link>
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                <Input
+                    className="grow"
+                    type="search"
+                    placeholder="Search repository..."
+                    autoComplete="off"
+                    value={search}
+                    disabled={isFetching}
+                    onChange={(e) => setSearch(e.target.value)}
+                    before={
+                        <FontAwesomeIcon
+                            icon={faMagnifyingGlass}
+                            className="text-gray-7c8db5 font-extralight py-3 pl-4"
+                        />
+                    }
+                />
+                {dao.details.isAuthMember && (
+                    <ButtonLink to={`/o/${daoName}/repos/create`}>Create new</ButtonLink>
                 )}
             </div>
 
-            <div className="mt-4">
-                {isFetching && (
-                    <div className="text-sm text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading repositories...
-                    </div>
-                )}
+            <div className="border border-gray-e6edff rounded-xl overflow-hidden">
+                {isFetching && <Loader className="p-4">Loading repositories...</Loader>}
 
                 {isEmpty && (
-                    <div className="text-sm text-gray-606060 text-center">
-                        There are no repositories yet
+                    <div className="text-sm text-gray-7c8db5 text-center py-4">
+                        There are no repositories
                     </div>
                 )}
 
-                <div className="divide-y divide-gray-c4c4c4">
+                <div className="divide-y divide-gray-e6edff">
                     {items.map((item, index) => {
                         getItemDetails(item)
                         return <RepoListItem key={index} daoName={daoName!} item={item} />
@@ -66,17 +64,20 @@ const DaoRepositoriesPage = () => {
                 </div>
 
                 {hasNext && (
-                    <div className="text-center mt-3">
-                        <button
-                            className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
-                            type="button"
-                            disabled={isFetching}
-                            onClick={getMore}
-                        >
-                            {isFetching && <Spinner className="mr-2" />}
-                            Load more
-                        </button>
-                    </div>
+                    <Button
+                        type="button"
+                        className={classNames(
+                            'w-full',
+                            '!rounded-none',
+                            '!text-gray-7c8db5 !bg-gray-fafafd',
+                            'disabled:opacity-70',
+                        )}
+                        disabled={isFetching}
+                        isLoading={isFetching}
+                        onClick={getMore}
+                    >
+                        Show more
+                    </Button>
                 )}
             </div>
         </div>

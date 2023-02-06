@@ -13,6 +13,7 @@ CONTRACTS = {
         'profile',
         'profileindex',
         'profiledao',
+        'daotag'
     ],
     '1.0.0': [
         'gosh/systemcontract',
@@ -63,7 +64,7 @@ def main():
             src = SRC_CONTRACTS_PATH / f'{v}{contract}.abi.json'
             key = contract.replace('gosh/', '').replace('smv/', '').lower()
 
-            if key in ['versioncontroller', 'profile', 'profiledao', 'profileindex']:
+            if key in CONTRACTS['']:
                 abis[key] = json.load(open(src, encoding='utf8'))
             else:
                 abis[version][key] = json.load(open(src, encoding='utf8'))

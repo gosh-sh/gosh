@@ -5,6 +5,7 @@ import {
     faCodeMerge,
     faCube,
     faWrench,
+    faListCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
@@ -17,12 +18,14 @@ import {
     useBranches,
     TRepository,
     shortString,
+    AppConfig,
 } from 'react-gosh'
 import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
     IGoshWallet,
 } from 'react-gosh/dist/gosh/interfaces'
+import SideMenuContainer from '../components/SideMenuContainer'
 
 export type TRepoLayoutOutletContext = {
     dao: {
@@ -45,40 +48,54 @@ const RepoLayout = () => {
     const { updateBranches } = useBranches(repository.adapter)
     const [isReady, setIsReady] = useState<boolean>(false)
 
-    const tabs = [
-        {
-            to: `/o/${daoName}/r/${repoName}${branchName ? `/tree/${branchName}` : ''}`,
-            title: 'Code',
-            icon: faCode,
-            public: true,
-        },
-        {
-            to: `/o/${daoName}/r/${repoName}/merge`,
-            title: 'Merge',
-            icon: faCodeMerge,
-            public: false,
-        },
-        {
-            to: `/o/${daoName}/r/${repoName}/pull`,
-            title: 'Pull request',
-            icon: faCodePullRequest,
-            public: false,
-        },
-        {
-            to: `/o/${daoName}/r/${repoName}/upgrade`,
-            title: 'Upgrade',
-            icon: faWrench,
-            public: false,
-        },
-    ]
+    const getTabs = () => {
+        const tabs = [
+            {
+                to: `/o/${daoName}/r/${repoName}${
+                    branchName ? `/tree/${branchName}` : ''
+                }`,
+                title: 'Code',
+                icon: faCode,
+            },
+        ]
 
-    if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-        tabs.push({
-            to: `/o/${daoName}/r/${repoName}/build/${branchName}`,
-            title: 'Build image',
-            icon: faCube,
-            public: false,
-        })
+        if (dao.details?.isAuthMember) {
+            tabs.push(
+                {
+                    to: `/o/${daoName}/r/${repoName}/merge`,
+                    title: 'Merge',
+                    icon: faCodeMerge,
+                },
+                {
+                    to: `/o/${daoName}/r/${repoName}/pull`,
+                    title: 'Pull request',
+                    icon: faCodePullRequest,
+                },
+                {
+                    to: `/o/${daoName}/r/${repoName}/upgrade`,
+                    title: 'Upgrade',
+                    icon: faWrench,
+                },
+            )
+
+            if (dao.details.version !== '1.0.0') {
+                tabs.push({
+                    to: `/o/${daoName}/r/${repoName}/tasks`,
+                    title: 'Tasks',
+                    icon: faListCheck,
+                })
+            }
+        }
+
+        if (!!AppConfig.dockerclient) {
+            tabs.push({
+                to: `/o/${daoName}/r/${repoName}/build/${branchName}`,
+                title: 'Build image',
+                icon: faCube,
+            })
+        }
+
+        return tabs
     }
 
     useEffect(() => {
@@ -94,7 +111,7 @@ const RepoLayout = () => {
     }, [isFetching, updateBranches])
 
     return (
-        <div className="container container--full my-10">
+        <SideMenuContainer>
             <h1 className="flex flex-wrap items-center mb-6 px-5 sm:px-0">
                 <Link
                     to={`/o/${daoName}`}
@@ -129,33 +146,29 @@ const RepoLayout = () => {
             {isReady && (
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
-                        {tabs
-                            .filter((item) =>
-                                !dao.details?.isAuthMember ? item.public : item,
-                            )
-                            .map((item, index) => (
-                                <NavLink
-                                    key={index}
-                                    to={item.to}
-                                    end={index === 0}
-                                    className={({ isActive }) =>
-                                        classNames(
-                                            'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
-                                            'whitespace-nowrap',
-                                            isActive
-                                                ? '!text-gray-050a15 border-b border-b-gray-050a15'
-                                                : null,
-                                        )
-                                    }
-                                >
-                                    <FontAwesomeIcon
-                                        icon={item.icon}
-                                        size="sm"
-                                        className="mr-2"
-                                    />
-                                    {item.title}
-                                </NavLink>
-                            ))}
+                        {getTabs().map((item, index) => (
+                            <NavLink
+                                key={index}
+                                to={item.to}
+                                end={index === 0}
+                                className={({ isActive }) =>
+                                    classNames(
+                                        'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
+                                        'whitespace-nowrap',
+                                        isActive
+                                            ? '!text-gray-050a15 border-b border-b-gray-050a15'
+                                            : null,
+                                    )
+                                }
+                            >
+                                <FontAwesomeIcon
+                                    icon={item.icon}
+                                    size="sm"
+                                    className="mr-2"
+                                />
+                                {item.title}
+                            </NavLink>
+                        ))}
                     </div>
 
                     <div>
@@ -182,7 +195,7 @@ const RepoLayout = () => {
                     <Outlet context={{ dao, repository }} />
                 </>
             )}
-        </div>
+        </SideMenuContainer>
     )
 }
 

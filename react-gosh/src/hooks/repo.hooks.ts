@@ -23,10 +23,12 @@ import {
     TPushProgress,
     TRepositoryListItem,
     TTaskCommitConfig,
+    TTaskListItem,
     TTree,
     TTreeItem,
 } from '../types/repo.types'
 import { sleep } from '../utils'
+import { useUser } from './user.hooks'
 
 function useRepoList(dao: string, perPage: number) {
     const [search, setSearch] = useState<string>('')
@@ -228,7 +230,7 @@ function useRepo(dao: string, repo: string) {
 
 function useRepoCreate(dao: IGoshDaoAdapter) {
     const create = async (name: string) => {
-        await dao.deployRepository(name)
+        await dao.createRepository(name, {})
     }
 
     return { create }
@@ -258,9 +260,11 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
 
         const gosh = GoshAdapterFactory.create(version)
         const adapter = await gosh.getDao({ name: dao })
-        await adapter.deployRepository(await repo.getName(), {
-            addr: repo.getAddress(),
-            version: repo.getVersion(),
+        await adapter.createRepository(await repo.getName(), {
+            prev: {
+                addr: repo.getAddress(),
+                version: repo.getVersion(),
+            },
         })
     }
 
@@ -983,14 +987,26 @@ function usePullRequest(
 
     const push = async (
         title: string,
-        message?: string,
-        tags?: string,
-        deleteSrcBranch?: boolean,
+        options: {
+            message?: string
+            tags?: string
+            deleteSrcBranch?: boolean
+            task?: TTaskCommitConfig
+        },
     ) => {
+        const { message, tags, deleteSrcBranch, task } = options
         const { name: srcCommit, version: srcVersion } = srcBranch!.commit
         await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
 
-        await _push(title, buildProgress.items, true, message, tags, srcBranch!.name)
+        await _push(
+            title,
+            buildProgress.items,
+            true,
+            message,
+            tags,
+            srcBranch!.name,
+            task,
+        )
         if (deleteSrcBranch) {
             await repo.deleteBranch(srcBranch!.name)
             await updateBranches()
@@ -1088,6 +1104,117 @@ function usePullRequestCommit(
     }
 }
 
+function useTaskList(
+    dao: IGoshDaoAdapter,
+    repository: IGoshRepositoryAdapter,
+    perPage: number,
+) {
+    const [tasks, setTasks] = useState<{
+        items: TTaskListItem[]
+        page: number
+        isFetching: boolean
+    }>({
+        items: [],
+        page: 1,
+        isFetching: true,
+    })
+
+    /** Get next chunk of event list items */
+    const getMore = () => {
+        setTasks((state) => ({ ...state, page: state.page + 1 }))
+    }
+
+    /** Load item details and update corresponging list item */
+    const setItemDetails = async (item: TTaskListItem) => {
+        if (item.isLoadDetailsFired) return
+
+        setTasks((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+
+        try {
+            const details = await item.adapter.getTask({ address: item.address })
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((curr) => {
+                    if (curr.address === item.address) {
+                        return { ...curr, ...details }
+                    }
+                    return curr
+                }),
+            }))
+        } catch {
+            setTasks((state) => ({
+                ...state,
+                items: state.items.filter((curr) => curr.address !== item.address),
+            }))
+        }
+    }
+
+    /** Get initial event list */
+    useEffect(() => {
+        const _getTaskList = async () => {
+            const repoName = await repository.getName()
+            const codeHash = await dao.getTaskCodeHash(repoName)
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${codeHash}"}`],
+            })
+            const items: TTaskListItem[] = await executeByChunk(
+                accounts.map(({ id }) => id),
+                MAX_PARALLEL_READ,
+                async (address) => {
+                    const data = await repository.getTask({ address })
+                    return { adapter: repository, ...data }
+                },
+            )
+            setTasks((state) => {
+                const merged = [...state.items, ...items]
+                return {
+                    items: merged,
+                    page: 1,
+                    isFetching: false,
+                }
+            })
+        }
+
+        _getTaskList()
+    }, [dao, repository])
+
+    /** Refresh task details (reset `isLoadDetailsFired` flag) */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (tasks.isFetching) return
+
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((item) => ({
+                    ...item,
+                    isLoadDetailsFired: false,
+                })),
+            }))
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [tasks.isFetching])
+
+    return {
+        isFetching: tasks.isFetching,
+        isEmpty: !tasks.isFetching && !tasks.items.length,
+        items: tasks.items.slice(0, tasks.page * perPage),
+        hasNext: tasks.page * perPage < tasks.items.length,
+        getMore,
+        getItemDetails: setItemDetails,
+    }
+}
+
 export {
     useRepoList,
     useRepo,
@@ -1103,4 +1230,5 @@ export {
     useMergeRequest,
     usePullRequest,
     usePullRequestCommit,
+    useTaskList,
 }

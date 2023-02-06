@@ -23,6 +23,8 @@ import {
     TSmvEventMinimal,
     TPushBlobData,
     ETaskBounty,
+    TDaoMember,
+    TTaskDetails,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -117,7 +119,9 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return this._isValidName(name, 'Repository name')
     }
 
-    async isValidProfile(username: string[]): Promise<TAddress[]> {
+    async isValidProfile(
+        username: string[],
+    ): Promise<{ username: string; address: TAddress }[]> {
         return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
             const { valid, reason } = this.isValidUsername(member)
@@ -128,7 +132,7 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
                 throw new GoshError(`${member}: Profile does not exist`)
             }
 
-            return profile.address
+            return { username: member, address: profile.address }
         })
     }
 
@@ -138,6 +142,10 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
 
     async resetAuth(): Promise<void> {
         this.auth = undefined
+    }
+
+    getVersion(): string {
+        return GoshAdapter_1_0_0.version
     }
 
     async getProfile(options: {
@@ -289,9 +297,9 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
 class GoshDaoAdapter implements IGoshDaoAdapter {
     private client: TonClient
     private gosh: IGoshAdapter
-    private dao: IGoshDao
+    dao: IGoshDao // TODO: remove public
     private profile?: IGoshProfile
-    private wallet?: IGoshWallet
+    wallet?: IGoshWallet // TODO: remove public
 
     constructor(gosh: IGoshAdapter, address: TAddress) {
         this.client = gosh.client
@@ -339,17 +347,27 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getDetails(): Promise<TDao> {
         const smv = await this.getSmv()
         const owner = await this._getOwner()
+        const supply = await smv.getTotalSupply()
         return {
             address: this.dao.address,
             name: await this.getName(),
             version: this.dao.version,
             members: await this._getProfiles(),
-            supply: await smv.getTotalSupply(),
+            supply: {
+                reserve: supply,
+                voting: supply,
+                total: supply,
+            },
             owner,
+            isMintOn: false,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
         }
+    }
+
+    async getDescription(): Promise<string | null> {
+        return null
     }
 
     async getRemoteConfig(): Promise<object> {
@@ -416,16 +434,27 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, addr)
     }
 
+    async getTaskCodeHash(repository: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getSmv(): Promise<IGoshSmvAdapter> {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
 
-    async deployRepository(
+    async createRepository(
         name: string,
-        prev?: { addr: TAddress; version: string } | undefined,
+        options: {
+            prev?: { addr: TAddress; version: string } | null
+            comment?: string | null
+            alone?: boolean | null
+        },
     ): Promise<IGoshRepositoryAdapter> {
-        if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
 
+        const { prev } = options
         const { valid, reason } = this.gosh.isValidRepoName(name)
         if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
 
@@ -443,16 +472,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return repo
     }
 
-    async createMember(username: string[]): Promise<void> {
+    async createMember(members: string[]): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const profiles = await this.gosh.isValidProfile(username)
+        const profiles = await this.gosh.isValidProfile(members)
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
 
         await this.wallet.run('startProposalForDeployWalletDao', {
-            pubaddr: profiles,
+            pubaddr: profiles.map(({ address }) => address),
             num_clients: await smv.getClientsCount(),
         })
     }
@@ -478,6 +507,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
+    async updateMemberAllowance(
+        members: { profile: string; increase: boolean; amount: number }[],
+        options: { comment?: string | undefined },
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async upgrade(version: string, description?: string | undefined): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -491,7 +527,22 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async sendTokens(profile: string, amount: number): Promise<void> {
+    async mint(
+        amount: number,
+        options: { comment?: string | undefined; alone?: boolean | undefined },
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async disableMint(options: { comment?: string; alone?: boolean }): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async sendInternal2Internal(username: string, amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTag(tag: string[]): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -524,7 +575,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, address, { keys })
     }
 
-    private async _getProfiles(): Promise<{ profile: TAddress; wallet: TAddress }[]> {
+    private async _getProfiles(): Promise<TDaoMember[]> {
         const { value0 } = await this.dao.runLocal('getWalletsFull', {})
         const profiles = []
         for (const key in value0) {
@@ -572,6 +623,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async isDeployed(): Promise<boolean> {
         return await this.repo.isDeployed()
+    }
+
+    getGosh(): IGoshAdapter {
+        return this.gosh
     }
 
     getAddress(): TAddress {
@@ -943,6 +998,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 return await this._getTag(address)
             },
         )
+    }
+
+    async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async getUpgrade(commit: string): Promise<TUpgradeData> {
@@ -1378,13 +1437,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async getTask(name: string): Promise<IGoshTask> {
-        throw new Error('Method is unavailable in current version')
-    }
-
     async createTask(
         name: string,
-        config: { assign: number; review: number; manager: number },
+        config: {
+            assign: { grant: number; lock: number }[]
+            review: { grant: number; lock: number }[]
+            manager: { grant: number; lock: number }[]
+        },
     ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
@@ -2288,14 +2347,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     async getDetails(): Promise<TSmvDetails> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const { m_pseudoDAOBalance } = await this.wallet.runLocal(
-            'm_pseudoDAOBalance',
-            {},
-        )
         const smvBalance = await this._getLockerBalance()
-
         return {
-            balance: +m_pseudoDAOBalance,
+            smvBalance: await this.getWalletBalance(this.wallet),
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
             isLockerBusy: await this._isLockerBusy(),
@@ -2333,9 +2387,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             accepted: !!isCompleted,
         }
 
-        const minimal = { address, type, status }
-        if (!isDetailed) return minimal
-
         // Event period
         const { startTime } = await event.runLocal('startTime', {})
         const { finishTime } = await event.runLocal('finishTime', {})
@@ -2345,6 +2396,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             finish: +finishTime * 1000,
             finishReal: +realFinishTime * 1000,
         }
+
+        const minimal = { address, type, status, time }
+        if (!isDetailed) return minimal
 
         // Event data
         const data = await this._getEventData(event, type.kind)
@@ -2360,12 +2414,12 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             total: +totalSupply,
         }
 
-        return { ...minimal, time, data, votes }
+        return { ...minimal, data, votes }
     }
 
     async getWalletBalance(wallet: IGoshWallet): Promise<number> {
         const { m_pseudoDAOBalance } = await wallet.runLocal('m_pseudoDAOBalance', {})
-        return +m_pseudoDAOBalance
+        return parseInt(m_pseudoDAOBalance)
     }
 
     async validateProposalStart(): Promise<void> {
@@ -2448,7 +2502,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshAddProtectedBranchProposalParams'
         } else if (type === ESmvEventType.BRANCH_UNLOCK) {
             fn = 'getGoshDeleteProtectedBranchProposalParams'
-        } else if (type === ESmvEventType.PR) {
+        } else if (type === ESmvEventType.PULL_REQUEST) {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'

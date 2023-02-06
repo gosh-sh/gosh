@@ -42,7 +42,7 @@ export const getPaginatedAccounts = async (params: {
                 id: { gt: $lastId },
                 ${filters.join(',')}
             }
-            orderBy: [{ path: "id", direction: ASC }]
+            orderBy: [{ path: "last_paid", direction: DESC }]
             limit: $limit
         ) {
             ${result.join(' ')}
