@@ -101,11 +101,11 @@ contract Task is Modifiers{
         }    
     }
     
-    function getGrantAssign(address pubaddr) public senderIs(address(this)) {
+    function getGrantAssign(address pubaddr) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = _lastassign; i < _grant.assign.length; i++){
             check += 1;
-            if (check == 6) { this.getGrantAssign{value: 0.2 ton}(pubaddr); }
+            if (check == 3) { this.getGrantAssign{value: 0.2 ton}(pubaddr); }
             if (now >= _grant.assign[i].lock + _locktime) { 
                 _fullAssign += _grant.assign[i].grant; 
                 _grant.assign[i].grant = 0; 
@@ -125,11 +125,11 @@ contract Task is Modifiers{
         return;
     }
     
-    function getGrantReview(address pubaddr) public senderIs(address(this)) {
+    function getGrantReview(address pubaddr) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = _lastreview; i < _grant.review.length; i++){
             check += 1;
-            if (check == 6) { this.getGrantReview{value: 0.2 ton}(pubaddr); }
+            if (check == 3) { this.getGrantReview{value: 0.2 ton}(pubaddr); }
             if (now >= _grant.review[i].lock + _locktime) { 
                 _fullReview += _grant.review[i].grant; 
                 _grant.review[i].grant = 0; 
@@ -146,11 +146,11 @@ contract Task is Modifiers{
         return;
     }
     
-    function getGrantManager(address pubaddr) public senderIs(address(this)) {
+    function getGrantManager(address pubaddr) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = _lastmanager; i < _grant.manager.length; i++){
             check += 1;
-            if (check == 6) { this.getGrantManager{value: 0.2 ton}(pubaddr); }
+            if (check == 3) { this.getGrantManager{value: 0.2 ton}(pubaddr); }
             if (now >= _grant.manager[i].lock + _locktime) { 
                 _fullManager += _grant.manager[i].grant; 
                 _grant.manager[i].grant = 0; 

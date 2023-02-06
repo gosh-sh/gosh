@@ -612,7 +612,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 5) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
@@ -628,7 +628,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 4) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
