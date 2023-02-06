@@ -581,6 +581,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _;
         require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST); 
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton}(true, _limit_wallets);
+        _allbalance -= _wallets[keyaddr].count;
         delete _wallets[keyaddr];
         getMoney();
     }

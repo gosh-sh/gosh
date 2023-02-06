@@ -196,6 +196,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
+        if (decision == true) {
+            _totalDoubt = _lockedBalance;
+            unlockVotingIn(_lockedBalance);
+        }
         _limited = decision;
         _limit_wallets = limitwallet;
         if (_index >= _walletcounter - 1) { return; }
@@ -902,6 +906,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
         _totalDoubt += grant;
+        if (_totalDoubt > m_pseudoDAOVoteBalance) { unlockVotingIn(math.min(_lockedBalance, _totalDoubt - m_pseudoDAOVoteBalance)); }
         getMoney();
     }
     
@@ -1022,6 +1027,18 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //SMV part
+    function unlockVotingIn (uint128 amount) private 
+    {
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                        4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+        tvm.accept();
+        _saveMsg();
+
+        ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
+                                                       (amount);
+    }
+
     function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients) internal view
     {
         uint256 prop_id = tvm.hash(dataCell);
