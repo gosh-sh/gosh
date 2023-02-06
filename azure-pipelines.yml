@@ -4,11 +4,11 @@ trigger:
 strategy:
   matrix:
     linux:
-      imageName: "ubuntu-latest"
+      imageName: "ubuntu-20.04"
     mac:
-      imageName: "macOS-latest"
+      imageName: "macOS-12"
     windows:
-      imageName: "windows-latest"
+      imageName: "windows-2019"
   maxParallel: 3
 
 pool:
@@ -25,7 +25,7 @@ steps:
   condition: eq( variables['Agent.OS'], 'Darwin' )
 # Windows
 - bash: |
-    choco install protoc openssl libssl-dev
+    choco install protoc
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   
 - bash: |
