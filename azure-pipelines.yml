@@ -3,10 +3,10 @@ trigger:
 
 strategy:
   matrix:
-    linux:
-      imageName: "ubuntu-20.04"
-    mac:
-      imageName: "macOS-12"
+#    linux:
+#      imageName: "ubuntu-20.04"
+#    mac:
+#      imageName: "macOS-12"
     windows:
       imageName: "windows-2019"
   maxParallel: 3
@@ -28,11 +28,11 @@ steps:
     choco install protoc openssl
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
 
-- bash: |
+- script: |
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.66.0
   displayName: Install rust
   condition: ne( variables['Agent.OS'], 'Windows_NT' )
-- bash: |
+- script: |
     curl -sSf -o rustup-init.exe https://win.rustup.rs
     rustup-init.exe -y --default-toolchain 1.66.0    
   displayName: Windows install rust
