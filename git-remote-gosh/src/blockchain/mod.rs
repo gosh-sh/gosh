@@ -36,8 +36,8 @@ pub use blockchain_contract_address::{BlockchainContractAddress, FormatShort};
 pub mod commit;
 mod serde_number;
 pub mod snapshot;
-pub mod tree;
 pub mod tag;
+pub mod tree;
 mod tvm_hash;
 pub mod user_wallet;
 pub use crate::{
@@ -566,10 +566,7 @@ message_id: \"{message_id}\"\n\terror: \"{error}\"\n}}"
 async fn default_callback(pe: ProcessingEvent) {
     // TODO: improve formatting for potentially unlimited structs/enums.
     // TODO: Need to clarify Remp json field
-    tracing::trace!(
-        "callback: {}",
-        processing_event_to_string(pe)
-    );
+    tracing::trace!("callback: {}", processing_event_to_string(pe));
 }
 
 #[instrument(level = "info", skip_all)]
@@ -631,8 +628,8 @@ pub async fn tag_list(
 ) -> anyhow::Result<Vec<String>> {
     tracing::debug!("tag_list: repo_addr={repo_addr}");
 
-    let GetContractCodeResult { code }
-        = get_contract_code(context, repo_addr, ContractKind::Tag).await?;
+    let GetContractCodeResult { code } =
+        get_contract_code(context, repo_addr, ContractKind::Tag).await?;
 
     let hash = calculate_boc_hash(context, &code).await?;
     let query = r#"query($code_hash: String!) {
@@ -665,8 +662,8 @@ pub async fn tag_list(
     for account in accounts {
         let address = BlockchainContractAddress::new(account.address);
         let tag_contract = GoshContract::new(address, gosh_abi::TAG);
-        let GetTagContentResult { content }
-            = tag_contract.read_state(context, "getContent", None).await?;
+        let GetTagContentResult { content } =
+            tag_contract.read_state(context, "getContent", None).await?;
         let mut iter = content.split('\n');
         let first = iter.next().unwrap();
         let item = if first.starts_with("tag") {
@@ -757,8 +754,8 @@ pub async fn calculate_contract_address(
         ..Default::default()
     };
 
-    let ResultOfEncodeInitialData { data }
-        = encode_initial_data(Arc::clone(context), params).await?;
+    let ResultOfEncodeInitialData { data } =
+        encode_initial_data(Arc::clone(context), params).await?;
 
     let params = ParamsOfEncodeTvc {
         code: Some(code.to_owned()),

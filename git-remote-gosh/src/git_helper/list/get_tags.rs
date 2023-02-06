@@ -1,4 +1,4 @@
-use crate::blockchain::{BlockchainContractAddress, EverClient, tag_list};
+use crate::blockchain::{tag_list, BlockchainContractAddress, EverClient};
 
 pub async fn get_tags(
     context: &EverClient,
@@ -10,5 +10,5 @@ pub async fn get_tags(
         Ok(None)
     } else {
         Ok(Some(tags))
-    }
+    };
 }

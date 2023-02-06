@@ -31,8 +31,8 @@ mod parallel_diffs_upload_support;
 mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
-mod push_tree;
 mod push_tag;
+mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
 use delete_tag::delete_tag;
@@ -635,8 +635,9 @@ where
             &repo_name,
             tag_name,
             &commit_id,
-            &tag_content
-        ).await?;
+            &tag_content,
+        )
+        .await?;
 
         let result_ok = format!("ok {remote_ref}\n");
         Ok(result_ok)
@@ -647,14 +648,14 @@ where
         tracing::debug!("push: refs={refs}");
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
-            ["", remote_tag] if remote_tag.starts_with("refs/tags") =>
-                self.delete_remote_tag(remote_tag).await?,
-            ["", remote_ref] =>
-                delete_remote_ref(remote_ref).await?,
-            [local_tag, remote_tag] if local_tag.starts_with("refs/tags") =>
-                self.push_ref_tag(local_tag, remote_tag).await?,
-            [local_ref, remote_ref] =>
-                self.push_ref(local_ref, remote_ref).await?,
+            ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
+                self.delete_remote_tag(remote_tag).await?
+            }
+            ["", remote_ref] => delete_remote_ref(remote_ref).await?,
+            [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
+                self.push_ref_tag(local_tag, remote_tag).await?
+            }
+            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
         tracing::debug!("push ref result: {result}");
@@ -670,7 +671,14 @@ where
         let dao_addr = self.dao_addr.clone();
         let repo_name = self.remote.repo.clone();
 
-        delete_tag(&blockchain, &remote_network, &dao_addr, &repo_name, &tag_name).await?;
+        delete_tag(
+            &blockchain,
+            &remote_network,
+            &dao_addr,
+            &repo_name,
+            &tag_name,
+        )
+        .await?;
 
         Ok(format!("ok {remote_ref}\n"))
     }

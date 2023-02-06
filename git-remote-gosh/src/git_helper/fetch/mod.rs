@@ -2,8 +2,8 @@ use super::GitHelper;
 use crate::{
     blockchain,
     blockchain::{
-        BlockchainContractAddress, BlockchainService, GetContractCodeResult,
         calculate_contract_address, get_contract_code, tag::load::TagObject,
+        BlockchainContractAddress, BlockchainService, GetContractCodeResult,
     },
 };
 use git_odb::{Find, Write};
@@ -211,19 +211,16 @@ where
     #[instrument(level = "trace", skip_all)]
     pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<()> {
         let client = self.blockchain.client();
-        let GetContractCodeResult { code } = get_contract_code(
-            client,
-            &self.repo_addr,
-            blockchain::ContractKind::Tag
-        )
-        .await?;
+        let GetContractCodeResult { code } =
+            get_contract_code(client, &self.repo_addr, blockchain::ContractKind::Tag).await?;
 
         let address = calculate_contract_address(
             client,
             blockchain::ContractKind::Tag,
             &code,
             Some(serde_json::json!({ "_nametag": tag_name })),
-        ).await?;
+        )
+        .await?;
 
         let tag = crate::blockchain::tag::load::get_content(client, &address).await?;
 

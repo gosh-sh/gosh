@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io;
 use std::io::BufRead;
 
-fn get_version_from_solidity_source() -> Vec<String> {
+fn get_version_from_solidity_source() -> String {
     let contracts_path = std::env::var("CONTRACTS_DIR").expect(
         "Failed to get GOSH contracts directory. Specify it with CONTRACTS_DIR env variable.",
     ) + "/systemcontract.sol";
@@ -12,11 +12,11 @@ fn get_version_from_solidity_source() -> Vec<String> {
     for line in io::BufReader::new(version_source).lines() {
         let line = line.expect(&format!("Failed to read line from {}", &contracts_path));
         if line.contains("string constant version = ") {
-            return vec![line
+            return line
                 .trim_start_matches(|c| c != '"')
                 .trim_end_matches(|c| c != '"')
                 .replace(['\"'], "")
-                .to_string()];
+                .to_string();
         }
     }
 
@@ -26,19 +26,15 @@ fn get_version_from_solidity_source() -> Vec<String> {
 fn main() {
     println!("cargo:rerun-if-env-changed=CONTRACTS_DIR");
     println!("cargo:rerun-if-changed=.cargo/config.toml");
-    println!("cargo:rerun-if-env-changed=GOSH_SUPPORTED_CONTRACT_VERSIONS");
+    println!("cargo:rerun-if-env-changed=GOSH_SUPPORTED_CONTRACT_VERSION");
     let mut supported_versions = get_version_from_solidity_source();
 
-    if let Ok(from_env) = std::env::var("GOSH_SUPPORTED_CONTRACT_VERSIONS") {
-        supported_versions = from_env
-            .replace(['[', ']', '\"'], "")
-            .split(',')
-            .map(|s| s.to_string())
-            .collect();
+    if let Ok(from_env) = std::env::var("GOSH_SUPPORTED_CONTRACT_VERSION") {
+        supported_versions = from_env;
     }
 
     println!(
-        "cargo:rustc-env=BUILD_SUPPORTED_VERSIONS={:?}",
+        "cargo:rustc-env=BUILD_SUPPORTED_VERSION={:?}",
         supported_versions
     );
 }

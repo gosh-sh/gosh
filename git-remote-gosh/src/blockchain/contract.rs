@@ -196,8 +196,8 @@ impl ContractRead for GoshContract {
         if result.is_null() {
             Ok(None)
         } else {
-            let result: ContractStatus
-                = serde_json::from_value(result).map_err(|e| anyhow::Error::from(e))?;
+            let result: ContractStatus =
+                serde_json::from_value(result).map_err(|e| anyhow::Error::from(e))?;
             Ok(Some(result))
         }
     }
@@ -237,9 +237,10 @@ mod tests {
             serde_json::from_value::<T>(v).map_err(|e| anyhow::Error::from(e))
         }
 
-        async fn load_account(&self, context: &EverClient)
-            -> anyhow::Result<Option<ContractStatus>>
-        {
+        async fn load_account(
+            &self,
+            context: &EverClient,
+        ) -> anyhow::Result<Option<ContractStatus>> {
             let contract_status = ContractStatus {
                 status: 1,
                 balance: 10000000000,
@@ -265,11 +266,8 @@ mod tests {
         );
         assert_eq!(result.branch.version, "commit_version");
 
-        let ContractStatus { status, balance } = contract
-            .load_account(&client)
-            .await
-            .unwrap()
-            .unwrap();
+        let ContractStatus { status, balance } =
+            contract.load_account(&client).await.unwrap().unwrap();
 
         assert_eq!(status, 1);
         assert_eq!(balance, 10000000000);

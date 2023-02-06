@@ -4,7 +4,7 @@ use std::env;
 
 use serde_json::Value;
 use std::sync::Arc;
-use anyhow::bail;
+
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::cache::proxy::CacheProxy;
@@ -64,12 +64,8 @@ mod list;
 
 mod fmt;
 
-pub fn supported_contract_versions() -> anyhow::Result<Vec<String>> {
-    Ok(env!("BUILD_SUPPORTED_VERSIONS")
-        .replace(['[', ']', '\"', ' '], "")
-        .split(',')
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>())
+pub fn supported_contract_version() -> anyhow::Result<String> {
+    Ok(env!("BUILD_SUPPORTED_VERSION").to_string())
 }
 
 impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
@@ -381,7 +377,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
                 helper.fetch(sha, name).await?;
-                continue
+                continue;
             }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
@@ -389,8 +385,8 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions().await?,
-            (Some("gosh_supported_contract_versions"), None, None) => {
-                let mut versions = supported_contract_versions()?;
+            (Some("gosh_supported_contract_version"), None, None) => {
+                let mut versions = vec![supported_contract_version()?];
                 versions.push("".to_string());
                 versions
             }

@@ -11,10 +11,13 @@ make install_for_test
 
 cd ../tests
 
-REMOTE_VERSION=$(grep -r "name = 'git-remote-gosh_v" ../git-remote-gosh/Cargo.toml | sed "s/name = '//i" | sed "s/'//i")
-echo "Remote name:"
-echo "$REMOTE_VERSION"
-echo $REMOTE_VERSION > dispatcher.ini
+cd ~/.cargo/bin/
+ls git-remote-gosh_* > dispatcher.ini
+echo "Remote names:"
+cat dispatcher.ini
+
+cd -
+mv ~/.cargo/bin/dispatcher.ini .
 
 export GOSH_INI_PATH=$PWD/dispatcher.ini
 echo "export GOSH_INI_PATH=$GOSH_INI_PATH" >> env.env
