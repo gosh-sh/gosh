@@ -19,3 +19,4 @@ steps:
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
     cargo build --release
+  workingDirectory: git-remote-gosh
