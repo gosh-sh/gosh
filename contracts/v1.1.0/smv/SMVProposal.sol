@@ -241,103 +241,103 @@ function getGoshProposalKind() external view returns( uint256  proposalKind)
 function getGoshSetCommitProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName,  string commit, optional(address) task, string comment)
 {
-    (proposalKind,  repoName,  branchName,  commit,,, task, comment,) = abi.decode(propData, (uint256, string, string, string, uint128, uint128, optional(address), string, uint128));
+    (proposalKind,  repoName,  branchName,  commit,,, task, comment,) = abi.decode(propData, (uint256, string, string, string, uint128, uint128, optional(address), string, uint32));
 }
 
 function getGoshAddProtectedBranchProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
 {
-    (proposalKind,  repoName,  branchName, comment,) = abi.decode(propData, (uint256, string, string, string, uint128));
+    (proposalKind,  repoName,  branchName, comment,) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
 function getGoshSetConfigDaoProposalParams () external view
          returns( uint256  proposalKind,  uint128 token, string comment)
 {
-    (proposalKind, token, comment, ) = abi.decode(propData, (uint256, uint128, string, uint128));
+    (proposalKind, token, comment, ) = abi.decode(propData, (uint256, uint128, string, uint32));
 }
 
 function getGoshDeleteProtectedBranchProposalParams () external view
          returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
 {
-    (proposalKind,  repoName,  branchName, comment,) = abi.decode(propData, (uint256, string, string, string, uint128));
+    (proposalKind,  repoName,  branchName, comment,) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
 function getGoshDeployWalletDaoProposalParams () external view
          returns( uint256  proposalKind, MemberToken[] pubaddr, string comment)
 {
-    (proposalKind, pubaddr, comment,) = abi.decode(propData, (uint256, MemberToken[], string, uint128));
+    (proposalKind, pubaddr, comment,) = abi.decode(propData, (uint256, MemberToken[], string, uint32));
 }
 
 function getGoshDeleteWalletDaoProposalParams () external view
          returns( uint256  proposalKind, address[] pubaddr, string comment)
 {
-    (proposalKind, pubaddr, comment, ) = abi.decode(propData, (uint256, address[], string, uint128));
+    (proposalKind, pubaddr, comment, ) = abi.decode(propData, (uint256, address[], string, uint32));
 }
 
 function getGoshUpgradeDaoProposalParams () external view
          returns( uint256  proposalKind, string newversion, string description, string comment)
 {
-    (proposalKind, newversion, description, comment, ) = abi.decode(propData, (uint256, string, string, string, uint128));
+    (proposalKind, newversion, description, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
 function getGoshConfirmTaskProposalParams () external view
          returns( uint256  proposalKind, string reponame, string taskname, string comment)
 {
-    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint128));
+    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
 function getGoshDestroyTaskProposalParams () external view
          returns( uint256  proposalKind, string reponame, string taskname, string comment)
 {
-    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint128));
+    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
 function getGoshDeployTaskProposalParams () external view
          returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, string comment)
 {
-    (proposalKind, reponame, taskname, grant, comment,) = abi.decode(propData, (uint256, string, string, ConfigGrant, string, uint128));
+    (proposalKind, reponame, taskname, grant, comment,) = abi.decode(propData, (uint256, string, string, ConfigGrant, string, uint32));
 }
 
 function getGoshDeployRepoProposalParams () external view
          returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous, string comment)
 {
-    (proposalKind, repoName, previous, comment,) = abi.decode(propData, (uint256, string, optional(AddrVersion), string, uint128));
+    (proposalKind, repoName, previous, comment,) = abi.decode(propData, (uint256, string, optional(AddrVersion), string, uint32));
 }
 
 function getGoshAddVoteTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
-    (proposalKind, pubaddr, grant, comment, ) = abi.decode(propData, (uint256, address, uint128, string, uint128));
+    (proposalKind, pubaddr, grant, comment, ) = abi.decode(propData, (uint256, address, uint128, string, uint32));
 }
 
 function getGoshAddRegularTokenProposalParams () external view
          returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
-    (proposalKind, pubaddr, grant, comment, ) = abi.decode(propData, (uint256, address, uint128, string, uint128));
+    (proposalKind, pubaddr, grant, comment, ) = abi.decode(propData, (uint256, address, uint128, string, uint32));
 }
 
 function getGoshMintTokenProposalParams () external view
          returns(uint256  proposalKind,  uint128 grant, string comment)
 {
-    (proposalKind, grant, comment, ) = abi.decode(propData, (uint256, uint128, string, uint128));
+    (proposalKind, grant, comment, ) = abi.decode(propData, (uint256, uint128, string, uint32));
 }
 
 function getGoshDaoTagProposalParams () external view
          returns(uint256  proposalKind,  string[] daotag, string comment)
 {
-    (proposalKind, daotag, comment, ) = abi.decode(propData, (uint256, string[], string, uint128));
+    (proposalKind, daotag, comment, ) = abi.decode(propData, (uint256, string[], string, uint32));
 }
 
 function getNotAllowMintProposalParams () external view
          returns(uint256  proposalKind, string comment)
 {
-    (proposalKind, comment, ) = abi.decode(propData, (uint256, string, uint128));
+    (proposalKind, comment, ) = abi.decode(propData, (uint256, string, uint32));
 }
 
 function getChangeAllowancetProposalParams () external view
          returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
 {
-    (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint128));
+    (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint32));
 }
 
 ////////////////////////////////////
