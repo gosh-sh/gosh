@@ -25,7 +25,7 @@ steps:
   condition: eq( variables['Agent.OS'], 'Darwin' )
 # Windows
 - bash: |
-    choco install protoc
+    choco install protoc openssl
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   
 - bash: |
