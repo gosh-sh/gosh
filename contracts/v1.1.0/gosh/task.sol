@@ -75,6 +75,7 @@ contract Task is Modifiers{
        require(_ready == false, ERR_TASK_COMPLETED);
        require(index1 < _candidates.length, ERR_TASK_COMPLETED);
        checkAccess(pubaddr, msg.sender, index2);
+       tvm.accept();
         _ready = true;
         _indexFinal = index1;
         _locktime = now;
