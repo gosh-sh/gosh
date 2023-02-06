@@ -31,7 +31,7 @@ steps:
   displayName: Install pre-requirements
 # Windows
 - bash: |
-    choco install protoc openssl
+    choco install protoc openssl strawberryperl
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements
 
