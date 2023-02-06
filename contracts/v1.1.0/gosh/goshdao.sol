@@ -708,6 +708,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Getters    
+    function getTaskCode(string repoName) external view returns(TvmCell) {
+        address repo = _buildRepositoryAddr(repoName);
+        return GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+    }
+    
     function getSnapshotAddr(string branch, address repo, string name) private view returns(address) {
         TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});

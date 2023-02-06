@@ -400,6 +400,15 @@
 			]
 		},
 		{
+			"name": "getTaskCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDaoTagAddr",
 			"inputs": [
 				{"name":"daotag","type":"string"}
