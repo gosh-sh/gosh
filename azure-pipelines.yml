@@ -7,34 +7,39 @@ trigger:
 
 strategy:
   matrix:
-#    linux:
-#      imageName: "ubuntu-20.04"
-#    mac:
-#      imageName: "macOS-12"
+    linux:
+      imageName: ubuntu-20.04
+      binName: git-remote-gosh-linux-amd64
+    mac:
+      imageName: macOS-12
+      binName: git-remote-gosh-darwin-amd64
     windows:
-      imageName: "windows-2019"
+      imageName: windows-2019
+      binName: git-remote-gosh-windows-amd64
   maxParallel: 3
 
 pool:
   vmImage: $(imageName)
 
 steps:
+# Pre-requirements
 # Linux
-- bash: |
+- script: |
     sudo apt install -y protobuf-compiler
   condition: eq( variables['Agent.OS'], 'Linux' )
-  displayName: Install pre-requirements
+  displayName: Install pre-requirements Linux
 # Mac
-- bash: |
+- script: |
     brew install protobuf
   condition: eq( variables['Agent.OS'], 'Darwin' )
-  displayName: Install pre-requirements
+  displayName: Install pre-requirements MacOS
 # Windows
-- bash: |
+- script: |
     choco install protoc
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
-  displayName: Install pre-requirements
+  displayName: Install pre-requirements Windows
 
+# Rust setup
 # Linux and macOS.
 - script: |
     set -e
@@ -56,13 +61,14 @@ steps:
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 # Set correct toolchain
-- bash: |
+- script: |
     rustup default $RUSTUP_TOOLCHAIN
     rustup update $RUSTUP_TOOLCHAIN
   env:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Set correct Rust version"
   
+# Build
 - bash: |
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
@@ -73,3 +79,7 @@ steps:
     cargo build --release
   workingDirectory: git-remote-gosh
   displayName: Build
+
+# Publish
+- publish: ./git-remote-gosh/bin/git-remote-gosh
+  artifact: $(binName)
