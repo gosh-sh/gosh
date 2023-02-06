@@ -72,7 +72,7 @@ struct ConfigGrant {
 struct ConfigCommit {
     address task;
     mapping(address => bool) pubaddrassign;
-    address pubaddrreview;
+    mapping(address => bool) pubaddrreview;
     address pubaddrmanager;
 }
 

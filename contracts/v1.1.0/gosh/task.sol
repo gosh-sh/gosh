@@ -32,8 +32,11 @@ contract Task is Modifiers{
     uint128 _fullReview = 0;
     uint128 _fullManager = 0;
     mapping(address => uint128) _assigners;
+    mapping(address => uint128) _reviewers;
     uint128 public _assignfull = 0;
+    uint128 public _reviewfull = 0;
     uint128 _assigncomplete = 0;
+    uint128 _reviewcomplete = 0;
     bool _allassign = false;
     bool _allreview = false;
     bool _allmanager = false;
@@ -80,6 +83,7 @@ contract Task is Modifiers{
         _indexFinal = index1;
         _locktime = now;
         _assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
+        _reviewfull = uint128(_candidates[_indexFinal].pubaddrreview.keys().length);
     }
     
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
@@ -92,7 +96,7 @@ contract Task is Modifiers{
             this.getGrantAssign{value: 0.2 ton}(pubaddr);
         }
         if (m_review == typegrant) {
-            require(_candidates[_indexFinal].pubaddrreview == pubaddr, ERR_REVIEW_NOT_EXIST);
+            require(_candidates[_indexFinal].pubaddrreview.exists(pubaddr), ERR_REVIEW_NOT_EXIST);
             this.getGrantReview{value: 0.2 ton}(pubaddr);
         }
         if (m_manager == typegrant) {
@@ -137,11 +141,14 @@ contract Task is Modifiers{
                 if (i == _grant.review.length - 1) { _allreview = true; } 
             } else { break; }
         }
-        _balance -= _fullReview;
+        uint128 diff = _fullReview / _reviewfull - _reviewers[pubaddr];
+        _balance -= diff;
+        if (diff == 0) { return; }
+        _reviewers[pubaddr] = _fullReview / _reviewfull;
+        if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullReview);
-        _fullReview = 0;
         checkempty();
         return;
     }
@@ -175,7 +182,7 @@ contract Task is Modifiers{
     
     function checkempty() private {
         if (_assigncomplete != _assignfull) { return; }
-        if (_allreview == false) { return; }
+        if (_reviewcomplete != _reviewfull) { return; }
         if (_allmanager == false) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
         selfdestruct(giver);
