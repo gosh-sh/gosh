@@ -32,7 +32,6 @@ steps:
 # Windows
 - bash: |
     choco install protoc
-    choco upgrade strawberryperl
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements
 
@@ -67,6 +66,11 @@ steps:
 - bash: |
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
+    cargo build --release
+  workingDirectory: git-remote-gosh
+  displayName: Prepare
+  
+- script: |
     cargo build --release
   workingDirectory: git-remote-gosh
   displayName: Build
