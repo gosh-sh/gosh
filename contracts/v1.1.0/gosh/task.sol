@@ -32,7 +32,7 @@ contract Task is Modifiers{
     uint128 _fullReview = 0;
     uint128 _fullManager = 0;
     mapping(address => uint128) _assigners;
-    uint128 _assignfull = 0;
+    uint128 public _assignfull = 0;
     uint128 _assigncomplete = 0;
     bool _allassign = false;
     bool _allreview = false;

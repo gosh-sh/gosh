@@ -106,6 +106,14 @@
 			"outputs": [
 				{"name":"_locktime","type":"uint128"}
 			]
+		},
+		{
+			"name": "_assignfull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_assignfull","type":"uint128"}
+			]
 		}
 	],
 	"data": [
