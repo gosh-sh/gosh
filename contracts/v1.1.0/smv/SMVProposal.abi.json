@@ -82,7 +82,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
-				{"name":"task","type":"optional(address)"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"address"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"},
 				{"name":"comment","type":"string"}
 			]
 		},
