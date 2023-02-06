@@ -56,7 +56,7 @@ steps:
     rustup default $RUSTUP_TOOLCHAIN
     rustup update $RUSTUP_TOOLCHAIN
   env:
-    RUSTUP_TOOLCHAIN: ${{parameters.rust}}
+    RUSTUP_TOOLCHAIN: 1.66.0
   displayName: "Set correct Rust version"
   
 - bash: |
