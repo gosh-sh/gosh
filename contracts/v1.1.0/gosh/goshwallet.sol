@@ -1331,8 +1331,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (msg.sender == _systemcontract) {
             _flag = false;
         }
-        if (msg.sender == tip3VotingLocker) {           
-            unlockVotingIn(_totalDoubt);
+        if (msg.sender == tip3VotingLocker) {        
+            if (_totalDoubt != 0) {   
+                unlockVotingIn(_totalDoubt);
+            }
         }
     }
 
