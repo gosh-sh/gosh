@@ -1,3 +1,6 @@
+parameters:
+  rust: 1.66.0
+
 trigger:
 - azure-pipelines
 
@@ -31,10 +34,10 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements
 
-# Linux & Mac
+# Linux and macOS.
 - script: |
     set -e
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.66.0
+    curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain $RUSTUP_TOOLCHAIN
     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
   env:
     RUSTUP_TOOLCHAIN: ${{parameters.rust}}
@@ -43,7 +46,7 @@ steps:
 # Windows.
 - script: |
     curl -sSf -o rustup-init.exe https://win.rustup.rs
-    rustup-init.exe -y --profile minimal --default-toolchain 1.66.0 --default-host x86_64-pc-windows-msvc
+    rustup-init.exe -y --profile minimal --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
     set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
   env:
