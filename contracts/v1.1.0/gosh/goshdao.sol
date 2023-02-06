@@ -664,6 +664,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _reserve += token;
     }
     
+    function receiveTokentoReserve(
+        address pubaddr,
+        uint128 index,
+        uint128 grant
+    ) public senderIs(getAddrWalletIn(pubaddr, index)) accept saveMsg {
+        _reserve += grant;
+        getMoney();
+    }
+    
     function getTaskAddr(string nametask, address repo) private view returns(address) {
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});

@@ -480,6 +480,14 @@
 			]
 		},
 		{
+			"name": "sendTokenToDaoReserve",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
