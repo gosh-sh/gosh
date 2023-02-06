@@ -1199,8 +1199,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder proposalBuilder;
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        proposalBuilder.store(proposalKind, repoName, taskName, grant, comment, now);
-        TvmCell c = proposalBuilder.toCell();
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, grant, comment, now);
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients);
         getMoney();
     }
@@ -1296,7 +1295,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (string taskName, string repoName, ConfigGrant grant) = s.decode(string, string, ConfigGrant);
+                (uint256 data, string taskName, string repoName, ConfigGrant grant) = abi.decode(propData, (uint256, string, string, ConfigGrant));
                 _deployTask(taskName, repoName, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
