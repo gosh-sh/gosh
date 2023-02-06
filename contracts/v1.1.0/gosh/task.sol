@@ -151,7 +151,7 @@ contract Task is Modifiers{
             check += 1;
             if (check == 6) { this.getGrantManager{value: 0.2 ton}(pubaddr); }
             if (now >= _grant.manager[i].lock + _locktime) { 
-                _fullReview += _grant.manager[i].grant; 
+                _fullManager += _grant.manager[i].grant; 
                 _grant.manager[i].grant = 0; 
                 _lastmanager = i + 1;
                 if (i == _grant.manager.length - 1) { _allmanager = true; } 
