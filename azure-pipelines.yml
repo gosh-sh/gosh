@@ -31,7 +31,8 @@ steps:
   displayName: Install pre-requirements
 # Windows
 - bash: |
-    choco install protoc strawberryperl --force
+    choco install protoc
+    choco upgrade strawberryperl
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements
 
