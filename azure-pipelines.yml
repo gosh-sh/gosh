@@ -15,6 +15,19 @@ pool:
   vmImage: $(imageName)
 
 steps:
+# Linux
+- bash: |
+    sudo apt install -y protobuf-compiler
+  condition: eq( variables['Agent.OS'], 'Linux' )
+# Mac
+- bash: |
+    brew install protobuf
+  condition: eq( variables['Agent.OS'], 'Darwin' )
+# Windows
+- bash: |
+    choco install protoc
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  
 - script: |
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
