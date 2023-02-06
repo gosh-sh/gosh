@@ -198,6 +198,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
         if (decision == true) {
             _totalDoubt = _lockedBalance;
+            updateHeadIn();
             unlockVotingIn(_lockedBalance);
         }
         _limited = decision;
@@ -906,7 +907,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
         _totalDoubt += grant;
-        if (_totalDoubt > m_pseudoDAOVoteBalance) { unlockVotingIn(math.min(_lockedBalance, _totalDoubt - m_pseudoDAOVoteBalance)); }
+        if (_totalDoubt > m_pseudoDAOVoteBalance) { updateHeadIn(); unlockVotingIn(math.min(_lockedBalance, _totalDoubt - m_pseudoDAOVoteBalance)); }
         getMoney();
     }
     
@@ -1027,6 +1028,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //SMV part
+    function updateHeadIn() private
+    {
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+
+                                    5*SMVConstants.VOTING_COMPLETION_FEE +
+                                    6*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+
+        tvm.accept();
+        _saveMsg();
+
+        ISMVTokenLocker(tip3VotingLocker).updateHead {value: 5*SMVConstants.VOTING_COMPLETION_FEE +
+                                                         5*SMVConstants.ACTION_FEE, flag: 1} ();
+    } 
+
     function unlockVotingIn (uint128 amount) private 
     {
         require(initialized, SMVErrors.error_not_initialized);
@@ -1034,7 +1049,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                                         4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
         tvm.accept();
         _saveMsg();
-
         ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
                                                        (amount);
     }
@@ -1316,6 +1330,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     receive() external {
         if (msg.sender == _systemcontract) {
             _flag = false;
+        }
+        if (msg.sender == tip3VotingLocker) {           
+            unlockVotingIn(_totalDoubt);
         }
     }
 

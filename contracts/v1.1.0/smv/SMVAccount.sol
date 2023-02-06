@@ -264,6 +264,18 @@ function unlockVoting (uint128 amount) external onlyOwnerPubkey(_access.get())
                                                    (amount);
 }
 
+function unlockVotingInAcc (uint128 amount) private
+{
+    require(initialized, SMVErrors.error_not_initialized);
+    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    tvm.accept();
+    _saveMsg();
+
+    ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
+                                                   (amount);
+}
+
 /* function voteFor ( uint256 platform_id, bool choice, uint128 amount, uint128 num_clients) external  check_owner
 {
     require(initialized, SMVErrors.error_not_initialized);
