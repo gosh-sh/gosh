@@ -239,9 +239,9 @@ function getGoshProposalKind() external view returns( uint256  proposalKind)
 }
 
 function getGoshSetCommitProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName,  string commit, string comment)
+         returns( uint256  proposalKind,  string repoName, string  branchName,  string commit, optional(address) task, string comment)
 {
-    (proposalKind,  repoName,  branchName,  commit, comment,) = abi.decode(propData, (uint256, string, string, string, string, uint128));
+    (proposalKind,  repoName,  branchName,  commit,,, task, comment,) = abi.decode(propData, (uint256, string, string, string, uint128, uint128, optional(address), string, uint128));
 }
 
 function getGoshAddProtectedBranchProposalParams () external view

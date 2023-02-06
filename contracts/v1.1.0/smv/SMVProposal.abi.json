@@ -82,6 +82,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
+				{"name":"task","type":"optional(address)"},
 				{"name":"comment","type":"string"}
 			]
 		},
