@@ -32,7 +32,8 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
         <div className="container flex flex-nowrap h-full pt-10">
             <div
                 className={classNames(
-                    'flex flex-col gap-y-3 min-w-[13rem] pb-10',
+                    'hidden lg:flex flex-col gap-y-3',
+                    'min-w-[13rem] pb-10 mr-10',
                     'border-r border-gray-e6edff',
                 )}
             >
@@ -111,9 +112,7 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
                     />
                 </div>
             </div>
-            <div className="grow pl-10 pb-10 overflow-hidden overflow-y-auto">
-                {children}
-            </div>
+            <div className="grow pb-10 overflow-hidden overflow-y-auto">{children}</div>
             <ReactTooltip clickable />
         </div>
     )
