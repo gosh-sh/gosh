@@ -78,7 +78,7 @@ steps:
     cargo build --release
     ls
     ls target
-    ls release
+    ls target/release
   workingDirectory: git-remote-gosh
   displayName: Build
 
