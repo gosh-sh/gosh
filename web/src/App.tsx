@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import ReactTooltip from 'react-tooltip'
 import { AppConfig } from 'react-gosh'
 
 import Header from './components/Header'
@@ -15,7 +14,7 @@ import SignupPage from './pages/Signup'
 import SigninPage from './pages/Signin'
 import DaosPage from './pages/Daos'
 import DaoPage from './pages/Dao'
-import DaoCreatePage from './pages/DaoCreate'
+import DaoCreatePage from './pages/DaoCreate/DaoCreate'
 import DaoUpgradePage from './pages/DaoUpgrade'
 import DaoWalletPage from './pages/DaoWallet'
 import DaoMembersPage from './pages/DaoMembers'
@@ -44,11 +43,12 @@ import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
 import { ToastOptionsShortcuts } from './helpers'
-import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
-import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
+import DaoSetupPage from './pages/DaoSetup/DaoSetup'
+import TaskCreatePage from './pages/TaskCreate'
+import TasksPage from './pages/Tasks'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -140,7 +140,7 @@ const App = () => {
     return (
         <div className="wrapper">
             <Header />
-            <main className="main grow">
+            <main id="main" className="grow">
                 <Routes>
                     <Route
                         path="/"
@@ -180,14 +180,15 @@ const App = () => {
                             <Route path="repos/create" element={<RepoCreatePage />} />
                             <Route path="events" element={<EventsPage />} />
                             <Route path="events/:eventAddr" element={<EventPage />} />
+                            <Route path="members" element={<DaoMembersPage />} />
+                            <Route path="wallet" element={<DaoWalletPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route
                                     index
-                                    element={<Navigate to="wallet" replace={true} />}
+                                    element={<Navigate to="setup" replace={true} />}
                                 />
-                                <Route path="wallet" element={<DaoWalletPage />} />
-                                <Route path="members" element={<DaoMembersPage />} />
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
+                                <Route path="setup" element={<DaoSetupPage />} />
                             </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>
@@ -221,33 +222,18 @@ const App = () => {
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
                             <Route path="upgrade" element={<RepoUpgradePage />} />
+                            <Route path="tasks">
+                                <Route index element={<TasksPage />} />
+                                <Route path="create" element={<TaskCreatePage />} />
+                            </Route>
                         </Route>
                     </Route>
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
-            <footer className="footer">
-                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end text-xs text-gray-050a15 px-3 py-2">
-                    {process.env.REACT_APP_GOSH_NETWORK?.split(',')[0]}
-                    <CopyClipboard
-                        label={
-                            <span data-tip={process.env.REACT_APP_GOSH_ROOTADDR}>
-                                {shortString(
-                                    process.env.REACT_APP_GOSH_ROOTADDR ?? '',
-                                    6,
-                                    4,
-                                )}
-                            </span>
-                        }
-                        componentProps={{
-                            text: process.env.REACT_APP_GOSH_ROOTADDR ?? '',
-                        }}
-                    />
-                </div>
-            </footer>
+            <footer className="footer"></footer>
 
             <ToastContainer {...ToastOptionsShortcuts.Default} />
-            <ReactTooltip clickable />
             <BaseModal />
         </div>
     )

@@ -23,6 +23,7 @@ import {
     TRepository,
     TTag,
     TTaskCommitConfig,
+    TTaskDetails,
     TTree,
     TTreeItem,
     TUpgradeData,
@@ -36,11 +37,12 @@ interface IGoshAdapter {
     isValidUsername(username: string): TValidationResult
     isValidDaoName(name: string): TValidationResult
     isValidRepoName(name: string): TValidationResult
-    isValidProfile(username: string[]): Promise<TAddress[]>
+    isValidProfile(username: string[]): Promise<{ username: string; address: TAddress }[]>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
 
+    getVersion(): string
     getProfile(options: { username?: string; address?: TAddress }): Promise<IGoshProfile>
     getDao(options: {
         name?: string
@@ -63,6 +65,11 @@ interface IGoshAdapter {
 }
 
 interface IGoshDaoAdapter {
+    // TODO: remove from public
+    dao: IGoshDao
+    wallet?: IGoshWallet
+    // End todo
+
     isDeployed(): Promise<boolean>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
@@ -72,30 +79,47 @@ interface IGoshDaoAdapter {
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
+    getDescription(): Promise<string | null>
     getRemoteConfig(): Promise<object>
     getRepository(options: {
         name?: string
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter>
     getMemberWallet(options: {
-        profile?: string
+        profile?: TAddress
         address?: TAddress
         index?: number
     }): Promise<IGoshWallet>
 
+    getTaskCodeHash(repository: string): Promise<string>
+
     getSmv(): Promise<IGoshSmvAdapter>
 
-    deployRepository(
+    createRepository(
         name: string,
-        prev?: { addr: TAddress; version: string } | undefined,
+        options: {
+            prev?: { addr: TAddress; version: string } | null
+            comment?: string | null
+            alone?: boolean | null
+        },
     ): Promise<IGoshRepositoryAdapter>
 
-    createMember(username: string[]): Promise<void>
+    createMember(
+        members: string[] | { username: string; allowance: number; comment: string }[],
+    ): Promise<void>
     deleteMember(username: string[]): Promise<void>
+    updateMemberAllowance(
+        members: { profile: TAddress; increase: boolean; amount: number }[],
+        options: { comment?: string },
+    ): Promise<void>
 
     upgrade(version: string, description?: string): Promise<void>
 
-    sendTokens(profile: TAddress, amount: number): Promise<void>
+    mint(amount: number, options: { comment?: string; alone?: boolean }): Promise<void>
+    disableMint(options: { comment?: string; alone?: boolean }): Promise<void>
+    sendInternal2Internal(username: string, amount: number): Promise<void>
+
+    createTag(tag: string[], alone?: boolean | null): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -103,6 +127,7 @@ interface IGoshRepositoryAdapter {
 
     isDeployed(): Promise<boolean>
 
+    getGosh(): IGoshAdapter
     getAddress(): TAddress
     getName(): Promise<string>
     getHead(): Promise<string>
@@ -138,6 +163,7 @@ interface IGoshRepositoryAdapter {
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getTags(): Promise<TTag[]>
+    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
     getUpgrade(commit: string): Promise<TUpgradeData>
     getContentSignature(
         repository: string,
@@ -185,14 +211,18 @@ interface IGoshRepositoryAdapter {
         content: string,
     ): Promise<void>
 
-    getTask(name: string): Promise<IGoshTask>
     createTask(
         name: string,
-        config: { assign: number; review: number; manager: number },
+        config: {
+            assign: { grant: number; lock: number }[]
+            review: { grant: number; lock: number }[]
+            manager: { grant: number; lock: number }[]
+        },
+        comment?: string,
     ): Promise<void>
-    confirmTask(name: string, index: number): Promise<void>
+    confirmTask(name: string, index: number, comment?: string): Promise<void>
     receiveTaskBounty(name: string, type: ETaskBounty): Promise<void>
-    deleteTask(name: string): Promise<void>
+    deleteTask(name: string, comment?: string): Promise<void>
 }
 
 interface IGoshSmvAdapter {
@@ -212,7 +242,7 @@ interface IGoshSmvAdapter {
     transferToWallet(amount: number): Promise<void>
     releaseAll(): Promise<void>
 
-    vote(event: TAddress, choice: boolean, amount: number): Promise<void>
+    vote(event: TAddress, choice: boolean, amount: number, note?: string): Promise<void>
 }
 
 interface IContract {

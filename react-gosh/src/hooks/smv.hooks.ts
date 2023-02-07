@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { MAX_PARALLEL_READ } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts } from '../helpers'
+import { executeByChunk, getAllAccounts, getPaginatedAccounts } from '../helpers'
 import { TAddress, TDao, TSmvDetails, TSmvEvent, TSmvEventListItem } from '../types'
 
 function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
     const [details, setDetails] = useState<TSmvDetails>({
-        balance: 0,
+        smvBalance: 0,
         smvAvailable: 0,
         smvLocked: 0,
         isLockerBusy: false,
@@ -25,7 +25,9 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
 
     useEffect(() => {
         const _getSmvDetails = async () => {
-            if (!adapter || !dao.details.isAuthMember) return
+            if (!adapter) {
+                return
+            }
 
             const data = await adapter.getDetails()
             setDetails(data)
@@ -37,23 +39,26 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
         return () => {
             clearInterval(interval)
         }
-    }, [adapter, dao.details.isAuthMember])
+    }, [adapter])
 
     return { adapter, details }
 }
 
-function useSmvTokenTransfer(smv?: IGoshSmvAdapter) {
+function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
     const [progress, setProgress] = useState<{
         toSmv: boolean
         toWallet: boolean
+        toInternal: boolean
         releaseAll: boolean
-    }>({ toSmv: false, toWallet: false, releaseAll: false })
+    }>({ toSmv: false, toWallet: false, toInternal: false, releaseAll: false })
 
     const transferToSmv = async (amount: number) => {
         try {
             setProgress((state) => ({ ...state, toSmv: true }))
 
-            if (!smv) throw new GoshError('SMV adapter is undefined')
+            if (!smv) {
+                throw new GoshError('SMV adapter is undefined')
+            }
             await smv.transferToSmv(amount)
         } catch (e) {
             throw e
@@ -66,7 +71,9 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter) {
         try {
             setProgress((state) => ({ ...state, toWallet: true }))
 
-            if (!smv) throw new GoshError('SMV adapter is undefined')
+            if (!smv) {
+                throw new GoshError('SMV adapter is undefined')
+            }
             await smv.transferToWallet(amount)
         } catch (e) {
             throw e
@@ -79,7 +86,9 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter) {
         try {
             setProgress((state) => ({ ...state, releaseAll: true }))
 
-            if (!smv) throw new GoshError('SMV adapter is undefined')
+            if (!smv) {
+                throw new GoshError('SMV adapter is undefined')
+            }
             await smv.releaseAll()
         } catch (e) {
             throw e
@@ -88,7 +97,22 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter) {
         }
     }
 
-    return { transferToSmv, transferToWallet, releaseAll, progress }
+    const transferToInternal = async (username: string, amount: number) => {
+        try {
+            setProgress((state) => ({ ...state, toInternal: true }))
+
+            if (!dao) {
+                throw new GoshError('DAO adapter is undefined')
+            }
+            await dao.sendInternal2Internal(username, amount)
+        } catch (e) {
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, toInternal: false }))
+        }
+    }
+
+    return { transferToSmv, transferToWallet, transferToInternal, releaseAll, progress }
 }
 
 function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
@@ -151,11 +175,7 @@ function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
             setEvents((state) => {
                 const merged = [...state.items, ...items]
                 return {
-                    items: merged.sort((a, b) => {
-                        const { completed: aCompleted } = a.status.completed
-                        const { completed: bCompleted } = b.status.completed
-                        return aCompleted > bCompleted ? -1 : 1
-                    }),
+                    items: merged,
                     page: 1,
                     isFetching: false,
                 }
@@ -191,6 +211,58 @@ function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
         hasNext: events.page * perPage < events.items.length,
         getMore,
         getItemDetails: setItemDetails,
+    }
+}
+
+/** TODO: Merge with useSmvEventList hook */
+function useSmvEventListRecent(dao: IGoshDaoAdapter, limit: number) {
+    const [events, setEvents] = useState<{
+        items: TSmvEventListItem[]
+        isFetching: boolean
+    }>({
+        items: [],
+        isFetching: true,
+    })
+
+    const _getEventList = useCallback(async () => {
+        const adapter = await dao.getSmv()
+        const codeHash = await adapter.getEventCodeHash()
+        const { results } = await getPaginatedAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            limit,
+        })
+        const items: any[] = await executeByChunk(
+            results.map(({ id }) => id),
+            MAX_PARALLEL_READ,
+            async (address) => {
+                const event = await adapter.getEvent(address, false)
+                return { adapter, ...event }
+            },
+        )
+
+        setEvents({ items, isFetching: false })
+    }, [])
+
+    /** Get initial event list */
+    useEffect(() => {
+        _getEventList()
+    }, [_getEventList])
+
+    /** Refresh recent event list */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (events.isFetching) return
+            _getEventList()
+        }, 30000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [events.isFetching, _getEventList])
+
+    return {
+        isFetching: events.isFetching,
+        items: events.items,
     }
 }
 
@@ -250,4 +322,11 @@ function useSmvVote(dao: IGoshDaoAdapter, event?: TSmvEvent) {
     return { vote }
 }
 
-export { useSmv, useSmvTokenTransfer, useSmvEventList, useSmvEvent, useSmvVote }
+export {
+    useSmv,
+    useSmvTokenTransfer,
+    useSmvEventList,
+    useSmvEventListRecent,
+    useSmvEvent,
+    useSmvVote,
+}

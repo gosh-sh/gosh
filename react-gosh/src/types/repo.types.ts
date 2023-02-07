@@ -130,10 +130,25 @@ type TBranchOperateProgress = {
 }
 
 type TTaskCommitConfig = {
-    task: TAddress
-    profileAssign: { [key: TAddress]: boolean }
-    profileReview: TAddress
-    profileManager: TAddress
+    task: string
+    assigners: string[]
+    reviewer: string
+    manager: string
+}
+
+type TTaskDetails = {
+    address: TAddress
+    name: string
+    repository: TAddress
+    candidates: any[]
+    config: any
+    confirmed: boolean
+    confirmedAt: number
+}
+
+type TTaskListItem = TTaskDetails & {
+    adapter: IGoshRepositoryAdapter
+    isLoadDetailsFired?: boolean
 }
 
 interface IPushCallback {
@@ -161,6 +176,8 @@ export {
     TBranchCompareProgress,
     TBranchOperateProgress,
     TTaskCommitConfig,
+    TTaskDetails,
+    TTaskListItem,
     IPushCallback,
     ITBranchOperateCallback,
 }

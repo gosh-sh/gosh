@@ -1,12 +1,12 @@
 import { Field, Form, Formik } from 'formik'
-import { TextField } from '../../components/Formik'
+import { FormikInput } from '../../components/Formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import yup from '../../yup-extended'
+import { Button } from '../../components/Form'
 
 type TFormValues = {
     name: string
@@ -21,7 +21,13 @@ const RepoCreatePage = () => {
     const onRepoCreate = async (values: TFormValues) => {
         try {
             await createRepository(values.name)
-            navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
+
+            const version = dao.details.version
+            if (version === '1.0.0') {
+                navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
+            } else if (version === '1.1.0') {
+                navigate(`/o/${daoName}/events`)
+            }
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -30,51 +36,48 @@ const RepoCreatePage = () => {
 
     if (!dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
     return (
-        <div className="container container--full mt-12 mb-5">
-            <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
-                <h1 className="font-semibold text-2xl text-center mb-8">
-                    Create new repository
-                </h1>
+        <div className="max-w-lg px-7 py-8 mx-auto">
+            <h1 className="font-medium text-3xl text-center mb-14">
+                Create new repository
+            </h1>
 
-                <Formik
-                    initialValues={{ name: '' }}
-                    onSubmit={onRepoCreate}
-                    validationSchema={yup.object().shape({
-                        name: yup.string().reponame().required('Name is required'),
-                    })}
-                >
-                    {({ isSubmitting, setFieldValue }) => (
-                        <Form>
-                            <div>
-                                <Field
-                                    name="name"
-                                    component={TextField}
-                                    inputProps={{
-                                        className: 'w-full',
-                                        autoComplete: 'off',
-                                        placeholder: 'Repository name',
-                                        disabled: isSubmitting,
-                                        onChange: (e: any) =>
-                                            setFieldValue(
-                                                'name',
-                                                e.target.value.toLowerCase(),
-                                            ),
-                                    }}
-                                />
-                            </div>
+            <Formik
+                initialValues={{ name: '' }}
+                onSubmit={onRepoCreate}
+                validationSchema={yup.object().shape({
+                    name: yup.string().reponame().required('Name is required'),
+                })}
+            >
+                {({ isSubmitting, setFieldValue }) => (
+                    <Form>
+                        <div className="mb-6">
+                            <Field
+                                name="name"
+                                component={FormikInput}
+                                inputProps={{
+                                    autoComplete: 'off',
+                                    placeholder: 'Repository name',
+                                    disabled: isSubmitting,
+                                    onChange: (e: any) =>
+                                        setFieldValue(
+                                            'name',
+                                            e.target.value.toLowerCase(),
+                                        ),
+                                }}
+                            />
+                        </div>
 
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="btn btn--body px-3 py-3 w-full mt-6"
-                            >
-                                {isSubmitting && <Spinner className="mr-2" size={'lg'} />}
-                                Create repository
-                            </button>
-                        </Form>
-                    )}
-                </Formik>
-            </div>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            isLoading={isSubmitting}
+                            className="w-full"
+                        >
+                            Create repository
+                        </Button>
+                    </Form>
+                )}
+            </Formik>
         </div>
     )
 }
