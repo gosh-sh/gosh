@@ -81,5 +81,5 @@ steps:
   displayName: Build
 
 # Publish
-- publish: ./git-remote-gosh/bin/git-remote-gosh
+- publish: ./git-remote-gosh/target/release/git-remote-gosh
   artifact: $(binName)
