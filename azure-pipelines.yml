@@ -1,9 +1,8 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.66.0 
+  value: 1.67.0 
 
-trigger:
-- dev
+trigger: none
 
 strategy:
   matrix:
@@ -81,5 +80,12 @@ steps:
   displayName: Build
 
 # Publish
+# Linux and macOS.
 - publish: ./git-remote-gosh/target/release/git-remote-gosh
   artifact: $(binName)
+  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+# Windows
+- publish: ./git-remote-gosh/target/release/git-remote-gosh.exe
+  artifact: $(binName).exe
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
