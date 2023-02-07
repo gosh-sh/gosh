@@ -79,6 +79,7 @@ steps:
     ls
     ls target
     ls target/release
+    find . -name "git-remote-gosh*"
   workingDirectory: git-remote-gosh
   displayName: Build
 
