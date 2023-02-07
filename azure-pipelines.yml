@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.67.0 
+  value: 1.66.0 
 
 trigger: none
 
@@ -76,16 +76,12 @@ steps:
   
 - script: |
     cargo build --release
+    ls
+    ls target
+    ls release
   workingDirectory: git-remote-gosh
   displayName: Build
 
 # Publish
-# Linux and macOS.
 - publish: ./git-remote-gosh/target/release/git-remote-gosh
   artifact: $(binName)
-  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
-
-# Windows
-- publish: ./git-remote-gosh/target/release/git-remote-gosh.exe
-  artifact: $(binName).exe
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
