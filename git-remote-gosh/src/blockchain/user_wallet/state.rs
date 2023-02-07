@@ -193,7 +193,7 @@ impl UserWalletMirrors {
                     .await;
                     match get_mirror_result {
                         Err(e) => {
-                            tracing::trace!("Error in get_user_wallet: {}", e);
+                            tracing::debug!("Error in get_user_wallet: {}", e);
                         }
                         Ok(mirror) => {
                             self.inner.write().await.add(wallet_index, mirror);

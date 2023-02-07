@@ -2,8 +2,7 @@ use crate::blockchain::ZERO_SHA;
 
 use git_hash::{self, ObjectId};
 use git_object::tree;
-use git_repository::{self};
-use git_repository::{Repository};
+use git_repository::{self, Repository};
 use git_traverse::tree::recorder;
 
 use std::{

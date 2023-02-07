@@ -1,3 +1,4 @@
+use crate::blockchain::contract::ContractInfo;
 use crate::{
     abi as gosh_abi,
     blockchain::{

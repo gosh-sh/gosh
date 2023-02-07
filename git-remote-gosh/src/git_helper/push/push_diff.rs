@@ -144,11 +144,11 @@ pub async fn inner_push_diff(
                 BlobDst::Patch(hex::encode(diff))
             }
         } else {
-            tracing::trace!("inner_push_diff->save_data_to_ipfs");
+            tracing::debug!("inner_push_diff->save_data_to_ipfs");
             let ipfs = save_data_to_ipfs(&ipfs_client, new_snapshot_content)
                 .await
                 .map_err(|e| {
-                    tracing::trace!("save_data_to_ipfs error: {:#?}", e);
+                    tracing::debug!("save_data_to_ipfs error: {:#?}", e);
                     e
                 })?;
             BlobDst::Ipfs(ipfs)
@@ -211,7 +211,7 @@ pub async fn inner_push_diff(
     };
 
     if diff.ipfs.is_some() {
-        tracing::trace!("push_diff: {:?}", diff);
+        tracing::debug!("push_diff: {:?}", diff);
     } else {
         tracing::trace!("push_diff: {:?}", diff);
     }

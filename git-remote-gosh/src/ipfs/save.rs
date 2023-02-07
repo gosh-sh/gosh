@@ -8,7 +8,7 @@ use tokio_retry::Retry;
 impl FileSave for IpfsService {
     #[instrument(level = "info", skip_all)]
     async fn save_blob(&self, blob: &[u8]) -> anyhow::Result<String> {
-        tracing::trace!("Uploading blob to IPFS");
+        tracing::debug!("Uploading blob to IPFS");
 
         let url = format!(
             "{}/api/v0/add?pin=true&quiet=true",
