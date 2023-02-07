@@ -78,7 +78,7 @@ pipeline {
                     script {
                         if (!params.ONLYWEB) {
                             dir('git-remote-gosh') {
-                                sh """
+                                sh '''
                                     PIPELINE_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
                                     PIPELINE_STATUS="inProgress"
                                     until [ $PIPELINE_STATUS == "inProgress" ]
@@ -92,7 +92,7 @@ pipeline {
                                     mv ./git-remote-gosh-lin-amd64/git-remote-gosh git-remote-gosh-linux-amd64
                                     mv ./git-remote-gosh-dar-amd64/git-remote-gosh git-remote-gosh-darwin-amd64
                                     mv ./git-remote-gosh-win-amd64/git-remote-gosh git-remote-gosh-windows-amd64
-                                """
+                                '''
                             }
                         }
                     }
