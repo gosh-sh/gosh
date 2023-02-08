@@ -1,0 +1,8 @@
+{
+    "fmt": {
+        "files": {
+            // disable deno fmt, use prettier for consistency
+            "exclude": ["."]
+        }
+    }
+}

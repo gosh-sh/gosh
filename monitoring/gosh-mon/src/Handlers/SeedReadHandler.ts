@@ -14,13 +14,13 @@ export default class SeedReadHandler extends AppHandler {
             'click settings',    /* 8*/ () => this.click(`//a[${ac_hrefs('/a/settings')}]`),
             'wait show button',  /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"),
             'click show btn 2',  /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
-            'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 1),
+            'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 3),
             'check seed',        /*12*/ () => { return this.checkSeed(); }
         );
     }
 
     protected async checkSeed(): Promise<number> {
-        const obtainedSeed: string = await this.copy();
+        const obtainedSeed: string = await this.getClipboard();
         if (obtainedSeed === this.seed)
             return 0;
         else

@@ -11,10 +11,10 @@ class SeedReadHandler extends AppHandler_1.default {
     }
     async handle(debug) {
         return await this.doSteps(
-        /* 0 -  7 */ ...this.initialSteps(debug, AppHandler_1.default.userSteps), 'click settings', /* 8*/ () => this.click(`//a[${(0, Utils_1.ac_hrefs)('/a/settings')}]`), 'wait show button', /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"), 'click show btn 2', /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1), 'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 1), 'check seed', /*12*/ () => { return this.checkSeed(); });
+        /* 0 -  7 */ ...this.initialSteps(debug, AppHandler_1.default.userSteps), 'click settings', /* 8*/ () => this.click(`//a[${(0, Utils_1.ac_hrefs)('/a/settings')}]`), 'wait show button', /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"), 'click show btn 2', /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1), 'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 3), 'check seed', /*12*/ () => { return this.checkSeed(); });
     }
     async checkSeed() {
-        const obtainedSeed = await this.copy();
+        const obtainedSeed = await this.getClipboard();
         if (obtainedSeed === this.seed)
             return 0;
         else

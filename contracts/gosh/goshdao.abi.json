@@ -41,7 +41,8 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"name":"wallets","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"token","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -50,7 +51,7 @@
 			"name": "returnWallets",
 			"inputs": [
 				{"name":"key","type":"uint256"},
-				{"name":"wallets","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -124,11 +125,33 @@
 			]
 		},
 		{
+			"name": "upgradeTokens",
+			"inputs": [
+				{"name":"newvalue","type":"uint128"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isAlone",
+			"inputs": [
+				{"name":"config","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"typeF","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -213,6 +236,14 @@
 			]
 		},
 		{
+			"name": "getDaoTokenConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
 			"name": "getWalletCode",
 			"inputs": [
 			],
@@ -262,11 +293,19 @@
 			]
 		},
 		{
+			"name": "getWalletsToken",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
 			"name": "getWalletsFull",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"map(uint256,address)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -291,7 +330,8 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint128"}
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"}
 			]
 		},
 		{
@@ -299,7 +339,24 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPreviousDaoAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(address)"}
 			]
 		},
 		{
@@ -434,8 +491,9 @@
 		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_previous","type":"optional(address)"},
-		{"name":"_wallets","type":"map(uint256,address)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},

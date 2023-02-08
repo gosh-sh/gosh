@@ -1,9 +1,9 @@
 use crate::logger::set_log_verbosity;
+use crate::logger::telemetry::do_init_opentelemetry;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Once;
 use std::time::Duration;
 use tokio::time::sleep;
-use crate::logger::telemetry::do_init_opentelemetry;
 
 static TEST_LOGGER: Once = Once::new();
 static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);

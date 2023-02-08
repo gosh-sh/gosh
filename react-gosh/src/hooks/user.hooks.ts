@@ -4,9 +4,10 @@ import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
 import { AppConfig } from '../appconfig'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
+import { IGoshAdapter } from '../gosh/interfaces'
 import { userAtom, userPersistAtom, userProfileSelector } from '../store'
 import { TUserSignupProgress, TUserPersist } from '../types'
-import { validatePhrase, validateUsername } from '../validators'
+import { validatePhrase } from '../validators'
 
 function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
@@ -44,7 +45,9 @@ function useUser() {
     }
 
     const signinProfiles = async (phrase: string) => {
-        await _validateCredentials({ phrase })
+        const gosh = GoshAdapterFactory.createLatest()
+        await _validateCredentials(gosh, { phrase })
+
         const indexes = await getProfiles(phrase)
         if (!indexes.length) {
             throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
@@ -53,10 +56,10 @@ function useUser() {
     }
 
     const signin = async (params: { username: string; phrase: string }) => {
-        await _validateCredentials(params)
+        const gosh = GoshAdapterFactory.createLatest()
+        await _validateCredentials(gosh, params)
 
         const { username, phrase } = params
-        const gosh = GoshAdapterFactory.createLatest()
         const profile = await gosh.getProfile({ username })
         if (!(await profile.isDeployed())) {
             throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
@@ -74,12 +77,17 @@ function useUser() {
     }
 
     const signup = async (params: { username: string; phrase: string }) => {
-        await _validateCredentials(params)
+        const gosh = GoshAdapterFactory.createLatest()
+        await _validateCredentials(gosh, params)
 
         const { username, phrase } = params
-        const gosh = GoshAdapterFactory.createLatest()
         const profile = await gosh.getProfile({ username })
-        if (await profile.isDeployed()) throw new GoshError(EGoshError.PROFILE_EXISTS)
+        if (await profile.isDeployed()) {
+            throw new GoshError(
+                EGoshError.PROFILE_EXISTS,
+                `GOSH username '${username}' is already taken`,
+            )
+        }
 
         setSignupProgress((state) => ({ ...state, isFetching: true }))
         const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
@@ -110,9 +118,9 @@ function useUser() {
         resetUserPersist()
     }
 
-    const _validateCredentials = async (params: any) => {
+    const _validateCredentials = async (gosh: IGoshAdapter, params: any) => {
         if (params.username) {
-            const { valid, reason } = validateUsername(params.username)
+            const { valid, reason } = gosh.isValidUsername(params.username)
             if (!valid) throw new GoshError(EGoshError.USER_NAME_INVALID, reason)
         }
 

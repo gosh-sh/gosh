@@ -12,7 +12,9 @@ class GoshRepository extends BaseContract implements IGoshRepository {
     }
 
     async getName(): Promise<string> {
-        const { value0 } = await this.runLocal('getName', {})
+        const { value0 } = await this.runLocal('getName', {}, undefined, {
+            useCachedBoc: true,
+        })
         return value0
     }
 }

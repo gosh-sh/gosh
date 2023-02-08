@@ -289,7 +289,7 @@ contract Snapshot is Modifiers {
         return NameOfFile;
     }
 
-    function getRepoAddress() external view returns(address) {
+    function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
     
@@ -297,8 +297,12 @@ contract Snapshot is Modifiers {
         return _baseCommit;
     }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("snapshot", version);
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
     
     function getOwner() external view returns(address) {

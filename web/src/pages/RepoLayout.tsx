@@ -11,6 +11,15 @@ import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import Spinner from '../components/Spinner'
 import { classNames, useRepo, TWalletDetails, TDao, useBranches } from 'react-gosh'
 import {
+    classNames,
+    useRepo,
+    TWalletDetails,
+    TDao,
+    useBranches,
+    TRepository,
+    shortString,
+} from 'react-gosh'
+import {
     IGoshDaoAdapter,
     IGoshRepositoryAdapter,
     IGoshWallet,
@@ -21,7 +30,10 @@ export type TRepoLayoutOutletContext = {
         adapter: IGoshDaoAdapter
         details: TDao
     }
-    repo: IGoshRepositoryAdapter
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     wallet?: {
         instance: IGoshWallet
         details: TWalletDetails
@@ -29,14 +41,14 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
-    const { daoName, repoName, branchName = 'main' } = useParams()
-    const { dao, adapter, isFetching } = useRepo(daoName!, repoName!)
-    const { updateBranches } = useBranches(adapter)
+    const { daoName, repoName, branchName } = useParams()
+    const { dao, repository, isFetching } = useRepo(daoName!, repoName!)
+    const { updateBranches } = useBranches(repository.adapter)
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const tabs = [
         {
-            to: `/o/${daoName}/r/${repoName}/tree/${branchName}`,
+            to: `/o/${daoName}/r/${repoName}${branchName ? `/tree/${branchName}` : ''}`,
             title: 'Code',
             icon: faCode,
             public: true,
@@ -104,7 +116,7 @@ const RepoLayout = () => {
                     {repoName}
                 </Link>
                 <span className="ml-2 align-super text-sm font-normal">
-                    {adapter?.getVersion()}
+                    {repository.details?.version}
                 </span>
             </h1>
 
@@ -147,7 +159,28 @@ const RepoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ dao, repo: adapter }} />
+                    <div>
+                        {repository.details?.commitsIn.map(
+                            ({ branch, commit }, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-amber-400 rounded-2xl px-4 py-2 mb-2 last:mb-6"
+                                >
+                                    <Spinner size="sm" className="mr-3" />
+                                    <span className="text-sm">
+                                        Repository is processing incoming commit
+                                        <span className="font-bold mx-1">
+                                            {shortString(commit.name, 7, 0, '')}
+                                        </span>
+                                        into branch
+                                        <span className="font-bold mx-1">{branch}</span>
+                                    </span>
+                                </div>
+                            ),
+                        )}
+                    </div>
+
+                    <Outlet context={{ dao, repository }} />
                 </>
             )}
         </div>

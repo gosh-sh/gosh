@@ -11,7 +11,7 @@ use std::{fmt, option::Option};
 
 pub mod diffs;
 
-#[derive(Deserialize, Debug, DataContract)]
+#[derive(Deserialize, DataContract)]
 #[abi = "snapshot.abi.json"]
 #[abi_data_fn = "getSnapshot"]
 pub struct Snapshot {
@@ -42,6 +42,42 @@ pub struct Snapshot {
     pub ready_for_diffs: bool,
 }
 
+fn crop_vec(v: &Vec<u8>) -> String {
+    if v.len() > 8 {
+        let mut str = v[0..4]
+            .to_vec()
+            .iter()
+            .fold(format!("Len: {}, Data: ", v.len()), |acc, el| {
+                format!("{acc}{:02X}", el)
+            });
+        str.push_str("..");
+        v[v.len() - 4..]
+            .to_vec()
+            .iter()
+            .fold(str, |acc, el| format!("{acc}{:02X}", el))
+    } else {
+        v.iter()
+            .map(|el| format!("{:02X}", el))
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+impl fmt::Debug for Snapshot {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        f.debug_struct("Snapshot")
+            .field("next_commit", &self.next_commit)
+            .field("next_content", &crop_vec(&self.next_content))
+            .field("next_ipfs", &self.next_ipfs)
+            .field("current_commit", &self.current_commit)
+            .field("current_content", &crop_vec(&self.current_content))
+            .field("current_ipfs", &self.current_ipfs)
+            .field("original_commit", &self.original_commit)
+            .field("ready_for_diffs", &self.ready_for_diffs)
+            .finish()
+    }
+}
+
 #[derive(Deserialize, Debug)]
 struct GetSnapshotAddrResult {
     #[serde(rename = "value0")]
@@ -55,13 +91,14 @@ struct GetSnapshotFilePath {
 }
 
 impl Snapshot {
-    #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn calculate_address(
         context: &EverClient,
         repo_contract: &mut GoshContract,
         branch_name: &str,
         file_path: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
+        tracing::trace!("calculate_address: repo_contract.address={}, branch_name={branch_name}, file_path={file_path}", repo_contract.address);
         let params = serde_json::json!({
             "branch": branch_name,
             "name": file_path
@@ -72,14 +109,15 @@ impl Snapshot {
         Ok(result.address)
     }
 
-    #[instrument(level = "debug", skip(context))]
+    #[instrument(level = "info", skip_all)]
     pub async fn get_file_path(
         context: &EverClient,
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<String> {
+        tracing::trace!("get_file_path: address={address}");
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.read_state(context, "getName", None).await?;
-        tracing::debug!("received file path `{result:?}` for snapshot {snapshot:?}",);
+        tracing::trace!("received file path `{result:?}` for snapshot {snapshot:?}",);
         // Note: Fix! Contract returns file path prefixed with a branch name
         let mut path = result.file_path;
         path = path

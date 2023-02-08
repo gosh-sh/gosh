@@ -14,8 +14,11 @@ type TFormValues = {
 const RepoUpgradePage = () => {
     const navigate = useNavigate()
     const { daoName } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { versions, upgrade: upgradeRepository } = useRepoUpgrade(dao.adapter, repo)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { versions, upgrade: upgradeRepository } = useRepoUpgrade(
+        dao.adapter,
+        repository.adapter,
+    )
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {

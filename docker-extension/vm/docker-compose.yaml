@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   gosh-docker-extension-backend:
     cap_add:
@@ -8,4 +8,3 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     image: "${DESKTOP_PLUGIN_IMAGE}"
-      

@@ -1,7 +1,10 @@
 use super::GitHelper;
 use crate::{
     blockchain,
-    blockchain::{BlockchainContractAddress, BlockchainService},
+    blockchain::{
+        BlockchainContractAddress, BlockchainService, GetContractCodeResult,
+        calculate_contract_address, get_contract_code, tag::load::TagObject,
+    },
 };
 use git_odb::{Find, Write};
 
@@ -50,8 +53,8 @@ where
         Ok(object_id)
     }
 
-    #[instrument(level = "debug")]
-    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+    #[instrument(level = "debug", skip_all)]
+    pub async fn fetch_ref(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {
             anyhow::bail!("Error. Can not fetch an object without refs/heads/ prefix");
@@ -62,7 +65,7 @@ where
             iter.by_ref().nth(REFS_HEAD_PREFIX.len() - 1);
             iter.as_str()
         };
-        tracing::info!("Calculate branch: {}", branch);
+        tracing::debug!("Calculate branch: {}", branch);
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -92,16 +95,16 @@ where
         let mut dangling_commits = vec![];
         loop {
             if blobs_restore_plan.is_available() {
-                tracing::info!("Restoring blobs");
+                tracing::debug!("Restoring blobs");
                 blobs_restore_plan.restore(self).await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
             if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
                 let id = tree_node_to_load.oid;
-                tracing::info!("Loading tree: {}", id);
+                tracing::debug!("Loading tree: {}", id);
                 guard!(id);
-                tracing::info!("Ok. Guard passed. Loading tree: {}", id);
+                tracing::debug!("Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -116,12 +119,12 @@ where
                     blockchain::Tree::load(&self.blockchain.client(), &address).await?;
                 let tree_object: git_object::Tree = onchain_tree_object.into();
 
-                tracing::info!("Tree obj parsed {}", id);
+                tracing::debug!("Tree obj parsed {}", id);
                 for entry in &tree_object.entries {
                     let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
-                            tracing::trace!("Tree entry: tree {}->{}", id, oid);
+                            tracing::debug!("Tree entry: tree {}->{}", id, oid);
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}/{}", path_to_node, entry.filename),
                                 oid,
@@ -131,7 +134,7 @@ where
                         git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
-                            tracing::trace!("Tree entry: blob {}->{}", id, oid);
+                            tracing::debug!("Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
 
                             let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -144,7 +147,7 @@ where
                                 &file_path[1..],
                             )
                             .await?;
-                            tracing::info!(
+                            tracing::debug!(
                                 "Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
                                 file_path,
                                 oid,
@@ -153,7 +156,7 @@ where
                             blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                         }
                         _ => {
-                            tracing::info!("IT MUST BE NOTED!");
+                            tracing::debug!("IT MUST BE NOTED!");
                             panic!();
                         }
                     }
@@ -173,18 +176,18 @@ where
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
                     blockchain::GoshCommit::load(&self.blockchain.client(), address).await?;
-                tracing::info!("loaded onchain commit {}", id);
+                tracing::debug!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
                     onchain_commit.content.as_bytes(),
                 );
                 let obj = git_object::Object::from(data.decode()?).into_commit();
-                tracing::info!("Received commit {}", id);
+                tracing::debug!("Received commit {}", id);
                 let to_load = TreeObjectsQueueItem {
                     path: "".to_owned(),
                     oid: obj.tree,
                 };
-                tracing::info!("New tree root: {}", &to_load.oid);
+                tracing::debug!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 for parent_id in &obj.parents {
                     commits_queue.push_back(*parent_id);
@@ -203,6 +206,49 @@ where
             break;
         }
         Ok(())
+    }
+
+    #[instrument(level = "trace", skip_all)]
+    pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<()> {
+        let client = self.blockchain.client();
+        let GetContractCodeResult { code } = get_contract_code(
+            client,
+            &self.repo_addr,
+            blockchain::ContractKind::Tag
+        )
+        .await?;
+
+        let address = calculate_contract_address(
+            client,
+            blockchain::ContractKind::Tag,
+            &code,
+            Some(serde_json::json!({ "_nametag": tag_name })),
+        ).await?;
+
+        let tag = crate::blockchain::tag::load::get_content(client, &address).await?;
+
+        if let TagObject::Annotated(obj) = tag {
+            let tag_object = git_object::Data::new(git_object::Kind::Tag, &obj.content);
+            let store = self.local_repository().clone().objects;
+            let tag_id = store.write_buf(tag_object.kind, tag_object.data)?;
+        }
+
+        Ok(())
+    }
+
+    #[instrument(level = "trace", skip_all)]
+    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+        tracing::debug!("fetch: sha={sha} ref={name}");
+        let splitted: Vec<&str> = name.rsplitn(2, '/').collect();
+        let result = match splitted[..] {
+            [tag_name, "refs/tags"] => self.fetch_tag(sha, tag_name).await?,
+            [_, "refs/heads"] => self.fetch_ref(sha, name).await?,
+            _ => anyhow::bail!(
+                "Error. Can not fetch an object without refs/heads/ or refs/tags/ prefixes"
+            ),
+        };
+
+        Ok(result)
     }
 }
 

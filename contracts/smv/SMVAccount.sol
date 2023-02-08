@@ -79,13 +79,13 @@ modifier check_locker {
   _ ;
 }
 
-uint128 constant DEFAULT_DAO_BALANCE = 100;
+uint128 DEFAULT_DAO_BALANCE;
 uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
             uint256 _platformCodeHash, uint16 _platformCodeDepth,
             uint256 _clientCodeHash, uint16 _clientCodeDepth,
-            uint256 _proposalCodeHash, uint16 _proposalCodeDepth,
+            uint256 _proposalCodeHash, uint16 _proposalCodeDepth, uint128 tokenforperson,
             address _tip3Root) public
 {
     _pubaddr = pubaddr; /* from goshWallet */
@@ -97,7 +97,7 @@ constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
                                      SMVConstants.LOCKER_INIT_VALUE +
                                      SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
     tvm.accept();
-    
+    DEFAULT_DAO_BALANCE = tokenforperson;
     initialized = false;
     
     m_tokenRoot = _tip3Root;

@@ -2,28 +2,46 @@
 
 ##### Pre-requirements
 - Docker installed
-- Giver wallet keys 
 
 #### Deploy
 
-1. Place giver keys file named giver.keys.json inside contracts/gosh folder
-2. Navigate to gosh directory:
+1. Navigate to contracts/multisig
     ```
-    cd contracts/gosh
+    cd contracts/multisig
     ```
-2. Build docker image with Everdev and other requirements:
+2. Build docker image with Everdev and other requirements
     ```
     make prepare-docker
     ```
-3. Build smart-contracts:
+3. Build GOSH giver(msig) contract for GOSH deployment
     ```
     make build-contracts-docker
     ```
-4. Deploy smart-contracts:
+4. Generate GOSH giver(msig) address, keys and network config. Note: better use endpoint address here like http://local-node, not everdev network name.
     ```
-    make deploy-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391
+    make generate-docker NETWORK=http://local-node
     ```
-4. Upgrade GOSH smart-contracts:
+5. Top up GOSH giver(msig) address. Note: you can use whatever method you want, depending on a network(se or not) and prefered tools.
+Example for SE and tonos-cli.
     ```
-    make upgrade-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391 VERSIONCONTROLLER_ADDR=0:78ca698f06804b318fc40acef8e65823f67ac24fb10e8c7ad8c8553b6eac6293
+    tonos-cli -u http://local-node call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest":"xxxxx","value":2000000000000000,"bounce":false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
     ```
+6. Deploy GOSH giver(msig).
+    ```
+    make deploy-docker
+    ```
+7. Navigate to GOSH contracts folder and build smart-contracts.
+    ```
+    cd contracts/gosh 
+    make build-contracts-docker
+    ```
+8. Deploy GOSH smart-contracts.
+    ```
+    make deploy-docker
+    ```
+9. Upgrade GOSH smart-contracts.
+    ```
+    make upgrade-docker
+    ```
+
+ Note: you can specify extra docker args adding EXTRA_DOCKER_ARGS="--network xxxxx --xxxx xxxx"

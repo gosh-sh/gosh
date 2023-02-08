@@ -5,9 +5,15 @@ use std::collections::HashMap;
 
 pub type TWalletMirrorIndex = u8;
 
+#[derive(Clone, Debug)]
+pub enum Wallet {
+    Contract(GoshContract),
+    NonExistent(BlockchainContractAddress),
+}
+
 #[derive(Clone)]
 pub struct UserWalletsMirrorsInnerState {
-    wallets: HashMap<TWalletMirrorIndex, GoshContract>,
+    wallets: HashMap<TWalletMirrorIndex, Wallet>,
     pub gosh_root: GoshContract,
     pub dao_address: BlockchainContractAddress,
     pub wallet_config: UserWalletConfig,
@@ -15,7 +21,7 @@ pub struct UserWalletsMirrorsInnerState {
 }
 
 impl UserWalletsMirrorsInnerState {
-    pub fn wallets(&self) -> &HashMap<TWalletMirrorIndex, GoshContract> {
+    pub fn wallets(&self) -> &HashMap<TWalletMirrorIndex, Wallet> {
         &self.wallets
     }
     pub fn is_full(&self) -> bool {
@@ -25,7 +31,7 @@ impl UserWalletsMirrorsInnerState {
         }
     }
     pub(crate) fn new(
-        zero_wallet: GoshContract,
+        zero_wallet: Wallet,
         gosh_root: GoshContract,
         dao_address: BlockchainContractAddress,
         wallet_config: UserWalletConfig,
@@ -58,6 +64,6 @@ impl UserWalletsMirrorsInnerState {
         }
     }
     pub fn add(&mut self, index: TWalletMirrorIndex, wallet: GoshContract) {
-        self.wallets.insert(index, wallet);
+        self.wallets.insert(index, Wallet::Contract(wallet));
     }
 }

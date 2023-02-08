@@ -1,0 +1,112 @@
+import {
+    GOSH_DAO_ABI,
+    GOSH_WALLET_ABI,
+    PROFILE_ABI,
+    SYSTEM_CONTRACT_ABI,
+} from '../eversdk/abi.ts'
+import { SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
+import { goshCli } from '../shortcuts.ts'
+
+export async function getAddrDao(dao_name: string): Promise<string> {
+    const { value0 } = await goshCli(
+        'run',
+        '--abi',
+        SYSTEM_CONTRACT_ABI,
+        SYSTEM_CONTRACT_ADDR,
+        'getAddrDao',
+        JSON.stringify({ name: dao_name }),
+    )
+    return value0
+}
+
+export async function deployDao(
+    dao_name: string,
+    profile_addr: string,
+    seed: string,
+): Promise<unknown> {
+    return await goshCli(
+        'call',
+        '--abi',
+        PROFILE_ABI,
+        profile_addr,
+        '--sign',
+        seed,
+        'deployDao',
+        JSON.stringify({
+            systemcontract: SYSTEM_CONTRACT_ADDR,
+            name: dao_name,
+            pubmem: [profile_addr],
+            previous: null,
+        }),
+    )
+}
+
+export async function turnOnDao(
+    wallet_addr: string,
+    profile_addr: string,
+    wallet_pubkey: string,
+    seed: string,
+): Promise<any> {
+    if (!wallet_pubkey.startsWith('0x')) {
+        wallet_pubkey = `0x${wallet_pubkey}`
+    }
+    return await goshCli(
+        'call',
+        '--abi',
+        PROFILE_ABI,
+        profile_addr,
+        '--sign',
+        seed,
+        'turnOn',
+        JSON.stringify({ pubkey: wallet_pubkey, wallet: wallet_addr }),
+    )
+}
+
+export async function isDaoMember(
+    dao_addr: string,
+    profile_addr: string,
+): Promise<boolean> {
+    const { value0 } = await goshCli(
+        'run',
+        '--abi',
+        GOSH_DAO_ABI,
+        dao_addr,
+        'isMember',
+        JSON.stringify({ pubaddr: profile_addr }),
+    )
+    return value0
+}
+
+export async function setAloneDaoConfig(
+    tokens: number,
+    wallet_addr: string,
+    seed: string,
+): Promise<boolean> {
+    return await goshCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneSetConfigDao',
+        JSON.stringify({ newtoken: tokens }),
+    )
+}
+
+export async function deployAloneDaoWallet(
+    profile_address: string[],
+    wallet_addr: string,
+    seed: string,
+): Promise<boolean> {
+    return await goshCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneDeployWalletDao',
+        JSON.stringify({ pubaddr: profile_address }),
+    )
+}

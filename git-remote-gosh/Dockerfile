@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.4.2
+# syntax=docker/dockerfile:1.5
 
 # Base builder ---------------------------
-FROM --platform=$BUILDPLATFORM rust:1.65-bullseye as rust-builder
+FROM --platform=$BUILDPLATFORM rust:1.66-bullseye as rust-builder
 
 WORKDIR /build
 

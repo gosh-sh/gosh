@@ -31,7 +31,9 @@ interface IGoshAdapter {
     goshroot: IGoshRoot
     gosh: IGosh
 
+    isValidUsername(username: string): TValidationResult
     isValidDaoName(name: string): TValidationResult
+    isValidRepoName(name: string): TValidationResult
     isValidProfile(username: string[]): Promise<TAddress[]>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
@@ -63,6 +65,7 @@ interface IGoshDaoAdapter {
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 
+    getGosh(): IGoshAdapter
     getAddress(): TAddress
     getName(): Promise<string>
     getVersion(): string
@@ -137,6 +140,11 @@ interface IGoshRepositoryAdapter {
         commit: string,
         label: string,
     ): Promise<string>
+    getIncomingCommits(): Promise<{ branch: string; commit: TCommit }[]>
+    subscribeIncomingCommits(
+        callback: (incoming: { branch: string; commit: TCommit }[]) => void,
+    ): Promise<void>
+    unsubscribe(): Promise<void>
 
     createBranch(
         name: string,
@@ -197,12 +205,14 @@ interface IContract {
     version: string
 
     isDeployed(): Promise<boolean>
+    boc(): Promise<string>
     getMessages(
         variables: {
             msgType: string[]
             node?: string[]
             cursor?: string
             limit?: number
+            allow_latest_inconsistent_data?: boolean
         },
         decode?: boolean,
         all?: boolean,
@@ -218,7 +228,7 @@ interface IContract {
         functionName: string,
         input: object,
         options?: AccountRunLocalOptions,
-        settings?: { logging?: boolean; retries?: number },
+        settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
 }
