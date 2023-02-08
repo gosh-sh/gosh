@@ -87,7 +87,7 @@ pipeline {
                                     until [ $PIPELINE_STATUS != "inProgress" ]
                                     do
                                         sleep 60
-                                        PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d \")
+                                        PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d ")
                                     done
                                     az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-lin-amd64
                                     az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-dar-amd64
