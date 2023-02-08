@@ -60,7 +60,7 @@ steps:
   condition: eq(variables['Agent.OS'], 'Windows_NT')
   
 # Build
-- script: |
+- bash: |
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
   workingDirectory: git-remote-gosh
