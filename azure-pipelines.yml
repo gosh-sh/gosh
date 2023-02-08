@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.67.0 
+  value: 1.66.0 
 
 trigger: none
 
@@ -39,7 +39,7 @@ steps:
   displayName: Install pre-requirements Windows
 
 # Rust setup
-# Linux and macOS.
+# Linux and macOS
 - script: |
     set -e
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
@@ -48,7 +48,7 @@ steps:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Install rust (*nix)"
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
-# Windows.
+# Windows
 - script: |
     curl -sSf -o rustup-init.exe https://win.rustup.rs
     rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN%
@@ -68,9 +68,19 @@ steps:
   
 - script: |
     cargo build --release
+    ls
+    ls target
+    ls target/release
   workingDirectory: git-remote-gosh
   displayName: Build
 
 # Publish
-- publish: ./git-remote-gosh/target/release/git-remote-gosh_unknown*
+# Linux and macOS
+- publish: ./git-remote-gosh/target/release/git-remote-gosh_unknown
   artifact: $(binName)
+  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+# Windows
+- publish: ./git-remote-gosh/target/release/git-remote-gosh_unknown.exe
+  artifact: $(binName)
+  condition: eq(variables['Agent.OS'], 'Windows_NT')

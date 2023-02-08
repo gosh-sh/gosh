@@ -74,29 +74,27 @@ pipeline {
                 }
             }
             steps {
-                retry(3) {
-                    script {
-                        if (!params.ONLYWEB) {
-                            dir('git-remote-gosh') {
-                                sh '''
-                                    #!/bin/bash
-                                    set -e 
-                                    set -x
-                                    PIPELINE_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
-                                    PIPELINE_STATUS=inProgress
-                                    until [ $PIPELINE_STATUS != "inProgress" ]
-                                    do
-                                        sleep 60
-                                        PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d '\"')
-                                    done
-                                    az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-lin-amd64
-                                    az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-dar-amd64
-                                    az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-windows-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-win-amd64
-                                    mv ./git-remote-gosh-lin-amd64/git-remote-gosh_unknown git-remote-gosh-linux-amd64
-                                    mv ./git-remote-gosh-dar-amd64/git-remote-gosh_unknown git-remote-gosh-darwin-amd64
-                                    mv ./git-remote-gosh-win-amd64/git-remote-gosh_unknown.exe git-remote-gosh-windows-amd64.exe
-                                '''
-                            }
+                script {
+                    if (!params.ONLYWEB) {
+                        dir('git-remote-gosh') {
+                            sh '''
+                                #!/bin/bash
+                                set -e 
+                                set -x
+                                PIPELINE_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
+                                PIPELINE_STATUS=inProgress
+                                until [ $PIPELINE_STATUS != "inProgress" ]
+                                do
+                                    sleep 60
+                                    PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d '\"')
+                                done
+                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-lin-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-dar-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-windows-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-win-amd64
+                                mv ./git-remote-gosh-lin-amd64/git-remote-gosh_unknown git-remote-gosh-linux-amd64
+                                mv ./git-remote-gosh-dar-amd64/git-remote-gosh_unknown git-remote-gosh-darwin-amd64
+                                mv ./git-remote-gosh-win-amd64/git-remote-gosh_unknown.exe git-remote-gosh-windows-amd64.exe
+                            '''
                         }
                     }
                 }
