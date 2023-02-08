@@ -82,24 +82,24 @@ steps:
 # Set Version
 # Linux and macOS
 - bash: |
-    echo "git-remote-gosh_v$(VERSION)"
-    mv git-remote-gosh_unknown git-remote-gosh_v$(checkVersion.VERSION)
+    echo git-remote-gosh_v$(VERSION)
+    mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
   workingDirectory: git-remote-gosh/target/release
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
 - bash: |
-    mv git-remote-gosh_unknown.exe git-remote-gosh_v$(checkVersion.VERSION).exe
+    mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
   workingDirectory: git-remote-gosh/target/release
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 # Publish
 # Linux and macOS
-- publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(checkVersion.VERSION)
+- publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(VERSION)
   artifact: $(artifactName)
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
-- publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(checkVersion.VERSION).exe
+- publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(VERSION).exe
   artifact: $(artifactName)
   condition: eq(variables['Agent.OS'], 'Windows_NT')
