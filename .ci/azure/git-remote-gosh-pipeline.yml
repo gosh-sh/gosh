@@ -75,7 +75,7 @@ steps:
 - bash: |
 #    chmod +x ./git-remote-gosh_unknown
 #    VERSION=$(./git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
-    VERSION=222222
+    VERSION=$(echo 222222)
     echo $VERSION
     echo "##vso[task.setvariable variable=VERSION]$VERSION"
   #workingDirectory: git-remote-gosh/target/release
