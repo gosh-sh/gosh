@@ -75,5 +75,5 @@ steps:
   displayName: Build
 
 # Publish
-- publish: ./git-remote-gosh/target/release/$(binName)
+- publish: ./gosh-dispatcher/target/release/$(binName)
   artifact: $(artifactName)
