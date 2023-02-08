@@ -340,6 +340,119 @@ function getChangeAllowancetProposalParams () external view
     (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint32));
 }
 
+function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
+{
+    TvmSlice s = Data.toSlice();
+    (proposalKind) = s.decode(uint256);
+}
+
+function getGoshSetCommitProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind,  string repoName, string  branchName,  string commit, optional(ConfigCommit) task, string comment)
+{
+    (proposalKind,  repoName,  branchName,  commit,,, task, comment,) = abi.decode(Data, (uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
+}
+
+function getGoshAddProtectedBranchProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
+{
+    (proposalKind,  repoName,  branchName, comment,) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getGoshSetConfigDaoProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind,  uint128 token, string comment)
+{
+    (proposalKind, token, comment, ) = abi.decode(Data, (uint256, uint128, string, uint32));
+}
+
+function getGoshDeleteProtectedBranchProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
+{
+    (proposalKind,  repoName,  branchName, comment,) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getGoshDeployWalletDaoProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, MemberToken[] pubaddr, string comment)
+{
+    (proposalKind, pubaddr, comment,) = abi.decode(Data, (uint256, MemberToken[], string, uint32));
+}
+
+function getGoshDeleteWalletDaoProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, address[] pubaddr, string comment)
+{
+    (proposalKind, pubaddr, comment, ) = abi.decode(Data, (uint256, address[], string, uint32));
+}
+
+function getGoshUpgradeDaoProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string newversion, string description, string comment)
+{
+    (proposalKind, newversion, description, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getGoshConfirmTaskProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string reponame, string taskname, uint128 index, string comment)
+{
+    (proposalKind, reponame, taskname, index, comment, ) = abi.decode(Data, (uint256, string, string, uint128, string, uint32));
+}
+
+function getGoshDestroyTaskProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+{
+    (proposalKind, reponame, taskname, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getGoshDeployTaskProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, string comment)
+{
+    (proposalKind, reponame, taskname, grant, comment,) = abi.decode(Data, (uint256, string, string, ConfigGrant, string, uint32));
+}
+
+function getGoshDeployRepoProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous, string comment)
+{
+    (proposalKind, repoName, previous, comment,) = abi.decode(Data, (uint256, string, optional(AddrVersion), string, uint32));
+}
+
+function getGoshAddVoteTokenProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
+{
+    (proposalKind, pubaddr, grant, comment, ) = abi.decode(Data, (uint256, address, uint128, string, uint32));
+}
+
+function getGoshAddRegularTokenProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
+{
+    (proposalKind, pubaddr, grant, comment, ) = abi.decode(Data, (uint256, address, uint128, string, uint32));
+}
+
+function getGoshMintTokenProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  uint128 grant, string comment)
+{
+    (proposalKind, grant, comment, ) = abi.decode(Data, (uint256, uint128, string, uint32));
+}
+
+function getGoshDaoTagProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  string[] daotag, string comment)
+{
+    (proposalKind, daotag, comment, ) = abi.decode(Data, (uint256, string[], string, uint32));
+}
+
+function getNotAllowMintProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind, string comment)
+{
+    (proposalKind, comment, ) = abi.decode(Data, (uint256, string, uint32));
+}
+
+function getChangeAllowancetProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
+{
+    (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(Data, (uint256, address[], bool[], uint128[], string, uint32));
+}
+
+function getHalfData (TvmCell Data) external pure
+        returns(TvmCell data1, TvmCell data2) {
+    (data1, data2) = abi.decode(Data, (TvmCell, TvmCell));
+}
+
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}

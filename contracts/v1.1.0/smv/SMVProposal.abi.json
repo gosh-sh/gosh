@@ -259,6 +259,227 @@
 			]
 		},
 		{
+			"name": "getGoshProposalKindData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"}
+			]
+		},
+		{
+			"name": "getGoshSetCommitProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshAddProtectedBranchProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshSetConfigDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeleteProtectedBranchProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeployWalletDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeleteWalletDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshUpgradeDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshConfirmTaskProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"index","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDestroyTaskProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeployTaskProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDeployRepoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshAddVoteTokenProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshAddRegularTokenProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshMintTokenProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDaoTagProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"daotag","type":"string[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getNotAllowMintProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeAllowancetProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getHalfData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"data1","type":"cell"},
+				{"name":"data2","type":"cell"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}
