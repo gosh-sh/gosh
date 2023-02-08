@@ -95,7 +95,7 @@ pipeline {
                                     sleep 60
                                     PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
                                 done
-                                until [ $PIPELINE_1_STATUS != "inProgress"]
+                                until [ $PIPELINE_1_STATUS != "inProgress" ]
                                 do
                                     sleep 60
                                     PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
