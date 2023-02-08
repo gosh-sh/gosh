@@ -98,23 +98,3 @@ fn decode_verbosity(level: u8) -> LevelFilter {
         _ => LevelFilter::TRACE,
     }
 }
-
-pub fn set_log_verbosity(verbosity: u8) {
-    let mut verbosity_level = verbosity;
-    if let Ok(trace_verbosity) = env::var(GIT_HELPER_ENV_TRACE_VERBOSITY) {
-        if u8::from_str(&trace_verbosity).unwrap_or_default() > 0 {
-            verbosity_level = 5;
-        }
-    }
-
-    let level_filter = match verbosity_level {
-        0 => LevelFilter::OFF,
-        1 => LevelFilter::ERROR,
-        2 => LevelFilter::WARN,
-        3 => LevelFilter::INFO,
-        4 => LevelFilter::DEBUG,
-        _ => LevelFilter::TRACE,
-    };
-
-    (GLOBAL_LOG_MANAGER.set_console_verbosity)(level_filter);
-}
