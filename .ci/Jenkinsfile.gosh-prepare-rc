@@ -67,39 +67,6 @@ pipeline {
                 }
             }
         }
-        stage('Build: GOSH dispatcher') {
-            agent {
-                node {
-                    label 'jenkins-main'
-                }
-            }
-            steps {
-                script {
-                    if (!params.ONLYWEB) {
-                        dir('git-remote-gosh') {
-                            sh '''
-                                #!/bin/bash
-                                set -e 
-                                set -x
-                                PIPELINE_ID=$(az pipelines build queue --definition-id 2 --branch \${BRANCH} --project gosh | jq .id)
-                                PIPELINE_STATUS=inProgress
-                                until [ $PIPELINE_STATUS != "inProgress" ]
-                                do
-                                    sleep 60
-                                    PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d '\"')
-                                done
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-lin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-dar-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-windows-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-win-amd64
-                                mv ./git-remote-gosh-lin-amd64/git-remote-gosh git-remote-gosh-linux-amd64
-                                mv ./git-remote-gosh-dar-amd64/git-remote-gosh git-remote-gosh-darwin-amd64
-                                mv ./git-remote-gosh-win-amd64/git-remote-gosh.exe git-remote-gosh-windows-amd64.exe
-                            '''
-                        }
-                    }
-                }
-            }
-        }
         stage('Build: Git Helper') {
             agent {
                 node {
@@ -114,19 +81,37 @@ pipeline {
                                 #!/bin/bash
                                 set -e 
                                 set -x
-                                PIPELINE_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
-                                PIPELINE_STATUS=inProgress
-                                until [ $PIPELINE_STATUS != "inProgress" ]
+                                
+                                # 2 = gosh-dispatcher
+                                PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${BRANCH} --project gosh | jq .id)
+                                PIPELINE_2_STATUS=inProgress
+
+                                # 1 = git-remote-gosh
+                                PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
+                                PIPELINE_1_STATUS=inProgress
+
+                                until [ $PIPELINE_2_STATUS != "inProgress" ]
                                 do
                                     sleep 60
-                                    PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d '\"')
+                                    PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status | tr -d '\"')
                                 done
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh_unknown-lin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh_unknown-dar-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-windows-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh_unknown-win-amd64
-                                mv ./git-remote-gosh-lin-amd64/git-remote-gosh_unknown git-remote-gosh_unknown-linux-amd64
-                                mv ./git-remote-gosh-dar-amd64/git-remote-gosh_unknown git-remote-gosh_unknown-darwin-amd64
-                                mv ./git-remote-gosh-win-amd64/git-remote-gosh_unknown.exe git-remote-gosh_unknown-windows-amd64.exe
+                                until [ $PIPELINE_1_STATUS != "inProgress"]
+                                do
+                                    sleep 60
+                                    PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
+                                done
+
+                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
+
+                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
+
+                                tar -cvf git-remote-gosh-linux-amd64.tar linux-amd64/*
+                                tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
+                                zip -r git-remote-gosh-windows-amd64.zip windows-amd64/*
                             '''
                         }
                     }
@@ -243,9 +228,14 @@ pipeline {
                     if (!params.ONLYWEB) {
                         dir('tests') {
                             sh """
-                                mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-linux-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
-                                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-                                ./set-vars.sh https://local-evernode.gosh.sh
+                                mkdir /home/jenkins/bin
+                                # dispatcher
+                                cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+                                # remote
+                                REMOTE_VERSION=$(git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
+                                cp -r ../git-remote-gosh/linux-amd64/$REMOTE_VERSION /home/jenkins/bin/$REMOTE_VERSION && chmod +x /home/jenkins/bin/$REMOTE_VERSION
+                                mkdir -p /home/jenkins/.gosh/
+                                echo $REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                             """
                             def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
                             runParallel items: (files).collect { "${it}" }
@@ -310,12 +300,9 @@ pipeline {
                             dir('.ci/scripts') {
                                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                                     sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-amd64'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh_unknown-linux-amd64'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-amd64'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh_unknown-darwin-amd64'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.exe'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh_unknown-windows-amd64.exe'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-amd64.tar'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-amd64.tar'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.zip'
                                 }
                             }
                         }
