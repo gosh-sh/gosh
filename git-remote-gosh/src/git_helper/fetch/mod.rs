@@ -181,6 +181,7 @@ where
                     git_object::Kind::Commit,
                     onchain_commit.content.as_bytes(),
                 );
+                // if disp_call ret control to dispatcher
                 let obj = git_object::Object::from(data.decode()?).into_commit();
                 tracing::debug!("Received commit {}", id);
                 let to_load = TreeObjectsQueueItem {

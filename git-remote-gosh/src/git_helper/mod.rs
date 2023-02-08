@@ -20,12 +20,14 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::blockchain::contract::ContractRead;
 
 pub mod ever_client;
 #[cfg(test)]
 mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
+static DISPATCHER_ENDL: &str = "endl";
 
 #[derive(Clone)]
 pub struct GitHelper<
@@ -317,7 +319,7 @@ async fn build_blockchain(
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
 #[instrument(level = "info", skip_all)]
-pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
+pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Result<()> {
     tracing::trace!("run: url={url}");
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
@@ -342,11 +344,21 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
                 }
                 tracing::debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
+                if dispatcher_call {
+                    stdout
+                        .write_all(format!("{DISPATCHER_ENDL}\n").as_bytes())
+                        .await?;
+                }
                 continue;
             } else if is_batching_fetch_in_progress {
                 is_batching_fetch_in_progress = false;
                 tracing::debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
+                if dispatcher_call {
+                    stdout
+                        .write_all(format!("{DISPATCHER_ENDL}\n").as_bytes())
+                        .await?;
+                }
                 continue;
             } else {
                 return Ok(());
@@ -376,7 +388,28 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
             }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
-                helper.fetch(sha, name).await?;
+                let fetch_result = helper.fetch(sha, name).await;
+                if let Err(e) = fetch_result {
+                    if e.to_string().contains("Was trying to call getCommit") {
+                        // let version = helper.get_repo_version().await?[0].clone();
+                        let previous: Value = helper
+                            .blockchain
+                            .repo_contract()
+                            .read_state(
+                                helper.blockchain.client(),
+                                "getPrevious",
+                                None
+                            ).await?;
+                        let out_str = format!(
+                            "dispatcher {previous} fetch {sha} {name}"
+                        );
+                        stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
+                        continue;
+                    } else {
+                        return Err(e);
+                    }
+                }
+
                 continue;
             }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
@@ -396,6 +429,11 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         for line in response {
             tracing::debug!("[{msg}] < {line}");
             stdout.write_all(format!("{line}\n").as_bytes()).await?;
+        }
+        if dispatcher_call {
+            stdout
+                .write_all(format!("{DISPATCHER_ENDL}\n").as_bytes())
+                .await?;
         }
     }
     Ok(())
