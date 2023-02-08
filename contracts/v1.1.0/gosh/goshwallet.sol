@@ -1394,7 +1394,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) external senderIs(address(this)) accept {
         tvm.accept();
         if (num == 0) { return; }
-        if (num > 1) {
+        if (num > 2) {
             (TvmCell data1, TvmCell data2) = abi.decode(Data,(TvmCell, TvmCell));
             this.isCompletedCallbackIn{value : 0.1 ton}(num - 1, data1, data2);
         }

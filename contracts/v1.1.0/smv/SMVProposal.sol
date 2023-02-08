@@ -453,6 +453,14 @@ function getHalfData (TvmCell Data) external pure
     (data1, data2) = abi.decode(Data, (TvmCell, TvmCell));
 }
 
+function getDataFirst () external view 
+        returns(uint128 num, TvmCell data1, TvmCell data2)
+{
+    TvmCell data0;
+    (, num, data0, ) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
+    (data1, data2) = abi.decode(data0,(TvmCell, TvmCell));
+}                
+
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}

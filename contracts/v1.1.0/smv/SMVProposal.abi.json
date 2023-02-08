@@ -480,6 +480,16 @@
 			]
 		},
 		{
+			"name": "getDataFirst",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"num","type":"uint128"},
+				{"name":"data1","type":"cell"},
+				{"name":"data2","type":"cell"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}
