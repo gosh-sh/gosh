@@ -42,19 +42,19 @@ const DaoLayout = () => {
         return tabs
     }
 
-    const getDaoDescription = useCallback(async () => {
+    const getDaoShortDescription = useCallback(async () => {
         if (dao.adapter) {
-            const content = await dao.adapter.getDescription()
+            const content = await dao.adapter.getShortDescription()
             setDescription(content)
         }
     }, [dao.adapter])
 
     useEffect(() => {
         if (!dao.isFetching) {
-            getDaoDescription()
+            getDaoShortDescription()
             setIsReady(true)
         }
-    }, [dao.isFetching, getDaoDescription])
+    }, [dao.isFetching, getDaoShortDescription])
 
     return (
         <SideMenuContainer>

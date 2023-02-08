@@ -372,22 +372,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async getDescription(): Promise<string | null> {
-        const repository = await this._getSystemRepository()
-        if (!repository) {
-            return null
-        }
+    async getShortDescription(): Promise<string | null> {
+        return await this._getSystemBlob('description.txt')
+    }
 
-        try {
-            const fullpath = 'main/description.txt'
-            const { content } = await repository.getBlob({ fullpath })
-            if (!Buffer.isBuffer(content)) {
-                return content
-            }
-        } catch (e: any) {
-            console.warn(e.message)
-        }
-        return null
+    async getDescription(): Promise<string | null> {
+        return await this._getSystemBlob('readme.md')
     }
 
     async getRemoteConfig(): Promise<object> {
@@ -797,6 +787,36 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return this.systemRepository
     }
 
+    private async _getSystemBlob(filename: string): Promise<string | null> {
+        const repository = await this._getSystemRepository()
+        if (!repository) {
+            return null
+        }
+
+        const branch = await repository.getBranch('main')
+        const tree = await repository.getTree(branch.commit.name, '')
+        const item = tree.items.find((it) => {
+            return it.type === 'blob' && it.name.toLowerCase() === filename
+        })
+        if (!item) {
+            return null
+        }
+
+        try {
+            const fullpath = `${branch.name}/${item.name}`
+            const { content } = await repository.getBlob({
+                fullpath,
+                commit: branch.commit.name,
+            })
+            if (!Buffer.isBuffer(content)) {
+                return content
+            }
+        } catch (e: any) {
+            console.warn(e.message)
+        }
+        return null
+    }
+
     private async _createLimitedWallet(): Promise<void> {
         if (!this.profile || !this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -915,12 +935,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get root tree items and recursively get subtrees
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
+
         let items: TTreeItem[] = []
         if (commit.name !== ZERO_COMMIT) {
             items = await this._getTreeItems({ name: commit.tree })
         }
-        if (search !== '') await recursive('', items)
+        if (search !== '') {
+            await recursive('', items)
+        }
 
         // Build full tree
         const tree = this._getTreeFromItems(items)

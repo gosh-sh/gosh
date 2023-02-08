@@ -79,6 +79,7 @@ interface IGoshDaoAdapter {
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
+    getShortDescription(): Promise<string | null>
     getDescription(): Promise<string | null>
     getRemoteConfig(): Promise<object>
     getRepository(options: {

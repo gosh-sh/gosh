@@ -3,14 +3,46 @@ import { classNames, useSmvEventListRecent } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
+import { useCallback, useEffect, useState } from 'react'
+import BlobPreview from '../../components/Blob/Preview'
 
 const DaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items: events } = useSmvEventListRecent(dao.adapter!, 3)
+    const [description, setDescription] = useState<string | null>()
+
+    const getDaoDescription = useCallback(async () => {
+        if (dao.adapter) {
+            const content = await dao.adapter.getDescription()
+            setDescription(content)
+        }
+    }, [dao.adapter])
+
+    useEffect(() => {
+        getDaoDescription()
+    }, [getDaoDescription])
 
     return (
         <div className="flex flex-wrap gap-4 justify-between">
             <div className="basis-8/12">
+                <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-9">
+                    {!description ? (
+                        <div className="py-10 text-center text-sm text-gray-7c8db5">
+                            Create readme.md file
+                            <br />
+                            in main branch of your _index repository
+                            <br />
+                            to add info about organization
+                        </div>
+                    ) : (
+                        <BlobPreview
+                            filename="README.md"
+                            value={description}
+                            className="!p-0"
+                        />
+                    )}
+                </div>
+
                 <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-9">
                     <h3 className="text-xl font-medium">Recent proposals</h3>
                     {!events.length && (

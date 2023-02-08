@@ -366,6 +366,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async getShortDescription(): Promise<string | null> {
+        return null
+    }
+
     async getDescription(): Promise<string | null> {
         return null
     }
