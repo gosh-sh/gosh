@@ -89,9 +89,9 @@ pipeline {
                                     az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-linux-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-lin-amd64
                                     az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-darwin-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-dar-amd64
                                     az pipelines runs artifact download --project gosh --artifact-name git-remote-gosh-windows-amd64 --run-id $PIPELINE_ID --path ./git-remote-gosh-win-amd64
-                                    mv ./git-remote-gosh-lin-amd64/git-remote-gosh git-remote-gosh-linux-amd64
-                                    mv ./git-remote-gosh-dar-amd64/git-remote-gosh git-remote-gosh-darwin-amd64
-                                    mv ./git-remote-gosh-win-amd64/git-remote-gosh git-remote-gosh-windows-amd64
+                                    mv ./git-remote-gosh-lin-amd64/git-remote-gosh_unknown git-remote-gosh-linux-amd64
+                                    mv ./git-remote-gosh-dar-amd64/git-remote-gosh_unknown git-remote-gosh-darwin-amd64
+                                    mv ./git-remote-gosh-win-amd64/git-remote-gosh_unknown.exe git-remote-gosh-windows-amd64.exe
                                 '''
                             }
                         }

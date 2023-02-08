@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.66.0 
+  value: 1.67.0 
 
 trigger: none
 
@@ -42,7 +42,7 @@ steps:
 # Linux and macOS.
 - script: |
     set -e
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain $RUSTUP_TOOLCHAIN
+    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
   env:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
@@ -51,21 +51,13 @@ steps:
 # Windows.
 - script: |
     curl -sSf -o rustup-init.exe https://win.rustup.rs
-    rustup-init.exe -y --profile minimal --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
+    rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN%
     set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
   env:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Install rust (windows)"
   condition: eq(variables['Agent.OS'], 'Windows_NT')
-
-# Set correct toolchain
-- bash: |
-    rustup default $RUSTUP_TOOLCHAIN
-    rustup update $RUSTUP_TOOLCHAIN
-  env:
-    RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
-  displayName: "Set correct Rust version"
   
 # Build
 - bash: |
@@ -76,13 +68,9 @@ steps:
   
 - script: |
     cargo build --release
-    ls
-    ls target
-    ls target/release
-    find . -name "git-remote-gosh*"
   workingDirectory: git-remote-gosh
   displayName: Build
 
 # Publish
-- publish: ./git-remote-gosh/target/release/git-remote-gosh
+- publish: ./git-remote-gosh/target/release/git-remote-gosh_unknown*
   artifact: $(binName)
