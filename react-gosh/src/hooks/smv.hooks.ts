@@ -49,8 +49,15 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
         toSmv: boolean
         toWallet: boolean
         toInternal: boolean
+        toReserve: boolean
         releaseAll: boolean
-    }>({ toSmv: false, toWallet: false, toInternal: false, releaseAll: false })
+    }>({
+        toSmv: false,
+        toWallet: false,
+        toInternal: false,
+        toReserve: false,
+        releaseAll: false,
+    })
 
     const transferToSmv = async (amount: number) => {
         try {
@@ -112,7 +119,29 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
         }
     }
 
-    return { transferToSmv, transferToWallet, transferToInternal, releaseAll, progress }
+    const transferToDaoReserve = async (amount: number) => {
+        try {
+            setProgress((state) => ({ ...state, toReserve: true }))
+
+            if (!dao) {
+                throw new GoshError('DAO adapter is undefined')
+            }
+            await dao.send2DaoReserve(amount)
+        } catch (e) {
+            throw e
+        } finally {
+            setProgress((state) => ({ ...state, toReserve: false }))
+        }
+    }
+
+    return {
+        transferToSmv,
+        transferToWallet,
+        transferToInternal,
+        transferToDaoReserve,
+        releaseAll,
+        progress,
+    }
 }
 
 function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {

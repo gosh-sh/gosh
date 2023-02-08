@@ -21,8 +21,13 @@ type TSend2InternalFormValues = {
 const DaoWalletPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { adapter: smv, details } = useSmv(dao)
-    const { transferToSmv, transferToWallet, releaseAll, transferToInternal } =
-        useSmvTokenTransfer(smv, dao.adapter)
+    const {
+        transferToSmv,
+        transferToWallet,
+        releaseAll,
+        transferToInternal,
+        transferToDaoReserve,
+    } = useSmvTokenTransfer(smv, dao.adapter)
 
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
         try {
@@ -61,6 +66,22 @@ const DaoWalletPage = () => {
         try {
             const { username, amount } = values
             await transferToInternal(username, amount)
+
+            toast.success('Tokens were successfuly sent')
+            helpers.resetForm()
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onSendToReserve = async (
+        values: TMoveBalanceFormValues,
+        helpers: FormikHelpers<TMoveBalanceFormValues>,
+    ) => {
+        try {
+            const { amount } = values
+            await transferToDaoReserve(amount)
 
             toast.success('Tokens were successfuly sent')
             helpers.resetForm()
@@ -194,57 +215,100 @@ const DaoWalletPage = () => {
                 </div>
 
                 {dao.details.version !== '1.0.0' && (
-                    <div className="py-5">
-                        <h3 className="text-lg font-medium mb-3">
-                            Send tokens to DAO member
-                        </h3>
-                        <Formik
-                            initialValues={{
-                                username: '',
-                                amount: 0,
-                            }}
-                            onSubmit={onSendToInternal}
-                            validationSchema={yup.object().shape({
-                                username: yup.string().username().required(),
-                                amount: yup
-                                    .number()
-                                    .min(1)
-                                    .max(details.smvBalance)
-                                    .required('Field is required'),
-                            })}
-                            enableReinitialize
-                        >
-                            {({ isSubmitting }) => (
-                                <Form className="flex flex-wrap items-baseline gap-3">
-                                    <div className="grow sm:grow-0">
-                                        <Field
-                                            name="username"
-                                            component={FormikInput}
-                                            placeholder="Username"
-                                            autoComplete="off"
+                    <>
+                        <div className="py-5">
+                            <h3 className="text-lg font-medium mb-3">
+                                Send tokens to DAO member
+                            </h3>
+                            <Formik
+                                initialValues={{
+                                    username: '',
+                                    amount: 0,
+                                }}
+                                onSubmit={onSendToInternal}
+                                validationSchema={yup.object().shape({
+                                    username: yup.string().username().required(),
+                                    amount: yup
+                                        .number()
+                                        .min(1)
+                                        .max(details.smvBalance)
+                                        .required('Field is required'),
+                                })}
+                                enableReinitialize
+                            >
+                                {({ isSubmitting }) => (
+                                    <Form className="flex flex-wrap items-baseline gap-3">
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="username"
+                                                component={FormikInput}
+                                                placeholder="Username"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="amount"
+                                                component={FormikInput}
+                                                placeholder="Amount"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
                                             disabled={isSubmitting}
-                                        />
-                                    </div>
-                                    <div className="grow sm:grow-0">
-                                        <Field
-                                            name="amount"
-                                            component={FormikInput}
-                                            placeholder="Amount"
-                                            autoComplete="off"
+                                            isLoading={isSubmitting}
+                                        >
+                                            Send tokens
+                                        </Button>
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
+
+                        <div className="py-5">
+                            <h3 className="text-lg font-medium mb-3">
+                                Send tokens to DAO reserve
+                            </h3>
+                            <Formik
+                                initialValues={{
+                                    amount: 0,
+                                }}
+                                onSubmit={onSendToReserve}
+                                validationSchema={yup.object().shape({
+                                    amount: yup
+                                        .number()
+                                        .min(1)
+                                        .max(details.smvBalance)
+                                        .required('Field is required'),
+                                })}
+                                enableReinitialize
+                            >
+                                {({ isSubmitting }) => (
+                                    <Form className="flex flex-wrap items-baseline gap-3">
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="amount"
+                                                component={FormikInput}
+                                                placeholder="Amount"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
                                             disabled={isSubmitting}
-                                        />
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        isLoading={isSubmitting}
-                                    >
-                                        Send tokens
-                                    </Button>
-                                </Form>
-                            )}
-                        </Formik>
-                    </div>
+                                            isLoading={isSubmitting}
+                                        >
+                                            Send tokens
+                                        </Button>
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
+                    </>
                 )}
             </div>
         </>

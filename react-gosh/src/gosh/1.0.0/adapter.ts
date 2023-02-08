@@ -542,6 +542,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async send2DaoReserve(amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async createTag(tag: string[]): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }

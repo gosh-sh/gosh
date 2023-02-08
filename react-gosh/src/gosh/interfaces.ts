@@ -118,6 +118,7 @@ interface IGoshDaoAdapter {
     mint(amount: number, options: { comment?: string; alone?: boolean }): Promise<void>
     disableMint(options: { comment?: string; alone?: boolean }): Promise<void>
     sendInternal2Internal(username: string, amount: number): Promise<void>
+    send2DaoReserve(amount: number): Promise<void>
 
     createTag(tag: string[], alone?: boolean | null): Promise<void>
 }

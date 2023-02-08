@@ -73,8 +73,9 @@ const DaoLayout = () => {
                         >
                             {dao.details?.version}
                         </span>
-                        {dao.details?.tags?.map((tag) => (
+                        {dao.details?.tags?.map((tag, index) => (
                             <span
+                                key={index}
                                 className={classNames(
                                     'mx-1 border border-gray-e6edff rounded px-2',
                                     'text-xs text-gray-7c8db5',

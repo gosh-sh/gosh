@@ -132,7 +132,7 @@ type TBranchOperateProgress = {
 type TTaskCommitConfig = {
     task: string
     assigners: string[]
-    reviewer: string
+    reviewers: string[]
     manager: string
 }
 

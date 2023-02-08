@@ -681,6 +681,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await this.wallet.run('sendToken', { pubaddr: profile.address, grant: amount })
     }
 
+    async send2DaoReserve(amount: number): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+        await this.wallet.run('sendTokenToDaoReserve', { grant: amount })
+    }
+
     async createTag(tag: string[], alone?: boolean | null): Promise<void> {
         if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
 
@@ -2337,7 +2344,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         task?: {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
-            pubaddrreview: TAddress
+            pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: TAddress
         },
     ): Promise<void> {
@@ -2361,7 +2368,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         task?: {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
-            pubaddrreview: TAddress
+            pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: TAddress
         },
     ): Promise<void> {
@@ -2402,13 +2409,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             assigners[item.address] = true
         }
 
-        const reviewer = await this.gosh.isValidProfile([config.reviewer])
+        const reviewers: { [address: string]: boolean } = {}
+        const _reviewers = await this.gosh.isValidProfile([...config.reviewers])
+        for (const item of _reviewers) {
+            reviewers[item.address] = true
+        }
+
         const manager = await this.gosh.isValidProfile([config.manager])
 
         return {
             task: task.address,
             pubaddrassign: assigners,
-            pubaddrreview: reviewer[0].address,
+            pubaddrreview: reviewers,
             pubaddrmanager: manager[0].address,
         }
     }
@@ -2705,6 +2717,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        // Get allowance
         // const { value0 } = await this.dao.runLocal('getWalletsFull', {})
         // const profiles = []
         // for (const key in value0) {

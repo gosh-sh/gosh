@@ -46,7 +46,7 @@ const PullCreate_1_1_0 = (props: TPullCreate_1_1_0Props) => {
                 taskConfig = {
                     task,
                     assigners: [],
-                    reviewer: review,
+                    reviewers: [review],
                     manager,
                 }
             }
