@@ -83,9 +83,8 @@ steps:
 # Set Version
 # Linux and macOS
 - bash: |
-    echo $(checkVersion.VERSION)
-    echo "$(checkVersion.VERSION)""
-    echo git-remote-gosh_v$(checkVersion.VERSION)
+    echo "$(checkVersion.VERSION)"
+    echo "git-remote-gosh_v$(checkVersion.VERSION)"
     echo git-remote-gosh_v\$(checkVersion.VERSION)
     #mv git-remote-gosh_unknown git-remote-gosh_v$(checkVersion.VERSION)
   #workingDirectory: git-remote-gosh/target/release
