@@ -72,9 +72,10 @@ steps:
 #  displayName: Build
 
 # Check version
-- script: |
+- bash: |
     #VERSION=$(git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
     VERSION=$(echo 1111)
+    echo $VERSION
     echo "##vso[task.setvariable variable=VERSION]$VERSION"
   #workingDirectory: git-remote-gosh/target/release
   name: checkVersion
@@ -82,7 +83,7 @@ steps:
 
 # Set Version
 # Linux and macOS
-- script: |
+- bash: |
     echo "$(checkVersion.VERSION)"
     echo "git-remote-gosh_v$(checkVersion.VERSION)"
     echo git-remote-gosh_v\$(checkVersion.VERSION)
