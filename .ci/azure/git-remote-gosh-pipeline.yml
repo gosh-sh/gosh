@@ -66,28 +66,25 @@ steps:
   workingDirectory: git-remote-gosh
   displayName: Prepare
   
-#- script: |
-#    cargo build --release
-#  workingDirectory: git-remote-gosh
-#  displayName: Build
+- script: |
+    cargo build --release
+  workingDirectory: git-remote-gosh
+  displayName: Build
 
 # Check version
 - bash: |
-    #VERSION=$(git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
-    VERSION=$(echo 1111)
+    VERSION=$(git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
     echo $VERSION
     echo "##vso[task.setvariable variable=VERSION]$VERSION"
-  #workingDirectory: git-remote-gosh/target/release
+  workingDirectory: git-remote-gosh/target/release
   condition: eq(variables['Agent.OS'], 'Linux')
 
 # Set Version
 # Linux and macOS
 - bash: |
-    echo "$(VERSION)"
     echo "git-remote-gosh_v$(VERSION)"
-    echo git-remote-gosh_v\$(checkVersion.VERSION)
-    #mv git-remote-gosh_unknown git-remote-gosh_v$(checkVersion.VERSION)
-  #workingDirectory: git-remote-gosh/target/release
+    mv git-remote-gosh_unknown git-remote-gosh_v$(checkVersion.VERSION)
+  workingDirectory: git-remote-gosh/target/release
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
