@@ -1,0 +1,64 @@
+version: '2.2'
+
+services:
+
+  _goshmon_image_build:
+    image: goshmon_image
+    command: [ 'echo', 'build completed' ]
+    build:
+      context: ..
+      dockerfile: Dockerfile
+
+# app.gosh.sh
+  gosh-cron-rem-rotate-small: &service
+    image: goshmon_image
+    depends_on: ["_goshmon_image_build"]
+    container_name: gosh-cron-rem-rotate-small
+    init: true
+    restart: "on-failure"
+    environment: ["GM_MODE=cron-rem-rotate-small"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-cron-rem-rotate-small-data:/home/node/app/data"
+    networks:
+      gosh-monitoring: { }
+
+  gosh-cron-rem-rotate-large:
+    <<: *service
+    container_name: gosh-cron-rem-rotate-large
+    environment: ["GM_MODE=cron-rem-rotate-large"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-cron-rem-rotate-large-data:/home/node/app/data"
+
+  gosh-cron-rem-rotate-small-next:
+    <<: *service
+    container_name: gosh-cron-rem-rotate-small-next
+    environment: ["GM_MODE=cron-rem-rotate-small-next"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-cron-rem-rotate-small-data-next:/home/node/app/data"
+
+  gosh-cron-rem-rotate-large-next:
+    <<: *service
+    container_name: gosh-cron-rem-rotate-large-next
+    environment: ["GM_MODE=cron-rem-rotate-large-next"]
+    volumes:
+      - "../config:/home/node/app/config:ro"
+      - "./errors:/home/node/app/errors"
+      - "gm-cron-rem-rotate-large-data-next:/home/node/app/data"
+
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+
+volumes:
+  gm-cron-rem-rotate-small-data:
+  gm-cron-rem-rotate-large-data:
+  gm-cron-rem-rotate-small-data-next:
+  gm-cron-rem-rotate-large-data-next:

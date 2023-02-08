@@ -1,34 +1,37 @@
 extern crate shellexpand;
 use std::{
     collections::HashMap,
-    env,
-    error::Error,
-    fmt,
+    env, fmt,
     io::{BufReader, Read},
     path::Path,
 };
 
 mod defaults;
 
-pub const IPFS_DIFF_THRESHOLD: usize = 15000;
-pub const IPFS_CONTENT_THRESHOLD: usize = 15000;
+pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
+pub const SET_COMMIT_TIMEOUT: &u64 = &180; // in secs
+pub const DEPLOY_CONTRACT_TIMEOUT: &u64 = &180; // in secs
+
+const USE_CACHE_ENV_VARIABLE_NAME: &str = "GOSH_USE_CACHE";
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
     pub pubkey: String,
     pub secret: String,
+    pub profile: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct NetworkConfig {
     #[serde(rename = "user-wallet")]
     user_wallet: Option<UserWalletConfig>,
     // Note corresponding test:
     // ensure_added_network_does_not_drop_defaults
+    #[serde(default = "std::vec::Vec::<String>::new")]
     endpoints: Vec<String>,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Config {
     #[serde(rename = "ipfs")]
@@ -70,21 +73,21 @@ impl Default for Config {
 
 impl Config {
     pub fn ipfs_http_endpoint(&self) -> &str {
-        return &self.ipfs_http_endpoint;
+        &self.ipfs_http_endpoint
     }
 
     pub fn primary_network(&self) -> &str {
-        return &self.primary_network;
+        &self.primary_network
     }
 
-    fn load<TReader: Read + Sized>(config_reader: TReader) -> Result<Self, Box<dyn Error>> {
+    fn load<TReader: Read + Sized>(config_reader: TReader) -> anyhow::Result<Self> {
         let config: Config = serde_json::from_reader(config_reader)?;
-        return Ok(config);
+        Ok(config)
     }
 
-    pub fn init() -> Result<Self, Box<dyn Error>> {
+    pub fn init() -> anyhow::Result<Self> {
         let config_path =
-            env::var("GOSH_CONFIG_PATH").unwrap_or(defaults::CONFIG_LOCATION.to_string());
+            env::var("GOSH_CONFIG_PATH").unwrap_or_else(|_| defaults::CONFIG_LOCATION.to_string());
         let config_path = shellexpand::tilde(&config_path).into_owned();
         let config_path = Path::new(&config_path);
         if !config_path.exists() {
@@ -92,33 +95,48 @@ impl Config {
         }
         let config_file = std::fs::File::open(config_path)?;
         let config_reader = BufReader::new(config_file);
-        return Self::load(config_reader);
+        Self::load(config_reader)
     }
 
-    #[instrument(level = "debug")]
+    pub fn use_cache(&self) -> Option<String> {
+        env::var(USE_CACHE_ENV_VARIABLE_NAME).ok()
+    }
+
+    #[instrument(level = "info", skip_all)]
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
-        return self
-            .networks
-            .get(network)
-            .map(|network_config| network_config.endpoints.clone());
+        tracing::trace!("find_network_endpoints: network={network}");
+        let network_config = self.networks.get(network);
+        match network_config {
+            None => defaults::NETWORK_ENDPOINTS
+                .get(network)
+                .and_then(|endpoints| Some(endpoints.clone())),
+            Some(network_config) => {
+                if network_config.endpoints.len() == 0 {
+                    defaults::NETWORK_ENDPOINTS
+                        .get(network)
+                        .and_then(|endpoints| Some(endpoints.clone()))
+                } else {
+                    Some(network_config.endpoints.clone())
+                }
+            }
+        }
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        return self
-            .networks
+        tracing::trace!("Networks: {:?}", self.networks);
+        self.networks
             .get(network)
-            .map(|network_config| network_config.user_wallet.as_ref())
-            .flatten()
-            .cloned();
+            .and_then(|network_config| network_config.user_wallet.as_ref())
+            .cloned()
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
-    fn load_from(s: &str) -> Config {
-        return Config::load(s.as_bytes()).unwrap();
+    pub fn load_from(s: &str) -> Config {
+        Config::load(s.as_bytes()).unwrap()
     }
 
     #[test]
@@ -131,6 +149,58 @@ mod tests {
         "#,
         );
         assert_eq!(config.ipfs_http_endpoint, "foo.endpoint");
+    }
+
+    #[test]
+    fn ensure_wallet_config_reads() {
+        let config = load_from(
+            r#"
+            {
+                "primary-network": "foo",
+                "networks": {
+                    "foo": {
+                        "user-wallet": {
+                            "pubkey": "bar",
+                            "secret": "baz",
+                            "profile": "foo"
+                        }
+                    }
+                }
+            }
+        "#,
+        );
+        let wallet_config = config
+            .find_network_user_wallet("foo")
+            .expect("It must be there");
+        assert_eq!(wallet_config.pubkey, "bar");
+        assert_eq!(wallet_config.secret, "baz");
+        assert_eq!(wallet_config.profile, "foo");
+    }
+
+    #[test]
+    fn ensure_wallet_config_present_does_not_drop_default_endpoints() {
+        let config = load_from(
+            r#"
+            {
+                "networks": {
+                    "network.gosh.sh": {
+                        "user-wallet": {
+                            "pubkey": "foo",
+                            "secret": "bar",
+                            "profile": "foo"
+                        }
+                    }
+                }
+            }
+        "#,
+        );
+        assert!(config.find_network_endpoints("network.gosh.sh").is_some());
+        assert_eq!(
+            config.find_network_endpoints("network.gosh.sh"),
+            defaults::NETWORK_ENDPOINTS
+                .get("network.gosh.sh")
+                .map(|e| e.clone())
+        );
     }
 
     #[test]
@@ -160,13 +230,14 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Bug: TODO: fix
     fn ensure_added_network_does_not_drop_defaults() {
         let config = load_from(
             r#"
             {
                 "networks": {
-                    "something-added": ["foo"]
+                    "something-added": {
+                        "endpoints": ["foo"]
+                    }
                 }
             }
         "#,

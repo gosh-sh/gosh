@@ -1,0 +1,11 @@
+server {
+
+    listen 80;
+    server_name BUCKET_NAME.gosh.sh;
+
+	location / {
+		proxy_pass              http://BUCKET_NAME.s3-website.eu-west-2.amazonaws.com;
+		proxy_intercept_errors on;
+    }
+
+} 

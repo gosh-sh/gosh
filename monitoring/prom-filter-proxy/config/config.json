@@ -1,0 +1,14 @@
+{
+  "source": "gosh-public-grafana",
+  "target": "gosh-prometheus",
+  "allow": "POST /api/v1/query_range",
+  "dashboards": "/dashboards/*.json",
+  "check_var": "query",
+  "replacers": {
+    "$__range": "[0-9]+s"
+  },
+  "user_agents": [
+    "Grafana/[0-9\\.]+"
+  ],
+  "debug": true
+}

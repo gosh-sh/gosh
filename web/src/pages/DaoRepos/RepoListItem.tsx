@@ -2,16 +2,16 @@ import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import { TGoshBranch, TGoshRepoDetails, TGoshTagDetails } from '../../types/types'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
+import { TRepository } from 'react-gosh/dist/types/repo.types'
 
 type TRepositoryListItemProps = {
     daoName: string
     daoLink?: boolean
-    item: Omit<TGoshRepoDetails, 'branches' | 'head' | 'tags'> & {
-        branches?: TGoshBranch[]
+    item: Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
+        branches?: number
         head?: string
-        tags?: TGoshTagDetails[]
+        commitsIn?: any[]
     }
 }
 
@@ -25,7 +25,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     <>
                         <Link
                             className="text-xl font-semibold hover:underline"
-                            to={`/${daoName}`}
+                            to={`/o/${daoName}`}
                         >
                             {daoName}
                         </Link>
@@ -34,27 +34,16 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 )}
                 <Link
                     className="text-xl font-semibold hover:underline"
-                    to={`/${daoName}/${item.name}`}
+                    to={`/o/${daoName}/r/${item.name}`}
                 >
                     {item.name}
                 </Link>
+                <span className="ml-2 align-super text-sm font-normal">
+                    {item.version}
+                </span>
             </div>
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
-
-            {!!item?.tags && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {item.tags.map((tag, index) => (
-                        <button
-                            key={index}
-                            type="button"
-                            className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
-                        >
-                            {tag.content}
-                        </button>
-                    ))}
-                </div>
-            )}
 
             <div className="flex gap-4 mt-3 text-xs text-gray-606060 justify-between">
                 <div className="flex gap-4">
@@ -64,7 +53,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches?.length}
+                        {item.branches}
                     </div>
                     {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />

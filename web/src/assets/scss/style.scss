@@ -9,6 +9,8 @@
 @import 'react-toastify/scss/main';
 @import 'github-markdown-css/github-markdown-light.css';
 // @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
+@import 'highlight.js/scss/github.scss';
+@import 'diff2html/bundles/css/diff2html.min.css';
 
 html,
 body,
@@ -20,7 +22,7 @@ body,
 }
 
 .wrapper {
-    background-image: url('../images/bg.png');
+    /* background-image: url('../images/bg.png'); */
     @apply bg-right-top
         bg-no-repeat
         bg-cover
@@ -125,8 +127,6 @@ for those elements which require gradient border color
         }
 
         &:hover {
-            @apply text-white;
-
             &::after {
                 @apply sm:bg-button-header-focus-border;
             }
@@ -226,8 +226,7 @@ for those elements which require gradient border color
     @apply relative
         rounded-3px
         bg-gray-050a15/3
-        transition
-        pointer-events-none;
+        transition;
 
     &::after {
         @extend .gradient-border-after;
@@ -271,7 +270,8 @@ for those elements which require gradient border color
         w-16
         rounded-full
         transition-colors
-        outline-none;
+        outline-none
+        border;
 
     &::after {
         @extend .gradient-border-after;
@@ -303,6 +303,464 @@ for those elements which require gradient border color
 
         span {
             @apply bg-gray-050a15 translate-x-10;
+        }
+    }
+}
+
+/** Line numbers for highlight.js */
+.code-line {
+    &__number {
+        @apply block absolute p-0 w-11;
+    }
+
+    &__number a {
+        @apply block
+            leading-5
+            text-right
+            px-2
+            py-px
+            bg-white
+            text-black/20 hover:text-black/80;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-size: 0.8125rem;
+    }
+
+    &__content {
+        @apply pl-14;
+    }
+
+    &--selected {
+        @apply bg-gray-e5e5f9;
+    }
+
+    &--selected &__number > a {
+        @apply text-black bg-gray-e5e5f9;
+    }
+}
+
+/* Technique to disable line numbers from being selected and copied.
+   Checkout this post for more details http://codepen.io/danoc/pen/ByGKZv */
+[data-pseudo-content]::before,
+[data-pseudo-content--before]::before,
+[data-pseudo-content--after]::after {
+    content: attr(data-pseudo-content);
+}
+
+.signup {
+    @apply flex flex-wrap justify-start pb-5;
+
+    &--home {
+        @apply pt-36;
+    }
+
+    &--organizations {
+        @apply pt-16 md:pt-36;
+    }
+
+    &--repositories {
+        @apply pt-16 md:pt-36;
+    }
+
+    &--phrase {
+        @apply pt-16 md:pt-36;
+    }
+
+    &--username {
+        @apply pt-16 md:pt-36;
+    }
+
+    &--complete {
+        @apply relative border rounded-xl items-center
+            py-9 px-4 lg:px-16
+            mb-9;
+    }
+
+    &__aside {
+        @apply basis-full lg:basis-1/2 overflow-hidden;
+
+        &--step {
+            @apply px-0 lg:px-24 mt-0 lg:mt-28;
+        }
+
+        &--complete {
+            @apply px-0 mt-0;
+        }
+    }
+
+    &__content {
+        @apply basis-full lg:basis-1/2
+            px-0 lg:px-3 mt-16 lg:mt-0
+            overflow-hidden;
+
+        &--first {
+            @apply order-first lg:order-none mt-0 mb-10 lg:mb-0;
+        }
+    }
+
+    &__reload-items {
+        @apply mb-4 text-end;
+
+        button {
+            @apply text-gray-7c8db5 text-sm px-2 py-1.5;
+        }
+
+        button .icon {
+            @apply mr-2;
+        }
+    }
+
+    &__orgitem {
+        @apply mb-6;
+    }
+
+    &__repoitem {
+    }
+
+    &__norepos {
+        @apply text-center text-gray-53596d
+            w-full lg:w-1/2
+            mx-auto mt-28;
+    }
+
+    &__norepos-title {
+        @apply text-xl;
+    }
+
+    &__norepos-content {
+        @apply leading-tight mt-2;
+    }
+
+    &__phrase-form {
+        @apply w-full max-w-[25.375rem] mx-auto
+            border rounded-xl p-5 lg:px-8 lg:py-12;
+    }
+
+    &__nickname-form {
+        @apply w-full max-w-[25.375rem] mx-auto;
+    }
+
+    &__dismiss-btn {
+        @apply absolute right-4 top-3
+            p-1
+            text-gray-7c8db5 hover:text-black;
+    }
+}
+.signup .aside-home {
+    &__header {
+        @apply pb-4 text-4xl md:text-5xl font-semibold leading-tight;
+    }
+
+    &__content {
+        @apply text-lg;
+    }
+
+    &__signup {
+        @apply btn btn--body
+            mt-14 py-3 px-4
+            text-center text-base leading-normal font-medium
+            w-full max-w-xs;
+    }
+}
+.signup .aside-step {
+    &__header {
+        @apply flex flex-nowrap items-center overflow-hidden mb-8;
+    }
+
+    &__title {
+        @apply grow
+            text-xl
+            whitespace-nowrap text-ellipsis overflow-hidden;
+    }
+
+    &__btn-signout {
+        @apply flex flex-nowrap items-center
+            py-2
+            w-full
+            rounded-lg
+            transition-all;
+
+        &-slide {
+            @apply grow
+                flex flex-nowrap
+                text-xl text-left
+                whitespace-nowrap text-ellipsis overflow-hidden;
+        }
+
+        &-icon {
+            @apply text-gray-7c8db5;
+        }
+
+        &-user {
+            @apply block
+                transition-all duration-300
+                whitespace-nowrap text-ellipsis overflow-hidden;
+        }
+
+        &-text {
+            @apply block
+                transition-all duration-75
+                translate-x-full w-0 overflow-hidden;
+        }
+
+        &:hover {
+            @apply px-3 bg-gray-50;
+
+            .aside-step__btn-signout-user {
+                @apply -translate-x-full w-0;
+            }
+            .aside-step__btn-signout-text {
+                @apply translate-x-0 w-full;
+            }
+            .aside-step__btn-signout-icon {
+                @apply text-black;
+            }
+        }
+    }
+
+    &__btn-back {
+        @apply mr-6;
+
+        button {
+            @apply rounded-full border
+                w-10 h-10
+                text-gray-200
+                hover:text-gray-400 hover:bg-gray-50;
+        }
+    }
+
+    &__text {
+        @apply text-2xl lg:text-3xl leading-normal font-medium;
+    }
+
+    &__text-secondary {
+        @apply text-lg lg:text-base mt-4 text-gray-53596d;
+    }
+
+    &__text-blue {
+        @apply text-blue-348eff;
+    }
+
+    &__btn-upload {
+        @apply btn btn--body
+            mt-14 py-3 px-5
+            text-base leading-normal font-medium
+            w-full max-w-xs;
+    }
+}
+.signup .orgitem {
+    @apply border rounded-xl overflow-hidden;
+
+    &__main {
+        @apply flex flex-nowrap p-5 cursor-pointer;
+
+        &:hover {
+            @apply bg-gray-50;
+
+            .orgitem__arrow {
+                @apply text-gray-53596d;
+            }
+        }
+    }
+
+    &__media {
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply w-[4rem] min-w-[4rem]; */
+        width: 4rem;
+        min-width: 4rem;
+
+        img {
+            @apply w-full rounded-xl;
+        }
+    }
+
+    &__content {
+        @apply grow pl-4 overflow-hidden;
+    }
+
+    &__header {
+        @apply relative mb-1;
+    }
+
+    &__title {
+        @apply text-xl font-medium leading-tight
+            whitespace-nowrap text-ellipsis overflow-hidden;
+
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply max-w-[80%] */
+        max-width: 80%;
+    }
+
+    &__arrow {
+        @apply absolute right-1 top-0
+            text-base text-gray-200
+            transition-transform
+            -rotate-90;
+    }
+
+    &__arrow-open {
+        @apply rotate-90;
+    }
+
+    &__description {
+        @apply text-xs md:text-sm text-gray-53596d;
+    }
+
+    &__footer {
+        @apply text-gray-606060 text-xs mt-3 hidden lg:block;
+    }
+
+    &__footer--xs {
+        @apply border-t px-5 py-2 mt-0 block lg:hidden;
+    }
+
+    &__repo {
+        @apply text-blue-348eff pr-2;
+    }
+
+    &__repos {
+        @apply max-h-96 overflow-auto;
+    }
+}
+.signup .repoitem {
+    @apply p-5
+        cursor-pointer
+        hover:bg-gray-50;
+
+    &__header {
+        @apply relative flex flex-nowrap items-center
+            font-medium;
+    }
+
+    &__icon {
+        @apply mr-2.5;
+    }
+
+    &__title {
+        @apply text-blue-1e7aec
+            whitespace-nowrap text-ellipsis overflow-hidden;
+
+        /** https://github.com/tailwindlabs/tailwindcss/issues/8806#issuecomment-1179028828 */
+        /* @apply max-w-[80%] */
+        max-width: 80%;
+    }
+
+    &__check {
+        @apply absolute top-0 right-0;
+    }
+
+    &__description {
+        @apply text-sm text-gray-53596d mt-1.5;
+    }
+
+    &__secondary {
+        @apply text-xs text-gray-53596d mt-2.5;
+    }
+}
+.signup .nickname-form {
+    @apply border rounded-xl p-5 lg:p-10;
+
+    &__title {
+        @apply text-2xl text-center text-blue-348eff font-medium mb-1;
+    }
+
+    &__subtitle {
+        @apply text-gray-53596d text-center mb-8;
+    }
+
+    &__submit {
+        @apply mt-10 mx-auto;
+
+        button {
+            @apply btn btn--body
+                w-full
+                px-4 py-3
+                leading-normal font-medium;
+        }
+
+        button .spinner {
+            @apply mr-3;
+        }
+    }
+}
+
+.signin {
+    &__phrase-form {
+        @apply px-5;
+    }
+}
+
+.phrase-form {
+    &__words {
+        @apply relative flex flex-wrap justify-center gap-3;
+    }
+
+    &__word {
+        @apply relative;
+    }
+
+    &__word-label {
+        @apply block text-xs text-gray-7c8db5;
+    }
+
+    &__word-input {
+        @apply border rounded-lg w-full lg:max-w-[150px] px-3 py-2;
+    }
+
+    &__word-suggestions {
+        @apply absolute left-0 top-full w-full
+            border rounded-lg overflow-hidden
+            bg-white
+            mt-1
+            z-1;
+    }
+
+    &__word-suggestion {
+        @apply px-3 py-2 cursor-pointer hover:bg-gray-50;
+    }
+
+    &__words-btns {
+        @apply text-right text-sm text-gray-7c8db5 mb-4;
+
+        button {
+            @apply px-2 py-1 rounded-lg
+                hover:bg-gray-fafafd;
+        }
+
+        button svg {
+            @apply mr-1;
+        }
+    }
+
+    &__words-clear-btn {
+        @apply absolute
+            right-0 lg:right-2 -top-3 lg:-top-6
+            py-1 px-2 rounded-lg
+            text-gray-7c8db5 hover:text-black
+            hover:bg-gray-50;
+    }
+
+    &__confirm {
+        @apply mt-16;
+    }
+
+    &__submit {
+        @apply mt-5 text-center;
+
+        button {
+            @apply btn btn--body
+                px-4 py-3
+                w-full md:w-1/3
+                leading-normal font-medium;
+        }
+
+        button .spinner {
+            @apply mr-3;
+        }
+    }
+
+    &__submit--full {
+        button {
+            @apply w-full;
         }
     }
 }

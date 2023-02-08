@@ -1,0 +1,96 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+#  external_labels:
+#      monitor: 'docker-host-alpha'
+
+# Load and evaluate rules in this file every 'evaluation_interval' seconds.
+rule_files:
+
+scrape_configs:
+
+  - job_name: 'nodeexporter'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['gosh-nodeexporter:9100']
+
+  - job_name: 'cadvisor'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['gosh-cadvisor:8080']
+
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'pushgateway'
+    scrape_interval: 10s
+    honor_labels: true
+    static_configs:
+      - targets: ['gosh-pushgateway:9091']
+
+  - job_name: 'trcnt-stat'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['trcnt-stat:9123']
+
+  - job_name: 'wallet-mon'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['wallet-mon:9888']
+
+  - job_name: 'gosh-mon-read'
+    scrape_interval: 60s
+    scrape_timeout: 59s
+    static_configs:
+      - targets:
+          - 'gosh-mon-app-sm-rd:9600'
+          - 'gosh-mon-app-la-rd:9600'
+          - 'gosh-mon-rem-sm-rd:9600'
+          - 'gosh-mon-rem-la-rd:9600'
+#          - 'gosh-mon-next-app-sm-rd:9600'
+#          - 'gosh-mon-next-app-la-rd:9600'
+#          - 'gosh-mon-next-rem-sm-rd:9600'
+#          - 'gosh-mon-next-rem-la-rd:9600'
+
+  - job_name: 'gosh-mon-write'
+    scrape_interval: 300s
+    scrape_timeout: 299s
+    static_configs:
+      - targets:
+          - 'gosh-mon-app-sm-wr:9600'
+          - 'gosh-mon-app-la-wr:9600'
+          - 'gosh-mon-rem-sm-wr:9600'
+          - 'gosh-mon-rem-la-wr:9600'
+#          - 'gosh-mon-next-app-sm-wr:9600'
+#          - 'gosh-mon-next-app-la-wr:9600'
+#          - 'gosh-mon-next-rem-sm-wr:9600'
+#          - 'gosh-mon-next-rem-la-wr:9600'
+
+  - job_name: 'gosh-mon-aux'
+    scrape_interval: 60s
+    scrape_timeout: 50s
+    static_configs:
+      - targets:
+          - 'gosh-mon-seed-read:9600'
+
+  - job_name: 'gosh-mon-redis'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['gosh-mon-redis-exporter:9121']
+
+  - job_name: 'supa-exp'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['supa-exp:9789']
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - 'gosh-alertmanager:9093'

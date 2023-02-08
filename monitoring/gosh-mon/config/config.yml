@@ -1,0 +1,252 @@
+global:
+  root:           0:18fae8e25d9ffea2b0875646398efe00361805b371ce61216a053af161a3a30e  # v1.0.0
+  organization:   monitoring
+  repository:     monitoring
+  branch:         NOT_SET
+  filename:       last
+  handler:        NOT_SET
+  large:          false
+  prefix:         gosh_mon_
+  timeout_ms:     20000
+  longtimeout_ms: 180000
+  interval:       45
+  subinterval:    0
+  origin:         NOT_SET
+  cron:           false
+  appurl:         https://app.gosh.sh/
+  pupextraflags:  []
+  gosh_repo_url:  https://github.com/gosh-sh/gosh.git
+  gosh_branch:    "release:latest"
+  gosh_bin_path:  last-git-remote-gosh
+  release_asset:  git-remote-gosh-amd64
+  username:       monitoring
+
+  ipfs_address:  https://ipfs.network.gosh.sh
+  prim_network:  gosh.sh
+  conf_endpoint: network.gosh.sh
+
+  # require | priority | fallback | disabled
+  use_envs: fallback  # root set in config for version, want to get endpoint
+
+  log_ws_req: 600
+  log_ws_res: 300
+
+  # do not use 0, it will result in '-' argument
+  push_verbosity: 1
+  pull_verbosity: 1
+
+  reverb__push_verbosity: 4
+  reverb__pull_verbosity: 4
+
+  redis_host: gosh-mon-redis
+  do_lock:    false
+
+  redlock_retry_delay_ms: 100
+  redlock_retry_jitter_ms: 10
+  redlock_autoextend_ms: 1000
+
+  # should be reasonably short, it may be useless to retry after significant period of time
+  reverb_ttl_s: 10
+
+  # clean logs older than 1 month or if total size > 100 MB or if count > 500
+  reverb_clean_old_s: 2678400
+  reverb_clean_total_mb: 100
+  reverb_clean_file_cnt: 500
+
+  do_archive_logs: true
+  arch_clean_old_s: 2678400
+  arch_clean_total_mb: 100
+  arch_clean_file_cnt: 500
+
+  large_sha1_cnt: 3000  # 3000*27.212890625 ~= 81638 > 64k max msg size
+
+
+includes:
+
+#  next: &next  # temporarily not available
+#    # for app.gosh.sh
+#    appurl: PLEASE_DEFINE
+#    prim_network: PLEASE_DEFINE
+#    conf_endpoint: PLEASE_DEFINE
+#    # for remote
+#    gosh_branch: "release:latest-prerelease"
+#    use_envs: require
+#    # separate org-repo for next
+#    organization: next-mon-org
+#    repository: next-mon-repo
+#    redis_pref: next_
+#    include: creds-next
+
+  cron-rotate: &cron-rotate
+    origin:       root
+    handler:      app-rotate
+    cron:         true
+    interval:     600
+    lock_retry_s: 1800
+
+  use_log_counter_for_remote: &use_log_counter_for_remote
+    log_counter:
+      sha_incorrect: It is a sequence of changes. Sha must be correct. Fail otherwise
+      none_unwrap: thread 'tokio-runtime-worker' panicked at 'called `Option::unwrap()` on a `None` value'
+      exec_timeout: Exited with code null
+
+
+modes:
+
+  seed-read:
+    handler: seed-read
+
+#  seed-read-next:
+#    <<: *next
+#    handler: seed-read
+
+  script: &script
+    handler: script
+    redis_host: ""
+
+  app-script:
+    <<: *script
+    scriptname: app
+
+  app-script-next:
+    <<: *script
+    scriptname: app-next
+
+  app-script-test:
+    <<: *script
+    scriptname: app-test
+
+# app.gosh.sh
+  app-setup: &app-setup
+    handler: app-setup
+    branch: root
+    branches:
+      - app-small
+      - app-large
+      - remote-small
+      - remote-large
+    cron: true
+    interval: 900
+    do_lock: true
+    redis_host: ""
+
+  app-small-read: &app-small-read
+    branch:  app-small
+    handler: app-read
+    large:   false
+
+  app-small-write: &app-small-write
+    branch:  app-small
+    handler: app-write
+    large:   false
+    interval: 500  # ~ 10 min - 100 s
+    do_lock: true
+
+  app-large-read: &app-large-read
+    branch:     app-large
+    handler:    app-read
+    large:      true
+    timeout_ms: 25000
+
+  app-large-write: &app-large-write
+    branch:     app-large
+    handler:    app-write
+    large:      true
+    timeout_ms: 25000
+    interval:   1650  # ~ 30 min - 150 s
+    do_lock:    true
+
+#  app-setup-next:
+#    <<: *app-setup
+#    <<: *next
+#
+#  app-small-read-next:
+#    <<: *app-small-read
+#    <<: *next
+#
+#  app-small-write-next:
+#    <<: *app-small-write
+#    <<: *next
+#
+#  app-large-read-next:
+#    <<: *app-large-read
+#    <<: *next
+#
+#  app-large-write-next:
+#    <<: *app-large-write
+#    <<: *next
+
+# git-remote-gosh
+  rem-small-read: &rem-small-read
+    <<: *use_log_counter_for_remote
+    branch:     remote-small
+    handler:    remote-read
+    large:      false
+    timeout_ms: 50
+
+  rem-small-write: &rem-small-write
+    <<: *use_log_counter_for_remote
+    branch:     remote-small
+    handler:    remote-write
+    large:      false
+    interval:   500  # ~ 10 min - 100 s
+    timeout_ms: 270
+    do_lock: true
+
+  rem-large-read: &rem-large-read
+    <<: *use_log_counter_for_remote
+    branch:     remote-large
+    handler:    remote-read
+    large:      true
+    timeout_ms: 50
+
+  rem-large-write: &rem-large-write
+    <<: *use_log_counter_for_remote
+    branch:  remote-large
+    handler: remote-write
+    large:   true
+    interval:   1650  # ~ 30 min - 150 s
+    timeout_ms: 270
+    do_lock: true
+
+#  rem-small-read-next:
+#    <<: *rem-small-read
+#    <<: *next
+#
+#  rem-small-write-next:
+#    <<: *rem-small-write
+#    <<: *next
+#
+#  rem-large-read-next:
+#    <<: *rem-large-read
+#    <<: *next
+#
+#  rem-large-write-next:
+#    <<: *rem-large-write
+#    <<: *next
+
+# rotation cron
+  cron-rem-rotate-test:
+    <<: *cron-rotate
+    branch:  test-branch
+
+  cron-rem-rotate-small: &cron-rem-rotate-small
+    <<: *cron-rotate
+    branch:  remote-small
+
+  cron-rem-rotate-large: &cron-rem-rotate-large
+    <<: *cron-rotate
+    branch:  remote-large
+    large:   true
+
+#  cron-rem-rotate-small-next:
+#    <<: *cron-rem-rotate-small
+#    <<: *next
+#
+#  cron-rem-rotate-large-next:
+#    <<: *cron-rem-rotate-large
+#    <<: *next
+
+  rsmq-monitor:
+    handler: rsmq-monitor
+    cron:    true

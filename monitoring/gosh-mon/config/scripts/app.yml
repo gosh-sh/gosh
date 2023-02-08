@@ -1,0 +1,8 @@
+- _: config
+  redis_host: ""
+- seed-read
+- app-setup
+- app-small-write
+- app-small-read
+- app-large-write
+- app-large-read

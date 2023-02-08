@@ -4,148 +4,101 @@ import {
     faTrash,
     faLock,
     faLockOpen,
+    faCodeBranch,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import BranchSelect from '../../components/BranchSelect'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
-import { TGoshBranch } from '../../types/types'
+import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import * as Yup from 'yup'
-import { useRecoilValue } from 'recoil'
-import { goshCurrBranchSelector } from '../../store/gosh.state'
-import { useGoshRepoBranches, useSmvBalance } from '../../hooks/gosh.hooks'
-import { EGoshError, GoshError } from '../../types/errors'
+import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
-import { GoshCommit } from '../../types/classes'
+import ToastError from '../../components/Error/ToastError'
+import { TBranch } from 'react-gosh/dist/types/repo.types'
+import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
 
 type TCreateBranchFormValues = {
     newName: string
-    from?: TGoshBranch
+    from?: TBranch
 }
 
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams()
-    const { repo, wallet } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
     const navigate = useNavigate()
-    const smvBalance = useSmvBalance(wallet)
     const [branchName, setBranchName] = useState<string>('main')
-    const { branches, updateBranches } = useGoshRepoBranches(repo)
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName))
+    const { branches, branch, updateBranches } = useBranches(
+        repository.adapter,
+        branchName,
+    )
+    const {
+        create: createBranch,
+        destroy: deleteBranch,
+        lock: lockBranch,
+        unlock: unlockBranch,
+        sethead: setheadBranch,
+        progress: branchProgress,
+    } = useBranchManagement(dao.details, repository.adapter)
     const [search, setSearch] = useState<string>('')
-    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches)
-    const [branchesBusy, setBranchesBusy] = useState<{
-        [key: string]: { busy: boolean; lock: boolean; delete: boolean }
-    }>({})
+    const [filtered, setFiltered] = useState<TBranch[]>(branches)
 
-    /** Lock branch by SMV */
     const onBranchLock = async (name: string) => {
         try {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: true, lock: true },
-            }))
-
-            if (await repo.isBranchProtected(name))
-                throw new Error('Branch is already protected')
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvBalance.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
-
-            await wallet.startProposalForAddProtectedBranch(repoName, name)
-            navigate(`/${daoName}/events`, { replace: true })
+            await lockBranch(name)
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
-        } finally {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: false, lock: false },
-            }))
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    /** Unlock branch by SMV */
     const onBranchUnlock = async (name: string) => {
         try {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: true, lock: true },
-            }))
-
-            const isProtected = await repo.isBranchProtected(name)
-            if (!isProtected) throw new Error('Branch is not protected')
-            if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-            if (smvBalance.smvBalance < 20)
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
-
-            await wallet.startProposalForDeleteProtectedBranch(repoName, name)
-            navigate(`/${daoName}/events`, { replace: true })
+            await unlockBranch(name)
+            navigate(`/o/${daoName}/events`, { replace: true })
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
-        } finally {
-            setBranchesBusy((state) => ({
-                ...state,
-                [name]: { ...state[name], busy: false, lock: false },
-            }))
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    /** Create new branch */
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
         helpers: FormikHelpers<any>,
     ) => {
         try {
-            if (!values.from) throw new GoshError(EGoshError.NO_BRANCH)
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
+            const { newName, from } = values
+            if (!from) throw new GoshError(EGoshError.NO_BRANCH)
 
-            const commit = new GoshCommit(wallet.account.client, values.from.commitAddr)
-            await wallet.deployBranch(
-                repo,
-                values.newName.toLowerCase(),
-                values.from.name,
-                await commit.getName(),
-            )
-            await updateBranches()
+            await createBranch(newName, from.name)
             helpers.resetForm()
+            helpers.setFieldValue('from', values.from)
         } catch (e: any) {
             console.error(e)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    /** Delete branch */
     const onBranchDelete = async (name: string) => {
         if (window.confirm(`Delete branch '${name}'?`)) {
             try {
-                setBranchesBusy((state) => ({
-                    ...state,
-                    [name]: { ...state[name], busy: true, delete: true },
-                }))
-
-                if (await repo.isBranchProtected(name))
-                    throw new Error('Branch is protected')
-                if (!repoName) throw new GoshError(EGoshError.NO_REPO)
-                if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-
-                await wallet.deleteBranch(repo, name)
-                await updateBranches()
+                await deleteBranch(name)
             } catch (e: any) {
-                setBranchesBusy((state) => ({
-                    ...state,
-                    [name]: { ...state[name], busy: false, delete: false },
-                }))
                 console.error(e)
-                toast.error(e.message)
+                toast.error(<ToastError error={e} />)
             }
+        }
+    }
+
+    const onBranchSetHead = async (name: string) => {
+        try {
+            await setheadBranch(name)
+        } catch (e: any) {
+            console.error(e)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -165,7 +118,7 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex flex-wrap justify-between gap-4">
-                {wallet?.isDaoParticipant && (
+                {dao.details.isAuthMember && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -245,37 +198,67 @@ export const BranchesPage = () => {
                 </div>
             </div>
 
+            {branchProgress.isFetching && branchProgress.type === 'create' && (
+                <div className="mt-4">
+                    <BranchOperateProgress
+                        operation="Deploy"
+                        progress={branchProgress.details}
+                    />
+                </div>
+            )}
+
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {filtered.map((branch, index) => (
                     <div
                         key={index}
-                        className="flex gap-4 items-center px-3 py-2 text-sm"
+                        className="flex flex-wrap gap-x-4 gap-y-2 items-center px-3 py-2 text-sm"
                     >
                         <div className="grow">
                             <Link
-                                to={`/${daoName}/${repoName}/tree/${branch.name}`}
-                                className="hover:underline"
+                                to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
+                                className="hover:underline mr-2"
                             >
                                 {branch.name}
                             </Link>
+
+                            {branch.isProtected && (
+                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
+                                    <FontAwesomeIcon
+                                        className="mr-1"
+                                        size="sm"
+                                        icon={faLock}
+                                    />
+                                    Locked
+                                </div>
+                            )}
+
+                            {repository.details.head === branch.name && (
+                                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
+                                    <FontAwesomeIcon
+                                        className="mr-1"
+                                        size="sm"
+                                        icon={faCodeBranch}
+                                    />
+                                    Head
+                                </div>
+                            )}
                         </div>
                         <div>
-                            {wallet?.isDaoParticipant && (
+                            {dao.details.isAuthMember && (
                                 <>
                                     <button
                                         type="button"
-                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3"
+                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
                                         onClick={() => {
                                             branch.isProtected
                                                 ? onBranchUnlock(branch.name)
                                                 : onBranchLock(branch.name)
                                         }}
-                                        disabled={
-                                            smvBalance.smvBusy ||
-                                            branchesBusy[branch.name]?.busy
-                                        }
+                                        disabled={branchProgress.isFetching}
                                     >
-                                        {branchesBusy[branch.name]?.lock ? (
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === '(un)lock' &&
+                                        branchProgress.name === branch.name ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon
@@ -293,16 +276,39 @@ export const BranchesPage = () => {
                                     </button>
                                     <button
                                         type="button"
+                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
+                                        onClick={() => onBranchSetHead(branch.name)}
+                                        disabled={
+                                            branchProgress.isFetching ||
+                                            repository.details.head === branch.name
+                                        }
+                                    >
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === 'sethead' &&
+                                        branchProgress.name === branch.name ? (
+                                            <Spinner size="xs" />
+                                        ) : (
+                                            <FontAwesomeIcon
+                                                icon={faCodeBranch}
+                                                size="sm"
+                                            />
+                                        )}
+                                        <span className="ml-2">Set head</span>
+                                    </button>
+                                    <button
+                                        type="button"
                                         className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
                                         hover:bg-rose-500 disabled:bg-rose-400"
                                         onClick={() => onBranchDelete(branch.name)}
                                         disabled={
                                             branch.isProtected ||
-                                            branchesBusy[branch.name]?.busy ||
+                                            branchProgress.isFetching ||
                                             ['main', 'master'].indexOf(branch.name) >= 0
                                         }
                                     >
-                                        {branchesBusy[branch.name]?.delete ? (
+                                        {branchProgress.isFetching &&
+                                        branchProgress.type === 'destroy' &&
+                                        branchProgress.name === branch.name ? (
                                             <Spinner size="xs" />
                                         ) : (
                                             <FontAwesomeIcon icon={faTrash} size="sm" />
@@ -312,6 +318,17 @@ export const BranchesPage = () => {
                                 </>
                             )}
                         </div>
+
+                        {branchProgress.isFetching &&
+                            branchProgress.type === 'destroy' &&
+                            branchProgress.name === branch.name && (
+                                <div className="basis-full">
+                                    <BranchOperateProgress
+                                        operation="Delete"
+                                        progress={branchProgress.details}
+                                    />
+                                </div>
+                            )}
                     </div>
                 ))}
             </div>

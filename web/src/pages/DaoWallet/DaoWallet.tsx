@@ -1,92 +1,58 @@
 import { Field, Form, Formik } from 'formik'
 import { useOutletContext } from 'react-router-dom'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import * as Yup from 'yup'
-import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../store/user.state'
-import CopyClipboard from '../../components/CopyClipboard'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from '../../types/errors'
+import { useSmv, useSmvTokenTransfer } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import { useSmvBalance } from '../../hooks/gosh.hooks'
+import ToastError from '../../components/Error/ToastError'
 
 type TMoveBalanceFormValues = {
     amount: number
 }
 
 const DaoWalletPage = () => {
-    const userState = useRecoilValue(userStateAtom)
-    const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
-    const smvBalance = useSmvBalance(wallet)
-
-    const networkName = 'mainnet'
-    const gitRemoteCredentials = {
-        'primary-network': networkName,
-        networks: {
-            [networkName]: {
-                'user-wallet': {
-                    pubkey: userState.keys?.public,
-                    secret: userState.keys?.secret,
-                },
-                // TODO: fix possible undefined
-                endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
-            },
-        },
-    }
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const { adapter: smv, details } = useSmv(dao)
+    const { transferToSmv, transferToWallet, releaseAll } = useSmvTokenTransfer(smv)
 
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
-        console.debug('[Move balance to SMV balance] - Values:', values)
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-
-            await wallet.lockVoting(values.amount)
+            await transferToSmv(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
     const onMoveSmvBalanceToBalance = async (values: TMoveBalanceFormValues) => {
-        console.debug('[Move SMV balance to balance] - Values:', values)
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-
-            await wallet.unlockVoting(values.amount)
+            await transferToWallet(values.amount)
             toast.success('Submitted, balance will be updated soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
     const onReleaseSmvTokens = async () => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-            if (smvBalance.smvBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-
-            await wallet.updateHead()
+            await releaseAll()
             toast.success('Release submitted, tokens will be released soon')
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!wallet)
-        return (
-            <div className="text-gray-606060">
-                <Spinner className="mr-3" />
-                Loading wallet...
-            </div>
-        )
     return (
         <>
-            <SmvBalance details={smvBalance} wallet={wallet} className="mb-4 !px-0" />
+            {dao.details.isAuthMember && (
+                <SmvBalance adapter={smv} details={details} className="mb-4 !px-0" />
+            )}
 
             <div className="divide-y divide-gray-200">
                 <div className="py-5">
@@ -96,12 +62,12 @@ const DaoWalletPage = () => {
                         to create new proposals and vote
                     </p>
                     <Formik
-                        initialValues={{ amount: smvBalance.balance }}
+                        initialValues={{ amount: details.balance }}
                         onSubmit={onMoveBalanceToSmvBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.balance)
+                                .max(details.balance)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -123,7 +89,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || details.isLockerBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to SMV balance
@@ -132,6 +98,7 @@ const DaoWalletPage = () => {
                         )}
                     </Formik>
                 </div>
+
                 <div className="py-5">
                     <h3 className="text-lg font-semibold">Release tokens</h3>
                     <p className="mb-3">
@@ -139,13 +106,13 @@ const DaoWalletPage = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            amount: smvBalance.smvBalance,
+                            amount: details.smvAvailable - details.smvLocked,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup.number()
                                 .min(1)
-                                .max(smvBalance.smvBalance)
+                                .max(details.smvAvailable - details.smvLocked)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -167,7 +134,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || details.isLockerBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to wallet
@@ -176,6 +143,7 @@ const DaoWalletPage = () => {
                         )}
                     </Formik>
                 </div>
+
                 <div className="py-5">
                     <h3 className="text-lg font-semibold">Release locked tokens</h3>
                     <p className="mb-3">
@@ -192,7 +160,7 @@ const DaoWalletPage = () => {
                                 <button
                                     className="btn btn--body !font-normal px-4 py-2"
                                     type="submit"
-                                    disabled={isSubmitting || smvBalance.smvBusy}
+                                    disabled={isSubmitting || details.isLockerBusy}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
                                     Release locked tokens
@@ -200,28 +168,6 @@ const DaoWalletPage = () => {
                             </Form>
                         )}
                     </Formik>
-                </div>
-                <div className="py-5">
-                    <h3 className="text-lg font-semibold">Git remote</h3>
-                    <div className="mb-3">~/.gosh/config.json</div>
-                    {wallet.isDaoParticipant ? (
-                        <div className="relative text-sm rounded-md">
-                            <CopyClipboard
-                                className="absolute right-3 top-3"
-                                componentProps={{
-                                    text: JSON.stringify(gitRemoteCredentials),
-                                }}
-                                iconProps={{ size: 'lg' }}
-                            />
-                            <pre className="bg-gray-050a15/5 px-4 py-3 overflow-x-auto">
-                                {JSON.stringify(gitRemoteCredentials, undefined, 2)}
-                            </pre>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-rose-400">
-                            You are not a DAO participant
-                        </p>
-                    )}
                 </div>
             </div>
         </>

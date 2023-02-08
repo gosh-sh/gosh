@@ -1,8 +1,9 @@
 #![allow(unused_variables)]
 
-use serde::de::Error as SerdeError;
-use serde::de::Visitor;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{
+    de::{Error as SerdeError, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
 
 use std::fmt;
 
@@ -14,6 +15,11 @@ pub struct Number(u8);
 #[serde(transparent)]
 pub struct NumberU64(u64);
 
+impl Into<u64> for NumberU64 {
+    fn into(self) -> u64 {
+        self.0
+    }
+}
 
 impl<'de> Deserialize<'de> for Number {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

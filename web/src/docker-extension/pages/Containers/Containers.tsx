@@ -22,10 +22,8 @@ import {
     Image as ImageType,
     Container as ContainerType,
 } from './../../interfaces'
-import { useRecoilValue } from 'recoil'
-import { userStateAtom } from '../../../store/user.state'
+import { shortString } from 'react-gosh'
 import CopyClipboard from '../../../components/CopyClipboard'
-import { shortString } from '../../../utils'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
@@ -275,7 +273,6 @@ function EnhancedTable<T extends { id: string }>({
 }
 
 const Main = () => {
-    const userState = useRecoilValue(userStateAtom)
     const [validation, setValidation] = useState<boolean | Validation>(false)
     const [containers, setContainers] = useState<{
         data: Array<ContainerType>
@@ -328,7 +325,7 @@ const Main = () => {
             },
             {
                 label: 'Gosh address',
-                id: 'goshAddress',
+                id: 'remoteUrl',
                 numeric: false,
                 disablePadding: false,
                 minWidth: 165,
@@ -361,7 +358,7 @@ const Main = () => {
             },
             {
                 label: 'Gosh address',
-                id: 'goshAddress',
+                id: 'remoteUrl',
                 numeric: false,
                 disablePadding: false,
                 maxWidth: 300,
@@ -374,59 +371,47 @@ const Main = () => {
     )
 
     useEffect(() => {
-        setContainers({
-            data: [],
-            isLoading: true,
-        })
-        DockerClient.getContainers(userState).then((value) => {
-            console.log(value)
-            setContainers({
-                data:
-                    value.map((container: ContainerType) => ({
-                        ...container,
-                        id: container.containerHash,
-                    })) || [],
-                isLoading: false,
-            })
-        })
-    }, [userState])
+        const _getContainerImageList = async () => {
+            await Promise.all([
+                (async () => {
+                    setContainers({ data: [], isLoading: true })
+                    const containers = await DockerClient.getContainers()
+                    setContainers({
+                        data:
+                            containers.map((container: ContainerType) => ({
+                                ...container,
+                                id: container.containerHash,
+                            })) || [],
+                        isLoading: false,
+                    })
+                })(),
+                (async () => {
+                    setImages({ data: [], isLoading: true })
+                    const images = await DockerClient.getImages()
+                    setImages({
+                        data: images.map((image: ImageType) => ({
+                            ...image,
+                            id: image.imageHash,
+                        })),
+                        isLoading: false,
+                    })
+                })(),
+            ])
+        }
 
-    useEffect(() => {
-        setImages({
-            data: [],
-            isLoading: true,
-        })
-        DockerClient.getImages(userState).then((value) => {
-            console.log(value)
-            setImages({
-                data: value.map((image: ImageType) => ({
-                    ...image,
-                    id: image.imageHash,
-                })),
-                isLoading: false,
-            })
-        })
-    }, [userState])
+        _getContainerImageList()
+    }, [])
 
-    const handleClick = () => {
+    const handleClick = async () => {
+        setContainers({ data: [], isLoading: true })
+        const containers = await DockerClient.getContainers()
         setContainers({
-            data: [],
-            isLoading: true,
-        })
-        DockerClient.getContainers(userState).then((value) => {
-            console.log(value)
-            setContainers({
-                data: value || [],
-                isLoading: false,
-            })
-            //do stuff
+            data: containers || [],
+            isLoading: false,
         })
     }
 
-    async function validateContainer(
-        element: ContainerType,
-        index: number,
-    ): Promise<void> {
+    const validateContainer = async (element: ContainerType): Promise<void> => {
         let logs: string[] = []
         let validation = {
             id: element.containerHash,
@@ -446,17 +431,17 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 })
             },
-            () =>
+            () => {
                 setValidation({
                     ...validation,
                     active: false,
                     stdout: logs.join('\n'),
-                }),
-            userState,
+                })
+            },
         )
     }
 
-    function validateImage(element: ImageType, index: number): void {
+    const validateImage = async (element: ImageType): Promise<void> => {
         let logs: string[] = []
         let validation = {
             id: element.imageHash,
@@ -465,7 +450,7 @@ const Main = () => {
             stdout: '',
         }
         setValidation(validation)
-        DockerClient.validateContainerImage(
+        await DockerClient.validateContainerImage(
             element.imageHash,
             (status: string) => {
                 logs.push(status)
@@ -475,13 +460,13 @@ const Main = () => {
                     stdout: logs.join('\n'),
                 })
             },
-            () =>
+            () => {
                 setValidation({
                     ...validation,
                     active: false,
                     stdout: logs.join('\n'),
-                }),
-            userState,
+                })
+            },
         )
     }
 

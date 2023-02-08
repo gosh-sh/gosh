@@ -1,15 +1,21 @@
-import { classNames } from '../utils'
+import { classNames } from 'react-gosh'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import { onboardingDataAtom } from '../store/onboarding.state'
+import OnboardingComplete from './Onboarding/components/Complete'
 
 const AccountLayout = () => {
+    const { step } = useRecoilValue(onboardingDataAtom)
     const tabs = [
-        { to: '/account/orgs', title: 'Organizations' },
-        { to: '/account/repos', title: 'Repositories' },
-        { to: '/account/settings', title: 'Settings' },
+        { to: '/a/orgs', title: 'Organizations' },
+        // { to: '/a/repos', title: 'Repositories' },
+        { to: '/a/settings', title: 'Settings' },
     ]
 
     return (
         <div className="container container--full mt-12 mb-5">
+            {step === 'complete' && <OnboardingComplete />}
+
             <div className="bordered-block px-7 py-8">
                 <h1 className="font-semibold text-2xl mb-5">User account</h1>
 

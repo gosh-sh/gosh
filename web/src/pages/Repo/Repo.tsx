@@ -1,41 +1,51 @@
 import React, { useEffect } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import BranchSelect from '../../components/BranchSelect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faClockRotateLeft,
     faCodeBranch,
     faFolder,
+    faRightLong,
     faMagnifyingGlass,
     faFileCirclePlus,
     faCode,
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import { useRecoilValue } from 'recoil'
-import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks'
 import Spinner from '../../components/Spinner'
-import { splitByPath } from '../../helpers'
+import { AppConfig, classNames, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from '../../utils'
+import { shortString } from 'react-gosh'
+import { BranchSelect } from '../../components/Branches'
+import RepoReadme from './Readme'
+import { onExternalLinkClick } from '../../helpers'
 
 const RepoPage = () => {
-    const treePath = useParams()['*'] || ''
-    const { daoName, repoName, branchName = 'main' } = useParams()
+    const treepath = useParams()['*'] || ''
+    const { daoName, repoName, branchName } = useParams()
     const navigate = useNavigate()
-    const { wallet, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useGoshRepoBranches(repo, branchName)
-    const tree = useGoshRepoTree(repo, branch, treePath)
-    const subtree = useRecoilValue(tree.getSubtree(treePath))
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
+    const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
-    const [dirUp] = splitByPath(treePath)
+    const [dirUp] = splitByPath(treepath)
+
+    const getRemoteUrl = (short: boolean): string => {
+        const goshAddress = AppConfig.versions[repository.details.version]
+        const goshstr = short ? shortString(goshAddress) : goshAddress
+        return `gosh://${goshstr}/${daoName}/${repoName}`
+    }
 
     useEffect(() => {
-        if (branch?.name) updateBranch(branch.name)
-    }, [branch?.name, updateBranch])
+        if (!branchName) {
+            navigate(`/o/${daoName}/r/${repoName}/tree/${repository.details.head}`)
+        } else {
+            updateBranch(branchName)
+        }
+    }, [daoName, repoName, branchName, repository.details.head, navigate, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -46,13 +56,15 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`)
+                                navigate(
+                                    `/o/${daoName}/r/${repoName}/tree/${selected.name}`,
+                                )
                             }
                         }}
                     />
 
                     <Link
-                        to={`/${daoName}/${repoName}/branches`}
+                        to={`/o/${daoName}/r/${repoName}/branches`}
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="font-semibold">
@@ -63,7 +75,7 @@ const RepoPage = () => {
                     </Link>
 
                     <Link
-                        to={`/${daoName}/${repoName}/commits/${branch?.name}`}
+                        to={`/o/${daoName}/r/${repoName}/commits/${branch?.name}`}
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} />
@@ -73,17 +85,17 @@ const RepoPage = () => {
 
                 <div className="flex grow gap-3 justify-end">
                     <Link
-                        to={`/${daoName}/${repoName}/find/${branch?.name}`}
+                        to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
-                    {!branch?.isProtected && wallet?.isDaoParticipant && (
+                    {!branch?.isProtected && dao.details.isAuthMember && (
                         <Link
-                            to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
-                                treePath && `/${treePath}`
-                            }`}
+                            to={`/o/${daoName}/r/${repoName}/blobs/create/${
+                                branch?.name
+                            }${treepath && `/${treepath}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
@@ -109,7 +121,7 @@ const RepoPage = () => {
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                         >
-                            <Menu.Items className="dropdown-menu !py-4 max-w-264px sm:max-w-none">
+                            <Menu.Items className="dropdown-menu !bg-white !py-4 max-w-264px sm:max-w-none">
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">
                                         <FontAwesomeIcon
@@ -118,26 +130,49 @@ const RepoPage = () => {
                                         />
                                         Clone
                                     </h3>
-                                    <div
-                                        className="flex border border-gray-0a1124/65 rounded
-                                        items-center text-gray-0a1124/65"
-                                    >
-                                        <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
-                                            gosh://
-                                            {shortString(
-                                                process.env.REACT_APP_GOSH_ADDR ?? '',
+                                    <div>
+                                        <div
+                                            className={classNames(
+                                                'flex items-center',
+                                                'border border-gray-0a1124/65 rounded',
+                                                'text-gray-0a1124/65',
                                             )}
-                                            /{daoName}/{repoName}
+                                        >
+                                            <div
+                                                className={classNames(
+                                                    'overflow-hidden whitespace-nowrap',
+                                                    'text-xs font-mono px-3 py-1',
+                                                )}
+                                            >
+                                                {getRemoteUrl(true)}
+                                            </div>
+                                            <CopyClipboard
+                                                componentProps={{
+                                                    text: getRemoteUrl(false),
+                                                }}
+                                                iconContainerClassName={classNames(
+                                                    'px-2 border-l border-gray-0a1124',
+                                                    'hover:text-gray-0a1124',
+                                                )}
+                                                iconProps={{ size: 'sm' }}
+                                            />
                                         </div>
-                                        <CopyClipboard
-                                            componentProps={{
-                                                text: `gosh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`,
-                                            }}
-                                            iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
-                                            iconProps={{
-                                                size: 'sm',
-                                            }}
-                                        />
+
+                                        <div className="mt-3 text-right text-xs text-gray-7c8db5">
+                                            <a
+                                                href="https://docs.gosh.sh/working-with-gosh/git-remote-helper/"
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => {
+                                                    onExternalLinkClick(
+                                                        e,
+                                                        'https://docs.gosh.sh/working-with-gosh/git-remote-helper/',
+                                                    )
+                                                }}
+                                            >
+                                                How to setup git remote helper?
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </Menu.Items>
@@ -146,57 +181,79 @@ const RepoPage = () => {
                 </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4">
                 {subtree === undefined && (
-                    <div className="text-gray-606060 text-sm">
+                    <div className="text-gray-606060 text-sm py-3">
                         <Spinner className="mr-3" />
                         Loading tree...
                     </div>
                 )}
 
-                {subtree && !subtree?.length && (
-                    <div className="text-sm text-gray-606060 text-center">
-                        There are no files yet
-                    </div>
-                )}
-
-                {!!subtree && treePath && (
+                {!!subtree && treepath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
-                        to={`/${daoName}/${repoName}/tree/${branchName}${
+                        to={`/o/${daoName}/r/${repoName}/tree/${branchName}${
                             dirUp && `/${dirUp}`
                         }`}
                     >
                         ..
                     </Link>
                 )}
-                <div className="divide-y divide-gray-c4c4c4">
-                    {!!subtree &&
-                        subtree?.map((item: any, index: number) => {
-                            const path = [item.path, item.name]
-                                .filter((part) => part !== '')
-                                .join('/')
-                            const type = item.type === 'tree' ? 'tree' : 'blobs'
+                <div className="divide-y divide-gray-c4c4c4 mb-5">
+                    {subtree?.map((item: any, index: number) => {
+                        const path = [item.path, item.name]
+                            .filter((part) => part !== '')
+                            .join('/')
+                        const type = item.type === 'tree' ? 'tree' : 'blobs/view'
 
+                        if (item.type === 'commit') {
                             return (
                                 <div key={index} className="py-3">
-                                    <Link
-                                        className="hover:underline text-sm"
-                                        to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
-                                    >
+                                    <span className="fa-layers fa-fw mr-2">
+                                        <FontAwesomeIcon icon={faFolder} size="1x" />
                                         <FontAwesomeIcon
-                                            className="mr-2"
-                                            icon={
-                                                item.type === 'tree' ? faFolder : faFile
-                                            }
-                                            fixedWidth
+                                            icon={faRightLong}
+                                            transform="shrink-6 down-1"
+                                            inverse
                                         />
-                                        {item.name}
-                                    </Link>
+                                    </span>
+                                    <span className="text-sm">{item.name}</span>
                                 </div>
                             )
-                        })}
+                        }
+
+                        return (
+                            <div key={index} className="py-3">
+                                <Link
+                                    className="hover:underline"
+                                    to={`/o/${daoName}/r/${repoName}/${type}/${branchName}/${path}`}
+                                >
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        icon={item.type === 'tree' ? faFolder : faFile}
+                                        size="1x"
+                                        fixedWidth
+                                    />
+                                    <span className="text-sm">{item.name}</span>
+                                </Link>
+                            </div>
+                        )
+                    })}
                 </div>
+
+                {subtree && !subtree?.length && (
+                    <div className="text-sm text-gray-606060 text-center py-3">
+                        There are no files yet
+                    </div>
+                )}
+
+                <RepoReadme
+                    className="border rounded overflow-hidden"
+                    dao={daoName!}
+                    repo={repoName!}
+                    branch={branch!.name}
+                    blobs={blobs || []}
+                />
             </div>
         </div>
     )

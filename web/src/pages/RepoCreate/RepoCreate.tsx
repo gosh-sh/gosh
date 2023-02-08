@@ -1,12 +1,12 @@
-import React from 'react'
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
-import TextField from '../../components/FormikForms/TextField'
+import { TextField } from '../../components/Formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Spinner from '../../components/Spinner'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { EGoshError, GoshError } from '../../types/errors'
+import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
+import yup from '../../yup-extended'
 
 type TFormValues = {
     name: string
@@ -15,21 +15,20 @@ type TFormValues = {
 const RepoCreatePage = () => {
     const { daoName } = useParams()
     const navigate = useNavigate()
-    const { wallet } = useOutletContext<TDaoLayoutOutletContext>()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const { create: createRepository } = useRepoCreate(dao.adapter)
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            if (!wallet) throw new GoshError(EGoshError.NO_WALLET)
-
-            await wallet.deployRepo(values.name.toLowerCase())
-            navigate(`/${daoName}/${values.name}`, { replace: true })
+            await createRepository(values.name)
+            navigate(`/o/${daoName}/r/${values.name}`, { replace: true })
         } catch (e: any) {
             console.error(e.message)
-            toast.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!wallet) return <Navigate to={`/${daoName}`} />
+    if (!dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
     return (
         <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
@@ -40,11 +39,8 @@ const RepoCreatePage = () => {
                 <Formik
                     initialValues={{ name: '' }}
                     onSubmit={onRepoCreate}
-                    validationSchema={Yup.object().shape({
-                        name: Yup.string()
-                            .matches(/^[\w-]+$/, 'Name has invalid characters')
-                            .max(64, 'Max length is 64 characters')
-                            .required('Name is required'),
+                    validationSchema={yup.object().shape({
+                        name: yup.string().reponame().required('Name is required'),
                     })}
                 >
                     {({ isSubmitting, setFieldValue }) => (
@@ -69,7 +65,7 @@ const RepoCreatePage = () => {
 
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !wallet}
+                                disabled={isSubmitting}
                                 className="btn btn--body px-3 py-3 w-full mt-6"
                             >
                                 {isSubmitting && <Spinner className="mr-2" size={'lg'} />}

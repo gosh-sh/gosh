@@ -8,13 +8,14 @@ macro_rules! abi {
 type Abi = (&'static str, &'static str);
 
 pub static DAO: Abi = abi!("goshdao.abi.json");
-pub static GOSH: Abi = abi!("gosh.abi.json");
+pub static GOSH: Abi = abi!("systemcontract.abi.json");
 pub static WALLET: Abi = abi!("goshwallet.abi.json");
 pub static REPO: Abi = abi!("repository.abi.json");
 pub static COMMIT: Abi = abi!("commit.abi.json");
 pub static SNAPSHOT: Abi = abi!("snapshot.abi.json");
 pub static TREE: Abi = abi!("tree.abi.json");
 pub static DIFF: Abi = abi!("diff.abi.json");
+pub static TAG: Abi = abi!("tag.abi.json");
 
 #[derive(serde::Serialize)]
 struct GetCommitAddrArgs {

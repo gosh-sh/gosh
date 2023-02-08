@@ -1,0 +1,14 @@
+{
+  "ipfs": "${ipfs_address}",
+  "primary-network": "${prim_network}",
+  "networks": {
+    "${prim_network}": {
+      "user-wallet": {
+        "profile": "${profile}",
+        "pubkey": "${pubkey}",
+        "secret": "${secret}"
+      },
+      "endpoints": ["${conf_endpoint}"]
+    }
+  }
+}

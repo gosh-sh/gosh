@@ -4,10 +4,10 @@
  *
  * Copyright (C) 2022 Serhii Horielyshev, GOSH pubkey 0xd060e0375b470815ea99d6bb2890a2a726c5b0579b83c742f5bb70e10a771a04
  */
-pragma ton-solidity >=0.61.2;
+pragma ever-solidity >=0.66.0;
 
 abstract contract Errors {
-    string constant versionErrors = "0.5.3";
+    string constant versionErrors = "1.0.0";
     
     uint constant ERR_NO_SALT = 200;
     uint constant ERR_SENDER_NOT_DAO = 202;
@@ -42,4 +42,26 @@ abstract contract Errors {
     uint constant ERR_WRONG_DATA = 231;
     uint constant ERR_NOT_EMPTY_DATA = 232;
     uint constant ERR_SNAPSHOT_NOT_READY = 233;
+    uint constant ERR_EMPTY_BRANCH = 234;
+    uint constant ERR_GOSH_UPDATE = 235;
+    uint constant ERR_OLD_CONTRACT = 236;
+    uint constant ERR_SYSTEM_CONTRACT_BAD_VERSION = 237;
+    uint constant ERR_BAD_COUNT_PARENTS = 238;
+    uint constant ERR_REPOSITORY_NOT_READY = 239;
+    uint constant ERR_PREV_NOT_EXIST = 240;
+    uint constant ERR_WRONG_DAO = 241;
+    uint constant ERR_TOMBSTONE = 242;
+    uint constant ERR_BAD_NUMBER_CUSTODIANS = 243;
+    uint constant ERR_NOTHING_TO_CONFIRM = 244;
+    uint constant ERR_ALREADY_CONFIRMED = 245;
+    uint constant ERR_WRONG_NUMBER_MEMBER = 246;
+    uint constant ERR_BAD_PARENT = 247;
+    uint constant ERR_TOO_LOW_BALANCE = 248;
+    uint constant ERR_FIRST_DAO = 249;
+    uint constant ERR_MESSAGE_EXPIRED = 250;
+    uint constant ERR_MESSAGE_WITH_HUGE_EXPIREAT = 251;
+    uint constant ERR_MESSAGE_IS_EXIST = 252;
+    uint constant ERR_TOO_MANY_DIFFS = 253; 
+    uint constant ERR_CONTRACT_BAD_VERSION = 254;  
+    uint constant ERR_NOT_ALONE = 255;   
 }
