@@ -1499,7 +1499,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             TvmSlice s = propData.toSlice();
             uint256 kind = s.decode(uint256);
             if (kind == MULTI_PROPOSAL_KIND) { 
-                (, uint128 num, TvmCell allpr) = abi.decode(propData,(uint256, uint128, TvmCell));
+                (, uint128 num, TvmCell allpr,) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
                 (TvmCell data1, TvmCell data2) = abi.decode(allpr,(TvmCell, TvmCell));
                 this.isCompletedCallbackIn{value : 0.1 ton}(num, data1, data2);
                 return;                
