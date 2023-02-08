@@ -8,13 +8,13 @@ strategy:
   matrix:
     linux:
       imageName: ubuntu-20.04
-      binName: git-remote-gosh-linux-amd64
+      binName: git-remote-gosh_unknown-linux-amd64
     mac:
       imageName: macOS-12
-      binName: git-remote-gosh-darwin-amd64
+      binName: git-remote-gosh_unknown-darwin-amd64
     windows:
       imageName: windows-2019
-      binName: git-remote-gosh-windows-amd64
+      binName: git-remote-gosh_unknown-windows-amd64
   maxParallel: 3
 
 pool:
