@@ -26,13 +26,31 @@ const DaoListItem = (props: TDaoListItemProps) => {
                 <img src={emptylogo} alt="" className="w-14 h-14 md:w-20 md:h-20" />
             </div>
             <div className="grow pl-4">
-                <Link to={`/o/${item.name}`} className="text-xl font-medium leading-5">
-                    {item.name}
-                </Link>
-
-                <span className="ml-2 align-super text-sm font-normal text-gray-7c8db5">
-                    {item.version}
-                </span>
+                <div className="flex flex-wrap items-center">
+                    <div className="mb-1 grow">
+                        <Link
+                            to={`/o/${item.name}`}
+                            className="text-xl font-medium leading-5"
+                        >
+                            {item.name}
+                        </Link>
+                        <span className="ml-2 align-super text-sm font-normal text-gray-7c8db5">
+                            {item.version}
+                        </span>
+                    </div>
+                    {!!item.tags?.length && (
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-7c8db5">
+                            {item.tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className="border border-gray-e6edff rounded px-2"
+                                >
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 <div
                     className={classNames(

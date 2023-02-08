@@ -68,11 +68,21 @@ const DaoLayout = () => {
                             {daoName}
                         </Link>
                         <span
-                            className="ml-2 align-super text-xs font-normal text-gray-7c8db5"
+                            className="mx-2 align-super text-xs font-normal text-gray-7c8db5"
                             data-tip="DAO version"
                         >
                             {dao.details?.version}
                         </span>
+                        {dao.details?.tags?.map((tag) => (
+                            <span
+                                className={classNames(
+                                    'mx-1 border border-gray-e6edff rounded px-2',
+                                    'text-xs text-gray-7c8db5',
+                                )}
+                            >
+                                #{tag}
+                            </span>
+                        ))}
                     </h1>
                     {description && <div className="mb-2 text-sm">{description}</div>}
                     {dao.adapter && (

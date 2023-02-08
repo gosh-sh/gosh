@@ -363,6 +363,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             members: await this._getProfiles(),
             supply: await this._getSupplyDetails(),
             owner,
+            tags: await this._getTags(),
             isMintOn: _allowMint,
             isAuthenticated: !!this.profile && !!this.wallet,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
@@ -770,6 +771,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return {
             maxWalletsWrite: +value0,
         }
+    }
+
+    private async _getTags(): Promise<string[]> {
+        const { value0 } = await this.dao.runLocal('getTags', {})
+        return Object.values(value0)
     }
 
     private async _getSystemRepository(): Promise<

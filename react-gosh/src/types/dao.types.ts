@@ -9,6 +9,7 @@ type TDao = {
     members: TDaoMember[]
     supply: TDaoSupplyDetails
     owner: TAddress
+    tags?: string[]
     isMintOn: boolean
     isAuthenticated: boolean
     isAuthOwner: boolean
