@@ -8,13 +8,13 @@ strategy:
   matrix:
     linux:
       imageName: ubuntu-20.04
-      artifactName: linux
+      artifactName: linux-amd64
     mac:
       imageName: macOS-12
-      artifactName: darwin
+      artifactName: darwin-amd64
     windows:
       imageName: windows-2019
-      artifactName: windows
+      artifactName: windows-amd64
   maxParallel: 3
 
 pool:
