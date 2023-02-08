@@ -83,8 +83,8 @@ pipeline {
                                     set -e 
                                     set -x
                                     PIPELINE_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
-                                    PIPELINE_STATUS="inProgress"
-                                    until [ $PIPELINE_STATUS != "inProgress" ]
+                                    PIPELINE_STATUS=\"inProgress\"
+                                    until [ $PIPELINE_STATUS != \"inProgress\" ]
                                     do
                                         sleep 60
                                         PIPELINE_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_ID | jq .status)
