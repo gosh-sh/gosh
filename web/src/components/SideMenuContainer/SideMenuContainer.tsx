@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { classNames, shortString } from 'react-gosh'
 import { NavLink } from 'react-router-dom'
 import ReactTooltip from 'react-tooltip'
+import { onExternalLinkClick } from '../../helpers'
 import CopyClipboard from '../CopyClipboard'
 
 const SideMenuContainer = (props: React.PropsWithChildren) => {
@@ -33,7 +34,7 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
             <div
                 className={classNames(
                     'hidden lg:flex flex-col gap-y-3',
-                    'min-w-[13rem] pb-10 mr-10',
+                    'min-w-[13rem] pb-10',
                     'border-r border-gray-e6edff',
                 )}
             >
@@ -64,14 +65,9 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
                             'py-2 pr-2',
                             'hover:text-black',
                         )}
-                        // onClick={(e) => {
-                        //     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-                        //         e.preventDefault()
-                        //         AppConfig.dockerclient?.host.openExternal(
-                        //             'https://blog.gosh.sh/',
-                        //         )
-                        //     }
-                        // }}
+                        onClick={(e) => {
+                            onExternalLinkClick(e, 'https://blog.gosh.sh/')
+                        }}
                     >
                         <FontAwesomeIcon icon={faBlog} fixedWidth />
                         <span className="ml-3">Our blog</span>
@@ -86,14 +82,9 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
                             'py-2 pr-2',
                             'hover:text-black',
                         )}
-                        // onClick={(e) => {
-                        //     if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
-                        //         e.preventDefault()
-                        //         AppConfig.dockerclient?.host.openExternal(
-                        //             'https://t.me/gosh_sh',
-                        //         )
-                        //     }
-                        // }}
+                        onClick={(e) => {
+                            onExternalLinkClick(e, 'https://t.me/gosh_sh')
+                        }}
                     >
                         <FontAwesomeIcon icon={faPaperPlane} fixedWidth />
                         <span className="ml-3">Our telegram</span>
@@ -112,7 +103,14 @@ const SideMenuContainer = (props: React.PropsWithChildren) => {
                     />
                 </div>
             </div>
-            <div className="grow pb-10 overflow-hidden overflow-y-auto">{children}</div>
+            <div
+                className={classNames(
+                    'grow overflow-hidden overflow-y-auto',
+                    'pb-10 pl-0 lg:pl-10',
+                )}
+            >
+                {children}
+            </div>
             <ReactTooltip clickable />
         </div>
     )
