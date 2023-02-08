@@ -9,12 +9,15 @@ strategy:
     linux:
       imageName: ubuntu-20.04
       binName: git-remote-gosh-linux-amd64
+      artifactName: linux
     mac:
       imageName: macOS-12
       binName: git-remote-gosh-darwin-amd64
+      artifactName: darwin
     windows:
       imageName: windows-2019
-      binName: git-remote-gosh-windows-amd64
+      binName: git-remote-gosh-windows-amd64.exe
+      artifactName: windows
   maxParallel: 3
 
 pool:
@@ -65,13 +68,12 @@ steps:
   workingDirectory: gosh-dispatcher
   displayName: Build
 
-# Publish
-# Linux and macOS
-- publish: ./git-remote-gosh/target/release/git-remote-gosh
-  artifact: $(binName)
-  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+# Rename binaries
+- script: |
+    mv git-remote-gosh $(binName)
+  workingDirectory: gosh-dispatcher/target/release
+  displayName: Build
 
-# Windows
-- publish: ./git-remote-gosh/target/release/git-remote-gosh.exe
-  artifact: $(binName)
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
+# Publish
+- publish: ./git-remote-gosh/target/release/$(binName)
+  artifact: $(artifactName)

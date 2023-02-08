@@ -8,13 +8,13 @@ strategy:
   matrix:
     linux:
       imageName: ubuntu-20.04
-      binName: git-remote-gosh_unknown-linux-amd64
+      artifactName: linux
     mac:
       imageName: macOS-12
-      binName: git-remote-gosh_unknown-darwin-amd64
+      artifactName: darwin
     windows:
       imageName: windows-2019
-      binName: git-remote-gosh_unknown-windows-amd64
+      artifactName: windows
   maxParallel: 3
 
 pool:
@@ -95,10 +95,10 @@ steps:
 # Publish
 # Linux and macOS
 - publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(checkVersion.VERSION)
-  artifact: $(binName)
+  artifact: $(artifactName)
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
 - publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(checkVersion.VERSION).exe
-  artifact: $(binName)
+  artifact: $(artifactName)
   condition: eq(variables['Agent.OS'], 'Windows_NT')
