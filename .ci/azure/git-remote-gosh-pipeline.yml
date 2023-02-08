@@ -83,17 +83,17 @@ steps:
 
 # Set Version
 # Linux and macOS
-- script: |
-    echo "git-remote-gosh_v$(VERSION)"
-    #mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
+- bash: |
+    echo git-remote-gosh_v$(VERSION)
+    mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
   #workingDirectory: git-remote-gosh/target/release
   displayName: Name binaries 
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
-- script: |
-    echo "git-remote-gosh_v$(VERSION)"
-    #mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
+- bash: |
+    echo git-remote-gosh_v$(VERSION)
+    mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
   #workingDirectory: git-remote-gosh/target/release
   displayName: Name binaries 
   condition: eq(variables['Agent.OS'], 'Windows_NT')
