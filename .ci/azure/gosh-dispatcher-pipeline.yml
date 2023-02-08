@@ -68,12 +68,6 @@ steps:
   workingDirectory: gosh-dispatcher
   displayName: Build
 
-# Rename binaries
-- script: |
-    mv git-remote-gosh $(binName)
-  workingDirectory: gosh-dispatcher/target/release
-  displayName: Build
-
 # Publish
 - publish: ./gosh-dispatcher/target/release/$(binName)
   artifact: $(artifactName)
