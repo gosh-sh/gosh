@@ -759,68 +759,6 @@ fn get_list_of_commit_objects(
     Ok(res)
 }
 
-#[instrument(level = "debug", skip(m))]
-fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
-    if from == till {
-        return 1u64;
-    }
-
-    let mut distance = 0u64;
-    let mut commit = from;
-
-    loop {
-        if !m.contains_key(commit) {
-            break 0;
-        }
-        let parents = m.get(commit).unwrap();
-        if let Some(parent) = parents.get(0) {
-            distance += 1;
-
-            if parent == till {
-                break distance;
-            }
-            commit = &parent.as_str();
-        } else {
-            break distance;
-        }
-    }
-}
-
-#[instrument(level = "trace")]
-fn get_list_of_commit_objects(
-    _ref: &str,
-    ancestor_commit_id: &str,
-) -> anyhow::Result<(String, bool)> {
-    // TODO: git rev-list?
-    let mut cmd_args = [
-        "rev-list",
-        "--objects",
-        "--in-commit-order",
-        "--reverse",
-        _ref,
-    ]
-    .map(String::from)
-    .to_vec();
-
-    if !ancestor_commit_id.is_empty() {
-        cmd_args.push(format!("^{}", ancestor_commit_id));
-    }
-
-    let cmd = Command::new("git")
-        .args(cmd_args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("git rev-list failed");
-
-    let out = cmd.wait_with_output()?;
-    if !out.status.success() {
-        Ok((String::new(), false))
-    } else {
-        Ok((String::from_utf8(out.stdout)?, true))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
