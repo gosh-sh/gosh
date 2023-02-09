@@ -354,6 +354,14 @@ contract SystemContract is Modifiers {
     function getDaoTagCode(string hashtag) external view returns(TvmCell) {
         return GoshLib.buildDaoTagCode(_code[m_DaoTagCode], hashtag, _versionController);
     }
+    
+    function getRepoTagGoshCode(string repotag) external view returns(TvmCell) {
+        return GoshLib.buildRepoTagGoshCode(_code[m_RepoTagCode], repotag, _versionController);
+    }
+    
+    function getRepoTagDaoCode(address dao, string repotag) external view returns(TvmCell) {
+        return GoshLib.buildRepoTagDaoCode(_code[m_RepoTagCode], repotag, dao, _versionController);
+    }
 
     function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
         return GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);

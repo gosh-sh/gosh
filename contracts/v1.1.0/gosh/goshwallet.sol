@@ -896,7 +896,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_DaoTagCode], repotag, _versionController);
+        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_RepoTagCode], repotag, _versionController);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo}});
         new RepoTagGosh {
             stateInit: s1, value: FEE_DEPLOY_REPO_TAG, wid: 0, bounce: true, flag: 1
@@ -942,13 +942,28 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        DaoTag(_getdaotagaddr(daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_getrepotaggoshaddr(_repo, daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_getrepotagdaoaddr(_repo, daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
         getMoney();
     }
     
     function _getdaotagaddr(string daotag) private view returns(address){        
         TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: _goshdao}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _getrepotaggoshaddr(address repo, string repotag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_RepoTagCode], repotag, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo}});
+
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _getrepotagdaoaddr(address repo, string repotag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildRepoTagDaoCode(_code[m_RepoTagCode], repotag, _goshdao, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo}});
+
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 

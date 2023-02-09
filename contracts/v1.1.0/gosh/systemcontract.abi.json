@@ -330,6 +330,25 @@
 			]
 		},
 		{
+			"name": "getRepoTagGoshCode",
+			"inputs": [
+				{"name":"repotag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getRepoTagDaoCode",
+			"inputs": [
+				{"name":"dao","type":"address"},
+				{"name":"repotag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}
