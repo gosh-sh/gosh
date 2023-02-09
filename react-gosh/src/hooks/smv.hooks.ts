@@ -160,14 +160,14 @@ function useSmvEventList(
     const [events, setEvents] = useState<{
         isFetching: boolean
         items: TSmvEventListItem[]
-        lastPaid?: number
+        lastTransLt?: string
         hasNext?: boolean
     }>({ items: [], isFetching: false })
 
     const { perPage = 5, latest = false } = params
 
     const getEventList = useCallback(
-        async (from?: number) => {
+        async (from?: string) => {
             if (!adapter || !eventCodeHash) {
                 return
             }
@@ -176,7 +176,7 @@ function useSmvEventList(
             const accounts = await getPaginatedAccounts({
                 filters: [`code_hash: {eq:"${eventCodeHash}"}`],
                 limit: perPage,
-                lastPaid: from,
+                lastTransLt: from,
             })
             if (latest) {
                 await _getEventListLatest(adapter, accounts)
@@ -188,7 +188,7 @@ function useSmvEventList(
     )
 
     const getMore = async () => {
-        await getEventList(events.lastPaid)
+        await getEventList(events.lastTransLt)
     }
 
     const getItemDetails = async (item: TSmvEventListItem) => {
@@ -238,7 +238,7 @@ function useSmvEventList(
             ...state,
             isFetching: false,
             items: [...state.items, ...items],
-            lastPaid: accounts.lastPaid,
+            lastTransLt: accounts.lastTransLt,
             hasNext: !accounts.completed,
         }))
 
@@ -268,7 +268,7 @@ function useSmvEventList(
             ...state,
             isFetching: false,
             items,
-            lastPaid: accounts.lastPaid,
+            lastTransLt: accounts.lastTransLt,
             hasNext: !accounts.completed,
         }))
     }

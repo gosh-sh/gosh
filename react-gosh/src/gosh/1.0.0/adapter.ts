@@ -1300,14 +1300,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        optional: {
+        options: {
             tags?: string
             branchParent?: string
             callback?: IPushCallback
         },
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        const { tags, branchParent, callback } = optional
+        const { tags, branchParent, callback } = options
 
         const taglist = tags ? tags.split(' ') : []
         const cb: IPushCallback = (params) => callback && callback(params)

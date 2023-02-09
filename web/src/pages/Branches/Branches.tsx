@@ -9,16 +9,17 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { TextField } from '../../components/Formik'
+import { FormikInput, TextField } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import * as Yup from 'yup'
 import { EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
+import yup from '../../yup-extended'
+import { Button, Input } from '../../components/Form'
 
 type TCreateBranchFormValues = {
     newName: string
@@ -116,14 +117,15 @@ export const BranchesPage = () => {
     }, [branches, search])
 
     return (
-        <div className="bordered-block px-7 py-8">
+        <>
             <div className="flex flex-wrap justify-between gap-4">
                 {dao.details.isAuthMember && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
-                        validationSchema={Yup.object().shape({
-                            newName: Yup.string()
+                        validationSchema={yup.object().shape({
+                            newName: yup
+                                .string()
                                 .matches(/^[\w-]+$/, 'Name has invalid characters')
                                 .max(64, 'Max length is 64 characters')
                                 .notOneOf(
@@ -157,40 +159,35 @@ export const BranchesPage = () => {
                                         <Field
                                             className="w-full"
                                             name="newName"
-                                            component={TextField}
+                                            component={FormikInput}
                                             errorEnabled={false}
-                                            inputProps={{
-                                                placeholder: 'Branch name',
-                                                autoComplete: 'off',
-                                                className: '!text-sm !py-1.5',
-                                                disabled: isSubmitting,
-                                                onChange: (e: any) => {
-                                                    setFieldValue(
-                                                        'newName',
-                                                        e.target.value.toLowerCase(),
-                                                    )
-                                                },
+                                            placeholder="Branch name"
+                                            autoComplete="off"
+                                            disabled={isSubmitting}
+                                            onChange={(e: any) => {
+                                                setFieldValue(
+                                                    'newName',
+                                                    e.target.value.toLowerCase(),
+                                                )
                                             }}
                                         />
                                     </div>
                                 </div>
-                                <button
+                                <Button
                                     type="submit"
-                                    className="btn btn--body px-3 py-1.5 !text-sm w-full sm:w-auto"
+                                    isLoading={isSubmitting}
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting && <Spinner className="mr-2" />}
                                     Create branch
-                                </button>
+                                </Button>
                             </Form>
                         )}
                     </Formik>
                 )}
 
-                <div className="input basis-full md:basis-1/4">
-                    <input
+                <div className="basis-full md:basis-1/4">
+                    <Input
                         type="text"
-                        className="element !text-sm !py-1.5"
                         placeholder="Search branch..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -207,11 +204,11 @@ export const BranchesPage = () => {
                 </div>
             )}
 
-            <div className="mt-5 divide-y divide-gray-c4c4c4">
+            <div className="mt-5 divide-y divide-gray-e6edff">
                 {filtered.map((branch, index) => (
                     <div
                         key={index}
-                        className="flex flex-wrap gap-x-4 gap-y-2 items-center px-3 py-2 text-sm"
+                        className="flex flex-wrap gap-x-4 gap-y-2 items-center py-2 text-sm"
                     >
                         <div className="grow">
                             <Link
@@ -332,7 +329,7 @@ export const BranchesPage = () => {
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     )
 }
 

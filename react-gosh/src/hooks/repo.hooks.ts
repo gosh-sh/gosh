@@ -19,7 +19,7 @@ import {
     treeAtom,
     treeSelector,
 } from '../store'
-import { TAddress, TDao } from '../types'
+import { TAddress, TDao, TPaginatedAccountsResult } from '../types'
 import {
     TBranch,
     TBranchCompareProgress,
@@ -333,7 +333,7 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const setRepository = useSetRecoilState(repositoryAtom)
     const { updateBranches } = useBranches(repo)
-    const { pushUpgrade } = _usePush(dao, repo)
+    const { pushUpgrade } = usePush(dao, repo)
     const [progress, setProgress] = useState<{
         name?: string
         type?: 'create' | 'destroy' | '(un)lock' | 'sethead'
@@ -722,8 +722,8 @@ function useCommit(
     }
 }
 
-function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
-    const { branch: branchData, updateBranch } = useBranches(repo, branch)
+function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
+    const { branch, updateBranch } = useBranches(repo, branchName)
     const [progress, setProgress] = useState<TPushProgress>({})
 
     const push = async (
@@ -733,26 +733,33 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
             original: string | Buffer
             modified: string | Buffer
         }[],
-        isPullRequest: boolean,
-        message?: string,
-        tags?: string,
-        parent?: string,
-        task?: TTaskCommitConfig,
+        options: {
+            isPullRequest?: boolean
+            message?: string
+            tags?: string
+            parent?: string
+            task?: TTaskCommitConfig
+        },
     ) => {
-        if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
-        if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
+        if (!branch) {
+            throw new GoshError(EGoshError.NO_BRANCH)
+        }
+        if (!dao.isAuthMember) {
+            throw new GoshError(EGoshError.NOT_MEMBER)
+        }
 
-        const { name, version } = branchData.commit
-        await pushUpgrade(branchData.name, name, version)
+        const { message, tags, parent, task, isPullRequest = false } = options
+        const { name, version } = branch.commit
+        await pushUpgrade(branch.name, name, version)
 
-        message = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(branchData.name, blobs, message, isPullRequest, {
+        const comment = [title, message].filter((v) => !!v).join('\n\n')
+        await repo.push(branch.name, blobs, comment, isPullRequest, {
             tags,
             branchParent: parent,
             task,
             callback: pushCallback,
         })
-        !isPullRequest && (await updateBranch(branchData.name))
+        !isPullRequest && (await updateBranch(branch.name))
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
@@ -782,27 +789,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         })
     }
 
-    return { branch: branchData, push, pushUpgrade, progress }
-}
-
-function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
-    const { push: _push, progress } = _usePush(dao, repo, branch)
-
-    const push = async (
-        title: string,
-        blobs: {
-            treepath: string[]
-            original: string | Buffer
-            modified: string | Buffer
-        }[],
-        message?: string,
-        tags?: string,
-        task?: TTaskCommitConfig,
-    ) => {
-        await _push(title, blobs, false, message, tags, undefined, task)
-    }
-
-    return { push, progress }
+    return { branch, push, pushUpgrade, progress }
 }
 
 function _useMergeRequest(
@@ -958,8 +945,11 @@ function _useMergeRequest(
 function useMergeRequest(
     dao: TDao,
     repo: IGoshRepositoryAdapter,
-    showDiffNum: number = 5,
+    options: {
+        showDiffNum?: number
+    },
 ) {
+    const { showDiffNum = 5 } = options
     const { updateBranches } = useBranches(repo)
     const { destroy: deleteBranch, progress: branchProgress } = useBranchManagement(
         dao,
@@ -971,15 +961,26 @@ function useMergeRequest(
         build,
         progress: buildProgress,
     } = _useMergeRequest(dao.name, repo, showDiffNum)
-    const { push: _push, progress: pushProgress } = _usePush(dao, repo, dstBranch?.name)
+    const {
+        push: _push,
+        pushUpgrade: _pushUpgrade,
+        progress,
+    } = usePush(dao, repo, dstBranch?.name)
 
     const push = async (
         title: string,
-        message?: string,
-        tags?: string,
-        deleteSrcBranch?: boolean,
+        options: {
+            isPullRequest?: boolean
+            message?: string
+            tags?: string
+            deleteSrcBranch?: boolean
+            task?: TTaskCommitConfig
+        },
     ) => {
-        await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
+        const { deleteSrcBranch, ...rest } = options
+        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
+        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
+        await _push(title, buildProgress.items, { ...rest, parent: srcBranch!.name })
         if (deleteSrcBranch) {
             await deleteBranch(srcBranch!.name)
             await updateBranches()
@@ -992,64 +993,8 @@ function useMergeRequest(
         build,
         buildProgress,
         push,
-        pushProgress,
-        branchProgress,
-    }
-}
-
-function usePullRequest(
-    dao: TDao,
-    repo: IGoshRepositoryAdapter,
-    showDiffNum: number = 5,
-) {
-    const { updateBranches } = useBranches(repo)
-    const {
-        srcBranch,
-        dstBranch,
-        build,
-        progress: buildProgress,
-    } = _useMergeRequest(dao.name, repo, showDiffNum)
-    const {
-        push: _push,
-        pushUpgrade: _pushUpgrade,
-        progress,
-    } = _usePush(dao, repo, dstBranch?.name)
-
-    const push = async (
-        title: string,
-        options: {
-            message?: string
-            tags?: string
-            deleteSrcBranch?: boolean
-            task?: TTaskCommitConfig
-        },
-    ) => {
-        const { message, tags, deleteSrcBranch, task } = options
-        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
-        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-
-        await _push(
-            title,
-            buildProgress.items,
-            true,
-            message,
-            tags,
-            srcBranch!.name,
-            task,
-        )
-        if (deleteSrcBranch) {
-            await repo.deleteBranch(srcBranch!.name)
-            await updateBranches()
-        }
-    }
-
-    return {
-        srcBranch,
-        dstBranch,
-        build,
-        buildProgress,
-        push,
         pushProgress: progress,
+        branchProgress,
     }
 }
 
@@ -1143,24 +1088,33 @@ function useTaskList(
     const [tasks, setTasks] = useState<{
         isFetching: boolean
         items: TTaskListItem[]
-        lastPaid?: number
+        lastTransLt?: string
         hasNext?: boolean
     }>({ items: [], isFetching: false })
 
-    const { perPage } = params
+    const { perPage = 5 } = params
 
     const getTaskList = useCallback(
-        async (from?: number) => {
+        async (from?: string) => {
             if (!taskCodeHash) {
                 return
             }
 
             setTasks((state) => ({ ...state, isFetching: true }))
-            const accounts = await getPaginatedAccounts({
-                filters: [`code_hash: {eq:"${taskCodeHash}"}`],
-                limit: perPage,
-                lastPaid: from,
-            })
+
+            let accounts: TPaginatedAccountsResult
+            if (perPage === 0) {
+                const results = await getAllAccounts({
+                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                })
+                accounts = { results, lastTransLt: undefined, completed: true }
+            } else {
+                accounts = await getPaginatedAccounts({
+                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                    limit: perPage,
+                    lastTransLt: from,
+                })
+            }
 
             const items: TTaskListItem[] = await executeByChunk(
                 accounts.results.map(({ id }) => id),
@@ -1175,7 +1129,7 @@ function useTaskList(
                 ...state,
                 isFetching: false,
                 items: [...state.items, ...items],
-                lastPaid: accounts.lastPaid,
+                lastTransLt: accounts.lastTransLt,
                 hasNext: !accounts.completed,
             }))
         },
@@ -1183,7 +1137,7 @@ function useTaskList(
     )
 
     const getMore = async () => {
-        await getTaskList(tasks.lastPaid)
+        await getTaskList(tasks.lastTransLt)
     }
 
     const getItemDetails = async (item: TTaskListItem) => {
@@ -1279,7 +1233,6 @@ export {
     useCommit,
     usePush,
     useMergeRequest,
-    usePullRequest,
     usePullRequestCommit,
     useTaskList,
 }

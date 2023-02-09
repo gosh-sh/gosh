@@ -1,27 +1,38 @@
 import { Form, Formik } from 'formik'
-import * as Yup from 'yup'
-import { classNames, TPushProgress } from 'react-gosh'
+import { classNames, TDao, TPushProgress, TRepository } from 'react-gosh'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { useNavigate } from 'react-router-dom'
 import BlobDiffPreview from '../Blob/DiffPreview'
-import CommitFields from './CommitFileds'
+import yup from '../../yup-extended'
+import { Button } from '../Form'
+import { CommitFields } from './CommitFields/CommitFields'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 
-type TBlobDeleteFormValues = {
+export type TBlobDeleteFormValues = {
     title: string
     message?: string
     tags?: string
+    task?: string
+    reviewers?: string
+    manager?: string
+    isPullRequest?: boolean
 }
 
 type TBlobDeleteFormProps = {
     className?: string
-    dao: string
-    repo: string
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     branch: string
     treepath: string
     content?: string | Buffer
     initialValues: TBlobDeleteFormValues
     validationSchema?: object
-    isDisabled?: boolean
     extraButtons?: any
     urlBack?: string
     progress?: TPushProgress
@@ -32,38 +43,95 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     const {
         className,
         dao,
-        repo,
+        repository,
         branch,
         treepath,
         content,
         initialValues,
         validationSchema,
-        isDisabled,
         extraButtons,
         urlBack,
         progress,
         onSubmit,
     } = props
-
     const navigate = useNavigate()
+
+    const getInitialValues = () => {
+        const version_1_1_0 = {
+            task: '',
+            reviewers: '',
+            manager: '',
+            isPullRequest: false,
+        }
+        return {
+            ...initialValues,
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+        }
+    }
+
+    const getValidationSchema = () => {
+        const version_1_1_0 = {
+            task: yup.string(),
+            reviewers: yup
+                .string()
+                .test(
+                    'check-reviewer',
+                    'Reviewer is required if task was selected',
+                    function (value) {
+                        const { path, createError } = this
+                        if (this.parent.task && !value) {
+                            return createError({ path })
+                        }
+                        return true
+                    },
+                ),
+            manager: yup
+                .string()
+                .test(
+                    'check-manager',
+                    'Manager is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        return yup.object().shape({
+            title: yup.string().required('Field is required'),
+            ...validationSchema,
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+        })
+    }
 
     return (
         <div className={classNames(className)}>
             <Formik
-                initialValues={initialValues}
-                validationSchema={Yup.object().shape({
-                    title: Yup.string().required('Field is required'),
-                    ...validationSchema,
-                })}
+                initialValues={getInitialValues()}
+                validationSchema={getValidationSchema()}
                 onSubmit={onSubmit}
             >
-                {({ values, isSubmitting }) => (
-                    <Form className="px-4 sm:px-7">
+                {({ isSubmitting }) => (
+                    <Form>
                         <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                             <div className="flex flex-wrap items-baseline gap-y-2">
                                 <RepoBreadcrumbs
-                                    daoName={dao}
-                                    repoName={repo}
+                                    daoName={dao.details.name}
+                                    repoName={repository.details.name}
                                     branchName={branch}
                                     pathName={treepath}
                                     isBlob={true}
@@ -73,17 +141,16 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                             </div>
 
                             {urlBack && (
-                                <button
-                                    className="btn btn--body px-3 py-1.5 !text-sm !font-normal text-center w-full sm:w-auto"
+                                <Button
                                     disabled={isSubmitting}
                                     onClick={() => navigate(urlBack)}
                                 >
                                     Discard changes
-                                </button>
+                                </Button>
                             )}
                         </div>
 
-                        <div className="mt-5 border rounded overflow-hidden">
+                        <div className="mt-5 relative overflow-hidden">
                             <BlobDiffPreview
                                 filename={treepath}
                                 original={content}
@@ -94,9 +161,10 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                         </div>
 
                         <CommitFields
+                            dao={dao.adapter}
+                            repository={repository.adapter}
                             className="mt-4"
                             isSubmitting={isSubmitting}
-                            isDisabled={isDisabled}
                             urlBack={urlBack}
                             extraButtons={extraButtons}
                             progress={progress}
@@ -108,4 +176,4 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     )
 }
 
-export default BlobDeleteForm
+export { BlobDeleteForm }

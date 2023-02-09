@@ -10,11 +10,12 @@ import {
     faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import CopyClipboard from '../../components/CopyClipboard'
-import Spinner from '../../components/Spinner'
 import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
 import { Buffer } from 'buffer'
 import FileDownload from '../../components/FileDownload'
 import { BranchSelect } from '../../components/Branches'
+import { ButtonLink } from '../../components/Form'
+import Loader from '../../components/Loader'
 
 const BlobPage = () => {
     const treepath = useParams()['*']
@@ -26,7 +27,7 @@ const BlobPage = () => {
     const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
     return (
-        <div className="bordered-block px-7 py-8">
+        <>
             <div className="flex flex-wrap items-center gap-3 mb-5">
                 <BranchSelect
                     branch={branch}
@@ -48,25 +49,17 @@ const BlobPage = () => {
                     />
                 </div>
                 <div className="grow text-right">
-                    <Link
-                        to={`/o/${daoName}/r/${repoName}/find/${branchName}`}
-                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
-                    >
+                    <ButtonLink to={`/o/${daoName}/r/${repoName}/find/${branchName}`}>
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
-                    </Link>
+                    </ButtonLink>
                 </div>
             </div>
 
             {!blob.isFetching && blob.content === undefined && (
-                <div className="text-gray-606060 text-sm">File not found</div>
+                <div className="text-gray-7c8db5 text-sm">File not found</div>
             )}
-            {blob.isFetching && (
-                <div className="text-gray-606060 text-sm">
-                    <Spinner className="mr-3" />
-                    Loading file...
-                </div>
-            )}
+            {blob.isFetching && <Loader className="text-sm">Loading file...</Loader>}
             {blob.path && !blob.isFetching && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
@@ -110,7 +103,7 @@ const BlobPage = () => {
                     <BlobPreview filename={blob.path} value={blob.content} />
                 </div>
             )}
-        </div>
+        </>
     )
 }
 

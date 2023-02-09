@@ -2,8 +2,8 @@ import { getCommitTime, TSmvEvent, usePullRequestCommit } from 'react-gosh'
 import BlobDiffPreview from '../../../../components/Blob/DiffPreview'
 import CopyClipboard from '../../../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import Committer from '../../../../components/Commit/Committer'
 import Loader from '../../../../components/Loader'
+import { Commiter } from '../../../../components/Commit'
 
 type TRepoPullRequestEventProps = {
     className?: string
@@ -47,7 +47,7 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                     </div>
                     <div className="flex gap-3 text-gray-7c8db5 text-sm">
                         <div>Commit by:</div>
-                        <Committer committer={commit.committer} />
+                        <Commiter committer={commit.committer} />
                     </div>
                 </>
             )}

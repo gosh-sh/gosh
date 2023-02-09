@@ -1,11 +1,9 @@
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { Tab } from '@headlessui/react'
-import { classNames, getCodeLanguageFromFilename, splitByPath } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
-import CommitFields from './CommitFileds'
+import { classNames, getCodeLanguageFromFilename, splitByPath, TDao } from 'react-gosh'
+import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
-import { TextField } from '../Formik'
+import { FormikInput } from '../Formik'
 import { useMonaco } from '@monaco-editor/react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -13,25 +11,38 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
 import BlobEditor from '../Blob/Editor'
 import BlobPreview from '../Blob/Preview'
+import { Button } from '../Form'
+import yup from '../../yup-extended'
+import { CommitFields } from './CommitFields/CommitFields'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 
-type TBlobCommitFormValues = {
+export type TBlobCommitFormValues = {
     name: string
     content: string
     title: string
     message?: string
     tags?: string
+    task?: string
+    reviewers?: string
+    manager?: string
+    isPullRequest?: boolean
 }
 
 type TBlobCommitFormProps = {
     className?: string
-    dao: string
-    repo: string
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     branch: string
     treepath: string
     initialValues: TBlobCommitFormValues
     validationSchema?: object
     isUpdate?: boolean
-    isDisabled?: boolean
     extraButtons?: any
     urlBack?: string
     progress?: TPushProgress
@@ -42,13 +53,12 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const {
         className,
         dao,
-        repo,
+        repository,
         branch,
         treepath,
         initialValues,
         validationSchema,
         isUpdate,
-        isDisabled,
         extraButtons,
         urlBack,
         progress,
@@ -60,13 +70,78 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const [activeTab, setActiveTab] = useState<number>(0)
     const [codeLanguage, setCodeLanguage] = useState<string>('plaintext')
 
+    const getInitialValues = () => {
+        const version_1_1_0 = {
+            task: '',
+            reviewers: '',
+            manager: '',
+            isPullRequest: false,
+        }
+        return {
+            ...initialValues,
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+        }
+    }
+
+    const getValidationSchema = () => {
+        const version_1_1_0 = {
+            task: yup.string(),
+            reviewers: yup
+                .string()
+                .test(
+                    'check-reviewer',
+                    'Reviewer is required if task was selected',
+                    function (value) {
+                        const { path, createError } = this
+                        if (this.parent.task && !value) {
+                            return createError({ path })
+                        }
+                        return true
+                    },
+                ),
+            manager: yup
+                .string()
+                .test(
+                    'check-manager',
+                    'Manager is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        return yup.object().shape({
+            name: yup.string().required('Field is required'),
+            title: yup.string().required('Field is required'),
+            ...validationSchema,
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+        })
+    }
+
     const onFilenameBlur = (
         e: any,
         values: TBlobCommitFormValues,
         handleBlur: any,
         setFieldValue: any,
     ) => {
-        if (isUpdate) return
+        if (isUpdate) {
+            return
+        }
 
         // Formik `handleBlur` event
         handleBlur(e)
@@ -76,7 +151,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
         setCodeLanguage(language)
 
         // Set commit title
-        if (!isUpdate && !values.title) {
+        if (!values.title) {
             setFieldValue('title', `Create ${e.target.value}`)
         }
     }
@@ -91,21 +166,17 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     return (
         <div className={classNames(className)}>
             <Formik
-                initialValues={initialValues}
-                validationSchema={Yup.object().shape({
-                    name: Yup.string().required('Field is required'),
-                    title: Yup.string().required('Field is required'),
-                    ...validationSchema,
-                })}
+                initialValues={getInitialValues()}
+                validationSchema={getValidationSchema()}
                 onSubmit={onSubmit}
             >
                 {({ values, setFieldValue, isSubmitting, handleBlur }) => (
-                    <Form className="px-4 sm:px-7">
+                    <Form>
                         <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                             <div className="flex flex-wrap items-baseline gap-y-2">
                                 <RepoBreadcrumbs
-                                    daoName={dao}
-                                    repoName={repo}
+                                    daoName={dao.details.name}
+                                    repoName={repository.details.name}
                                     branchName={branch}
                                     pathName={
                                         !isUpdate ? treepath : splitByPath(treepath)[0]
@@ -115,25 +186,20 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                 <div>
                                     <Field
                                         name="name"
-                                        component={TextField}
+                                        component={FormikInput}
                                         errorEnabled={false}
-                                        inputProps={{
-                                            className: '!text-sm !px-2.5 !py-1.5',
-                                            autoComplete: 'off',
-                                            placeholder: 'Name of new file',
-                                            disabled:
-                                                isSubmitting ||
-                                                isDisabled ||
-                                                !monaco ||
-                                                activeTab === 1,
-                                            onBlur: (e: any) => {
-                                                onFilenameBlur(
-                                                    e,
-                                                    values,
-                                                    handleBlur,
-                                                    setFieldValue,
-                                                )
-                                            },
+                                        autoComplete="off"
+                                        placeholder="Name of new file"
+                                        disabled={
+                                            isSubmitting || !monaco || activeTab === 1
+                                        }
+                                        onBlur={(e: any) => {
+                                            onFilenameBlur(
+                                                e,
+                                                values,
+                                                handleBlur,
+                                                setFieldValue,
+                                            )
                                         }}
                                     />
                                 </div>
@@ -142,17 +208,16 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                             </div>
 
                             {urlBack && (
-                                <button
-                                    className="btn btn--body px-3 py-1.5 !text-sm !font-normal text-center w-full sm:w-auto"
+                                <Button
                                     disabled={isSubmitting}
                                     onClick={() => navigate(urlBack)}
                                 >
                                     Discard changes
-                                </button>
+                                </Button>
                             )}
                         </div>
 
-                        <div className="mt-5 border rounded overflow-hidden">
+                        <div className="mt-5 border border-gray-e6edff rounded-xl overflow-hidden">
                             <Tab.Group
                                 defaultIndex={activeTab}
                                 onChange={(index) => setActiveTab(index)}
@@ -212,11 +277,11 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                 </Tab.Panels>
                             </Tab.Group>
                         </div>
-
                         <CommitFields
-                            className="mt-4"
+                            dao={dao.adapter}
+                            repository={repository.adapter}
+                            className="mt-12"
                             isSubmitting={isSubmitting}
-                            isDisabled={!monaco || isDisabled}
                             urlBack={urlBack}
                             extraButtons={extraButtons}
                             progress={progress}
@@ -228,4 +293,4 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     )
 }
 
-export default BlobCommitForm
+export { BlobCommitForm }

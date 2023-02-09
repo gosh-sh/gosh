@@ -34,30 +34,41 @@ export const getPaginatedAccounts = async (params: {
     filters?: string[]
     result?: string[]
     limit?: number
-    lastPaid?: number
+    lastTransLt?: string
 }): Promise<TPaginatedAccountsResult> => {
-    const { filters = [], result = [], limit = 10 } = params
-    const lastPaid = params.lastPaid || Date.now()
-    const query = `query AccountsQuery( $lastPaid: Float, $limit: Int) {
+    const { filters = [], result = [], limit = 10, lastTransLt } = params
+    // TODO: fix this (not normal)
+    const _params = {
+        qVar: lastTransLt ? '$lastTransLt: String' : '$lastPaid: Float',
+        filter: lastTransLt
+            ? 'last_trans_lt: { lt: $lastTransLt }'
+            : 'last_paid: { lt: $lastPaid }',
+        orderByPath: lastTransLt ? 'last_trans_lt' : 'last_paid',
+        var: lastTransLt ? { lastTransLt, limit } : { lastPaid: Date.now(), limit },
+    }
+
+    const query = `query AccountsQuery( ${_params.qVar}, $limit: Int) {
         accounts(
             filter: {
-                last_paid: { lt: $lastPaid },
+                ${_params.filter},
                 ${filters.join(',')}
             }
-            orderBy: [{ path: "last_paid", direction: DESC }]
+            orderBy: [{ path: "${_params.orderByPath}", direction: DESC }]
             limit: $limit
         ) {
-            id last_paid ${result.join(' ')}
+            id last_trans_lt ${result.join(' ')}
         }
     }`
     const response = await AppConfig.goshclient.net.query({
         query,
-        variables: { lastPaid, limit },
+        variables: _params.var,
     })
     const results = response.result.data.accounts
     return {
         results,
-        lastPaid: results.length ? results[results.length - 1].last_paid : undefined,
+        lastTransLt: results.length
+            ? results[results.length - 1].last_trans_lt
+            : undefined,
         completed: results.length < limit,
     }
 }
@@ -68,17 +79,17 @@ export const getAllAccounts = async (params: {
 }): Promise<any[]> => {
     const { filters, result } = params
 
-    let next: number | undefined
+    let next: string | undefined
     const results = []
     while (true) {
         const accounts = await getPaginatedAccounts({
             filters,
             result,
             limit: 50,
-            lastPaid: next,
+            lastTransLt: next,
         })
         results.push(...accounts.results)
-        next = accounts.lastPaid
+        next = accounts.lastTransLt
         if (accounts.completed) {
             break
         }
