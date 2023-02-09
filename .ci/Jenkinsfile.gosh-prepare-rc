@@ -71,7 +71,7 @@ pipeline {
         stage('Build: Git Helper') {
             agent {
                 node {
-                    label 'jenkins-main'
+                    label 'master'
                 }
             }
             steps {
