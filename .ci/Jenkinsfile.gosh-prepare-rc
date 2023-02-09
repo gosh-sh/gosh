@@ -215,9 +215,9 @@ pipeline {
                                 set -e
                                 set -x
 
-                                cp -r /tmp/git-remote-gosh/git-remote-gosh* ./
-                                cp -r /tmp/git-remote-gosh/*.tar ./
-                                cp -r /tmp/git-remote-gosh/*.zip ./
+                                cp -r /tmp/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
+                                cp -r /tmp/git-remote-gosh/*.tar ../git-remote-gosh
+                                cp -r /tmp/git-remote-gosh/*.zip ../git-remote-gosh
                                 
                                 pwd
                                 ls -la 
