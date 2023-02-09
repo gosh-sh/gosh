@@ -376,6 +376,12 @@ function getChangeAllowancetProposalParams () external view
     (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint32));
 }
 
+function getGoshRepoTagProposalParams () external view
+         returns(uint256  proposalKind,  string[] daotag, string repo, string comment)
+{
+    (proposalKind, daotag, repo, comment, ) = abi.decode(propData, (uint256, string[], string, string, uint32));
+}
+
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
 {
     TvmSlice s = Data.toSlice();
@@ -482,6 +488,12 @@ function getChangeAllowancetProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
 {
     (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(Data, (uint256, address[], bool[], uint128[], string, uint32));
+}
+
+function getGoshRepoTagProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  string[] daotag, string repo, string comment)
+{
+    (proposalKind, daotag, repo, comment, ) = abi.decode(Data, (uint256, string[], string, string, uint32));
 }
 
 function getHalfData (TvmCell Data) external pure

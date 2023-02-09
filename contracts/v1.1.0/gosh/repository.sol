@@ -37,6 +37,7 @@ contract Repository is Modifiers{
     bool _ready = false;
     bool _limited = true;
     mapping(uint256 => string) public _versions;
+    string public _description;
 
     constructor(
         address pubaddr,
@@ -44,6 +45,7 @@ contract Repository is Modifiers{
         string nameDao,
         address goshdao,
         address rootgosh,
+        string desc,
         TvmCell CommitCode,
         TvmCell WalletCode,
         TvmCell codeTag,
@@ -57,6 +59,7 @@ contract Repository is Modifiers{
         ) public {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
+        _description = desc;
         _versions = versions;
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;

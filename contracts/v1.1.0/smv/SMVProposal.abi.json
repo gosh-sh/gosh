@@ -266,6 +266,17 @@
 			]
 		},
 		{
+			"name": "getGoshRepoTagProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"daotag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshProposalKindData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -473,6 +484,18 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshRepoTagProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"daotag","type":"string[]"},
+				{"name":"repo","type":"string"},
 				{"name":"comment","type":"string"}
 			]
 		},

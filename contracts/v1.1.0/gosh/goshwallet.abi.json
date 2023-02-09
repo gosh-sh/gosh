@@ -237,6 +237,7 @@
 			"name": "AloneDeployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
 			],
 			"outputs": [
@@ -388,6 +389,7 @@
 			"name": "deployRepositoryDao",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
 			],
 			"outputs": [
@@ -397,6 +399,7 @@
 			"name": "startProposalForDeployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -472,8 +475,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
 				{"name":"numberChangedFiles","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"name":"numberCommits","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -683,6 +685,52 @@
 			]
 		},
 		{
+			"name": "startProposalForAddRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellAddRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForDestroyRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellDestroyRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForAddDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
@@ -745,19 +793,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForTaskConfirm",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"index","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{

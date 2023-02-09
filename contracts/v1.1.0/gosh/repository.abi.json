@@ -11,6 +11,7 @@
 				{"name":"nameDao","type":"string"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootgosh","type":"address"},
+				{"name":"desc","type":"string"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeTag","type":"cell"},
@@ -413,6 +414,14 @@
 			"outputs": [
 				{"name":"_versions","type":"map(uint256,string)"}
 			]
+		},
+		{
+			"name": "_description",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_description","type":"string"}
+			]
 		}
 	],
 	"data": [
@@ -441,6 +450,7 @@
 		{"name":"_counttag","type":"uint128"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_limited","type":"bool"},
-		{"name":"_versions","type":"map(uint256,string)"}
+		{"name":"_versions","type":"map(uint256,string)"},
+		{"name":"_description","type":"string"}
 	]
 }

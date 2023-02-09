@@ -25,16 +25,6 @@
 			]
 		},
 		{
-			"name": "confirmSmv",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"index1","type":"uint128"},
-				{"name":"index2","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getGrant",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

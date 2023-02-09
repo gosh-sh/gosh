@@ -366,14 +366,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _totalsupply += token;
     }
     
-    function isAloneDeploy (string nameRepo, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function isAloneDeploy (string nameRepo, string descr, optional(AddrVersion) previous, address pub, uint128 index, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
         require(_wallets.prev(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         require(_wallets.next(keyaddr).hasValue() == false, ERR_NOT_ALONE);
         getMoney();
-        if (typeF == ALONE_DEPLOY_REPO) { GoshWallet(msg.sender).deployRepositoryDao{value:0.2 ton}(nameRepo, previous); return; }
+        if (typeF == ALONE_DEPLOY_REPO) { GoshWallet(msg.sender).deployRepositoryDao{value:0.2 ton}(nameRepo, descr, previous); return; }
     }
     
     function deployWalletPrivate(MemberToken[] pubaddrdeploy) private {

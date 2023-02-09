@@ -72,12 +72,13 @@ contract Task is Modifiers{
     function isReady(ConfigCommit commit) public senderIs(_repo) {
         require(_ready == false, ERR_TASK_COMPLETED);
         _candidates.push(commit);
-    } 
-    
-    function confirmSmv(address pubaddr, uint128 index1, uint128 index2) public {
+//    } 
+//    
+//    function confirmSmv(address pubaddr, uint128 index1, uint128 index2) public {
        require(_ready == false, ERR_TASK_COMPLETED);
-       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
-       checkAccess(pubaddr, msg.sender, index2);
+//       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
+       uint128 index1 = 0;
+//       checkAccess(pubaddr, msg.sender, index2);
        tvm.accept();
         _ready = true;
         _indexFinal = index1;

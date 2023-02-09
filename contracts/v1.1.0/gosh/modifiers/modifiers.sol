@@ -183,6 +183,12 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant MULTI_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant MULTI_PROPOSAL_DURATION = 1 weeks;
+    
+    uint32 constant REPOTAG_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant REPOTAG_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant REPOTAG_DESTROY_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant REPOTAG_DESTROY_PROPOSAL_DURATION  = 1 weeks; 
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -205,6 +211,8 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant ALLOW_MINT_PROPOSAL_KIND = 18;
     uint256 constant CHANGE_ALLOWANCE_PROPOSAL_KIND = 19;
     uint256 constant MULTI_PROPOSAL_KIND = 20;
+    uint256 constant REPOTAG_PROPOSAL_KIND = 21;
+    uint256 constant REPOTAG_DESTROY_PROPOSAL_KIND = 22;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
