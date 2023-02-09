@@ -217,14 +217,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string newversion,
         string description,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, newversion, description, comment, now);
 
-        _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -243,7 +243,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool[] increase,
         uint128[] grant,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -253,7 +253,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, comment, now);
 
-        _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -270,7 +270,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForSetTombstoneDao(
         string description,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -278,7 +278,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, description, comment, now);
 
-        _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -360,7 +360,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForMintDaoReserve(
         uint128 token,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -370,7 +370,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, token, comment, now);
 
-        _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -383,7 +383,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function startProposalForNotAllowMint(
         string comment,
-        uint128 num_clients
+        uint128 num_clients, address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -394,7 +394,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmCell c = abi.encode(proposalKind, comment, now);
 
-        _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -413,7 +413,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address pubaddr,
         uint128 token,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -424,7 +424,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, now);
 
-        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -440,7 +440,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address pubaddr,
         uint128 token,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -450,7 +450,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, now);
 
-        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -465,7 +465,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeployWalletDao(
         MemberToken[] pubaddr,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -477,7 +477,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
 
-        _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -491,7 +491,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDeleteWalletDao(
         address[] pubaddr,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -502,7 +502,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
 
-        _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -634,7 +634,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nameRepo, 
         optional(AddrVersion) previous,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -645,7 +645,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, nameRepo, previous, comment, now);
 
-        _startProposalForOperation(c, DEPLOY_REPO_PROPOSAL_START_AFTER, DEPLOY_REPO_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DEPLOY_REPO_PROPOSAL_START_AFTER, DEPLOY_REPO_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1184,12 +1184,22 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                                                        (amount);
     }
 
-    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients) internal view
+    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients, address[] reviewers) internal view
     {
         uint256 prop_id = tvm.hash(dataCell);
-        uint32 startTime = now + startTimeAfter;
-        uint32 finishTime = now + startTimeAfter + durationTime;
-        startProposal(prop_id, dataCell, startTime, finishTime, num_clients );
+        /* uint32 startTime = now + startTimeAfter;
+        uint32 finishTime = now + startTimeAfter + durationTime; */        
+        mapping (address => bool) revs;
+        //clean the dublicates
+        for (address a: reviewers) revs[a] = true;
+        
+        TvmBuilder b;
+        b.storeRef(dataCell);
+        TvmBuilder br;
+        br.store(revs);
+        b.storeRef(br.toCell());
+        TvmCell newDataCell = b.toCell();
+        startProposal(prop_id, newDataCell, startTimeAfter, durationTime, num_clients);
     }
 
     function startProposalForSetCommit(
@@ -1200,7 +1210,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 numberCommits,
         string comment,
         uint128 num_clients,
-        optional(ConfigCommit) task
+        optional(ConfigCommit) task,
+        address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         if (_limited == true) {
@@ -1212,7 +1223,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, now);
 
-        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1231,7 +1242,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForAddDaoTag(
         string[] tag,
         string comment,
-        uint128 num_clients
+        uint128 num_clients,
+        address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);       
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1241,7 +1253,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, comment, now);
 
-        _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1255,7 +1267,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForDestroyDaoTag(
         string[] tag,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);       
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1265,7 +1277,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, comment, now);
 
-        _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1280,7 +1292,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1290,7 +1302,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, now);
 
-        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1308,7 +1320,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         uint128 index,
         string comment,
-        uint128 num_clients
+        uint128 num_clients, 
+        address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1317,7 +1330,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = TASK_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, index, comment, now);
-        _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -1334,7 +1347,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string taskName,
         string repoName,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1343,7 +1356,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, now);
-        _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -1358,7 +1371,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startMultiProposal(
         uint128 number,
         TvmCell proposals,
-        uint128 num_clients
+        uint128 num_clients, 
+        address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1368,7 +1382,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, now);
-        _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
@@ -1378,7 +1392,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         ConfigGrant grant,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1390,7 +1404,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, grant, comment, now);
-        _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -1407,7 +1421,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string comment,
-        uint128 num_clients
+        uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1417,7 +1431,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, now);
 
-        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients);
+        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
