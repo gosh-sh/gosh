@@ -278,6 +278,17 @@
 			]
 		},
 		{
+			"name": "getChangeDescriptionProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repo","type":"string"},
+				{"name":"descr","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshProposalKindData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -498,6 +509,18 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"daotag","type":"string[]"},
 				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeDescriptionProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repo","type":"string"},
+				{"name":"descr","type":"string"},
 				{"name":"comment","type":"string"}
 			]
 		},
