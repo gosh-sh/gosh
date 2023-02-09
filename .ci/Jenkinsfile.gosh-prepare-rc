@@ -81,14 +81,33 @@ pipeline {
                                 #!/bin/bash
                                 set -e 
                                 set -x
+                                
+                                # 2 = gosh-dispatcher
+                                PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${BRANCH} --project gosh | jq .id)
+                                PIPELINE_2_STATUS=inProgress
 
-                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 114 --path ./linux-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 114 --path ./darwin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 114 --path ./windows-amd64
+                                # 1 = git-remote-gosh
+                                PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${BRANCH} --project gosh | jq .id)
+                                PIPELINE_1_STATUS=inProgress
 
-                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 115 --path ./linux-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 115 --path ./darwin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 115 --path ./windows-amd64
+                                until [ $PIPELINE_2_STATUS != "inProgress" ]
+                                do
+                                    sleep 60
+                                    PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
+                                done
+                                until [ $PIPELINE_1_STATUS != "inProgress" ]
+                                do
+                                    sleep 60
+                                    PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
+                                done
+
+                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
+
+                                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
 
                                 tar -cvf git-remote-gosh-linux-amd64.tar linux-amd64/*
                                 tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
