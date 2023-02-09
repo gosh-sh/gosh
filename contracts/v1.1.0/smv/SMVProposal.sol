@@ -388,6 +388,18 @@ function getChangeDescriptionProposalParams () external view
     (proposalKind, repo, descr, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
+function getChangeHideVotingResultProposalParams () external view
+         returns(uint256  proposalKind,  bool result, string comment)
+{
+    (proposalKind, result, comment, ) = abi.decode(propData, (uint256, bool, string, uint32));
+}
+
+function getChangeAllowDiscussionProposalParams () external view
+         returns(uint256  proposalKind,  bool result, string comment)
+{
+    (proposalKind, result, comment, ) = abi.decode(propData, (uint256, bool, string, uint32));
+}
+
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
 {
     TvmSlice s = Data.toSlice();
@@ -506,6 +518,18 @@ function getChangeDescriptionProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  string repo, string descr, string comment)
 {
     (proposalKind, repo, descr, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getChangeHideVotingResultProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  bool result, string comment)
+{
+    (proposalKind, result, comment, ) = abi.decode(Data, (uint256, bool, string, uint32));
+}
+
+function getChangeAllowDiscussionProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  bool result, string comment)
+{
+    (proposalKind, result, comment, ) = abi.decode(Data, (uint256, bool, string, uint32));
 }
 
 function getHalfData (TvmCell Data) external pure

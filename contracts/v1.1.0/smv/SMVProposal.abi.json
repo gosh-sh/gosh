@@ -289,6 +289,26 @@
 			]
 		},
 		{
+			"name": "getChangeHideVotingResultProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeAllowDiscussionProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshProposalKindData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -521,6 +541,28 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repo","type":"string"},
 				{"name":"descr","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeHideVotingResultProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeAllowDiscussionProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},

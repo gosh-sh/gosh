@@ -78,6 +78,26 @@
 			]
 		},
 		{
+			"name": "changeHideVotingResult",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeAllowDiscussion",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyDiff",
 			"inputs": [
 				{"name":"repo","type":"address"},
@@ -713,6 +733,22 @@
 			"outputs": [
 				{"name":"_allowMint","type":"bool"}
 			]
+		},
+		{
+			"name": "_hide_voting_results",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_hide_voting_results","type":"bool"}
+			]
+		},
+		{
+			"name": "_allow_discussion_on_proposals",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_allow_discussion_on_proposals","type":"bool"}
+			]
 		}
 	],
 	"data": [
@@ -758,6 +794,8 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"_allowMint","type":"bool"},
+		{"name":"_hide_voting_results","type":"bool"},
+		{"name":"_allow_discussion_on_proposals","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"saveind","type":"optional(uint128)"},

@@ -290,6 +290,50 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
         return abi.encode(proposalKind, description, comment, now);
     }
+    
+    function startProposalForSetHideVotingResult(
+        bool res,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, res, comment, now);
+
+        _startProposalForOperation(c, CHANGE_HIDE_VOTING_RESULT_PROPOSAL_START_AFTER, CHANGE_HIDE_VOTING_RESULT_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellSetHideVotingResult(bool res,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
+        return abi.encode(proposalKind, res, comment, now);
+    }
+    
+    function startProposalForSetAllowDiscussion(
+        bool res,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, res, comment, now);
+
+        _startProposalForOperation(c, CHANGE_ALLOW_DISCUSSION_PROPOSAL_START_AFTER, CHANGE_ALLOW_DISCUSSION_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellSetAllowDiscussion(bool res,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
+        return abi.encode(proposalKind, res, comment, now);
+    }
 
     
     
@@ -1670,6 +1714,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
                 (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
                 _changeDescription(repo, descr);
+            } else
+            if (kind == CHANGE_HIDE_VOTING_PROPOSAL_KIND) {
+                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
+               GoshDao(_goshdao).changeHideVotingResult{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
+            } else
+            if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
+               (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));
+               GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
             }
         }
     }
@@ -1786,6 +1838,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
                 (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
                 _changeDescription(repo, descr);
+            } else
+            if (kind == CHANGE_HIDE_VOTING_PROPOSAL_KIND) {
+                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
+               GoshDao(_goshdao).changeHideVotingResult{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
+            } else
+            if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
+               (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));
+               GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
             }
         }
     }

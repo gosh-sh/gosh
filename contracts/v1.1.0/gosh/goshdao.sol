@@ -56,6 +56,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool _flag = false;
     bool _tombstone = false;
     bool public _allowMint = true;
+    bool public _hide_voting_results = false;
+    bool public _allow_discussion_on_proposals = true;
     
     uint128 timeMoney = 0;
     optional(MemberToken[]) saveaddr;
@@ -199,6 +201,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         _flag = true;
         SystemContract(_systemcontract).sendMoneyDao{value : 0.2 ton}(_nameDao, 50000 ton);
+    }
+    
+    function changeHideVotingResult (address pub, uint128 index, bool res) public senderIs(getAddrWalletIn(pub, index))  accept {
+        _hide_voting_results = res;
+        getMoney();
+    }
+    
+    function changeAllowDiscussion (address pub, uint128 index, bool res) public senderIs(getAddrWalletIn(pub, index))  accept {
+        _allow_discussion_on_proposals = res;
+        getMoney();
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {

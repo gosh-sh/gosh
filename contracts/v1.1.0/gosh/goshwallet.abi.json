@@ -187,6 +187,48 @@
 			]
 		},
 		{
+			"name": "startProposalForSetHideVotingResult",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetHideVotingResult",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForSetAllowDiscussion",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetAllowDiscussion",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "AloneNotAllowMint",
 			"inputs": [
 			],
