@@ -38,7 +38,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Compile: SMV') {
+        stage('Compile: SMV') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -67,7 +67,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Build: Git Helper') {
             agent {
                 node {
@@ -117,7 +117,7 @@ pipeline {
                 }
             }
         }*/
-        /*stage('Deploy: deploy smart-contracts') {
+        stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -196,7 +196,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Tests: functional') {
             agent {
                 docker {
@@ -219,8 +219,10 @@ pipeline {
                                 cp -r /tmp/git-remote-gosh/windows* ../git-remote-gosh
                                 
                                 mkdir /home/jenkins/bin
+
                                 # dispatcher
                                 cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+                               
                                 # remote
                                 cd ../git-remote-gosh/linux-amd64
                                 REMOTE_VERSION=\$(find . -name "git-remote-gosh_v*" | tr -d "./")
