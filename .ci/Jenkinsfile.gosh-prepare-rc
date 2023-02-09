@@ -222,7 +222,9 @@ pipeline {
                                 # dispatcher
                                 cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
                                 # remote
-                                REMOTE_VERSION=\$(find ../git-remote-gosh -name "git-remote-gosh_v*")
+                                cd ../git-remote-gosh/linux-amd64
+                                REMOTE_VERSION=\$(find . -name "git-remote-gosh_v*")
+                                cd -
                                 cp -r ../git-remote-gosh/linux-amd64/$REMOTE_VERSION /home/jenkins/bin/$REMOTE_VERSION && chmod +x /home/jenkins/bin/$REMOTE_VERSION
                                 mkdir -p /home/jenkins/.gosh/
                                 echo $REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
