@@ -163,6 +163,36 @@ library GoshLib {
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
     
+    function buildRepoTagGoshCode(
+        TvmCell originalCode,
+        string tag,
+        address versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(tag);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
+    function buildRepoTagDaoCode(
+        TvmCell originalCode,
+        string tag,
+        address dao,
+        address versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(tag);
+        b.store(dao);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
     function buildProfileIndexCode(
         TvmCell originalCode,
         uint256 pubkey,

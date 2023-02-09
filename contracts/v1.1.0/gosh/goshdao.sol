@@ -144,7 +144,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         string ver = b.decode(string);
         if (ver == "1.1.0"){
             mapping(uint256 => MemberToken) wallets;
-            (wallets, _hashtag, _reserve, _allbalance, _totalsupply, _versions) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string));
+            mapping(uint256 => string) hashtag;
+            (wallets, hashtag, _reserve, _allbalance, _totalsupply, _versions) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets);

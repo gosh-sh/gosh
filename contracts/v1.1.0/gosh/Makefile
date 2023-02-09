@@ -1,5 +1,5 @@
-tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex task daotag
-cpfl = profile profiledao profileindex versioncontroller daotag
+tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex task daotag repotagdao repotaggosh
+cpfl = profile profiledao profileindex versioncontroller
 KEYS_PATH = ${CURDIR}
 clean:
 	rm -f *.tvc *.abi.json *.code

@@ -31,6 +31,9 @@ contract Repository is Modifiers{
     string _head;
     mapping(uint256 => Item) _Branches;
     mapping(uint256 => bool) _protectedBranch;
+    mapping(uint256 => string) _hashtag;
+    uint128 _limittag = 3;
+    uint128 _counttag = 0;
     bool _ready = false;
     bool _limited = true;
     mapping(uint256 => string) public _versions;
@@ -266,6 +269,31 @@ contract Repository is Modifiers{
         TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), branch, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
+    }
+    
+    function smvdeployrepotag (address pub, uint128 index, string[] tag) public accept {
+        require(checkAccess(pub, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
+            _counttag++;
+            _hashtag[tvm.hash(tag[t])] = tag[t];
+            TvmCell s1 = _composeWalletStateInit(pub, 0);
+            address addr = address.makeAddrStd(0, tvm.hash(s1));
+            GoshWallet(addr).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+        }
+    }
+    
+    function smvdestroyrepotag (address pub, uint128 index, string[] tag) public accept {
+        require(checkAccess(pub, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t])) == false) { continue; }
+            _counttag--;
+            delete _hashtag[tvm.hash(tag[t])];
+            TvmCell s1 = _composeWalletStateInit(pub, 0);
+            address addr = address.makeAddrStd(0, tvm.hash(s1));
+            GoshWallet(addr).destroyRepoTag{value:0.2 ton}(_name, tag[t]);   	
+        }
     }
 
     //Getters

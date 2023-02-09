@@ -20,6 +20,7 @@ import "task.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "profile.sol";
+import "repotaggosh.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
@@ -878,6 +879,34 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function deployRepoTag(
+        string repoName,
+        string repotag
+    ) public senderIs(_buildRepositoryAddr(repoName)) accept saveMsg {
+        _deployRepoTag(msg.sender, repotag);
+        getMoney();
+    }
+    
+    function _deployRepoTag(
+        address repo,
+        string repotag
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_DaoTagCode], repotag, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao}});
+        new RepoTagGosh {
+            stateInit: s1, value: FEE_DEPLOY_REPO_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _systemcontract, repotag, _code[m_WalletCode], _index);
+        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_DaoTagCode], repotag, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao}});
+        new RepoTagGosh {
+            stateInit: s1, value: FEE_DEPLOY_REPO_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _systemcontract, repotag, _code[m_WalletCode], _index);
+        getMoney();
+    }
+    
     function destroyDaoTag(
         string daotag
     ) public senderIs(_goshdao) accept saveMsg {
@@ -888,6 +917,26 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _destroyDaoTag(
         string daotag
     ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        DaoTag(_getdaotagaddr(daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        getMoney();
+    }
+    
+    function destroyRepoTag(
+        string repoName,
+        string daotag
+    ) public senderIs(_buildRepositoryAddr(repoName)) accept saveMsg {
+        _destroyRepoTag(msg.sender, daotag);
+        getMoney();
+    }
+    
+    function _destroyRepoTag(
+        address _repo,
+        string daotag
+    ) private {
+        _repo;
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -1313,6 +1362,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
+        require(number <= 50, ERR_TOO_MANY_PROPOSALS);
         tvm.accept();
         _saveMsg();
 
