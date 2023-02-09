@@ -409,6 +409,11 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                         return Err(e);
                     }
                 }
+                if dispatcher_call {
+                    stdout
+                        .write_all(format!("{DISPATCHER_ENDL}\n").as_bytes())
+                        .await?;
+                }
 
                 continue;
             }
