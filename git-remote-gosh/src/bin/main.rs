@@ -75,7 +75,7 @@ async fn main_internal() -> anyhow::Result<()> {
                 .ok_or(anyhow::anyhow!(
                     "Wrong args for git-remote call\nRequired: <name> <url>"
                 ))?;
-            let dispatcher_call = matches.contains_id("dispatcher");
+            let dispatcher_call = matches.get_flag("dispatcher");
             git_remote_gosh::git_helper::run(config, &url, dispatcher_call).await?;
         }
     }
