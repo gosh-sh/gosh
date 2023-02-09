@@ -83,17 +83,17 @@ pipeline {
                                 set -x
 
                                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 114 --path ./linux-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 114 --path ./darwin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 114 --path ./windows-amd64
+                                #az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 114 --path ./darwin-amd64
+                                #az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 114 --path ./windows-amd64
 
                                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 115 --path ./linux-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 115 --path ./darwin-amd64
-                                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 115 --path ./windows-amd64
+                                #az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 115 --path ./darwin-amd64
+                                #az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 115 --path ./windows-amd64
 
                                 tar -cvf git-remote-gosh-linux-amd64.tar linux-amd64/*
-                                tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
-                                zip -r git-remote-gosh-windows-amd64.zip windows-amd64/*
-                                rm ../.git
+                                #tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
+                                #zip -r git-remote-gosh-windows-amd64.zip windows-amd64/*
+                                rm ../.git -rf
                             '''
                         }
                     }
