@@ -27,7 +27,7 @@ contract Repository is Modifiers{
     address _systemcontract;
     string static _name;
     string _nameDao;
-    address _goshdao;
+    address public _goshdao;
     string _head;
     mapping(uint256 => Item) _Branches;
     mapping(uint256 => bool) _protectedBranch;

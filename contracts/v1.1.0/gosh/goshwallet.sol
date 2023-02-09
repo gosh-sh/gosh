@@ -654,10 +654,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function getCellDeployRepo(string nameRepo, 
+        string descr,
         optional(AddrVersion) previous,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, nameRepo, previous, comment, now);       
+        return abi.encode(proposalKind, nameRepo, descr, previous, comment, now);       
     }
 
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {

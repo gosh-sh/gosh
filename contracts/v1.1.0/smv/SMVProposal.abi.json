@@ -198,6 +198,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"}
 			]
@@ -414,6 +415,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"}
 			]

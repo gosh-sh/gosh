@@ -335,9 +335,9 @@ function getGoshDeployTaskProposalParams () external view
 }
 
 function getGoshDeployRepoProposalParams () external view
-         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous, string comment)
+         returns(uint256  proposalKind,  string repoName, string descr, optional(AddrVersion) previous, string comment)
 {
-    (proposalKind, repoName, previous, comment,) = abi.decode(propData, (uint256, string, optional(AddrVersion), string, uint32));
+    (proposalKind, repoName, descr, previous, comment,) = abi.decode(propData, (uint256, string, string, optional(AddrVersion), string, uint32));
 }
 
 function getGoshAddVoteTokenProposalParams () external view
@@ -449,9 +449,9 @@ function getGoshDeployTaskProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshDeployRepoProposalParamsData (TvmCell Data) external pure
-         returns(uint256  proposalKind,  string repoName, optional(AddrVersion) previous, string comment)
+         returns(uint256  proposalKind,  string repoName, string descr, optional(AddrVersion) previous, string comment)
 {
-    (proposalKind, repoName, previous, comment,) = abi.decode(Data, (uint256, string, optional(AddrVersion), string, uint32));
+    (proposalKind, repoName, descr, previous, comment,) = abi.decode(Data, (uint256, string, string, optional(AddrVersion), string, uint32));
 }
 
 function getGoshAddVoteTokenProposalParamsData (TvmCell Data) external pure

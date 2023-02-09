@@ -408,6 +408,14 @@
 			]
 		},
 		{
+			"name": "_goshdao",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_goshdao","type":"address"}
+			]
+		},
+		{
 			"name": "_versions",
 			"inputs": [
 			],

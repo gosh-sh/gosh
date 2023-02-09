@@ -412,6 +412,7 @@
 			"name": "getCellDeployRepo",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"}
 			],
