@@ -21,7 +21,7 @@ pipeline {
                 }
             }
             steps {
-                script {
+                /*script {
                     if (env.ghprbPullLink) {
                         env.BRANCH = env.ghprbSourceBranch
                     } else {
@@ -30,10 +30,10 @@ pipeline {
                 }
                 echo "${BRANCH}"
                 git branch: "${BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
-                checkout scm
+                checkout scm*/
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
-                    currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
+                    //currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
                 }
             }
         }
