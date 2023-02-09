@@ -213,6 +213,7 @@ pipeline {
                                 set -e
                                 set -x
                                 
+                                pwd
                                 ls -la 
                                 ls -la ../git-remote-gosh
                                 ls -la ../git-remote-gosh/linux-amd64
