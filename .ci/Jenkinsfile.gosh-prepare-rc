@@ -223,7 +223,7 @@ pipeline {
                                 cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
                                 # remote
                                 cd ../git-remote-gosh/linux-amd64
-                                REMOTE_VERSION=\$(find . -name "git-remote-gosh_v*")
+                                REMOTE_VERSION=\$(find . -name "git-remote-gosh_v*" | tr -d "./")
                                 cd -
                                 cp -r ../git-remote-gosh/linux-amd64/$REMOTE_VERSION /home/jenkins/bin/$REMOTE_VERSION && chmod +x /home/jenkins/bin/$REMOTE_VERSION
                                 mkdir -p /home/jenkins/.gosh/
