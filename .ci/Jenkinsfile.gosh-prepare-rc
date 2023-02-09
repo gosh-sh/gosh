@@ -203,7 +203,7 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace/gosh-prepare-rc:/var/jenkins_home/workspace/gosh-prepare-rc'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace/gosh-prepare-rc:/tmp'
                 }
             }
             steps {
@@ -214,6 +214,10 @@ pipeline {
                                 #!/bin/bash
                                 set -e
                                 set -x
+
+                                cp -r /tmp/git-remote-gosh/git-remote-gosh* ./
+                                cp -r /tmp/git-remote-gosh/*.tar ./
+                                cp -r /tmp/git-remote-gosh/*.zip ./
                                 
                                 pwd
                                 ls -la 
