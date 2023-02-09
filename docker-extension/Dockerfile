@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.5
 
-ARG GOSH_GIT_IMAGE=teamgosh/git
+#ARG GOSH_GIT_IMAGE=teamgosh/git
 
-FROM ${GOSH_GIT_IMAGE} as gosh_git
+#FROM ${GOSH_GIT_IMAGE} as gosh_git
 FROM --platform=${BUILDPLATFORM} node:18-bullseye-slim as node_slim
 
 

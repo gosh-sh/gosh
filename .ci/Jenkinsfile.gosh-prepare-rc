@@ -230,6 +230,8 @@ pipeline {
                                 cp -r ../git-remote-gosh/linux-amd64/$REMOTE_VERSION /home/jenkins/bin/$REMOTE_VERSION && chmod +x /home/jenkins/bin/$REMOTE_VERSION
                                 mkdir -p /home/jenkins/.gosh/
                                 echo $REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+                                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                                ./set-vars.sh https://local-evernode.gosh.sh
                             '''
                             def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
                             runParallel items: (files).collect { "${it}" }
