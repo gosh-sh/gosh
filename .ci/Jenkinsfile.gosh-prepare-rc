@@ -94,7 +94,8 @@ pipeline {
                                 tar -cvf git-remote-gosh-linux-amd64.tar linux-amd64/*
                                 #tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
                                 #zip -r git-remote-gosh-windows-amd64.zip windows-amd64/*
-                                rm ../.git -rf
+                                pwd
+                                ls -la .
                             '''
                         }
                     }
