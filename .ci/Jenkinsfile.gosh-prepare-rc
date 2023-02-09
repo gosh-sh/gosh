@@ -70,9 +70,9 @@ pipeline {
         }*/
         stage('Build: Git Helper') {
             agent {
-                //node {
-                    label 'master'
-                //}
+                node {
+                    label 'jenkins-main'
+                }
             }
             steps {
                 script {
