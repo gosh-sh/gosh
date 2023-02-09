@@ -214,6 +214,26 @@
 			]
 		},
 		{
+			"name": "smvdeployrepotag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdestroyrepotag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getContentAddress",
 			"inputs": [
 				{"name":"commit","type":"string"},
@@ -294,6 +314,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTags",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,string)"}
 			]
 		},
 		{
@@ -408,6 +436,9 @@
 		{"name":"_head","type":"string"},
 		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"_Branches","type":"map(uint256,tuple)"},
 		{"name":"_protectedBranch","type":"map(uint256,bool)"},
+		{"name":"_hashtag","type":"map(uint256,string)"},
+		{"name":"_limittag","type":"uint128"},
+		{"name":"_counttag","type":"uint128"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_limited","type":"bool"},
 		{"name":"_versions","type":"map(uint256,string)"}

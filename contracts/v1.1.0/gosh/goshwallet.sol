@@ -73,6 +73,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell contentSignature,
         TvmCell codeTask,
         TvmCell codedaotag,
+        TvmCell coderepotag,
         mapping(uint256 => string) versions,
         uint128 limit_wallets,
         optional(uint256) access,
@@ -104,6 +105,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_contentSignature] = contentSignature;
         _code[m_TaskCode] = codeTask;
         _code[m_DaoTagCode] = codedaotag;
+        _code[m_RepoTagCode] = coderepotag;
         _access = access;
         _limit_wallets = limit_wallets;
         ///////////////////
@@ -129,7 +131,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         getMoney();
@@ -546,7 +548,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -895,12 +897,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_DaoTagCode], repotag, _versionController);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo}});
         new RepoTagGosh {
             stateInit: s1, value: FEE_DEPLOY_REPO_TAG, wid: 0, bounce: true, flag: 1
         }(_pubaddr, _systemcontract, repotag, _code[m_WalletCode], _index);
-        TvmCell deployCode = GoshLib.buildRepoTagGoshCode(_code[m_DaoTagCode], repotag, _versionController);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao}});
+        deployCode = GoshLib.buildRepoTagDaoCode(_code[m_RepoTagCode], repotag, _goshdao, _versionController);
+        s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo}});
         new RepoTagGosh {
             stateInit: s1, value: FEE_DEPLOY_REPO_TAG, wid: 0, bounce: true, flag: 1
         }(_pubaddr, _systemcontract, repotag, _code[m_WalletCode], _index);

@@ -20,6 +20,7 @@
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaotag","type":"cell"},
+				{"name":"coderepotag","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
@@ -122,7 +123,8 @@
 				{"name":"newversion","type":"string"},
 				{"name":"description","type":"string"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -145,7 +147,8 @@
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -167,7 +170,8 @@
 			"inputs": [
 				{"name":"description","type":"string"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -243,7 +247,8 @@
 			"inputs": [
 				{"name":"token","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -262,7 +267,8 @@
 			"name": "startProposalForNotAllowMint",
 			"inputs": [
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -282,7 +288,8 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -304,7 +311,8 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -325,7 +333,8 @@
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -345,7 +354,8 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -389,7 +399,8 @@
 				{"name":"nameRepo","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -525,8 +536,26 @@
 			]
 		},
 		{
+			"name": "deployRepoTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"repotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroyDaoTag",
 			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyRepoTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
 				{"name":"daotag","type":"string"}
 			],
 			"outputs": [
@@ -632,7 +661,8 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -657,7 +687,8 @@
 			"inputs": [
 				{"name":"tag","type":"string[]"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -677,7 +708,8 @@
 			"inputs": [
 				{"name":"tag","type":"string[]"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -698,7 +730,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -721,7 +754,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"index","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -744,7 +778,8 @@
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -765,7 +800,8 @@
 			"inputs": [
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -777,7 +813,8 @@
 				{"name":"repoName","type":"string"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -800,7 +837,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"}
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -1123,6 +1161,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "acceptReviewer",
+			"inputs": [
+				{"name":"propAddress","type":"address"}
+			],
+			"outputs": [
 			]
 		},
 		{

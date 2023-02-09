@@ -164,6 +164,14 @@
 			]
 		},
 		{
+			"name": "setRepoTag",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setDiff",
 			"inputs": [
 				{"name":"code","type":"cell"}

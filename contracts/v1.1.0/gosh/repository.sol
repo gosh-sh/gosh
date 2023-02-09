@@ -350,6 +350,10 @@ contract Repository is Modifiers{
         TvmCell s1 = _composeDiffStateInit(commitName, address(this), index1, index2);
         return  address(tvm.hash(s1));
     }
+    
+    function getTags() external view returns(mapping(uint256 => string)) {
+        return _hashtag;
+    }
 
     function getCommitCode() external view returns(TvmCell) {
         return _code[m_CommitCode];

@@ -22,6 +22,7 @@
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaotag","type":"cell"},
+				{"name":"coderepotag","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},
