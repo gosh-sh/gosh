@@ -815,6 +815,45 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             value: FEE_DESTROY_BRANCH, bounce: true, flag: 1
         }(_pubaddr, Name, _index);
     }
+    
+    function startProposalForChangeDescription(
+        string repoName,
+        string descr,
+        string comment,
+        uint128 num_clients,
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        tvm.accept();
+        _saveMsg();
+
+        uint256 proposalKind = CHANGE_DESCRIPTION_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, repoName, descr, comment, now);
+
+        _startProposalForOperation(c, CHANGE_DESCRIPTION_PROPOSAL_START_AFTER, CHANGE_DESCRIPTION_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellChangeDescription(string repoName,
+        string descr,
+        string comment) external pure returns(TvmCell) {
+    	uint256 proposalKind = CHANGE_DESCRIPTION_PROPOSAL_KIND;
+        return abi.encode(proposalKind, repoName, descr, comment, now);
+    }
+    
+    function _changeDescription(
+        string repoName,
+        string descr
+    ) private view {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        address repo = _buildRepositoryAddr(repoName);
+        Repository(repo).changeDescription{
+            value: 0.17 ton, bounce: true, flag: 1
+        }(_pubaddr, descr, _index);
+    }
 
     function setHEAD(
         string repoName,
@@ -1627,6 +1666,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == REPOTAG_DESTROY_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
                 Repository(_buildRepositoryAddr(repo)).smvdestroyrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+            }  else
+            if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
+                (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
+                _changeDescription(repo, descr);
             }
         }
     }
@@ -1739,6 +1782,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == REPOTAG_DESTROY_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
                 Repository(_buildRepositoryAddr(repo)).smvdestroyrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+            }  else
+            if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
+                (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
+                _changeDescription(repo, descr);
             }
         }
     }

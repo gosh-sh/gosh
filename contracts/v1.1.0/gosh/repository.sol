@@ -165,6 +165,13 @@ contract Repository is Modifiers{
         _Branches[tvm.hash(branch)] = Item(branch, getCommitAddr(namecommit), version);
     }
 
+    function changeDescription(address pubaddr, string descr, uint128 index) public {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        tvm.accept();
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        _description = descr;
+    }
+    
     //Diff part
     function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public view senderIs(address(this)){
         tvm.accept();

@@ -115,6 +115,16 @@
 			]
 		},
 		{
+			"name": "changeDescription",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"descr","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "SendDiff",
 			"inputs": [
 				{"name":"branch","type":"string"},
