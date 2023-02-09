@@ -209,6 +209,13 @@ pipeline {
                     if (!params.ONLYWEB) {
                         dir('tests') {
                             sh '''
+                                #!/bin/bash
+                                set -e
+                                set -x
+                                
+                                ls -la 
+                                ls -la ../git-remote-gosh
+                                ls -la ../git-remote-gosh/linux-amd64
                                 mkdir /home/jenkins/bin
                                 # dispatcher
                                 cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
