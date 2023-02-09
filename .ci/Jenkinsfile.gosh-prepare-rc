@@ -5,7 +5,6 @@ pipeline {
     //}
     options {
         timestamps ()
-        skipDefaultCheckout()
     }
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true

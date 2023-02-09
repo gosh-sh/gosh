@@ -39,7 +39,8 @@ COPY --link icon.svg /
 COPY --link index.html /ui/index.html
 
 ARG TARGETOS TARGETARCH
-COPY --link --from=gosh_git /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY ./${BUILDOS}-${BUILDARCH}/git-remote-gosh /usr/local/bin/git-remote-gosh
+COPY ./${BUILDOS}-${BUILDARCH}/git-remote-gosh /usr/local/bin/git-remote-gosh
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
