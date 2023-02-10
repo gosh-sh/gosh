@@ -22,8 +22,11 @@ uint32  creationTime;
 address public tokenRoot;
 
 TvmCell propData;
+mapping (address => bool) public reviewers;
 uint32 public startTime;
 uint32 public finishTime;
+uint32 public deltaStartTime;
+uint32 public deltaFinishTime;
 address public ownerAddress;
 
 uint128 public votesYes;
@@ -64,8 +67,25 @@ modifier check_token_root {
     _ ;
 }
 
+function acceptReviewer() external override
+{
+    require(msg.value > 0, SMVErrors.error_not_internal_message);
+    require(reviewers.exists(msg.sender), SMVErrors.error_not_my_reviewer);
+
+    delete reviewers[msg.sender];
+
+    if (reviewers.empty())
+    {
+        startTime = now + deltaStartTime;
+        finishTime = now + deltaStartTime + deltaFinishTime;
+        realFinishTime = finishTime;
+    }
+
+    address(msg.sender).transfer(0, false, 64);
+} 
+
 function onCodeUpgrade (address goshdao,
-			uint256 _platform_id,
+                		uint256 _platform_id,
                         uint128 amountToLock,
                         uint128 /* totalVotes */,
                         TvmCell staticCell,
@@ -90,9 +110,24 @@ function onCodeUpgrade (address goshdao,
     TvmSlice s = inputCell.toSlice();
     TvmSlice s1 = s.loadRefAsSlice(); //inputCell+currentHead
 
-    propData = s1.loadRef();
+    TvmSlice propDataExtra = s1.loadRefAsSlice();
+    propData = propDataExtra.loadRef();
+    TvmSlice reviewersSlice = propDataExtra.loadRefAsSlice();
+    reviewers = reviewersSlice.decode(mapping (address => bool));
+
+
     TvmSlice s12 = s1.loadRefAsSlice();
-    (startTime, finishTime, ownerAddress, tokenRoot) = s12.decode(uint32, uint32, address, address);
+    (deltaStartTime, deltaFinishTime, ownerAddress, tokenRoot) = s12.decode(uint32, uint32, address, address);
+    if (reviewers.empty())
+    {
+        startTime = now + deltaStartTime;
+        finishTime = now + deltaStartTime + deltaFinishTime;
+    }
+    else
+    {
+        startTime = 0xFFFFFFFF;
+        finishTime = 0;
+    }
     realFinishTime = finishTime;
     currentHead = s.decode(optional(address));
 
@@ -155,6 +190,7 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     tvm.accept();
 
     bool allowed = //(!proposalBusy) &&
+                   reviewers.empty() &&
                    (now >= startTime) &&  (now < finishTime) && (!votingResult.hasValue());
 
     if (!allowed)

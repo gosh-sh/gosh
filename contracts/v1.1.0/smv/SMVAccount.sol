@@ -325,6 +325,19 @@ function getPlatfotmId (uint256 propId, uint8 platformType, address _tip3VotingL
     return tvm.hash(staticBuilder.toCell());
 }
 
+function acceptReviewer (address propAddress) external  onlyOwnerPubkey(_access.get())
+{
+    require(initialized, SMVErrors.error_not_initialized);
+    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    tvm.accept();
+    _saveMsg();
+
+    ISMVProposal(propAddress).acceptReviewer{value: SMVConstants.ACTION_FEE, flag: 1}();
+
+}
+
+
 function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint256 propId, TvmCell propData,
                         uint32 startTime, uint32 finishTime, uint128 num_clients) internal view /* public check_owner */
 {
@@ -350,8 +363,6 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
     staticBuilder.store(platformType, tip3VotingLocker, propId, platformCodeHash, platformCodeDepth);
 
 
-
-
     TvmBuilder inputBuilder;
     inputBuilder.storeRef(propData);
     TvmBuilder t;
@@ -359,8 +370,13 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
     inputBuilder.storeRef(t.toCell());
 
     uint128 amount = DEFAULT_PROPOSAL_VALUE; //get from Config
+    /* TvmSlice s = propData.toSlice();
+    (uint256 proposalKind) = s.decode(uint256); */
+
     TvmSlice s = propData.toSlice();
-    (uint256 proposalKind) = s.decode(uint256);
+    TvmSlice propDataSlice = s.loadRefAsSlice();    
+    (uint256 proposalKind) = propDataSlice.decode(uint256);
+
     if ((proposalKind == SETCOMMIT_PROPOSAL_KIND) || (proposalKind == DEPLOY_WALLET_DAO_PROPOSAL_KIND)) { amount = 0; }
 
     ISMVTokenLocker(tip3VotingLocker).startPlatform
