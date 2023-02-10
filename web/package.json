@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
-        "start": "npm run start:dev",
+        "start": "npm run wasm && npm run start:dev",
         "start:ci": "dotenv -e .env.ci node env.json.js && dotenv -e .env.ci react-scripts start",
         "start:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development react-scripts start",
         "start:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production react-scripts start",
@@ -52,7 +52,7 @@
         "@mui/icons-material": "^5.8.4",
         "@mui/material": "^5.9.1",
         "@octokit/core": "^4.1.0",
-        "@supabase/supabase-js": "^2.1.2",
+        "@supabase/supabase-js": "^2.7.1",
         "buffer": "^6.0.3",
         "classnames": "^2.3.1",
         "crypto-js": "^4.1.1",

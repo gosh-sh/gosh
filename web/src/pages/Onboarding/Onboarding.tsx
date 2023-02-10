@@ -23,7 +23,7 @@ const OnboardingPage = () => {
 
     const signinOAuth = async () => {
         try {
-            await singinOAuthSupabase('github', document.location.href)
+            await singinOAuthSupabase('github')
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -43,6 +43,10 @@ const OnboardingPage = () => {
     useEffect(() => {
         const _getOAuthSession = async () => {
             setOAuth({ session: null, isLoading: true })
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+            console.log('User:', user)
             const { data } = await supabase.auth.getSession()
             setOAuth({ session: data.session, isLoading: false })
         }
