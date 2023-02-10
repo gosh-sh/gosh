@@ -12,6 +12,13 @@
 			]
 		},
 		{
+			"name": "acceptReviewer",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "onContinueAction",
 			"inputs": [
 				{"name":"t","type":"uint128"}
@@ -661,6 +668,14 @@
 			]
 		},
 		{
+			"name": "reviewers",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"reviewers","type":"map(address,bool)"}
+			]
+		},
+		{
 			"name": "startTime",
 			"inputs": [
 			],
@@ -674,6 +689,22 @@
 			],
 			"outputs": [
 				{"name":"finishTime","type":"uint32"}
+			]
+		},
+		{
+			"name": "deltaStartTime",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"deltaStartTime","type":"uint32"}
+			]
+		},
+		{
+			"name": "deltaFinishTime",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"deltaFinishTime","type":"uint32"}
 			]
 		},
 		{
@@ -759,8 +790,11 @@
 		{"name":"creationTime","type":"uint32"},
 		{"name":"tokenRoot","type":"address"},
 		{"name":"propData","type":"cell"},
+		{"name":"reviewers","type":"map(address,bool)"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},
+		{"name":"deltaStartTime","type":"uint32"},
+		{"name":"deltaFinishTime","type":"uint32"},
 		{"name":"ownerAddress","type":"address"},
 		{"name":"votesYes","type":"uint128"},
 		{"name":"votesNo","type":"uint128"},
