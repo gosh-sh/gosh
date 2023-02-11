@@ -162,7 +162,7 @@ function useSmvEventList(
         items: TSmvEventListItem[]
         lastPaid?: number
         hasNext?: boolean
-    }>({ items: [], isFetching: true })
+    }>({ items: [], isFetching: false })
 
     const { perPage = 5, latest = false } = params
 

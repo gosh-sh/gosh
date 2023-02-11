@@ -5,7 +5,12 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
+import {
+    executeByChunk,
+    getAllAccounts,
+    getPaginatedAccounts,
+    getTreeItemFullPath,
+} from '../helpers'
 import {
     branchesAtom,
     branchSelector,
@@ -1132,26 +1137,59 @@ function usePullRequestCommit(
 function useTaskList(
     dao: IGoshDaoAdapter,
     repository: IGoshRepositoryAdapter,
-    perPage: number,
+    params: { perPage?: number },
 ) {
+    const [taskCodeHash, setTaskCodehash] = useState<string>()
     const [tasks, setTasks] = useState<{
-        items: TTaskListItem[]
-        page: number
         isFetching: boolean
-    }>({
-        items: [],
-        page: 1,
-        isFetching: true,
-    })
+        items: TTaskListItem[]
+        lastPaid?: number
+        hasNext?: boolean
+    }>({ items: [], isFetching: false })
 
-    /** Get next chunk of event list items */
-    const getMore = () => {
-        setTasks((state) => ({ ...state, page: state.page + 1 }))
+    const { perPage } = params
+
+    const getTaskList = useCallback(
+        async (from?: number) => {
+            if (!taskCodeHash) {
+                return
+            }
+
+            setTasks((state) => ({ ...state, isFetching: true }))
+            const accounts = await getPaginatedAccounts({
+                filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                limit: perPage,
+                lastPaid: from,
+            })
+
+            const items: TTaskListItem[] = await executeByChunk(
+                accounts.results.map(({ id }) => id),
+                MAX_PARALLEL_READ,
+                async (address) => {
+                    const data = await repository.getTask({ address })
+                    return { adapter: repository, ...data }
+                },
+            )
+
+            setTasks((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastPaid: accounts.lastPaid,
+                hasNext: !accounts.completed,
+            }))
+        },
+        [taskCodeHash, perPage],
+    )
+
+    const getMore = async () => {
+        await getTaskList(tasks.lastPaid)
     }
 
-    /** Load item details and update corresponging list item */
-    const setItemDetails = async (item: TTaskListItem) => {
-        if (item.isLoadDetailsFired) return
+    const getItemDetails = async (item: TTaskListItem) => {
+        if (item.isLoadDetailsFired) {
+            return
+        }
 
         setTasks((state) => ({
             ...state,
@@ -1182,39 +1220,27 @@ function useTaskList(
         }
     }
 
-    /** Get initial event list */
+    /** Get task code hash */
     useEffect(() => {
-        const _getTaskList = async () => {
+        const _getTaskCodeHash = async () => {
             const repoName = await repository.getName()
-            const codeHash = await dao.getTaskCodeHash(repoName)
-            const accounts = await getAllAccounts({
-                filters: [`code_hash: {eq:"${codeHash}"}`],
-            })
-            const items: TTaskListItem[] = await executeByChunk(
-                accounts.map(({ id }) => id),
-                MAX_PARALLEL_READ,
-                async (address) => {
-                    const data = await repository.getTask({ address })
-                    return { adapter: repository, ...data }
-                },
-            )
-            setTasks((state) => {
-                const merged = [...state.items, ...items]
-                return {
-                    items: merged,
-                    page: 1,
-                    isFetching: false,
-                }
-            })
+            const hash = await dao.getTaskCodeHash(repoName)
+            setTaskCodehash(hash)
         }
-
-        _getTaskList()
+        _getTaskCodeHash()
     }, [dao, repository])
 
-    /** Refresh task details (reset `isLoadDetailsFired` flag) */
+    /** Initial loading */
+    useEffect(() => {
+        getTaskList()
+    }, [getTaskList])
+
+    /** Refresh task last (reset `isLoadDetailsFired` flag) */
     useEffect(() => {
         const interval = setInterval(() => {
-            if (tasks.isFetching) return
+            if (tasks.isFetching) {
+                return
+            }
 
             setTasks((state) => ({
                 ...state,
@@ -1233,10 +1259,10 @@ function useTaskList(
     return {
         isFetching: tasks.isFetching,
         isEmpty: !tasks.isFetching && !tasks.items.length,
-        items: tasks.items.slice(0, tasks.page * perPage),
-        hasNext: tasks.page * perPage < tasks.items.length,
+        items: tasks.items,
+        hasNext: tasks.hasNext,
         getMore,
-        getItemDetails: setItemDetails,
+        getItemDetails,
     }
 }
 
