@@ -73,8 +73,8 @@ const BlobUpdatePage = () => {
 
             {blob.path && !blob.isFetching && (
                 <BlobCommitForm
-                    dao={dao.details}
-                    repo={repoName!}
+                    dao={dao}
+                    repository={repository}
                     branch={branchName}
                     treepath={treepath!}
                     initialValues={{

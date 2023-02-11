@@ -19,7 +19,7 @@ import {
     treeAtom,
     treeSelector,
 } from '../store'
-import { TAddress, TDao } from '../types'
+import { TAddress, TDao, TPaginatedAccountsResult } from '../types'
 import {
     TBranch,
     TBranchCompareProgress,
@@ -1088,24 +1088,33 @@ function useTaskList(
     const [tasks, setTasks] = useState<{
         isFetching: boolean
         items: TTaskListItem[]
-        lastPaid?: number
+        lastTransLt?: string
         hasNext?: boolean
     }>({ items: [], isFetching: false })
 
-    const { perPage } = params
+    const { perPage = 5 } = params
 
     const getTaskList = useCallback(
-        async (from?: number) => {
+        async (from?: string) => {
             if (!taskCodeHash) {
                 return
             }
 
             setTasks((state) => ({ ...state, isFetching: true }))
-            const accounts = await getPaginatedAccounts({
-                filters: [`code_hash: {eq:"${taskCodeHash}"}`],
-                limit: perPage,
-                lastPaid: from,
-            })
+
+            let accounts: TPaginatedAccountsResult
+            if (perPage === 0) {
+                const results = await getAllAccounts({
+                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                })
+                accounts = { results, lastTransLt: undefined, completed: true }
+            } else {
+                accounts = await getPaginatedAccounts({
+                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                    limit: perPage,
+                    lastTransLt: from,
+                })
+            }
 
             const items: TTaskListItem[] = await executeByChunk(
                 accounts.results.map(({ id }) => id),
@@ -1120,7 +1129,7 @@ function useTaskList(
                 ...state,
                 isFetching: false,
                 items: [...state.items, ...items],
-                lastPaid: accounts.lastPaid,
+                lastTransLt: accounts.lastTransLt,
                 hasNext: !accounts.completed,
             }))
         },
@@ -1128,7 +1137,7 @@ function useTaskList(
     )
 
     const getMore = async () => {
-        await getTaskList(tasks.lastPaid)
+        await getTaskList(tasks.lastTransLt)
     }
 
     const getItemDetails = async (item: TTaskListItem) => {

@@ -66,7 +66,8 @@ const MergeCreatePage = () => {
 
             {!isFetching && !isEmpty && (
                 <BranchCommitForm
-                    dao={dao.details}
+                    dao={dao}
+                    repository={repository}
                     className="mt-12"
                     initialValues={{
                         title: `Merge branch '${srcBranch?.name}' into '${dstBranch?.name}'`,

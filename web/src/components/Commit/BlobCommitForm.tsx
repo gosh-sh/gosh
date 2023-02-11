@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import { Tab } from '@headlessui/react'
 import { classNames, getCodeLanguageFromFilename, splitByPath, TDao } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
+import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { FormikInput } from '../Formik'
 import { useMonaco } from '@monaco-editor/react'
@@ -14,6 +14,7 @@ import BlobPreview from '../Blob/Preview'
 import { Button } from '../Form'
 import yup from '../../yup-extended'
 import { CommitFields } from './CommitFields/CommitFields'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 export type TBlobCommitFormValues = {
     name: string
@@ -29,8 +30,14 @@ export type TBlobCommitFormValues = {
 
 type TBlobCommitFormProps = {
     className?: string
-    dao: TDao
-    repo: string
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     branch: string
     treepath: string
     initialValues: TBlobCommitFormValues
@@ -46,7 +53,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const {
         className,
         dao,
-        repo,
+        repository,
         branch,
         treepath,
         initialValues,
@@ -68,10 +75,11 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
             task: '',
             reviewers: '',
             manager: '',
+            isPullRequest: false,
         }
         return {
             ...initialValues,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         }
     }
 
@@ -103,13 +111,25 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                         return true
                     },
                 ),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
         }
 
         return yup.object().shape({
             name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         })
     }
 
@@ -155,8 +175,8 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                         <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                             <div className="flex flex-wrap items-baseline gap-y-2">
                                 <RepoBreadcrumbs
-                                    daoName={dao.name}
-                                    repoName={repo}
+                                    daoName={dao.details.name}
+                                    repoName={repository.details.name}
                                     branchName={branch}
                                     pathName={
                                         !isUpdate ? treepath : splitByPath(treepath)[0]
@@ -257,9 +277,9 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                 </Tab.Panels>
                             </Tab.Group>
                         </div>
-
                         <CommitFields
-                            dao={dao}
+                            dao={dao.adapter}
+                            repository={repository.adapter}
                             className="mt-12"
                             isSubmitting={isSubmitting}
                             urlBack={urlBack}

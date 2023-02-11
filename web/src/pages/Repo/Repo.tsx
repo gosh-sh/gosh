@@ -100,14 +100,16 @@ const RepoPage = () => {
                         </ButtonLink>
                     )}
                     <Menu as="div" className="relative">
-                        <Menu.Button as={Button}>
-                            <FontAwesomeIcon icon={faCode} />
-                            <span className="hidden sm:inline-block ml-2">Code</span>
-                            <FontAwesomeIcon
-                                icon={faChevronDown}
-                                size="xs"
-                                className="ml-2"
-                            />
+                        <Menu.Button as="div">
+                            <Button>
+                                <FontAwesomeIcon icon={faCode} />
+                                <span className="hidden sm:inline-block ml-2">Code</span>
+                                <FontAwesomeIcon
+                                    icon={faChevronDown}
+                                    size="xs"
+                                    className="ml-2"
+                                />
+                            </Button>
                         </Menu.Button>
                         <Transition
                             as={React.Fragment}

@@ -64,8 +64,8 @@ const BlobDeletePage = () => {
 
             {blob.path && !blob.isFetching && (
                 <BlobDeleteForm
-                    dao={dao.details}
-                    repo={repoName!}
+                    dao={dao}
+                    repository={repository}
                     branch={branchName}
                     treepath={treepath!}
                     content={blob.content}

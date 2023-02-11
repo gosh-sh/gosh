@@ -1,11 +1,12 @@
 import { Form, Formik } from 'formik'
-import { classNames, TDao, TPushProgress } from 'react-gosh'
+import { classNames, TDao, TPushProgress, TRepository } from 'react-gosh'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { useNavigate } from 'react-router-dom'
 import BlobDiffPreview from '../Blob/DiffPreview'
 import yup from '../../yup-extended'
 import { Button } from '../Form'
 import { CommitFields } from './CommitFields/CommitFields'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 export type TBlobDeleteFormValues = {
     title: string
@@ -19,8 +20,14 @@ export type TBlobDeleteFormValues = {
 
 type TBlobDeleteFormProps = {
     className?: string
-    dao: TDao
-    repo: string
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     branch: string
     treepath: string
     content?: string | Buffer
@@ -36,7 +43,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     const {
         className,
         dao,
-        repo,
+        repository,
         branch,
         treepath,
         content,
@@ -54,10 +61,11 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
             task: '',
             reviewers: '',
             manager: '',
+            isPullRequest: false,
         }
         return {
             ...initialValues,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         }
     }
 
@@ -89,12 +97,24 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                         return true
                     },
                 ),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
         }
 
         return yup.object().shape({
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         })
     }
 
@@ -110,8 +130,8 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                         <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                             <div className="flex flex-wrap items-baseline gap-y-2">
                                 <RepoBreadcrumbs
-                                    daoName={dao.name}
-                                    repoName={repo}
+                                    daoName={dao.details.name}
+                                    repoName={repository.details.name}
                                     branchName={branch}
                                     pathName={treepath}
                                     isBlob={true}
@@ -141,7 +161,8 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                         </div>
 
                         <CommitFields
-                            dao={dao}
+                            dao={dao.adapter}
+                            repository={repository.adapter}
                             className="mt-4"
                             isSubmitting={isSubmitting}
                             urlBack={urlBack}

@@ -1,6 +1,7 @@
 import { Form, Formik } from 'formik'
 import { classNames, TDao } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import yup from '../../yup-extended'
 import { CommitFields } from './CommitFields/CommitFields'
 
@@ -17,7 +18,14 @@ export type TBranchCommitFormValues = {
 
 type TBranchCommitFormProps = {
     className?: string
-    dao: TDao
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
     initialValues: TBranchCommitFormValues
     validationSchema?: object
     extraButtons?: any
@@ -29,6 +37,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     const {
         className,
         dao,
+        repository,
         initialValues,
         validationSchema,
         extraButtons,
@@ -41,10 +50,11 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
             task: '',
             reviewers: '',
             manager: '',
+            isPullRequest: false,
         }
         return {
             ...initialValues,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         }
     }
 
@@ -76,12 +86,24 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
                         return true
                     },
                 ),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
         }
 
         return yup.object().shape({
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
         })
     }
 
@@ -95,7 +117,8 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
                 {({ isSubmitting }) => (
                     <Form>
                         <CommitFields
-                            dao={dao}
+                            dao={dao.adapter}
+                            repository={repository.adapter}
                             isSubmitting={isSubmitting}
                             extraButtons={extraButtons}
                             progress={progress}

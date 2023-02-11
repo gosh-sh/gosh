@@ -9,7 +9,7 @@ type TCreateMultiProposalParams = {
 
 type TPaginatedAccountsResult = {
     results: any[]
-    lastPaid?: number
+    lastTransLt?: string
     completed: boolean
 }
 

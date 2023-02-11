@@ -54,8 +54,8 @@ const BlobCreatePage = () => {
     return (
         <div>
             <BlobCommitForm
-                dao={dao.details}
-                repo={repoName!}
+                dao={dao}
+                repository={repository}
                 branch={branchName}
                 treepath={treepath!}
                 initialValues={{

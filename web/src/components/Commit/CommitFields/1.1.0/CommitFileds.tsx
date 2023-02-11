@@ -1,12 +1,20 @@
 import { Field } from 'formik'
-import { classNames } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
+import { classNames, useTaskList } from 'react-gosh'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TPushProgress } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../Form'
-import { FormikCheckbox, FormikInput, FormikTextarea } from '../../../Formik'
+import {
+    FormikCheckbox,
+    FormikInput,
+    FormikSelect,
+    FormikTextarea,
+} from '../../../Formik'
 import CommitProgress from '../../CommitProgress'
 
 type TCommitFields_1_1_0Props = {
+    dao: IGoshDaoAdapter
+    repository: IGoshRepositoryAdapter
     className?: string
     isSubmitting: boolean
     urlBack?: string
@@ -15,8 +23,10 @@ type TCommitFields_1_1_0Props = {
 }
 
 const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
-    const { className, isSubmitting, urlBack, extraButtons, progress } = props
+    const { dao, repository, className, isSubmitting, urlBack, extraButtons, progress } =
+        props
     const navigate = useNavigate()
+    const tasks = useTaskList(dao, repository, { perPage: 0 })
 
     return (
         <div
@@ -63,12 +73,16 @@ const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
                     <div>
                         <Field
                             name="task"
-                            component={'select'}
+                            component={FormikSelect}
                             label="Select task (optional)"
                             disabled={isSubmitting}
                         >
                             <option value="">Select task</option>
-                            <option value="t1">Task #1</option>
+                            {tasks.items.map(({ name }, index) => (
+                                <option value={name} key={index}>
+                                    {name}
+                                </option>
+                            ))}
                         </Field>
                     </div>
                     <div className="mt-6">
