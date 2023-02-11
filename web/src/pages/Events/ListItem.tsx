@@ -22,11 +22,13 @@ const EventListItem = (props: TEventListItemProps) => {
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <EventStatusBadge status={event.status} />
-                <span className="text-gray-7c8db5 text-sm">
-                    Created {new Date(event.time.start).toLocaleDateString()}
-                    <span className="mx-1">-</span>
-                    Executed {new Date(event.time.finish).toLocaleDateString()}
-                </span>
+                {event.time && (
+                    <span className="text-gray-7c8db5 text-sm">
+                        Created {new Date(event.time.start).toLocaleDateString()}
+                        <span className="mx-1">-</span>
+                        Executed {new Date(event.time.finish).toLocaleDateString()}
+                    </span>
+                )}
                 <div className="grow">
                     <EventProgressBar votes={event.votes} />
                 </div>

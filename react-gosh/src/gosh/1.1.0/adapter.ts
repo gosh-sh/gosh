@@ -27,6 +27,12 @@ import {
     TDaoSupplyDetails,
     TDaoMember,
     TTaskDetails,
+    TCreateRepositoryParams,
+    TCreateRepositoryResult,
+    TCreateMultiProposalParams,
+    TSmvEventVotes,
+    TSmvEventStatus,
+    TSmvEventTime,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -360,7 +366,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             address: this.dao.address,
             name: await this.getName(),
             version: this.dao.version,
-            members: await this._getProfiles(),
+            members: await this.getMembers(),
             supply: await this._getSupplyDetails(),
             owner,
             tags: await this._getTags(),
@@ -431,6 +437,20 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshRepositoryAdapter(this.gosh, value0, auth, config)
     }
 
+    async getMembers(): Promise<TDaoMember[]> {
+        const { value0 } = await this.dao.runLocal('getWalletsFull', {})
+        const profiles = []
+        for (const key in value0) {
+            const profile = `0:${key.slice(2)}`
+            profiles.push({
+                profile,
+                wallet: value0[key].member,
+                allowance: value0[key].count,
+            })
+        }
+        return profiles
+    }
+
     async getMemberWallet(options: {
         profile?: TAddress
         address?: TAddress
@@ -466,25 +486,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createRepository(
-        name: string,
-        options: {
-            prev?: { addr: TAddress; version: string } | null
-            comment?: string | null
-            alone?: boolean | null
-        },
-    ): Promise<IGoshRepositoryAdapter> {
-        if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        params: TCreateRepositoryParams,
+    ): Promise<TCreateRepositoryResult> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
 
-        const { prev, comment, alone } = options
+        const { name, prev, comment, alone, cell } = params
         const { valid, reason } = this.gosh.isValidRepoName(name)
-        if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
+        if (!valid) {
+            throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
+        }
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
-        if (await repo.isDeployed()) return repo
+        if (await repo.isDeployed()) {
+            return repo
+        }
 
         // Deploy repo
-        if (alone) {
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDeployRepo', {
+                nameRepo: name.toLowerCase(),
+                previous: prev || null,
+                comment: comment || '',
+            })
+            return value0
+        } else if (alone) {
             await this.wallet.run('AloneDeployRepository', {
                 nameRepo: name.toLowerCase(),
                 previous: prev || null,
@@ -679,7 +707,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createTag(tag: string[], alone?: boolean | null): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
 
         const clean = tag.map((item) => {
             return item.startsWith('#') ? item.slice(1) : item
@@ -696,6 +726,43 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 num_clients: await smv.getClientsCount(),
             })
         }
+    }
+
+    async createMultiProposal(params: TCreateMultiProposalParams): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        // Prepare cells
+        const cells = await executeByChunk(params, 200, async ({ fn, params }) => {
+            if (fn === 'CREATE_REPOSITORY') {
+                return await this.createRepository({ ...params, cell: true })
+            }
+            return null
+        })
+
+        // Compose cells
+        const clean = cells.filter((cell) => typeof cell === 'string')
+        const count = clean.length
+        for (let i = clean.length - 1; i > 0; i--) {
+            const cellA = clean[i - 1]
+            const cellB = clean[i]
+            const { value0 } = await this.wallet.runLocal('AddCell', {
+                data1: cellA,
+                data2: cellB,
+            })
+            clean.splice(i - 1, 2, value0)
+            await sleep(100)
+        }
+
+        // Create proposal
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startMultiProposal', {
+            number: count,
+            proposals: clean[0],
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -742,20 +809,6 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         const address = await this._getWalletAddress(this.profile.address, index)
         return new GoshWallet(this.client, address, { keys })
-    }
-
-    private async _getProfiles(): Promise<TDaoMember[]> {
-        const { value0 } = await this.dao.runLocal('getWalletsFull', {})
-        const profiles = []
-        for (const key in value0) {
-            const profile = `0:${key.slice(2)}`
-            profiles.push({
-                profile,
-                wallet: value0[key].member,
-                allowance: value0[key].count,
-            })
-        }
-        return profiles
     }
 
     private async _getOwner(): Promise<TAddress> {
@@ -894,7 +947,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             address: this.repo.address,
             name: await this.getName(),
             version: this.repo.version,
-            branches: (await this._getBranches()).length,
+            branches: await this._getBranches(),
             head: await this.getHead(),
             commitsIn: [],
         }
@@ -2785,45 +2838,94 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const event = await this._getEvent(address)
 
         // Event type
-        const { proposalKind } = await event.runLocal('getGoshProposalKind', {})
+        const { proposalKind } = await event.runLocal(
+            'getGoshProposalKind',
+            {},
+            undefined,
+            { useCachedBoc: true },
+        )
         const kind = parseInt(proposalKind)
         const type = { kind, name: SmvEventTypes[kind] }
+        const minimal = { address, type, status: await this.getEventStatus({ event }) }
+        if (!isDetailed) {
+            return minimal
+        }
 
-        // Event status
+        return {
+            ...minimal,
+            time: await this.getEventTime({ event }),
+            data: await this._getEventData(event, type.kind),
+            votes: await this.getEventVotes({ event }),
+        }
+    }
+
+    async getEventVotes(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventVotes> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
+        }
+
+        const { votesYes } = await event.runLocal('votesYes', {})
+        const { votesNo } = await event.runLocal('votesNo', {})
+        const { totalSupply } = await event.runLocal('totalSupply', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return {
+            yes: parseInt(votesYes),
+            no: parseInt(votesNo),
+            yours: await this._getEventUserVotes(event),
+            total: parseInt(totalSupply),
+        }
+    }
+
+    async getEventStatus(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventStatus> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
+        }
+
         const { value0: isCompleted } = await event.runLocal('_isCompleted', {})
-        const status = {
+        return {
             completed: isCompleted !== null,
             accepted: !!isCompleted,
         }
+    }
 
-        // Event period
-        const { startTime } = await event.runLocal('startTime', {})
-        const { finishTime } = await event.runLocal('finishTime', {})
-        const { realFinishTime } = await event.runLocal('realFinishTime', {})
-        const time = {
+    async getEventTime(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventTime> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
+        }
+
+        const { startTime } = await event.runLocal('startTime', {}, undefined, {
+            useCachedBoc: true,
+        })
+        const { finishTime } = await event.runLocal('finishTime', {}, undefined, {
+            useCachedBoc: true,
+        })
+        const { realFinishTime } = await event.runLocal('realFinishTime', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return {
             start: parseInt(startTime) * 1000,
             finish: parseInt(finishTime) * 1000,
             finishReal: parseInt(realFinishTime) * 1000,
         }
-
-        const minimal = { address, type, status, time }
-        if (!isDetailed) return minimal
-
-        // Event data
-        const data = await this._getEventData(event, type.kind)
-
-        // Event votes
-        const { votesYes } = await event.runLocal('votesYes', {})
-        const { votesNo } = await event.runLocal('votesNo', {})
-        const { totalSupply } = await event.runLocal('totalSupply', {})
-        const votes = {
-            yes: parseInt(votesYes),
-            no: parseInt(votesNo),
-            yours: await this._getEventUserVotes(event),
-            total: +totalSupply,
-        }
-
-        return { ...minimal, data, votes }
     }
 
     async getWalletBalance(wallet: IGoshWallet): Promise<number> {
@@ -2965,6 +3067,35 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getNotAllowMintProposalParams'
         } else if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
             fn = 'getChangeAllowancetProposalParams'
+        } else if (type === ESmvEventType.MULTI_PROPOSAL) {
+            const { num, data1, data2 } = await event.runLocal(
+                'getDataFirst',
+                {},
+                undefined,
+                { useCachedBoc: true },
+            )
+            const count = parseInt(num)
+            const items = [await this._getMultiEventData(event, data1)]
+
+            let rest = data2
+            for (let i = 1; i < count; i++) {
+                const { data1: curr, data2: next } = await event.runLocal(
+                    'getHalfData',
+                    { Data: rest },
+                    undefined,
+                    { useCachedBoc: true },
+                )
+                items.push(await this._getMultiEventData(event, curr))
+
+                if (i === count - 2) {
+                    items.push(await this._getMultiEventData(event, next))
+                    break
+                }
+                rest = next
+                await sleep(300)
+            }
+            console.debug(items)
+            return items
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
@@ -2972,6 +3103,30 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const decoded = await event.runLocal(fn, {}, undefined, { useCachedBoc: true })
         delete decoded.proposalKind
         return decoded
+    }
+
+    private async _getMultiEventData(event: IGoshSmvProposal, data: string) {
+        const { proposalKind } = await event.runLocal(
+            'getGoshProposalKindData',
+            { Data: data },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const kind = parseInt(proposalKind)
+        const type = { kind, name: SmvEventTypes[kind] }
+
+        let fn = ''
+        if (kind === ESmvEventType.REPO_CREATE) {
+            fn = 'getGoshDeployRepoProposalParamsData'
+        } else {
+            throw new GoshError(`Multi event type "${type}" is unknown`)
+        }
+
+        const decoded = await event.runLocal(fn, { Data: data }, undefined, {
+            useCachedBoc: true,
+        })
+        delete decoded.proposalKind
+        return { type, ...decoded }
     }
 
     private async _getEventUserVotes(event: IGoshSmvProposal): Promise<number> {

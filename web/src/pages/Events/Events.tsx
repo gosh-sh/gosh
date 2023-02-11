@@ -9,15 +9,19 @@ import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
 const EventsPage = () => {
     const { daoName } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } =
-        useSmvEventList(dao.adapter, 10)
+    const { items, isFetching, isEmpty, hasNext, getMore } = useSmvEventList(
+        dao.adapter,
+        { perPage: 5 },
+    )
 
     return (
         <div className="flex flex-wrap gap-4 justify-between">
             <div className="basis-8/12">
                 <h3 className="text-xl font-medium mb-4">DAO events</h3>
                 <div className="border border-gray-e6edff rounded-xl overflow-hidden">
-                    {isFetching && <Loader className="p-4">Loading events...</Loader>}
+                    {isFetching && !items.length && (
+                        <Loader className="p-4">Loading events...</Loader>
+                    )}
 
                     {isEmpty && (
                         <div className="text-gray-7c8db5 text-sm text-center p-4">
@@ -26,16 +30,13 @@ const EventsPage = () => {
                     )}
 
                     <div className="divide-y divide-gray-e6edff">
-                        {items.map((item, index) => {
-                            getItemDetails(item)
-                            return (
-                                <EventListItem
-                                    key={index}
-                                    daoName={daoName || ''}
-                                    event={item}
-                                />
-                            )
-                        })}
+                        {items.map((item, index) => (
+                            <EventListItem
+                                key={index}
+                                daoName={daoName || ''}
+                                event={item}
+                            />
+                        ))}
                     </div>
 
                     {hasNext && (

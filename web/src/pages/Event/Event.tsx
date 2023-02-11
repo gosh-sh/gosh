@@ -25,7 +25,7 @@ import ReactTooltip from 'react-tooltip'
 const EventPage = () => {
     const { eventAddr } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { isFetching, event } = useSmvEvent(dao.adapter, eventAddr!)
+    const { event, isFetching } = useSmvEvent(dao.adapter, eventAddr!)
 
     const getDurationDelta = () => {
         const ms = moment(event?.time.finish).diff(moment())
@@ -52,7 +52,7 @@ const EventPage = () => {
                         'text-sm text-gray-7c8db5',
                     )}
                 >
-                    <EventStatusBadge status={event!.status} />
+                    <EventStatusBadge status={event.status} />
                     <div className="grow text-gray-7c8db5 text-sm">
                         Created {new Date(event.time.start).toLocaleDateString()}
                         <span className="mx-1">-</span>

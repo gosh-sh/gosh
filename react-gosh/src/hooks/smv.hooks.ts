@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MAX_PARALLEL_READ } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from '../gosh/interfaces'
 import { executeByChunk, getAllAccounts, getPaginatedAccounts } from '../helpers'
-import { TAddress, TDao, TSmvDetails, TSmvEvent, TSmvEventListItem } from '../types'
+import {
+    TAddress,
+    TDao,
+    TPaginatedAccountsResult,
+    TSmvDetails,
+    TSmvEvent,
+    TSmvEventListItem,
+} from '../types'
 
 function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
@@ -144,25 +151,50 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
     }
 }
 
-function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
+function useSmvEventList(
+    dao: IGoshDaoAdapter,
+    params: { perPage?: number; latest?: boolean },
+) {
+    const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
+    const [eventCodeHash, setEventCodehash] = useState<string>()
     const [events, setEvents] = useState<{
-        items: TSmvEventListItem[]
-        page: number
         isFetching: boolean
-    }>({
-        items: [],
-        page: 1,
-        isFetching: true,
-    })
+        items: TSmvEventListItem[]
+        lastPaid?: number
+        hasNext?: boolean
+    }>({ items: [], isFetching: true })
 
-    /** Get next chunk of event list items */
-    const getMore = () => {
-        setEvents((state) => ({ ...state, page: state.page + 1 }))
+    const { perPage = 5, latest = false } = params
+
+    const getEventList = useCallback(
+        async (from?: number) => {
+            if (!adapter || !eventCodeHash) {
+                return
+            }
+
+            setEvents((state) => ({ ...state, isFetching: true }))
+            const accounts = await getPaginatedAccounts({
+                filters: [`code_hash: {eq:"${eventCodeHash}"}`],
+                limit: perPage,
+                lastPaid: from,
+            })
+            if (latest) {
+                await _getEventListLatest(adapter, accounts)
+            } else {
+                await _getEventListCommon(adapter, accounts)
+            }
+        },
+        [adapter, eventCodeHash, perPage, latest],
+    )
+
+    const getMore = async () => {
+        await getEventList(events.lastPaid)
     }
 
-    /** Load item details and update corresponging list item */
-    const setItemDetails = async (item: TSmvEventListItem) => {
-        if (item.isLoadDetailsFired) return
+    const getItemDetails = async (item: TSmvEventListItem) => {
+        if (item.isLoadDetailsFired) {
+            return
+        }
 
         setEvents((state) => ({
             ...state,
@@ -174,7 +206,12 @@ function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
             }),
         }))
 
-        const details = await item.adapter.getEvent(item.address, true)
+        const details = {
+            time: item.time
+                ? item.time
+                : await item.adapter.getEventTime({ address: item.address }),
+            votes: await item.adapter.getEventVotes({ address: item.address }),
+        }
         setEvents((state) => ({
             ...state,
             items: state.items.map((curr) => {
@@ -184,84 +221,12 @@ function useSmvEventList(dao: IGoshDaoAdapter, perPage: number) {
         }))
     }
 
-    /** Get initial event list */
-    useEffect(() => {
-        const _getEventList = async () => {
-            const adapter = await dao.getSmv()
-            const codeHash = await adapter.getEventCodeHash()
-            const accounts = await getAllAccounts({
-                filters: [`code_hash: {eq:"${codeHash}"}`],
-            })
-            const items: any[] = await executeByChunk(
-                accounts.map(({ id }) => id),
-                MAX_PARALLEL_READ,
-                async (address) => {
-                    const event = await adapter.getEvent(address, false)
-                    return { adapter, ...event }
-                },
-            )
-
-            setEvents((state) => {
-                const merged = [...state.items, ...items]
-                return {
-                    items: merged,
-                    page: 1,
-                    isFetching: false,
-                }
-            })
-        }
-
-        _getEventList()
-    }, [])
-
-    /** Refresh event details (reset `isLoadDetailsFired` flag) */
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (events.isFetching) return
-
-            setEvents((state) => ({
-                ...state,
-                items: state.items.map((item) => ({
-                    ...item,
-                    isLoadDetailsFired: item.status.completed,
-                })),
-            }))
-        }, 20000)
-
-        return () => {
-            clearInterval(interval)
-        }
-    }, [events.isFetching])
-
-    return {
-        isFetching: events.isFetching,
-        isEmpty: !events.isFetching && !events.items.length,
-        items: events.items.slice(0, events.page * perPage),
-        hasNext: events.page * perPage < events.items.length,
-        getMore,
-        getItemDetails: setItemDetails,
-    }
-}
-
-/** TODO: Merge with useSmvEventList hook */
-function useSmvEventListRecent(dao: IGoshDaoAdapter, limit: number) {
-    const [events, setEvents] = useState<{
-        items: TSmvEventListItem[]
-        isFetching: boolean
-    }>({
-        items: [],
-        isFetching: true,
-    })
-
-    const _getEventList = useCallback(async () => {
-        const adapter = await dao.getSmv()
-        const codeHash = await adapter.getEventCodeHash()
-        const { results } = await getPaginatedAccounts({
-            filters: [`code_hash: {eq:"${codeHash}"}`],
-            limit,
-        })
-        const items: any[] = await executeByChunk(
-            results.map(({ id }) => id),
+    const _getEventListCommon = async (
+        adapter: IGoshSmvAdapter,
+        accounts: TPaginatedAccountsResult,
+    ) => {
+        const items: TSmvEventListItem[] = await executeByChunk(
+            accounts.results.map(({ id }) => id),
             MAX_PARALLEL_READ,
             async (address) => {
                 const event = await adapter.getEvent(address, false)
@@ -269,36 +234,115 @@ function useSmvEventListRecent(dao: IGoshDaoAdapter, limit: number) {
             },
         )
 
-        setEvents({ items, isFetching: false })
-    }, [])
+        setEvents((state) => ({
+            ...state,
+            isFetching: false,
+            items: [...state.items, ...items],
+            lastPaid: accounts.lastPaid,
+            hasNext: !accounts.completed,
+        }))
 
-    /** Get initial event list */
-    useEffect(() => {
-        _getEventList()
-    }, [_getEventList])
+        for (const item of items) {
+            getItemDetails(item)
+        }
+    }
 
-    /** Refresh recent event list */
+    const _getEventListLatest = async (
+        adapter: IGoshSmvAdapter,
+        accounts: TPaginatedAccountsResult,
+    ) => {
+        const items: TSmvEventListItem[] = await executeByChunk(
+            accounts.results.map(({ id }) => id),
+            MAX_PARALLEL_READ,
+            async (address) => {
+                const event = await adapter.getEvent(address, false)
+                return {
+                    adapter,
+                    time: await adapter.getEventTime({ address }),
+                    ...event,
+                }
+            },
+        )
+
+        setEvents((state) => ({
+            ...state,
+            isFetching: false,
+            items,
+            lastPaid: accounts.lastPaid,
+            hasNext: !accounts.completed,
+        }))
+    }
+
+    /** Get smv adapter */
     useEffect(() => {
-        const interval = setInterval(() => {
-            if (events.isFetching) return
-            _getEventList()
-        }, 30000)
+        const _getAdapter = async () => {
+            const _adapter = await dao.getSmv()
+            setAdapter(_adapter)
+        }
+        _getAdapter()
+    }, [dao])
+
+    /** Get event code hash */
+    useEffect(() => {
+        const _getEventCodeHash = async () => {
+            if (!adapter) {
+                return
+            }
+            const hash = await adapter.getEventCodeHash()
+            setEventCodehash(hash)
+        }
+        _getEventCodeHash()
+    }, [adapter])
+
+    /** Initial loading */
+    useEffect(() => {
+        getEventList()
+    }, [getEventList])
+
+    /**
+     * Refresh event list
+     * Reset `isLoadDetailsFired` flag or reload whole list
+     * in case of `latest=true`
+     * */
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            if (events.isFetching) {
+                return
+            }
+
+            if (latest) {
+                await getEventList()
+            } else {
+                setEvents((state) => ({
+                    ...state,
+                    items: state.items.map((item) => ({
+                        ...item,
+                        isLoadDetailsFired: item.status.completed,
+                    })),
+                }))
+            }
+        }, 20000)
 
         return () => {
             clearInterval(interval)
         }
-    }, [events.isFetching, _getEventList])
+    }, [events.isFetching, latest])
 
     return {
         isFetching: events.isFetching,
+        isEmpty: !events.isFetching && !events.items.length,
         items: events.items,
+        hasNext: events.hasNext,
+        getMore,
+        getItemDetails,
     }
 }
 
 function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
-    const [event, setEvent] = useState<TSmvEvent>()
-    const [isFetching, setIsFetching] = useState<boolean>(true)
+    const [event, setEvent] = useState<{ isFetching: boolean; item?: TSmvEvent | null }>({
+        isFetching: false,
+    })
 
     useEffect(() => {
         const _getAdapter = async () => {
@@ -307,24 +351,32 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
         }
 
         _getAdapter()
-    }, [])
+    }, [dao])
 
     useEffect(() => {
         const _getEvent = async () => {
-            if (!adapter) return
+            if (!adapter) {
+                return
+            }
 
-            setIsFetching(true)
+            setEvent((state) => ({ ...state, isFetching: true }))
             const data = (await adapter.getEvent(address, true)) as TSmvEvent
-            setEvent(data)
-            setIsFetching(false)
-
-            return data
+            setEvent((state) => ({ ...state, item: data, isFetching: false }))
         }
 
         _getEvent()
         const interval = setInterval(async () => {
-            const data = await _getEvent()
-            if (data?.status.completed) clearInterval(interval)
+            if (adapter) {
+                const status = await adapter.getEventStatus({ address })
+                const votes = await adapter.getEventVotes({ address })
+                setEvent((state) => ({
+                    ...state,
+                    item: state.item ? { ...state.item, status, votes } : state.item,
+                }))
+                if (status.completed) {
+                    clearInterval(interval)
+                }
+            }
         }, 10000)
 
         return () => {
@@ -332,7 +384,7 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
         }
     }, [adapter, address])
 
-    return { event, isFetching }
+    return { event: event.item, isFetching: event.isFetching }
 }
 
 function useSmvVote(dao: IGoshDaoAdapter, event?: TSmvEvent) {
@@ -351,11 +403,4 @@ function useSmvVote(dao: IGoshDaoAdapter, event?: TSmvEvent) {
     return { vote }
 }
 
-export {
-    useSmv,
-    useSmvTokenTransfer,
-    useSmvEventList,
-    useSmvEventListRecent,
-    useSmvEvent,
-    useSmvVote,
-}
+export { useSmv, useSmvTokenTransfer, useSmvEventList, useSmvEvent, useSmvVote }

@@ -28,30 +28,109 @@ import {
     TTreeItem,
 } from '../types/repo.types'
 import { sleep } from '../utils'
-import { useUser } from './user.hooks'
 
-function useRepoList(dao: string, perPage: number) {
+function useRepoList(dao: string, params: { perPage?: number; version?: string }) {
     const [search, setSearch] = useState<string>('')
-    const [repos, setRepos] = useState<{
-        items: TRepositoryListItem[]
-        filtered: { search: string; items: string[] }
-        page: number
+    const [accounts, setAccounts] = useState<{
         isFetching: boolean
-    }>({
-        items: [],
-        filtered: { search: '', items: [] },
-        page: 1,
-        isFetching: true,
-    })
+        items: { address: TAddress; version: string }[]
+    }>({ isFetching: false, items: [] })
+    const [repos, setRepos] = useState<{
+        isFetching: boolean
+        items: TRepositoryListItem[]
+        lastAccountIndex: number
+        hasNext?: boolean
+    }>({ isFetching: false, items: [], lastAccountIndex: 0 })
 
-    /** Get next chunk of DAO list items */
-    const getMore = () => {
-        setRepos((state) => ({ ...state, page: state.page + 1 }))
+    const { perPage = 5, version } = params
+    const versions = Object.keys(AppConfig.versions).reverse()
+
+    const getRepositoryAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+
+        const items: { address: TAddress; version: string }[] = []
+        for (const ver of versions) {
+            if (version && ver !== version) {
+                continue
+            }
+
+            const gosh = GoshAdapterFactory.create(ver)
+            const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
+            if (!(await daoAdapter.isDeployed())) {
+                continue
+            }
+
+            const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
+            const result = await getAllAccounts({
+                filters: [`code_hash: {eq:"${codeHash}"}`],
+            })
+            items.push(...result.map(({ id }) => ({ address: id, version: ver })))
+        }
+
+        setAccounts((state) => ({ ...state, isFetching: false, items }))
+    }, [dao])
+
+    const getRepositoryList = useCallback(
+        async (lastAccountIndex: number, names: string[]) => {
+            if (accounts.isFetching) {
+                return
+            }
+
+            setRepos((state) => ({ ...state, isFetching: true }))
+
+            const items: TRepositoryListItem[] = []
+            for (let i = lastAccountIndex; i < accounts.items.length; i++) {
+                lastAccountIndex = i
+                const account = accounts.items[i]
+                const gosh = GoshAdapterFactory.create(account.version)
+                const repository = await gosh.getRepository({ address: account.address })
+                if (!(await repository.isDeployed())) {
+                    continue
+                }
+
+                const name = await repository.getName()
+                if (names.findIndex((n) => n === name) >= 0) {
+                    continue
+                }
+
+                items.push({
+                    adapter: repository,
+                    address: account.address,
+                    name,
+                    version: account.version,
+                })
+
+                if (items.length === perPage) {
+                    break
+                }
+            }
+
+            setRepos((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastAccountIndex,
+                hasNext: lastAccountIndex < accounts.items.length - 1,
+            }))
+
+            for (const item of items) {
+                getItemDetails(item)
+            }
+        },
+        [accounts.isFetching, accounts.items, perPage],
+    )
+
+    const getMore = async () => {
+        await getRepositoryList(
+            repos.lastAccountIndex + 1,
+            repos.items.map(({ name }) => name),
+        )
     }
 
-    /** Load item details and update corresponging list item */
-    const setItemDetails = async (item: TRepositoryListItem) => {
-        if (item.isLoadDetailsFired) return
+    const getItemDetails = async (item: TRepositoryListItem) => {
+        if (item.isLoadDetailsFired) {
+            return
+        }
 
         setRepos((state) => ({
             ...state,
@@ -67,88 +146,33 @@ function useRepoList(dao: string, perPage: number) {
         setRepos((state) => ({
             ...state,
             items: state.items.map((curr) => {
-                if (curr.address === item.address) return { ...curr, ...details }
+                if (curr.address === item.address) {
+                    return { ...curr, ...details }
+                }
                 return curr
             }),
         }))
     }
 
-    /** Get initial repos list */
+    /** Get all repositories accounts from all GOSH versions */
     useEffect(() => {
-        const _getRepoList = async () => {
-            // Get repos details (prepare repo list items)
-            const names: string[] = []
-            const items: TRepositoryListItem[] = []
-            for (const version of Object.keys(AppConfig.versions).reverse()) {
-                const gosh = GoshAdapterFactory.create(version)
-                const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
-                if (!(await daoAdapter.isDeployed())) continue
+        getRepositoryAccounts()
+    }, [getRepositoryAccounts])
 
-                const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
-                const accounts = await getAllAccounts({
-                    filters: [`code_hash: {eq:"${codeHash}"}`],
-                })
-                const veritems = await executeByChunk(
-                    accounts.map(({ id }) => id),
-                    MAX_PARALLEL_READ,
-                    async (address) => {
-                        const adapter = await daoAdapter.getRepository({ address })
-                        const name = await adapter.getName()
-                        if (names.indexOf(name) >= 0) return null
-
-                        names.push(name)
-                        return { adapter, address, name, version }
-                    },
-                )
-                items.push(...(veritems.filter((v) => !!v) as TRepositoryListItem[]))
-            }
-
-            setRepos((state) => {
-                const merged = [...state.items, ...items]
-                return {
-                    items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
-                    filtered: { search: '', items: merged.map((item) => item.address) },
-                    page: 1,
-                    isFetching: false,
-                }
-            })
-        }
-
-        _getRepoList()
-    }, [dao])
-
-    /** Update filtered items and page depending on search */
+    /** Get repositories list per page */
     useEffect(() => {
-        setRepos((state) => {
-            return {
-                ...state,
-                page: search ? 1 : state.page,
-                filtered: {
-                    search,
-                    items: state.items
-                        .filter((item) => _searchItem(search, item.name))
-                        .map((item) => item.address),
-                },
-            }
-        })
-    }, [search])
-
-    const _searchItem = (what: string, where: string): boolean => {
-        const pattern = new RegExp(`^${what}`, 'i')
-        return !what || where.search(pattern) >= 0
-    }
+        getRepositoryList(0, [])
+    }, [getRepositoryList])
 
     return {
-        isFetching: repos.isFetching,
-        isEmpty: !repos.isFetching && !repos.filtered.items.length,
-        items: repos.items
-            .filter((item) => repos.filtered.items.indexOf(item.address) >= 0)
-            .slice(0, repos.page * perPage),
-        hasNext: repos.page * perPage < repos.filtered.items.length,
+        isFetching: accounts.isFetching || repos.isFetching,
+        isEmpty: !accounts.isFetching && !repos.isFetching && !repos.items.length,
+        items: repos.items,
+        hasNext: repos.hasNext,
         search,
         setSearch,
         getMore,
-        getItemDetails: setItemDetails,
+        getItemDetails,
     }
 }
 
@@ -230,7 +254,7 @@ function useRepo(dao: string, repo: string) {
 
 function useRepoCreate(dao: IGoshDaoAdapter) {
     const create = async (name: string) => {
-        await dao.createRepository(name, {})
+        await dao.createRepository({ name })
     }
 
     return { create }
@@ -260,7 +284,8 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
 
         const gosh = GoshAdapterFactory.create(version)
         const adapter = await gosh.getDao({ name: dao })
-        await adapter.createRepository(await repo.getName(), {
+        await adapter.createRepository({
+            name: await repo.getName(),
             prev: {
                 addr: repo.getAddress(),
                 version: repo.getVersion(),

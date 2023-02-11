@@ -17,14 +17,14 @@ type TRepository = {
     address: TAddress
     name: string
     version: string
-    branches: number
+    branches: any[]
     head: string
     commitsIn: { branch: string; commit: TCommit }[]
 }
 
 type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
     adapter: IGoshRepositoryAdapter
-    branches?: number
+    branches?: any[]
     head?: string
     commitsIn?: { branch: string; commit: TCommit }[]
     isLoadDetailsFired?: boolean
@@ -151,6 +151,16 @@ type TTaskListItem = TTaskDetails & {
     isLoadDetailsFired?: boolean
 }
 
+type TCreateRepositoryParams = {
+    name: string
+    prev?: { addr: TAddress; version: string } | null
+    comment?: string | null
+    alone?: boolean | null
+    cell?: boolean | null
+}
+
+type TCreateRepositoryResult = IGoshRepositoryAdapter | string
+
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -178,6 +188,8 @@ export {
     TTaskCommitConfig,
     TTaskDetails,
     TTaskListItem,
+    TCreateRepositoryParams,
+    TCreateRepositoryResult,
     IPushCallback,
     ITBranchOperateCallback,
 }

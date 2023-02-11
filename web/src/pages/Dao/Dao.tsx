@@ -1,5 +1,5 @@
 import { Link, useOutletContext } from 'react-router-dom'
-import { classNames, useSmvEventListRecent } from 'react-gosh'
+import { classNames, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
@@ -8,7 +8,7 @@ import BlobPreview from '../../components/Blob/Preview'
 
 const DaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items: events } = useSmvEventListRecent(dao.adapter!, 3)
+    const { items: events } = useSmvEventList(dao.adapter!, { perPage: 3, latest: true })
     const [description, setDescription] = useState<string | null>()
 
     const getDaoDescription = useCallback(async () => {
@@ -56,9 +56,12 @@ const DaoPage = () => {
                             const { time, type, address, status } = item
                             return (
                                 <div key={index} className="px-4">
-                                    <div className="my-1 text-gray-7c8db5 text-xs">
-                                        Due - {new Date(time.finishReal).toLocaleString()}
-                                    </div>
+                                    {time && (
+                                        <div className="my-1 text-gray-7c8db5 text-xs">
+                                            Due -{' '}
+                                            {new Date(time.finishReal).toLocaleString()}
+                                        </div>
+                                    )}
                                     <div className="mb-4">
                                         <Link
                                             to={`/o/${dao.details.name}/events/${address}`}

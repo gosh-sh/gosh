@@ -10,16 +10,8 @@ import classNames from 'classnames'
 
 const DaoRepositoriesPage = () => {
     const { daoName } = useParams()
-    const {
-        items,
-        isFetching,
-        isEmpty,
-        hasNext,
-        search,
-        setSearch,
-        getMore,
-        getItemDetails,
-    } = useRepoList(daoName!, 5)
+    const { items, isFetching, isEmpty, hasNext, search, setSearch, getMore } =
+        useRepoList(daoName!, { perPage: 5 })
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
 
     return (
@@ -30,10 +22,10 @@ const DaoRepositoriesPage = () => {
                 <Input
                     className="grow"
                     type="search"
-                    placeholder="Search repository..."
+                    placeholder="Search repository (disabled)"
                     autoComplete="off"
                     value={search}
-                    disabled={isFetching}
+                    disabled={true || isFetching}
                     onChange={(e) => setSearch(e.target.value)}
                     before={
                         <FontAwesomeIcon
@@ -48,7 +40,9 @@ const DaoRepositoriesPage = () => {
             </div>
 
             <div className="border border-gray-e6edff rounded-xl overflow-hidden">
-                {isFetching && <Loader className="p-4">Loading repositories...</Loader>}
+                {isFetching && !items.length && (
+                    <Loader className="p-4">Loading repositories...</Loader>
+                )}
 
                 {isEmpty && (
                     <div className="text-sm text-gray-7c8db5 text-center py-4">
@@ -57,10 +51,9 @@ const DaoRepositoriesPage = () => {
                 )}
 
                 <div className="divide-y divide-gray-e6edff">
-                    {items.map((item, index) => {
-                        getItemDetails(item)
-                        return <RepoListItem key={index} daoName={daoName!} item={item} />
-                    })}
+                    {items.map((item, index) => (
+                        <RepoListItem key={index} daoName={daoName!} item={item} />
+                    ))}
                 </div>
 
                 {hasNext && (

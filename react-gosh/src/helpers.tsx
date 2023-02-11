@@ -4,6 +4,7 @@ import { sleep } from './utils'
 import { AppConfig } from './appconfig'
 import { TTreeItem } from './types/repo.types'
 import { GoshError } from './errors'
+import { TPaginatedAccountsResult } from './types'
 
 export const retry = async (fn: Function, maxAttempts: number) => {
     const delay = (fn: Function, ms: number) => {
@@ -33,29 +34,30 @@ export const getPaginatedAccounts = async (params: {
     filters?: string[]
     result?: string[]
     limit?: number
-    lastId?: string
-}): Promise<{ results: any[]; lastId?: string; completed: boolean }> => {
-    const { filters = [], result = ['id'], limit = 10, lastId = null } = params
-    const query = `query AccountsQuery( $lastId: String, $limit: Int) {
+    lastPaid?: number
+}): Promise<TPaginatedAccountsResult> => {
+    const { filters = [], result = [], limit = 10 } = params
+    const lastPaid = params.lastPaid || Date.now()
+    const query = `query AccountsQuery( $lastPaid: Float, $limit: Int) {
         accounts(
             filter: {
-                id: { gt: $lastId },
+                last_paid: { lt: $lastPaid },
                 ${filters.join(',')}
             }
             orderBy: [{ path: "last_paid", direction: DESC }]
             limit: $limit
         ) {
-            ${result.join(' ')}
+            id last_paid ${result.join(' ')}
         }
     }`
     const response = await AppConfig.goshclient.net.query({
         query,
-        variables: { lastId, limit },
+        variables: { lastPaid, limit },
     })
     const results = response.result.data.accounts
     return {
         results,
-        lastId: results.length ? results[results.length - 1].id : undefined,
+        lastPaid: results.length ? results[results.length - 1].last_paid : undefined,
         completed: results.length < limit,
     }
 }
@@ -66,18 +68,20 @@ export const getAllAccounts = async (params: {
 }): Promise<any[]> => {
     const { filters, result } = params
 
-    let next: string | undefined
+    let next: number | undefined
     const results = []
     while (true) {
         const accounts = await getPaginatedAccounts({
             filters,
             result,
             limit: 50,
-            lastId: next,
+            lastPaid: next,
         })
         results.push(...accounts.results)
-        next = accounts.lastId
-        if (accounts.completed) break
+        next = accounts.lastPaid
+        if (accounts.completed) {
+            break
+        }
         await sleep(200)
     }
     return results

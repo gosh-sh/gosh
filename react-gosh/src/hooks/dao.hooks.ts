@@ -77,8 +77,11 @@ function useDaoList(perPage: number) {
                 const { name, version } = item
                 const index = clean.findIndex((a) => a.name === name)
 
-                if (index < 0) clean.push(item)
-                else if (clean[index].version < version) clean[index] = item
+                if (index < 0) {
+                    clean.push(item)
+                } else if (clean[index].version < version) {
+                    clean[index] = item
+                }
             })
 
             setDaos((state) => {
@@ -287,7 +290,10 @@ function useDaoCreate() {
         // Deploy DAO service repository
         let repo: IGoshRepositoryAdapter
         try {
-            repo = await dao.createRepository('_index', { alone: true })
+            repo = (await dao.createRepository({
+                name: '_index',
+                alone: true,
+            })) as IGoshRepositoryAdapter
             setProgress((state) => ({ ...state, isRepositoryDeployed: true }))
         } catch (e) {
             setProgress((state) => ({ ...state, isRepositoryDeployed: false }))
@@ -409,16 +415,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
     const _getMemberList_1_1_0 = async () => {
         const gosh = dao.getGosh()
 
-        const details = await dao.getDetails()
-        const items = await executeByChunk(
-            details.members,
-            MAX_PARALLEL_READ,
-            async (member) => {
-                const profile = await gosh.getProfile({ address: member.profile })
-                const name = await profile.getName()
-                return { ...member, name }
-            },
-        )
+        const members = await dao.getMembers()
+        const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
+            const profile = await gosh.getProfile({ address: member.profile })
+            const name = await profile.getName()
+            return { ...member, name }
+        })
         return items
     }
 

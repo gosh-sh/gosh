@@ -7,11 +7,16 @@ import {
 } from '@eversdk/core'
 import {
     TAddress,
+    TCreateMultiProposalParams,
     TDao,
+    TDaoMember,
     TProfileDetails,
     TSmvDetails,
     TSmvEvent,
     TSmvEventMinimal,
+    TSmvEventStatus,
+    TSmvEventTime,
+    TSmvEventVotes,
     TValidationResult,
 } from '../types'
 import {
@@ -20,6 +25,8 @@ import {
     ITBranchOperateCallback,
     TBranch,
     TCommit,
+    TCreateRepositoryParams,
+    TCreateRepositoryResult,
     TRepository,
     TTag,
     TTaskCommitConfig,
@@ -86,6 +93,7 @@ interface IGoshDaoAdapter {
         name?: string
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter>
+    getMembers(): Promise<TDaoMember[]>
     getMemberWallet(options: {
         profile?: TAddress
         address?: TAddress
@@ -96,14 +104,7 @@ interface IGoshDaoAdapter {
 
     getSmv(): Promise<IGoshSmvAdapter>
 
-    createRepository(
-        name: string,
-        options: {
-            prev?: { addr: TAddress; version: string } | null
-            comment?: string | null
-            alone?: boolean | null
-        },
-    ): Promise<IGoshRepositoryAdapter>
+    createRepository(params: TCreateRepositoryParams): Promise<TCreateRepositoryResult>
 
     createMember(
         members: string[] | { username: string; allowance: number; comment: string }[],
@@ -122,6 +123,8 @@ interface IGoshDaoAdapter {
     send2DaoReserve(amount: number): Promise<void>
 
     createTag(tag: string[], alone?: boolean | null): Promise<void>
+
+    createMultiProposal(params: TCreateMultiProposalParams): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -236,6 +239,18 @@ interface IGoshSmvAdapter {
         address: TAddress,
         isDetailed?: boolean,
     ): Promise<TSmvEventMinimal | TSmvEvent>
+    getEventVotes(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventVotes>
+    getEventStatus(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventStatus>
+    getEventTime(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventTime>
     getWalletBalance(wallet: IGoshWallet): Promise<number>
 
     validateProposalStart(): Promise<void>

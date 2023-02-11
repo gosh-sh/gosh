@@ -1,4 +1,4 @@
-import { IGoshSmvAdapter } from '../gosh/interfaces'
+import { IGoshSmvAdapter, IGoshSmvProposal } from '../gosh/interfaces'
 
 enum ESmvEventType {
     PULL_REQUEST = 1,
@@ -19,6 +19,7 @@ enum ESmvEventType {
     DAO_TAG_REMOVE = 17,
     DAO_TOKEN_MINT_DISABLE = 18,
     DAO_ALLOWANCE_CHANGE = 19,
+    MULTI_PROPOSAL = 20,
 }
 
 type TSmvDetails = {
@@ -28,43 +29,53 @@ type TSmvDetails = {
     isLockerBusy: boolean
 }
 
+type TSmvEventVotes = {
+    yes: number
+    no: number
+    yours: number
+    total: number
+}
+
+type TSmvEventStatus = {
+    completed: boolean
+    accepted: boolean
+}
+
+type TSmvEventTime = {
+    start: number
+    finish: number
+    finishReal: number
+}
+
 type TSmvEventMinimal = {
     address: string
     type: {
         kind: number
         name: string
     }
-    status: {
-        completed: boolean
-        accepted: boolean
-    }
-    time: {
-        start: number
-        finish: number
-        finishReal: number
-    }
+    status: TSmvEventStatus
 }
 
 type TSmvEvent = TSmvEventMinimal & {
     data: any
-    votes: {
-        yes: number
-        no: number
-        yours: number
-        total: number
-    }
+    time: TSmvEventTime
+    votes: TSmvEventVotes
 }
 
-type TSmvEventListItem = Omit<TSmvEvent, 'data' | 'votes'> & {
+type TSmvEventListItem = TSmvEventMinimal & {
     adapter: IGoshSmvAdapter
-    data?: any
-    votes?: {
-        yes: number
-        no: number
-        yours: number
-        total: number
-    }
+    time?: TSmvEventTime
+    votes?: TSmvEventVotes
     isLoadDetailsFired?: boolean
 }
 
-export { ESmvEventType, TSmvDetails, TSmvEventMinimal, TSmvEvent, TSmvEventListItem }
+export {
+    ESmvEventType,
+    TSmvDetails,
+    TSmvEventVotes,
+    TSmvEventStatus,
+    TSmvEventTime,
+    TSmvEventMinimal,
+    TSmvEvent,
+    TSmvEventListItem,
+}

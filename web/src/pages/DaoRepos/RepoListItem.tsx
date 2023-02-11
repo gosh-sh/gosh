@@ -3,17 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import { TRepository } from 'react-gosh/dist/types/repo.types'
+import { TRepositoryListItem } from 'react-gosh/dist/types/repo.types'
 import ReactTooltip from 'react-tooltip'
 
 type TRepositoryListItemProps = {
     daoName: string
     daoLink?: boolean
-    item: Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
-        branches?: number
-        head?: string
-        commitsIn?: any[]
-    }
+    item: TRepositoryListItem
 }
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
@@ -44,7 +40,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 <div className="flex gap-4">
                     <div data-tip="Branches">
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches}
+                        {item.branches?.length}
                     </div>
                 </div>
                 <CopyClipboard
