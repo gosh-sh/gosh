@@ -18,4 +18,4 @@ const Commiter = (props: TCommiterProps) => {
     )
 }
 
-export default Commiter
+export { Commiter }

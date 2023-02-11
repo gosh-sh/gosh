@@ -30,7 +30,6 @@ import BlobDeletePage from './pages/BlobDelete'
 import BlobPage from './pages/Blob'
 import CommitsPage from './pages/Commits'
 import CommitPage from './pages/Commit'
-import PullCreatePage from './pages/PullCreate'
 import MergeCreatePage from './pages/MergeCreate'
 import GotoPage from './pages/Goto'
 import EventsPage from './pages/Events'
@@ -217,7 +216,6 @@ const App = () => {
                                     element={<CommitPage />}
                                 />
                             </Route>
-                            <Route path="pull" element={<PullCreatePage />} />
                             <Route path="merge" element={<MergeCreatePage />} />
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />

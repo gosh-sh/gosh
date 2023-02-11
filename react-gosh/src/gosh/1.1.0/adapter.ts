@@ -1604,15 +1604,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        optional: {
+        options: {
             tags?: string
             branchParent?: string
             task?: TTaskCommitConfig
             callback?: IPushCallback
         },
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        const { tags, branchParent, callback } = optional
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        const { tags, branchParent, callback } = options
 
         const taglist = tags ? tags.split(' ') : []
         const cb: IPushCallback = (params) => callback && callback(params)
@@ -1622,7 +1624,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { items } = await this.getTree(branchTo.commit)
 
         // Validation
-        const task = await this._getTaskCommitConfig(optional.task)
+        const task = await this._getTaskCommitConfig(options.task)
         if (!isPullRequest && branchTo.isProtected) {
             throw new GoshError(EGoshError.PR_BRANCH)
         }

@@ -13,7 +13,6 @@ import {
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import Spinner from '../../components/Spinner'
 import { AppConfig, classNames, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
@@ -22,6 +21,8 @@ import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
 import RepoReadme from './Readme'
 import { onExternalLinkClick } from '../../helpers'
+import { Button, ButtonLink } from '../../components/Form'
+import Loader from '../../components/Loader'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
@@ -48,7 +49,7 @@ const RepoPage = () => {
     }, [daoName, repoName, branchName, repository.details.head, navigate, updateBranch])
 
     return (
-        <div className="bordered-block px-7 py-8">
+        <>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-4">
                 <div className="grow flex items-center gap-y-2 gap-x-5">
                     <BranchSelect
@@ -65,7 +66,7 @@ const RepoPage = () => {
 
                     <Link
                         to={`/o/${daoName}/r/${repoName}/branches`}
-                        className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
+                        className="block text-sm text-gray-53596d hover:text-black"
                     >
                         <span className="font-semibold">
                             <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
@@ -76,7 +77,7 @@ const RepoPage = () => {
 
                     <Link
                         to={`/o/${daoName}/r/${repoName}/commits/${branch?.name}`}
-                        className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
+                        className="block text-sm text-gray-53596d hover:text-black"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} />
                         <span className="hidden sm:inline-block ml-1">History</span>
@@ -84,26 +85,22 @@ const RepoPage = () => {
                 </div>
 
                 <div className="flex grow gap-3 justify-end">
-                    <Link
-                        to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
-                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
-                    >
+                    <ButtonLink to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}>
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
-                    </Link>
+                    </ButtonLink>
                     {!branch?.isProtected && dao.details.isAuthMember && (
-                        <Link
+                        <ButtonLink
                             to={`/o/${daoName}/r/${repoName}/blobs/create/${
                                 branch?.name
                             }${treepath && `/${treepath}`}`}
-                            className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
                             <span className="hidden sm:inline-block ml-2">Add file</span>
-                        </Link>
+                        </ButtonLink>
                     )}
                     <Menu as="div" className="relative">
-                        <Menu.Button className="btn btn--body text-sm px-4 py-1.5 !font-normal">
+                        <Menu.Button as={Button}>
                             <FontAwesomeIcon icon={faCode} />
                             <span className="hidden sm:inline-block ml-2">Code</span>
                             <FontAwesomeIcon
@@ -183,12 +180,8 @@ const RepoPage = () => {
 
             <div className="mt-4">
                 {subtree === undefined && (
-                    <div className="text-gray-606060 text-sm py-3">
-                        <Spinner className="mr-3" />
-                        Loading tree...
-                    </div>
+                    <Loader className="text-sm">Loading tree...</Loader>
                 )}
-
                 {!!subtree && treepath && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
@@ -199,7 +192,7 @@ const RepoPage = () => {
                         ..
                     </Link>
                 )}
-                <div className="divide-y divide-gray-c4c4c4 mb-5">
+                <div className="divide-y divide-gray-e6edff mb-5">
                     {subtree?.map((item: any, index: number) => {
                         const path = [item.path, item.name]
                             .filter((part) => part !== '')
@@ -242,20 +235,20 @@ const RepoPage = () => {
                 </div>
 
                 {subtree && !subtree?.length && (
-                    <div className="text-sm text-gray-606060 text-center py-3">
+                    <div className="text-sm text-gray-7c8db5 text-center py-3">
                         There are no files yet
                     </div>
                 )}
 
                 <RepoReadme
-                    className="border rounded overflow-hidden"
+                    className="border border-gray-e6edff rounded-xl overflow-hidden"
                     dao={daoName!}
                     repo={repoName!}
                     branch={branch!.name}
                     blobs={blobs || []}
                 />
             </div>
-        </div>
+        </>
     )
 }
 

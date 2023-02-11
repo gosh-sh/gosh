@@ -3,10 +3,10 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { EGoshError, splitByPath, useBlob, usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
-import Spinner from '../../components/Spinner'
 import { Buffer } from 'buffer'
 import ToastError from '../../components/Error/ToastError'
-import BlobCommitForm from '../../components/Commit/BlobCommitForm'
+import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
+import Loader from '../../components/Loader'
 
 const BlobUpdatePage = () => {
     const treepath = useParams()['*']
@@ -22,18 +22,32 @@ const BlobUpdatePage = () => {
 
     const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${treepath}`
 
-    const onPush = async (values: any) => {
+    const onPush = async (values: TBlobCommitFormValues) => {
         try {
-            const { name, title, message, tags, content } = values
+            console.debug(values)
+            const { name, content, title, message, tags, isPullRequest } = values
             const [path] = splitByPath(treepath!)
             const bPath = `${path ? `${path}/` : ''}${name}`
-            const blobUpd = {
+            const blobObject = {
                 treepath: [treepath!, bPath],
                 original: blob?.content ?? '',
                 modified: content,
             }
-            await push(title, [blobUpd], message, tags)
-            navigate(urlBack.replace(treepath!, bPath))
+            const task = values.task
+                ? {
+                      task: values.task,
+                      assigners: [],
+                      reviewers: values.reviewers?.split(' ') || [],
+                      manager: values.manager || '',
+                  }
+                : undefined
+
+            await push(title, [blobObject], { isPullRequest, message, tags, task })
+            if (isPullRequest) {
+                navigate(`/o/${daoName}/events`, { replace: true })
+            } else {
+                navigate(urlBack.replace(treepath!, bPath))
+            }
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -49,22 +63,17 @@ const BlobUpdatePage = () => {
 
     if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
     return (
-        <div className="bordered-block py-8">
-            <div className="px-4 sm:px-7">
+        <>
+            <div>
                 {!blob.isFetching && blob.content === undefined && (
-                    <div className="text-gray-606060 text-sm">File not found</div>
+                    <div className="text-gray-7c8db5 text-sm">File not found</div>
                 )}
-                {blob.isFetching && (
-                    <div className="text-gray-606060 text-sm">
-                        <Spinner className="mr-3" />
-                        Loading file...
-                    </div>
-                )}
+                {blob.isFetching && <Loader className="text-sm">Loading file...</Loader>}
             </div>
 
             {blob.path && !blob.isFetching && (
                 <BlobCommitForm
-                    dao={daoName!}
+                    dao={dao.details}
                     repo={repoName!}
                     branch={branchName}
                     treepath={treepath!}
@@ -79,7 +88,7 @@ const BlobUpdatePage = () => {
                     onSubmit={onPush}
                 />
             )}
-        </div>
+        </>
     )
 }
 

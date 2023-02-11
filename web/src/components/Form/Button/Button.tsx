@@ -13,7 +13,8 @@ const Button = (props: TButtonProps) => {
             className={classNames(
                 'bg-black text-white rounded-lg',
                 'text-sm text-center whitespace-nowrap',
-                'py-2.5 px-4',
+                'border border-transparent',
+                'py-2 px-4',
                 'hover:text-white/75',
                 'disabled:text-gray-7c8db5 disabled:bg-gray-fafafd disabled:pointer-events-none',
                 className,

@@ -200,7 +200,7 @@ interface IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        optional: {
+        options: {
             tags?: string
             branchParent?: string
             task?: TTaskCommitConfig

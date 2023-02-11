@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-    faCode,
     faCodePullRequest,
-    faCodeMerge,
     faCube,
     faWrench,
     faListCheck,
+    faCodeBranch,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
@@ -26,6 +25,8 @@ import {
     IGoshWallet,
 } from 'react-gosh/dist/gosh/interfaces'
 import SideMenuContainer from '../components/SideMenuContainer'
+import { faFile } from '@fortawesome/free-regular-svg-icons'
+import Loader from '../components/Loader'
 
 export type TRepoLayoutOutletContext = {
     dao: {
@@ -54,8 +55,13 @@ const RepoLayout = () => {
                 to: `/o/${daoName}/r/${repoName}${
                     branchName ? `/tree/${branchName}` : ''
                 }`,
-                title: 'Code',
-                icon: faCode,
+                title: 'Files',
+                icon: faFile,
+            },
+            {
+                to: `/o/${daoName}/r/${repoName}/branches`,
+                title: 'Branches',
+                icon: faCodeBranch,
             },
         ]
 
@@ -64,11 +70,6 @@ const RepoLayout = () => {
                 {
                     to: `/o/${daoName}/r/${repoName}/merge`,
                     title: 'Merge',
-                    icon: faCodeMerge,
-                },
-                {
-                    to: `/o/${daoName}/r/${repoName}/pull`,
-                    title: 'Pull request',
                     icon: faCodePullRequest,
                 },
                 {
@@ -136,16 +137,15 @@ const RepoLayout = () => {
                 </span>
             </h1>
 
-            {!isReady && (
-                <div className="text-gray-606060 px-5 sm:px-0">
-                    <Spinner className="mr-3" />
-                    Loading repository...
-                </div>
-            )}
-
+            {!isReady && <Loader>Loading repository...</Loader>}
             {isReady && (
                 <>
-                    <div className="flex gap-x-6 mb-6 px-5 sm:px-0 overflow-x-auto no-scrollbar">
+                    <div
+                        className={classNames(
+                            'flex gap-x-9 mb-10 overflow-x-auto no-scrollbar',
+                            'border-b border-b-gray-e6edff',
+                        )}
+                    >
                         {getTabs().map((item, index) => (
                             <NavLink
                                 key={index}
@@ -153,11 +153,10 @@ const RepoLayout = () => {
                                 end={index === 0}
                                 className={({ isActive }) =>
                                     classNames(
-                                        'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
-                                        'whitespace-nowrap',
-                                        isActive
-                                            ? '!text-gray-050a15 border-b border-b-gray-050a15'
-                                            : null,
+                                        'py-2 text-gray-7c8db5 font-medium whitespace-nowrap',
+                                        'border-b-4 border-b-transparent',
+                                        'hover:border-black hover:text-black',
+                                        isActive ? '!border-black text-black' : null,
                                     )
                                 }
                             >

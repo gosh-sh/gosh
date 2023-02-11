@@ -1,28 +1,34 @@
 import { Form, Formik } from 'formik'
-import * as Yup from 'yup'
-import { classNames } from 'react-gosh'
+import { classNames, TDao } from 'react-gosh'
 import { TPushProgress } from 'react-gosh/dist/types/repo.types'
-import CommitFields from './CommitFileds'
+import yup from '../../yup-extended'
+import { CommitFields } from './CommitFields/CommitFields'
 
-type TCommitFormValues = {
+export type TBranchCommitFormValues = {
     title: string
     message?: string
     tags?: string
-    deleteBranch?: boolean
+    deleteSrcBranch?: boolean
+    task?: string
+    reviewers?: string
+    manager?: string
+    isPullRequest?: boolean
 }
 
-type TCommitFormProps = {
+type TBranchCommitFormProps = {
     className?: string
-    initialValues: TCommitFormValues
+    dao: TDao
+    initialValues: TBranchCommitFormValues
     validationSchema?: object
     extraButtons?: any
     progress?: TPushProgress
-    onSubmit(values: TCommitFormValues): Promise<void>
+    onSubmit(values: TBranchCommitFormValues): Promise<void>
 }
 
-const BranchCommitForm = (props: TCommitFormProps) => {
+const BranchCommitForm = (props: TBranchCommitFormProps) => {
     const {
         className,
+        dao,
         initialValues,
         validationSchema,
         extraButtons,
@@ -30,19 +36,66 @@ const BranchCommitForm = (props: TCommitFormProps) => {
         onSubmit,
     } = props
 
+    const getInitialValues = () => {
+        const version_1_1_0 = {
+            task: '',
+            reviewers: '',
+            manager: '',
+        }
+        return {
+            ...initialValues,
+            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+        }
+    }
+
+    const getValidationSchema = () => {
+        const version_1_1_0 = {
+            task: yup.string(),
+            reviewers: yup
+                .string()
+                .test(
+                    'check-reviewer',
+                    'Reviewer is required if task was selected',
+                    function (value) {
+                        const { path, createError } = this
+                        if (this.parent.task && !value) {
+                            return createError({ path })
+                        }
+                        return true
+                    },
+                ),
+            manager: yup
+                .string()
+                .test(
+                    'check-manager',
+                    'Manager is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        return yup.object().shape({
+            title: yup.string().required('Field is required'),
+            ...validationSchema,
+            ...(dao.version === '1.1.0' ? version_1_1_0 : {}),
+        })
+    }
+
     return (
-        <div className={classNames('border rounded px-4 py-3', className)}>
+        <div className={classNames(className)}>
             <Formik
-                initialValues={initialValues}
+                initialValues={getInitialValues()}
+                validationSchema={getValidationSchema()}
                 onSubmit={onSubmit}
-                validationSchema={Yup.object().shape({
-                    title: Yup.string().required('Field is required'),
-                    ...validationSchema,
-                })}
             >
                 {({ isSubmitting }) => (
                     <Form>
                         <CommitFields
+                            dao={dao}
                             isSubmitting={isSubmitting}
                             extraButtons={extraButtons}
                             progress={progress}
@@ -54,4 +107,4 @@ const BranchCommitForm = (props: TCommitFormProps) => {
     )
 }
 
-export default BranchCommitForm
+export { BranchCommitForm }
