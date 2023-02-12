@@ -215,9 +215,13 @@ class GoshAdapter_1_1_0 implements IGoshAdapter {
         address?: TAddress | undefined
     }): Promise<IGoshRepositoryAdapter> {
         const { path, address } = options
-        if (address) return new GoshRepositoryAdapter(this, address)
+        if (address) {
+            return new GoshRepositoryAdapter(this, address)
+        }
 
-        if (!path) throw new GoshError('Repository path is undefined')
+        if (!path) {
+            throw new GoshError('Repository path is undefined')
+        }
         const [dao, name] = path.split('/')
         const { value0 } = await this.gosh.runLocal(
             'getAddrRepository',
@@ -423,8 +427,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             }
         }
 
-        if (address) return new GoshRepositoryAdapter(this.gosh, address, auth, config)
-        if (!name) throw new GoshError('Repo name undefined')
+        if (address) {
+            return new GoshRepositoryAdapter(this.gosh, address, auth, config)
+        }
+        if (!name) {
+            throw new GoshError('Repo name undefined')
+        }
 
         const { value0 } = await this.dao.runLocal(
             'getAddrRepository',
@@ -468,6 +476,20 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, addr)
     }
 
+    async getReviewers(
+        username: string[],
+    ): Promise<{ username: string; profile: string; wallet: string }[]> {
+        const profiles = await this.gosh.isValidProfile(username)
+        return await executeByChunk(
+            profiles,
+            MAX_PARALLEL_READ,
+            async ({ username, address }) => {
+                const wallet = await this.getMemberWallet({ profile: address, index: 0 })
+                return { username, profile: address, wallet: wallet.address }
+            },
+        )
+    }
+
     async getTaskCodeHash(repository: string): Promise<string> {
         const { value0 } = await this.dao.runLocal(
             'getTaskCode',
@@ -492,12 +514,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const { name, prev, comment, description, reviewers, alone, cell } = params
+        const { name, prev, comment, description, reviewers = [], alone, cell } = params
         const { valid, reason } = this.gosh.isValidRepoName(name)
         if (!valid) {
             throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
         }
-        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const _reviewers = await this.getReviewers(reviewers)
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
@@ -529,7 +551,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 descr: description || '',
                 previous: prev || null,
                 comment: comment || '',
-                reviewers: profiles.map(({ address }) => address),
+                reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
             })
         }
@@ -767,6 +789,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             proposals: clean[0],
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async addTaskReview(event: TAddress): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+        await this.wallet.run('acceptReviewer', { propAddress: event })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -2492,7 +2521,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrmanager: TAddress
         },
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         await this.auth.wallet0.run('setCommit', {
             repoName: await this.getName(),
@@ -2516,7 +2547,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrmanager: TAddress
         },
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const dao = await this._getDao()
+        const _reviewers = await executeByChunk(
+            Object.keys(task?.pubaddrreview || {}),
+            MAX_PARALLEL_READ,
+            async (profile) => {
+                const wallet = await dao.getMemberWallet({ profile, index: 0 })
+                return wallet.address
+            },
+        )
 
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForSetCommit', {
@@ -2528,7 +2571,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task,
             comment,
             num_clients: smvClientsCount,
-            reviewers: task ? Object.keys(task.pubaddrreview) : [],
+            reviewers: _reviewers,
         })
     }
 
@@ -2808,6 +2851,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         return parsedDiff
+    }
+
+    private async _getDao(): Promise<IGoshDaoAdapter> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        const { value0 } = await this.auth.wallet0.runLocal('getAddrDao', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return new GoshDaoAdapter(this.gosh, value0)
+    }
+
+    private async _getReviewers(username: string[]) {
+        const dao = await this._getDao()
+        return await dao.getReviewers(username)
     }
 
     /**

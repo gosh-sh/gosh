@@ -207,9 +207,7 @@ function useSmvEventList(
         }))
 
         const details = {
-            time: item.time
-                ? item.time
-                : await item.adapter.getEventTime({ address: item.address }),
+            time: await item.adapter.getEventTime({ address: item.address }),
             votes: await item.adapter.getEventVotes({ address: item.address }),
         }
         setEvents((state) => ({
@@ -368,10 +366,13 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
         const interval = setInterval(async () => {
             if (adapter) {
                 const status = await adapter.getEventStatus({ address })
+                const time = await adapter.getEventTime({ address })
                 const votes = await adapter.getEventVotes({ address })
                 setEvent((state) => ({
                     ...state,
-                    item: state.item ? { ...state.item, status, votes } : state.item,
+                    item: state.item
+                        ? { ...state.item, status, time, votes }
+                        : state.item,
                 }))
                 if (status.completed) {
                     clearInterval(interval)

@@ -99,6 +99,9 @@ interface IGoshDaoAdapter {
         address?: TAddress
         index?: number
     }): Promise<IGoshWallet>
+    getReviewers(
+        username: string[],
+    ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
 
     getTaskCodeHash(repository: string): Promise<string>
 
@@ -125,6 +128,8 @@ interface IGoshDaoAdapter {
     createTag(tag: string[], alone?: boolean | null): Promise<void>
 
     createMultiProposal(params: TCreateMultiProposalParams): Promise<void>
+
+    addTaskReview(event: TAddress): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {

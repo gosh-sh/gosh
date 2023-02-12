@@ -453,6 +453,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, addr)
     }
 
+    async getReviewers(
+        username: string[],
+    ): Promise<{ username: string; profile: string; wallet: string }[]> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getTaskCodeHash(repository: string): Promise<string> {
         throw new Error('Method is unavailable in current version')
     }
@@ -565,6 +571,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createMultiProposal(params: TCreateMultiProposalParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async addTaskReview(event: string): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
