@@ -1,11 +1,6 @@
-import { TCreateRepositoryParams } from './repo.types'
+import { TRepositoryCreateParams } from './repo.types'
 
 type TAddress = string
-
-type TCreateMultiProposalParams = {
-    fn: 'CREATE_REPOSITORY'
-    params: TCreateRepositoryParams
-}[]
 
 type TPaginatedAccountsResult = {
     results: any[]
@@ -18,9 +13,22 @@ type TValidationResult = {
     reason?: string
 }
 
+type TEventCreateParams = {
+    comment?: string
+    reviewers?: string[]
+}
+
+type TEventMultipleCreateProposalParams = TEventCreateParams & {
+    proposals: {
+        fn: 'CREATE_REPOSITORY'
+        params: TRepositoryCreateParams
+    }[]
+}
+
 export {
     TAddress,
-    TCreateMultiProposalParams,
+    TEventMultipleCreateProposalParams,
     TPaginatedAccountsResult,
+    TEventCreateParams,
     TValidationResult,
 }

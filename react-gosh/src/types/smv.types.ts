@@ -22,6 +22,7 @@ enum ESmvEventType {
     MULTI_PROPOSAL = 20,
     REPO_TAG_ADD = 21,
     REPO_TAG_REMOVE = 22,
+    REPO_UPDATE_DESCRIPTION = 23,
 }
 
 type TSmvDetails = {

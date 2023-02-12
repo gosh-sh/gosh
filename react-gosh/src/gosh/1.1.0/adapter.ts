@@ -27,12 +27,13 @@ import {
     TDaoSupplyDetails,
     TDaoMember,
     TTaskDetails,
-    TCreateRepositoryParams,
-    TCreateRepositoryResult,
-    TCreateMultiProposalParams,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TEventMultipleCreateProposalParams,
     TSmvEventVotes,
     TSmvEventStatus,
     TSmvEventTime,
+    TRepositoryUpdateDescriptionParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -508,8 +509,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createRepository(
-        params: TCreateRepositoryParams,
-    ): Promise<TCreateRepositoryResult> {
+        params: TRepositoryCreateParams,
+    ): Promise<TRepositoryCreateResult> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -531,6 +532,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellDeployRepo', {
                 nameRepo: name.toLowerCase(),
+                descr: description || '',
                 previous: prev || null,
                 comment: comment || '',
             })
@@ -754,13 +756,17 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async createMultiProposal(params: TCreateMultiProposalParams): Promise<void> {
+    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
+        const { proposals, reviewers = [] } = params
+
+        // Reviewers
+        const _reviewers = await this.getReviewers(reviewers)
 
         // Prepare cells
-        const cells = await executeByChunk(params, 200, async ({ fn, params }) => {
+        const cells = await executeByChunk(proposals, 200, async ({ fn, params }) => {
             if (fn === 'CREATE_REPOSITORY') {
                 return await this.createRepository({ ...params, cell: true })
             }
@@ -787,6 +793,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await this.wallet.run('startMultiProposal', {
             number: count,
             proposals: clean[0],
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
     }
@@ -1920,6 +1927,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
+    async updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const { description, comment = '', reviewers = [] } = params
+        const _reviewers = await this._getReviewers(reviewers)
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForChangeDescription', {
+            repoName: await this.getName(),
+            descr: description,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: smvClientsCount,
+        })
+    }
+
     private async _isBranchProtected(name: string): Promise<boolean> {
         const { value0 } = await this.repo.runLocal('isBranchProtected', {
             branch: name,
@@ -2854,13 +2878,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getDao(): Promise<IGoshDaoAdapter> {
-        if (!this.auth) {
-            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        }
-        const { value0 } = await this.auth.wallet0.runLocal('getAddrDao', {}, undefined, {
+        const { _goshdao } = await this.repo.runLocal('_goshdao', {}, undefined, {
             useCachedBoc: true,
         })
-        return new GoshDaoAdapter(this.gosh, value0)
+        return new GoshDaoAdapter(this.gosh, _goshdao)
     }
 
     private async _getReviewers(username: string[]) {
@@ -3196,6 +3217,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshRepoTagProposalParams'
         } else if (type === ESmvEventType.REPO_TAG_REMOVE) {
             fn = 'getGoshRepoTagProposalParams'
+        } else if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
+            fn = 'getChangeDescriptionProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data1, data2 } = await event.runLocal(
                 'getDataFirst',

@@ -1,5 +1,5 @@
 import { IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { TAddress } from './types'
+import { TAddress, TEventCreateParams } from './types'
 
 enum EBlobFlag {
     BINARY = 1,
@@ -153,17 +153,19 @@ type TTaskListItem = TTaskDetails & {
     isLoadDetailsFired?: boolean
 }
 
-type TCreateRepositoryParams = {
+type TRepositoryCreateParams = TEventCreateParams & {
     name: string
     description?: string
-    prev?: { addr: TAddress; version: string } | null
-    comment?: string | null
-    reviewers?: string[]
-    alone?: boolean | null
-    cell?: boolean | null
+    prev?: { addr: TAddress; version: string }
+    alone?: boolean
+    cell?: boolean
 }
 
-type TCreateRepositoryResult = IGoshRepositoryAdapter | string
+type TRepositoryCreateResult = IGoshRepositoryAdapter | string
+
+type TRepositoryUpdateDescriptionParams = TEventCreateParams & {
+    description: string
+}
 
 interface IPushCallback {
     (params: TPushProgress): void
@@ -192,8 +194,9 @@ export {
     TTaskCommitConfig,
     TTaskDetails,
     TTaskListItem,
-    TCreateRepositoryParams,
-    TCreateRepositoryResult,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TRepositoryUpdateDescriptionParams,
     IPushCallback,
     ITBranchOperateCallback,
 }

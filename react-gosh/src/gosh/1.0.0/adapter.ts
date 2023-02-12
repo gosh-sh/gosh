@@ -25,12 +25,13 @@ import {
     ETaskBounty,
     TDaoMember,
     TTaskDetails,
-    TCreateRepositoryParams,
-    TCreateRepositoryResult,
-    TCreateMultiProposalParams,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TEventMultipleCreateProposalParams,
     TSmvEventVotes,
     TSmvEventStatus,
     TSmvEventTime,
+    TRepositoryUpdateDescriptionParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -468,8 +469,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createRepository(
-        params: TCreateRepositoryParams,
-    ): Promise<TCreateRepositoryResult> {
+        params: TRepositoryCreateParams,
+    ): Promise<TRepositoryCreateResult> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -570,7 +571,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createMultiProposal(params: TCreateMultiProposalParams): Promise<void> {
+    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1503,6 +1504,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             comment?: string
         },
     ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

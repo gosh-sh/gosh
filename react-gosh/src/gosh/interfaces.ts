@@ -7,7 +7,7 @@ import {
 } from '@eversdk/core'
 import {
     TAddress,
-    TCreateMultiProposalParams,
+    TEventMultipleCreateProposalParams,
     TDao,
     TDaoMember,
     TProfileDetails,
@@ -25,8 +25,8 @@ import {
     ITBranchOperateCallback,
     TBranch,
     TCommit,
-    TCreateRepositoryParams,
-    TCreateRepositoryResult,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
     TRepository,
     TTag,
     TTaskCommitConfig,
@@ -34,6 +34,7 @@ import {
     TTree,
     TTreeItem,
     TUpgradeData,
+    TRepositoryUpdateDescriptionParams,
 } from '../types/repo.types'
 
 interface IGoshAdapter {
@@ -107,7 +108,7 @@ interface IGoshDaoAdapter {
 
     getSmv(): Promise<IGoshSmvAdapter>
 
-    createRepository(params: TCreateRepositoryParams): Promise<TCreateRepositoryResult>
+    createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
 
     createMember(
         members: string[] | { username: string; allowance: number; comment: string }[],
@@ -127,7 +128,7 @@ interface IGoshDaoAdapter {
 
     createTag(tag: string[], alone?: boolean | null): Promise<void>
 
-    createMultiProposal(params: TCreateMultiProposalParams): Promise<void>
+    createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
     addTaskReview(event: TAddress): Promise<void>
 }
@@ -251,6 +252,8 @@ interface IGoshRepositoryAdapter {
             comment?: string
         },
     ): Promise<void>
+
+    updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void>
 }
 
 interface IGoshSmvAdapter {
