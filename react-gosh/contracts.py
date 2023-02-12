@@ -13,7 +13,6 @@ CONTRACTS = {
         'profile',
         'profileindex',
         'profiledao',
-        'daotag'
     ],
     '1.0.0': [
         'gosh/systemcontract',
@@ -43,6 +42,8 @@ CONTRACTS = {
         'gosh/diff',
         'gosh/tree',
         'gosh/content-signature',
+        'gosh/daotag',
+        'gosh/repotaggosh',
         'smv/SMVProposal',
         'smv/SMVTokenLocker',
         'smv/SMVClient',
