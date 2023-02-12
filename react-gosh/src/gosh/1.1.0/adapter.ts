@@ -1,4 +1,4 @@
-import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
@@ -75,7 +75,7 @@ import {
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
-import { GoshTag } from './goshtag'
+import { GoshCommitTag } from './goshcommittag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
 import {
@@ -492,11 +492,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const { name, prev, comment, alone, cell } = params
+        const { name, prev, comment, description, reviewers, alone, cell } = params
         const { valid, reason } = this.gosh.isValidRepoName(name)
         if (!valid) {
             throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
         }
+        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
@@ -515,6 +516,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneDeployRepository', {
                 nameRepo: name.toLowerCase(),
+                descr: description || '',
                 previous: prev || null,
             })
             const wait = await whileFinite(async () => await repo.isDeployed())
@@ -524,8 +526,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             await smv.validateProposalStart()
             await this.wallet.run('startProposalForDeployRepository', {
                 nameRepo: name.toLowerCase(),
+                descr: description || '',
                 previous: prev || null,
                 comment: comment || '',
+                reviewers: profiles.map(({ address }) => address),
                 num_clients: await smv.getClientsCount(),
             })
         }
@@ -943,6 +947,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async getDetails(): Promise<TRepository> {
+        const { _description } = await this.repo.runLocal('_description', {})
         return {
             address: this.repo.address,
             name: await this.getName(),
@@ -950,6 +955,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branches: await this._getBranches(),
             head: await this.getHead(),
             commitsIn: [],
+            description: _description,
+            tags: await this._getTags(),
         }
     }
 
@@ -1275,7 +1282,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getTags(): Promise<TTag[]> {
+    async getCommitTags(): Promise<TTag[]> {
         // Get repo tag code and all tag accounts addresses
         const code = await this.repo.runLocal('getTagCode', {}, undefined, {
             useCachedBoc: true,
@@ -1290,7 +1297,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             accounts,
             MAX_PARALLEL_READ,
             async (address) => {
-                return await this._getTag(address)
+                return await this._getCommitTag(address)
             },
         )
     }
@@ -1773,12 +1780,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             review: { grant: number; lock: number }[]
             manager: { grant: number; lock: number }[]
         },
-        comment?: string,
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
     ): Promise<void> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        const { reviewers, comment } = options
+        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
         const task = await this._getTask({ name })
         if (await task.isDeployed()) {
             throw new GoshError('Task already exists', { name })
@@ -1790,6 +1802,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             taskName: name,
             grant: config,
             comment: comment || '',
+            reviewers: profiles.map(({ address }) => address),
             num_clients: smvClientsCount,
         })
     }
@@ -1832,6 +1845,52 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
+    async createTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const { reviewers, comment } = options
+        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForAddRepoTag', {
+            tag: tags,
+            repo: await this.getName(),
+            comment: comment || '',
+            reviewers: profiles.map(({ address }) => address),
+            num_clients: smvClientsCount,
+        })
+    }
+
+    async deleteTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const { reviewers, comment } = options
+        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const smvClientsCount = await this._validateProposalStart()
+        await this.auth.wallet0.run('startProposalForDestroyRepoTag', {
+            tag: tags,
+            repo: await this.getName(),
+            comment: comment || '',
+            reviewers: profiles.map(({ address }) => address),
+            num_clients: smvClientsCount,
+        })
+    }
+
     private async _isBranchProtected(name: string): Promise<boolean> {
         const { value0 } = await this.repo.runLocal('isBranchProtected', {
             branch: name,
@@ -1856,6 +1915,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             nametask: name,
         })
         return new GoshTask(this.client, value0)
+    }
+
+    private async _getTags(): Promise<string[]> {
+        const { value0 } = await this.repo.runLocal('getTags', {})
+        return Object.values(value0)
     }
 
     private async _getBranches(): Promise<any[]> {
@@ -2200,8 +2264,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getTag(address: TAddress): Promise<TTag> {
-        const tag = new GoshTag(this.client, address)
+    private async _getCommitTag(address: TAddress): Promise<TTag> {
+        const tag = new GoshCommitTag(this.client, address)
         const commit = await tag.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })
@@ -2464,6 +2528,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task,
             comment,
             num_clients: smvClientsCount,
+            reviewers: task ? Object.keys(task.pubaddrreview) : [],
         })
     }
 
@@ -3069,6 +3134,10 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getNotAllowMintProposalParams'
         } else if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
             fn = 'getChangeAllowancetProposalParams'
+        } else if (type === ESmvEventType.REPO_TAG_ADD) {
+            fn = 'getGoshRepoTagProposalParams'
+        } else if (type === ESmvEventType.REPO_TAG_REMOVE) {
+            fn = 'getGoshRepoTagProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data1, data2 } = await event.runLocal(
                 'getDataFirst',

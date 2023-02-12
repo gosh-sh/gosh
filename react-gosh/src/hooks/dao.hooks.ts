@@ -292,6 +292,7 @@ function useDaoCreate() {
         try {
             repo = (await dao.createRepository({
                 name: '_index',
+                description: 'DAO system repository',
                 alone: true,
             })) as IGoshRepositoryAdapter
             setProgress((state) => ({ ...state, isRepositoryDeployed: true }))

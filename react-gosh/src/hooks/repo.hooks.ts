@@ -258,8 +258,8 @@ function useRepo(dao: string, repo: string) {
 }
 
 function useRepoCreate(dao: IGoshDaoAdapter) {
-    const create = async (name: string) => {
-        await dao.createRepository({ name })
+    const create = async (name: string, options: { description?: string }) => {
+        await dao.createRepository({ name, ...options })
     }
 
     return { create }

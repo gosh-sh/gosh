@@ -24,4 +24,6 @@ export const SmvEventTypes: { [key: number]: string } = {
     18: 'Disable minting DAO tokens',
     19: 'Change DAO member(s) allowance',
     20: 'Multi proposal',
+    21: 'Add repository tag',
+    22: 'Remove repository tag',
 }

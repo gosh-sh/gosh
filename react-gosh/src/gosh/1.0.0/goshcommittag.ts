@@ -1,15 +1,15 @@
 import { TonClient } from '@eversdk/core'
 import { TAddress } from '../../types'
 import { BaseContract } from '../base'
-import { IGoshTag } from '../interfaces'
+import { IGoshCommitTag } from '../interfaces'
 
-class GoshTag extends BaseContract implements IGoshTag {
+class GoshCommitTag extends BaseContract implements IGoshCommitTag {
     static key: string = 'tag'
     static version = '1.0.0'
 
     constructor(client: TonClient, address: TAddress) {
-        super(client, GoshTag.key, address, { version: GoshTag.version })
+        super(client, GoshCommitTag.key, address, { version: GoshCommitTag.version })
     }
 }
 
-export { GoshTag }
+export { GoshCommitTag }

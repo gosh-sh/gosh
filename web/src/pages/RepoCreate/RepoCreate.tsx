@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { FormikInput } from '../../components/Formik'
+import { FormikInput, FormikTextarea } from '../../components/Formik'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
@@ -10,6 +10,7 @@ import { Button } from '../../components/Form'
 
 type TFormValues = {
     name: string
+    description?: string
 }
 
 const RepoCreatePage = () => {
@@ -20,7 +21,7 @@ const RepoCreatePage = () => {
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await createRepository(values.name)
+            await createRepository(values.name, { description: values.description })
 
             const version = dao.details.version
             if (version === '1.0.0') {
@@ -54,16 +55,22 @@ const RepoCreatePage = () => {
                             <Field
                                 name="name"
                                 component={FormikInput}
-                                inputProps={{
-                                    autoComplete: 'off',
-                                    placeholder: 'Repository name',
-                                    disabled: isSubmitting,
-                                    onChange: (e: any) =>
-                                        setFieldValue(
-                                            'name',
-                                            e.target.value.toLowerCase(),
-                                        ),
-                                }}
+                                autoComplete="off"
+                                placeholder="Repository name"
+                                disabled={isSubmitting}
+                                onChange={(e: any) =>
+                                    setFieldValue('name', e.target.value.toLowerCase())
+                                }
+                            />
+                        </div>
+
+                        <div className="mb-6">
+                            <Field
+                                name="description"
+                                component={FormikTextarea}
+                                autoComplete="off"
+                                placeholder="Repository description (optional)"
+                                disabled={isSubmitting}
                             />
                         </div>
 

@@ -167,7 +167,7 @@ interface IGoshRepositoryAdapter {
     ): Promise<{ treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
-    getTags(): Promise<TTag[]>
+    getCommitTags(): Promise<TTag[]>
     getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
     getUpgrade(commit: string): Promise<TUpgradeData>
     getContentSignature(
@@ -223,11 +223,29 @@ interface IGoshRepositoryAdapter {
             review: { grant: number; lock: number }[]
             manager: { grant: number; lock: number }[]
         },
-        comment?: string,
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
     ): Promise<void>
     confirmTask(name: string, index: number, comment?: string): Promise<void>
     receiveTaskBounty(name: string, type: ETaskBounty): Promise<void>
     deleteTask(name: string, comment?: string): Promise<void>
+
+    createTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void>
+    deleteTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void>
 }
 
 interface IGoshSmvAdapter {
@@ -376,7 +394,7 @@ interface IGoshTree extends IContract {
     address: TAddress
 }
 
-interface IGoshTag extends IContract {
+interface IGoshCommitTag extends IContract {
     address: TAddress
 }
 
@@ -422,7 +440,7 @@ export {
     IGoshDiff,
     IGoshSnapshot,
     IGoshTree,
-    IGoshTag,
+    IGoshCommitTag,
     IGoshTask,
     IGoshContentSignature,
     IGoshSmvProposal,

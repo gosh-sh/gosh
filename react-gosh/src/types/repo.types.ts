@@ -20,6 +20,8 @@ type TRepository = {
     branches: any[]
     head: string
     commitsIn: { branch: string; commit: TCommit }[]
+    description?: string
+    tags?: string[]
 }
 
 type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
@@ -153,8 +155,10 @@ type TTaskListItem = TTaskDetails & {
 
 type TCreateRepositoryParams = {
     name: string
+    description?: string
     prev?: { addr: TAddress; version: string } | null
     comment?: string | null
+    reviewers?: string[]
     alone?: boolean | null
     cell?: boolean | null
 }

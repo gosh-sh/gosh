@@ -34,7 +34,9 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 </span>
             </div>
 
-            <div className="text-sm text-gray-53596d">Gosh repository</div>
+            {item.description && (
+                <div className="text-xs text-gray-7c8db5">{item.description}</div>
+            )}
 
             <div className="flex gap-4 mt-3 text-sm text-gray-7c8db5 justify-between">
                 <div className="flex gap-4">

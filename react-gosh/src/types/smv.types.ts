@@ -20,6 +20,8 @@ enum ESmvEventType {
     DAO_TOKEN_MINT_DISABLE = 18,
     DAO_ALLOWANCE_CHANGE = 19,
     MULTI_PROPOSAL = 20,
+    REPO_TAG_ADD = 21,
+    REPO_TAG_REMOVE = 22,
 }
 
 type TSmvDetails = {

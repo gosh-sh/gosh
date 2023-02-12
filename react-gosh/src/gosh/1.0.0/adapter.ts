@@ -50,7 +50,6 @@ import {
     IGoshSmvAdapter,
     IGoshSmvLocker,
     IGoshSmvProposal,
-    IGoshTask,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -73,7 +72,7 @@ import {
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
-import { GoshTag } from './goshtag'
+import { GoshCommitTag } from './goshcommittag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
 import {
@@ -993,7 +992,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getTags(): Promise<TTag[]> {
+    async getCommitTags(): Promise<TTag[]> {
         // Get repo tag code and all tag accounts addresses
         const code = await this.repo.runLocal('getTagCode', {}, undefined, {
             useCachedBoc: true,
@@ -1008,7 +1007,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             accounts,
             MAX_PARALLEL_READ,
             async (address) => {
-                return await this._getTag(address)
+                return await this._getCommitTag(address)
             },
         )
     }
@@ -1457,6 +1456,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             review: { grant: number; lock: number }[]
             manager: { grant: number; lock: number }[]
         },
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
     ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
@@ -1470,6 +1473,26 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async deleteTask(name: string): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTag(
+        tags: string[],
+        options: {
+            reviewers?: string[]
+            comment?: string
+        },
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1822,8 +1845,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getTag(address: TAddress): Promise<TTag> {
-        const tag = new GoshTag(this.client, address)
+    private async _getCommitTag(address: TAddress): Promise<TTag> {
+        const tag = new GoshCommitTag(this.client, address)
         const commit = await tag.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })
