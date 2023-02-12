@@ -34,6 +34,22 @@ import {
     TSmvEventStatus,
     TSmvEventTime,
     TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoUpgradeParams,
+    TTaskConfirmParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
+    TDaoMintDisableParams,
+    TDaoMemberAllowanceUpdateParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -511,16 +527,24 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async createRepository(
         params: TRepositoryCreateParams,
     ): Promise<TRepositoryCreateResult> {
+        const {
+            name,
+            prev,
+            comment = '',
+            description = '',
+            reviewers = [],
+            alone,
+            cell,
+        } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const { name, prev, comment, description, reviewers = [], alone, cell } = params
         const { valid, reason } = this.gosh.isValidRepoName(name)
         if (!valid) {
             throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
         }
-        const _reviewers = await this.getReviewers(reviewers)
 
         // Check if repo is already deployed
         const repo = await this.getRepository({ name })
@@ -532,27 +556,28 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellDeployRepo', {
                 nameRepo: name.toLowerCase(),
-                descr: description || '',
+                descr: description,
                 previous: prev || null,
-                comment: comment || '',
+                comment,
             })
             return value0
         } else if (alone) {
             await this.wallet.run('AloneDeployRepository', {
                 nameRepo: name.toLowerCase(),
-                descr: description || '',
+                descr: description,
                 previous: prev || null,
             })
             const wait = await whileFinite(async () => await repo.isDeployed())
             if (!wait) throw new GoshError('Deploy repository timeout reached')
         } else {
+            const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
             await this.wallet.run('startProposalForDeployRepository', {
                 nameRepo: name.toLowerCase(),
-                descr: description || '',
+                descr: description,
                 previous: prev || null,
-                comment: comment || '',
+                comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
             })
@@ -561,11 +586,20 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return repo
     }
 
-    async createMember(
-        members: { username: string; allowance: number; comment: string }[],
-    ): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async createMember(params: TDaoMemberCreateParams): Promise<void> {
+        const { members = [], reviewers = [] } = params
 
+        if (!members.length) {
+            return
+        }
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        // Get reviewers
+        const _reviewers = await this.getReviewers(reviewers)
+
+        // Get members' profiles
         const usernames = members.map(({ username }) => username)
         const profiles = await this.gosh.isValidProfile(usernames)
 
@@ -593,20 +627,24 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await this.wallet.run('startProposalForDeployWalletDao', {
             pubaddr,
             comment: note.length ? note.join('\n\n') : '',
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async deleteMember(username: string[]): Promise<void> {
+    async deleteMember(params: TDaoMemberDeleteParams): Promise<void> {
+        const { usernames, comment = '', reviewers = [] } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        const _reviewers = await this.getReviewers(reviewers)
         const profiles = await executeByChunk(
-            username,
+            usernames,
             MAX_PARALLEL_READ,
-            async (member) => {
-                const profile = await this.gosh.getProfile({ username: member })
+            async (username) => {
+                const profile = await this.gosh.getProfile({ username })
                 return profile.address
             },
         )
@@ -616,19 +654,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         await this.wallet.run('startProposalForDeleteWalletDao', {
             pubaddr: profiles,
-            comment: '',
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async updateMemberAllowance(
-        members: { profile: string; increase: boolean; amount: number }[],
-        options: { comment?: string },
-    ): Promise<void> {
+    async updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void> {
+        const { members, comment = '', reviewers = [] } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        const { comment = '' } = options
 
         const profiles: TAddress[] = []
         const increase: boolean[] = []
@@ -642,6 +679,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             amount.push(item.amount)
         }
 
+        const _reviewers = await this.getReviewers(reviewers)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
         await this.wallet.run('startProposalForChangeAllowance', {
@@ -649,61 +687,120 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             increase,
             grant: amount,
             comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async upgrade(version: string, description?: string | undefined): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async upgrade(params: TDaoUpgradeParams): Promise<void> {
+        const { version, description, comment = '', reviewers = [] } = params
 
-        const smv = await this.getSmv()
-        await smv.validateProposalStart()
-
-        await this.wallet.run('startProposalForUpgradeDao', {
-            newversion: version,
-            description: description ?? `Upgrade DAO to version ${version}`,
-            comment: '',
-            num_clients: await smv.getClientsCount(),
-        })
-    }
-
-    async mint(
-        amount: number,
-        options: { comment?: string; alone?: boolean },
-    ): Promise<void> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { comment, alone } = options
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForUpgradeDao', {
+            newversion: version,
+            description: description ?? `Upgrade DAO to version ${version}`,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
+    }
+
+    async mint(params: TDaoMintTokenParams): Promise<void> {
+        const { amount, comment = '', reviewers = [], alone } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
         if (alone) {
             await this.wallet.run('AloneMintDaoReserve', { token: amount })
         } else {
+            const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
 
             await this.wallet.run('startProposalForMintDaoReserve', {
                 token: amount,
-                comment: comment || '',
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
             })
         }
     }
 
-    async disableMint(options: { comment?: string; alone?: boolean }): Promise<void> {
+    async disableMint(params: TDaoMintDisableParams): Promise<void> {
+        const { comment = '', reviewers = [], alone } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { comment, alone } = options
         if (alone) {
             await this.wallet.run('AloneNotAllowMint', {})
         } else {
+            const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
 
             await this.wallet.run('startProposalForNotAllowMint', {
-                comment: comment || '',
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async addVotingTokens(params: TDaoVotingTokenAddParams): Promise<void> {
+        const { username, amount, comment = '', reviewers = [], alone } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (alone) {
+            await this.wallet.run('AloneAddVoteTokenDao', { grant: amount })
+        } else {
+            const profiles = await this.gosh.isValidProfile([username])
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+
+            await this.wallet.run('startProposalForAddVoteToken', {
+                pubaddr: profiles[0].address,
+                token: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async addRegularTokens(params: TDaoRegularTokenAddParams): Promise<void> {
+        const { username, amount, comment = '', reviewers = [], alone } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (alone) {
+            await this.wallet.run('AloneAddTokenDao', { grant: amount })
+        } else {
+            const profiles = await this.gosh.isValidProfile([username])
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+
+            await this.wallet.run('startProposalForAddRegularToken', {
+                pubaddr: profiles[0].address,
+                token: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
             })
         }
@@ -734,26 +831,51 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await this.wallet.run('sendTokenToDaoReserve', { grant: amount })
     }
 
-    async createTag(tag: string[], alone?: boolean | null): Promise<void> {
+    async createTag(params: TDaoTagCreateParams): Promise<void> {
+        const { tags, comment = '', reviewers = [], alone } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const clean = tag.map((item) => {
+        const clean = tags.map((item) => {
             return item.startsWith('#') ? item.slice(1) : item
         })
 
         if (alone) {
             await this.wallet.run('AloneDeployDaoTag', { tag: clean })
         } else {
+            const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
             await this.wallet.run('startProposalForAddDaoTag', {
                 tag: clean,
-                comment: '',
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
             })
         }
+    }
+
+    async deleteTag(params: TDaoTagDeleteParams): Promise<void> {
+        const { tags, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const clean = tags.map((item) => {
+            return item.startsWith('#') ? item.slice(1) : item
+        })
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForAddDaoTag', {
+            tag: clean,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
@@ -1599,32 +1721,44 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         cb({ completed: true })
     }
 
-    async lockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async lockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
+        const { name, comment = '', reviewers = [] } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (await this._isBranchProtected(name)) {
             throw new GoshError('Branch is already protected')
         }
 
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
-            comment: '',
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
 
-    async unlockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async unlockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
+        const { name, comment = '', reviewers = [] } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (!(await this._isBranchProtected(name))) {
             throw new GoshError('Branch is not protected')
         }
 
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
             repoName: await this.getName(),
             branchName: name,
-            comment: '',
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
@@ -1809,24 +1943,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async createTask(
-        name: string,
-        config: {
-            assign: { grant: number; lock: number }[]
-            review: { grant: number; lock: number }[]
-            manager: { grant: number; lock: number }[]
-        },
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async createTask(params: TTaskCreateParams): Promise<void> {
+        const { name, config, comment = '', reviewers = [] } = params
+
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { reviewers, comment } = options
-        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const _reviewers = await this._getReviewers(reviewers)
         const task = await this._getTask({ name })
         if (await task.isDeployed()) {
             throw new GoshError('Task already exists', { name })
@@ -1837,23 +1961,27 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             repoName: await this.getName(),
             taskName: name,
             grant: config,
-            comment: comment || '',
-            reviewers: profiles.map(({ address }) => address),
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
 
-    async confirmTask(name: string, index: number, comment?: string): Promise<void> {
+    async confirmTask(params: TTaskConfirmParams): Promise<void> {
+        const { name, index, comment = '', reviewers = [] } = params
+
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForTaskConfirm', {
             repoName: await this.getName(),
             taskName: name,
             index,
-            comment: comment || '',
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
@@ -1867,62 +1995,56 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async deleteTask(name: string, comment?: string): Promise<void> {
+    async deleteTask(params: TTaskDeleteParams): Promise<void> {
+        const { name, comment = '', reviewers = [] } = params
+
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForTaskDestroy', {
             repoName: await this.getName(),
             taskName: name,
-            comment: comment || '',
+            comment: comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
 
-    async createTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async createTag(params: TRepositoryTagCreateParams): Promise<void> {
+        const { tags, comment = '', reviewers = [] } = params
+
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { reviewers, comment } = options
-        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForAddRepoTag', {
             tag: tags,
             repo: await this.getName(),
-            comment: comment || '',
-            reviewers: profiles.map(({ address }) => address),
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }
 
-    async deleteTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async deleteTag(params: TRepositoryTagDeleteParams): Promise<void> {
+        const { tags, comment = '', reviewers = [] } = params
+
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { reviewers, comment } = options
-        const profiles = reviewers ? await this.gosh.isValidProfile(reviewers) : []
+        const _reviewers = await this._getReviewers(reviewers)
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForDestroyRepoTag', {
             tag: tags,
             repo: await this.getName(),
-            comment: comment || '',
-            reviewers: profiles.map(({ address }) => address),
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
         })
     }

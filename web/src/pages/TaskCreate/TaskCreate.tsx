@@ -99,7 +99,9 @@ const TaskCreatePage = () => {
             }
 
             // Create task
-            await repository.adapter.createTask(values.name, _struct, {
+            await repository.adapter.createTask({
+                name: values.name,
+                config: _struct,
                 comment: values.comment,
             })
             navigate(`/o/${dao.details.name}/events`)

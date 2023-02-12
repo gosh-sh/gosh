@@ -265,7 +265,7 @@ function useDaoCreate() {
         // Setup total supply and minting policy
         try {
             if (supply && supply > 20) {
-                await dao.mint(supply - 20, { alone: true })
+                await dao.mint({ amount: supply - 20, alone: true })
             }
             if (mint === false) {
                 await dao.disableMint({ alone: true })
@@ -280,7 +280,7 @@ function useDaoCreate() {
         try {
             const cleanTags = (tags || []).filter((item) => !!item)
             if (cleanTags.length) {
-                await dao.createTag(cleanTags, true)
+                await dao.createTag({ tags: cleanTags, alone: true })
             }
             setProgress((state) => ({ ...state, isTagsDeployed: true }))
         } catch {
@@ -352,7 +352,7 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
         if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
             throw new GoshError(`Gosh version ${version} is not supported`)
         }
-        await dao.upgrade(version)
+        await dao.upgrade({ version })
     }
 
     return { versions, upgrade }
@@ -473,7 +473,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     const _create_1_0_0 = async (options: { usernames?: string[] }) => {
         const clean = (options.usernames || []).filter((item) => !!item)
         if (clean.length) {
-            await dao.createMember(clean)
+            await dao.createMember({ usernames: clean })
         }
     }
 
@@ -482,7 +482,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     }) => {
         const clean = (options.members || []).filter(({ username }) => !!username)
         if (clean.length) {
-            await dao.createMember(clean)
+            await dao.createMember({ members: clean })
         }
     }
 
@@ -502,7 +502,7 @@ function useDaoMemberDelete(dao: IGoshDaoAdapter) {
 
     const remove = async (username: string[]) => {
         setFetching((state) => [...state, ...username])
-        await dao.deleteMember(username)
+        await dao.deleteMember({ usernames: username })
         setFetching((state) => state.filter((item) => username.indexOf(item) < 0))
     }
 
@@ -512,7 +512,7 @@ function useDaoMemberDelete(dao: IGoshDaoAdapter) {
 function useDaoMint(dao: IGoshDaoAdapter) {
     const mint = async (amount: number, comment?: string) => {
         if (amount > 0) {
-            await dao.mint(amount, { comment })
+            await dao.mint({ amount, comment })
         }
     }
 
@@ -553,7 +553,7 @@ function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
                 increase: allowance > _allowance,
                 amount: Math.abs(allowance - _allowance),
             }))
-        await dao.updateMemberAllowance(prepared, { comment })
+        await dao.updateMemberAllowance({ members: prepared, comment })
     }
 
     return update

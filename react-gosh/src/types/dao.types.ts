@@ -1,6 +1,6 @@
 import { KeyPair } from '@eversdk/core'
 import { IGoshDaoAdapter } from '../gosh/interfaces'
-import { TAddress } from './types'
+import { TAddress, TEventCreateParams } from './types'
 
 type TDao = {
     address: TAddress
@@ -73,6 +73,54 @@ type TWalletDetails = {
     isDaoOwner: boolean
 }
 
+type TDaoMemberCreateParams = TEventCreateParams & {
+    usernames?: string[]
+    members?: { username: string; allowance: number; comment: string }[]
+}
+
+type TDaoMemberDeleteParams = TEventCreateParams & {
+    usernames: string[]
+}
+
+type TDaoMemberAllowanceUpdateParams = TEventCreateParams & {
+    members: { profile: TAddress; increase: boolean; amount: number }[]
+}
+
+type TDaoUpgradeParams = TEventCreateParams & {
+    version: string
+    description?: string
+}
+
+type TDaoVotingTokenAddParams = TEventCreateParams & {
+    username: string
+    amount: number
+    alone?: boolean
+}
+
+type TDaoRegularTokenAddParams = TEventCreateParams & {
+    username: string
+    amount: number
+    alone?: boolean
+}
+
+type TDaoMintTokenParams = TEventCreateParams & {
+    amount: number
+    alone?: boolean
+}
+
+type TDaoMintDisableParams = TEventCreateParams & {
+    alone?: boolean
+}
+
+type TDaoTagCreateParams = TEventCreateParams & {
+    tags: string[]
+    alone?: boolean
+}
+
+type TDaoTagDeleteParams = TEventCreateParams & {
+    tags: string[]
+}
+
 export {
     TDao,
     TDaoListItem,
@@ -81,4 +129,14 @@ export {
     TDaoMemberDetails,
     TDaoSupplyDetails,
     TWalletDetails,
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoMemberAllowanceUpdateParams,
+    TDaoUpgradeParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoMintDisableParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
 }

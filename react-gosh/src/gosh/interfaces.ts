@@ -18,6 +18,16 @@ import {
     TSmvEventTime,
     TSmvEventVotes,
     TValidationResult,
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoUpgradeParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
+    TDaoMintDisableParams,
+    TDaoMemberAllowanceUpdateParams,
 } from '../types'
 import {
     ETaskBounty,
@@ -35,6 +45,12 @@ import {
     TTreeItem,
     TUpgradeData,
     TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TTaskConfirmParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
 } from '../types/repo.types'
 
 interface IGoshAdapter {
@@ -110,23 +126,21 @@ interface IGoshDaoAdapter {
 
     createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
 
-    createMember(
-        members: string[] | { username: string; allowance: number; comment: string }[],
-    ): Promise<void>
-    deleteMember(username: string[]): Promise<void>
-    updateMemberAllowance(
-        members: { profile: TAddress; increase: boolean; amount: number }[],
-        options: { comment?: string },
-    ): Promise<void>
+    createMember(params: TDaoMemberCreateParams): Promise<void>
+    deleteMember(params: TDaoMemberDeleteParams): Promise<void>
+    updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void>
 
-    upgrade(version: string, description?: string): Promise<void>
+    upgrade(params: TDaoUpgradeParams): Promise<void>
 
-    mint(amount: number, options: { comment?: string; alone?: boolean }): Promise<void>
-    disableMint(options: { comment?: string; alone?: boolean }): Promise<void>
+    mint(params: TDaoMintTokenParams): Promise<void>
+    disableMint(params: TDaoMintDisableParams): Promise<void>
+    addVotingTokens(params: TDaoVotingTokenAddParams): Promise<void>
+    addRegularTokens(params: TDaoRegularTokenAddParams): Promise<void>
     sendInternal2Internal(username: string, amount: number): Promise<void>
     send2DaoReserve(amount: number): Promise<void>
 
-    createTag(tag: string[], alone?: boolean | null): Promise<void>
+    createTag(params: TDaoTagCreateParams): Promise<void>
+    deleteTag(params: TDaoTagDeleteParams): Promise<void>
 
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
@@ -193,8 +207,8 @@ interface IGoshRepositoryAdapter {
         callback?: ITBranchOperateCallback,
     ): Promise<void>
     deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void>
-    lockBranch(name: string): Promise<void>
-    unlockBranch(name: string): Promise<void>
+    lockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void>
+    unlockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void>
 
     setHead(branch: string): Promise<void>
     push(
@@ -222,36 +236,13 @@ interface IGoshRepositoryAdapter {
         content: string,
     ): Promise<void>
 
-    createTask(
-        name: string,
-        config: {
-            assign: { grant: number; lock: number }[]
-            review: { grant: number; lock: number }[]
-            manager: { grant: number; lock: number }[]
-        },
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void>
-    confirmTask(name: string, index: number, comment?: string): Promise<void>
+    createTask(params: TTaskCreateParams): Promise<void>
+    confirmTask(params: TTaskConfirmParams): Promise<void>
     receiveTaskBounty(name: string, type: ETaskBounty): Promise<void>
-    deleteTask(name: string, comment?: string): Promise<void>
+    deleteTask(params: TTaskDeleteParams): Promise<void>
 
-    createTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void>
-    deleteTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void>
+    createTag(params: TRepositoryTagCreateParams): Promise<void>
+    deleteTag(params: TRepositoryTagDeleteParams): Promise<void>
 
     updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void>
 }

@@ -60,7 +60,7 @@ const TaskListItem = (props: TTaskListItemProps) => {
         setIsDeleting(true)
 
         try {
-            await repository.deleteTask(item.name)
+            await repository.deleteTask({ name: item.name })
             navigate(`/o/${dao.name}/events`)
         } catch (e: any) {
             console.error(e.message)
@@ -76,7 +76,7 @@ const TaskListItem = (props: TTaskListItemProps) => {
         setIsConfirming(true)
 
         try {
-            await repository.confirmTask(item.name, 0)
+            await repository.confirmTask({ name: item.name, index: 0 })
             navigate(`/o/${dao.name}/events`)
         } catch (e: any) {
             console.error(e.message)

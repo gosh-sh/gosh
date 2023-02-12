@@ -167,6 +167,36 @@ type TRepositoryUpdateDescriptionParams = TEventCreateParams & {
     description: string
 }
 
+type TRepositoryChangeBranchProtectionParams = TEventCreateParams & {
+    name: string
+}
+
+type TRepositoryTagCreateParams = TEventCreateParams & {
+    tags: string[]
+}
+
+type TRepositoryTagDeleteParams = TEventCreateParams & {
+    tags: string[]
+}
+
+type TTaskConfirmParams = TEventCreateParams & {
+    name: string
+    index: number
+}
+
+type TTaskDeleteParams = TEventCreateParams & {
+    name: string
+}
+
+type TTaskCreateParams = TEventCreateParams & {
+    name: string
+    config: {
+        assign: { grant: number; lock: number }[]
+        review: { grant: number; lock: number }[]
+        manager: { grant: number; lock: number }[]
+    }
+}
+
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -197,6 +227,12 @@ export {
     TRepositoryCreateParams,
     TRepositoryCreateResult,
     TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
+    TTaskConfirmParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
     IPushCallback,
     ITBranchOperateCallback,
 }

@@ -1,4 +1,4 @@
-import { IGoshSmvAdapter, IGoshSmvProposal } from '../gosh/interfaces'
+import { IGoshSmvAdapter } from '../gosh/interfaces'
 
 enum ESmvEventType {
     PULL_REQUEST = 1,

@@ -32,6 +32,22 @@ import {
     TSmvEventStatus,
     TSmvEventTime,
     TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoUpgradeParams,
+    TTaskConfirmParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
+    TDaoMintDisableParams,
+    TDaoMemberAllowanceUpdateParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -493,54 +509,62 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return repo
     }
 
-    async createMember(members: string[]): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async createMember(params: TDaoMemberCreateParams): Promise<void> {
+        const { usernames = [] } = params
 
-        const profiles = await this.gosh.isValidProfile(members)
+        if (!usernames.length) {
+            return
+        }
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
+        const profiles = await this.gosh.isValidProfile(usernames)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForDeployWalletDao', {
             pubaddr: profiles.map(({ address }) => address),
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async deleteMember(username: string[]): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async deleteMember(params: TDaoMemberDeleteParams): Promise<void> {
+        const { usernames } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const profiles = await executeByChunk(
-            username,
+            usernames,
             MAX_PARALLEL_READ,
-            async (member) => {
-                const profile = await this.gosh.getProfile({ username: member })
+            async (username) => {
+                const profile = await this.gosh.getProfile({ username })
                 return profile.address
             },
         )
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForDeleteWalletDao', {
             pubaddr: profiles,
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async updateMemberAllowance(
-        members: { profile: string; increase: boolean; amount: number }[],
-        options: { comment?: string | undefined },
-    ): Promise<void> {
+    async updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async upgrade(version: string, description?: string | undefined): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async upgrade(params: TDaoUpgradeParams): Promise<void> {
+        const { version, description } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForUpgradeDao', {
             newversion: version,
             description: description ?? `Upgrade DAO to version ${version}`,
@@ -548,14 +572,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async mint(
-        amount: number,
-        options: { comment?: string | undefined; alone?: boolean | undefined },
-    ): Promise<void> {
+    async mint(params: TDaoMintTokenParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async disableMint(options: { comment?: string; alone?: boolean }): Promise<void> {
+    async disableMint(params: TDaoMintDisableParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async addVotingTokens(params: TDaoVotingTokenAddParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async addRegularTokens(params: TDaoRegularTokenAddParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -567,7 +596,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createTag(tag: string[]): Promise<void> {
+    async createTag(params: TDaoTagCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTag(params: TDaoTagDeleteParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1264,8 +1297,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         cb({ completed: true })
     }
 
-    async lockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async lockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
+        const { name } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (await this._isBranchProtected(name)) {
             throw new GoshError('Branch is already protected')
         }
@@ -1278,8 +1315,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async unlockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async unlockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
+        const { name } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (!(await this._isBranchProtected(name))) {
             throw new GoshError('Branch is not protected')
         }
@@ -1460,22 +1501,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async createTask(
-        name: string,
-        config: {
-            assign: { grant: number; lock: number }[]
-            review: { grant: number; lock: number }[]
-            manager: { grant: number; lock: number }[]
-        },
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async createTask(params: TTaskCreateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async confirmTask(name: string, index: number): Promise<void> {
+    async confirmTask(params: TTaskConfirmParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1483,27 +1513,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTask(name: string): Promise<void> {
+    async deleteTask(params: TTaskDeleteParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async createTag(params: TRepositoryTagCreateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTag(
-        tags: string[],
-        options: {
-            reviewers?: string[]
-            comment?: string
-        },
-    ): Promise<void> {
+    async deleteTag(params: TRepositoryTagDeleteParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
