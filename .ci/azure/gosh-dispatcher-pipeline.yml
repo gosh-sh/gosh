@@ -63,10 +63,30 @@ steps:
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 # Build
+# Linux
+- script: |
+    cargo build --release
+    rustup target add aarch64-unknown-linux-gnu
+    cargo build --release --target aarch64-unknown-linux-gnu
+    ls target/release
+  workingDirectory: gosh-dispatcher
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Build Linux
+# Mac
+- script: |
+    cargo build --release
+    rustup target add aarch64-apple-darwin
+    cargo build --release --target aarch64-apple-darwin
+    ls target/release
+  workingDirectory: gosh-dispatcher
+  condition: eq( variables['Agent.OS'], 'Darwin' )
+  displayName: Build MacOS
+# Windows
 - script: |
     cargo build --release
   workingDirectory: gosh-dispatcher
-  displayName: Build
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  displayName: Build Windows
 
 # Publish
 - publish: ./gosh-dispatcher/target/release/$(binName)
