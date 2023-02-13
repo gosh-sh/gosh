@@ -4,7 +4,7 @@ type TAddress = string
 
 type TPaginatedAccountsResult = {
     results: any[]
-    lastTransLt?: string
+    lastId?: string
     completed: boolean
 }
 

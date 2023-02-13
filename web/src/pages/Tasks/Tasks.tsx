@@ -7,7 +7,7 @@ import { TaskListItem } from './components'
 
 const TasksPage = () => {
     const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
-    const { items, isFetching, isEmpty, hasNext, getMore } = useTaskList(
+    const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } = useTaskList(
         dao.adapter,
         repository.adapter,
         { perPage: 10 },
@@ -35,14 +35,17 @@ const TasksPage = () => {
                 )}
 
                 <div className="divide-y divide-gray-e6edff">
-                    {items.map((item, index) => (
-                        <TaskListItem
-                            key={index}
-                            item={item}
-                            dao={dao.details}
-                            repository={repository.adapter}
-                        />
-                    ))}
+                    {items.map((item, index) => {
+                        getItemDetails(item)
+                        return (
+                            <TaskListItem
+                                key={index}
+                                item={item}
+                                dao={dao.details}
+                                repository={repository.adapter}
+                            />
+                        )
+                    })}
                 </div>
 
                 {hasNext && (

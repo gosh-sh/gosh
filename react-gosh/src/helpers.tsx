@@ -34,41 +34,32 @@ export const getPaginatedAccounts = async (params: {
     filters?: string[]
     result?: string[]
     limit?: number
-    lastTransLt?: string
+    lastId?: string
 }): Promise<TPaginatedAccountsResult> => {
-    const { filters = [], result = [], limit = 10, lastTransLt } = params
-    // TODO: fix this (not normal)
-    const _params = {
-        qVar: lastTransLt ? '$lastTransLt: String' : '$lastPaid: Float',
-        filter: lastTransLt
-            ? 'last_trans_lt: { lt: $lastTransLt }'
-            : 'last_paid: { lt: $lastPaid }',
-        orderByPath: lastTransLt ? 'last_trans_lt' : 'last_paid',
-        var: lastTransLt ? { lastTransLt, limit } : { lastPaid: Date.now(), limit },
-    }
-
-    const query = `query AccountsQuery( ${_params.qVar}, $limit: Int) {
+    const { filters = [], result = [], limit = 10, lastId } = params
+    const query = `query AccountsQuery( $lastId: String, $limit: Int) {
         accounts(
             filter: {
-                ${_params.filter},
+                id: { gt: $lastId },
                 ${filters.join(',')}
             }
-            orderBy: [{ path: "${_params.orderByPath}", direction: DESC }]
+            orderBy: [
+                { path: "last_paid", direction: DESC },
+                { path: "id", direction: ASC },
+            ]
             limit: $limit
         ) {
-            id last_trans_lt ${result.join(' ')}
+            id ${result.join(' ')}
         }
     }`
     const response = await AppConfig.goshclient.net.query({
         query,
-        variables: _params.var,
+        variables: { lastId, limit },
     })
     const results = response.result.data.accounts
     return {
         results,
-        lastTransLt: results.length
-            ? results[results.length - 1].last_trans_lt
-            : undefined,
+        lastId: results.length ? results[results.length - 1].id : undefined,
         completed: results.length < limit,
     }
 }
@@ -86,10 +77,10 @@ export const getAllAccounts = async (params: {
             filters,
             result,
             limit: 50,
-            lastTransLt: next,
+            lastId: next,
         })
         results.push(...accounts.results)
-        next = accounts.lastTransLt
+        next = accounts.lastId
         if (accounts.completed) {
             break
         }

@@ -1088,7 +1088,7 @@ function useTaskList(
     const [tasks, setTasks] = useState<{
         isFetching: boolean
         items: TTaskListItem[]
-        lastTransLt?: string
+        lastId?: string
         hasNext?: boolean
     }>({ items: [], isFetching: false })
 
@@ -1107,12 +1107,12 @@ function useTaskList(
                 const results = await getAllAccounts({
                     filters: [`code_hash: {eq:"${taskCodeHash}"}`],
                 })
-                accounts = { results, lastTransLt: undefined, completed: true }
+                accounts = { results, lastId: undefined, completed: true }
             } else {
                 accounts = await getPaginatedAccounts({
                     filters: [`code_hash: {eq:"${taskCodeHash}"}`],
                     limit: perPage,
-                    lastTransLt: from,
+                    lastId: from,
                 })
             }
 
@@ -1129,7 +1129,7 @@ function useTaskList(
                 ...state,
                 isFetching: false,
                 items: [...state.items, ...items],
-                lastTransLt: accounts.lastTransLt,
+                lastId: accounts.lastId,
                 hasNext: !accounts.completed,
             }))
         },
@@ -1137,7 +1137,7 @@ function useTaskList(
     )
 
     const getMore = async () => {
-        await getTaskList(tasks.lastTransLt)
+        await getTaskList(tasks.lastId)
     }
 
     const getItemDetails = async (item: TTaskListItem) => {

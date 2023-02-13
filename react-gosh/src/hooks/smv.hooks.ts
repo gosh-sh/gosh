@@ -160,7 +160,7 @@ function useSmvEventList(
     const [events, setEvents] = useState<{
         isFetching: boolean
         items: TSmvEventListItem[]
-        lastTransLt?: string
+        lastId?: string
         hasNext?: boolean
     }>({ items: [], isFetching: false })
 
@@ -176,7 +176,7 @@ function useSmvEventList(
             const accounts = await getPaginatedAccounts({
                 filters: [`code_hash: {eq:"${eventCodeHash}"}`],
                 limit: perPage,
-                lastTransLt: from,
+                lastId: from,
             })
             if (latest) {
                 await _getEventListLatest(adapter, accounts)
@@ -188,7 +188,7 @@ function useSmvEventList(
     )
 
     const getMore = async () => {
-        await getEventList(events.lastTransLt)
+        await getEventList(events.lastId)
     }
 
     const getItemDetails = async (item: TSmvEventListItem) => {
@@ -207,6 +207,7 @@ function useSmvEventList(
         }))
 
         const details = {
+            status: await item.adapter.getEventStatus({ address: item.address }),
             time: await item.adapter.getEventTime({ address: item.address }),
             votes: await item.adapter.getEventVotes({ address: item.address }),
         }
@@ -236,13 +237,9 @@ function useSmvEventList(
             ...state,
             isFetching: false,
             items: [...state.items, ...items],
-            lastTransLt: accounts.lastTransLt,
+            lastId: accounts.lastId,
             hasNext: !accounts.completed,
         }))
-
-        for (const item of items) {
-            getItemDetails(item)
-        }
     }
 
     const _getEventListLatest = async (
@@ -266,7 +263,7 @@ function useSmvEventList(
             ...state,
             isFetching: false,
             items,
-            lastTransLt: accounts.lastTransLt,
+            lastId: accounts.lastId,
             hasNext: !accounts.completed,
         }))
     }

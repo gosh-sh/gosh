@@ -9,10 +9,8 @@ import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
 const EventsPage = () => {
     const { daoName } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items, isFetching, isEmpty, hasNext, getMore } = useSmvEventList(
-        dao.adapter,
-        { perPage: 5 },
-    )
+    const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } =
+        useSmvEventList(dao.adapter, { perPage: 5 })
 
     return (
         <div className="flex flex-wrap gap-4 justify-between">
@@ -30,13 +28,16 @@ const EventsPage = () => {
                     )}
 
                     <div className="divide-y divide-gray-e6edff">
-                        {items.map((item, index) => (
-                            <EventListItem
-                                key={index}
-                                daoName={daoName || ''}
-                                event={item}
-                            />
-                        ))}
+                        {items.map((item, index) => {
+                            getItemDetails(item)
+                            return (
+                                <EventListItem
+                                    key={index}
+                                    daoName={daoName || ''}
+                                    event={item}
+                                />
+                            )
+                        })}
                     </div>
 
                     {hasNext && (
