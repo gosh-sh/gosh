@@ -50,7 +50,6 @@ import BuildPage from './docker-extension/pages/Build'
 import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
 import React, { useLayoutEffect } from 'react'
-import { User } from '@supabase/gotrue-js/src/lib/types'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
