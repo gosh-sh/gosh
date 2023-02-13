@@ -54,16 +54,13 @@ import { User } from '@supabase/gotrue-js/src/lib/types'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
-    const [user, setUser] = React.useState<User | undefined>()
 
     // supabase
     useLayoutEffect(() => {
         console.log('document.location', document.location)
         supabase.auth.getUser().then(({ data: { user } }) => {
             console.log('Layout: Supabase User', user)
-            if (user) {
-                setUser(user)
-            } else {
+            if (!user) {
                 console.warn('Supabase User is empty')
             }
         })
@@ -158,7 +155,7 @@ const App = () => {
             <Header />
             <main className="main grow">
                 <Routes>
-                    <Route path="/" element={<OnboardingPage />} />
+                    <Route path="/" element={<Navigate to="onboarding" replace />} />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>
