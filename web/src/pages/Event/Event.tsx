@@ -25,6 +25,8 @@ import { Button } from '../../components/Form'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { Form, Formik } from 'formik'
+import { DaoEventShowProgressEvent } from './components/DaoEventShowProgressEvent/DaoEventShowProgressEvent'
+import { DaoEventAllowDiscussionEvent } from './components/DaoEventAllowDiscussionEvent/DaoEventAllowDiscussionEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -147,12 +149,20 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.TASK_DELETE && (
                             <RepoTaskDeleteEvent event={event} />
                         )}
+                        {event.type.kind === ESmvEventType.DAO_EVENT_HIDE_PROGRESS && (
+                            <DaoEventShowProgressEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION && (
+                            <DaoEventAllowDiscussionEvent event={event} />
+                        )}
                     </div>
                 </div>
 
                 <div className="grow">
                     <div className="border border-gray-e6edff rounded-xl p-5">
-                        <EventProgressBar votes={event.votes} />
+                        {(dao.details.isEventProgressOn || event.status?.completed) && (
+                            <EventProgressBar votes={event.votes} />
+                        )}
                         <div className="mt-5 text-sm text-gray-7c8db5 text-center">
                             {!event.reviewers.length ? (
                                 <>{getDurationDelta()} to end</>

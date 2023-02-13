@@ -559,6 +559,24 @@ function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
     return update
 }
 
+function useDaoEventSettingsManage(dao: IGoshDaoAdapter) {
+    const updateShowProgress = async (params: { show: boolean; comment?: string }) => {
+        await dao.updateEventShowProgress(params)
+    }
+
+    const updateAllowDiscussion = async (params: {
+        allow: boolean
+        comment?: string
+    }) => {
+        await dao.updateEventAllowDiscussion(params)
+    }
+
+    return {
+        updateShowProgress,
+        updateAllowDiscussion,
+    }
+}
+
 export {
     useDaoList,
     useDao,
@@ -570,4 +588,5 @@ export {
     useDaoMemberSetAllowance,
     useDaoMint,
     useDaoMintDisable,
+    useDaoEventSettingsManage,
 }

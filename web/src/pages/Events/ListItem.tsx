@@ -1,20 +1,20 @@
 import { Link } from 'react-router-dom'
-import { TSmvEventListItem } from 'react-gosh'
+import { TDao, TSmvEventListItem } from 'react-gosh'
 import { EventProgressBar, EventStatusBadge } from '../../components/Event'
 
 type TEventListItemProps = {
-    daoName: string
+    dao: TDao
     event: TSmvEventListItem
 }
 
 const EventListItem = (props: TEventListItemProps) => {
-    const { daoName, event } = props
+    const { dao, event } = props
 
     return (
         <div className="px-5 py-6">
             <div className="mb-4">
                 <Link
-                    to={`/o/${daoName}/events/${event.address}`}
+                    to={`/o/${dao.name}/events/${event.address}`}
                     className="text-xl text-blue-348eff font-medium"
                 >
                     {event.type.name}
@@ -36,9 +36,11 @@ const EventListItem = (props: TEventListItemProps) => {
                         )}
                     </span>
                 )}
-                <div className="grow">
-                    <EventProgressBar votes={event.votes} />
-                </div>
+                {(dao.isEventProgressOn || event.status?.completed) && (
+                    <div className="grow">
+                        <EventProgressBar votes={event.votes} />
+                    </div>
+                )}
             </div>
         </div>
     )

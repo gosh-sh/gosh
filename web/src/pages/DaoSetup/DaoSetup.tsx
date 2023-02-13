@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { useDaoMint, useDaoMintDisable } from 'react-gosh'
+import { useDaoEventSettingsManage, useDaoMint, useDaoMintDisable } from 'react-gosh'
 import ToastError from '../../components/Error/ToastError'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import yup from '../../yup-extended'
@@ -10,18 +10,24 @@ import { Button } from '../../components/Form'
 
 type TSupplyFormValues = {
     amount: number
-    comment: string
+    comment?: string
 }
 
 type TMintFormValues = {
     mint: boolean
-    comment: string
+    comment?: string
+}
+
+type TBooleanFormValues = {
+    value: boolean
+    comment?: string
 }
 
 const DaoSetupPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const mint = useDaoMint(dao.adapter)
     const mintDisable = useDaoMintDisable(dao.adapter)
+    const eventSettingsManage = useDaoEventSettingsManage(dao.adapter)
     const navigate = useNavigate()
 
     const onMint = async (values: TSupplyFormValues) => {
@@ -44,17 +50,38 @@ const DaoSetupPage = () => {
         }
     }
 
+    const onEventShowProgress = async (values: TBooleanFormValues) => {
+        try {
+            const { value, comment } = values
+            await eventSettingsManage.updateShowProgress({ show: value, comment })
+            navigate(`/o/${dao.details.name}/events`)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onEventAllowDiscussion = async (values: TBooleanFormValues) => {
+        try {
+            const { value, comment } = values
+            await eventSettingsManage.updateAllowDiscussion({ allow: value, comment })
+            navigate(`/o/${dao.details.name}/events`)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
     if (dao.details.version === '1.0.0') {
         return <Navigate to={`/o/${dao.details.name}`} />
     }
     return (
         <>
             <h3 className="text-xl font-medium mb-10">Token setup</h3>
-
             <div className="divide-y divide-gray-e6edff">
                 <div className="pb-10">
                     <Formik
-                        initialValues={{ mint: dao.details.isMintOn, comment: '' }}
+                        initialValues={{ mint: dao.details.isMintOn }}
                         onSubmit={onMintDisable}
                     >
                         {({ isSubmitting, values }) => (
@@ -108,7 +135,7 @@ const DaoSetupPage = () => {
 
                 <div className="pt-10">
                     <Formik
-                        initialValues={{ amount: 0, comment: '' }}
+                        initialValues={{ amount: 0 }}
                         validationSchema={yup.object().shape({
                             amount: yup.number().integer().positive().required(),
                         })}
@@ -148,6 +175,89 @@ const DaoSetupPage = () => {
                                         </div>
                                     </>
                                 )}
+                            </Form>
+                        )}
+                    </Formik>
+                </div>
+            </div>
+
+            <h3 className="text-xl font-medium mt-14 mb-10">Proposal setup</h3>
+            <div className="divide-y divide-gray-e6edff">
+                <div className="pb-10">
+                    <Formik
+                        initialValues={{ value: !dao.details.isEventProgressOn }}
+                        onSubmit={onEventShowProgress}
+                    >
+                        {({ isSubmitting }) => (
+                            <Form>
+                                <div>
+                                    <Field
+                                        type="checkbox"
+                                        name="value"
+                                        component={FormikCheckbox}
+                                        disabled={isSubmitting}
+                                        inputProps={{
+                                            label: "Hide voting results until it's over",
+                                        }}
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Field
+                                        name="comment"
+                                        component={FormikTextarea}
+                                        disabled={isSubmitting}
+                                        placeholder="Leave your comment"
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Button
+                                        type="submit"
+                                        isLoading={isSubmitting}
+                                        disabled={isSubmitting}
+                                    >
+                                        Save changes and start proposal
+                                    </Button>
+                                </div>
+                            </Form>
+                        )}
+                    </Formik>
+                </div>
+
+                <div className="pt-10">
+                    <Formik
+                        initialValues={{ value: dao.details.isEventDiscussionOn }}
+                        onSubmit={onEventAllowDiscussion}
+                    >
+                        {({ isSubmitting }) => (
+                            <Form>
+                                <div>
+                                    <Field
+                                        type="checkbox"
+                                        name="value"
+                                        component={FormikCheckbox}
+                                        disabled={isSubmitting}
+                                        inputProps={{
+                                            label: 'Allow discussions on proposals',
+                                        }}
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Field
+                                        name="comment"
+                                        component={FormikTextarea}
+                                        disabled={isSubmitting}
+                                        placeholder="Leave your comment"
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Button
+                                        type="submit"
+                                        isLoading={isSubmitting}
+                                        disabled={isSubmitting}
+                                    >
+                                        Save changes and start proposal
+                                    </Button>
+                                </div>
                             </Form>
                         )}
                     </Formik>

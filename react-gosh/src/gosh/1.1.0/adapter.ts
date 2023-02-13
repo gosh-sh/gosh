@@ -50,6 +50,8 @@ import {
     TDaoMemberAllowanceUpdateParams,
     TRepositoryTagCreateParams,
     TRepositoryTagDeleteParams,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventShowProgressParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -383,6 +385,15 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getDetails(): Promise<TDao> {
         const owner = await this._getOwner()
         const { _allowMint } = await this.dao.runLocal('_allowMint', {})
+        const { _hide_voting_results } = await this.dao.runLocal(
+            '_hide_voting_results',
+            {},
+        )
+        const { _allow_discussion_on_proposals } = await this.dao.runLocal(
+            '_allow_discussion_on_proposals',
+            {},
+        )
+
         return {
             address: this.dao.address,
             name: await this.getName(),
@@ -392,6 +403,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             owner,
             tags: await this._getTags(),
             isMintOn: _allowMint,
+            isEventProgressOn: !_hide_voting_results,
+            isEventDiscussionOn: _allow_discussion_on_proposals,
             isAuthenticated: !!this.profile && !!this.wallet,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
@@ -925,6 +938,44 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
         await this.wallet.run('acceptReviewer', { propAddress: event })
+    }
+
+    async updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void> {
+        const { show, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForSetHideVotingResult', {
+            res: show,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
+    }
+
+    async updateEventAllowDiscussion(
+        params: TDaoEventAllowDiscussionParams,
+    ): Promise<void> {
+        const { allow, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForSetAllowDiscussion', {
+            res: allow,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -3375,6 +3426,10 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshRepoTagProposalParams'
         } else if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
             fn = 'getChangeDescriptionProposalParams'
+        } else if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
+            fn = 'getChangeHideVotingResultProposalParams'
+        } else if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
+            fn = 'getChangeAllowDiscussionProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data1, data2 } = await event.runLocal(
                 'getDataFirst',

@@ -27,4 +27,6 @@ export const SmvEventTypes: { [key: number]: string } = {
     21: 'Add repository tag',
     22: 'Remove repository tag',
     23: 'Update repository description',
+    24: 'Event allow discussion',
+    25: 'Event show progress',
 }

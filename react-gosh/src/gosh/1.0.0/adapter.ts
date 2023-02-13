@@ -48,6 +48,8 @@ import {
     TDaoMemberAllowanceUpdateParams,
     TRepositoryTagCreateParams,
     TRepositoryTagDeleteParams,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventShowProgressParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -382,6 +384,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
             owner,
             isMintOn: false,
+            isEventProgressOn: true,
+            isEventDiscussionOn: true,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
@@ -609,6 +613,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async addEventReview(event: string): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateEventAllowDiscussion(
+        params: TDaoEventAllowDiscussionParams,
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

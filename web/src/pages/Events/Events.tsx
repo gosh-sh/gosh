@@ -1,4 +1,4 @@
-import { useOutletContext, useParams } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import { classNames, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import EventListItem from './ListItem'
@@ -7,7 +7,6 @@ import { Button } from '../../components/Form'
 import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
 
 const EventsPage = () => {
-    const { daoName } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } =
         useSmvEventList(dao.adapter, { perPage: 5 })
@@ -33,7 +32,7 @@ const EventsPage = () => {
                             return (
                                 <EventListItem
                                     key={index}
-                                    daoName={daoName || ''}
+                                    dao={dao.details}
                                     event={item}
                                 />
                             )

@@ -28,6 +28,8 @@ import {
     TDaoTagDeleteParams,
     TDaoMintDisableParams,
     TDaoMemberAllowanceUpdateParams,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventShowProgressParams,
 } from '../types'
 import {
     ETaskBounty,
@@ -145,6 +147,8 @@ interface IGoshDaoAdapter {
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
     addEventReview(event: TAddress): Promise<void>
+    updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void>
+    updateEventAllowDiscussion(params: TDaoEventAllowDiscussionParams): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {

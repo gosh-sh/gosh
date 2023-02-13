@@ -11,6 +11,8 @@ type TDao = {
     owner: TAddress
     tags?: string[]
     isMintOn: boolean
+    isEventProgressOn: boolean
+    isEventDiscussionOn: boolean
     isAuthenticated: boolean
     isAuthOwner: boolean
     isAuthMember: boolean
@@ -23,6 +25,8 @@ type TDaoListItem = Omit<
     | 'supply'
     | 'owner'
     | 'isMintOn'
+    | 'isEventProgressOn'
+    | 'isEventDiscussionOn'
     | 'isAuthOwner'
     | 'isAuthMember'
     | 'isAuthenticated'
@@ -32,6 +36,8 @@ type TDaoListItem = Omit<
     supply?: TDaoSupplyDetails
     owner?: TAddress
     isMintOn?: boolean
+    isEventProgressOn?: boolean
+    isEventDiscussionOn?: boolean
     isAuthOwner?: boolean
     isAuthMember?: boolean
     isAuthenticated?: boolean
@@ -121,6 +127,14 @@ type TDaoTagDeleteParams = TEventCreateParams & {
     tags: string[]
 }
 
+type TDaoEventShowProgressParams = TEventCreateParams & {
+    show: boolean
+}
+
+type TDaoEventAllowDiscussionParams = TEventCreateParams & {
+    allow: boolean
+}
+
 export {
     TDao,
     TDaoListItem,
@@ -139,4 +153,6 @@ export {
     TDaoMintDisableParams,
     TDaoTagCreateParams,
     TDaoTagDeleteParams,
+    TDaoEventShowProgressParams,
+    TDaoEventAllowDiscussionParams,
 }
