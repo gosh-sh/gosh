@@ -123,14 +123,14 @@ steps:
     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
   workingDirectory: git-remote-gosh/target/aarch64-unknown-linux-gnu
   displayName: Name binaries 
-  condition: not(eq(variables['Agent.OS'], 'Linux'))
+  condition: eq(variables['Agent.OS'], 'Linux')
 
 # MacOS arm64
 - bash: |
     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
   workingDirectory: git-remote-gosh/target/aarch64-apple-darwin
   displayName: Name binaries 
-  condition: not(eq(variables['Agent.OS'], 'Darwin'))
+  condition: eq(variables['Agent.OS'], 'Darwin')
 
 # Windows
 - bash: |
