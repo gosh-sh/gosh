@@ -315,10 +315,11 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
                 const status = await adapter.getEventStatus({ address })
                 const time = await adapter.getEventTime({ address })
                 const votes = await adapter.getEventVotes({ address })
+                const reviewers = await adapter.getEventReviewers({ address })
                 setEvent((state) => ({
                     ...state,
                     item: state.item
-                        ? { ...state.item, status, time, votes }
+                        ? { ...state.item, status, time, votes, reviewers }
                         : state.item,
                 }))
                 if (status.completed) {

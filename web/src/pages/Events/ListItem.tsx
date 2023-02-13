@@ -24,9 +24,16 @@ const EventListItem = (props: TEventListItemProps) => {
                 {event.status && <EventStatusBadge status={event.status} />}
                 {event.time && (
                     <span className="text-gray-7c8db5 text-sm">
-                        Created {new Date(event.time.start).toLocaleDateString()}
-                        <span className="mx-1">-</span>
-                        Executed {new Date(event.time.finish).toLocaleDateString()}
+                        {event.time.finish ? (
+                            <>
+                                Created {new Date(event.time.start).toLocaleDateString()}
+                                <span className="mx-1">-</span>
+                                Executed{' '}
+                                {new Date(event.time.finish).toLocaleDateString()}
+                            </>
+                        ) : (
+                            'Review required'
+                        )}
                     </span>
                 )}
                 <div className="grow">

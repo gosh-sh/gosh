@@ -608,7 +608,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async addTaskReview(event: string): Promise<void> {
+    async addEventReview(event: string): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -2460,7 +2460,15 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             time: await this.getEventTime({ event }),
             data: await this._getEventData(event, type.kind),
             votes: await this.getEventVotes({ event }),
+            reviewers: await this.getEventReviewers({ event }),
         }
+    }
+
+    async getEventReviewers(params: {
+        address?: string | undefined
+        event?: IGoshSmvProposal | undefined
+    }): Promise<string[]> {
+        return []
     }
 
     async getEventVotes(params: {

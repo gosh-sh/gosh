@@ -1,5 +1,5 @@
 import { useOutletContext, useParams } from 'react-router-dom'
-import { classNames, ESmvEventType, shortString, useSmvEvent } from 'react-gosh'
+import { classNames, ESmvEventType, shortString, useSmvEvent, useUser } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Loader from '../../components/Loader'
 import { EventProgressBar, EventStatusBadge } from '../../components/Event'
@@ -21,9 +21,14 @@ import {
     RepoTaskDeleteEvent,
 } from './components'
 import ReactTooltip from 'react-tooltip'
+import { Button } from '../../components/Form'
+import { toast } from 'react-toastify'
+import ToastError from '../../components/Error/ToastError'
+import { Form, Formik } from 'formik'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
+    const { user } = useUser()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { event, isFetching } = useSmvEvent(dao.adapter, eventAddr!)
 
@@ -31,6 +36,16 @@ const EventPage = () => {
         const ms = moment(event?.time.finish).diff(moment())
         const delta = moment.duration(ms)
         return `${delta.days()}d ${delta.hours()}h ${delta.minutes()}m`
+    }
+
+    const onReviewApprove = async () => {
+        try {
+            await dao.adapter.addEventReview(event!.address)
+            toast.success('Review accepted. Event details will be updated soon')
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
     }
 
     if (isFetching && !event) {
@@ -54,9 +69,16 @@ const EventPage = () => {
                 >
                     <EventStatusBadge status={event.status} />
                     <div className="grow text-gray-7c8db5 text-sm">
-                        Created {new Date(event.time.start).toLocaleDateString()}
-                        <span className="mx-1">-</span>
-                        Executed {new Date(event.time.finish).toLocaleDateString()}
+                        {!event.reviewers.length ? (
+                            <>
+                                Created {new Date(event.time.start).toLocaleDateString()}
+                                <span className="mx-1">-</span>
+                                Executed{' '}
+                                {new Date(event.time.finish).toLocaleDateString()}
+                            </>
+                        ) : (
+                            'Review required'
+                        )}
                     </div>
                     <div>
                         <CopyClipboard
@@ -132,14 +154,52 @@ const EventPage = () => {
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         <EventProgressBar votes={event.votes} />
                         <div className="mt-5 text-sm text-gray-7c8db5 text-center">
-                            {getDurationDelta()} to end
+                            {!event.reviewers.length ? (
+                                <>{getDurationDelta()} to end</>
+                            ) : (
+                                'Review required'
+                            )}
                         </div>
                     </div>
 
-                    {!event.status.completed && dao.details.isAuthMember && (
+                    {!event.status.completed &&
+                        dao.details.isAuthMember &&
+                        !event.reviewers.length && (
+                            <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
+                                <h3 className="mb-4 text-xl font-medium">Your vote</h3>
+                                <EventVotingForm dao={dao} event={event} />
+                            </div>
+                        )}
+
+                    {!!event.reviewers.length && (
                         <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
-                            <h3 className="mb-4 text-xl font-medium">Your vote</h3>
-                            <EventVotingForm dao={dao} event={event} />
+                            <h3 className="mb-4 text-xl font-medium">Event review</h3>
+                            <div className="text-sm">
+                                Review required from:
+                                <ul>
+                                    {event.reviewers.map((username, index) => (
+                                        <li key={index}>{username}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {event.reviewers.indexOf(user.username || '') >= 0 && (
+                                <div className="mt-3">
+                                    <Formik initialValues={{}} onSubmit={onReviewApprove}>
+                                        {({ isSubmitting }) => (
+                                            <Form>
+                                                <Button
+                                                    type="submit"
+                                                    isLoading={isSubmitting}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    Approve
+                                                </Button>
+                                            </Form>
+                                        )}
+                                    </Formik>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

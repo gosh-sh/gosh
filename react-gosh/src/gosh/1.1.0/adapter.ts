@@ -920,7 +920,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async addTaskReview(event: TAddress): Promise<void> {
+    async addEventReview(event: TAddress): Promise<void> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -3125,7 +3125,40 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             time: await this.getEventTime({ event }),
             data: await this._getEventData(event, type.kind),
             votes: await this.getEventVotes({ event }),
+            reviewers: await this.getEventReviewers({ event }),
         }
+    }
+
+    async getEventReviewers(params: {
+        address?: string | undefined
+        event?: IGoshSmvProposal | undefined
+    }): Promise<string[]> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
+        }
+
+        const { reviewers } = await event.runLocal('reviewers', {})
+        const wallets = Object.keys(reviewers).map((address) => {
+            return new GoshWallet(this.client, address)
+        })
+        const usernames = await executeByChunk(
+            wallets,
+            MAX_PARALLEL_READ,
+            async (wallet) => {
+                const { value0 } = await wallet.runLocal(
+                    'getWalletOwner',
+                    {},
+                    undefined,
+                    { useCachedBoc: true },
+                )
+                const profile = new GoshProfile(this.client, value0)
+                return await profile.getName()
+            },
+        )
+        return usernames
     }
 
     async getEventVotes(params: {

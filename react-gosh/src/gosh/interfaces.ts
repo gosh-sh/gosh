@@ -144,7 +144,7 @@ interface IGoshDaoAdapter {
 
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
-    addTaskReview(event: TAddress): Promise<void>
+    addEventReview(event: TAddress): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -256,6 +256,10 @@ interface IGoshSmvAdapter {
         address: TAddress,
         isDetailed?: boolean,
     ): Promise<TSmvEventMinimal | TSmvEvent>
+    getEventReviewers(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<string[]>
     getEventVotes(params: {
         address?: TAddress
         event?: IGoshSmvProposal

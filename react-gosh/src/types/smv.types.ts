@@ -63,6 +63,7 @@ type TSmvEvent = TSmvEventMinimal & {
     time: TSmvEventTime
     votes: TSmvEventVotes
     status: TSmvEventStatus
+    reviewers: string[]
 }
 
 type TSmvEventListItem = TSmvEventMinimal & {
