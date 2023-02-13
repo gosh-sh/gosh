@@ -106,13 +106,13 @@ steps:
   displayName: Publish amd64
 
 # Linux arm64
-- publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/$(binName)
+- publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/release/$(binName)
   artifact: linux-arm64
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Publish arm64 Linux
 
 # MacOS arm64
-- publish: ./gosh-dispatcher/target/aarch64-apple-darwin/$(binName)
+- publish: ./gosh-dispatcher/target/aarch64-apple-darwin/release/$(binName)
   artifact: darwin-arm64
   condition: eq( variables['Agent.OS'], 'Darwin' )
   displayName: Publish arm64 MacOS

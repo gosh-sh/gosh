@@ -154,13 +154,13 @@ steps:
   displayName: Publish amd64 Windows
 
 # Linux arm64
-- publish: ./git-remote-gosh/target/aarch64-unknown-linux-gnu/git-remote-gosh_v$(VERSION)
+- publish: ./git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_v$(VERSION)
   artifact: linux-arm64
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Publish arm64 Linux
 
 # MacOS arm64
-- publish: ./git-remote-gosh/target/aarch64-apple-darwin/git-remote-gosh_v$(VERSION)
+- publish: ./git-remote-gosh/target/aarch64-apple-darwin/release/git-remote-gosh_v$(VERSION)
   artifact: darwin-arm64
   condition: eq( variables['Agent.OS'], 'Darwin' )
   displayName: Publish arm64 MacOS
