@@ -329,9 +329,9 @@ function getGoshDestroyTaskProposalParams () external view
 }
 
 function getGoshDeployTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, string comment)
+         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, string comment)
 {
-    (proposalKind, reponame, taskname, grant, comment,) = abi.decode(propData, (uint256, string, string, ConfigGrant, string, uint32));
+    (proposalKind, reponame, taskname, tag, grant, comment,) = abi.decode(propData, (uint256, string, string, string[], ConfigGrant, string, uint32));
 }
 
 function getGoshDeployRepoProposalParams () external view
@@ -461,9 +461,9 @@ function getGoshDestroyTaskProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshDeployTaskProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind, string reponame, string taskname, ConfigGrant grant, string comment)
+         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, string comment)
 {
-    (proposalKind, reponame, taskname, grant, comment,) = abi.decode(Data, (uint256, string, string, ConfigGrant, string, uint32));
+    (proposalKind, reponame, taskname, tag, grant, comment,) = abi.decode(Data, (uint256, string, string, string[], ConfigGrant, string, uint32));
 }
 
 function getGoshDeployRepoProposalParamsData (TvmCell Data) external pure

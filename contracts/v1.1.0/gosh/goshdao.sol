@@ -18,6 +18,7 @@ import "commit.sol";
 import "profiledao.sol";
 import "snapshot.sol";
 import "daotag.sol";
+import "repotaggosh.sol";
 import "task.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
@@ -613,53 +614,57 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 index,
         string repoName,
         string nametask,
+        string[] hashtag,
         ConfigGrant grant
     ) public senderIs(getAddrWalletIn(pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+        this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, msg.sender);
      }   
      
      function calculateBalanceAssign(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
-        uint128 index) public pure senderIs(address(this)) accept {
+        string[] hashtag,
+        uint128 index, address sender) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+        this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, sender);
      }
      
      function calculateBalanceReview(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
-        uint128 index) public pure senderIs(address(this)) accept {
+        string[] hashtag,
+        uint128 index, address sender) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, 0);
+        this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, sender);
       }
       
       function calculateBalanceManager(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
-        uint128 index) public senderIs(address(this)) accept {
+        string[] hashtag,
+        uint128 index, address sender) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, i); return; }
+            if (check == 3) { this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
@@ -671,8 +676,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(repo, _systemcontract, address(this), _code[m_WalletCode], grant, balance);
+        }(repo, _systemcontract, address(this), _code[m_WalletCode], grant, balance, hashtag);
+        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         getMoney();
+    }
+    
+    function deployTaskTag (address repo, address task, string[] tag, address sender) public pure senderIs(address(this)) accept {
+        for (uint8 t = 0; t < tag.length; t++){ 
+            GoshWallet(sender).deployTaskTag{value:0.2 ton}(repo, task, tag[t]);   	
+        }
+    }
+    
+    function destroyTaskTag (string nametask, address repo, string[] tag, address sender) public view senderIs(getTaskAddr(nametask, repo))  accept {
+        for (uint8 t = 0; t < tag.length; t++){ 
+            GoshWallet(sender).destroyTaskTag{value:0.2 ton}(repo, msg.sender, tag[t]);   	
+        }
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(getTaskAddr(nametask, repo)) accept {

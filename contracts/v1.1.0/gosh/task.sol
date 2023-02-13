@@ -25,7 +25,8 @@ contract Task is Modifiers{
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
     ConfigCommit[] _candidates;   
-    ConfigGrant _grant;
+    ConfigGrant _grant;   
+    string[] public _hashtag;
     uint128 _indexFinal;
     uint128 public _locktime = 0;
     uint128 _fullAssign = 0;
@@ -51,7 +52,8 @@ contract Task is Modifiers{
         address goshdao,
         TvmCell WalletCode,
         ConfigGrant grant,
-        uint128 balance
+        uint128 balance,
+        string[] hashtag
         ) public senderIs(goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
@@ -61,6 +63,7 @@ contract Task is Modifiers{
         _repo = repo;
         _grant = grant;
         _balance = balance;
+        _hashtag = hashtag;
     }
  /*   
     function setConfig(ConfigGrant grant, uint128 index) public {
@@ -126,7 +129,7 @@ contract Task is Modifiers{
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, diff);
-        checkempty();
+        checkempty(addr);
         return;
     }
     
@@ -150,7 +153,7 @@ contract Task is Modifiers{
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullReview);
-        checkempty();
+        checkempty(addr);
         return;
     }
     
@@ -171,7 +174,7 @@ contract Task is Modifiers{
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullManager);
         _fullManager = 0;
-        checkempty();
+        checkempty(addr);
         return;
     }
     
@@ -181,11 +184,12 @@ contract Task is Modifiers{
         return addr == sender;
     }
     
-    function checkempty() private {
+    function checkempty(address addr) private {
         if (_assigncomplete != _assignfull) { return; }
         if (_reviewcomplete != _reviewfull) { return; }
         if (_allmanager == false) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton}(_nametask, _repo, _hashtag, addr);
         selfdestruct(giver);
     }
     
@@ -206,6 +210,7 @@ contract Task is Modifiers{
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton}(_nametask, _repo, _hashtag, msg.sender);
         selfdestruct(giver);
     }
     

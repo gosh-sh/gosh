@@ -46,6 +46,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     address _rootpubaddr;
     string _nameDao;
     bool _flag = false;
+    uint128 _limittag = 3;
     mapping(uint8 => TvmCell) _code;
     uint128 counter = 0;
     uint128 _last_time = 0;
@@ -1056,12 +1057,83 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _deployTask(
         string repoName,
         string nametask,
+        string[] hashtag,
         ConfigGrant grant
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton}(_pubaddr, _index, repoName, nametask, grant);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton}(_pubaddr, _index, repoName, nametask, hashtag, grant);
         getMoney();
+    }
+    
+    function deployTaskTag(
+        address repo,
+        address task,
+        string tag
+    ) public senderIs(_goshdao) accept saveMsg {
+        _deployTaskTag(repo, task, tag);
+        getMoney();
+    }
+    
+    function _deployTaskTag(
+        address repo,
+        address task,
+        string tag
+    ) private {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        TvmCell deployCode = GoshLib.buildTaskTagGoshCode(_code[m_RepoTagCode], tag, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        new RepoTagGosh {
+            stateInit: s1, value: FEE_DEPLOY_TASK_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _systemcontract, tag, _code[m_WalletCode], _index);
+        deployCode = GoshLib.buildTaskTagDaoCode(_code[m_RepoTagCode], tag, _goshdao, _versionController);
+        s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        new RepoTagGosh {
+            stateInit: s1, value: FEE_DEPLOY_TASK_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _systemcontract, tag, _code[m_WalletCode], _index);
+        deployCode = GoshLib.buildTaskTagRepoCode(_code[m_RepoTagCode], tag, _goshdao, repo, _versionController);
+        s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        new RepoTagGosh {
+            stateInit: s1, value: FEE_DEPLOY_TASK_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _systemcontract, tag, _code[m_WalletCode], _index);
+        getMoney();
+    }
+    
+    function destroyTaskTag(
+        address repo,
+        address task,
+        string tag
+    ) public senderIs(_goshdao) accept saveMsg {
+        _destroyTaskTag(repo, task, tag);
+        getMoney();
+    }
+    
+    function _destroyTaskTag (
+        address repo,
+        address task,
+        string tag) private {       
+        RepoTagGosh(_gettasktaggoshaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_gettasktagdaoaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_gettasktagrepoaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        getMoney();
+    }
+    
+    function _gettasktaggoshaddr(address repo, address task, string tag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildTaskTagGoshCode(_code[m_RepoTagCode], tag, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _gettasktagdaoaddr(address repo, address task, string tag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildTaskTagDaoCode(_code[m_RepoTagCode], tag, _goshdao, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function _gettasktagrepoaddr(address repo, address task, string tag) private view returns(address){        
+        TvmCell deployCode = GoshLib.buildTaskTagRepoCode(_code[m_RepoTagCode], tag, _goshdao, repo, _versionController);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: RepoTagGosh, varInit: {_goshdao: _goshdao, _repo: repo, _task: task}});
+        return address.makeAddrStd(0, tvm.hash(s1));
     }
 
 /*    function _confirmTask(
@@ -1543,6 +1615,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startProposalForTaskDeploy(
         string taskName,
         string repoName,
+        string[] tag,
         ConfigGrant grant,
         string comment,
         uint128 num_clients , address[] reviewers
@@ -1552,11 +1625,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(grant.assign.length <= 150, ERR_TOO_MANY_VESTING_TIME);
         require(grant.review.length <= 150, ERR_TOO_MANY_VESTING_TIME);
         require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
         tvm.accept();
         _saveMsg();
 
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, grant, comment, now);
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, comment, now);
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
@@ -1564,10 +1638,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellTaskDeploy(
         string taskName,
         string repoName,
+        string tag,
         ConfigGrant grant,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, taskName, grant, comment, now);
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, comment, now);
     }
 
     function startProposalForDeleteProtectedBranch(
@@ -1668,8 +1743,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, ConfigGrant, uint32));
-                _deployTask(taskName, repoName, grant);
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                _deployTask(taskName, repoName, tag, grant);
             }  else
 
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
@@ -1793,8 +1868,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, ConfigGrant, uint32));
-                _deployTask(taskName, repoName, grant);
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                _deployTask(taskName, repoName, tag, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
                 (, string repoName, string descr, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, string, optional(AddrVersion), uint32));

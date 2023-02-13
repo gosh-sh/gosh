@@ -349,6 +349,36 @@
 			]
 		},
 		{
+			"name": "getTaskTagGoshCode",
+			"inputs": [
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTaskTagDaoCode",
+			"inputs": [
+				{"name":"dao","type":"address"},
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTaskTagRepoCode",
+			"inputs": [
+				{"name":"dao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDaoWalletCode",
 			"inputs": [
 				{"name":"pubaddr","type":"address"}

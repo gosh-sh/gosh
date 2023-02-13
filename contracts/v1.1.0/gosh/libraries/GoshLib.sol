@@ -169,6 +169,7 @@ library GoshLib {
         address versionc
     ) public returns (TvmCell) {
         TvmBuilder b;
+        b.store("REPO");
         b.store(tag);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
@@ -184,8 +185,60 @@ library GoshLib {
         address versionc
     ) public returns (TvmCell) {
         TvmBuilder b;
+        b.store("REPO");
         b.store(tag);
         b.store(dao);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
+    function buildTaskTagGoshCode(
+        TvmCell originalCode,
+        string tag,
+        address versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("TASK");
+        b.store(tag);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+    
+    function buildTaskTagDaoCode(
+        TvmCell originalCode,
+        string tag,
+        address dao,
+        address versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("TASK");
+        b.store(tag);
+        b.store(dao);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }    
+    
+    function buildTaskTagRepoCode(
+        TvmCell originalCode,
+        string tag,
+        address dao,
+        address repo,
+        address versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("TASK");
+        b.store(tag);
+        b.store(dao);
+        b.store(repo);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

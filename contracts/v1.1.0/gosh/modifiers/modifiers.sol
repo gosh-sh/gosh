@@ -122,6 +122,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_PROFILE_INDEX = 3 ton;
     uint128 constant FEE_DEPLOY_DAO_TAG = 7 ton;
     uint128 constant FEE_DEPLOY_REPO_TAG = 7.5 ton;
+    uint128 constant FEE_DEPLOY_TASK_TAG = 7.8 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 10 seconds;

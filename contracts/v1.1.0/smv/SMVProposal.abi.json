@@ -187,6 +187,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
+				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"comment","type":"string"}
 			]
@@ -434,6 +435,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
+				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"comment","type":"string"}
 			]
