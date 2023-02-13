@@ -9,21 +9,22 @@ strategy:
     linux:
       imageName: ubuntu-20.04
       binName: git-remote-gosh
-      artifactName: linux-amd64
+      artifactNameAmd: linux-amd64
     mac:
       imageName: macOS-12
       binName: git-remote-gosh
-      artifactName: darwin-amd64
+      artifactNameAmd: linux-amd64
     windows:
       imageName: windows-2019
       binName: git-remote-gosh.exe
-      artifactName: windows-amd64
+      artifactNameAmd: linux-amd64
   maxParallel: 3
 
 pool:
   vmImage: $(imageName)
 
 steps:
+#######################################################
 # Pre-requirements
 # Linux
 - script: |
@@ -41,6 +42,7 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements Windows
 
+###########################################################
 # Rust setup
 # Linux and macOS
 - script: |
@@ -62,31 +64,29 @@ steps:
   displayName: "Install rust (windows)"
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
+##########################################################
 # Build
 # Linux
-# - script: |
-#     cargo build --release
-#     sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
-#     rustup target add aarch64-unknown-linux-gnu
-#     cargo build --release --target aarch64-unknown-linux-gnu
-#   env:
-#     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
-#     CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
-#     CXX_x86_64_unknown_linux_gnu: x86_64-linux-gnu-g++
-#     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-#     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
-#     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
-#   workingDirectory: gosh-dispatcher
-#   condition: eq( variables['Agent.OS'], 'Linux' )
-#   displayName: Build Linux
+ - script: |
+     cargo build --release
+     sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
+     rustup target add aarch64-unknown-linux-gnu
+     cargo build --release --target aarch64-unknown-linux-gnu
+   env:
+     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
+     CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
+     CXX_x86_64_unknown_linux_gnu: x86_64-linux-gnu-g++
+     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
+   workingDirectory: gosh-dispatcher
+   condition: eq( variables['Agent.OS'], 'Linux' )
+   displayName: Build Linux 
 # Mac
 - script: |
     #cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
-    ls
-    ls target
-    ls target/release
   workingDirectory: gosh-dispatcher
   condition: eq( variables['Agent.OS'], 'Darwin' )
   displayName: Build MacOS
@@ -97,11 +97,21 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Build Windows
 
-# Publish amd64
+##################################
+# Publish 
+# Linux, MacOs and Windows amd64 
 - publish: ./gosh-dispatcher/target/release/$(binName)
-  artifact: $(artifactName)
+  artifact: $(artifactNameAmd)
+  displayName: Publish amd64
 
 # Linux arm64
 - publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/$(binName)
-  artifact: $(artifactName)
+  artifact: linux-arm64
   condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Publish arm64 Linux
+
+# MacOS arm64
+- publish: ./gosh-dispatcher/target/aarch64-apple-darwin/$(binName)
+  artifact: darwin-arm64
+  condition: eq( variables['Agent.OS'], 'Darwin' )
+  displayName: Publish arm64 MacOS
