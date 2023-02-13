@@ -65,13 +65,18 @@ steps:
 # Build
 # Linux
 - script: |
-    #cargo build --release
+    cargo build --release
     sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
     rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
+    echo 111111111111111111
     ls
+    echo 222222222222222222
     ls target
+    echo 333333333333333333
     ls target/release
+    echo 444444444444444444
+    ls -R target
   env:
     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
     CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
