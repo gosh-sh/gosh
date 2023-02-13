@@ -46,7 +46,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     address _rootpubaddr;
     string _nameDao;
     bool _flag = false;
-    uint128 _limittag = 3;
+    uint128 _limittag = 4;
     mapping(uint8 => TvmCell) _code;
     uint128 counter = 0;
     uint128 _last_time = 0;
