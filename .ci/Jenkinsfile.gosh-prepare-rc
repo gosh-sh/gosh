@@ -104,10 +104,14 @@ pipeline {
                                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
                                 az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
                                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_1_ID --path ./linux-arm64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_1_ID --path ./darwin-arm64
 
                                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
                                 az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
                                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
+                                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path ./linux-arm64
+                                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path ./darwin-arm64
 
                                 cd linux-amd64
                                 tar -cvf git-remote-gosh-linux-amd64.tar ./*
@@ -115,6 +119,10 @@ pipeline {
                                 tar -cvf git-remote-gosh-darwin-amd64.tar ./*
                                 cd ../windows-amd64
                                 zip -r git-remote-gosh-windows-amd64.zip /*
+                                cd ../linux-arm64
+                                tar -cvf git-remote-gosh-linux-arm64.tar ./*
+                                cd ../darwin-arm64
+                                tar -cvf git-remote-gosh-darwin-arm64.tar ./*
                             '''
                         }
                     }
@@ -320,6 +328,8 @@ pipeline {
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-amd64.tar'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-amd64.tar'
                                     sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.zip'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-arm64.tar'
+                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-arm64.tar'
                                 }
                             }
                         }

@@ -21,6 +21,7 @@ pool:
   vmImage: $(imageName)
 
 steps:
+##################################################
 # Pre-requirements
 # Linux
 - script: |
@@ -38,6 +39,7 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Install pre-requirements Windows
 
+######################################################
 # Rust setup
 # Linux and macOS
 - script: |
@@ -58,7 +60,8 @@ steps:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Install rust (windows)"
   condition: eq(variables['Agent.OS'], 'Windows_NT')
-  
+
+################################################### 
 # Build
 - bash: |
     mkdir -p ./resources
@@ -97,6 +100,7 @@ steps:
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Build Windows
 
+############################################################
 # Check version
 - bash: |
     chmod +x ./git-remote-gosh_unknown
@@ -105,6 +109,7 @@ steps:
   workingDirectory: git-remote-gosh/target/release
   displayName: Get supported_contract_version
 
+#############################################################
 # Set Version
 # Linux and macOS amd64
 - bash: |
@@ -129,13 +134,12 @@ steps:
 
 # Windows
 - bash: |
-    echo git-remote-gosh_v$(VERSION)
     mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
   workingDirectory: git-remote-gosh/target/release
   displayName: Name binaries 
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
-##################################
+###########################################################
 # Publish
 # Linux and macOS amd64
 - publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(VERSION)
