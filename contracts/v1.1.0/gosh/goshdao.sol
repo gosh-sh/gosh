@@ -68,6 +68,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     uint128 _allbalance = 0;
     uint128 _totalsupply = 0;
     
+    bool public _isRepoUpgraded = false;
+    
     constructor(
         address versionController,
         address pubaddr, 
@@ -293,6 +295,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     //Wallet part
+    function setRepoUpgraded(address pub, uint128 index, bool res) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _isRepoUpgraded = res;
+        getMoney();
+    }
+    
     function setTombstone(address pub, uint128 index, string description) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         _tombstone = true;

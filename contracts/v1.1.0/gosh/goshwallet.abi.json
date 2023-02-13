@@ -229,6 +229,14 @@
 			]
 		},
 		{
+			"name": "setRepoUpgraded",
+			"inputs": [
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "AloneNotAllowMint",
 			"inputs": [
 			],
