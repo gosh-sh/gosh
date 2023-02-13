@@ -102,6 +102,7 @@ import {
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
     SmvEventTypes,
+    SYSTEM_TAG,
     ZERO_BLOB_SHA1,
     ZERO_COMMIT,
 } from '../../constants'
@@ -277,6 +278,43 @@ class GoshAdapter_1_1_0 implements IGoshAdapter {
             { useCachedBoc: true },
         )
         return value0
+    }
+
+    async getTaskTagGoshCodeHash(tag: string): Promise<string> {
+        const { value0 } = await this.gosh.runLocal(
+            'getTaskTagGoshCode',
+            { tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getTaskTagDaoCodeHash(dao: TAddress, tag: string): Promise<string> {
+        const { value0 } = await this.gosh.runLocal(
+            'getTaskTagDaoCode',
+            { dao, tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getTaskTagRepoCodeHash(
+        dao: string,
+        repository: string,
+        tag: string,
+    ): Promise<string> {
+        const { value0 } = await this.gosh.runLocal(
+            'getTaskTagRepoCode',
+            { dao, repo: repository, tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
@@ -1519,6 +1557,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
         const { _hashtag } = await task.runLocal('_hashtag', {})
         const { _locktime } = await task.runLocal('_locktime', {})
+
+        // Clean tags
+        const _systemTagIndex = _hashtag.findIndex((item: string) => item === SYSTEM_TAG)
+        if (_systemTagIndex >= 0) {
+            _hashtag.splice(_systemTagIndex, 1)
+        }
+
         return {
             address: task.address,
             name: value0,
@@ -2014,7 +2059,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             repoName: await this.getName(),
             taskName: name,
             grant: config,
-            tag: tags,
+            tag: [SYSTEM_TAG, ...tags],
             comment,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,

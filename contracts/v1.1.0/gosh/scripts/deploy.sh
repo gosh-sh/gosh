@@ -62,7 +62,7 @@ PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../../profile.tvc | tr -d ' ",' | 
 PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 DAO_TAG_CODE=$(everdev contract dt $GOSH_PATH/daotag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-REPO_TAG_CODE=$(everdev contract dt $GOSH_PATH/repotaggosh.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+HELP_TAG_CODE=$(everdev contract dt $GOSH_PATH/taggosh.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 
 # ############################################################
@@ -149,8 +149,8 @@ echo "     ====> Run setTask"
 everdev contract run $SYSTEMCONTRACT_ABI setTask --input "{\"code\":\"$TASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setDaoTag"
 everdev contract run $SYSTEMCONTRACT_ABI setDaoTag --input "{\"code\":\"$DAO_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setRepoTag"
-everdev contract run $SYSTEMCONTRACT_ABI setRepoTag --input "{\"code\":\"$REPO_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setHelpTag"
+everdev contract run $SYSTEMCONTRACT_ABI setHelpTag --input "{\"code\":\"$HELP_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"
