@@ -335,6 +335,48 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
         return abi.encode(proposalKind, res, comment, now);
     }
+    
+    function startProposalForTagUpgrade(
+        string repoName,
+        string nametag,
+        string newversion,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = TAG_UPGRADE_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, repoName, nametag, newversion, comment, now);
+
+        _startProposalForOperation(c, TAG_UPGRADE_PROPOSAL_START_AFTER, TAG_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellTagUpgrade(string repoName,
+        string nametag,
+        string newversion,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
+        return abi.encode(proposalKind, repoName, nametag, newversion, comment, now);
+    }
+    
+    function _tagUpgrade(
+        string repoName,
+        string nametag,
+        string newversion
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        Tag(addr).upgradeToVersion{value: 2.3 ton, flag: 1}(_pubaddr, _index, newversion); 
+        getMoney();
+    }
 
     function setRepoUpgraded(bool res) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -934,7 +976,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
             stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, _code[m_WalletCode], _index);
+        }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, repoName, _nameDao, _code[m_WalletCode], _index);
         getMoney();
     }
 
@@ -1803,6 +1845,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));
                GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
+            } else
+            if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
+               (, string repoName, string nametag, string newversion, ,) = abi.decode(propData, (uint256, string, string, string, string, uint32));
+               _tagUpgrade (repoName, nametag, newversion);
             }
         }
     }
@@ -1927,6 +1973,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));
                GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
+            } else
+            if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
+               (, string repoName, string nametag, string newversion, ,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
+               _tagUpgrade(repoName, nametag, newversion);
             }
         }
     }

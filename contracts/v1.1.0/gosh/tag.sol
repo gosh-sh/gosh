@@ -24,6 +24,8 @@ contract Tag is Modifiers{
     address _pubaddr;
     address _systemcontract;
     address _goshdao;
+    string _repoName;
+    string _nameDao;
     mapping(uint8 => TvmCell) _code;
     
     constructor(
@@ -33,6 +35,8 @@ contract Tag is Modifiers{
         string content,
         address goshaddr,
         address goshdao,
+        string reponame,
+        string namedao,
         TvmCell WalletCode,
         uint128 index) public onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
@@ -41,6 +45,8 @@ contract Tag is Modifiers{
         _systemcontract = goshaddr;
         _goshdao = goshdao;
         _pubaddr = pubaddr;
+        _repoName = reponame;
+        _nameDao = namedao;
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         _nameCommit = nameCommit;
         _commit = commit;
@@ -61,6 +67,12 @@ contract Tag is Modifiers{
             varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
         });
         return _contract;
+    }
+    
+    function upgradeToVersion(address pubaddr, uint128 index, string newversion) public view {
+        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        newversion;
+//        SystemContract(_systemcontract).upgradeTag(_nameDao, _repoName, _nametag, _commit, _content, newversion);
     }
     
     //Selfdestruct

@@ -229,6 +229,41 @@
 			]
 		},
 		{
+			"name": "startProposalForTagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"newversion","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellTagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"newversion","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "_tagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setRepoUpgraded",
 			"inputs": [
 				{"name":"res","type":"bool"}

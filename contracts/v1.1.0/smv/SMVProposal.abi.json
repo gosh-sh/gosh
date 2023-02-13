@@ -310,6 +310,17 @@
 			]
 		},
 		{
+			"name": "getTagUpgradeProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"newversion","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshProposalKindData",
 			"inputs": [
 				{"name":"Data","type":"cell"}

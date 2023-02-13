@@ -199,6 +199,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant CHANGE_HIDE_VOTING_RESULT_PROPOSAL_START_AFTER  = 10 seconds;
     uint32 constant CHANGE_HIDE_VOTING_RESULT_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant TAG_UPGRADE_PROPOSAL_START_AFTER  = 10 seconds;
+    uint32 constant TAG_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -226,6 +229,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant CHANGE_DESCRIPTION_PROPOSAL_KIND = 23;
     uint256 constant CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND = 24;
     uint256 constant CHANGE_HIDE_VOTING_PROPOSAL_KIND = 25;
+    uint256 constant TAG_UPGRADE_PROPOSAL_KIND = 26;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

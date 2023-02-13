@@ -400,6 +400,12 @@ function getChangeAllowDiscussionProposalParams () external view
     (proposalKind, result, comment, ) = abi.decode(propData, (uint256, bool, string, uint32));
 }
 
+function getTagUpgradeProposalParams () external view
+         returns(uint proposalKind, string repoName, string nametag, string newversion) 
+{
+     (proposalKind, repoName, nametag, newversion, ,) = abi.decode(propData, (uint256, string, string, string, string, uint32));
+}
+
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
 {
     TvmSlice s = Data.toSlice();

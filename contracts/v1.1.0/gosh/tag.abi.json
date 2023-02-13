@@ -12,8 +12,20 @@
 				{"name":"content","type":"string"},
 				{"name":"goshaddr","type":"address"},
 				{"name":"goshdao","type":"address"},
+				{"name":"reponame","type":"string"},
+				{"name":"namedao","type":"string"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeToVersion",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -79,6 +91,8 @@
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
+		{"name":"_repoName","type":"string"},
+		{"name":"_nameDao","type":"string"},
 		{"name":"_code","type":"map(uint8,cell)"}
 	]
 }
