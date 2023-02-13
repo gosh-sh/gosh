@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { classNames, useDao, TDao, shortString } from 'react-gosh'
+import {
+    classNames,
+    useDao,
+    TDao,
+    shortString,
+    AppConfig,
+    GoshAdapterFactory,
+} from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import SideMenuContainer from '../components/SideMenuContainer'
 import emptylogo from '../assets/images/emptylogo.svg'
@@ -20,6 +27,9 @@ const DaoLayout = () => {
     const dao = useDao(daoName!)
     const [description, setDescription] = useState<string | null>()
     const [isReady, setIsReady] = useState<boolean>(false)
+    const [upgrades, setUpgrades] = useState<
+        'isNotLatest' | 'isUpgradeAvailable' | 'isRepoUpgradeNeeded'
+    >()
 
     const getTabs = () => {
         const tabs = [
@@ -55,6 +65,39 @@ const DaoLayout = () => {
             setIsReady(true)
         }
     }, [dao.isFetching, getDaoShortDescription])
+
+    useEffect(() => {
+        const _checkUpgrades = async () => {
+            console.debug('Check DAO upgrades')
+            if (!isReady || !dao.adapter) {
+                return
+            }
+
+            // Check if using latest version of DAO or new version avaiable
+            const latest = Object.keys(AppConfig.versions).reverse()[0]
+            if (dao.adapter.getVersion() !== latest) {
+                const gosh = GoshAdapterFactory.createLatest()
+                const newest = await gosh.getDao({ name: daoName, useAuth: false })
+                if (await newest.isDeployed()) {
+                    setUpgrades('isNotLatest')
+                } else {
+                    setUpgrades('isUpgradeAvailable')
+                }
+                return
+            }
+
+            // TODO: Check repositories upgraded flag
+            setUpgrades(undefined)
+        }
+
+        // TODO: Turn on when ready
+        // _checkUpgrades()
+        // const interval = setInterval(_checkUpgrades, 15000)
+
+        // return () => {
+        //     clearInterval(interval)
+        // }
+    }, [isReady, dao.adapter])
 
     return (
         <SideMenuContainer>
@@ -104,9 +147,8 @@ const DaoLayout = () => {
             </div>
 
             {!dao.errors.length && !isReady && <Loader>Loading organization...</Loader>}
-
             {!!dao.errors.length && (
-                <div className="p-3 bg-rose-600 text-white rounded">
+                <div className="p-3 bg-red-ff3b30 text-white rounded-xl">
                     <ul>
                         {dao.errors.map((error, index) => (
                             <li key={index}>{error}</li>
@@ -114,9 +156,40 @@ const DaoLayout = () => {
                     </ul>
                 </div>
             )}
-
             {isReady && !dao.errors.length && (
                 <>
+                    {upgrades && (
+                        <div className="mb-6 py-3 px-5 bg-red-ff3b30 text-white text-sm rounded-xl">
+                            {upgrades === 'isNotLatest' && (
+                                <>
+                                    You are using old version of DAO.
+                                    <br />
+                                    <button
+                                        className="underline"
+                                        onClick={() => document.location.reload()}
+                                    >
+                                        Reload
+                                    </button>{' '}
+                                    page to go to the latest version
+                                </>
+                            )}
+                            {upgrades === 'isUpgradeAvailable' && (
+                                <>
+                                    New version of DAO is available.
+                                    <br />
+                                    Go to the{' '}
+                                    <Link
+                                        className="underline"
+                                        to={`/o/${daoName}/settings/upgrade`}
+                                    >
+                                        upgrade
+                                    </Link>{' '}
+                                    page
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     <div
                         className={classNames(
                             'flex gap-x-8 mb-6 overflow-x-auto no-scrollbar',
