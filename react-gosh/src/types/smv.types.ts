@@ -56,17 +56,18 @@ type TSmvEventMinimal = {
         kind: number
         name: string
     }
-    status: TSmvEventStatus
 }
 
 type TSmvEvent = TSmvEventMinimal & {
     data: any
     time: TSmvEventTime
     votes: TSmvEventVotes
+    status: TSmvEventStatus
 }
 
 type TSmvEventListItem = TSmvEventMinimal & {
     adapter: IGoshSmvAdapter
+    status?: TSmvEventStatus
     time?: TSmvEventTime
     votes?: TSmvEventVotes
     isLoadDetailsFired?: boolean

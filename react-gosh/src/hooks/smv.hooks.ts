@@ -1,16 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { MAX_PARALLEL_READ } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts, getPaginatedAccounts } from '../helpers'
-import {
-    TAddress,
-    TDao,
-    TPaginatedAccountsResult,
-    TSmvDetails,
-    TSmvEvent,
-    TSmvEventListItem,
-} from '../types'
+import { executeByChunk, getAllAccounts } from '../helpers'
+import { TAddress, TDao, TSmvDetails, TSmvEvent, TSmvEventListItem } from '../types'
 
 function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
@@ -151,44 +144,70 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
     }
 }
 
-function useSmvEventList(
-    dao: IGoshDaoAdapter,
-    params: { perPage?: number; latest?: boolean },
-) {
+function useSmvEventList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
-    const [eventCodeHash, setEventCodehash] = useState<string>()
+    const [accounts, setAccounts] = useState<{
+        isFetching: boolean
+        items: { id: TAddress; last_paid: number }[]
+    }>({ isFetching: false, items: [] })
     const [events, setEvents] = useState<{
         isFetching: boolean
         items: TSmvEventListItem[]
-        lastId?: string
+        lastAccountIndex: number
         hasNext?: boolean
-    }>({ items: [], isFetching: false })
+    }>({ items: [], isFetching: false, lastAccountIndex: 0 })
 
-    const { perPage = 5, latest = false } = params
+    const { perPage = 5 } = params
+
+    const getEventAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+
+        const adapter = await dao.getSmv()
+        const codeHash = await adapter.getEventCodeHash()
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+
+        setAdapter(adapter)
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: result.sort((a, b) => b.last_paid - a.last_paid),
+        }))
+    }, [dao])
 
     const getEventList = useCallback(
-        async (from?: string) => {
-            if (!adapter || !eventCodeHash) {
+        async (lastAccountIndex: number) => {
+            if (!adapter || accounts.isFetching) {
                 return
             }
 
             setEvents((state) => ({ ...state, isFetching: true }))
-            const accounts = await getPaginatedAccounts({
-                filters: [`code_hash: {eq:"${eventCodeHash}"}`],
-                limit: perPage,
-                lastId: from,
-            })
-            if (latest) {
-                await _getEventListLatest(adapter, accounts)
-            } else {
-                await _getEventListCommon(adapter, accounts)
-            }
+
+            const endAccountIndex = lastAccountIndex + perPage
+            const items: TSmvEventListItem[] = await executeByChunk(
+                accounts.items.slice(lastAccountIndex, endAccountIndex),
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const event = await adapter.getEvent(id, false)
+                    return { adapter, ...event }
+                },
+            )
+
+            setEvents((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastAccountIndex: endAccountIndex,
+                hasNext: endAccountIndex < accounts.items.length,
+            }))
         },
-        [adapter, eventCodeHash, perPage, latest],
+        [adapter, accounts.isFetching, accounts.items, perPage],
     )
 
     const getMore = async () => {
-        await getEventList(events.lastId)
+        await getEventList(events.lastAccountIndex)
     }
 
     const getItemDetails = async (item: TSmvEventListItem) => {
@@ -220,112 +239,43 @@ function useSmvEventList(
         }))
     }
 
-    const _getEventListCommon = async (
-        adapter: IGoshSmvAdapter,
-        accounts: TPaginatedAccountsResult,
-    ) => {
-        const items: TSmvEventListItem[] = await executeByChunk(
-            accounts.results.map(({ id }) => id),
-            MAX_PARALLEL_READ,
-            async (address) => {
-                const event = await adapter.getEvent(address, false)
-                return { adapter, ...event }
-            },
-        )
-
-        setEvents((state) => ({
-            ...state,
-            isFetching: false,
-            items: [...state.items, ...items],
-            lastId: accounts.lastId,
-            hasNext: !accounts.completed,
-        }))
-    }
-
-    const _getEventListLatest = async (
-        adapter: IGoshSmvAdapter,
-        accounts: TPaginatedAccountsResult,
-    ) => {
-        const items: TSmvEventListItem[] = await executeByChunk(
-            accounts.results.map(({ id }) => id),
-            MAX_PARALLEL_READ,
-            async (address) => {
-                const event = await adapter.getEvent(address, false)
-                return {
-                    adapter,
-                    time: await adapter.getEventTime({ address }),
-                    ...event,
-                }
-            },
-        )
-
-        setEvents((state) => ({
-            ...state,
-            isFetching: false,
-            items,
-            lastId: accounts.lastId,
-            hasNext: !accounts.completed,
-        }))
-    }
-
-    /** Get smv adapter */
+    /** Get all event accounts */
     useEffect(() => {
-        const _getAdapter = async () => {
-            const _adapter = await dao.getSmv()
-            setAdapter(_adapter)
-        }
-        _getAdapter()
-    }, [dao])
-
-    /** Get event code hash */
-    useEffect(() => {
-        const _getEventCodeHash = async () => {
-            if (!adapter) {
-                return
-            }
-            const hash = await adapter.getEventCodeHash()
-            setEventCodehash(hash)
-        }
-        _getEventCodeHash()
-    }, [adapter])
+        getEventAccounts()
+    }, [getEventAccounts])
 
     /** Initial loading */
     useEffect(() => {
-        getEventList()
+        getEventList(0)
     }, [getEventList])
 
     /**
      * Refresh event list
-     * Reset `isLoadDetailsFired` flag or reload whole list
-     * in case of `latest=true`
+     * Reset `isLoadDetailsFired` flag
      * */
     useEffect(() => {
         const interval = setInterval(async () => {
-            if (events.isFetching) {
+            if (accounts.isFetching || events.isFetching) {
                 return
             }
 
-            if (latest) {
-                await getEventList()
-            } else {
-                setEvents((state) => ({
-                    ...state,
-                    items: state.items.map((item) => ({
-                        ...item,
-                        isLoadDetailsFired: item.status.completed,
-                    })),
-                }))
-            }
+            setEvents((state) => ({
+                ...state,
+                items: state.items.map((item) => ({
+                    ...item,
+                    isLoadDetailsFired: item.status?.completed,
+                })),
+            }))
         }, 20000)
 
         return () => {
             clearInterval(interval)
         }
-    }, [events.isFetching, latest])
+    }, [accounts.isFetching, events.isFetching])
 
     return {
-        isFetching: events.isFetching,
-        isEmpty: !events.isFetching && !events.items.length,
+        isFetching: accounts.isFetching || events.isFetching,
+        isEmpty: !accounts.isFetching && !events.isFetching && !events.items.length,
         items: events.items,
         hasNext: events.hasNext,
         getMore,

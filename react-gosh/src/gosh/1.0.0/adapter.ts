@@ -2449,13 +2449,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const { proposalKind } = await event.runLocal('getGoshProposalKind', {})
         const kind = parseInt(proposalKind)
         const type = { kind, name: SmvEventTypes[kind] }
-        const minimal = { address, type, status: await this.getEventStatus({ event }) }
+        const minimal = { address, type }
         if (!isDetailed) {
             return minimal
         }
 
         return {
             ...minimal,
+            status: await this.getEventStatus({ event }),
             time: await this.getEventTime({ event }),
             data: await this._getEventData(event, type.kind),
             votes: await this.getEventVotes({ event }),

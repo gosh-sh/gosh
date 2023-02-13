@@ -10,7 +10,7 @@ const TasksPage = () => {
     const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } = useTaskList(
         dao.adapter,
         repository.adapter,
-        { perPage: 10 },
+        { perPage: 5 },
     )
 
     return (

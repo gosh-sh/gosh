@@ -21,7 +21,7 @@ const EventListItem = (props: TEventListItemProps) => {
                 </Link>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <EventStatusBadge status={event.status} />
+                {event.status && <EventStatusBadge status={event.status} />}
                 {event.time && (
                     <span className="text-gray-7c8db5 text-sm">
                         Created {new Date(event.time.start).toLocaleDateString()}

@@ -8,7 +8,10 @@ import BlobPreview from '../../components/Blob/Preview'
 
 const DaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items: events } = useSmvEventList(dao.adapter!, { perPage: 3, latest: true })
+    const { items: events, getItemDetails: getEventDetails } = useSmvEventList(
+        dao.adapter!,
+        { perPage: 3 },
+    )
     const [description, setDescription] = useState<string | null>()
 
     const getDaoDescription = useCallback(async () => {
@@ -53,6 +56,7 @@ const DaoPage = () => {
                     )}
                     <div className="mt-5 flex flex-nowrap divide-x divide-gray-e6edff">
                         {events.map((item, index) => {
+                            getEventDetails(item)
                             const { time, type, address, status } = item
                             return (
                                 <div key={index} className="px-4">
@@ -70,24 +74,26 @@ const DaoPage = () => {
                                             {type.name}
                                         </Link>
                                     </div>
-                                    <div>
-                                        <span
-                                            className={classNames(
-                                                'rounded py-0.5 px-4 text-xs',
-                                                !status.completed
-                                                    ? 'bg-gray-d6e4ee'
+                                    {status && (
+                                        <div>
+                                            <span
+                                                className={classNames(
+                                                    'rounded py-0.5 px-4 text-xs',
+                                                    !status.completed
+                                                        ? 'bg-gray-d6e4ee'
+                                                        : status.accepted
+                                                        ? 'bg-lime-100'
+                                                        : 'bg-rose-200',
+                                                )}
+                                            >
+                                                {!status.completed
+                                                    ? 'In progress'
                                                     : status.accepted
-                                                    ? 'bg-lime-100'
-                                                    : 'bg-rose-200',
-                                            )}
-                                        >
-                                            {!item.status.completed
-                                                ? 'In progress'
-                                                : item.status.accepted
-                                                ? 'Accepted'
-                                                : 'Rejected'}
-                                        </span>
-                                    </div>
+                                                    ? 'Accepted'
+                                                    : 'Rejected'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })}

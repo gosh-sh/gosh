@@ -44,7 +44,6 @@ export const getPaginatedAccounts = async (params: {
                 ${filters.join(',')}
             }
             orderBy: [
-                { path: "last_paid", direction: DESC },
                 { path: "id", direction: ASC },
             ]
             limit: $limit

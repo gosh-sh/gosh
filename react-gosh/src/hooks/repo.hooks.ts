@@ -5,12 +5,7 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import {
-    executeByChunk,
-    getAllAccounts,
-    getPaginatedAccounts,
-    getTreeItemFullPath,
-} from '../helpers'
+import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
 import {
     branchesAtom,
     branchSelector,
@@ -19,7 +14,7 @@ import {
     treeAtom,
     treeSelector,
 } from '../store'
-import { TAddress, TDao, TPaginatedAccountsResult } from '../types'
+import { TAddress, TDao } from '../types'
 import {
     TBranch,
     TBranchCompareProgress,
@@ -38,7 +33,7 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
     const [search, setSearch] = useState<string>('')
     const [accounts, setAccounts] = useState<{
         isFetching: boolean
-        items: { address: TAddress; version: string }[]
+        items: { address: TAddress; last_paid: number; version: string }[]
     }>({ isFetching: false, items: [] })
     const [repos, setRepos] = useState<{
         isFetching: boolean
@@ -53,7 +48,7 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
     const getRepositoryAccounts = useCallback(async () => {
         setAccounts((state) => ({ ...state, isFetching: true }))
 
-        const items: { address: TAddress; version: string }[] = []
+        const items: { address: TAddress; last_paid: number; version: string }[] = []
         for (const ver of versions) {
             if (version && ver !== version) {
                 continue
@@ -68,11 +63,22 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
             const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
             const result = await getAllAccounts({
                 filters: [`code_hash: {eq:"${codeHash}"}`],
+                result: ['last_paid'],
             })
-            items.push(...result.map(({ id }) => ({ address: id, version: ver })))
+            items.push(
+                ...result.map(({ id, last_paid }) => ({
+                    address: id,
+                    last_paid,
+                    version: ver,
+                })),
+            )
         }
 
-        setAccounts((state) => ({ ...state, isFetching: false, items }))
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: items.sort((a, b) => b.last_paid - a.last_paid),
+        }))
     }, [dao])
 
     const getRepositoryList = useCallback(
@@ -83,6 +89,7 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
 
             setRepos((state) => ({ ...state, isFetching: true }))
 
+            const _names = [...names]
             const items: TRepositoryListItem[] = []
             for (let i = lastAccountIndex; i < accounts.items.length; i++) {
                 lastAccountIndex = i
@@ -94,10 +101,11 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
                 }
 
                 const name = await repository.getName()
-                if (names.findIndex((n) => n === name) >= 0) {
+                if (_names.findIndex((n) => n === name) >= 0) {
                     continue
                 }
 
+                _names.push(name)
                 items.push({
                     adapter: repository,
                     address: account.address,
@@ -105,7 +113,7 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
                     version: account.version,
                 })
 
-                if (items.length === perPage) {
+                if (perPage > 0 && items.length === perPage) {
                     break
                 }
             }
@@ -1084,43 +1092,50 @@ function useTaskList(
     repository: IGoshRepositoryAdapter,
     params: { perPage?: number },
 ) {
-    const [taskCodeHash, setTaskCodehash] = useState<string>()
+    const [accounts, setAccounts] = useState<{
+        isFetching: boolean
+        items: { id: TAddress; last_paid: number }[]
+    }>({ isFetching: false, items: [] })
     const [tasks, setTasks] = useState<{
         isFetching: boolean
         items: TTaskListItem[]
-        lastId?: string
+        lastAccountIndex: number
         hasNext?: boolean
-    }>({ items: [], isFetching: false })
+    }>({ items: [], isFetching: false, lastAccountIndex: 0 })
 
     const { perPage = 5 } = params
 
+    const getTaskAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+
+        const repoName = await repository.getName()
+        const codeHash = await dao.getTaskCodeHash(repoName)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: result.sort((a, b) => b.last_paid - a.last_paid),
+        }))
+    }, [dao, repository])
+
     const getTaskList = useCallback(
-        async (from?: string) => {
-            if (!taskCodeHash) {
+        async (lastAccountIndex: number) => {
+            if (!repository || accounts.isFetching) {
                 return
             }
 
             setTasks((state) => ({ ...state, isFetching: true }))
 
-            let accounts: TPaginatedAccountsResult
-            if (perPage === 0) {
-                const results = await getAllAccounts({
-                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
-                })
-                accounts = { results, lastId: undefined, completed: true }
-            } else {
-                accounts = await getPaginatedAccounts({
-                    filters: [`code_hash: {eq:"${taskCodeHash}"}`],
-                    limit: perPage,
-                    lastId: from,
-                })
-            }
-
+            const endAccountIndex = perPage > 0 ? lastAccountIndex + perPage : undefined
             const items: TTaskListItem[] = await executeByChunk(
-                accounts.results.map(({ id }) => id),
+                accounts.items.slice(lastAccountIndex, endAccountIndex),
                 MAX_PARALLEL_READ,
-                async (address) => {
-                    const data = await repository.getTask({ address })
+                async ({ id }) => {
+                    const data = await repository.getTask({ address: id })
                     return { adapter: repository, ...data }
                 },
             )
@@ -1129,15 +1144,17 @@ function useTaskList(
                 ...state,
                 isFetching: false,
                 items: [...state.items, ...items],
-                lastId: accounts.lastId,
-                hasNext: !accounts.completed,
+                lastAccountIndex: endAccountIndex || accounts.items.length,
+                hasNext: endAccountIndex
+                    ? endAccountIndex < accounts.items.length
+                    : false,
             }))
         },
-        [taskCodeHash, perPage],
+        [repository, accounts.isFetching, accounts.items, perPage],
     )
 
     const getMore = async () => {
-        await getTaskList(tasks.lastId)
+        await getTaskList(tasks.lastAccountIndex)
     }
 
     const getItemDetails = async (item: TTaskListItem) => {
@@ -1174,25 +1191,20 @@ function useTaskList(
         }
     }
 
-    /** Get task code hash */
+    /** Get all task accounts */
     useEffect(() => {
-        const _getTaskCodeHash = async () => {
-            const repoName = await repository.getName()
-            const hash = await dao.getTaskCodeHash(repoName)
-            setTaskCodehash(hash)
-        }
-        _getTaskCodeHash()
-    }, [dao, repository])
+        getTaskAccounts()
+    }, [getTaskAccounts])
 
     /** Initial loading */
     useEffect(() => {
-        getTaskList()
+        getTaskList(0)
     }, [getTaskList])
 
     /** Refresh task last (reset `isLoadDetailsFired` flag) */
     useEffect(() => {
         const interval = setInterval(() => {
-            if (tasks.isFetching) {
+            if (accounts.isFetching || tasks.isFetching) {
                 return
             }
 
@@ -1208,11 +1220,11 @@ function useTaskList(
         return () => {
             clearInterval(interval)
         }
-    }, [tasks.isFetching])
+    }, [accounts.isFetching, tasks.isFetching])
 
     return {
-        isFetching: tasks.isFetching,
-        isEmpty: !tasks.isFetching && !tasks.items.length,
+        isFetching: accounts.isFetching || tasks.isFetching,
+        isEmpty: !accounts.isFetching && !tasks.isFetching && !tasks.items.length,
         items: tasks.items,
         hasNext: tasks.hasNext,
         getMore,
