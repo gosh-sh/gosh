@@ -39,8 +39,8 @@ COPY --link icon.svg /
 COPY --link index.html /ui/index.html
 
 ARG TARGETOS TARGETARCH
-COPY ./${BUILDOS}-${BUILDARCH}/git-remote-gosh /usr/local/bin/git-remote-gosh
-COPY ./${BUILDOS}-${BUILDARCH}/git-remote-gosh /usr/local/bin/git-remote-gosh
+
+RUN curl -s https://raw.githubusercontent.com/gosh-sh/gosh/cicd/azure-binaries-and-dispatcher/install.sh | bash -s
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1

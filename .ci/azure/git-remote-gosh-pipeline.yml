@@ -115,28 +115,28 @@ steps:
 - bash: |
     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
   workingDirectory: git-remote-gosh/target/release
-  displayName: Name binaries 
+  displayName: Name binaries Linux and macOS amd64
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Linux arm64
 - bash: |
     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
-  workingDirectory: git-remote-gosh/target/aarch64-unknown-linux-gnu
-  displayName: Name binaries 
+  workingDirectory: git-remote-gosh/target/aarch64-unknown-linux-gnu/release
+  displayName: Name binaries Linux arm64
   condition: eq(variables['Agent.OS'], 'Linux')
 
 # MacOS arm64
 - bash: |
     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
-  workingDirectory: git-remote-gosh/target/aarch64-apple-darwin
-  displayName: Name binaries 
+  workingDirectory: git-remote-gosh/target/aarch64-apple-darwin/release
+  displayName: Name binaries MacOS arm64
   condition: eq(variables['Agent.OS'], 'Darwin')
 
 # Windows
 - bash: |
     mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
   workingDirectory: git-remote-gosh/target/release
-  displayName: Name binaries 
+  displayName: Name binaries Windows
   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 ###########################################################

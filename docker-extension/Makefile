@@ -74,7 +74,6 @@ build-ci: prepare-builder build-ui-v2
 	  --platform $(PLATFORM) \
 	  --build-arg detailed_description="${DETAILED_DESCRIPTION}" \
 	  --build-arg this_version_updates="${THIS_VERSION_CHANGES}" \
-	  --build-arg GOSH_GIT_IMAGE=${GOSH_GIT_IMAGE} \
 	  --build-arg ui_v2="$(LOCAL_TEMP_DIR)/ui-v2" \
 	  --build-arg gosh_abi_local_dir="$(LOCAL_TEMP_DIR)/gosh" \
 	  --push \
