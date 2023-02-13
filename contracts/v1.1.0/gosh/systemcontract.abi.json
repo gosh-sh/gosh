@@ -279,6 +279,16 @@
 			]
 		},
 		{
+			"name": "getTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getContentAddress",
 			"inputs": [
 				{"name":"repoName","type":"string"},

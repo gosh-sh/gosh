@@ -16,6 +16,7 @@ import "repository.sol";
 import "commit.sol";
 import "profile.sol";
 import "tag.sol";
+import "task.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
@@ -312,6 +313,13 @@ contract SystemContract is Modifiers {
     }
 
     //Getters
+    function getTaskAddr(string nametask, address repo) external view returns(address) {
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        return taskaddr;
+    }
+
     function getTagAddr(
         string daoName,
         string repoName,
