@@ -256,7 +256,7 @@ contract SystemContract is Modifiers {
         _code[m_DaoTagCode] = code;
     }
     
-    function setRepoTag(TvmCell code) public  onlyOwner accept {
+    function setHelpTag(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_RepoTagCode] = code;
     }

@@ -191,7 +191,7 @@
 			]
 		},
 		{
-			"name": "setRepoTag",
+			"name": "setHelpTag",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],
