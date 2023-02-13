@@ -66,6 +66,7 @@ steps:
 # Linux
 - script: |
     #cargo build --release
+    apt install -y gcc-x86-64-linux-gnu
     rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
     ls
