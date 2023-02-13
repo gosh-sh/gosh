@@ -141,7 +141,7 @@ steps:
 - publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(VERSION)
   artifact: $(artifactNameAmd)
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
-  isplayName: Publish amd64 Linux
+  displayName: Publish amd64 Linux
 
 # Windows amd64
 - publish: ./git-remote-gosh/target/release/git-remote-gosh_v$(VERSION).exe
