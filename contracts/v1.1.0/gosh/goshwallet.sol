@@ -979,6 +979,22 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, repoName, _nameDao, _code[m_WalletCode], _index);
         getMoney();
     }
+    
+    function deployTagUpgrade(
+        string repoName,
+        string nametag,
+        string nameCommit,
+        address commit,
+        string content
+    ) public senderIs(_goshdao)  accept saveMsg {
+        address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+        new Tag{
+            stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, repoName, _nameDao, _code[m_WalletCode], _index);
+        getMoney();
+    }
 
     function deleteTag(string repoName, string nametag) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);

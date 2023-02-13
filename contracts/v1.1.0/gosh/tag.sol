@@ -9,6 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
+import "systemcontract.sol";
 import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
@@ -72,7 +73,7 @@ contract Tag is Modifiers{
     function upgradeToVersion(address pubaddr, uint128 index, string newversion) public view {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
         newversion;
-//        SystemContract(_systemcontract).upgradeTag(_nameDao, _repoName, _nametag, _commit, _content, newversion);
+        SystemContract(_systemcontract).upgradeTag1(_nameDao, _repoName, _nametag, _nameCommit, _commit, _content, newversion);
     }
     
     //Selfdestruct

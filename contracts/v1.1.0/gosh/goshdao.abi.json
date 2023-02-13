@@ -173,6 +173,18 @@
 			]
 		},
 		{
+			"name": "upgradeTag4",
+			"inputs": [
+				{"name":"namerepo","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setRepoUpgraded",
 			"inputs": [
 				{"name":"pub","type":"address"},

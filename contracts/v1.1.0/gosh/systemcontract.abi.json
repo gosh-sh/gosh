@@ -12,6 +12,33 @@
 			]
 		},
 		{
+			"name": "upgradeTag1",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeTag3",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeDao1",
 			"inputs": [
 				{"name":"namedao","type":"string"},

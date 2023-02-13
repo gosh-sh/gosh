@@ -630,6 +630,18 @@
 			]
 		},
 		{
+			"name": "deployTagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deleteTag",
 			"inputs": [
 				{"name":"repoName","type":"string"},

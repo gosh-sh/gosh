@@ -50,6 +50,16 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
     
+    function upgradeTag1(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string newversion) public view senderIs(getTagAddr(namedao, namerepo, nametag)) accept {
+        VersionController(_versionController).upgradeTag2{value : 0.3 ton, flag: 1}(namedao, namerepo, nametag, namecommit, commit, content, newversion, version);
+    }
+    
+    function upgradeTag3(string namedao, string namerepo, string nametag, string namecommit, address commit,  string content) public view senderIs(_versionController) accept {
+        TvmCell s1 = _composeDaoStateInit(namedao);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshDao(addr).upgradeTag4{value : 0.11 ton, flag: 1}(namerepo, nametag, namecommit, commit, content);
+    }  
+    
     function upgradeDao1(string namedao, string newversion) public view {
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));

@@ -293,6 +293,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _tombstone = true;
         SystemContract(_systemcontract).upgradeDao1{value : 0.1 ton, flag: 1}(_nameDao, newversion);
     }
+    
+    function upgradeTag4(string namerepo, string nametag, string namecommit, address commit, string content) public view senderIs(_systemcontract) accept {
+        uint256 keyaddr;       
+        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
+        (,MemberToken worker) = _wallets.next(keyaddr).get();
+        GoshWallet(worker.member).deployTagUpgrade{value:3.1 ton}(namerepo, nametag, namecommit, commit, content);
+    }
 
     //Wallet part
     function setRepoUpgraded(address pub, uint128 index, bool res) public senderIs(getAddrWalletIn(pub, index))  accept {

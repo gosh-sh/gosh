@@ -52,6 +52,28 @@ contract VersionController is Modifiers {
         _SystemContractCode[tvm.hash(version)] = SystemContractV(version, code);
     }
     
+    function upgradeTag2(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string version, string previousversion) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        SystemContract(addr).upgradeTag3(namedao, namerepo, nametag, namecommit, commit, content);
+    }
+    
     function upgradeDao2(string namedao, string version, address previous, string previousversion) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
