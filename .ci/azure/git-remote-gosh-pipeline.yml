@@ -69,7 +69,7 @@ steps:
 # Linux
 - script: |
     #cargo build --release
-    rustup target add aarch64-unknown-linux-gnu g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
+    rustup target add aarch64-unknown-linux-gnu 
     cargo build --release --target aarch64-unknown-linux-gnu
     ls
     ls target
