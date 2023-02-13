@@ -15,6 +15,7 @@ import "goshdao.sol";
 import "repository.sol";
 import "commit.sol";
 import "profile.sol";
+import "tag.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
@@ -301,6 +302,19 @@ contract SystemContract is Modifiers {
     }
 
     //Getters
+    function getTagAddr(
+        string daoName,
+        string repoName,
+        string nametag
+    ) private view returns(address) {
+        TvmCell s1 = _composeDaoStateInit(daoName);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address repo = _buildRepositoryAddr(repoName, addr);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell s2 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+        return address.makeAddrStd(0, tvm.hash(s2));
+    }
+    
     function getContentAddress(string repoName,
         string daoName,
         string commit,

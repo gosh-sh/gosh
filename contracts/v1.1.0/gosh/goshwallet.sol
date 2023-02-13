@@ -20,7 +20,7 @@ import "task.sol";
 import "tree.sol";
 import "goshwallet.sol";
 import "profile.sol";
-import "repotaggosh.sol";
+import "taggosh.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";

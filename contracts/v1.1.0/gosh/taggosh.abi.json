@@ -42,6 +42,14 @@
 				{"name":"value1","type":"address"},
 				{"name":"value2","type":"address"}
 			]
+		},
+		{
+			"name": "_task",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_task","type":"address"}
+			]
 		}
 	],
 	"data": [

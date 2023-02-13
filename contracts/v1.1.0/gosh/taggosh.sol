@@ -19,7 +19,7 @@ contract RepoTagGosh is Modifiers {
     address _systemcontract;
     address static _goshdao;
     address static _repo;
-    address static _task;
+    address static public _task;
     mapping(uint8 => TvmCell) _code;
     string _tag;
     

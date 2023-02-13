@@ -18,7 +18,7 @@ import "commit.sol";
 import "profiledao.sol";
 import "snapshot.sol";
 import "daotag.sol";
-import "repotaggosh.sol";
+import "taggosh.sol";
 import "task.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
