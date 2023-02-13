@@ -65,7 +65,7 @@ steps:
 # Build
 # Linux
 - script: |
-    cargo build --release
+    #cargo build --release
     rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
     ls target/release
@@ -74,7 +74,7 @@ steps:
   displayName: Build Linux
 # Mac
 - script: |
-    cargo build --release
+    #cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
     ls target/release
