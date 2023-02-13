@@ -109,9 +109,12 @@ pipeline {
                                 az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
                                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
 
-                                tar -cvf git-remote-gosh-linux-amd64.tar linux-amd64/*
-                                tar -cvf git-remote-gosh-darwin-amd64.tar darwin-amd64/*
-                                zip -r git-remote-gosh-windows-amd64.zip windows-amd64/*
+                                cd linux-amd64
+                                tar -cvf git-remote-gosh-linux-amd64.tar ./*
+                                cd ../darwin-amd64
+                                tar -cvf git-remote-gosh-darwin-amd64.tar ./*
+                                cd ../windows-amd64
+                                zip -r git-remote-gosh-windows-amd64.zip /*
                             '''
                         }
                     }
