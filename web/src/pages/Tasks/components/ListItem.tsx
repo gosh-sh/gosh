@@ -118,9 +118,20 @@ const TaskListItem = (props: TTaskListItemProps) => {
             <div className="mb-6 flex gap-3 items-center justify-between">
                 <div className="grow text-xl font-medium">
                     {item.name}
-                    <span className="align-super ml-2">
+                    <span className="mx-2 align-super">
                         <StatusBadge item={item} />
                     </span>
+                    {item.tags.map((tag, index) => (
+                        <span
+                            key={index}
+                            className={classNames(
+                                'mx-1 border border-gray-e6edff rounded px-2',
+                                'text-xs text-gray-7c8db5 align-super',
+                            )}
+                        >
+                            {tag}
+                        </span>
+                    ))}
                 </div>
                 <div>
                     <span className="text-xl font-medium">{getTaskCost()}</span>

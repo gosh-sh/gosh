@@ -17,6 +17,7 @@ type TFormValues = {
     manager: number
     lock: number
     vesting: number
+    tags?: string
     comment?: string
 }
 
@@ -98,10 +99,14 @@ const TaskCreatePage = () => {
                 throw new GoshError(errTitle, `Manager ${errMessage}`)
             }
 
+            // Tags
+            const tags = values.tags ? values.tags.trim().split(' ') : []
+
             // Create task
             await repository.adapter.createTask({
                 name: values.name,
                 config: _struct,
+                tags,
                 comment: values.comment,
             })
             navigate(`/o/${dao.details.name}/events`)
@@ -121,6 +126,8 @@ const TaskCreatePage = () => {
                 manager: 10,
                 lock: 0,
                 vesting: 0,
+                comment: '',
+                tags: '',
             }}
             validationSchema={yup.object().shape({
                 name: yup.string().required(),
@@ -172,6 +179,17 @@ const TaskCreatePage = () => {
                                 placeholder="Task name"
                                 autoComplete="off"
                                 disabled={isSubmitting}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <Field
+                                component={FormikInput}
+                                label="Task tags (optional)"
+                                name="tags"
+                                placeholder="Task tags"
+                                autoComplete="off"
+                                disabled={isSubmitting}
+                                help="Enter a space after each tag"
                             />
                         </div>
                         <div>

@@ -146,6 +146,7 @@ type TTaskDetails = {
     config: any
     confirmed: boolean
     confirmedAt: number
+    tags: string[]
 }
 
 type TTaskListItem = TTaskDetails & {
@@ -195,6 +196,7 @@ type TTaskCreateParams = TEventCreateParams & {
         review: { grant: number; lock: number }[]
         manager: { grant: number; lock: number }[]
     }
+    tags?: string[]
 }
 
 interface IPushCallback {
