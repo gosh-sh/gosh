@@ -57,7 +57,7 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
 
             {blobs.items.map(
                 ({ item, current, previous, showDiff, isFetching }, index) => (
-                    <div key={index} className="my-5">
+                    <div key={index} className="my-5 relative">
                         <BlobDiffPreview
                             filename={item.treepath}
                             modified={current}
