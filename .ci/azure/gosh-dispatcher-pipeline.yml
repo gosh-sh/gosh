@@ -13,11 +13,11 @@ strategy:
     mac:
       imageName: macOS-12
       binName: git-remote-gosh
-      artifactNameAmd: linux-amd64
+      artifactNameAmd: darwin-amd64
     windows:
       imageName: windows-2019
       binName: git-remote-gosh.exe
-      artifactNameAmd: linux-amd64
+      artifactNameAmd: windows-amd64
   maxParallel: 3
 
 pool:
@@ -85,7 +85,7 @@ steps:
   displayName: Build Linux 
 # Mac
 - script: |
-    #cargo build --release
+    cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
   workingDirectory: gosh-dispatcher
