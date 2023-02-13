@@ -118,7 +118,7 @@ pipeline {
                                 cd ../darwin-amd64
                                 tar -cvf git-remote-gosh-darwin-amd64.tar ./*
                                 cd ../windows-amd64
-                                zip -r git-remote-gosh-windows-amd64.zip /*
+                                zip -r git-remote-gosh-windows-amd64.zip ./*
                                 cd ../linux-arm64
                                 tar -cvf git-remote-gosh-linux-arm64.tar ./*
                                 cd ../darwin-arm64
