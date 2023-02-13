@@ -82,21 +82,21 @@ steps:
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
-  workingDirectory: gosh-dispatcher
+  workingDirectory: git-remote-gosh
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Build Linux
 # Mac
 - script: |
-    #cargo build --release
+    cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
-  workingDirectory: gosh-dispatcher
+  workingDirectory: git-remote-gosh
   condition: eq( variables['Agent.OS'], 'Darwin' )
   displayName: Build MacOS
 # Windows
 - script: |
     cargo build --release
-  workingDirectory: gosh-dispatcher
+  workingDirectory: git-remote-gosh
   condition: eq( variables['Agent.OS'], 'Windows_NT' )
   displayName: Build Windows
 
