@@ -69,11 +69,18 @@ steps:
 # Linux
 - script: |
     #cargo build --release
-    rustup target add aarch64-unknown-linux-gnu
+    rustup target add aarch64-unknown-linux-gnu g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
     cargo build --release --target aarch64-unknown-linux-gnu
     ls
     ls target
     ls target/release
+  env:
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
+    CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
+    CXX_x86_64_unknown_linux_gnu: x86_64-linux-gnu-g++
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+    CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+    CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
   workingDirectory: gosh-dispatcher
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Build Linux
