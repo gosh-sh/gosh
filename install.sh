@@ -9,9 +9,17 @@ SUPPORTED_CONTRACTS_VERSIONS=("1_0_0")
 
 # Define variables.
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-  TAR="git-remote-gosh-linux-amd64.tar"
+    if [[ `uname -m` == "x86_64" ]]; then
+        TAR="git-remote-gosh-linux-amd64.tar"
+    else
+        TAR="git-remote-gosh-linux-arm64.tar"
+    fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-  TAR="git-remote-gosh-darwin-amd64.tar"
+    if [[ `uname -m` == "x86_64" ]]; then
+        TAR="git-remote-gosh-darwin-amd64.tar"
+    else
+        TAR="git-remote-gosh-darwin-arm64.tar"
+    fi
 else
   echo "Only \"MacOS\" and \"Linux\" are supported - not \"$OSTYPE\""
   exit 1;
