@@ -84,26 +84,26 @@ contract Task is Modifiers{
 //       require(_ready == false, ERR_TASK_COMPLETED);
 //       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
 //       checkAccess(pubaddr, msg.sender, index2);
-       tvm.accept();
-        this.calculateAssignLength(uint128(_candidates.length - 1));
+        tvm.accept();
+        this.calculateAssignLength{value : 0.15 ton}(uint128(_candidates.length - 1));
     }
     
     function calculateAssignLength (uint128 index) public view senderIs(address(this)) accept {    
         require(_ready == false, ERR_TASK_COMPLETED);    
         uint128 assignfull = uint128(_candidates[index].pubaddrassign.keys().length);
-        this.calculateReviewLength(index, assignfull);
+        this.calculateReviewLength{value : 0.15 ton}(index, assignfull);
     }
     
     function calculateReviewLength (uint128 index, uint128 assignfull) public view senderIs(address(this)) accept {      
         require(_ready == false, ERR_TASK_COMPLETED);  
         uint128 reviewfull = uint128(_candidates[index].pubaddrreview.keys().length);
-        this.calculateManagerLength(index, assignfull, reviewfull);
+        this.calculateManagerLength{value : 0.15 ton}(index, assignfull, reviewfull);
     }
     
     function calculateManagerLength (uint128 index, uint128 assignfull, uint128 reviewfull) public senderIs(address(this)) accept { 
         require(_ready == false, ERR_TASK_COMPLETED);       
         uint128 managerfull = uint128(_candidates[index].pubaddrmanager.keys().length);
-        if (_assignfull + _reviewfull + _managerfull == 0) { return; } 
+        require(assignfull + reviewfull + managerfull > 0, ERR_DIFFERENT_COUNT); 
         _assignfull = assignfull;
         _reviewfull = reviewfull;
         _managerfull = managerfull;
