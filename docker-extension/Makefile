@@ -65,7 +65,8 @@ build: clean_temp prepare-builder build-ui-v2 build-gosh-git-image ## Build serv
 	  --output=type=docker \
 	  .
 
-build-ci: prepare-builder build-ui-v2
+#build-ci: prepare-builder build-ui-v2
+build-ci: prepare-builder
 	mkdir -p $(LOCAL_TEMP_DIR)/gosh
 	cp -r ../contracts/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \

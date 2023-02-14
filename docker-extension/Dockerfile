@@ -37,7 +37,8 @@ COPY --link index.html /ui/index.html
 
 ARG TARGETOS TARGETARCH
 
-RUN curl -s https://raw.githubusercontent.com/gosh-sh/gosh/cicd/azure-binaries-and-dispatcher/install.sh | bash -s
+RUN apt install -y wget && \
+    wget -O - https://raw.githubusercontent.com/gosh-sh/gosh/cicd/azure-binaries-and-dispatcher/install.sh | bash -s
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
