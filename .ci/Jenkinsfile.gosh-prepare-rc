@@ -79,8 +79,7 @@ pipeline {
                         dir('git-remote-gosh') {
                             sh '''
                                 #!/bin/bash
-                                set -e 
-                                set -x
+                                set -ex
                                 
                                 # 2 = gosh-dispatcher
                                 PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${BRANCH} --project gosh | jq .id)
@@ -115,17 +114,26 @@ pipeline {
 
                                 cd linux-amd64
                                 tar -cvf git-remote-gosh-linux-amd64.tar ./*
+
                                 cd ../darwin-amd64
                                 tar -cvf git-remote-gosh-darwin-amd64.tar ./*
+
                                 cd ../windows-amd64
                                 zip -r git-remote-gosh-windows-amd64.zip ./*
+
                                 cd ../linux-arm64
                                 tar -cvf git-remote-gosh-linux-arm64.tar ./*
+
                                 cd ../darwin-arm64
                                 tar -cvf git-remote-gosh-darwin-arm64.tar ./*
                             '''
                         }
                     }
+                }
+            }
+            post {
+                always {
+                    cleanWs()
                 }
             }
         }
@@ -243,9 +251,7 @@ pipeline {
                                 set -x
 
                                 cp -r /tmp/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
-                                cp -r /tmp/git-remote-gosh/linux* ../git-remote-gosh
-                                cp -r /tmp/git-remote-gosh/darwin* ../git-remote-gosh
-                                cp -r /tmp/git-remote-gosh/windows* ../git-remote-gosh
+                                cp -r /tmp/git-remote-gosh/linux-amd64 ../git-remote-gosh/
                                 
                                 mkdir /home/jenkins/bin
 
