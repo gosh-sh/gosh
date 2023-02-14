@@ -1517,6 +1517,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             'getStatus',
             {},
         )
+        const { _hashtag } = await task.runLocal('_hashtag', {})
         const { _locktime } = await task.runLocal('_locktime', {})
         return {
             address: task.address,
@@ -1526,6 +1527,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             config: value3,
             confirmed: value4,
             confirmedAt: _locktime,
+            tags: _hashtag,
         }
     }
 
@@ -1995,7 +1997,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async createTask(params: TTaskCreateParams): Promise<void> {
-        const { name, config, comment = '', reviewers = [] } = params
+        const { name, config, tags = [], comment = '', reviewers = [] } = params
 
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -2012,6 +2014,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             repoName: await this.getName(),
             taskName: name,
             grant: config,
+            tag: tags,
             comment,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: smvClientsCount,
