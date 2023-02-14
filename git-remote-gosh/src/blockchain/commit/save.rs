@@ -68,6 +68,7 @@ pub trait BlockchainCommitPusher {
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
         parents: &[BlockchainContractAddress],
+        upgrade_commit: bool,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
         &self,
@@ -92,6 +93,7 @@ impl BlockchainCommitPusher for Everscale {
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
         parents: &[BlockchainContractAddress],
+        upgrade_commit: bool,
     ) -> anyhow::Result<()> {
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
@@ -100,7 +102,7 @@ impl BlockchainCommitPusher for Everscale {
             raw_commit: raw_commit.to_owned(),
             parents: parents.to_owned(),
             tree_addr: tree_addr.clone(),
-            upgrade: false,
+            upgrade: upgrade_commit,
         };
         tracing::trace!("push_commit: dao_addr={dao_addr}");
         tracing::trace!("deployCommit params: {:?}", args);

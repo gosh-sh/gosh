@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::blockchain::contract::ContractRead;
 use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
@@ -20,7 +21,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::blockchain::contract::ContractRead;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -395,14 +395,9 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                         let previous: Value = helper
                             .blockchain
                             .repo_contract()
-                            .read_state(
-                                helper.blockchain.client(),
-                                "getPrevious",
-                                None
-                            ).await?;
-                        let out_str = format!(
-                            "dispatcher {previous} fetch {sha} {name}"
-                        );
+                            .read_state(helper.blockchain.client(), "getPrevious", None)
+                            .await?;
+                        let out_str = format!("dispatcher {previous} fetch {sha} {name}");
                         stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
                         continue;
                     } else {

@@ -171,9 +171,8 @@ async fn main() -> anyhow::Result<()> {
         }
         eprintln!("Output: {output:?}");
         for line in output {
-            stdout.write_all(line.as_bytes()).await.unwrap();
-            stdout.write_all("\n".as_bytes()).await.unwrap();
-            stdout.flush().await.unwrap();
+            stdout.write_all(format!("{line}\n").as_bytes()).await.unwrap();
+            stdout.flush().await;
         }
         if let Ok(Some(code)) = main_helper.try_wait() {
             tracing::trace!("Loop finished with: {code:?}");

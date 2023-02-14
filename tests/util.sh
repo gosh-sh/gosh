@@ -81,6 +81,7 @@ function deploy_DAO_and_repo {
   gosh-cli -j call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
       "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
   REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "REPO_ADDR=$REPO_ADDR"
 
   echo "***** awaiting repo deploy *****"
   wait_account_active $REPO_ADDR
@@ -100,6 +101,8 @@ function upgrade_DAO {
   fi
   echo "***** start proposal for upgrade *****"
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --num_clients 1
+
+  sleep 60
 
   echo "***** get data for proposal *****"
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)

@@ -55,6 +55,7 @@ impl DeployTree for Everscale {
             nodes: nodes.to_owned(),
             ipfs: None, // !!!
         };
+        tracing::trace!("DeployTreeArgs: {params:?}");
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self

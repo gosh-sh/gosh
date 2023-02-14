@@ -262,6 +262,7 @@ pub mod tests {
                 dao_addr: &BlockchainContractAddress,
                 raw_commit: &str,
                 parents: &[BlockchainContractAddress],
+                upgrade_commit: bool,
             ) -> anyhow::Result<()>;
             async fn notify_commit(
                 &self,

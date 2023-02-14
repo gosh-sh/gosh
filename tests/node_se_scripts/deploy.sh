@@ -26,7 +26,7 @@ make deploy-docker
 
 cd ../gosh
 
-sed -i 's/1 minutes/1 seconds/' modifiers/modifiers.sol
+#sed -i 's/1 minutes/1 seconds/' modifiers/modifiers.sol
 proposal_period=$(cat modifiers/modifiers.sol | grep SET_UPGRADE_PROPOSAL_START_AFTER | cut -d '=' -f 2)
 if [ $proposal_period != " 1 seconds;" ]; then
   echo "Failed to change proposal period"
@@ -36,4 +36,4 @@ fi
 make build
 make deploy-docker
 
-sed -i 's/1 seconds/1 minutes/' modifiers/modifiers.sol
+#sed -i 's/1 seconds/1 minutes/' modifiers/modifiers.sol

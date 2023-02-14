@@ -1,5 +1,6 @@
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
+use serde_json::Value;
 
 use crate::{
     blockchain::{
@@ -331,6 +332,8 @@ pub async fn push_initial_snapshot<B>(
     remote_network: String,
     branch_name: String,
     file_path: String,
+    upgrade: bool,
+    commit_id: String,
 ) -> anyhow::Result<()>
 where
     B: BlockchainService,
@@ -346,7 +349,39 @@ where
             true
         }
     };
-
+    let (content, commit_id) = if upgrade {
+        tracing::trace!("generate content for upgrade snapshot");
+        let previous: Value = blockchain
+            .repo_contract()
+            .read_state(blockchain.client(), "getPrevious", None)
+            .await?;
+        let previous_repo_addr = previous.as_object().unwrap()["value0"].as_object().unwrap()
+            ["addr"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        tracing::trace!("Previous repo addr: {previous_repo_addr}");
+        let repo_addr = BlockchainContractAddress::new(previous_repo_addr);
+        let mut repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
+        let snapshot_addr = Snapshot::calculate_address(
+            blockchain.client(),
+            &mut repo_contract,
+            &branch_name,
+            &file_path,
+        )
+        .await?;
+        let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
+        let content: Vec<u8> = ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
+        tracing::trace!("Previous snapshot content: {content:?}");
+        let mut content_string = "".to_string();
+        for byte in content {
+            content_string.push_str(&format!("{:02x}", byte));
+        }
+        tracing::trace!("content_string: {content_string:?}");
+        (content_string, commit_id)
+    } else {
+        ("".to_string(), "".to_string())
+    };
     RetryIf::spawn(
         default_retry_strategy(),
         || async {
@@ -355,9 +390,9 @@ where
                     &wallet,
                     repo_addr.clone(),
                     branch_name.clone(),
-                    "".to_string(),
+                    commit_id.clone(),
                     file_path.clone(),
-                    "".to_string(),
+                    content.clone(),
                 )
                 .await
         },

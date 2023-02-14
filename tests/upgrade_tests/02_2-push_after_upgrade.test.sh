@@ -62,7 +62,6 @@ sleep 3
 export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
-
 echo "***** check old dir after upgrade *****"
 cd $REPO_NAME
 git fetch
