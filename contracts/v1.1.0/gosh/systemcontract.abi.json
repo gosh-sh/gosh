@@ -282,7 +282,8 @@
 			"name": "getTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
-				{"name":"repo","type":"address"}
+				{"name":"dao","type":"string"},
+				{"name":"repoName","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

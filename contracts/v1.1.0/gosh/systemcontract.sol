@@ -313,7 +313,10 @@ contract SystemContract is Modifiers {
     }
 
     //Getters
-    function getTaskAddr(string nametask, address repo) external view returns(address) {
+    function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
+        TvmCell s0 = _composeDaoStateInit(dao);
+        address addr = address.makeAddrStd(0, tvm.hash(s0));
+        address repo = _buildRepositoryAddr(repoName, addr);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
