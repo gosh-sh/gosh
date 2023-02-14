@@ -331,6 +331,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 num_clients , address[] reviewers) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         getMoney();
+        (int8 _, uint256 keyaddr) = pub.unpack();
+        _;
+        if ((_abilityInvite == false) && (_wallets.exists(keyaddr) == false)) { return; }
         GoshWallet(getAddrWalletIn(pub, 0)).startProposalForDeployWalletDao2{value : 0.1 ton, flag: 1}(pubaddr, comment, num_clients, reviewers);
     }
     
