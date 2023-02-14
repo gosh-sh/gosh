@@ -320,20 +320,20 @@ contract SystemContract is Modifiers {
     }
 
     //Getters
-    function getTopicCode(address object) external view returns(TvmCell) {
+    function getTopicCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildTopicCode(
-            _code[m_TopicCode], object, version
+            _code[m_TopicCode], dao, version
         );
     }
     
-    function getTopicAddr(string name, string content, address object) external view returns(address) {
+    function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
         TvmCell deployCode = GoshLib.buildTopicCode(
-            _code[m_TopicCode], object, version
+            _code[m_TopicCode], dao, version
         );
         return address.makeAddrStd(0, tvm.hash(tvm.buildStateInit({
             code: deployCode,
             contr: Topic,
-            varInit: {_name: name, _content: content}
+            varInit: {_name: name, _content: content, _object: object}
         })));
     }
     

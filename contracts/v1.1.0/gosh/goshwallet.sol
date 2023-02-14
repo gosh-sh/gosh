@@ -753,12 +753,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function _composeTopicStateInit(string name, string content, address object) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildTopicCode(
-            _code[m_TopicCode], object, version
+            _code[m_TopicCode], _goshdao, version
         );
         return tvm.buildStateInit({
             code: deployCode,
             contr: Topic,
-            varInit: {_name: name, _content: content}
+            varInit: {_name: name, _content: content, _object: object}
         });
     }
 /*

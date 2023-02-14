@@ -261,12 +261,12 @@ library GoshLib {
     
     function buildTopicCode(
         TvmCell originalCode,
-        address object,
+        address dao,
         string versionc
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store("TOPIC");
-        b.store(object);
+        b.store(dao);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

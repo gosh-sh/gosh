@@ -19,7 +19,7 @@ contract Topic is Modifiers{
     string constant version = "1.1.0";
     string static public _name;
     string static public _content;
-    address public _object;
+    address static public _object;
     address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;

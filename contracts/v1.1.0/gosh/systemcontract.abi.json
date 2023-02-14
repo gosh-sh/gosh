@@ -289,7 +289,7 @@
 		{
 			"name": "getTopicCode",
 			"inputs": [
-				{"name":"object","type":"address"}
+				{"name":"dao","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -300,7 +300,8 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"content","type":"string"},
-				{"name":"object","type":"address"}
+				{"name":"object","type":"address"},
+				{"name":"dao","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

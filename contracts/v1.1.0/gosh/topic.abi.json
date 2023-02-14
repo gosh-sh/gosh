@@ -75,7 +75,8 @@
 	],
 	"data": [
 		{"key":1,"name":"_name","type":"string"},
-		{"key":2,"name":"_content","type":"string"}
+		{"key":2,"name":"_content","type":"string"},
+		{"key":3,"name":"_object","type":"address"}
 	],
 	"events": [
 	],
