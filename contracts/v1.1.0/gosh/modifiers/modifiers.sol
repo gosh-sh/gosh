@@ -73,7 +73,7 @@ struct ConfigCommit {
     address task;
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
-    address pubaddrmanager;
+    mapping(address => bool) pubaddrmanager;
 }
 
 abstract contract Modifiers is ReplayProtection {   

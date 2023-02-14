@@ -34,10 +34,13 @@ contract Task is Modifiers{
     uint128 _fullManager = 0;
     mapping(address => uint128) _assigners;
     mapping(address => uint128) _reviewers;
+    mapping(address => uint128) _managers;
     uint128 public _assignfull = 0;
     uint128 public _reviewfull = 0;
+    uint128 public _managerfull = 0;
     uint128 _assigncomplete = 0;
     uint128 _reviewcomplete = 0;
+    uint128 _managercomplete = 0;
     bool _allassign = false;
     bool _allreview = false;
     bool _allmanager = false;
@@ -83,13 +86,26 @@ contract Task is Modifiers{
        uint128 index1 = 0;
 //       checkAccess(pubaddr, msg.sender, index2);
        tvm.accept();
-        _ready = true;
         _indexFinal = index1;
         _locktime = now;
-        _assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
-        _reviewfull = uint128(_candidates[_indexFinal].pubaddrreview.keys().length);
+        this.calculateAssignLength();
     }
     
+    function calculateAssignLength () public senderIs(address(this)) accept {        
+        _assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
+        this.calculateReviewLength();
+    }
+    
+    function calculateReviewLength () public senderIs(address(this)) accept {        
+        _reviewfull = uint128(_candidates[_indexFinal].pubaddrreview.keys().length);
+        this.calculateManagerLength();
+    }
+    
+    function calculateManagerLength () public senderIs(address(this)) accept {        
+        _managerfull = uint128(_candidates[_indexFinal].pubaddrmanager.keys().length);
+        _ready = true;
+    }
+        
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
         require(_ready == true, ERR_TASK_NOT_COMPLETED);
         require(now >= _locktime, ERR_NOT_READY);
@@ -104,7 +120,7 @@ contract Task is Modifiers{
             this.getGrantReview{value: 0.2 ton}(pubaddr);
         }
         if (m_manager == typegrant) {
-            require(_candidates[_indexFinal].pubaddrmanager == pubaddr, ERR_MANAGER_NOT_EXIST);
+            require(_candidates[_indexFinal].pubaddrmanager.exists(pubaddr), ERR_MANAGER_NOT_EXIST);
             this.getGrantManager{value: 0.2 ton}(pubaddr);
         }    
     }
@@ -152,7 +168,7 @@ contract Task is Modifiers{
         if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
-        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullReview);
+        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, diff);
         checkempty(addr);
         return;
     }
@@ -169,11 +185,14 @@ contract Task is Modifiers{
                 if (i == _grant.manager.length - 1) { _allmanager = true; } 
             } else { break; }
         }
-        _balance -= _fullManager;
+        uint128 diff = _fullManager / _managerfull - _managers[pubaddr];
+        _balance -= diff;
+        if (diff == 0) { return; }
+        _managers[pubaddr] = _fullManager / _managerfull;
+        if ((_allmanager == true) && (diff != 0)) { _managercomplete += 1; }
         TvmCell s1 = _composeWalletStateInit(pubaddr, 0);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
-        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, _fullManager);
-        _fullManager = 0;
+        GoshWallet(addr).grantToken{value: 0.1 ton}(_nametask, _repo, diff);
         checkempty(addr);
         return;
     }
@@ -187,7 +206,7 @@ contract Task is Modifiers{
     function checkempty(address addr) private {
         if (_assigncomplete != _assignfull) { return; }
         if (_reviewcomplete != _reviewfull) { return; }
-        if (_allmanager == false) { return; }
+        if (_managercomplete != _managerfull) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton}(_nametask, _repo, _hashtag, addr);
         selfdestruct(giver);

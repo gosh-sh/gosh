@@ -131,7 +131,7 @@
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]
@@ -145,7 +145,7 @@
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]
@@ -166,7 +166,7 @@
 				{"name":"oldcommit","type":"address"},
 				{"name":"namecommit","type":"string"},
 				{"name":"number","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 			]
@@ -209,7 +209,7 @@
 				{"name":"commit","type":"address"},
 				{"name":"number","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [

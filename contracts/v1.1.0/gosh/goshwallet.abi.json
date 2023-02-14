@@ -827,7 +827,7 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
@@ -842,7 +842,7 @@
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"address"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
