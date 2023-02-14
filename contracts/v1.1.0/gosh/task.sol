@@ -90,19 +90,19 @@ contract Task is Modifiers{
     
     function calculateAssignLength (uint128 index) public view senderIs(address(this)) accept {    
         require(_ready == false, ERR_TASK_COMPLETED);    
-        uint128 assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
+        uint128 assignfull = uint128(_candidates[index].pubaddrassign.keys().length);
         this.calculateReviewLength(index, assignfull);
     }
     
     function calculateReviewLength (uint128 index, uint128 assignfull) public view senderIs(address(this)) accept {      
         require(_ready == false, ERR_TASK_COMPLETED);  
-        uint128 reviewfull = uint128(_candidates[_indexFinal].pubaddrreview.keys().length);
+        uint128 reviewfull = uint128(_candidates[index].pubaddrreview.keys().length);
         this.calculateManagerLength(index, assignfull, reviewfull);
     }
     
     function calculateManagerLength (uint128 index, uint128 assignfull, uint128 reviewfull) public senderIs(address(this)) accept { 
         require(_ready == false, ERR_TASK_COMPLETED);       
-        uint128 managerfull = uint128(_candidates[_indexFinal].pubaddrmanager.keys().length);
+        uint128 managerfull = uint128(_candidates[index].pubaddrmanager.keys().length);
         if (_assignfull + _reviewfull + _managerfull == 0) { return; } 
         _assignfull = assignfull;
         _reviewfull = reviewfull;
