@@ -54,7 +54,7 @@ tar -xf $TAR
 rm -f $TAR
 ########## DELETE THIS
 cp -r linux-amd64/git-remote-gosh ./
-cp -r git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} ./
+cp -r linux-amd64/git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} ./
 
 # make executable 
 chmod +x git-remote-gosh
