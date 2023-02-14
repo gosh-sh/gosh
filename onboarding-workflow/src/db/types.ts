@@ -44,6 +44,10 @@ export interface Database {
                     recipient_email: string | null
                     is_recipient_sent: boolean | null
                     sender_username: string | null
+                    recipient_status: string | null
+                    recipient_username: string | null
+                    recipient_allowance: number | null
+                    recipient_comment: string | null
                 }
                 Insert: {
                     id?: string
@@ -53,6 +57,10 @@ export interface Database {
                     recipient_email?: string | null
                     is_recipient_sent?: boolean | null
                     sender_username?: string | null
+                    recipient_status?: string | null
+                    recipient_username?: string | null
+                    recipient_allowance?: number | null
+                    recipient_comment?: string | null
                 }
                 Update: {
                     id?: string
@@ -62,6 +70,10 @@ export interface Database {
                     recipient_email?: string | null
                     is_recipient_sent?: boolean | null
                     sender_username?: string | null
+                    recipient_status?: string | null
+                    recipient_username?: string | null
+                    recipient_allowance?: number | null
+                    recipient_comment?: string | null
                 }
             }
             emails: {
@@ -107,6 +119,7 @@ export interface Database {
                     updated_at: string | null
                     ignore: boolean
                     objects: number | null
+                    resolution: string | null
                 }
                 Insert: {
                     id?: string
@@ -118,6 +131,7 @@ export interface Database {
                     updated_at?: string | null
                     ignore?: boolean
                     objects?: number | null
+                    resolution?: string | null
                 }
                 Update: {
                     id?: string
@@ -129,6 +143,7 @@ export interface Database {
                     updated_at?: string | null
                     ignore?: boolean
                     objects?: number | null
+                    resolution?: string | null
                 }
             }
             test: {
@@ -182,7 +197,30 @@ export interface Database {
             }
         }
         Views: {
+            last_dao_invite: {
+                Row: {
+                    id: string | null
+                    created_at: string | null
+                    sender_email: string | null
+                    dao_name: string | null
+                    recipient_email: string | null
+                    is_recipient_sent: boolean | null
+                    sender_username: string | null
+                    recipient_status: string | null
+                    recipient_username: string | null
+                    recipient_allowance: number | null
+                    recipient_comment: string | null
+                }
+            }
             telemetry: {
+                Row: {
+                    repositories_uploaded: number | null
+                    repositories_total: number | null
+                    users_total: number | null
+                    daos_total: number | null
+                }
+            }
+            telemetry2: {
                 Row: {
                     repositories_uploaded: number | null
                     repositories_total: number | null
