@@ -21,6 +21,7 @@
 				{"name":"codeTask","type":"cell"},
 				{"name":"codedaotag","type":"cell"},
 				{"name":"coderepotag","type":"cell"},
+				{"name":"topiccode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
@@ -489,6 +490,26 @@
 		{
 			"name": "destroyWallet",
 			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTopic",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployMessage",
+			"inputs": [
+				{"name":"topic","type":"address"},
+				{"name":"answer","type":"optional(uint256)"},
+				{"name":"message","type":"string"}
 			],
 			"outputs": [
 			]

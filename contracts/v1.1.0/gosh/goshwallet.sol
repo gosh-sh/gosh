@@ -22,6 +22,7 @@ import "goshwallet.sol";
 import "profile.sol";
 import "taggosh.sol";
 import "content-signature.sol";
+import "topic.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/SMVAccount.sol";
 import "../smv/Libraries/SMVConstants.sol";
@@ -75,6 +76,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell codeTask,
         TvmCell codedaotag,
         TvmCell coderepotag,
+        TvmCell topiccode,
         mapping(uint256 => string) versions,
         uint128 limit_wallets,
         optional(uint256) access,
@@ -107,6 +109,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_TaskCode] = codeTask;
         _code[m_DaoTagCode] = codedaotag;
         _code[m_RepoTagCode] = coderepotag;
+        _code[m_TopicCode] = topiccode;
         _access = access;
         _limit_wallets = limit_wallets;
         ///////////////////
@@ -132,7 +135,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         getMoney();
@@ -679,7 +682,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -733,7 +736,31 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _flag = true;
         SystemContract(_systemcontract).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
+    
+    function deployTopic(string name, string content, address object) public onlyOwnerPubkeyOptional(_access)  accept view {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        TvmCell s1 = _composeTopicStateInit(name, content, object);
+        new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
+            _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
+    }
+    
+    function deployMessage(address topic, optional(uint256) answer, string message) public onlyOwnerPubkeyOptional(_access)  accept view {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        Topic(topic).acceptMessage{value:0.1 ton}(_pubaddr, _index, answer, message);
+    }       
 
+    function _composeTopicStateInit(string name, string content, address object) internal view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTopicCode(
+            _code[m_TopicCode], object, version
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Topic,
+            varInit: {_name: name, _content: content}
+        });
+    }
 /*
     function destroyObject(address obj) public onlyOwnerPubkeyOptional(_access)  accept view {
         require(_tombstone == false, ERR_TOMBSTONE);

@@ -258,4 +258,19 @@ library GoshLib {
         b.store(version);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
+    
+    function buildTopicCode(
+        TvmCell originalCode,
+        address object,
+        string versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("TOPIC");
+        b.store(object);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
 }

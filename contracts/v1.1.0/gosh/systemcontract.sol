@@ -17,6 +17,7 @@ import "commit.sol";
 import "profile.sol";
 import "tag.sol";
 import "task.sol";
+import "topic.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
 import "./libraries/GoshLib.sol";
@@ -127,6 +128,7 @@ contract SystemContract is Modifiers {
             _code[m_TaskCode],
             _code[m_DaoTagCode],
             _code[m_RepoTagCode],
+            _code[m_TopicCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -311,8 +313,30 @@ contract SystemContract is Modifiers {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TagCode] = code;
     }
+    
+    function setTopic(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_TopicCode] = code;
+    }
 
     //Getters
+    function getTopicCode(address object) external view returns(TvmCell) {
+        return GoshLib.buildTopicCode(
+            _code[m_TopicCode], object, version
+        );
+    }
+    
+    function getTopicAddr(string name, string content, address object) external view returns(address) {
+        TvmCell deployCode = GoshLib.buildTopicCode(
+            _code[m_TopicCode], object, version
+        );
+        return address.makeAddrStd(0, tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: Topic,
+            varInit: {_name: name, _content: content}
+        })));
+    }
+    
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
         TvmCell s0 = _composeDaoStateInit(dao);
         address addr = address.makeAddrStd(0, tvm.hash(s0));

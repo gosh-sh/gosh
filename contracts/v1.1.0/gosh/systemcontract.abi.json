@@ -279,6 +279,34 @@
 			]
 		},
 		{
+			"name": "setTopic",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getTopicCode",
+			"inputs": [
+				{"name":"object","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTopicAddr",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
