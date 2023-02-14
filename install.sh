@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
