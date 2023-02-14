@@ -28,6 +28,7 @@
 		{
 			"name": "calculateAssignLength",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -35,6 +36,7 @@
 		{
 			"name": "calculateReviewLength",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -42,6 +44,7 @@
 		{
 			"name": "calculateManagerLength",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

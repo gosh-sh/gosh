@@ -81,29 +81,32 @@ contract Task is Modifiers{
 //    } 
 //    
 //    function confirmSmv(address pubaddr, uint128 index1, uint128 index2) public {
-       require(_ready == false, ERR_TASK_COMPLETED);
+//       require(_ready == false, ERR_TASK_COMPLETED);
 //       require(index1 < _candidates.length, ERR_TASK_COMPLETED);
-       uint128 index1 = 0;
 //       checkAccess(pubaddr, msg.sender, index2);
        tvm.accept();
-        _indexFinal = index1;
-        _locktime = now;
-        this.calculateAssignLength();
+        this.calculateAssignLength(uint128(_candidates.length - 1));
     }
     
-    function calculateAssignLength () public senderIs(address(this)) accept {        
+    function calculateAssignLength (uint128 index) public senderIs(address(this)) accept {    
+        require(_ready == false, ERR_TASK_COMPLETED);    
         _assignfull = uint128(_candidates[_indexFinal].pubaddrassign.keys().length);
-        this.calculateReviewLength();
+        this.calculateReviewLength(index);
     }
     
-    function calculateReviewLength () public senderIs(address(this)) accept {        
+    function calculateReviewLength (uint128 index) public senderIs(address(this)) accept {      
+        require(_ready == false, ERR_TASK_COMPLETED);  
         _reviewfull = uint128(_candidates[_indexFinal].pubaddrreview.keys().length);
-        this.calculateManagerLength();
+        this.calculateManagerLength(index);
     }
     
-    function calculateManagerLength () public senderIs(address(this)) accept {        
+    function calculateManagerLength (uint128 index) public senderIs(address(this)) accept { 
+        require(_ready == false, ERR_TASK_COMPLETED);       
         _managerfull = uint128(_candidates[_indexFinal].pubaddrmanager.keys().length);
+        if (_assignfull + _reviewfull + _managerfull == 0) { return; } 
+        _indexFinal = index;
         _ready = true;
+        _locktime = now;
     }
         
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
