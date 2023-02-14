@@ -265,6 +265,22 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return value0
     }
 
+    async getTaskTagGoshCodeHash(tag: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskTagDaoCodeHash(dao: string, tag: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskTagRepoCodeHash(
+        dao: string,
+        repository: string,
+        tag: string,
+    ): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })

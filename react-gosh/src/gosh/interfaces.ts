@@ -86,6 +86,13 @@ interface IGoshAdapter {
     }): Promise<IGoshRepositoryAdapter>
     getRepositoryCodeHash(dao: TAddress): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
+    getTaskTagGoshCodeHash(tag: string): Promise<string>
+    getTaskTagDaoCodeHash(dao: TAddress, tag: string): Promise<string>
+    getTaskTagRepoCodeHash(
+        dao: TAddress,
+        repository: TAddress,
+        tag: string,
+    ): Promise<string>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }

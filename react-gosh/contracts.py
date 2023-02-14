@@ -43,7 +43,7 @@ CONTRACTS = {
         'gosh/tree',
         'gosh/content-signature',
         'gosh/daotag',
-        'gosh/repotaggosh',
+        'gosh/taggosh',
         'smv/SMVProposal',
         'smv/SMVTokenLocker',
         'smv/SMVClient',
