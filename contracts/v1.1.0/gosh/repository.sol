@@ -193,7 +193,7 @@ contract Repository is Modifiers{
     }
 
     //Setters
-    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number, optional(ConfigCommit) task) public senderIs(getCommitAddr(namecommit)) {
+    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number, uint128 number_commit, optional(ConfigCommit) task) public senderIs(getCommitAddr(namecommit)) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
@@ -203,10 +203,9 @@ contract Repository is Modifiers{
         }
         _Branches[tvm.hash(nameBranch)] = Item(nameBranch, getCommitAddr(namecommit), version);
         if (task.hasValue()){
-            address taskaddr = task.get().task;
-            ConfigCommit tasksend = task.get();
-            tasksend.task = getCommitAddr(namecommit);
-            Task(taskaddr).isReady{value: 0.1 ton}(tasksend);
+            ConfigCommit taskf = task.get();
+            ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager});
+            Task(taskf.task).isReady{value: 0.1 ton}(tasksend);
         }
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }

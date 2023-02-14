@@ -378,6 +378,7 @@
 		{"name":"_continueChain","type":"bool"},
 		{"name":"_continueDiff","type":"bool"},
 		{"name":"_number","type":"uint128"},
+		{"name":"_numbercommits","type":"uint128"},
 		{"name":"_approved","type":"uint128"},
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},

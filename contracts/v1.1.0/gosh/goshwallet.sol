@@ -1489,7 +1489,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(ConfigCommit) task,
         address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_tombstone == false, ERR_TOMBSTONE); 
         if (_limited == true) {
            require(_lockedBalance + m_pseudoDAOBalance > 0, ERR_LOW_TOKEN);
         }

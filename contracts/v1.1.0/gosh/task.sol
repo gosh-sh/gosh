@@ -24,7 +24,7 @@ contract Task is Modifiers{
     address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
-    ConfigCommit[] _candidates;   
+    ConfigCommitBase[] _candidates;   
     ConfigGrant _grant;   
     string[] public _hashtag;
     uint128 _indexFinal;
@@ -75,7 +75,7 @@ contract Task is Modifiers{
         _grant = grant;
     } 
  */   
-    function isReady(ConfigCommit commit) public senderIs(_repo) {
+    function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_ready == false, ERR_TASK_COMPLETED);
         _candidates.push(commit);
 //    } 
@@ -240,7 +240,7 @@ contract Task is Modifiers{
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, ConfigCommit[], ConfigGrant, bool, uint128) {
+    function getStatus() external view returns(string, address, ConfigCommitBase[], ConfigGrant, bool, uint128) {
         return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal);
     }
     function getVersion() external pure returns(string, string) {

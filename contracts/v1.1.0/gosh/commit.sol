@@ -51,6 +51,7 @@ contract Commit is Modifiers {
     bool _continueChain = false;
     bool _continueDiff = false;
     uint128 _number;
+    uint128 _numbercommits;
     uint128 _approved;
     bool _flag = false;
     optional(Pause) _saved;
@@ -185,6 +186,7 @@ contract Commit is Modifiers {
         require(_diffcheck == false, ERR_PROCCESS_IS_EXIST);
         require(_number == 0, ERR_PROCCESS_IS_EXIST);
         _number = number;
+        _numbercommits = numberCommits;
         _approved = 0;
         _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
@@ -302,7 +304,7 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number, _task);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number, _numbercommits, _task);
             _number = 0;
         }
         else {

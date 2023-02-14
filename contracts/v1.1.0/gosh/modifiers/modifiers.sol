@@ -76,6 +76,15 @@ struct ConfigCommit {
     mapping(address => bool) pubaddrmanager;
 }
 
+struct ConfigCommitBase {
+    address task;
+    address commit;
+    uint128 number_commit;
+    mapping(address => bool) pubaddrassign;
+    mapping(address => bool) pubaddrreview;
+    mapping(address => bool) pubaddrmanager;
+}
+
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "1.1.0";
     
