@@ -420,9 +420,9 @@ function getChangeAllowDiscussionProposalParams () external view
 }
 
 function getTagUpgradeProposalParams () external view
-         returns(uint proposalKind, string repoName, string nametag, string newversion) 
+         returns(uint proposalKind, string[] repoName, string[] nametag, string newversion) 
 {
-     (proposalKind, repoName, nametag, newversion, ,) = abi.decode(propData, (uint256, string, string, string, string, uint32));
+     (proposalKind, repoName, nametag, newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
 }
 
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
@@ -561,6 +561,12 @@ function getChangeAllowDiscussionProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  bool result, string comment)
 {
     (proposalKind, result, comment, ) = abi.decode(Data, (uint256, bool, string, uint32));
+}
+
+function getTagUpgradeProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string[] repoName, string[] nametag, string newversion) 
+{
+     (proposalKind, repoName, nametag, newversion, ,) = abi.decode(Data, (uint256, string[], string[], string, string, uint32));
 }
 
 function getHalfData (TvmCell Data) external pure

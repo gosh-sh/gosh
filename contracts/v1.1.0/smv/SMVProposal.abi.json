@@ -331,8 +331,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"},
-				{"name":"nametag","type":"string"},
+				{"name":"repoName","type":"string[]"},
+				{"name":"nametag","type":"string[]"},
 				{"name":"newversion","type":"string"}
 			]
 		},
@@ -603,6 +603,18 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"result","type":"bool"},
 				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getTagUpgradeProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string[]"},
+				{"name":"nametag","type":"string[]"},
+				{"name":"newversion","type":"string"}
 			]
 		},
 		{

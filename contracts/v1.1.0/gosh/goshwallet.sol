@@ -337,8 +337,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startProposalForTagUpgrade(
-        string repoName,
-        string nametag,
+        string[] repoName,
+        string[] nametag,
         string newversion,
         string comment,
         uint128 num_clients , address[] reviewers
@@ -346,6 +346,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
+        require(repoName.length == nametag.length, ERR_DIFFERENT_COUNT);
         uint256 proposalKind = TAG_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, nametag, newversion, comment, now);
 
@@ -363,16 +364,28 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function _tagUpgrade(
-        string repoName,
-        string nametag,
+        string[] repoName,
+        string[] nametag,
         string newversion
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+    ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = _buildRepositoryAddr(repoName);
+        this._tagUpgrade2{value:0.12 ton}(repoName, nametag, newversion, 0);
+        getMoney();
+    }
+    
+    function _tagUpgrade2(
+        string[] repoName,
+        string[] nametag,
+        string newversion,
+        uint128 index
+    ) public senderIs(address(this))  accept saveMsg {
+        if (index >= repoName.length) { return; }
+        this._tagUpgrade2{value:0.12 ton}(repoName, nametag, newversion, index + 1);
+        address repo = _buildRepositoryAddr(repoName[index]);
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag[index]}});
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         Tag(addr).upgradeToVersion{value: 2.3 ton, flag: 1}(_pubaddr, _index, newversion); 
         getMoney();
@@ -1888,7 +1901,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
             } else
             if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
-               (, string repoName, string nametag, string newversion, ,) = abi.decode(propData, (uint256, string, string, string, string, uint32));
+               (, string[] repoName, string[] nametag, string newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
                _tagUpgrade (repoName, nametag, newversion);
             } else
             if (kind == ABILITY_INVITE_PROPOSAL_KIND) {
@@ -2020,8 +2033,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
             } else
             if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
-               (, string repoName, string nametag, string newversion, ,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
-               _tagUpgrade(repoName, nametag, newversion);
+               (, string[] repoName, string[] nametag, string newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
+               _tagUpgrade (repoName, nametag, newversion);
             } else
             if (kind == ABILITY_INVITE_PROPOSAL_KIND) {
                 (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               

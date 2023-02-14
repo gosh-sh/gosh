@@ -341,7 +341,7 @@ function rejectReviewer (address propAddress) external  onlyOwnerPubkey(_access.
 {
     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
-                                    SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+                                    SMVConstants.ACTION_FEE + SMVConstants.EPSILON_FEE, SMVErrors.error_balance_too_low);
     tvm.accept();
     _saveMsg();
 
