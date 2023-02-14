@@ -108,6 +108,14 @@
 			]
 		},
 		{
+			"name": "rejectReviewer",
+			"inputs": [
+				{"name":"propAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "clientAddressForProposal",
 			"inputs": [
 				{"name":"_tip3VotingLocker","type":"address"},

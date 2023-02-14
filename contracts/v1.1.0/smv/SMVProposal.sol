@@ -84,6 +84,19 @@ function acceptReviewer() external override
     address(msg.sender).transfer(0, false, 64);
 } 
 
+function rejectReviewer() external override
+{
+    require(msg.value > 0, SMVErrors.error_not_internal_message);
+    require(reviewers.exists(msg.sender), SMVErrors.error_not_my_reviewer);
+
+    delete reviewers;
+    reviewers[msg.sender] = true;
+    votingResult.set(false) ;
+    realFinishTime = now;
+    IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, votingResult, propData);
+    address(msg.sender).transfer(0, false, 64);
+} 
+
 function onCodeUpgrade (address goshdao,
                 		uint256 _platform_id,
                         uint128 amountToLock,
@@ -370,10 +383,16 @@ function getNotAllowMintProposalParams () external view
     (proposalKind, comment, ) = abi.decode(propData, (uint256, string, uint32));
 }
 
-function getChangeAllowancetProposalParams () external view
+function getChangeAllowanceProposalParams () external view
          returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
 {
     (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint32));
+}
+
+function getAbilityInviteProposalParams () external view
+         returns(uint256  proposalKind, bool result)
+{
+         (proposalKind, result, ,) = abi.decode(propData,(uint256, bool, string, uint32));  
 }
 
 function getGoshRepoTagProposalParams () external view
@@ -508,10 +527,16 @@ function getNotAllowMintProposalParamsData (TvmCell Data) external pure
     (proposalKind, comment, ) = abi.decode(Data, (uint256, string, uint32));
 }
 
-function getChangeAllowancetProposalParamsData (TvmCell Data) external pure
+function getChangeAllowanceProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
 {
     (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(Data, (uint256, address[], bool[], uint128[], string, uint32));
+}
+
+function getAbilityInviteProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind, bool result)
+{
+         (proposalKind, result, ,) = abi.decode(Data,(uint256, bool, string, uint32));  
 }
 
 function getGoshRepoTagProposalParamsData (TvmCell Data) external pure

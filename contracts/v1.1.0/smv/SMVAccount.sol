@@ -337,6 +337,18 @@ function acceptReviewer (address propAddress) external  onlyOwnerPubkey(_access.
 
 }
 
+function rejectReviewer (address propAddress) external  onlyOwnerPubkey(_access.get())
+{
+    require(initialized, SMVErrors.error_not_initialized);
+    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    tvm.accept();
+    _saveMsg();
+
+    ISMVProposal(propAddress).rejectReviewer{value: SMVConstants.ACTION_FEE + SMVConstants.EPSILON_FEE, flag: 1}();
+
+}
+
 
 function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint256 propId, TvmCell propData,
                         uint32 startTime, uint32 finishTime, uint128 num_clients) internal view /* public check_owner */

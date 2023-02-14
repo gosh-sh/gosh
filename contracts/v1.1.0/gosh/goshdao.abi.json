@@ -195,11 +195,34 @@
 			]
 		},
 		{
+			"name": "setAbilityInvite",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTombstone",
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "proposalForDeployWalletDao",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -808,6 +831,14 @@
 			"outputs": [
 				{"name":"_isRepoUpgraded","type":"bool"}
 			]
+		},
+		{
+			"name": "_abilityInvite",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_abilityInvite","type":"bool"}
+			]
 		}
 	],
 	"data": [
@@ -861,6 +892,7 @@
 		{"name":"_reserve","type":"uint128"},
 		{"name":"_allbalance","type":"uint128"},
 		{"name":"_totalsupply","type":"uint128"},
-		{"name":"_isRepoUpgraded","type":"bool"}
+		{"name":"_isRepoUpgraded","type":"bool"},
+		{"name":"_abilityInvite","type":"bool"}
 	]
 }

@@ -386,6 +386,27 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).setRepoUpgraded{value: 0.17 ton, flag: 1}(_pubaddr, _index, res);
     }
     
+    function startProposalForSetAbilityInvite(
+        bool res,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = ABILITY_INVITE_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, res, comment, now);
+
+        _startProposalForOperation(c, ABILITY_INVITE_PROPOSAL_START_AFTER, ABILITY_INVITE_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function _setAbilityInvite(bool res) private view accept {
+        tvm.accept();
+        GoshDao(_goshdao).setAbilityInvite{value: 0.17 ton, flag: 1}(_pubaddr, _index, res);
+    }
+    
     function AloneNotAllowMint() public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -563,17 +584,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-       
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);       
         tvm.accept();
         _saveMsg();
-
+        GoshDao(_goshdao).proposalForDeployWalletDao{value: 1.3 ton}(_pubaddr, _index, pubaddr, comment, num_clients, reviewers);
+    }
+    
+    
+     function startProposalForDeployWalletDao2(
+        MemberToken[] pubaddr,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public senderIs(_goshdao) accept saveMsg {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
-
         _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
-
         getMoney();
     }
     
@@ -1865,6 +1890,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
                (, string repoName, string nametag, string newversion, ,) = abi.decode(propData, (uint256, string, string, string, string, uint32));
                _tagUpgrade (repoName, nametag, newversion);
+            } else
+            if (kind == ABILITY_INVITE_PROPOSAL_KIND) {
+                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
+               _setAbilityInvite(result);
             }
         }
     }
@@ -1993,6 +2022,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
                (, string repoName, string nametag, string newversion, ,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
                _tagUpgrade(repoName, nametag, newversion);
+            } else
+            if (kind == ABILITY_INVITE_PROPOSAL_KIND) {
+                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
+               _setAbilityInvite(result);
             }
         }
     }

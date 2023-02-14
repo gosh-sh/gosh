@@ -69,6 +69,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     uint128 _totalsupply = 0;
     
     bool public _isRepoUpgraded = false;
+    bool public _abilityInvite = false;
     
     constructor(
         address versionController,
@@ -308,12 +309,29 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
+    function setAbilityInvite(address pub, uint128 index, bool res) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _abilityInvite = res;
+        getMoney();
+    }
+    
     function setTombstone(address pub, uint128 index, string description) public senderIs(getAddrWalletIn(pub, index))  accept {
         require(_tombstone == false, ERR_TOMBSTONE);
         _tombstone = true;
         getMoney();
         uint256 zero;
         this.askForTombstoneIn{value : 0.1 ton, flag: 1}(zero, description);
+    }
+    
+    function proposalForDeployWalletDao(
+        address pub, 
+        uint128 index, 
+        MemberToken[] pubaddr,
+        string comment,
+        uint128 num_clients , address[] reviewers) public senderIs(getAddrWalletIn(pub, index))  accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        getMoney();
+        GoshWallet(getAddrWalletIn(pub, 0)).startProposalForDeployWalletDao2{value : 0.1 ton, flag: 1}(pubaddr, comment, num_clients, reviewers);
     }
     
     function isAlone (uint128 token, MemberToken[] pubaddr, address pub, uint128 index, string[] tag, uint128 typeF) public senderIs(getAddrWalletIn(pub, index))  accept {

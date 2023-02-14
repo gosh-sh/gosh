@@ -19,6 +19,13 @@
 			]
 		},
 		{
+			"name": "rejectReviewer",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "onContinueAction",
 			"inputs": [
 				{"name":"t","type":"uint128"}
@@ -256,7 +263,7 @@
 			]
 		},
 		{
-			"name": "getChangeAllowancetProposalParams",
+			"name": "getChangeAllowanceProposalParams",
 			"inputs": [
 			],
 			"outputs": [
@@ -265,6 +272,15 @@
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getAbilityInviteProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"}
 			]
 		},
 		{
@@ -521,7 +537,7 @@
 			]
 		},
 		{
-			"name": "getChangeAllowancetProposalParamsData",
+			"name": "getChangeAllowanceProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
@@ -531,6 +547,16 @@
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getAbilityInviteProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"}
 			]
 		},
 		{
