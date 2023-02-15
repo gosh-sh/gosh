@@ -737,7 +737,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         SystemContract(_systemcontract).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
     }
     
-    function deployTopic(string name, string content, address object) public onlyOwnerPubkeyOptional(_access)  accept view {
+    function deployTopic(string name, string content, address object) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         TvmCell s1 = _composeTopicStateInit(name, content, object);
@@ -745,7 +745,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }
     
-    function deployMessage(address topic, optional(uint256) answer, string message) public onlyOwnerPubkeyOptional(_access)  accept view {
+    function deployMessage(address topic, optional(uint256) answer, string message) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Topic(topic).acceptMessage{value:0.1 ton}(_pubaddr, _index, answer, message);
