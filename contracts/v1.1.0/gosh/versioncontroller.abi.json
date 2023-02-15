@@ -28,6 +28,33 @@
 			]
 		},
 		{
+			"name": "upgradeTag2",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"},
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion3",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeDao2",
 			"inputs": [
 				{"name":"namedao","type":"string"},

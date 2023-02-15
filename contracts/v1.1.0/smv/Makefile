@@ -1,5 +1,5 @@
 tvcs = SMVAccount SMVTokenLocker LockerPlatform SMVClient SMVProposal TokenRootOwner
-cpfl = profile profiledao profileindex versioncontroller
+cpfl = profile profiledao profileindex
 
 # build-contracts:
 # 	./compile_all.sh
