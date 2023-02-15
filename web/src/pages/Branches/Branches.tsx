@@ -225,7 +225,7 @@ export const BranchesPage = () => {
                                         size="sm"
                                         icon={faLock}
                                     />
-                                    Locked
+                                    Protected
                                 </div>
                             )}
 
@@ -254,21 +254,12 @@ export const BranchesPage = () => {
                                         disabled={branchProgress.isFetching}
                                     >
                                         {branchProgress.isFetching &&
-                                        branchProgress.type === '(un)lock' &&
-                                        branchProgress.name === branch.name ? (
-                                            <Spinner size="xs" />
-                                        ) : (
-                                            <FontAwesomeIcon
-                                                icon={
-                                                    branch.isProtected
-                                                        ? faLockOpen
-                                                        : faLock
-                                                }
-                                                size="sm"
-                                            />
-                                        )}
-                                        <span className="ml-2">
-                                            {branch.isProtected ? 'Unlock' : 'Lock'}
+                                            branchProgress.type === '(un)lock' &&
+                                            branchProgress.name === branch.name && (
+                                                <Spinner size="xs" />
+                                            )}
+                                        <span>
+                                            {branch.isProtected ? 'Unprotect' : 'Protect'}
                                         </span>
                                     </button>
                                     <button
