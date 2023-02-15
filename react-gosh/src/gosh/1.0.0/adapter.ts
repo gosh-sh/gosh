@@ -51,6 +51,8 @@ import {
     TTaskReceiveBountyParams,
     TDaoEventSendReviewParams,
     TDaoAskMembershipAllowanceParams,
+    TTopic,
+    TTopicCreateParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -515,6 +517,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getTopicCodeHash(): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTopic(params: { address?: string | undefined }): Promise<TTopic> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getSmv(): Promise<IGoshSmvAdapter> {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
@@ -676,6 +686,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async updateEventAllowDiscussion(
         params: TDaoEventAllowDiscussionParams,
     ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTopic(params: TTopicCreateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

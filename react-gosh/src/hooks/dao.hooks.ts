@@ -8,6 +8,8 @@ import {
     TDaoListItem,
     TDaoMemberDetails,
     TTaskListItem,
+    TTopic,
+    TTopicCreateParams,
 } from '../types'
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
@@ -776,6 +778,14 @@ function useTaskList(
     }
 }
 
+function useTopicCreate(dao: IGoshDaoAdapter) {
+    const create = async (params: TTopicCreateParams) => {
+        await dao.createTopic(params)
+    }
+
+    return create
+}
+
 function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     const [accounts, setAccounts] = useState<{
         isFetching: boolean
@@ -783,7 +793,7 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     }>({ isFetching: false, items: [] })
     const [topics, setTopics] = useState<{
         isFetching: boolean
-        items: any[]
+        items: TTopic[]
         lastAccountIndex: number
         hasNext?: boolean
     }>({ items: [], isFetching: false, lastAccountIndex: 0 })
@@ -793,8 +803,7 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     const getAccounts = useCallback(async () => {
         setAccounts((state) => ({ ...state, isFetching: true }))
 
-        const adapter = await dao.getSmv()
-        const codeHash = await adapter.getEventCodeHash()
+        const codeHash = await dao.getTopicCodeHash()
         const result = await getAllAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             result: ['last_paid'],
@@ -809,59 +818,31 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
 
     const getTopicList = useCallback(
         async (lastAccountIndex: number) => {
-            //     if (accounts.isFetching) {
-            //         return
-            //     }
-            //     setTopics((state) => ({ ...state, isFetching: true }))
-            //     const endAccountIndex = lastAccountIndex + perPage
-            //     const items: TSmvEventListItem[] = await executeByChunk(
-            //         accounts.items.slice(lastAccountIndex, endAccountIndex),
-            //         MAX_PARALLEL_READ,
-            //         async ({ id }) => {
-            //             const event = await adapter.getEvent(id, false)
-            //             return { adapter, ...event }
-            //         },
-            //     )
-            //     setEvents((state) => ({
-            //         ...state,
-            //         isFetching: false,
-            //         items: [...state.items, ...items],
-            //         lastAccountIndex: endAccountIndex,
-            //         hasNext: endAccountIndex < accounts.items.length,
-            //     }))
+            if (accounts.isFetching) {
+                return
+            }
+            setTopics((state) => ({ ...state, isFetching: true }))
+            const endAccountIndex = lastAccountIndex + perPage
+            const items: TTopic[] = await executeByChunk(
+                accounts.items.slice(lastAccountIndex, endAccountIndex),
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    return await dao.getTopic({ address: id })
+                },
+            )
+            setTopics((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastAccountIndex: endAccountIndex,
+                hasNext: endAccountIndex < accounts.items.length,
+            }))
         },
         [accounts.isFetching, accounts.items, perPage],
     )
 
     const getMore = async () => {
-        // await getEventList(events.lastAccountIndex)
-    }
-
-    const getItemDetails = async (item: any) => {
-        // if (item.isLoadDetailsFired) {
-        //     return
-        // }
-        // setEvents((state) => ({
-        //     ...state,
-        //     items: state.items.map((curr) => {
-        //         if (curr.address === item.address) {
-        //             return { ...curr, isLoadDetailsFired: true }
-        //         }
-        //         return curr
-        //     }),
-        // }))
-        // const details = {
-        //     status: await item.adapter.getEventStatus({ address: item.address }),
-        //     time: await item.adapter.getEventTime({ address: item.address }),
-        //     votes: await item.adapter.getEventVotes({ address: item.address }),
-        // }
-        // setEvents((state) => ({
-        //     ...state,
-        //     items: state.items.map((curr) => {
-        //         if (curr.address === item.address) return { ...curr, ...details }
-        //         return curr
-        //     }),
-        // }))
+        await getTopicList(topics.lastAccountIndex)
     }
 
     /** Get all topic accounts */
@@ -874,35 +855,12 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
         getTopicList(0)
     }, [getTopicList])
 
-    /**
-     * Refresh event list
-     * Reset `isLoadDetailsFired` flag
-     * */
-    useEffect(() => {
-        // const interval = setInterval(async () => {
-        //     if (accounts.isFetching || events.isFetching) {
-        //         return
-        //     }
-        //     setEvents((state) => ({
-        //         ...state,
-        //         items: state.items.map((item) => ({
-        //             ...item,
-        //             isLoadDetailsFired: item.status?.completed,
-        //         })),
-        //     }))
-        // }, 20000)
-        // return () => {
-        //     clearInterval(interval)
-        // }
-    }, [accounts.isFetching, topics.isFetching])
-
     return {
         isFetching: accounts.isFetching || topics.isFetching,
         isEmpty: !accounts.isFetching && !topics.isFetching && !topics.items.length,
         items: topics.items,
         hasNext: topics.hasNext,
         getMore,
-        getItemDetails,
     }
 }
 
@@ -918,4 +876,6 @@ export {
     useDaoMint,
     useDaoSettingsManage,
     useTaskList,
+    useTopicCreate,
+    useTopicList,
 }

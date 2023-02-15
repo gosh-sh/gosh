@@ -53,6 +53,8 @@ import {
     TTaskReceiveBountyParams,
     TDaoEventSendReviewParams,
     TDaoAskMembershipAllowanceParams,
+    TTopic,
+    TTopicCreateParams,
 } from '../types'
 
 interface IGoshAdapter {
@@ -134,6 +136,9 @@ interface IGoshDaoAdapter {
     getTaskCodeHash(repository: string): Promise<string>
     getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
 
+    getTopicCodeHash(): Promise<string>
+    getTopic(params: { address?: TAddress }): Promise<TTopic>
+
     getSmv(): Promise<IGoshSmvAdapter>
 
     createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
@@ -165,6 +170,8 @@ interface IGoshDaoAdapter {
     sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
     updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void>
     updateEventAllowDiscussion(params: TDaoEventAllowDiscussionParams): Promise<void>
+
+    createTopic(params: TTopicCreateParams): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -423,6 +430,10 @@ interface IGoshHelperTag extends IContract {
     address: TAddress
 }
 
+interface IGoshTopic extends IContract {
+    address: TAddress
+}
+
 interface IGoshContentSignature extends IContract {
     address: TAddress
 }
@@ -464,6 +475,7 @@ export {
     IGoshCommitTag,
     IGoshTask,
     IGoshHelperTag,
+    IGoshTopic,
     IGoshContentSignature,
     IGoshSmvProposal,
     IGoshSmvLocker,

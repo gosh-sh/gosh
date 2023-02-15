@@ -43,6 +43,7 @@ const DaoLayout = () => {
             tabs.push(
                 { to: `/o/${daoName}/settings`, title: 'Settings' },
                 { to: `/o/${daoName}/wallet`, title: 'Wallet' },
+                { to: `/o/${daoName}/topics`, title: 'Topics' },
             )
         }
         if (dao.details?.isAuthLimited) {
