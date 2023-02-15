@@ -54,7 +54,8 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"_","type":"uint128"}
 			],
 			"outputs": [
 			]

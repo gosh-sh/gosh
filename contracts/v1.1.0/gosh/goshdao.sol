@@ -162,7 +162,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
-    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets) public internalMsg {
+    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets, uint128 _) public internalMsg {
+        _;
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
