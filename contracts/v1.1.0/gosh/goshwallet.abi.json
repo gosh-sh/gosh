@@ -818,6 +818,23 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersion",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion5",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "receiveToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
