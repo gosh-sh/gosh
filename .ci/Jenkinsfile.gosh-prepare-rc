@@ -114,7 +114,7 @@ pipeline {
                             tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
                             tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
                             tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
-                            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./*
+                            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
                         '''
                     }
                 }
@@ -311,9 +311,9 @@ pipeline {
                                 sh './create-github-release.sh $TOKEN ${VERSION} ${COMMIT}'
                                 sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-amd64.tar'
                                 sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-amd64.tar'
-                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.zip'
                                 sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-arm64.tar'
                                 sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-arm64.tar'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.zip'
                             }
                         }
                     }
