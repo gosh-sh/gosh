@@ -30,8 +30,7 @@ import {
     TDaoMemberAllowanceUpdateParams,
     TDaoEventAllowDiscussionParams,
     TDaoEventShowProgressParams,
-} from '../types'
-import {
+    TTaskDetails,
     ETaskBounty,
     IPushCallback,
     ITBranchOperateCallback,
@@ -42,18 +41,19 @@ import {
     TRepository,
     TTag,
     TTaskCommitConfig,
-    TTaskDetails,
     TTree,
     TTreeItem,
     TUpgradeData,
     TRepositoryUpdateDescriptionParams,
     TRepositoryChangeBranchProtectionParams,
-    TTaskConfirmParams,
     TTaskDeleteParams,
     TTaskCreateParams,
     TRepositoryTagCreateParams,
     TRepositoryTagDeleteParams,
-} from '../types/repo.types'
+    TTaskReceiveBountyParams,
+    TDaoEventSendReviewParams,
+    TDaoAskMembershipAllowanceParams,
+} from '../types'
 
 interface IGoshAdapter {
     client: TonClient
@@ -93,6 +93,7 @@ interface IGoshAdapter {
         repository: TAddress,
         tag: string,
     ): Promise<string>
+    getHelperTag(address: TAddress): Promise<IGoshHelperTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
@@ -130,6 +131,7 @@ interface IGoshDaoAdapter {
     ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
 
     getTaskCodeHash(repository: string): Promise<string>
+    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
 
     getSmv(): Promise<IGoshSmvAdapter>
 
@@ -138,6 +140,7 @@ interface IGoshDaoAdapter {
     createMember(params: TDaoMemberCreateParams): Promise<void>
     deleteMember(params: TDaoMemberDeleteParams): Promise<void>
     updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void>
+    updateAskMembershipAllowance(params: TDaoAskMembershipAllowanceParams): Promise<void>
 
     upgrade(params: TDaoUpgradeParams): Promise<void>
 
@@ -153,7 +156,11 @@ interface IGoshDaoAdapter {
 
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
-    addEventReview(event: TAddress): Promise<void>
+    createTask(params: TTaskCreateParams): Promise<void>
+    receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
+    deleteTask(params: TTaskDeleteParams): Promise<void>
+
+    sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
     updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void>
     updateEventAllowDiscussion(params: TDaoEventAllowDiscussionParams): Promise<void>
 }
@@ -199,7 +206,6 @@ interface IGoshRepositoryAdapter {
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getCommitTags(): Promise<TTag[]>
-    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
     getUpgrade(commit: string): Promise<TUpgradeData>
     getContentSignature(
         repository: string,
@@ -246,11 +252,6 @@ interface IGoshRepositoryAdapter {
         label: string,
         content: string,
     ): Promise<void>
-
-    createTask(params: TTaskCreateParams): Promise<void>
-    confirmTask(params: TTaskConfirmParams): Promise<void>
-    receiveTaskBounty(name: string, type: ETaskBounty): Promise<void>
-    deleteTask(params: TTaskDeleteParams): Promise<void>
 
     createTag(params: TRepositoryTagCreateParams): Promise<void>
     deleteTag(params: TRepositoryTagDeleteParams): Promise<void>
@@ -416,6 +417,10 @@ interface IGoshTask extends IContract {
     address: TAddress
 }
 
+interface IGoshHelperTag extends IContract {
+    address: TAddress
+}
+
 interface IGoshContentSignature extends IContract {
     address: TAddress
 }
@@ -456,6 +461,7 @@ export {
     IGoshTree,
     IGoshCommitTag,
     IGoshTask,
+    IGoshHelperTag,
     IGoshContentSignature,
     IGoshSmvProposal,
     IGoshSmvLocker,

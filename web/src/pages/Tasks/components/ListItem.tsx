@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { classNames, ETaskBounty, TDao, TTaskListItem } from 'react-gosh'
-import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ToastError from '../../../components/Error/ToastError'
@@ -8,8 +8,10 @@ import { Button } from '../../../components/Form'
 
 type TTaskListItemProps = {
     item: TTaskListItem
-    dao: TDao
-    repository: IGoshRepositoryAdapter
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
 }
 
 const StatusBadge = (props: { item: TTaskListItem }) => {
@@ -32,10 +34,9 @@ const StatusBadge = (props: { item: TTaskListItem }) => {
 }
 
 const TaskListItem = (props: TTaskListItemProps) => {
-    const { item, dao, repository } = props
+    const { item, dao } = props
     const navigate = useNavigate()
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-    const [isConfirming, setIsConfirming] = useState<boolean>(false)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
     const [isClaiming, setIsClaiming] = useState<boolean>(false)
 
@@ -58,49 +59,43 @@ const TaskListItem = (props: TTaskListItemProps) => {
     const onTaskDelete = async () => {
         setIsSubmitting(true)
         setIsDeleting(true)
-
         try {
-            await repository.deleteTask({ name: item.name })
-            navigate(`/o/${dao.name}/events`)
+            await dao.adapter.deleteTask({ repository: item.repository, name: item.name })
+            navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
         } finally {
             setIsSubmitting(false)
-            setIsConfirming(false)
-        }
-    }
-
-    const onTaskConfirm = async () => {
-        setIsSubmitting(true)
-        setIsConfirming(true)
-
-        try {
-            await repository.confirmTask({ name: item.name, index: 0 })
-            navigate(`/o/${dao.name}/events`)
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        } finally {
-            setIsSubmitting(false)
-            setIsConfirming(false)
+            setIsDeleting(false)
         }
     }
 
     const onTaskClaim = async () => {
         setIsSubmitting(true)
         setIsClaiming(true)
-
         try {
             await Promise.all([
                 (async () => {
-                    await repository.receiveTaskBounty(item.name, ETaskBounty.ASSING)
+                    await dao.adapter.receiveTaskBounty({
+                        repository: item.repository,
+                        name: item.name,
+                        type: ETaskBounty.ASSING,
+                    })
                 })(),
                 (async () => {
-                    await repository.receiveTaskBounty(item.name, ETaskBounty.REVIEW)
+                    await dao.adapter.receiveTaskBounty({
+                        repository: item.repository,
+                        name: item.name,
+                        type: ETaskBounty.REVIEW,
+                    })
                 })(),
                 (async () => {
-                    await repository.receiveTaskBounty(item.name, ETaskBounty.MANAGER)
+                    await dao.adapter.receiveTaskBounty({
+                        repository: item.repository,
+                        name: item.name,
+                        type: ETaskBounty.MANAGER,
+                    })
                 })(),
             ])
             toast.success('Claim rewards request sent. Check you wallet balance')
@@ -115,7 +110,7 @@ const TaskListItem = (props: TTaskListItemProps) => {
 
     return (
         <div className="px-5 py-6">
-            <div className="mb-6 flex gap-3 items-center justify-between">
+            <div className="flex gap-3 items-center justify-between">
                 <div className="grow text-xl font-medium">
                     {item.name}
                     <span className="mx-2 align-super">
@@ -137,6 +132,11 @@ const TaskListItem = (props: TTaskListItemProps) => {
                     <span className="text-xl font-medium">{getTaskCost()}</span>
                 </div>
             </div>
+            <div className="mb-6">
+                <span className="text-gray-7c8db5 text-sm">
+                    Repository: {item.repository}
+                </span>
+            </div>
             <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
                 {!item.confirmed && (
                     <Button
@@ -151,17 +151,6 @@ const TaskListItem = (props: TTaskListItemProps) => {
                         Delete
                     </Button>
                 )}
-                {!item.confirmed && !!item.candidates.length && (
-                    <Button
-                        className="!bg-green-34c759"
-                        onClick={onTaskConfirm}
-                        disabled={isSubmitting}
-                        isLoading={isConfirming}
-                    >
-                        Confirm and create proposal
-                    </Button>
-                )}
-
                 {item.confirmed && (
                     <Button
                         onClick={onTaskClaim}

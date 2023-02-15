@@ -30,4 +30,6 @@ export const SmvEventTypes: { [key: number]: string } = {
     23: 'Update repository description',
     24: 'Event allow discussion',
     25: 'Event show progress',
+    26: 'Upgrade repository tags',
+    27: 'DAO ask membership allowance',
 }

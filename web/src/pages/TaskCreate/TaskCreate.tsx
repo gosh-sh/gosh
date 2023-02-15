@@ -1,15 +1,16 @@
 import { Field, Form, Formik } from 'formik'
-import { GoshError } from 'react-gosh'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { GoshError, useRepoList } from 'react-gosh'
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { Button } from '../../components/Form'
-import { FormikInput, FormikTextarea } from '../../components/Formik'
+import { FormikInput, FormikSelect, FormikTextarea } from '../../components/Formik'
 import { FormikSlider } from '../../components/Formik/FormikSlider'
 import yup from '../../yup-extended'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
 
 type TFormValues = {
+    repository: string
     name: string
     cost: number
     assign: number
@@ -33,8 +34,15 @@ type TStruct = {
 }
 
 const TaskCreatePage = () => {
-    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const navigate = useNavigate()
+    const { items: repositories, isFetching: isRepositoriesFetching } = useRepoList(
+        dao.details.name,
+        {
+            perPage: 0,
+            version: dao.details.version,
+        },
+    )
 
     const getTokenAmount = (cost: number, percent: number) => {
         return Math.round((cost * percent) / 100)
@@ -103,7 +111,8 @@ const TaskCreatePage = () => {
             const tags = values.tags ? values.tags.trim().split(' ') : []
 
             // Create task
-            await repository.adapter.createTask({
+            await dao.adapter.createTask({
+                repository: values.repository,
                 name: values.name,
                 config: _struct,
                 tags,
@@ -116,9 +125,13 @@ const TaskCreatePage = () => {
         }
     }
 
+    if (!dao.details.isAuthMember) {
+        return <Navigate to={`/o/${dao.details.name}/tasks`} />
+    }
     return (
         <Formik
             initialValues={{
+                repository: '',
                 name: '',
                 cost: 0,
                 assign: 60,
@@ -130,6 +143,7 @@ const TaskCreatePage = () => {
                 tags: '',
             }}
             validationSchema={yup.object().shape({
+                repository: yup.string().required(),
                 name: yup.string().required(),
                 cost: yup
                     .number()
@@ -171,6 +185,25 @@ const TaskCreatePage = () => {
                     </h1>
 
                     <div className="w-1/3">
+                        <div className="mb-4">
+                            <Field
+                                component={FormikSelect}
+                                label="Repository"
+                                name="repository"
+                                disabled={isSubmitting || isRepositoriesFetching}
+                            >
+                                <option value="">
+                                    {isRepositoriesFetching
+                                        ? 'Loading...'
+                                        : 'Select repository'}
+                                </option>
+                                {repositories.map(({ name }, index) => (
+                                    <option key={index} value={name}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </Field>
+                        </div>
                         <div className="mb-4">
                             <Field
                                 component={FormikInput}

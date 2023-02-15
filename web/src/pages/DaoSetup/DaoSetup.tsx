@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { useDaoEventSettingsManage, useDaoMint, useDaoMintDisable } from 'react-gosh'
+import { useDaoSettingsManage, useDaoMint } from 'react-gosh'
 import ToastError from '../../components/Error/ToastError'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import yup from '../../yup-extended'
@@ -26,8 +26,7 @@ type TBooleanFormValues = {
 const DaoSetupPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const mint = useDaoMint(dao.adapter)
-    const mintDisable = useDaoMintDisable(dao.adapter)
-    const eventSettingsManage = useDaoEventSettingsManage(dao.adapter)
+    const daoSettingsManage = useDaoSettingsManage(dao.adapter)
     const navigate = useNavigate()
 
     const onMint = async (values: TSupplyFormValues) => {
@@ -42,7 +41,7 @@ const DaoSetupPage = () => {
 
     const onMintDisable = async (values: TMintFormValues) => {
         try {
-            await mintDisable(values.comment)
+            await daoSettingsManage.disableMint(values.comment)
             navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
@@ -53,7 +52,7 @@ const DaoSetupPage = () => {
     const onEventShowProgress = async (values: TBooleanFormValues) => {
         try {
             const { value, comment } = values
-            await eventSettingsManage.updateShowProgress({ show: value, comment })
+            await daoSettingsManage.updateEventShowProgress({ show: value, comment })
             navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
@@ -64,7 +63,18 @@ const DaoSetupPage = () => {
     const onEventAllowDiscussion = async (values: TBooleanFormValues) => {
         try {
             const { value, comment } = values
-            await eventSettingsManage.updateAllowDiscussion({ allow: value, comment })
+            await daoSettingsManage.updateEventAllowDiscussion({ allow: value, comment })
+            navigate(`/o/${dao.details.name}/events`)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onAskMembershipAllowance = async (values: TBooleanFormValues) => {
+        try {
+            const { value, comment } = values
+            await daoSettingsManage.updateAskMembershipAllowance(value, comment)
             navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
@@ -238,6 +248,49 @@ const DaoSetupPage = () => {
                                         disabled={isSubmitting}
                                         inputProps={{
                                             label: 'Allow discussions on proposals',
+                                        }}
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Field
+                                        name="comment"
+                                        component={FormikTextarea}
+                                        disabled={isSubmitting}
+                                        placeholder="Leave your comment"
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Button
+                                        type="submit"
+                                        isLoading={isSubmitting}
+                                        disabled={isSubmitting}
+                                    >
+                                        Save changes and start proposal
+                                    </Button>
+                                </div>
+                            </Form>
+                        )}
+                    </Formik>
+                </div>
+            </div>
+
+            <h3 className="text-xl font-medium mt-14 mb-10">Members setup</h3>
+            <div className="divide-y divide-gray-e6edff">
+                <div className="pb-10">
+                    <Formik
+                        initialValues={{ value: dao.details.isAskMembershipOn }}
+                        onSubmit={onAskMembershipAllowance}
+                    >
+                        {({ isSubmitting }) => (
+                            <Form>
+                                <div>
+                                    <Field
+                                        type="checkbox"
+                                        name="value"
+                                        component={FormikCheckbox}
+                                        disabled={isSubmitting}
+                                        inputProps={{
+                                            label: 'Allow external users to ask DAO membership',
                                         }}
                                     />
                                 </div>

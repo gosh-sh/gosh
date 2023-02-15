@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRecoilState } from 'recoil'
-import { executeByChunk } from '../helpers'
+import { executeByChunk, getAllAccounts } from '../helpers'
 import { daoAtom } from '../store'
-import { TDaoCreateProgress, TDaoListItem, TDaoMemberDetails } from '../types'
+import {
+    TAddress,
+    TDaoCreateProgress,
+    TDaoListItem,
+    TDaoMemberDetails,
+    TTaskListItem,
+} from '../types'
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
 import { useProfile, useUser } from './user.hooks'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
-import { MAX_PARALLEL_READ } from '../constants'
+import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
@@ -519,14 +525,6 @@ function useDaoMint(dao: IGoshDaoAdapter) {
     return mint
 }
 
-function useDaoMintDisable(dao: IGoshDaoAdapter) {
-    const disable = async (comment?: string) => {
-        await dao.disableMint({ comment })
-    }
-
-    return disable
-}
-
 function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
     const update = async (
         updated: (TDaoMemberDetails & { _allowance?: number })[],
@@ -559,21 +557,204 @@ function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
     return update
 }
 
-function useDaoEventSettingsManage(dao: IGoshDaoAdapter) {
-    const updateShowProgress = async (params: { show: boolean; comment?: string }) => {
+function useDaoSettingsManage(dao: IGoshDaoAdapter) {
+    const updateEventShowProgress = async (params: {
+        show: boolean
+        comment?: string
+    }) => {
         await dao.updateEventShowProgress(params)
     }
 
-    const updateAllowDiscussion = async (params: {
+    const updateEventAllowDiscussion = async (params: {
         allow: boolean
         comment?: string
     }) => {
         await dao.updateEventAllowDiscussion(params)
     }
 
+    const disableMint = async (comment?: string) => {
+        await dao.disableMint({ comment })
+    }
+
+    const updateAskMembershipAllowance = async (decision: boolean, comment?: string) => {
+        await dao.updateAskMembershipAllowance({ decision, comment })
+    }
+
     return {
-        updateShowProgress,
-        updateAllowDiscussion,
+        disableMint,
+        updateEventShowProgress,
+        updateEventAllowDiscussion,
+        updateAskMembershipAllowance,
+    }
+}
+
+function useTaskList(
+    dao: IGoshDaoAdapter,
+    params: { repository?: string; perPage?: number },
+) {
+    const [accounts, setAccounts] = useState<{
+        isFetching: boolean
+        items: { id: TAddress; last_paid: number }[]
+    }>({ isFetching: false, items: [] })
+    const [tasks, setTasks] = useState<{
+        isFetching: boolean
+        items: TTaskListItem[]
+        lastAccountIndex: number
+        hasNext?: boolean
+    }>({ items: [], isFetching: false, lastAccountIndex: 0 })
+
+    const { repository, perPage = 5 } = params
+
+    const getTaskAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+
+        let result: { id: TAddress; last_paid: number }[] = []
+        if (!repository) {
+            result = await _getTaskAccountsDao(dao)
+        } else {
+            result = await _getTaskAccountsRepository(dao, repository)
+        }
+
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: result.sort((a, b) => b.last_paid - a.last_paid),
+        }))
+    }, [dao, repository])
+
+    const _getTaskAccountsDao = async (
+        dao: IGoshDaoAdapter,
+    ): Promise<{ id: TAddress; last_paid: number }[]> => {
+        const gosh = dao.getGosh()
+        const codeHash = await gosh.getTaskTagDaoCodeHash(dao.getAddress(), SYSTEM_TAG)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+        return await executeByChunk(
+            result,
+            MAX_PARALLEL_READ,
+            async ({ id, last_paid }) => {
+                const tag = await gosh.getHelperTag(id)
+                const { _task } = await tag.runLocal('_task', {})
+                return { id: _task, last_paid }
+            },
+        )
+    }
+
+    const _getTaskAccountsRepository = async (
+        dao: IGoshDaoAdapter,
+        repository: string,
+    ): Promise<{ id: TAddress; last_paid: number }[]> => {
+        const codeHash = await dao.getTaskCodeHash(repository)
+        return await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+    }
+
+    const getTaskList = useCallback(
+        async (lastAccountIndex: number) => {
+            if (accounts.isFetching) {
+                return
+            }
+            setTasks((state) => ({ ...state, isFetching: true }))
+            const endAccountIndex = perPage > 0 ? lastAccountIndex + perPage : undefined
+            const items: TTaskListItem[] = await executeByChunk(
+                accounts.items.slice(lastAccountIndex, endAccountIndex),
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const data = await dao.getTask({ address: id })
+                    return { adapter: dao, ...data }
+                },
+            )
+            setTasks((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastAccountIndex: endAccountIndex || accounts.items.length,
+                hasNext: endAccountIndex
+                    ? endAccountIndex < accounts.items.length
+                    : false,
+            }))
+        },
+        [dao, accounts.isFetching, accounts.items, perPage],
+    )
+
+    const getMore = async () => {
+        await getTaskList(tasks.lastAccountIndex)
+    }
+
+    const getItemDetails = async (item: TTaskListItem) => {
+        if (item.isLoadDetailsFired) {
+            return
+        }
+        setTasks((state) => ({
+            ...state,
+            items: state.items.map((curr) => {
+                if (curr.address === item.address) {
+                    return { ...curr, isLoadDetailsFired: true }
+                }
+                return curr
+            }),
+        }))
+        try {
+            const details = await item.adapter.getTask({ address: item.address })
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((curr) => {
+                    if (curr.address === item.address) {
+                        return { ...curr, ...details }
+                    }
+                    return curr
+                }),
+            }))
+        } catch {
+            setTasks((state) => ({
+                ...state,
+                items: state.items.filter((curr) => curr.address !== item.address),
+            }))
+        }
+    }
+
+    /** Get all task accounts */
+    useEffect(() => {
+        getTaskAccounts()
+    }, [getTaskAccounts])
+
+    /** Initial loading */
+    useEffect(() => {
+        getTaskList(0)
+    }, [getTaskList])
+
+    /** Refresh task last (reset `isLoadDetailsFired` flag) */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (accounts.isFetching || tasks.isFetching) {
+                return
+            }
+
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((item) => ({
+                    ...item,
+                    isLoadDetailsFired: false,
+                })),
+            }))
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [accounts.isFetching, tasks.isFetching])
+
+    return {
+        isFetching: accounts.isFetching || tasks.isFetching,
+        isEmpty: !accounts.isFetching && !tasks.isFetching && !tasks.items.length,
+        items: tasks.items,
+        hasNext: tasks.hasNext,
+        getMore,
+        getItemDetails,
     }
 }
 
@@ -587,6 +768,6 @@ export {
     useDaoMemberDelete,
     useDaoMemberSetAllowance,
     useDaoMint,
-    useDaoMintDisable,
-    useDaoEventSettingsManage,
+    useDaoSettingsManage,
+    useTaskList,
 }

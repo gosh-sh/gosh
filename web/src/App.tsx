@@ -189,6 +189,10 @@ const App = () => {
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
                                 <Route path="setup" element={<DaoSetupPage />} />
                             </Route>
+                            <Route path="tasks">
+                                <Route index element={<TasksPage />} />
+                                <Route path="create" element={<TaskCreatePage />} />
+                            </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
@@ -220,10 +224,6 @@ const App = () => {
                             <Route path="build/:branchName" element={<BuildPage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
                             <Route path="upgrade" element={<RepoUpgradePage />} />
-                            <Route path="tasks">
-                                <Route index element={<TasksPage />} />
-                                <Route path="create" element={<TaskCreatePage />} />
-                            </Route>
                         </Route>
                     </Route>
                     <Route path="*" element={<NotFoundPage />} />

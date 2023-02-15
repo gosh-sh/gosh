@@ -1,6 +1,6 @@
 import { Field } from 'formik'
 import { classNames, useTaskList } from 'react-gosh'
-import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../Form'
@@ -14,7 +14,7 @@ import CommitProgress from '../../CommitProgress'
 
 type TCommitFields_1_1_0Props = {
     dao: IGoshDaoAdapter
-    repository: IGoshRepositoryAdapter
+    repository: string
     className?: string
     isSubmitting: boolean
     urlBack?: string
@@ -26,7 +26,7 @@ const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
     const { dao, repository, className, isSubmitting, urlBack, extraButtons, progress } =
         props
     const navigate = useNavigate()
-    const tasks = useTaskList(dao, repository, { perPage: 0 })
+    const tasks = useTaskList(dao, { repository, perPage: 0 })
 
     return (
         <div
@@ -87,10 +87,10 @@ const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
                     </div>
                     <div className="mt-6">
                         <Field
-                            name="reviewers"
+                            name="assigners"
                             component={FormikInput}
-                            label="Code reviewer(s)"
-                            placeholder="Code reviewers"
+                            label="Assigner(s)"
+                            placeholder="Assigners"
                             help="Enter a space after each username"
                             autoComplete="off"
                             disabled={isSubmitting}
@@ -98,10 +98,22 @@ const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
                     </div>
                     <div className="mt-6">
                         <Field
-                            name="manager"
+                            name="reviewers"
                             component={FormikInput}
-                            label="Manager"
-                            placeholder="Manager"
+                            label="Reviewer(s)"
+                            placeholder="Reviewers"
+                            help="Enter a space after each username"
+                            autoComplete="off"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="mt-6">
+                        <Field
+                            name="managers"
+                            component={FormikInput}
+                            label="Manager(s)"
+                            placeholder="Managers"
+                            help="Enter a space after each username"
                             autoComplete="off"
                             disabled={isSubmitting}
                         />

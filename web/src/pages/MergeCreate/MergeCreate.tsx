@@ -30,9 +30,9 @@ const MergeCreatePage = () => {
             const task = values.task
                 ? {
                       task: values.task,
-                      assigners: [],
+                      assigners: values.assigners?.split(' ') || [],
                       reviewers: values.reviewers?.split(' ') || [],
-                      manager: values.manager || '',
+                      managers: values.managers?.split(' ') || [],
                   }
                 : undefined
             await push(title, { message, tags, isPullRequest, deleteSrcBranch, task })

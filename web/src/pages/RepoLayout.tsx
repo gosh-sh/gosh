@@ -3,7 +3,6 @@ import {
     faCodePullRequest,
     faCube,
     faWrench,
-    faListCheck,
     faCodeBranch,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -78,14 +77,6 @@ const RepoLayout = () => {
                     icon: faWrench,
                 },
             )
-
-            if (dao.details.version !== '1.0.0') {
-                tabs.push({
-                    to: `/o/${daoName}/r/${repoName}/tasks`,
-                    title: 'Tasks',
-                    icon: faListCheck,
-                })
-            }
         }
 
         if (!!AppConfig.dockerclient) {

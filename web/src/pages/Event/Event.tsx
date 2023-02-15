@@ -21,12 +21,10 @@ import {
     RepoTaskDeleteEvent,
 } from './components'
 import ReactTooltip from 'react-tooltip'
-import { Button } from '../../components/Form'
-import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
-import { Form, Formik } from 'formik'
 import { DaoEventShowProgressEvent } from './components/DaoEventShowProgressEvent/DaoEventShowProgressEvent'
 import { DaoEventAllowDiscussionEvent } from './components/DaoEventAllowDiscussionEvent/DaoEventAllowDiscussionEvent'
+import { EventReviewForm } from './components/ReviewForm/ReviewForm'
+import { DaoAskMembershipAllowanceEvent } from './components/DaoAskMembershipAllowanceEvent/DaoAskMembershipAllowanceEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -38,16 +36,6 @@ const EventPage = () => {
         const ms = moment(event?.time.finish).diff(moment())
         const delta = moment.duration(ms)
         return `${delta.days()}d ${delta.hours()}h ${delta.minutes()}m`
-    }
-
-    const onReviewApprove = async () => {
-        try {
-            await dao.adapter.addEventReview(event!.address)
-            toast.success('Review accepted. Event details will be updated soon')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
     }
 
     if (isFetching && !event) {
@@ -155,6 +143,10 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION && (
                             <DaoEventAllowDiscussionEvent event={event} />
                         )}
+                        {event.type.kind ===
+                            ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
+                            <DaoAskMembershipAllowanceEvent event={event} />
+                        )}
                     </div>
                 </div>
 
@@ -181,7 +173,7 @@ const EventPage = () => {
                             </div>
                         )}
 
-                    {!!event.reviewers.length && (
+                    {!event.status.completed && !!event.reviewers.length && (
                         <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
                             <h3 className="mb-4 text-xl font-medium">Event review</h3>
                             <div className="text-sm">
@@ -195,19 +187,7 @@ const EventPage = () => {
 
                             {event.reviewers.indexOf(user.username || '') >= 0 && (
                                 <div className="mt-3">
-                                    <Formik initialValues={{}} onSubmit={onReviewApprove}>
-                                        {({ isSubmitting }) => (
-                                            <Form>
-                                                <Button
-                                                    type="submit"
-                                                    isLoading={isSubmitting}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    Approve
-                                                </Button>
-                                            </Form>
-                                        )}
-                                    </Formik>
+                                    <EventReviewForm dao={dao.adapter} event={event} />
                                 </div>
                             )}
                         </div>

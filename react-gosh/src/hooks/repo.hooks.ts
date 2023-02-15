@@ -23,7 +23,6 @@ import {
     TPushProgress,
     TRepositoryListItem,
     TTaskCommitConfig,
-    TTaskListItem,
     TTree,
     TTreeItem,
 } from '../types/repo.types'
@@ -1087,151 +1086,6 @@ function usePullRequestCommit(
     }
 }
 
-function useTaskList(
-    dao: IGoshDaoAdapter,
-    repository: IGoshRepositoryAdapter,
-    params: { perPage?: number },
-) {
-    const [accounts, setAccounts] = useState<{
-        isFetching: boolean
-        items: { id: TAddress; last_paid: number }[]
-    }>({ isFetching: false, items: [] })
-    const [tasks, setTasks] = useState<{
-        isFetching: boolean
-        items: TTaskListItem[]
-        lastAccountIndex: number
-        hasNext?: boolean
-    }>({ items: [], isFetching: false, lastAccountIndex: 0 })
-
-    const { perPage = 5 } = params
-
-    const getTaskAccounts = useCallback(async () => {
-        setAccounts((state) => ({ ...state, isFetching: true }))
-
-        const repoName = await repository.getName()
-        const codeHash = await dao.getTaskCodeHash(repoName)
-        const result = await getAllAccounts({
-            filters: [`code_hash: {eq:"${codeHash}"}`],
-            result: ['last_paid'],
-        })
-
-        setAccounts((state) => ({
-            ...state,
-            isFetching: false,
-            items: result.sort((a, b) => b.last_paid - a.last_paid),
-        }))
-    }, [dao, repository])
-
-    const getTaskList = useCallback(
-        async (lastAccountIndex: number) => {
-            if (!repository || accounts.isFetching) {
-                return
-            }
-
-            setTasks((state) => ({ ...state, isFetching: true }))
-
-            const endAccountIndex = perPage > 0 ? lastAccountIndex + perPage : undefined
-            const items: TTaskListItem[] = await executeByChunk(
-                accounts.items.slice(lastAccountIndex, endAccountIndex),
-                MAX_PARALLEL_READ,
-                async ({ id }) => {
-                    const data = await repository.getTask({ address: id })
-                    return { adapter: repository, ...data }
-                },
-            )
-
-            setTasks((state) => ({
-                ...state,
-                isFetching: false,
-                items: [...state.items, ...items],
-                lastAccountIndex: endAccountIndex || accounts.items.length,
-                hasNext: endAccountIndex
-                    ? endAccountIndex < accounts.items.length
-                    : false,
-            }))
-        },
-        [repository, accounts.isFetching, accounts.items, perPage],
-    )
-
-    const getMore = async () => {
-        await getTaskList(tasks.lastAccountIndex)
-    }
-
-    const getItemDetails = async (item: TTaskListItem) => {
-        if (item.isLoadDetailsFired) {
-            return
-        }
-
-        setTasks((state) => ({
-            ...state,
-            items: state.items.map((curr) => {
-                if (curr.address === item.address) {
-                    return { ...curr, isLoadDetailsFired: true }
-                }
-                return curr
-            }),
-        }))
-
-        try {
-            const details = await item.adapter.getTask({ address: item.address })
-            setTasks((state) => ({
-                ...state,
-                items: state.items.map((curr) => {
-                    if (curr.address === item.address) {
-                        return { ...curr, ...details }
-                    }
-                    return curr
-                }),
-            }))
-        } catch {
-            setTasks((state) => ({
-                ...state,
-                items: state.items.filter((curr) => curr.address !== item.address),
-            }))
-        }
-    }
-
-    /** Get all task accounts */
-    useEffect(() => {
-        getTaskAccounts()
-    }, [getTaskAccounts])
-
-    /** Initial loading */
-    useEffect(() => {
-        getTaskList(0)
-    }, [getTaskList])
-
-    /** Refresh task last (reset `isLoadDetailsFired` flag) */
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (accounts.isFetching || tasks.isFetching) {
-                return
-            }
-
-            setTasks((state) => ({
-                ...state,
-                items: state.items.map((item) => ({
-                    ...item,
-                    isLoadDetailsFired: false,
-                })),
-            }))
-        }, 20000)
-
-        return () => {
-            clearInterval(interval)
-        }
-    }, [accounts.isFetching, tasks.isFetching])
-
-    return {
-        isFetching: accounts.isFetching || tasks.isFetching,
-        isEmpty: !accounts.isFetching && !tasks.isFetching && !tasks.items.length,
-        items: tasks.items,
-        hasNext: tasks.hasNext,
-        getMore,
-        getItemDetails,
-    }
-}
-
 export {
     useRepoList,
     useRepo,
@@ -1246,5 +1100,4 @@ export {
     usePush,
     useMergeRequest,
     usePullRequestCommit,
-    useTaskList,
 }

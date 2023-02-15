@@ -11,8 +11,9 @@ export type TBranchCommitFormValues = {
     tags?: string
     deleteSrcBranch?: boolean
     task?: string
+    assigners?: string
     reviewers?: string
-    manager?: string
+    managers?: string
     isPullRequest?: boolean
 }
 
@@ -48,8 +49,9 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     const getInitialValues = () => {
         const version_1_1_0 = {
             task: '',
+            assigners: '',
             reviewers: '',
-            manager: '',
+            managers: '',
             isPullRequest: false,
         }
         return {
@@ -61,31 +63,9 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     const getValidationSchema = () => {
         const version_1_1_0 = {
             task: yup.string(),
-            reviewers: yup
-                .string()
-                .test(
-                    'check-reviewer',
-                    'Reviewer is required if task was selected',
-                    function (value) {
-                        const { path, createError } = this
-                        if (this.parent.task && !value) {
-                            return createError({ path })
-                        }
-                        return true
-                    },
-                ),
-            manager: yup
-                .string()
-                .test(
-                    'check-manager',
-                    'Manager is required if task was selected',
-                    function (value) {
-                        if (this.parent.task && !value) {
-                            return false
-                        }
-                        return true
-                    },
-                ),
+            assigners: yup.string(),
+            reviewers: yup.string(),
+            managers: yup.string(),
             isPullRequest: yup
                 .boolean()
                 .test(
@@ -118,7 +98,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
                     <Form>
                         <CommitFields
                             dao={dao.adapter}
-                            repository={repository.adapter}
+                            repository={repository.details.name}
                             isSubmitting={isSubmitting}
                             extraButtons={extraButtons}
                             progress={progress}

@@ -2,25 +2,24 @@ import { classNames, useTaskList } from 'react-gosh'
 import { useOutletContext } from 'react-router-dom'
 import { Button, ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
+import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { TaskListItem } from './components'
 
 const TasksPage = () => {
-    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } = useTaskList(
         dao.adapter,
-        repository.adapter,
         { perPage: 5 },
     )
 
     return (
         <div>
             <div className="mb-7 text-right">
-                <ButtonLink
-                    to={`/o/${dao.details.name}/r/${repository.details.name}/tasks/create`}
-                >
-                    Create task
-                </ButtonLink>
+                {dao.details.isAuthMember && (
+                    <ButtonLink to={`/o/${dao.details.name}/tasks/create`}>
+                        Create task
+                    </ButtonLink>
+                )}
             </div>
 
             <div className="border border-gray-e6edff rounded-xl overflow-hidden">
@@ -37,14 +36,7 @@ const TasksPage = () => {
                 <div className="divide-y divide-gray-e6edff">
                     {items.map((item, index) => {
                         getItemDetails(item)
-                        return (
-                            <TaskListItem
-                                key={index}
-                                item={item}
-                                dao={dao.details}
-                                repository={repository.adapter}
-                            />
-                        )
+                        return <TaskListItem key={index} item={item} dao={dao} />
                     })}
                 </div>
 

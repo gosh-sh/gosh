@@ -22,7 +22,6 @@ import {
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
-    ETaskBounty,
     TDaoMember,
     TTaskDetails,
     TRepositoryCreateParams,
@@ -36,7 +35,6 @@ import {
     TDaoMemberCreateParams,
     TDaoMemberDeleteParams,
     TDaoUpgradeParams,
-    TTaskConfirmParams,
     TTaskDeleteParams,
     TTaskCreateParams,
     TDaoVotingTokenAddParams,
@@ -50,6 +48,9 @@ import {
     TRepositoryTagDeleteParams,
     TDaoEventAllowDiscussionParams,
     TDaoEventShowProgressParams,
+    TTaskReceiveBountyParams,
+    TDaoEventSendReviewParams,
+    TDaoAskMembershipAllowanceParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -69,6 +70,7 @@ import {
     IGoshSmvAdapter,
     IGoshSmvLocker,
     IGoshSmvProposal,
+    IGoshHelperTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -281,6 +283,10 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getHelperTag(address: string): Promise<IGoshHelperTag> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -402,6 +408,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isMintOn: false,
             isEventProgressOn: true,
             isEventDiscussionOn: true,
+            isAskMembershipOn: false,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
@@ -500,6 +507,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getSmv(): Promise<IGoshSmvAdapter> {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
@@ -576,6 +587,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async updateAskMembershipAllowance(
+        params: TDaoAskMembershipAllowanceParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async upgrade(params: TDaoUpgradeParams): Promise<void> {
         const { version, description } = params
 
@@ -628,7 +645,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async addEventReview(event: string): Promise<void> {
+    async createTask(params: TTaskCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTask(params: TTaskDeleteParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1086,10 +1115,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
-        throw new Error('Method is unavailable in current version')
-    }
-
     async getUpgrade(commit: string): Promise<TUpgradeData> {
         const object = await this.getCommit({ name: commit })
         if (object.name === ZERO_COMMIT) {
@@ -1529,22 +1554,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             label,
             content,
         })
-    }
-
-    async createTask(params: TTaskCreateParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
-    }
-
-    async confirmTask(params: TTaskConfirmParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
-    }
-
-    async receiveTaskBounty(name: string, type: ETaskBounty): Promise<void> {
-        throw new Error('Method is unavailable in current version')
-    }
-
-    async deleteTask(params: TTaskDeleteParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
     }
 
     async createTag(params: TRepositoryTagCreateParams): Promise<void> {

@@ -13,8 +13,9 @@ export type TBlobDeleteFormValues = {
     message?: string
     tags?: string
     task?: string
+    assigners?: string
     reviewers?: string
-    manager?: string
+    managers?: string
     isPullRequest?: boolean
 }
 
@@ -60,7 +61,8 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
         const version_1_1_0 = {
             task: '',
             reviewers: '',
-            manager: '',
+            assigners: '',
+            managers: '',
             isPullRequest: false,
         }
         return {
@@ -72,31 +74,9 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     const getValidationSchema = () => {
         const version_1_1_0 = {
             task: yup.string(),
-            reviewers: yup
-                .string()
-                .test(
-                    'check-reviewer',
-                    'Reviewer is required if task was selected',
-                    function (value) {
-                        const { path, createError } = this
-                        if (this.parent.task && !value) {
-                            return createError({ path })
-                        }
-                        return true
-                    },
-                ),
-            manager: yup
-                .string()
-                .test(
-                    'check-manager',
-                    'Manager is required if task was selected',
-                    function (value) {
-                        if (this.parent.task && !value) {
-                            return false
-                        }
-                        return true
-                    },
-                ),
+            assigners: yup.string(),
+            reviewers: yup.string(),
+            managers: yup.string(),
             isPullRequest: yup
                 .boolean()
                 .test(
@@ -162,7 +142,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
 
                         <CommitFields
                             dao={dao.adapter}
-                            repository={repository.adapter}
+                            repository={repository.details.name}
                             className="mt-4"
                             isSubmitting={isSubmitting}
                             urlBack={urlBack}

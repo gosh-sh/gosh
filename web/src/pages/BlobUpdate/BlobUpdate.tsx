@@ -24,7 +24,6 @@ const BlobUpdatePage = () => {
 
     const onPush = async (values: TBlobCommitFormValues) => {
         try {
-            console.debug(values)
             const { name, content, title, message, tags, isPullRequest } = values
             const [path] = splitByPath(treepath!)
             const bPath = `${path ? `${path}/` : ''}${name}`
@@ -36,9 +35,9 @@ const BlobUpdatePage = () => {
             const task = values.task
                 ? {
                       task: values.task,
-                      assigners: [],
+                      assigners: values.assigners?.split(' ') || [],
                       reviewers: values.reviewers?.split(' ') || [],
-                      manager: values.manager || '',
+                      managers: values.managers?.split(' ') || [],
                   }
                 : undefined
 

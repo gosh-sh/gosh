@@ -2,6 +2,12 @@ import { KeyPair } from '@eversdk/core'
 import { IGoshDaoAdapter } from '../gosh/interfaces'
 import { TAddress, TEventCreateParams } from './types'
 
+enum ETaskBounty {
+    ASSING = 1,
+    REVIEW = 2,
+    MANAGER = 3,
+}
+
 type TDao = {
     address: TAddress
     name: string
@@ -13,6 +19,7 @@ type TDao = {
     isMintOn: boolean
     isEventProgressOn: boolean
     isEventDiscussionOn: boolean
+    isAskMembershipOn: boolean
     isAuthenticated: boolean
     isAuthOwner: boolean
     isAuthMember: boolean
@@ -27,6 +34,7 @@ type TDaoListItem = Omit<
     | 'isMintOn'
     | 'isEventProgressOn'
     | 'isEventDiscussionOn'
+    | 'isAskMembershipOn'
     | 'isAuthOwner'
     | 'isAuthMember'
     | 'isAuthenticated'
@@ -38,6 +46,7 @@ type TDaoListItem = Omit<
     isMintOn?: boolean
     isEventProgressOn?: boolean
     isEventDiscussionOn?: boolean
+    isAskMembershipOn?: boolean
     isAuthOwner?: boolean
     isAuthMember?: boolean
     isAuthenticated?: boolean
@@ -79,6 +88,44 @@ type TWalletDetails = {
     isDaoOwner: boolean
 }
 
+type TTaskDetails = {
+    address: TAddress
+    name: string
+    repository: string
+    candidates: any[]
+    config: any
+    confirmed: boolean
+    confirmedAt: number
+    tags: string[]
+}
+
+type TTaskListItem = TTaskDetails & {
+    adapter: IGoshDaoAdapter
+    isLoadDetailsFired?: boolean
+}
+
+type TTaskCreateParams = TEventCreateParams & {
+    repository: string
+    name: string
+    config: {
+        assign: { grant: number; lock: number }[]
+        review: { grant: number; lock: number }[]
+        manager: { grant: number; lock: number }[]
+    }
+    tags?: string[]
+}
+
+type TTaskDeleteParams = TEventCreateParams & {
+    repository: string
+    name: string
+}
+
+type TTaskReceiveBountyParams = {
+    repository: string
+    name: string
+    type: ETaskBounty
+}
+
 type TDaoMemberCreateParams = TEventCreateParams & {
     usernames?: string[]
     members?: { username: string; allowance: number; comment: string }[]
@@ -90,6 +137,10 @@ type TDaoMemberDeleteParams = TEventCreateParams & {
 
 type TDaoMemberAllowanceUpdateParams = TEventCreateParams & {
     members: { profile: TAddress; increase: boolean; amount: number }[]
+}
+
+type TDaoAskMembershipAllowanceParams = TEventCreateParams & {
+    decision: boolean
 }
 
 type TDaoUpgradeParams = TEventCreateParams & {
@@ -135,7 +186,13 @@ type TDaoEventAllowDiscussionParams = TEventCreateParams & {
     allow: boolean
 }
 
+type TDaoEventSendReviewParams = {
+    event: TAddress
+    decision: boolean
+}
+
 export {
+    ETaskBounty,
     TDao,
     TDaoListItem,
     TDaoCreateProgress,
@@ -143,9 +200,15 @@ export {
     TDaoMemberDetails,
     TDaoSupplyDetails,
     TWalletDetails,
+    TTaskDetails,
+    TTaskListItem,
+    TTaskCreateParams,
+    TTaskDeleteParams,
+    TTaskReceiveBountyParams,
     TDaoMemberCreateParams,
     TDaoMemberDeleteParams,
     TDaoMemberAllowanceUpdateParams,
+    TDaoAskMembershipAllowanceParams,
     TDaoUpgradeParams,
     TDaoVotingTokenAddParams,
     TDaoRegularTokenAddParams,
@@ -155,4 +218,5 @@ export {
     TDaoTagDeleteParams,
     TDaoEventShowProgressParams,
     TDaoEventAllowDiscussionParams,
+    TDaoEventSendReviewParams,
 }

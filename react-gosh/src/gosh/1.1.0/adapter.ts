@@ -23,7 +23,6 @@ import {
     TSmvEventMinimal,
     TPushBlobData,
     TTaskCommitConfig,
-    ETaskBounty,
     TDaoSupplyDetails,
     TDaoMember,
     TTaskDetails,
@@ -38,7 +37,6 @@ import {
     TDaoMemberCreateParams,
     TDaoMemberDeleteParams,
     TDaoUpgradeParams,
-    TTaskConfirmParams,
     TTaskDeleteParams,
     TTaskCreateParams,
     TDaoVotingTokenAddParams,
@@ -52,6 +50,9 @@ import {
     TRepositoryTagDeleteParams,
     TDaoEventAllowDiscussionParams,
     TDaoEventShowProgressParams,
+    TTaskReceiveBountyParams,
+    TDaoEventSendReviewParams,
+    TDaoAskMembershipAllowanceParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -72,6 +73,7 @@ import {
     IGoshSmvLocker,
     IGoshSmvProposal,
     IGoshTask,
+    IGoshHelperTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -112,6 +114,7 @@ import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
 import { GoshSmvClient } from './goshsmvclient'
 import { GoshTask } from './goshtask'
+import { GoshHelperTag } from './goshhelpertag'
 
 class GoshAdapter_1_1_0 implements IGoshAdapter {
     private static instance: GoshAdapter_1_1_0
@@ -317,6 +320,10 @@ class GoshAdapter_1_1_0 implements IGoshAdapter {
         return hash
     }
 
+    async getHelperTag(address: string): Promise<IGoshHelperTag> {
+        return new GoshHelperTag(this.client, address)
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -431,6 +438,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             '_allow_discussion_on_proposals',
             {},
         )
+        const { _abilityInvite } = await this.dao.runLocal('_abilityInvite', {})
 
         return {
             address: this.dao.address,
@@ -443,6 +451,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isMintOn: _allowMint,
             isEventProgressOn: !_hide_voting_results,
             isEventDiscussionOn: _allow_discussion_on_proposals,
+            isAskMembershipOn: _abilityInvite,
             isAuthenticated: !!this.profile && !!this.wallet,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
@@ -569,6 +578,40 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         )
         const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
         return hash
+    }
+
+    async getTask(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<TTaskDetails> {
+        const task = await this._getTask(options)
+        const { value0, value1, value2, value3, value4 } = await task.runLocal(
+            'getStatus',
+            {},
+        )
+        const repository = await this.getRepository({ address: value1 })
+        const { _hashtag } = await task.runLocal('_hashtag', {}, undefined, {
+            useCachedBoc: true,
+        })
+        const { _locktime } = await task.runLocal('_locktime', {})
+
+        // Clean tags
+        const _systemTagIndex = _hashtag.findIndex((item: string) => item === SYSTEM_TAG)
+        if (_systemTagIndex >= 0) {
+            _hashtag.splice(_systemTagIndex, 1)
+        }
+
+        return {
+            address: task.address,
+            name: value0,
+            repository: await repository.getName(),
+            candidates: value2,
+            config: value3,
+            confirmed: value4,
+            confirmedAt: _locktime,
+            tags: _hashtag,
+        }
     }
 
     async getSmv(): Promise<IGoshSmvAdapter> {
@@ -737,6 +780,26 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             pubaddr: profiles,
             increase,
             grant: amount,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
+    }
+
+    async updateAskMembershipAllowance(
+        params: TDaoAskMembershipAllowanceParams,
+    ): Promise<void> {
+        const { decision, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForSetAbilityInvite', {
+            res: decision,
             comment,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
@@ -971,11 +1034,77 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async addEventReview(event: TAddress): Promise<void> {
+    async createTask(params: TTaskCreateParams): Promise<void> {
+        const {
+            repository,
+            name,
+            config,
+            tags = [],
+            comment = '',
+            reviewers = [],
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        const _reviewers = await this.getReviewers(reviewers)
+        const _task = await this._getTask({ repository, name })
+        if (await _task.isDeployed()) {
+            throw new GoshError('Task already exists', { name })
+        }
+
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForTaskDeploy', {
+            repoName: repository,
+            taskName: name,
+            grant: config,
+            tag: [SYSTEM_TAG, ...tags],
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
+    }
+
+    async receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        const { repository, name, type } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        await this.wallet.run('askGrantToken', {
+            repoName: repository,
+            nametask: name,
+            typegrant: type,
+        })
+    }
+
+    async deleteTask(params: TTaskDeleteParams): Promise<void> {
+        const { repository, name, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForTaskDestroy', {
+            repoName: repository,
+            taskName: name,
+            comment: comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
+    }
+
+    async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
+        const { event, decision } = params
+
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
-        await this.wallet.run('acceptReviewer', { propAddress: event })
+
+        const fn = decision ? 'acceptReviewer' : 'rejectReviewer'
+        await this.wallet.run(fn, { propAddress: event })
     }
 
     async updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void> {
@@ -1072,6 +1201,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return {
             maxWalletsWrite: +value0,
         }
+    }
+
+    private async _getTask(options: {
+        address?: TAddress
+        repository?: string
+        name?: string
+    }): Promise<IGoshTask> {
+        const { repository, name, address } = options
+
+        if (address) {
+            return new GoshTask(this.client, address)
+        }
+        if (!repository || !name) {
+            throw new GoshError(
+                'Either task address or repository and task name should be provided',
+            )
+        }
+        const { value0 } = await this.gosh.gosh.runLocal('getTaskAddr', {
+            dao: await this.getName(),
+            repoName: repository,
+            nametask: name,
+        })
+        return new GoshTask(this.client, value0)
     }
 
     private async _getTags(): Promise<string[]> {
@@ -1549,33 +1701,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
-        const task = await this._getTask(options)
-        const { value0, value1, value2, value3, value4 } = await task.runLocal(
-            'getStatus',
-            {},
-        )
-        const { _hashtag } = await task.runLocal('_hashtag', {})
-        const { _locktime } = await task.runLocal('_locktime', {})
-
-        // Clean tags
-        const _systemTagIndex = _hashtag.findIndex((item: string) => item === SYSTEM_TAG)
-        if (_systemTagIndex >= 0) {
-            _hashtag.splice(_systemTagIndex, 1)
-        }
-
-        return {
-            address: task.address,
-            name: value0,
-            repository: value1,
-            candidates: value2,
-            config: value3,
-            confirmed: value4,
-            confirmedAt: _locktime,
-            tags: _hashtag,
-        }
-    }
-
     async getUpgrade(commit: string): Promise<TUpgradeData> {
         const object = await this.getCommit({ name: commit })
         if (object.name === ZERO_COMMIT) {
@@ -2041,77 +2166,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async createTask(params: TTaskCreateParams): Promise<void> {
-        const { name, config, tags = [], comment = '', reviewers = [] } = params
-
-        if (!this.auth) {
-            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        }
-
-        const _reviewers = await this._getReviewers(reviewers)
-        const task = await this._getTask({ name })
-        if (await task.isDeployed()) {
-            throw new GoshError('Task already exists', { name })
-        }
-
-        const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet0.run('startProposalForTaskDeploy', {
-            repoName: await this.getName(),
-            taskName: name,
-            grant: config,
-            tag: [SYSTEM_TAG, ...tags],
-            comment,
-            reviewers: _reviewers.map(({ wallet }) => wallet),
-            num_clients: smvClientsCount,
-        })
-    }
-
-    async confirmTask(params: TTaskConfirmParams): Promise<void> {
-        const { name, index, comment = '', reviewers = [] } = params
-
-        if (!this.auth) {
-            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        }
-
-        const _reviewers = await this._getReviewers(reviewers)
-        const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet0.run('startProposalForTaskConfirm', {
-            repoName: await this.getName(),
-            taskName: name,
-            index,
-            comment,
-            reviewers: _reviewers.map(({ wallet }) => wallet),
-            num_clients: smvClientsCount,
-        })
-    }
-
-    async receiveTaskBounty(name: string, type: ETaskBounty): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        await this.auth.wallet0.run('askGrantToken', {
-            repoName: await this.getName(),
-            nametask: name,
-            typegrant: type,
-        })
-    }
-
-    async deleteTask(params: TTaskDeleteParams): Promise<void> {
-        const { name, comment = '', reviewers = [] } = params
-
-        if (!this.auth) {
-            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        }
-
-        const _reviewers = await this._getReviewers(reviewers)
-        const smvClientsCount = await this._validateProposalStart()
-        await this.auth.wallet0.run('startProposalForTaskDestroy', {
-            repoName: await this.getName(),
-            taskName: name,
-            comment: comment,
-            reviewers: _reviewers.map(({ wallet }) => wallet),
-            num_clients: smvClientsCount,
-        })
-    }
-
     async createTag(params: TRepositoryTagCreateParams): Promise<void> {
         const { tags, comment = '', reviewers = [] } = params
 
@@ -2180,6 +2234,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         if (address) {
             return new GoshTask(this.client, address)
+        }
+        if (!name) {
+            throw new GoshError('Either task address or name should be provided')
         }
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -2763,7 +2820,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
             pubaddrreview: { [address: string]: boolean }
-            pubaddrmanager: TAddress
+            pubaddrmanager: { [address: string]: boolean }
         },
     ): Promise<void> {
         if (!this.auth) {
@@ -2789,7 +2846,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
             pubaddrreview: { [address: string]: boolean }
-            pubaddrmanager: TAddress
+            pubaddrmanager: { [address: string]: boolean }
         },
     ): Promise<void> {
         if (!this.auth) {
@@ -2821,6 +2878,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {
+        const _getMapping = async (usernames: string[]) => {
+            const clean = usernames.map((item) => item.trim()).filter((item) => !!item)
+            const unique = new Set([...clean])
+            const validated = await this.gosh.isValidProfile(Array.from(unique))
+
+            const map: { [address: string]: boolean } = {}
+            for (const item of validated) {
+                map[item.address] = true
+            }
+            return map
+        }
+
         if (!config) {
             return undefined
         }
@@ -2833,28 +2902,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Task does not exist', { name: config.task })
         }
 
-        const assigners: { [address: string]: boolean } = {}
-        const _assigners = await this.gosh.isValidProfile([
-            ...config.assigners,
-            this.auth.username,
-        ])
-        for (const item of _assigners) {
-            assigners[item.address] = true
-        }
-
-        const reviewers: { [address: string]: boolean } = {}
-        const _reviewers = await this.gosh.isValidProfile([...config.reviewers])
-        for (const item of _reviewers) {
-            reviewers[item.address] = true
-        }
-
-        const manager = await this.gosh.isValidProfile([config.manager])
+        const assigners = await _getMapping([...config.assigners, this.auth.username])
+        const reviewers = await _getMapping(config.reviewers)
+        const managers = await _getMapping(config.managers)
 
         return {
             task: task.address,
             pubaddrassign: assigners,
             pubaddrreview: reviewers,
-            pubaddrmanager: manager[0].address,
+            pubaddrmanager: managers,
         }
     }
 
@@ -3467,7 +3523,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
             fn = 'getNotAllowMintProposalParams'
         } else if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
-            fn = 'getChangeAllowancetProposalParams'
+            fn = 'getChangeAllowanceProposalParams'
         } else if (type === ESmvEventType.REPO_TAG_ADD) {
             fn = 'getGoshRepoTagProposalParams'
         } else if (type === ESmvEventType.REPO_TAG_REMOVE) {
@@ -3478,6 +3534,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getChangeHideVotingResultProposalParams'
         } else if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
             fn = 'getChangeAllowDiscussionProposalParams'
+        } else if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
+            fn = 'getAbilityInviteProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data1, data2 } = await event.runLocal(
                 'getDataFirst',

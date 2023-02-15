@@ -48,6 +48,12 @@ const DaoLayout = () => {
         if (dao.details?.isAuthLimited) {
             tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet' })
         }
+        if (dao.details?.version !== '1.0.0') {
+            tabs.push({
+                to: `/o/${daoName}/tasks`,
+                title: 'Tasks',
+            })
+        }
 
         return tabs
     }

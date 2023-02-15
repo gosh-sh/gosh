@@ -7,12 +7,6 @@ enum EBlobFlag {
     IPFS = 4,
 }
 
-enum ETaskBounty {
-    ASSING = 1,
-    REVIEW = 2,
-    MANAGER = 3,
-}
-
 type TRepository = {
     address: TAddress
     name: string
@@ -135,23 +129,7 @@ type TTaskCommitConfig = {
     task: string
     assigners: string[]
     reviewers: string[]
-    manager: string
-}
-
-type TTaskDetails = {
-    address: TAddress
-    name: string
-    repository: TAddress
-    candidates: any[]
-    config: any
-    confirmed: boolean
-    confirmedAt: number
-    tags: string[]
-}
-
-type TTaskListItem = TTaskDetails & {
-    adapter: IGoshRepositoryAdapter
-    isLoadDetailsFired?: boolean
+    managers: string[]
 }
 
 type TRepositoryCreateParams = TEventCreateParams & {
@@ -180,25 +158,6 @@ type TRepositoryTagDeleteParams = TEventCreateParams & {
     tags: string[]
 }
 
-type TTaskConfirmParams = TEventCreateParams & {
-    name: string
-    index: number
-}
-
-type TTaskDeleteParams = TEventCreateParams & {
-    name: string
-}
-
-type TTaskCreateParams = TEventCreateParams & {
-    name: string
-    config: {
-        assign: { grant: number; lock: number }[]
-        review: { grant: number; lock: number }[]
-        manager: { grant: number; lock: number }[]
-    }
-    tags?: string[]
-}
-
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -209,7 +168,6 @@ interface ITBranchOperateCallback {
 
 export {
     EBlobFlag,
-    ETaskBounty,
     TRepository,
     TRepositoryListItem,
     TTree,
@@ -224,17 +182,12 @@ export {
     TBranchCompareProgress,
     TBranchOperateProgress,
     TTaskCommitConfig,
-    TTaskDetails,
-    TTaskListItem,
     TRepositoryCreateParams,
     TRepositoryCreateResult,
     TRepositoryUpdateDescriptionParams,
     TRepositoryChangeBranchProtectionParams,
     TRepositoryTagCreateParams,
     TRepositoryTagDeleteParams,
-    TTaskConfirmParams,
-    TTaskDeleteParams,
-    TTaskCreateParams,
     IPushCallback,
     ITBranchOperateCallback,
 }

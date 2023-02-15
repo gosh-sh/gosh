@@ -3,7 +3,7 @@ import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
-import { BlobCommitForm } from '../../components/Commit'
+import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 
 const BlobCreatePage = () => {
     const treepath = useParams()['*']
@@ -20,7 +20,7 @@ const BlobCreatePage = () => {
         treepath && `/${treepath}`
     }`
 
-    const onPush = async (values: any) => {
+    const onPush = async (values: TBlobCommitFormValues) => {
         try {
             const { name, content, title, message, tags, isPullRequest } = values
             const blobObject = {
@@ -31,9 +31,9 @@ const BlobCreatePage = () => {
             const task = values.task
                 ? {
                       task: values.task,
-                      assigners: [],
+                      assigners: values.assigners?.split(' ') || [],
                       reviewers: values.reviewers?.split(' ') || [],
-                      manager: values.manager || '',
+                      managers: values.managers?.split(' ') || [],
                   }
                 : undefined
             await push(title, [blobObject], { isPullRequest, message, tags, task })

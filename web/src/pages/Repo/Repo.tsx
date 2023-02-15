@@ -103,7 +103,7 @@ const RepoPage = () => {
                         <Menu.Button as="div">
                             <Button>
                                 <FontAwesomeIcon icon={faCode} />
-                                <span className="hidden sm:inline-block ml-2">Code</span>
+                                <span className="hidden sm:inline-block ml-2">Clone</span>
                                 <FontAwesomeIcon
                                     icon={faChevronDown}
                                     size="xs"
