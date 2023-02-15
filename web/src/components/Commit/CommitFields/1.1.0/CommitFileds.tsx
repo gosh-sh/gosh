@@ -75,9 +75,11 @@ const CommitFields_1_1_0 = (props: TCommitFields_1_1_0Props) => {
                             name="task"
                             component={FormikSelect}
                             label="Select task (optional)"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || tasks.isFetching}
                         >
-                            <option value="">Select task</option>
+                            <option value="">
+                                {tasks.isFetching ? 'Loading...' : 'Select task'}
+                            </option>
                             {tasks.items.map(({ name }, index) => (
                                 <option value={name} key={index}>
                                     {name}

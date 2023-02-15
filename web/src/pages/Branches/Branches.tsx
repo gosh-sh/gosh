@@ -9,7 +9,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { FormikInput, TextField } from '../../components/Formik'
+import { FormikInput } from '../../components/Formik'
 import Spinner from '../../components/Spinner'
 import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
