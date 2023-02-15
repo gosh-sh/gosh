@@ -357,6 +357,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return await this.dao.isDeployed()
     }
 
+    async isRepositoriesUpgraded(): Promise<boolean> {
+        return true
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         if (!(await this.isDeployed())) return
 
@@ -607,6 +611,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             description: description ?? `Upgrade DAO to version ${version}`,
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async setRepositoriesUpgraded(): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async mint(params: TDaoMintTokenParams): Promise<void> {
@@ -2576,11 +2584,16 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return parseInt(m_pseudoDAOBalance)
     }
 
-    async validateProposalStart(): Promise<void> {
-        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+    async validateProposalStart(min?: number): Promise<void> {
+        if (await this._isLockerBusy()) {
+            throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        }
 
+        min = min ?? 20
         const { total } = await this._getLockerBalance()
-        if (total < 20) throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+        if (total < min) {
+            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
+        }
     }
 
     async transferToSmv(amount: number): Promise<void> {

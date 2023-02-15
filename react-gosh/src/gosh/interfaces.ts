@@ -105,6 +105,7 @@ interface IGoshDaoAdapter {
     // End todo
 
     isDeployed(): Promise<boolean>
+    isRepositoriesUpgraded(): Promise<boolean>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 
@@ -143,6 +144,7 @@ interface IGoshDaoAdapter {
     updateAskMembershipAllowance(params: TDaoAskMembershipAllowanceParams): Promise<void>
 
     upgrade(params: TDaoUpgradeParams): Promise<void>
+    setRepositoriesUpgraded(): Promise<void>
 
     mint(params: TDaoMintTokenParams): Promise<void>
     disableMint(params: TDaoMintDisableParams): Promise<void>
@@ -286,7 +288,7 @@ interface IGoshSmvAdapter {
     }): Promise<TSmvEventTime>
     getWalletBalance(wallet: IGoshWallet): Promise<number>
 
-    validateProposalStart(): Promise<void>
+    validateProposalStart(min?: number): Promise<void>
 
     transferToSmv(amount: number): Promise<void>
     transferToWallet(amount: number): Promise<void>

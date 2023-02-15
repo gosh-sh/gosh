@@ -5,7 +5,12 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
+import {
+    executeByChunk,
+    getAllAccounts,
+    getRepositoryAccounts,
+    getTreeItemFullPath,
+} from '../helpers'
 import {
     branchesAtom,
     branchSelector,
@@ -42,37 +47,10 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
     }>({ isFetching: false, items: [], lastAccountIndex: 0 })
 
     const { perPage = 5, version } = params
-    const versions = Object.keys(AppConfig.versions).reverse()
 
-    const getRepositoryAccounts = useCallback(async () => {
+    const getAccounts = useCallback(async () => {
         setAccounts((state) => ({ ...state, isFetching: true }))
-
-        const items: { address: TAddress; last_paid: number; version: string }[] = []
-        for (const ver of versions) {
-            if (version && ver !== version) {
-                continue
-            }
-
-            const gosh = GoshAdapterFactory.create(ver)
-            const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
-            if (!(await daoAdapter.isDeployed())) {
-                continue
-            }
-
-            const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
-            const result = await getAllAccounts({
-                filters: [`code_hash: {eq:"${codeHash}"}`],
-                result: ['last_paid'],
-            })
-            items.push(
-                ...result.map(({ id, last_paid }) => ({
-                    address: id,
-                    last_paid,
-                    version: ver,
-                })),
-            )
-        }
-
+        const items = await getRepositoryAccounts(dao, { version })
         setAccounts((state) => ({
             ...state,
             isFetching: false,
@@ -95,10 +73,6 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
                 const account = accounts.items[i]
                 const gosh = GoshAdapterFactory.create(account.version)
                 const repository = await gosh.getRepository({ address: account.address })
-                if (!(await repository.isDeployed())) {
-                    continue
-                }
-
                 const name = await repository.getName()
                 if (_names.findIndex((n) => n === name) >= 0) {
                     continue
@@ -168,8 +142,8 @@ function useRepoList(dao: string, params: { perPage?: number; version?: string }
 
     /** Get all repositories accounts from all GOSH versions */
     useEffect(() => {
-        getRepositoryAccounts()
-    }, [getRepositoryAccounts])
+        getAccounts()
+    }, [getAccounts])
 
     /** Get repositories list per page */
     useEffect(() => {

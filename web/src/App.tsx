@@ -48,6 +48,7 @@ import { NetworkQueriesProtocol } from '@eversdk/core'
 import DaoSetupPage from './pages/DaoSetup/DaoSetup'
 import TaskCreatePage from './pages/TaskCreate'
 import TasksPage from './pages/Tasks'
+import ReposUpgradePage from './pages/ReposUpgrade/ReposUpgrade'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -177,6 +178,7 @@ const App = () => {
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<DaoReposPage />} />
                             <Route path="repos/create" element={<RepoCreatePage />} />
+                            <Route path="repos/upgrade" element={<ReposUpgradePage />} />
                             <Route path="events" element={<EventsPage />} />
                             <Route path="events/:eventAddr" element={<EventPage />} />
                             <Route path="members" element={<DaoMembersPage />} />

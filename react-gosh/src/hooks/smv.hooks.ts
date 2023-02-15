@@ -34,7 +34,15 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
         }
 
         _getSmvDetails()
-        const interval = setInterval(async () => await _getSmvDetails(), 10000)
+
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await _getSmvDetails()
+                _intervalLock = false
+            }
+        }, 10000)
 
         return () => {
             clearInterval(interval)
@@ -310,8 +318,12 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
         }
 
         _getEvent()
+
+        let _intervalLock = false
         const interval = setInterval(async () => {
-            if (adapter) {
+            if (adapter && !_intervalLock) {
+                _intervalLock = true
+
                 const status = await adapter.getEventStatus({ address })
                 const time = await adapter.getEventTime({ address })
                 const votes = await adapter.getEventVotes({ address })
@@ -322,6 +334,8 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
                         ? { ...state.item, status, time, votes, reviewers }
                         : state.item,
                 }))
+
+                _intervalLock = false
                 if (status.completed) {
                     clearInterval(interval)
                 }

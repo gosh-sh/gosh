@@ -74,8 +74,7 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const _checkUpgrades = async () => {
-            console.debug('Check DAO upgrades')
-            if (!isReady || !dao.adapter) {
+            if (!isReady || !dao.adapter || !dao.details?.isAuthMember) {
                 return
             }
 
@@ -83,7 +82,10 @@ const DaoLayout = () => {
             const latest = Object.keys(AppConfig.versions).reverse()[0]
             if (dao.adapter.getVersion() !== latest) {
                 const gosh = GoshAdapterFactory.createLatest()
-                const newest = await gosh.getDao({ name: daoName, useAuth: false })
+                const newest = await gosh.getDao({
+                    name: dao.details.name,
+                    useAuth: false,
+                })
                 if (await newest.isDeployed()) {
                     setUpgrades('isNotLatest')
                 } else {
@@ -92,18 +94,31 @@ const DaoLayout = () => {
                 return
             }
 
-            // TODO: Check repositories upgraded flag
+            // Check repositories upgraded flag
+            if (!(await dao.adapter.isRepositoriesUpgraded())) {
+                setUpgrades('isRepoUpgradeNeeded')
+                return
+            }
+
+            // Reset upgrades message
             setUpgrades(undefined)
         }
 
-        // TODO: Turn on when ready
-        // _checkUpgrades()
-        // const interval = setInterval(_checkUpgrades, 15000)
+        _checkUpgrades()
 
-        // return () => {
-        //     clearInterval(interval)
-        // }
-    }, [isReady, dao.adapter])
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await _checkUpgrades()
+                _intervalLock = false
+            }
+        }, 15000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [isReady, dao.adapter, dao.details?.name, dao.details?.isAuthMember])
 
     return (
         <SideMenuContainer>
@@ -187,6 +202,20 @@ const DaoLayout = () => {
                                     <Link
                                         className="underline"
                                         to={`/o/${daoName}/settings/upgrade`}
+                                    >
+                                        upgrade
+                                    </Link>{' '}
+                                    page
+                                </>
+                            )}
+                            {upgrades === 'isRepoUpgradeNeeded' && (
+                                <>
+                                    DAO repositories should be upgraded.
+                                    <br />
+                                    Go to the{' '}
+                                    <Link
+                                        className="underline"
+                                        to={`/o/${daoName}/repos/upgrade`}
                                     >
                                         upgrade
                                     </Link>{' '}

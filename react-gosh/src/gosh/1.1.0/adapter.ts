@@ -391,6 +391,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return await this.dao.isDeployed()
     }
 
+    async isRepositoriesUpgraded(): Promise<boolean> {
+        const { _isRepoUpgraded } = await this.dao.runLocal('_isRepoUpgraded', {})
+        return _isRepoUpgraded
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         if (!(await this.isDeployed())) {
             return
@@ -823,6 +828,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async setRepositoriesUpgraded(): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        await this.wallet.run('setRepoUpgraded', { res: true })
     }
 
     async mint(params: TDaoMintTokenParams): Promise<void> {
@@ -3390,14 +3402,15 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return parseInt(m_pseudoDAOBalance)
     }
 
-    async validateProposalStart(): Promise<void> {
+    async validateProposalStart(min?: number): Promise<void> {
         if (await this._isLockerBusy()) {
             throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
         }
 
+        min = min ?? 20
         const { total } = await this._getLockerBalance()
-        if (total < 20) {
-            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+        if (total < min) {
+            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
         }
     }
 

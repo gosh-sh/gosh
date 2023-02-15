@@ -180,7 +180,15 @@ function useDao(name: string) {
     }, [name])
 
     useEffect(() => {
-        const interval = setInterval(updateDetails, 10000)
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await updateDetails()
+                _intervalLock = false
+            }
+        }, 10000)
+
         return () => {
             clearInterval(interval)
         }
@@ -454,7 +462,14 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
     /** Refresh members list */
     useEffect(() => {
-        const interval = setInterval(_getMemberList, 30000)
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await _getMemberList()
+                _intervalLock = false
+            }
+        }, 30000)
 
         return () => {
             clearInterval(interval)

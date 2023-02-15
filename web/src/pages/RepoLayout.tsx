@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import {
     faCodePullRequest,
     faCube,
-    faWrench,
     faCodeBranch,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -65,18 +64,11 @@ const RepoLayout = () => {
         ]
 
         if (dao.details?.isAuthMember) {
-            tabs.push(
-                {
-                    to: `/o/${daoName}/r/${repoName}/merge`,
-                    title: 'Merge',
-                    icon: faCodePullRequest,
-                },
-                {
-                    to: `/o/${daoName}/r/${repoName}/upgrade`,
-                    title: 'Upgrade',
-                    icon: faWrench,
-                },
-            )
+            tabs.push({
+                to: `/o/${daoName}/r/${repoName}/merge`,
+                title: 'Merge',
+                icon: faCodePullRequest,
+            })
         }
 
         if (!!AppConfig.dockerclient) {
