@@ -52,9 +52,6 @@ wget --content-disposition --no-cookie -q --header "Accept: application/octet-st
 # unpack
 tar -xf $TAR
 rm -f $TAR
-########## DELETE THIS
-cp linux-amd64/git-remote-gosh ./
-cp linux-amd64/git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} ./
 
 # make executable 
 chmod +x git-remote-gosh
