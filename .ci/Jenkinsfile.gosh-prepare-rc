@@ -112,7 +112,7 @@ pipeline {
                                 az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path ./linux-arm64
                                 az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path ./darwin-arm64
 
-                                tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 git $(ls -A linux-amd64)
+                                tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
                                 tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
                                 tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
                                 tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)
