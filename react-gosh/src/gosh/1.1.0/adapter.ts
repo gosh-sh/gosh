@@ -53,6 +53,8 @@ import {
     TTaskReceiveBountyParams,
     TDaoEventSendReviewParams,
     TDaoAskMembershipAllowanceParams,
+    TTopic,
+    TTopicCreateParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -74,6 +76,7 @@ import {
     IGoshSmvProposal,
     IGoshTask,
     IGoshHelperTag,
+    IGoshTopic,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -115,6 +118,7 @@ import { GoshSmvProposal } from './goshsmvproposal'
 import { GoshSmvClient } from './goshsmvclient'
 import { GoshTask } from './goshtask'
 import { GoshHelperTag } from './goshhelpertag'
+import { GoshTopic } from './goshtopic'
 
 class GoshAdapter_1_1_0 implements IGoshAdapter {
     private static instance: GoshAdapter_1_1_0
@@ -616,6 +620,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             confirmed: value4,
             confirmedAt: _locktime,
             tags: _hashtag,
+        }
+    }
+
+    async getTopicCodeHash(): Promise<string> {
+        const { value0 } = await this.gosh.gosh.runLocal(
+            'getTopicCode',
+            { dao: this.dao.address },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getTopic(params: { address?: string }): Promise<TTopic> {
+        const topic = await this._getTopic(params)
+        const { value0, value1, value2 } = await topic.runLocal(
+            'getObject',
+            {},
+            undefined,
+            { useCachedBoc: true },
+        )
+        return {
+            address: topic.address,
+            name: value0,
+            content: value1,
+            object: value2,
         }
     }
 
@@ -1157,6 +1188,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
+    async createTopic(params: TTopicCreateParams): Promise<void> {
+        const { name, content, object } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        await this.wallet.run('deployTopic', { name, content, object })
+    }
+
     private async _isAuthMember(): Promise<boolean> {
         if (!this.profile) return false
 
@@ -1236,6 +1277,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             nametask: name,
         })
         return new GoshTask(this.client, value0)
+    }
+
+    private async _getTopic(params: { address?: TAddress }): Promise<IGoshTopic> {
+        const { address } = params
+        if (address) {
+            return new GoshTopic(this.client, address)
+        }
+        throw new GoshError('Topic address should be provided')
     }
 
     private async _getTags(): Promise<string[]> {

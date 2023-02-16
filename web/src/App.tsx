@@ -49,6 +49,8 @@ import DaoSetupPage from './pages/DaoSetup/DaoSetup'
 import TaskCreatePage from './pages/TaskCreate'
 import TasksPage from './pages/Tasks'
 import ReposUpgradePage from './pages/ReposUpgrade/ReposUpgrade'
+import TopicsPage from './pages/Topics'
+import TopicCreatePage from './pages/TopicCreate'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -194,6 +196,10 @@ const App = () => {
                             <Route path="tasks">
                                 <Route index element={<TasksPage />} />
                                 <Route path="create" element={<TaskCreatePage />} />
+                            </Route>
+                            <Route path="topics">
+                                <Route index element={<TopicsPage />} />
+                                <Route path="create" element={<TopicCreatePage />} />
                             </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>

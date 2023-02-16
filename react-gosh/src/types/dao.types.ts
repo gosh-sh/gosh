@@ -191,6 +191,19 @@ type TDaoEventSendReviewParams = {
     decision: boolean
 }
 
+type TTopic = {
+    address: TAddress
+    name: string
+    content: string
+    object: TAddress
+}
+
+type TTopicCreateParams = {
+    name: string
+    content: string
+    object: TAddress
+}
+
 export {
     ETaskBounty,
     TDao,
@@ -219,4 +232,6 @@ export {
     TDaoEventShowProgressParams,
     TDaoEventAllowDiscussionParams,
     TDaoEventSendReviewParams,
+    TTopic,
+    TTopicCreateParams,
 }
