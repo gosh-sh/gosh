@@ -2,7 +2,9 @@ use super::{
     branch::DeployBranch,
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
+    get_contracts_blocks,
     snapshot::save::{DeployDiff, DeployNewSnapshot},
+    tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
     BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
@@ -10,6 +12,7 @@ use super::{
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 #[async_trait]
@@ -35,6 +38,15 @@ pub trait BlockchainCommitService {
 }
 
 #[async_trait]
+pub trait BlockchainReadContractRawDataService {
+    async fn get_contracts_state_raw_data(
+        &self,
+        addresses: &[BlockchainContractAddress],
+        allow_incomplete_results: bool,
+    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
+}
+
+#[async_trait]
 pub trait BlockchainService:
     Debug
     + Clone
@@ -45,11 +57,13 @@ pub trait BlockchainService:
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
+    + BlockchainReadContractRawDataService
     // TODO: fix naming later
     + DeployBranch
     + DeployTree
     + DeployDiff
     + DeployNewSnapshot
+    + Tagging
 {
     fn client(&self) -> &EverClient;
     fn root_contract(&self) -> &GoshContract;
@@ -58,32 +72,36 @@ pub trait BlockchainService:
 
 #[async_trait]
 impl BlockchainBranchesService for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn is_branch_protected(
         &self,
         repository_address: &BlockchainContractAddress,
         branch_name: &str,
     ) -> anyhow::Result<bool> {
+        tracing::trace!("is_branch_protected: repository_address={repository_address}, branch_name={branch_name}");
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
 
         let params = serde_json::json!({ "branch": branch_name });
         let result: GetBoolResult = contract
             .read_state(self.client(), "isBranchProtected", Some(params))
             .await?;
+        tracing::trace!("is_branch_protected result: {:?}", result);
         Ok(result.is_ok)
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn remote_rev_parse(
         &self,
         repository_address: &BlockchainContractAddress,
         rev: &str,
     ) -> anyhow::Result<Option<(BlockchainContractAddress, String)>> {
+        tracing::trace!("remote_rev_parse: repository_address={repository_address}, rev={rev}");
         let contract = GoshContract::new(repository_address, gosh_abi::REPO);
         let args = serde_json::json!({ "name": rev });
         let result: GetAddrBranchResult = contract
             .read_state(self.client(), "getAddrBranch", Some(args))
             .await?;
+        tracing::trace!("remote_rev_parse result: {:?}", result);
         if result.branch.branch_name.is_empty() {
             Ok(None)
         } else {
@@ -94,12 +112,25 @@ impl BlockchainBranchesService for Everscale {
 
 #[async_trait]
 impl BlockchainCommitService for Everscale {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn get_commit_by_addr(
         &self,
         address: &BlockchainContractAddress,
     ) -> anyhow::Result<Option<GoshCommit>> {
+        tracing::trace!("get_commit_by_addr: address={address}");
         Ok(Some(GoshCommit::load(self.client(), address).await?))
+    }
+}
+
+#[async_trait]
+impl BlockchainReadContractRawDataService for Everscale {
+    #[instrument(level = "info", skip_all)]
+    async fn get_contracts_state_raw_data(
+        &self,
+        addresses: &[BlockchainContractAddress],
+        allow_incomplete_results: bool,
+    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+        get_contracts_blocks(self.client(), addresses, allow_incomplete_results).await
     }
 }
 
@@ -145,9 +176,10 @@ pub mod tests {
             // empty
         }
 
-        impl Clone for Everscale {
-            fn clone(&self) -> Self;
-        }
+        // For unknown reason test fails with such clone, need to implement it separately
+        // impl Clone for Everscale {
+        //     fn clone(&self) -> Self;
+        // }
 
         #[async_trait]
         impl DeployBranch for Everscale {
@@ -196,6 +228,26 @@ pub mod tests {
                 commit_id: String,
                 file_path: String,
                 content: String,
+            ) -> anyhow::Result<()>;
+        }
+
+        #[async_trait]
+        impl Tagging for Everscale {
+            async fn deploy_tag(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                tag_name: String,
+                commit_id: String,
+                content: String,
+                commit_address: BlockchainContractAddress,
+            ) -> anyhow::Result<()>;
+
+            async fn delete_tag(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                tag_name: String,
             ) -> anyhow::Result<()>;
         }
 
@@ -260,6 +312,19 @@ pub mod tests {
             fn client(&self) -> &EverClient;
             fn root_contract(&self) -> &GoshContract;
             fn repo_contract(&self) -> &GoshContract;
+        }
+        #[async_trait]
+        impl BlockchainReadContractRawDataService for Everscale {
+            async fn get_contracts_state_raw_data(
+                &self,
+                addresses: &[BlockchainContractAddress],
+                allow_incomplete_results: bool
+            ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
+        }
+    }
+    impl Clone for MockEverscale {
+        fn clone(&self) -> Self {
+            Self::new()
         }
     }
 }

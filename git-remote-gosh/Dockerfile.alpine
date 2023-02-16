@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4.2
+# syntax=docker/dockerfile:1.5
 
 # FROM alpine:edge
 # RUN apk add git curl
@@ -9,7 +9,7 @@
 
 # Base builder ---------------------------
 # FROM --platform=$BUILDPLATFORM rust:1.62-bullseye as rust-builder
-FROM --platform=$BUILDPLATFORM rust:1.62-alpine as rust-builder
+FROM --platform=$BUILDPLATFORM rust:1.66-alpine as rust-builder
 
 WORKDIR /build
 

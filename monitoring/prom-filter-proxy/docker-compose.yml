@@ -1,0 +1,23 @@
+version: '2.2'
+
+services:
+
+  gosh-prom-filter-proxy:
+    image: abhinavsingh/proxy.py:v2.4.4
+    container_name: gosh-prom-filter-proxy
+    restart: "unless-stopped"
+    expose: [8899]
+    volumes:
+      - "./config:/config:ro"
+      - "../public-grafana/grafana/provisioning/dashboards/gosh:/dashboards:ro"
+    networks: {gosh-monitoring: {}, gosh-public-grafana: {}}
+    environment: {PYTHONPATH: '/config'}
+    entrypoint: ['proxy','--hostname','0.0.0.0','--plugins','filter.FilterPlugin','--log-level','warning']
+
+networks:
+  gosh-monitoring:
+    external:
+      name: gosh-monitoring
+  gosh-public-grafana:
+    external:
+      name: gosh-public-grafana

@@ -14,33 +14,38 @@ import {
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
 import Spinner from '../../components/Spinner'
-import { AppConfig, splitByPath, useBranches, useTree } from 'react-gosh'
+import { AppConfig, classNames, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
 import RepoReadme from './Readme'
+import { onExternalLinkClick } from '../../helpers'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
-    const { daoName, repoName, branchName = 'main' } = useParams()
+    const { daoName, repoName, branchName } = useParams()
     const navigate = useNavigate()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branches, branch, updateBranch } = useBranches(repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
     const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
 
     const [dirUp] = splitByPath(treepath)
 
     const getRemoteUrl = (short: boolean): string => {
-        const goshAddress = AppConfig.versions[repo.getVersion()]
+        const goshAddress = AppConfig.versions[repository.details.version]
         const goshstr = short ? shortString(goshAddress) : goshAddress
         return `gosh://${goshstr}/${daoName}/${repoName}`
     }
 
     useEffect(() => {
-        updateBranch(branchName)
-    }, [branchName, updateBranch])
+        if (!branchName) {
+            navigate(`/o/${daoName}/r/${repoName}/tree/${repository.details.head}`)
+        } else {
+            updateBranch(branchName)
+        }
+    }, [daoName, repoName, branchName, repository.details.head, navigate, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -116,7 +121,7 @@ const RepoPage = () => {
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                         >
-                            <Menu.Items className="dropdown-menu !py-4 max-w-264px sm:max-w-none">
+                            <Menu.Items className="dropdown-menu !bg-white !py-4 max-w-264px sm:max-w-none">
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">
                                         <FontAwesomeIcon
@@ -125,22 +130,49 @@ const RepoPage = () => {
                                         />
                                         Clone
                                     </h3>
-                                    <div
-                                        className="flex border border-gray-0a1124/65 rounded
-                                        items-center text-gray-0a1124/65"
-                                    >
-                                        <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
-                                            {getRemoteUrl(true)}
+                                    <div>
+                                        <div
+                                            className={classNames(
+                                                'flex items-center',
+                                                'border border-gray-0a1124/65 rounded',
+                                                'text-gray-0a1124/65',
+                                            )}
+                                        >
+                                            <div
+                                                className={classNames(
+                                                    'overflow-hidden whitespace-nowrap',
+                                                    'text-xs font-mono px-3 py-1',
+                                                )}
+                                            >
+                                                {getRemoteUrl(true)}
+                                            </div>
+                                            <CopyClipboard
+                                                componentProps={{
+                                                    text: getRemoteUrl(false),
+                                                }}
+                                                iconContainerClassName={classNames(
+                                                    'px-2 border-l border-gray-0a1124',
+                                                    'hover:text-gray-0a1124',
+                                                )}
+                                                iconProps={{ size: 'sm' }}
+                                            />
                                         </div>
-                                        <CopyClipboard
-                                            componentProps={{
-                                                text: getRemoteUrl(false),
-                                            }}
-                                            iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
-                                            iconProps={{
-                                                size: 'sm',
-                                            }}
-                                        />
+
+                                        <div className="mt-3 text-right text-xs text-gray-7c8db5">
+                                            <a
+                                                href="https://docs.gosh.sh/working-with-gosh/git-remote-helper/"
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => {
+                                                    onExternalLinkClick(
+                                                        e,
+                                                        'https://docs.gosh.sh/working-with-gosh/git-remote-helper/',
+                                                    )
+                                                }}
+                                            >
+                                                How to setup git remote helper?
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </Menu.Items>

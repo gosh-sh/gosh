@@ -8,6 +8,7 @@ import ToastError from '../../components/Error/ToastError'
 import { useEffect, useState } from 'react'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
+import { onExternalLinkClick } from '../../helpers'
 
 const SigninPage = () => {
     const navigate = useNavigate()
@@ -16,9 +17,10 @@ const SigninPage = () => {
     const [step, setStep] = useState<{ name: string; data: any }>()
     const [setupPin, setSetupPin] = useState<string>()
 
-    const onPhraseSubmit = async (values: { phrase: string }) => {
+    const onPhraseSubmit = async (values: { words: string[] }) => {
         try {
-            const { phrase } = values
+            const { words } = values
+            const phrase = words.join(' ')
             const profiles = await signinProfiles(phrase)
             if (profiles.length > 1) {
                 setStep({
@@ -71,7 +73,28 @@ const SigninPage = () => {
                 Sign in to Gosh
             </h1>
 
-            {!step && <SigninPhraseForm onSubmit={onPhraseSubmit} />}
+            {!step && (
+                <>
+                    <SigninPhraseForm onSubmit={onPhraseSubmit} />
+                    {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
+                        <div className="text-center mt-8">
+                            <p className="text-lg font-medium">Don't have an account?</p>
+                            <p>
+                                Register at
+                                <a
+                                    href="https://app.gosh.sh/"
+                                    className="ml-1 text-blue-1e7aec underline"
+                                    onClick={(e) => {
+                                        onExternalLinkClick(e, 'https://app.gosh.sh/')
+                                    }}
+                                >
+                                    app.gosh.sh
+                                </a>
+                            </p>
+                        </div>
+                    )}
+                </>
+            )}
             {step?.name === 'ProfileRequired' && (
                 <SigninProfileForm
                     profiles={step.data.profiles}

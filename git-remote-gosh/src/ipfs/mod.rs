@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use std::{path::Path, time::Duration};
 use tokio::fs::File;
 use tokio_retry::strategy::ExponentialBackoff;
+use tracing::Instrument;
 
 type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 
@@ -47,7 +48,7 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
 
     let http_client = reqwest_middleware::ClientBuilder::new(reqwest::Client::builder().build()?)
         .with_init(reqwest_middleware::Extension(OtelName(
-            "gosh_reqwest".into(),
+            "ipfs_reqwest".into(),
         )))
         .with(TracingMiddleware::default())
         .build();
@@ -58,21 +59,6 @@ pub fn build_ipfs(endpoint: &str) -> anyhow::Result<IpfsService> {
 }
 
 impl IpfsService<MiddlewareHttpClient> {
-    /// Creates a new [`IpfsService`].
-    /// # Panics
-    ///
-    /// This method panics if a TLS backend cannot be initialized, or the resolver
-    /// cannot load the system configuration.
-    ///
-    /// Use [`build_ipfs()`] if you wish to handle the failure as an `Error`
-    /// instead of panicking.
-    pub fn new(ipfs_endpoint_address: &str) -> Self {
-        Self {
-            ipfs_endpoint_address: ipfs_endpoint_address.to_owned(),
-            http_client: reqwest_middleware::ClientBuilder::new(reqwest::Client::new()).build(),
-        }
-    }
-
     fn retry_strategy(&self) -> impl Iterator<Item = Duration> {
         // TODO: parametrize the retry strategy via builder and take from self
         ExponentialBackoff::from_millis(100)
@@ -85,7 +71,7 @@ impl IpfsService<MiddlewareHttpClient> {
             .take(MAX_RETRIES)
     }
 
-    #[instrument(level = "debug", skip(cli, url, body))]
+    #[instrument(level = "info", skip_all)]
     async fn save_body<U, B>(cli: &MiddlewareHttpClient, url: U, body: B) -> anyhow::Result<String>
     where
         U: reqwest::IntoUrl,
@@ -98,23 +84,25 @@ impl IpfsService<MiddlewareHttpClient> {
         Ok(response_body.hash)
     }
 
-    #[instrument(level = "debug", skip(cli, blob))]
+    #[instrument(level = "info", skip_all)]
     async fn save_blob_retriable(
         cli: &MiddlewareHttpClient,
         url: &str,
         blob: &[u8],
     ) -> anyhow::Result<String> {
+        tracing::trace!("save_blob_retriable: url={url}");
         // TODO: to_owned is not really necessary since reqwest doesn't modify body
         // so may be there's more clever way to not to copy blob
         IpfsService::save_body(cli, url, blob.to_owned()).await
     }
 
-    #[instrument(level = "debug", skip(cli, path))]
+    #[instrument(level = "info", skip_all)]
     async fn save_file_retriable(
         cli: &MiddlewareHttpClient,
         url: &str,
         path: impl AsRef<Path>,
     ) -> anyhow::Result<String> {
+        tracing::trace!("save_file_retriable: url={url}");
         // in case of file upload usually you want to store metadata, but:
         // 1) reqwest async has no support for file
         // 2) we actually don't need it since we don't want to store metadata for a file in IPFS
@@ -123,12 +111,15 @@ impl IpfsService<MiddlewareHttpClient> {
         IpfsService::save_body(cli, url, body).await
     }
 
-    #[instrument(level = "debug", skip(cli))]
+    #[instrument(level = "info", skip_all)]
     async fn load_retriable(cli: &MiddlewareHttpClient, url: &str) -> anyhow::Result<Vec<u8>> {
         tracing::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;
         tracing::info!("Got response: {:?}", response);
-        let response_body = response.bytes().await?;
+        let response_body = response
+            .bytes()
+            .instrument(info_span!("decode_response").or_current())
+            .await?;
         Ok(Vec::from(&response_body[..]))
     }
 }

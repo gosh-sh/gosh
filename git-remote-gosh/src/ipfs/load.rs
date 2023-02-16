@@ -5,8 +5,9 @@ use tokio_retry::Retry;
 
 #[async_trait]
 impl FileLoad for IpfsService {
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn load(&self, cid: &str) -> anyhow::Result<Vec<u8>> {
+        tracing::trace!("load: cid={cid}");
         let url = format!("{}/ipfs/{cid}", self.ipfs_endpoint_address);
 
         Retry::spawn(self.retry_strategy(), || async {

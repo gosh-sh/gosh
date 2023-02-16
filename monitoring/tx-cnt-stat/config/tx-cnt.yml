@@ -7,20 +7,34 @@ libtimeout:  10000
 networks:
   gosh: "network.gosh.sh"
 # test: "vps23.ton.dev"
-  test: "n01.fld.dapp.tonlabs.io"
 
 values:
-  - 31000
-  - 15
-  - 20
-  - 17
-  - 16
-  - 2
-  - 1.4
-  - 1.6
-  - 6
-  - 1.3
-  - 18
-  - 60
-  - ^31000
-  - ^60
+  - 31000   # OLD: DAO - not works
+  - 15      # Repository
+  - 20      # Commit
+  - 17      # Diff
+  - 16      # OLD: Snapshot
+  - 2       # OLD: Copy snapshot
+  - 1.4     # Branch
+  - 1.6     # ~Branch
+  - 6       # Tag
+  - 1.3     # ~Tag
+  - 18      # Tree
+  - 60      # OLD: Wallet - not works
+  - ^31000  # OLD: DAO
+  - ^60     # OLD: Wallet
+  - 50000   # NEW: DAO
+  - ^50000  # NEW: DAO
+  - 50      # NEW: Snapshot
+  - 1000    # NEW: Wallet
+  - ^1000   # NEW: Wallet
+  - 10000   # NEW: Profile
+  - ^10000  # NEW: Profile
+  - 51      # NEW: System contract
+  - 101     # NEW: DAO Profile
+  - 3       # NEW: Profile index
+  - ^15     # Fuzzy repository
+
+codehash:
+  daoprof-1.0.0: e8db13dc741fc56436bde38dea431bf19a47862e8a4b3c73960e6fe366dc3593
+  userprof-1.0.0: 9e00741a1666c01026e3c94955a708480c39950b815ebe4c8a998fde7ffb7cf5

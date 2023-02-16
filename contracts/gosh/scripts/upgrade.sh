@@ -5,41 +5,37 @@ set -e
 set -o pipefail
 
 ### Set during docker run. See Makefile and README.
-#NETWORK
-#GIVER_WALLET_ADDR
-#VERSIONCONTROLLER_ADDR
-
-echo $NETWORK
-echo $GIVER_WALLET_ADDR
-echo $VERSIONCONTROLLER_ADDR
+## -- empty --
 
 # envs
-SIGNER="GOSHSigner" # will be created automatically
-WALLET_SIGNER="GiverWalletSigner" # will be created automatically
+SIGNER="__gosh" # will be created automatically
+GIVER_SIGNER="__giver" # will be created automatically
 GOSH_PATH="../../gosh"
 SMV_PATH="../../smv"
 VERSIONCONTROLLER_ABI="$GOSH_PATH/versioncontroller.abi.json"
 SYSTEMCONTRACT_ABI="$GOSH_PATH/systemcontract.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
-GIVER_WALLET_KEYS_PATH=/tmp/giver.keys.json
 
 GOSH_BALANCE=400000000000000
 
 GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
-echo $GOSH_VERSION
+echo "========== Gosh version: $GOSH_VERSION"
 export GOSH_VERSION=$GOSH_VERSION
 
-# Upload GOSH keys
-echo "========== Get keys for VersionController"
-seed=`cat $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
-everdev signer add $SIGNER "$seed"
-
+# Set network
+NETWORK=`cat /tmp/Giver.network`
 everdev network add $NETWORK $NETWORK
+echo "========== Network: $NETWORK"
 
-# Prepare GIVER_WALLET
-curl https://raw.githubusercontent.com/tonlabs/ton-labs-contracts/master/solidity/safemultisig/SafeMultisigWallet.abi.json -O -s
-GIVER_WALLET_ABI="./SafeMultisigWallet.abi.json"
-everdev signer add $WALLET_SIGNER $GIVER_WALLET_KEYS_PATH
+# Set version controller keys
+echo "========== Set keys for VersionController"
+everdev signer add $SIGNER "$VERSIONCONTROLLER_SEED"
+
+# Prepare giver
+GIVER_ABI="../../multisig/MultisigWallet.abi.json"
+GIVER_ADDR=`cat /tmp/Giver.addr`
+GIVER_SEED=`cat /tmp/Giver.seed`
+everdev signer add $GIVER_SIGNER "$GIVER_SEED"
 
 
 # ############################################################
@@ -62,13 +58,8 @@ TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/cod
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
-
-# ############################################################
-# Calculate VersionController address
-# ############################################################
-VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
+# Echo VersionController address
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
-echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 
 # Apply VersionController setters
 echo "========== Run VersionController setters"
@@ -87,7 +78,7 @@ echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 
 # Send tokens to SystemContract
 echo "     ====> Send tokens to SystemContract"
-everdev contract run $GIVER_WALLET_ABI submitTransaction --input "{\"dest\": \"$SYSTEMCONTRACT_ADDR\", \"value\": $GOSH_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $WALLET_SIGNER --address $GIVER_WALLET_ADDR > /dev/null || exit 1
+everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$SYSTEMCONTRACT_ADDR\", \"value\": $GOSH_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
 
 # Set flag to true (enable code setters)
 echo "========== Run SystemContract setFlag (true)"
@@ -129,3 +120,6 @@ everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"
 everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"false\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+
+# Destroy giver
+everdev contract run $GIVER_ABI TheBigBang -i "{\"returnMoney\": \"$SYSTEMCONTRACT_ADDR\"}" -a $GIVER_ADDR -s $GIVER_SIGNER -n $NETWORK > /dev/null || exit 1

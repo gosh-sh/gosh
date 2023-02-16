@@ -371,11 +371,20 @@
 			]
 		},
 		{
+			"name": "getCreator",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getVersion",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
 			]
 		},
 		{

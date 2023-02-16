@@ -1,12 +1,15 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{blockchain::branch::DeployBranch, git_helper::GitHelper};
+use crate::{
+    blockchain::{branch::DeployBranch, user_wallet::WalletError},
+    git_helper::GitHelper,
+};
 use git_hash::ObjectId;
 use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 use tokio::task::{JoinError, JoinSet};
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
 use super::{
@@ -18,7 +21,7 @@ use super::{
 pub struct CreateBranchOperation<'a, Blockchain> {
     ancestor_commit: ObjectId,
     new_branch: String,
-    context: &'a mut GitHelper<Blockchain>,
+    context: &'a GitHelper<Blockchain>,
 }
 
 impl<'a, Blockchain> CreateBranchOperation<'a, Blockchain>
@@ -28,7 +31,7 @@ where
     pub fn new(
         ancestor_commit: ObjectId,
         branch_name: impl Into<String>,
-        context: &'a mut GitHelper<Blockchain>,
+        context: &'a GitHelper<Blockchain>,
     ) -> Self
     where
         Blockchain: BlockchainService,
@@ -50,7 +53,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn preinit_branch(&mut self) -> anyhow::Result<()> {
         let wallet = self
             .context
@@ -69,7 +72,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let all_files: Vec<recorder::Entry> = {
             self.context
@@ -118,30 +121,39 @@ where
             let new_branch = self.new_branch.clone();
             let full_path = entry.filepath.to_string();
 
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    true
+                }
+            };
+
             snapshot_handlers.spawn(
                 async move {
-                    Retry::spawn(default_retry_strategy(), || async {
-                        tracing::debug!("attempt to push a new snapshot");
-                        push_new_branch_snapshot(
-                            &blockchain,
-                            &file_provider,
-                            &remote_network,
-                            &dao_addr,
-                            &repo_addr,
-                            &ancestor_commit,
-                            &new_branch,
-                            &full_path,
-                            &content,
-                        )
-                        .await
-                        .map_err(|e| {
-                            tracing::warn!("Attempt failed with {:#?}", e);
-                            e
-                        })
-                    })
+                    RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            tracing::debug!("attempt to push a new snapshot");
+                            push_new_branch_snapshot(
+                                &blockchain,
+                                &file_provider,
+                                &remote_network,
+                                &dao_addr,
+                                &repo_addr,
+                                &ancestor_commit,
+                                &new_branch,
+                                &full_path,
+                                &content,
+                            )
+                            .await
+                        },
+                        condition,
+                    )
                     .await
                 }
-                .instrument(debug_span!("tokio::spawn::push_new_branch_snapshot").or_current()),
+                .instrument(info_span!("tokio::spawn::push_new_branch_snapshot").or_current()),
             );
         }
         while let Some(finished_task) = snapshot_handlers.join_next().await {
@@ -151,7 +163,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     async fn wait_branch_ready(&mut self) -> anyhow::Result<()> {
         // Ensure repository contract state
         // Ping Sergey Horelishev for details
@@ -162,7 +174,7 @@ where
     /// Run create branch operation.
     /// Returns false if it was a branch from a commit
     /// and true if it was the first ever branch
-    #[instrument(level = "debug")]
+    #[instrument(level = "info", skip_all)]
     pub async fn run(&mut self) -> anyhow::Result<bool> {
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;

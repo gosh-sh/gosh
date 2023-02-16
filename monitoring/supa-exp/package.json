@@ -1,0 +1,19 @@
+{
+  "name": "supa-exp",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "set NODE_OPTIONS=--trace-warnings & ts-node-dev --respawn --transpile-only ./src/app.ts",
+    "prod": "tsc && node ./app/app.js",
+    "run": "node ./app/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.1",
+    "axios": "^1.2.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.14",
+    "@types/node": "^18.7.23"
+  }
+}

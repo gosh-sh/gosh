@@ -271,7 +271,7 @@
 			]
 		},
 		{
-			"name": "getRepoAddress",
+			"name": "getAddrRepository",
 			"inputs": [
 			],
 			"outputs": [
@@ -323,7 +323,24 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"string"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getInitUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
 			]
 		},
 		{

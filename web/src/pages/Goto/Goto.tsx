@@ -8,8 +8,8 @@ import { useBranches, useTree } from 'react-gosh'
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { branch } = useBranches(repo, branchName)
+    const { repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { branch } = useBranches(repository.adapter, branchName)
     const { tree, blobs } = useTree(daoName!, repoName!, branch?.commit)
     const [search, setSearch] = useState<string>('')
 

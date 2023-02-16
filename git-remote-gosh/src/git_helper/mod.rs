@@ -2,8 +2,10 @@
 use std::env;
 
 use std::sync::Arc;
+use anyhow::bail;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -23,6 +25,7 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 
+#[derive(Clone)]
 pub struct GitHelper<
     Blockchain = crate::blockchain::Everscale,
     FileProvider = crate::ipfs::IpfsService,
@@ -33,7 +36,8 @@ pub struct GitHelper<
     pub remote: Remote,
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
-    local_git_repository: git_repository::Repository,
+    local_repository: Arc<git_repository::Repository>,
+    cache: Arc<CacheProxy>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -58,11 +62,7 @@ where
     FileProvider: FileStorage,
 {
     pub fn local_repository(&self) -> &git_repository::Repository {
-        &self.local_git_repository
-    }
-
-    pub fn local_repository_mut(&mut self) -> &mut git_repository::Repository {
-        &mut self.local_git_repository
+        &self.local_repository
     }
 
     pub async fn calculate_tree_address(
@@ -78,13 +78,14 @@ where
         .await
     }
 
-    #[instrument(level = "debug", skip(blockchain))]
+    #[instrument(level = "info", skip_all)]
     async fn build(
         config: Config,
         url: &str,
         blockchain: Blockchain,
         file_provider: FileProvider,
     ) -> anyhow::Result<Self> {
+        tracing::trace!("build: config={config:?}, url={url}");
         // TODO: remove duplicate logic
         let remote = Remote::new(url, &config)?;
         let ever_client = create_client(&config, &remote.network)?;
@@ -104,8 +105,22 @@ where
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
 
         let local_git_dir = env::var("GIT_DIR")?;
-        let local_git_repository = git_repository::open(&local_git_dir)?;
+        let local_repository = Arc::new(git_repository::open(&local_git_dir)?);
         tracing::info!("Opening repo at {}", local_git_dir);
+        let mut cache = CacheProxy::new();
+        let cache_str = config.use_cache();
+        tracing::debug!("cache address: {:?}", cache_str);
+        if let Some(cache_address) = cache_str {
+            if cache_address.starts_with("memcache://") {
+                let namespace = ":".to_owned() + &String::from(&repo_addr);
+                let memcache =
+                    crate::cache::memcached_impl::Memcached::new(&cache_address, &namespace)?;
+                cache.set_memcache(memcache);
+                tracing::debug!("using memcache service. namespace: {}", namespace);
+            } else {
+                anyhow::bail!("Unknown caching address specified: {}", cache_address);
+            }
+        }
 
         Ok(Self {
             config,
@@ -114,7 +129,8 @@ where
             remote,
             dao_addr: dao.address,
             repo_addr,
-            local_git_repository,
+            local_repository,
+            cache: Arc::new(cache),
         })
     }
 
@@ -124,11 +140,17 @@ where
         Ok(caps)
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "trace", skip_all)]
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
+        tracing::debug!("list: for_push={for_push}");
         let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
         let mut ref_list: Vec<String> = refs.unwrap();
         if !for_push {
+            let tags = list::get_tags(&self.blockchain.client(), &self.repo_addr).await?;
+            match tags {
+                None => (),
+                Some(mut list) => ref_list.append(&mut list),
+            };
             let head = get_head(&self.blockchain.client(), &self.repo_addr).await?;
             let refs_suffix = format!(" refs/heads/{}", head);
             if ref_list.iter().any(|e: &String| e.ends_with(&refs_suffix)) {
@@ -138,8 +160,8 @@ where
                 ref_list.push(format!("@{} HEAD", splitted.nth(1).unwrap()));
             }
         }
-        tracing::trace!("list: {:?}", ref_list);
         ref_list.push("".to_owned());
+        tracing::debug!("list: {:?}", ref_list);
         Ok(ref_list)
     }
 
@@ -184,7 +206,7 @@ async fn build_blockchain(
     let local_git_repository = git_repository::open(&local_git_dir)?;
     tracing::info!("Opening repo at {}", local_git_dir);
 
-    tracing::debug!("Searching for a wallet at {}", &remote.network);
+    tracing::trace!("Searching for a wallet at {}", &remote.network);
     blockchain_builder.wallet_config(config.find_network_user_wallet(&remote.network));
 
     Ok(blockchain_builder.build()?)
@@ -192,8 +214,9 @@ async fn build_blockchain(
 
 // Implement protocol defined here:
 // https://github.com/git/git/blob/master/Documentation/gitremote-helpers.txt
-#[instrument(level = "debug", skip(config))]
+#[instrument(level = "info", skip_all)]
 pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
+    tracing::trace!("run: url={url}");
     let blockchain = build_blockchain(&config, url).await?;
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
@@ -203,17 +226,23 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
 
     // Note: we assume git client will work correctly and will terminate this batch
     // with an empty line prior the next operation
-    let mut is_batching_operation_in_progress = false;
+    let mut is_batching_push_in_progress = false;
+    let mut is_batching_fetch_in_progress = false;
 
     let mut batch_response: Vec<String> = Vec::new();
     while let Some(line) = lines.next_line().await? {
         if line.is_empty() {
-            if is_batching_operation_in_progress {
-                is_batching_operation_in_progress = false;
+            if is_batching_push_in_progress {
+                is_batching_push_in_progress = false;
                 for line in batch_response.clone() {
                     tracing::debug!("[batched] < {line}");
                     stdout.write_all(format!("{line}\n").as_bytes()).await?;
                 }
+                tracing::debug!("[batched] < {line}");
+                stdout.write_all("\n".as_bytes()).await?;
+                continue;
+            } else if is_batching_fetch_in_progress {
+                is_batching_fetch_in_progress = false;
                 tracing::debug!("[batched] < {line}");
                 stdout.write_all("\n".as_bytes()).await?;
                 continue;
@@ -227,7 +256,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        tracing::debug!("Line: {line}");
+        tracing::trace!("Line: {line}");
         tracing::debug!(
             "> {} {} {}",
             cmd.unwrap(),
@@ -238,15 +267,15 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => {
-                is_batching_operation_in_progress = true;
+                is_batching_push_in_progress = true;
                 let push_result = helper.push(ref_arg).await?;
                 batch_response.push(push_result);
                 vec![]
             }
             (Some("fetch"), Some(sha), Some(name)) => {
-                is_batching_operation_in_progress = true;
+                is_batching_fetch_in_progress = true;
                 helper.fetch(sha, name).await?;
-                vec![]
+                continue
             }
             (Some("capabilities"), None, None) => helper.capabilities().await?,
             (Some("list"), None, None) => helper.list(false).await?,
@@ -290,6 +319,9 @@ pub mod tests {
         let repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
         let file_provider = build_ipfs(config.ipfs_http_endpoint()).unwrap();
         // let local_git_dir = env::var("GIT_DIR").unwrap();
+        let local_repository = Arc::new(repo);
+
+        let cache = Arc::new(CacheProxy::new());
 
         GitHelper {
             config,
@@ -298,7 +330,8 @@ pub mod tests {
             remote,
             dao_addr,
             repo_addr,
-            local_git_repository: repo,
+            local_repository,
+            cache,
         }
     }
 }

@@ -4,6 +4,9 @@ networks:
   gosh-monitoring:
     external:
       name: gosh-monitoring
+  gosh-public-grafana:
+    external:
+      name: gosh-public-grafana
 
 
 services:
@@ -16,7 +19,7 @@ services:
       - "443:443"
     volumes:
       - ./caddy:/etc/caddy
-      - /mnt/data/caddy:/data
+      - ./data:/data
       - ./www:/var/www
     environment:
       - ADMIN_USER=${ADMIN_USER}
@@ -25,3 +28,4 @@ services:
     restart: unless-stopped
     networks:
       - gosh-monitoring
+      - gosh-public-grafana

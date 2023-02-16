@@ -1,0 +1,26 @@
+# TODO refactor
+include .env
+
+.PHONY: docker
+docker:
+	rm -rf abi
+	mkdir -p abi
+	cp ../contracts/gosh/*.abi.json abi
+	npm i
+	if [ -z "$(GOSH_ENDPOINTS)" ]; then echo GOSH_ENDPOINTS required; exit 1; fi
+	docker buildx build \
+		-t gosh-onboarding \
+		--build-arg GOSH_ENDPOINTS=$(GOSH_ENDPOINTS) \
+		.
+
+.PHONY: fmt
+fmt:
+	npx prettier -w .
+
+.PHONY: supabase_types
+supabase_types:
+	echo $(SUPABASE_ADMIN_URI)
+	if test -z "$(SUPABASE_ADMIN_URI)"; then echo set SUPABASE_ADMIN_URI ; exit 1; fi
+	mkdir -p src/db
+	npx supabase gen types typescript --db-url $(SUPABASE_ADMIN_URI) > src/db/types.ts
+	npx prettier -w src/db/types.ts

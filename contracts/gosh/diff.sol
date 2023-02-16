@@ -329,8 +329,12 @@ contract DiffC is Modifiers {
         return getDiffAddress(_index2 + 1);
     }
     
-    function getVersion() external pure returns(string) {
-        return version;
+    function getVersion() external pure returns(string, string) {
+        return ("diff", version);
+    }
+    
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
     
     function getOwner() external view returns(address) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 set -o pipefail
 . ./util.sh
 
@@ -15,10 +15,9 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
-sleep 30
 
 echo "***** cloning repo *****"
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 cd $REPO_NAME
 
@@ -43,13 +42,12 @@ git commit -m "added $FILE1-$CHANGE"
 echo "***** awaiting push $FILE1 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 20
@@ -69,13 +67,12 @@ git commit -m "added $FILE2-$CHANGE"
 echo "***** awaiting push $FILE2 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 30
@@ -95,13 +92,12 @@ git commit -m "added $FILE3-$CHANGE"
 echo "***** awaiting push $FILE3 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 40
@@ -121,13 +117,12 @@ git commit -m "added $FILE4-$CHANGE"
 echo "***** awaiting push $FILE4 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 50
@@ -147,13 +142,12 @@ git commit -m "added $FILE5-$CHANGE"
 echo "***** awaiting push $FILE5 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 60
@@ -173,13 +167,12 @@ git commit -m "added $FILE6-$CHANGE"
 echo "***** awaiting push $FILE6 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 70
@@ -199,13 +192,12 @@ git commit -m "added $FILE7-$CHANGE"
 echo "***** awaiting push $FILE7 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 80
@@ -225,13 +217,12 @@ git commit -m "added $FILE8-$CHANGE"
 echo "***** awaiting push $FILE8 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME
 
-echo "***** awaiting set commit into $BRANCH_NAME *****"
-wait_set_commit $REPO_ADDR $BRANCH_NAME
-sleep 30
+# echo "***** awaiting set commit into $BRANCH_NAME *****"
+# wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
-git clone gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** comparing repositories *****"
 diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git" || exit 90

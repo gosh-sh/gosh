@@ -20,7 +20,6 @@ class Service {
     _libtimeout = 0;
     _accesskey;
     _projectid;
-    _electoraddr = '-1:3333333333333333333333333333333333333333333333333333333333333333'; // usual
     _needauth = [];
     clients = {};
     endpoints = {};
@@ -253,47 +252,6 @@ class Service {
             }
         }
         return m;
-    }
-    measureStats(m, field, key, data, pfx) {
-        const stats = {};
-        for (let block of data) {
-            const st_value = block[field];
-            if (stats[st_value] === undefined)
-                stats[st_value] = 0;
-            stats[st_value] += 1;
-        }
-        for (const [stat_value, stat_count] of Object.entries(stats)) {
-            m.set(`${pfx}_stat_${key}{value="${stat_value}"}`, stat_count);
-        }
-    }
-    measureStats2(m, field1, field2, key1, key2, data, pfx) {
-        const stats = {};
-        for (let block of data) {
-            const st_value = block[field1] + '###' + block[field2];
-            if (stats[st_value] === undefined)
-                stats[st_value] = 0;
-            stats[st_value] += 1;
-        }
-        for (const [stat_value, stat_count] of Object.entries(stats)) {
-            const spl = stat_value.split('###');
-            m.set(`${pfx}_stat_${key1}_${key2}{value1="${spl[0]}",value2="${spl[1]}"}`, stat_count);
-        }
-    }
-    measureStatsSignatures(m, data, pfx) {
-        const stats = {};
-        for (let block of data) {
-            if (block['signatures'] && block['signatures']['signatures']) {
-                for (let bss of block['signatures']['signatures']) {
-                    const st_value = bss['node_id'];
-                    if (stats[st_value] === undefined)
-                        stats[st_value] = 0;
-                    stats[st_value] += 1;
-                }
-            }
-        }
-        for (const [stat_value, stat_count] of Object.entries(stats)) {
-            m.set(`${pfx}_stat_blksigs{value="${stat_value}"}`, stat_count);
-        }
     }
     requiredConfigItems() { return ['port', 'prefix', 'timeout', 'libtimeout']; }
     keepLast(k, v, p) { return true; }

@@ -1,9 +1,18 @@
 #!/bin/bash
 # start after deploy.sh
-set -e 
+set -e
 set -o pipefail
+. ./util.sh
 
-export NETWORK=vps23.ton.dev
+# Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <network_name>
+DEFAULT_NETWORK=n01.fld.dapp.tonlabs.io
+
+if [ -z "$1" ]
+  then
+    export NETWORK=$DEFAULT_NETWORK
+else
+    export NETWORK=$1
+fi
 echo "NETWORK=$NETWORK" > env.env
 
 tonos-cli config --url $NETWORK
@@ -22,21 +31,24 @@ DAO_ABI=../contracts/gosh/goshdao.abi.json
 
 # generate user keys
 SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
+echo $SEED > user.seed
 DAO_KEYS=test.keys.json
 tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile
-USER_PROFILE_NAME="@user106"
+USER_PROFILE_NAME=user1
 tonos-cli call --abi $SYSTEM_CONTRACT_ABI $SYSTEM_CONTRACT_ADDR deployProfile "{\"pubkey\":\"$DAO_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
 USER_PROFILE_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+wait_account_active $USER_PROFILE_ADDR
 
 # *deploy DAO
-export DAO_NAME=dao-106
+export DAO_NAME=dao-1
 echo "export DAO_NAME=$DAO_NAME" >> env.env
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $DAO_KEYS deployDao \
   "{\"systemcontract\":\"$SYSTEM_CONTRACT_ADDR\", \"name\":\"$DAO_NAME\", \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
 DAO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrDao "{\"name\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+wait_account_active $DAO_ADDR
 
 # user keys
 export WALLET_KEYS=$DAO_KEYS
@@ -54,7 +66,8 @@ tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS tu
 
 GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 
-USER_CONFIG=~/.gosh/config.json
+USER_CONFIG=$(pwd)/config.json
+echo "export GOSH_CONFIG_PATH=$USER_CONFIG" >> env.env
 
 WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
 WALLET_SECRET=$(cat $WALLET_KEYS | sed -n '/secret/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
@@ -72,7 +85,7 @@ tee $USER_CONFIG <<EOF
         "pubkey": "$WALLET_PUBKEY",
         "secret": "$WALLET_SECRET"
       },
-      "endpoints": ["https://$NETWORK/"]
+      "endpoints": ["$NETWORK"]
     }
   }
 }

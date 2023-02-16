@@ -17,20 +17,27 @@ pub mod service;
 pub use service::*;
 
 use ton_client::{
-    abi::{encode_message, CallSet, ParamsOfEncodeMessage, Signer},
-    boc::{cache_set, BocCacheType, ParamsOfBocCacheSet, ResultOfBocCacheSet},
-    net::{query_collection, ParamsOfQueryCollection},
+    abi::{
+        encode_initial_data, encode_message, Abi, CallSet, ParamsOfEncodeInitialData,
+        ParamsOfEncodeMessage, ResultOfEncodeInitialData, Signer,
+    },
+    boc::{
+        cache_set, encode_tvc, get_boc_hash, BocCacheType, ParamsOfBocCacheSet, ParamsOfEncodeTvc,
+        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfEncodeTvc, ResultOfGetBocHash,
+    },
+    net::{query_collection, ParamsOfQuery, ParamsOfQueryCollection},
     processing::ProcessingEvent,
     tvm::{run_tvm, ParamsOfRunTvm},
     ClientContext,
 };
 
 mod blockchain_contract_address;
-pub use blockchain_contract_address::BlockchainContractAddress;
+pub use blockchain_contract_address::{BlockchainContractAddress, FormatShort};
 pub mod commit;
 mod serde_number;
 pub mod snapshot;
 pub mod tree;
+pub mod tag;
 mod tvm_hash;
 pub mod user_wallet;
 pub use crate::{
@@ -53,6 +60,8 @@ pub const EMPTY_BLOB_SHA1: &str = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
 pub const EMPTY_BLOB_SHA256: &str =
     "0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7";
 
+pub const MAX_ACCOUNTS_ADDRESSES_PER_QUERY: usize = 255;
+
 static PINNED_CONTRACT_BOCREFS: Lazy<
     Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>,
 > = Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
@@ -64,7 +73,19 @@ pub enum GoshBlobBitFlags {
     Ipfs = 4,
 }
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+#[repr(u8)]
+pub enum ContractKind {
+    Dao,
+    Wallet,
+    Repo,
+    Commit,
+    Tree,
+    Snapshot,
+    Diff,
+    Tag,
+}
+
+base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
 #[derive(Deserialize, Debug)]
 pub struct GoshBlob {
@@ -90,6 +111,13 @@ struct CallResult {
     total_fees: u64,
     in_msg: String,
     out_msgs: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct FFCallResult {
+    shard_block_id: String,
+    message_id: String,
+    sending_endpoints: Vec<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -128,6 +156,24 @@ pub struct GetAllAddressResult {
     pub branch_ref: Vec<BranchRef>,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct GetContractCodeResult {
+    #[serde(rename = "value0")]
+    pub code: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Account {
+    #[serde(rename = "id")]
+    pub address: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct GetTagContentResult {
+    #[serde(rename = "value0")]
+    pub content: String,
+}
+
 #[derive(Deserialize, Debug, Clone)]
 struct GetAddrBranchResult {
     #[serde(rename = "value0")]
@@ -143,6 +189,8 @@ struct GetHeadResult {
 #[derive(Deserialize, Debug)]
 struct GetVersionResult {
     #[serde(rename = "value0")]
+    pub contract_name: String,
+    #[serde(rename = "value1")]
     pub version: String,
 }
 
@@ -167,14 +215,80 @@ impl Clone for Everscale {
     }
 }
 
-#[instrument(level = "debug", skip(context, contract))]
+#[instrument(level = "trace", skip_all)]
+async fn get_contracts_blocks(
+    context: &EverClient,
+    contracts_addresses: &[BlockchainContractAddress],
+    allow_incomplete_results: bool,
+) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+    tracing::trace!("get_contracts_blocks: allow_incomplete_results={allow_incomplete_results}");
+    if contracts_addresses.is_empty() {
+        return Ok(HashMap::new());
+    }
+    tracing::trace!("internal get_contracts_blocks start");
+    let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
+    for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        let addresses: &[String] = &chunk
+            .iter()
+            .map(|e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) })
+            .collect::<Vec<String>>();
+        let filter = serde_json::json!({
+            "id": {
+                "in": addresses
+            }
+        });
+        tracing::trace!("Filter: {}", filter.to_string());
+        let query_result: Vec<serde_json::Value> = query_collection(
+            Arc::clone(context),
+            ParamsOfQueryCollection {
+                collection: "accounts".to_owned(),
+                filter: Some(filter),
+                result: "id boc".to_owned(),
+                limit: Some(contracts_addresses.len() as u32),
+                order: None,
+            },
+        )
+        .instrument(info_span!("get_contracts_blocks sdk::query_collection").or_current())
+        .await
+        .map(|r| r.result)?;
+        if query_result.len() != contracts_addresses.len() {
+            if !allow_incomplete_results {
+                anyhow::bail!(
+                    "Some accounts are missing. Expecting {} boc results while have {}",
+                    contracts_addresses.len(),
+                    query_result.len()
+                );
+            } else {
+                tracing::trace!(
+                    "Got incomplete result: {} out of {}",
+                    query_result.len(),
+                    contracts_addresses.len()
+                );
+            }
+        }
+        for r in query_result.iter() {
+            let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
+            let address = BlockchainContractAddress::new(
+                r["id"]
+                    .as_str()
+                    .expect("address must be a string")
+                    .to_owned(),
+            );
+            accounts_bocs.insert(address, boc);
+        }
+    }
+    return Ok(accounts_bocs);
+}
+
+#[instrument(level = "info", skip_all)]
 async fn run_local(
     context: &EverClient,
     contract: &GoshContract,
     function_name: &str,
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
-    tracing::debug!("internal run_local start");
+    tracing::trace!("internal run_local start");
+    tracing::trace!("read_state: function_name={function_name}, args={args:?}");
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));
@@ -188,7 +302,7 @@ async fn run_local(
             order: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::query_collection").or_current())
+    .instrument(info_span!("run_local sdk::query_collection").or_current())
     .await
     .map(|r| r.result)?;
 
@@ -216,7 +330,7 @@ async fn run_local(
             processing_try_index: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::encode_message").or_current())
+    .instrument(info_span!("run_local sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
 
@@ -231,7 +345,7 @@ async fn run_local(
             return_updated_account: None,
         },
     )
-    .instrument(debug_span!("run_local sdk::run_tvm").or_current())
+    .instrument(info_span!("run_local sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;
@@ -239,7 +353,7 @@ async fn run_local(
     Ok(result)
 }
 
-#[instrument(level = "debug", skip(context, contract))]
+#[instrument(level = "info", skip_all)]
 async fn run_static(
     context: &EverClient,
     contract: &GoshContract,
@@ -247,6 +361,7 @@ async fn run_static(
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
     // Read lock
+    tracing::trace!("run_static: function_name={function_name}, args={args:?}");
     let boc_ref = {
         PINNED_CONTRACT_BOCREFS
             .read()
@@ -278,7 +393,7 @@ async fn run_static(
                 order: None,
             },
         )
-        .instrument(debug_span!("run_static sdk::query_collection").or_current())
+        .instrument(info_span!("run_static sdk::query_collection").or_current())
         .await
         .map(|r| r.result)?;
 
@@ -325,7 +440,7 @@ async fn run_static(
             processing_try_index: None,
         },
     )
-    .instrument(debug_span!("run_static sdk::encode_message").or_current())
+    .instrument(info_span!("run_static sdk::encode_message").or_current())
     .await
     .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
@@ -340,7 +455,7 @@ async fn run_static(
             return_updated_account: None,
         },
     )
-    .instrument(debug_span!("run_static sdk::run_tvm").or_current())
+    .instrument(info_span!("run_static sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())?;
@@ -348,43 +463,239 @@ async fn run_static(
     Ok(result)
 }
 
-async fn default_callback(pe: ProcessingEvent) {
-    tracing::debug!("cb: {:#?}", pe);
+#[instrument(level = "debug", skip(context))]
+pub async fn get_account_data(
+    context: &EverClient,
+    contract: &GoshContract,
+) -> anyhow::Result<serde_json::Value> {
+    let query = r#"query($address: String!){
+        blockchain {
+          account(address: $address) {
+            info {
+              acc_type balance
+            }
+          }
+        }
+    }"#
+    .to_owned();
+
+    let result = ton_client::net::query(
+        Arc::clone(context),
+        ParamsOfQuery {
+            query: query.clone(),
+            variables: Some(serde_json::json!({
+                "address": contract.address,
+            })),
+            ..Default::default()
+        },
+    )
+    .await
+    .map(|r| r.result)?;
+
+    let extracted_data = &result["data"]["blockchain"]["account"]["info"];
+
+    Ok(extracted_data.clone())
 }
 
-#[instrument(level = "debug", skip(context))]
+fn processing_event_to_string(pe: ProcessingEvent) -> String {
+    match pe {
+        ProcessingEvent::WillSend {
+            shard_block_id,
+            message_id,
+            message,
+            ..
+        } => format!(
+            "\nWillSend: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::DidSend {
+            shard_block_id,
+            message_id,
+            message,
+            ..
+        } => format!(
+            "\nDidSend: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::SendFailed {
+            shard_block_id,
+            message_id,
+            message,
+            error,
+            ..
+        } => format!(
+            "\nSendFailed: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n\t\
+error: \"{error}\"\n}}"
+        ),
+        ProcessingEvent::WillFetchNextBlock {
+            shard_block_id,
+            message_id,
+            message,
+            ..
+        } => format!(
+            "\nWillFetchNextBlock: {{\n\t\
+shard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n}}"
+        ),
+        ProcessingEvent::FetchNextBlockFailed {
+            shard_block_id,
+            message_id,
+            message,
+            error,
+            ..
+        } => format!(
+            "\nFetchNextBlockFailed: {{\n\tshard_block_id: \"{shard_block_id}\",\n\t\
+message_id: \"{message_id}\"\n\terror: \"{error}\"\n}}"
+        ),
+        ProcessingEvent::MessageExpired {
+            message_id,
+            message,
+            error,
+            ..
+        } => format!(
+            "\nMessageExpired: {{\n\terror: \"{error}\",\n\tmessage_id: \"{message_id}\"\n}}"
+        ),
+        _ => format!("{:#?}", pe),
+    }
+}
+
+async fn default_callback(pe: ProcessingEvent) {
+    // TODO: improve formatting for potentially unlimited structs/enums.
+    // TODO: Need to clarify Remp json field
+    tracing::trace!(
+        "callback: {}",
+        processing_event_to_string(pe)
+    );
+}
+
+#[instrument(level = "info", skip_all)]
 pub async fn get_repo_address(
     context: &EverClient,
     gosh_root_addr: &BlockchainContractAddress,
     dao: &str,
     repo: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
+    tracing::trace!("get_repo_address: gosh_root_addr={gosh_root_addr}, dao={dao}, repo={repo}");
     let contract = GoshContract::new(gosh_root_addr, gosh_abi::GOSH);
 
     let args = serde_json::json!({ "dao": dao, "name": repo });
     let result: GetRepoAddrResult = contract
         .read_state(context, "getAddrRepository", Some(args))
         .await?;
+    tracing::trace!("get_repo_address result: {:?}", result);
     Ok(BlockchainContractAddress::new(result.address))
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn branch_list(
     context: &EverClient,
     repo_addr: &BlockchainContractAddress,
 ) -> anyhow::Result<GetAllAddressResult> {
+    tracing::trace!("branch_list: repo_addr={repo_addr}");
     let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
 
     let result: GetAllAddressResult = contract.read_state(context, "getAllAddress", None).await?;
+    tracing::trace!("branch_list result: {:?}", result);
     Ok(result)
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "trace", skip_all)]
+pub async fn get_contract_code(
+    context: &EverClient,
+    repo_addr: &BlockchainContractAddress,
+    kind: ContractKind,
+) -> anyhow::Result<GetContractCodeResult> {
+    tracing::debug!("get_contract_code: repo_addr={repo_addr}");
+    let contract = GoshContract::new(repo_addr, gosh_abi::REPO);
+
+    let fn_name = match kind {
+        ContractKind::Commit => "getCommitCode",
+        ContractKind::Tag => "getTagCode",
+        _ => unimplemented!(),
+    };
+
+    let result: GetContractCodeResult = contract.read_state(context, fn_name, None).await?;
+    tracing::debug!("{fn_name} result: {result:?}");
+
+    Ok(result)
+}
+
+#[instrument(level = "trace", skip_all)]
+pub async fn tag_list(
+    context: &EverClient,
+    repo_addr: &BlockchainContractAddress,
+) -> anyhow::Result<Vec<String>> {
+    tracing::debug!("tag_list: repo_addr={repo_addr}");
+
+    let GetContractCodeResult { code }
+        = get_contract_code(context, repo_addr, ContractKind::Tag).await?;
+
+    let hash = calculate_boc_hash(context, &code).await?;
+    let query = r#"query($code_hash: String!) {
+        accounts(filter: {
+            code_hash: { eq: $code_hash }
+        }) {
+            id
+        }
+    }"#
+    .to_string();
+
+    let result = ton_client::net::query(
+        Arc::clone(&context),
+        ParamsOfQuery {
+            query,
+            variables: Some(serde_json::json!({
+                "code_hash": hash,
+            })),
+            ..Default::default()
+        },
+    )
+    .await
+    .map(|r| r.result)?;
+
+    let raw_accounts = result["data"]["accounts"].clone();
+    let accounts: Vec<Account> = serde_json::from_value(raw_accounts)?;
+
+    let mut result: Vec<String> = vec![];
+
+    for account in accounts {
+        let address = BlockchainContractAddress::new(account.address);
+        let tag_contract = GoshContract::new(address, gosh_abi::TAG);
+        let GetTagContentResult { content }
+            = tag_contract.read_state(context, "getContent", None).await?;
+        let mut iter = content.split('\n');
+        let first = iter.next().unwrap();
+        let item = if first.starts_with("tag") {
+            // lightweght tag:
+            // "tag <TAG_NAME>\nobject <COMMIT_ID>\n"
+            let tag_name = first.split(' ').nth(1).unwrap();
+            let commit_id = iter.next().unwrap().split(' ').nth(1).unwrap();
+            format!("{commit_id} refs/tags/{tag_name}")
+        } else {
+            // annotated tag:
+            // "id <TAG_ID>\nobject <COMMIT_ID>\ntype commit\ntag <TAG_NAME>\n..."
+            let tag_id = first.split(' ').nth(1).unwrap();
+            let tag_name = iter.nth(2).unwrap().split(' ').nth(1).unwrap();
+            format!("{tag_id} refs/tags/{tag_name}")
+        };
+        result.push(item);
+    }
+
+    tracing::debug!("tag_list result: {:?}", result);
+    Ok(result.to_owned())
+}
+
+#[instrument(level = "info", skip_all)]
 pub async fn get_commit_address(
     context: &EverClient,
     repo_contract: &mut impl ContractStatic,
     sha: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
+    tracing::trace!("get_commit_address: repo_contract={repo_contract:?}, sha={sha}");
     let result: GetCommitAddrResult = repo_contract
         .static_method(
             context,
@@ -395,11 +706,12 @@ pub async fn get_commit_address(
     Ok(result.address)
 }
 
-#[instrument(level = "debug", skip(context))]
+#[instrument(level = "info", skip_all)]
 pub async fn get_commit_by_addr(
     context: &EverClient,
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<Option<GoshCommit>> {
+    tracing::trace!("get_commit_by_addr: address={address}");
     let commit = GoshCommit::load(context, address).await?;
     Ok(Some(commit))
 }
@@ -410,7 +722,55 @@ pub async fn get_head(
 ) -> anyhow::Result<String> {
     let contract = GoshContract::new(address, gosh_abi::REPO);
     let result: GetHeadResult = contract.read_state(context, "getHEAD", None).await?;
+    tracing::trace!("get_head result: {:?}", result);
     Ok(result.head)
+}
+
+#[instrument(level = "trace", skip_all)]
+pub async fn calculate_boc_hash(context: &EverClient, code: &str) -> anyhow::Result<String> {
+    let params = ParamsOfGetBocHash {
+        boc: code.to_owned(),
+    };
+    let ResultOfGetBocHash { hash } = get_boc_hash(Arc::clone(context), params).await?;
+    Ok(hash)
+}
+
+#[instrument(level = "trace", skip_all)]
+pub async fn calculate_contract_address(
+    context: &EverClient,
+    kind: ContractKind,
+    code: &str,
+    initial_data: Option<serde_json::Value>,
+) -> anyhow::Result<BlockchainContractAddress> {
+    let abi = match kind {
+        ContractKind::Tag => gosh_abi::TAG,
+        ContractKind::Commit => gosh_abi::COMMIT,
+        ContractKind::Tree => gosh_abi::TREE,
+        ContractKind::Snapshot => gosh_abi::SNAPSHOT,
+        ContractKind::Diff => gosh_abi::DIFF,
+        _ => unimplemented!(),
+    };
+
+    let params = ParamsOfEncodeInitialData {
+        abi: Some(Abi::Json(abi.1.to_owned())),
+        initial_data,
+        ..Default::default()
+    };
+
+    let ResultOfEncodeInitialData { data }
+        = encode_initial_data(Arc::clone(context), params).await?;
+
+    let params = ParamsOfEncodeTvc {
+        code: Some(code.to_owned()),
+        data: Some(data.to_owned()),
+        ..Default::default()
+    };
+
+    let ResultOfEncodeTvc { tvc } = encode_tvc(Arc::clone(context), params).await?;
+
+    let hash = calculate_boc_hash(context, &tvc).await?;
+
+    Ok(BlockchainContractAddress::new(format!("0:{hash}")))
 }
 
 #[cfg(test)]
@@ -432,7 +792,7 @@ pub mod tests {
 
     impl TestEnv {
         pub fn new() -> Self {
-            let cfg = config::Config::init().unwrap();
+            let cfg = config::Config::default();
             let client = create_client(&cfg, "vps23.ton.dev").unwrap();
             TestEnv {
                 config: cfg,
@@ -477,12 +837,6 @@ pub mod tests {
         );
     }
 
-    #[derive(Deserialize, Debug)]
-    struct GetHashResult {
-        #[serde(rename = "value0")]
-        hash: String,
-    }
-
     #[tokio::test]
     async fn ensure_calculate_tvm_hash_correctly() {
         let te = TestEnv::new();
@@ -496,27 +850,6 @@ pub mod tests {
             .await
             .unwrap();
         assert_eq!(PRECALCULATED_HASH_FOR_THE_STRING, format!("0x{}", hash));
-        /*
-        let args = serde_json::json!({
-            "state": hex::encode(sample_string)
-        });
-        let logger = crate::logger::GitHelperLogger::init().ok().unwrap();
-
-        let test_pubkey = "13f63ef393f3fc6c22a7faf629dca64df19ca0388cf1c8dd04c84ddf44d1e742";
-        let test_secret = "80378dc53f9d6d27a69463d9e14a6ec867a08665faba96bec793ffa592b26d64";
-        let contract = crate::blockchain::user_wallet::get_user_wallet(
-            &te.client,
-            &te.gosh,
-            &te.dao,
-            test_pubkey,
-            test_secret
-        ).await.ok().unwrap();
-        let result: GetHashResult = contract
-            .read_state(&te.client, "getHash", Some(args))
-            .await
-            .expect("ok");
-        assert_eq!(result.hash, format!("0x{}", hash));
-        */
     }
 
     // TODO:

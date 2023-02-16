@@ -20,33 +20,7 @@ export default class AppSetupHandler extends AppHandler {
         const found: any = {};
         const or = this.organization, re = this.repository, br = this.branch, fn = this.filename;
         return await this.doSteps(
-            ...this.initialSteps(debug, AppHandler.indexSteps),
-            'remove footer',               () => this.removeFooter(), // not a step, utility function
-            'click signin',                () => this.click(`//a[${ac_hrefs('/a/signin')}]`),
-            'input seed',                  () => this.pasteInto("//textarea[@name='phrase']", this.seed, undefined, undefined, true),
-            'input username',              () => this.pasteInto("//input[@name='username']", this.username, 50, true),
-            'click sign in',               () => this.click("//button[contains(., 'Sign in') and @type='submit']"),
-            'wait for spinner gone',       () => this.waitForGone('svg.fa-spinner'),
-            'wait 100ms',                  () => this.wait(100),
-            'count popup toast errors',    async () => { found.err = (await this.count(`//div[@role='alert' and @class='Toastify__toast-body']`)) == 1; },
-            'popup toast exists', ...this.cond_if(() => found.err, [
-                'wait 500ms',              () => this.wait(500),
-                'close popup toast',       () => this.click("//button[contains(@class, 'Toastify__close-button')]"),
-                'click root',              () => this.click(`//a[@href='/']`),
-                'click signup',            () => this.click(`//a[${ac_hrefs('/a/signup')}]`),
-                'input seed',              () => this.erasePaste("//textarea[@name='phrase']", this.seed, undefined, true),
-                'input username',          () => this.pasteInto("//input[@name='username']", this.username),
-                'click switch button',     () => this.click("//button[@role='switch']"),
-                'click create account',    () => this.click("//button[contains(., 'Create account') and @type='submit']"),
-                'wait 100ms',              () => this.wait(100),
-                'wait for spinner gone',   () => this.waitForGone('svg.fa-spinner'),
-            ]),
-            'input pin code',              () => this.type("//input[@type='password' and @placeholder='PIN code']", "1111"),
-            'wait 200ms',                  () => this.wait(200),
-            'confirm pin code',            () => this.type("//input[@type='password' and @placeholder='PIN code']", "1111"),
-            'wait for spinner gone',       () => this.waitForGone('svg.fa-spinner'),
-            'wait 100ms to settle',        () => this.wait(100),
-            'wait for spinner gone',       () => this.waitForGone('svg.fa-spinner'),
+            ...this.initialSteps(debug, AppHandler.userSteps),
             'search for organization',     () => this.type('//input[@type="search"]', or),
             'count wanted organizations',  async () => { found.org = (await this.count(`//a[${or_hrefs(`/o/${or}`)}]`)) == 1; },
             'organization exists', ...this.cond_ifnot(() => found.org, [

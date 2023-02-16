@@ -7,6 +7,9 @@ make install
 #### Debug extension
 make debug
 
+### Docs
+More information about extension and how to work with it can be found [here](https://docs.gosh.sh/working-with-gosh/docker-extension).
+
 ### Demo
 
 image sha256:3954a180f14293556ecadd98b04e5b4379352eb0fca3d23e52d3bcea40944a73

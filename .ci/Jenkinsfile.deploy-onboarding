@@ -1,0 +1,42 @@
+pipeline {
+    agent {
+        node {
+            label 'onboarding'
+        }
+    }
+    parameters {
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
+    }
+    stages {
+        stage('Build') {     
+            steps {
+                script {
+                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
+                    currentBuild.displayName = "#${BUILD_NUMBER}_deploy-onbd_${VERSION}"
+                    dir('contracts/gosh') {
+                        sh 'make build-contracts'
+                    }
+                    dir('onboarding-workflow') {
+                        sh 'docker compose down -v --remove-orphans || true'
+                        sh 'npm i'
+                        sh 'make docker'
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    dir('onboarding-workflow') {
+                        sh 'docker-compose up -d'
+                    }
+                }
+            }
+            /*post {
+                always {
+                    cleanWs()
+                }
+            }*/
+        }
+    }
+}

@@ -2,16 +2,19 @@ use self::push_diff::push_initial_snapshot;
 
 use super::GitHelper;
 use crate::{
-    blockchain::{get_commit_address, BlockchainContractAddress, BlockchainService, ZERO_SHA},
+    blockchain::{
+        get_commit_address, user_wallet::WalletError, BlockchainContractAddress, BlockchainService,
+        ZERO_SHA,
+    },
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
     },
 };
+use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
 use std::{
     collections::{HashMap, HashSet},
-    process::{Command, Stdio},
     str::FromStr,
     sync::Arc,
     vec::Vec,
@@ -20,17 +23,21 @@ use tokio::{
     sync::Semaphore,
     task::{JoinError, JoinSet},
 };
-use tokio_retry::Retry;
+use tokio_retry::RetryIf;
 use tracing::Instrument;
 
-mod utilities;
 pub mod create_branch;
 mod parallel_diffs_upload_support;
+mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
 mod push_tree;
-use push_tree::push_tree;
+mod push_tag;
+use push_tag::push_tag;
+mod delete_tag;
+use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
+use push_tree::push_tree;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
@@ -58,7 +65,7 @@ impl<Blockchain> GitHelper<Blockchain>
 where
     Blockchain: BlockchainService + 'static,
 {
-    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
+    #[instrument(level = "info", skip_all)]
     async fn push_blob_update(
         &mut self,
         file_path: &str,
@@ -69,6 +76,7 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_blob_update: file_path={file_path}, original_blob_id={original_blob_id}, next_state_blob_id={next_state_blob_id}, commit_id={commit_id}, branch_name={branch_name}");
         let file_diff = utilities::generate_blob_diff(
             &self.local_repository().objects,
             Some(original_blob_id),
@@ -89,15 +97,7 @@ where
         Ok(())
     }
 
-    #[instrument(
-        level = "debug",
-        skip(
-            self,
-            statistics,
-            parallel_diffs_upload_support,
-            parallel_snapshot_uploads
-        )
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_new_blob(
         &mut self,
         file_path: &str,
@@ -109,6 +109,7 @@ where
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
         {
+            tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}");
             let blockchain = self.blockchain.clone();
             let repo_address = self.repo_addr.clone();
             let dao_addr = self.dao_addr.clone();
@@ -128,7 +129,7 @@ where
                     )
                     .await
                 }
-                .instrument(debug_span!("tokio::spawn::push_initial_snapshot").or_current()),
+                .instrument(info_span!("tokio::spawn::push_initial_snapshot").or_current()),
             );
         }
 
@@ -150,7 +151,7 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self, statistics, parallel_diffs_upload_support))]
+    #[instrument(level = "info", skip_all)]
     async fn push_blob_remove(
         &mut self,
         file_path: &str,
@@ -160,6 +161,7 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_blob_remove: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}");
         let file_diff =
             utilities::generate_blob_diff(&self.local_repository().objects, Some(blob_id), None)
                 .await?;
@@ -177,8 +179,9 @@ where
         Ok(())
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     fn tree_root_for_commit(&mut self, commit_id: &ObjectId) -> ObjectId {
+        tracing::trace!("tree_root_for_commit: commit_id={commit_id}");
         let mut buffer: Vec<u8> = Vec::new();
         return self
             .local_repository()
@@ -193,8 +196,9 @@ where
             .tree();
     }
 
-    #[instrument(level = "debug", skip(self))]
-    fn get_parent_id(&mut self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
+    #[instrument(level = "info", skip_all)]
+    fn get_parent_id(&self, commit_id: &ObjectId) -> anyhow::Result<ObjectId> {
+        tracing::trace!("get_parent_id: commit_id={commit_id}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -215,12 +219,13 @@ where
         Ok(parent_id)
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "info", skip_all)]
     async fn find_ancestor_commit_in_remote_repo(
         &self,
         remote_branch_name: &str,
         remote_commit_addr: BlockchainContractAddress,
     ) -> anyhow::Result<(String, Option<ObjectId>)> {
+        tracing::trace!("find_ancestor_commit_in_remote_repo: remote_branch_name={remote_branch_name}, remote_commit_addr={remote_commit_addr}");
         let is_protected = self
             .blockchain
             .is_branch_protected(&self.repo_addr, remote_branch_name)
@@ -250,18 +255,7 @@ where
         ))
     }
 
-    #[instrument(
-        level = "debug",
-        skip(
-            self,
-            statistics,
-            parallel_diffs_upload_support,
-            parallel_snapshot_uploads,
-            push_semaphore,
-            push_handlers,
-            parents_of_commits
-        )
-    )]
+    #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -276,6 +270,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
+        tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -318,30 +313,41 @@ where
             let branch_name = remote_branch_name.to_owned().clone();
 
             let permit = push_semaphore.acquire_owned().await?;
+
+            let condition = |e: &anyhow::Error| {
+                if e.is::<WalletError>() {
+                    false
+                } else {
+                    tracing::warn!("Attempt failed with {:#?}", e);
+                    true
+                }
+            };
+
             push_handlers.spawn(
                 async move {
-                    let res = Retry::spawn(default_retry_strategy(), || async {
-                        blockchain
-                            .push_commit(
-                                &object_id,
-                                &branch_name,
-                                &tree_addr,
-                                &remote,
-                                &dao_addr,
-                                &raw_commit,
-                                &*parents,
-                            )
-                            .await
-                            .map_err(|e| {
-                                tracing::warn!("Attempt failed with {:#?}", e);
-                                e
-                            })
-                    })
+                    let res = RetryIf::spawn(
+                        default_retry_strategy(),
+                        || async {
+                            blockchain
+                                .push_commit(
+                                    &object_id,
+                                    &branch_name,
+                                    &tree_addr,
+                                    &remote,
+                                    &dao_addr,
+                                    &raw_commit,
+                                    &*parents,
+                                )
+                                .await
+                        },
+                        condition,
+                    )
                     .await;
+
                     drop(permit);
                     res
                 }
-                .instrument(debug_span!("tokio::spawn::push_commit").or_current()),
+                .instrument(info_span!("tokio::spawn::push_commit").or_current()),
             );
         }
 
@@ -393,7 +399,7 @@ where
     }
 
     // find ancestor commit
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "trace", skip_all)]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
         // Note:
         // Here is the problem. We have file snapshot per branch per path.
@@ -402,14 +408,9 @@ where
         // This led to a problem that some files were copied from one place to another
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
-        tracing::info!("push_ref {} : {}", local_ref, remote_ref);
-        fn get_branch_name(_ref: &str) -> anyhow::Result<&str> {
-            let mut iter = _ref.rsplit('/');
-            iter.next()
-                .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
-        }
-        let local_branch_name: &str = get_branch_name(local_ref)?;
-        let remote_branch_name: &str = get_branch_name(remote_ref)?;
+        tracing::debug!("push_ref {} : {}", local_ref, remote_ref);
+        let local_branch_name: &str = get_ref_name(local_ref)?;
+        let remote_branch_name: &str = get_ref_name(remote_ref)?;
 
         // 1. Check if branch exists and ready in the blockchain
 
@@ -432,13 +433,20 @@ where
                 ("".to_owned(), None)
             };
 
+        let latest_commit = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?;
+
+        let ancestor_commit_object = if ancestor_commit_id != "" {
+            Some(ObjectId::from_str(&ancestor_commit_id)?)
+        } else {
+            None
+        };
+
         // get list of git objects in local repo, excluding ancestor ones
-        let (commit_objects_list, status) =
-            get_list_of_commit_objects(local_ref, &ancestor_commit_id)?;
-        if !status {
-            // TODO: Check if it is right to return Ok here
-            return Ok(format!("error {remote_ref} fetch first\n"));
-        }
+        let commit_objects_list =
+            get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
         // 3. If branch needs to be created do so
         if prev_commit_id.is_none() {
@@ -448,8 +456,7 @@ where
             //    if it doesn't
             let originating_commit = git_hash::ObjectId::from_str(
                 commit_objects_list
-                    .lines()
-                    .next()
+                    .first()
                     .expect("git object list is empty"),
             )?;
             let branching_point = self.get_parent_id(&originating_commit)?;
@@ -480,25 +487,17 @@ where
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
-        let latest_commit_id = self
-            .local_repository()
-            .find_reference(local_ref)?
-            .into_fully_peeled_id()?
-            .object()?
-            .id;
-
-        tracing::debug!("latest commit id {latest_commit_id}");
+        let latest_commit_id = latest_commit.object()?.id;
+        tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         // iterate through the git objects list and push them
-        for line in commit_objects_list.lines() {
-            let Some(oid) = line.split_ascii_whitespace().next() else {
-                break;
-            };
+        for oid in &commit_objects_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
+                    // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
                         object_id,
@@ -546,10 +545,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("obj join-hanlder: {}", e);
+                    bail!("obj join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("obj inner: {}", e)
+                    bail!("obj inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -559,10 +558,10 @@ where
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
             match finished_task {
                 Err(e) => {
-                    panic!("snapshots join-hanlder: {}", e);
+                    bail!("snapshots join-hanlder: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("snapshots inner: {}", e)
+                    bail!("snapshots inner: {}", e)
                 }
                 Ok(Ok(_)) => {}
             }
@@ -591,25 +590,105 @@ where
         Ok(result_ok)
     }
 
-    #[instrument(level = "debug", skip(self))]
+    #[instrument(level = "trace", skip(self))]
+    async fn push_ref_tag(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
+        tracing::debug!("push_tag {} : {}", local_ref, remote_ref);
+        let tag_name: &str = get_ref_name(local_ref)?;
+
+        let commit_id = self
+            .local_repository()
+            .find_reference(tag_name)?
+            .into_fully_peeled_id()?
+            .detach();
+
+        let mut buffer: Vec<u8> = Vec::new();
+        let ref_obj = self
+            .local_repository()
+            .refs
+            .try_find(local_ref)?
+            .expect("Tag should exists");
+
+        let tag_content = if commit_id.to_string() != ref_obj.target.id().to_string() {
+            let tag_obj = self
+                .local_repository()
+                .objects
+                .try_find(ref_obj.target.id(), &mut buffer)?
+                .unwrap();
+            format!(
+                "id {}\n{}",
+                ref_obj.target.id().to_string(),
+                String::from_utf8(tag_obj.data.to_vec())?
+            )
+        } else {
+            format!("tag {tag_name}\nobject {commit_id}\n")
+        };
+
+        let blockchain = self.blockchain.clone();
+        let remote_network = self.remote.network.clone();
+        let dao_addr = self.dao_addr.clone();
+        let repo_name = self.remote.repo.clone();
+
+        push_tag(
+            &self.blockchain,
+            &remote_network,
+            &dao_addr,
+            &repo_name,
+            tag_name,
+            &commit_id,
+            &tag_content
+        ).await?;
+
+        let result_ok = format!("ok {remote_ref}\n");
+        Ok(result_ok)
+    }
+
+    #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
+        tracing::debug!("push: refs={refs}");
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
-            [remote_ref] => delete_remote_ref(remote_ref).await?,
-            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
+            ["", remote_tag] if remote_tag.starts_with("refs/tags") =>
+                self.delete_remote_tag(remote_tag).await?,
+            ["", remote_ref] =>
+                delete_remote_ref(remote_ref).await?,
+            [local_tag, remote_tag] if local_tag.starts_with("refs/tags") =>
+                self.push_ref_tag(local_tag, remote_tag).await?,
+            [local_ref, remote_ref] =>
+                self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
         tracing::debug!("push ref result: {result}");
         Ok(result)
     }
+
+    async fn delete_remote_tag(&mut self, remote_ref: &str) -> anyhow::Result<String> {
+        tracing::debug!("delete_remote_tag {remote_ref}");
+        let tag_name: &str = get_ref_name(remote_ref)?;
+
+        let blockchain = self.blockchain.clone();
+        let remote_network = self.remote.network.clone();
+        let dao_addr = self.dao_addr.clone();
+        let repo_name = self.remote.repo.clone();
+
+        delete_tag(&blockchain, &remote_network, &dao_addr, &repo_name, &tag_name).await?;
+
+        Ok(format!("ok {remote_ref}\n"))
+    }
+}
+
+fn get_ref_name(_ref: &str) -> anyhow::Result<&str> {
+    let mut iter = _ref.rsplit('/');
+    iter.next()
+        .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
 }
 
 async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
-    Ok("delete ref ok".to_owned())
+    Ok("deleted remote ref".to_owned())
 }
 
-#[instrument(level = "debug", skip(m))]
+#[instrument(level = "info", skip_all)]
 fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
+    tracing::trace!("calculate_left_distance: from={from}, till={till}");
     if from == till {
         return 1u64;
     }
@@ -637,37 +716,47 @@ fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str
 
 #[instrument(level = "trace")]
 fn get_list_of_commit_objects(
-    _ref: &str,
-    ancestor_commit_id: &str,
-) -> anyhow::Result<(String, bool)> {
-    // TODO: git rev-list?
-    let mut cmd_args = [
-        "rev-list",
-        "--objects",
-        "--in-commit-order",
-        "--reverse",
-        _ref,
-    ]
-    .map(String::from)
-    .to_vec();
+    start: git_repository::Id,
+    till: Option<ObjectId>,
+) -> anyhow::Result<Vec<String>> {
+    let walk = start
+        .ancestors()
+        .all()?
+        .map(|e| e.expect("all entities should be present"))
+        .into_iter();
 
-    if !ancestor_commit_id.is_empty() {
-        cmd_args.push(format!("^{}", ancestor_commit_id));
+    let commits: Vec<git_repository::Id> = match till {
+        None => walk.into_iter().collect(),
+        Some(id) => walk
+            .take_while(|e| e.object().expect("object should exist").id != id)
+            .into_iter()
+            .collect(),
+    };
+
+    let mut res = Vec::new();
+    // observation from `git rev-list --reverse`
+    // 1) commits are going in reverse order (from old to new)
+    // 2) but for each commit tree elements are going in BFS order
+    //
+    // so if we just rev() commits we'll have topological order for free
+    for commit in commits.iter().rev() {
+        let commit = commit.object()?.into_commit();
+        res.push(commit.id.to_string());
+        let tree = commit.tree()?;
+        res.push(tree.id.to_string());
+        // res.extend(
+        //     tree.traverse()
+        //         .breadthfirst
+        //         .files()?
+        //         .iter()
+        //         // IMPORTANT: ignore blobs because later logic skips blobs too
+        //         // but might change in the future refactorings
+        //         .filter(|e| !e.mode.is_blob())
+        //         .into_iter()
+        //         .map(|e| e.oid.to_string()),
+        // );
     }
-
-    let cmd = Command::new("git")
-        .args(cmd_args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("git rev-list failed");
-
-    let out = cmd.wait_with_output()?;
-    if !out.status.success() {
-        Ok((String::new(), false))
-    } else {
-        Ok((String::from_utf8(out.stdout)?, true))
-    }
+    Ok(res)
 }
 
 #[cfg(test)]

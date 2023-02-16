@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 set -o pipefail
+. /tmp/util.sh
+
+### Set during docker run. See Makefile and README.
+## -- empty --
 
 ### Set during docker run. See Makefile and README.
 ## -- empty --
@@ -76,9 +80,14 @@ echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 echo "========== Send 2000 tons for deploy VersionController"
 everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
 
+delay 40
+
 # Deploy VersionController
 echo "========== Deploy VersionController"
 everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+
+echo "***** awaiting VersionController deploy *****"
+wait_account_active $VERSIONCONTROLLER_ADDR
 
 # Apply VersionController setters
 echo "========== Run VersionController setters"
@@ -99,6 +108,10 @@ everdev contract run $VERSIONCONTROLLER_ABI deploySystemContract --input "{\"ver
 echo "========== Get SystemContract address"
 SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
 echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
+
+echo "***** awaiting SystemContract deploy *****"
+wait_account_active $SYSTEMCONTRACT_ADDR
+
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract.addr
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 

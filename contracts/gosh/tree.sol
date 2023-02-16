@@ -310,9 +310,13 @@ contract Tree is Modifiers {
     function getsha() external view returns(uint256, string) {
         return (_shaTreeLocal, _shaTree);
     }
+    
+    function getVersion() external pure returns(string, string) {
+        return ("tree", version);
+    }
 
-    function getVersion() external pure returns(string) {
-        return version;
+    function getOwner() external view returns(address) {
+        return _pubaddr;
     }
 
     function getOwner() external view returns(address) {

@@ -9,6 +9,10 @@ use std::{
 mod defaults;
 
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
+pub const SET_COMMIT_TIMEOUT: &u64 = &180; // in secs
+pub const DEPLOY_CONTRACT_TIMEOUT: &u64 = &180; // in secs
+
+const USE_CACHE_ENV_VARIABLE_NAME: &str = "GOSH_USE_CACHE";
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
@@ -27,7 +31,7 @@ pub struct NetworkConfig {
     endpoints: Vec<String>,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Config {
     #[serde(rename = "ipfs")]
@@ -94,8 +98,13 @@ impl Config {
         Self::load(config_reader)
     }
 
-    #[instrument(level = "debug")]
+    pub fn use_cache(&self) -> Option<String> {
+        env::var(USE_CACHE_ENV_VARIABLE_NAME).ok()
+    }
+
+    #[instrument(level = "info", skip_all)]
     pub fn find_network_endpoints(&self, network: &str) -> Option<Vec<String>> {
+        tracing::trace!("find_network_endpoints: network={network}");
         let network_config = self.networks.get(network);
         match network_config {
             None => defaults::NETWORK_ENDPOINTS
@@ -114,7 +123,7 @@ impl Config {
     }
 
     pub fn find_network_user_wallet(&self, network: &str) -> Option<UserWalletConfig> {
-        tracing::debug!("Networks: {:?}", self.networks);
+        tracing::trace!("Networks: {:?}", self.networks);
         self.networks
             .get(network)
             .and_then(|network_config| network_config.user_wallet.as_ref())

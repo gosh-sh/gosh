@@ -9,8 +9,12 @@ const BlobCreatePage = () => {
     const treepath = useParams()['*']
     const navigate = useNavigate()
     const { daoName, repoName, branchName = 'main' } = useParams()
-    const { dao, repo } = useOutletContext<TRepoLayoutOutletContext>()
-    const { push, progress: pushProgress } = usePush(dao.details, repo, branchName)
+    const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+    const { push, progress: pushProgress } = usePush(
+        dao.details,
+        repository.adapter,
+        branchName,
+    )
 
     const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
         treepath && `/${treepath}`
