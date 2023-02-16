@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
@@ -59,3 +59,12 @@ chmod +x git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]}
 
 mv git-remote-gosh $HOME/.gosh/
 mv git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} $HOME/.gosh/
+
+echo "export PATH=\$PATH:\$HOME/.gosh" >> $HOME/.bash_profile
+echo "export PATH=\$PATH:\$HOME/.gosh" >> $HOME/.bashrc
+
+echo ======================================================
+echo 'Run the following command to finish your installation:'
+echo ======================================================
+echo 'export PATH=$PATH:$HOME/.gosh'
+echo ======================================================

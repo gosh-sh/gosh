@@ -130,7 +130,7 @@ pipeline {
             steps {
                 script {
                     dir('docker-extension') {
-                        sh "make build-ci IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                     }
                 }
             }
@@ -321,7 +321,7 @@ pipeline {
             }
         }
 
-        /*stage('Prerelease: push rc Docker Extension image') {
+        stage('Prerelease: push rc Docker Extension image') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -336,7 +336,7 @@ pipeline {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
                                 }
-                                sh "make build-ci IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
                             }
                         }
                     }
@@ -347,7 +347,7 @@ pipeline {
                     cleanWs()
                 }
             }
-        }*/
+        }
     }
 }
 
