@@ -391,7 +391,6 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                 let fetch_result = helper.fetch(sha, name).await;
                 if let Err(e) = fetch_result {
                     if e.to_string().contains("Was trying to call getCommit") {
-                        // let version = helper.get_repo_version().await?[0].clone();
                         let previous: Value = helper
                             .blockchain
                             .repo_contract()

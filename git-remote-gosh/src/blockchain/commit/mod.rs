@@ -16,7 +16,7 @@ pub struct GoshCommit {
     repo: String,
     pub branch: String,
     pub sha: String,
-    pub parents: Vec<String>,
+    parents: Vec<String>,
     pub content: String,
 }
 

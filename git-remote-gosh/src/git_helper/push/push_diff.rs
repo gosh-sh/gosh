@@ -17,6 +17,8 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
+use crate::blockchain::get_commit_address;
+use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
 
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
@@ -336,7 +338,7 @@ pub async fn push_initial_snapshot<B>(
     commit_id: String,
 ) -> anyhow::Result<()>
 where
-    B: BlockchainService,
+    B: BlockchainService + 'static,
 {
     tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
@@ -378,6 +380,23 @@ where
             content_string.push_str(&format!("{:02x}", byte));
         }
         tracing::trace!("content_string: {content_string:?}");
+
+        // If we deploy snapshot with content we have to wait for commit to be deployed first
+        // because snapshot with content will call commit for check
+
+        let mut repo_contract = blockchain.repo_contract().clone();
+        let new_commit = get_commit_address(
+            &blockchain.client(),
+            &mut repo_contract,
+            &commit_id,
+        ).await?;
+        tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
+        ParallelDiffsUploadSupport::wait_contracts_deployed(
+            &blockchain,
+            &vec![new_commit],
+        ).await?;
+        tracing::trace!("commit is ready");
+
         (content_string, commit_id)
     } else {
         ("".to_string(), "".to_string())

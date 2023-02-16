@@ -44,12 +44,6 @@ echo "Upgrade to test version $TEST_VERSION1"
 cd ../gosh
 
 sed -i "s/version = \"$CUR_VERSION/version = \"$TEST_VERSION1/" *.sol
-sed -i 's/1 minutes/1 seconds/' modifiers/modifiers.sol
-proposal_period=$(cat modifiers/modifiers.sol | grep SET_UPGRADE_PROPOSAL_START_AFTER | cut -d '=' -f 2)
-if [ "$proposal_period" != " 1 seconds;" ]; then
-  echo "Failed to change proposal period"
-  exit 1
-fi
 
 CHECK_VERSION=$(grep -r 'string constant version' systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 if [ $CHECK_VERSION != $TEST_VERSION1 ]; then
@@ -97,7 +91,6 @@ SYSTEM_CONTRACT_ADDR_2=$(gosh-cli -c "$CLI_CONF_PATH" -j run $VERSIONCONTROLLER_
 echo "SYSTEM_CONTRACT_ADDR_2=$SYSTEM_CONTRACT_ADDR_2"
 
 sed -i "s/version = \"$TEST_VERSION2/version = \"$CUR_VERSION/" *.sol
-sed -i 's/1 seconds/1 minutes/' modifiers/modifiers.sol
 make build
 
 cd $TESTS_PATH

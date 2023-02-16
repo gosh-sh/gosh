@@ -10,9 +10,9 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo02_2
-DAO_NAME="dao-upgrade-test02_2_$(date +%s)"
-NEW_REPO_PATH=upgrade_repo02_2_v2
+REPO_NAME=upgrade_repo02_3
+DAO_NAME="dao-upgrade-test02_3_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo02_3_v2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -40,17 +40,23 @@ fi
 
 # push 1 file
 echo "***** Pushing file to old repo *****"
-echo old_ver > 1.txt
+echo old_ver1 > 1.txt
 git add 1.txt
 git commit -m test
 git push
+echo old_ver2 > 1.txt
+git add 1.txt
+git commit -m test1
+git push
+
+git log
 
 cd ..
 
 echo "Upgrade DAO"
 upgrade_DAO
 
-echo "***** new repo02_2 deploy *****"
+echo "***** new repo02_3 deploy *****"
 gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
     "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -68,7 +74,7 @@ git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+GOSH_TRACE=5 git push
 cd ..
 
 echo "***** cloning repo with new link *****"
@@ -87,3 +93,11 @@ echo "GOOD VERSION"
 cd ..
 
 echo "TEST SUCCEEDED"
+#
+#тест
+#старт ветки от непоследнего комита в паренте
+#
+#надо протестить пуш после апргрейда без предыдущего
+#тест с несколькими коммитами апгрейд
+#
+#

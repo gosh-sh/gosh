@@ -424,7 +424,6 @@ where
         local_branch_name: &str,
         remote_branch_name: &str,
     ) -> anyhow::Result<()> {
-        // get previous commit
         // check in cur repo if account with commit exists   eg call get version
         // if not found need to init upgrade commit
         // can get list of objects and push the last commit and objects
@@ -434,15 +433,18 @@ where
         // snapshot should be deployed with content of the last snapshot and new addr of commit
 
         tracing::trace!("check check_and_upgrade_previous_commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
+
+        // 1) get ancestor commit address
         let mut repo_contract = self.blockchain.repo_contract().clone();
         let ancestor_address = get_commit_address(
             &self.blockchain.client(),
             &mut repo_contract,
             &ancestor_commit,
         )
-        .await?;
+            .await?;
         tracing::trace!("ancestor address: {ancestor_address}");
 
+        // 2) Check that ancestor contract exists
         let ancestor_contract = GoshContract::new(&ancestor_address, gosh_abi::COMMIT);
         // if ancestor is valid return
         let res = ancestor_contract
@@ -451,7 +453,11 @@ where
         if let Ok(_) = res {
             return Ok(());
         }
+
+        // If ancestor commit doesn't exist we need to deploy a new version of the commit with init_upgrade flag set to true
         tracing::trace!("Failed to get contract version: {res:?}");
+
+        // 3) Get address of the previous version of the repo
         let previous: Value = self
             .blockchain
             .repo_contract()
@@ -462,6 +468,8 @@ where
             .as_str()
             .unwrap();
         tracing::trace!("prev repo addr: {previous_repo_addr:?}");
+
+        // 4) Get address of the ancestor commit of previous version
         let previous_repo_addr = BlockchainContractAddress::new(previous_repo_addr);
         let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
         let prev_ancestor_address = get_commit_address(
@@ -469,8 +477,10 @@ where
             &mut prev_repo_contract,
             &ancestor_commit,
         )
-        .await?;
+            .await?;
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
+
+        // 5) Get previous version commit tree
         let prev_ancestor_contract = GoshContract::new(&prev_ancestor_address, gosh_abi::COMMIT);
         let prev_tree_addr: Value = prev_ancestor_contract
             .run_static(self.blockchain.client(), "gettree", None)
@@ -481,27 +491,40 @@ where
             .to_string();
         tracing::trace!("Prev tree address: {upgrade_tree_addr}");
         let upgrade_tree_addr = Some(BlockchainContractAddress::new(upgrade_tree_addr));
-        // let parents
+
+        // 6) get previous version commit data
         let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
             .await?
             .unwrap();
+        tracing::trace!("Prev version commit data: {commit:?}");
+
+        // 7) For new version ancestor commit set parent to the ancestor commit of previous version
         let parents_for_upgrade = vec![prev_ancestor_address.clone()];
-        // for parent in commit.parents {
-        //     parents_for_upgrade.push(BlockchainContractAddress::new(parent));
-        // }
-        // TODO: need to fix if commit is not the latest/
-        let till_id = // if !parents_for_upgrade.is_empty() {
-            // let commit = get_commit_by_addr(self.blockchain.client(), &parents_for_upgrade[0]).await?.unwrap();
-            // Some(ObjectId::from_str(&commit.sha)?)
-        // } else {
-            None;
-        // };
+
+        // 8.1) Get ancestor of ancestor
+
+
+        // 8) Get list of objects to push with the ancestor commit
+        // TODO: need to fix if commit is not the latest
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?
             .id();
-        let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
 
+        let till_id = ancestor_id
+            .ancestors()
+            .all()?
+            .map(|e| e.expect("all entities should be present"))
+            .into_iter()
+            .skip(1)
+            .next()
+            .map(|id| id.object().expect("object should exist").id);
+
+        tracing::trace!("Find objects till: {till_id:?}");
+        let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
+        tracing::trace!("List of commit objects: {commit_objects_list:?}");
+
+        // 9) push objects
         let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
@@ -516,7 +539,6 @@ where
             .id;
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
-        let mut first = false;
         // iterate through the git objects list and push them
         let mut prev_commit_id = None;
         for oid in &commit_objects_list {
@@ -524,10 +546,6 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
-                    if first {
-                        break;
-                    }
-                    first = true;
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -601,6 +619,7 @@ where
             }
         }
 
+        // 10) call set commit to the new version of the ancestor commit
         self.blockchain
             .notify_commit(
                 &latest_commit_id,

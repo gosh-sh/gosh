@@ -49,8 +49,6 @@ async fn main() -> anyhow::Result<()> {
     // zero arg is always current binary path, we don't need it
     args.remove(0);
 
-    eprintln!("ARGS: {args:?}");
-
     let mut highest = None;
     let mut system_contracts = HashMap::new();
     for helper_path in existing_to_supported_map.keys() {
@@ -91,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
             break;
         }
     }
-    eprintln!("system contracts: {system_contracts:?}");
+    tracing::trace!("system contracts: {system_contracts:?}");
     tracing::trace!("Highest repository version: {highest:?}");
     if highest.is_none() {
         return Err(format_err!(
@@ -131,14 +129,14 @@ async fn main() -> anyhow::Result<()> {
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
     let mut prev_dispatched = None;
-    eprintln!("Start");
+    tracing::trace!("Start dispatcher message interchange");
     while let Some(input_line) = lines.next_line().await? {
         if let Some(prev) = &prev_dispatched {
             if *prev == input_line {
                 continue;
             }
         }
-        eprintln!("stdin line: {input_line}");
+        tracing::trace!("stdin line: {input_line}");
         if let Some(stdin) = main_helper.stdin.as_mut() {
             stdin.write_all(input_line.as_bytes()).await?;
             stdin.write_all("\n".as_bytes()).await?;
@@ -146,22 +144,18 @@ async fn main() -> anyhow::Result<()> {
         } else {
             panic!("Failed to take stdin");
         }
-        eprintln!("waiting for output");
+        tracing::trace!("waiting for output");
         let mut output = vec![];
         if let Some(out) = main_helper.stdout.as_mut() {
             let reader = BufReader::new(out);
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
-                eprintln!("Push out line: {line}");
                 if line.contains(DISPATCHER_ENDL) {
-                    eprintln!("ENDL");
                     break;
                 }
                 if line.starts_with("dispatcher") {
-                    eprintln!("dispatcher callback");
                     prev_dispatched = Some(input_line);
                     call_helper_after_fail(line, &existing_to_supported_map, &args, &system_contracts).await?;
-                    // std::process::exit(0);
                     break;
                 }
                 output.push(line.clone());
@@ -169,14 +163,13 @@ async fn main() -> anyhow::Result<()> {
         } else {
             panic!("Failed to take stdout");
         }
-        eprintln!("Output: {output:?}");
+        tracing::trace!("Output: {output:?}");
         for line in output {
             stdout.write_all(format!("{line}\n").as_bytes()).await.unwrap();
             stdout.flush().await;
         }
         if let Ok(Some(code)) = main_helper.try_wait() {
             tracing::trace!("Loop finished with: {code:?}");
-            eprintln!("Code: {code:?}");
             if let Some(code) = code.code() {
                 if code != 0 {
                     return Err(format_err!("Error: {code}"));
@@ -268,8 +261,8 @@ async fn get_supported_version(binary_path: &str) -> anyhow::Result<String> {
 }
 
 async fn call_helper_after_fail(remote_callback: String, existing_to_supported_map: &HashMap<String, String>, args: &Vec<String>, system_contracts: &HashMap<String, String> ) -> anyhow::Result<()> {
-    // dispatcher {"value0":{"addr":"0:31e344f46732761e76f730c9d46722f070a8473e1e97aa550e53571e640e33b7","version":"1.0.0"}} fetch eeb077143f2d278dcf1628a5cee69c4aa52d62af refs/heads/main
-    eprintln!("call_helper_after_fail {remote_callback}");
+    // callback string = dispatcher {"value0":{"addr":"0:31e344f46732761e76f730c9d46722f070a8473e1e97aa550e53571e640e33b7","version":"1.0.0"}} fetch eeb077143f2d278dcf1628a5cee69c4aa52d62af refs/heads/main
+    tracing::trace!("call_helper_after_fail {remote_callback}");
     let mut args = args.to_owned();
     let mut parser = remote_callback.split(' ');
     // skip 1 part
@@ -287,7 +280,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         }
     }
     */
-    eprintln!("previous: {previous}");
+    tracing::trace!("previous repo: {previous}");
     let version = serde_json::Value::from_str(previous)?
         .as_object()
         .unwrap()
@@ -301,18 +294,17 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         .as_str()
         .unwrap()
         .to_owned();
-    eprintln!("version: {version}");
+    tracing::trace!("version: {version}");
     let mut proper_helper = None;
     for (helper, helper_version) in existing_to_supported_map {
         if *helper_version == version {
             proper_helper = Some(helper);
         }
     }
-    eprintln!("proper_helper: {proper_helper:?}");
+    tracing::trace!("proper_helper: {proper_helper:?}");
     let proper_helper = proper_helper.ok_or(
         format_err!("Helper with supported version {version} was not found.")
     )?;
-    eprintln!("system contracts: {system_contracts:?}");
     let new_system_contract = system_contracts.get(&version).ok_or(format_err!("Failed to get system contract address for version {version}"))?;
 
     let old_system = args[1].split("://").collect::<Vec<&str>>()[1]
@@ -324,7 +316,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         .replace(&old_system, new_system_contract);
     tracing::trace!("New repo link: {new_repo_link}");
     args[1] = new_repo_link;
-    eprintln!("new args: {args:?}");
+    tracing::trace!("new args: {args:?}");
 
     let mut previous_helper = Command::new(proper_helper)
         .args(args.clone())
@@ -333,7 +325,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         .stdout(Stdio::piped())
         .spawn()?;
 
-    eprintln!("send input: {cmd}");
+    tracing::trace!("send input: {cmd}");
     if let Some(stdin) = previous_helper.stdin.as_mut() {
         stdin.write_all(cmd.as_bytes()).await?;
         stdin.write_all("\n".as_bytes()).await?;
@@ -350,9 +342,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         let reader = BufReader::new(out);
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
-            eprintln!("Push out line: {line}");
             if line.contains(DISPATCHER_ENDL) {
-                eprintln!("ENDL");
                 break;
             }
             output.push(line.clone());
@@ -360,7 +350,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
     } else {
         panic!("Failed to take stdout");
     }
-    eprintln!("Output: {output:?}");
+    tracing::trace!("Output: {output:?}");
     for line in output {
         io::stdout().write_all(line.as_bytes()).await.unwrap();
         io::stdout().write_all("\n".as_bytes()).await.unwrap();

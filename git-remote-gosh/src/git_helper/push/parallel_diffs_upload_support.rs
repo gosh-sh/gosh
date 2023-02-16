@@ -161,7 +161,7 @@ impl ParallelDiffsUploadSupport {
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn wait_contracts_deployed<B>(
+    pub async fn wait_contracts_deployed<B>(
         blockchain: &B,
         addresses: &[BlockchainContractAddress],
     ) -> anyhow::Result<()>
