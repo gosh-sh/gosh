@@ -44,6 +44,7 @@ CONTRACTS = {
         'gosh/content-signature',
         'gosh/daotag',
         'gosh/taggosh',
+        'gosh/topic',
         'smv/SMVProposal',
         'smv/SMVTokenLocker',
         'smv/SMVClient',
