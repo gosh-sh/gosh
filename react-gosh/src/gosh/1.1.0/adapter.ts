@@ -721,7 +721,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         // Create proposal
         const smv = await this.getSmv()
-        await smv.validateProposalStart()
+        await smv.validateProposalStart(0)
 
         await this.wallet.run('startProposalForDeployWalletDao', {
             pubaddr,
@@ -3408,9 +3408,11 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         }
 
         min = min ?? 20
-        const { total } = await this._getLockerBalance()
-        if (total < min) {
-            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
+        if (min > 0) {
+            const { total } = await this._getLockerBalance()
+            if (total < min) {
+                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
+            }
         }
     }
 

@@ -334,6 +334,9 @@ function useDaoCreate() {
             setProgress((state) => ({ ...state, isBlobsDeployed: true }))
         }
 
+        // Set upgrade repos flag
+        await dao.setRepositoriesUpgraded()
+
         // Set progress
         setProgress((state) => ({ ...state, isFetching: false }))
     }
@@ -768,6 +771,136 @@ function useTaskList(
         isEmpty: !accounts.isFetching && !tasks.isFetching && !tasks.items.length,
         items: tasks.items,
         hasNext: tasks.hasNext,
+        getMore,
+        getItemDetails,
+    }
+}
+
+function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
+    const [accounts, setAccounts] = useState<{
+        isFetching: boolean
+        items: { id: TAddress; last_paid: number }[]
+    }>({ isFetching: false, items: [] })
+    const [topics, setTopics] = useState<{
+        isFetching: boolean
+        items: any[]
+        lastAccountIndex: number
+        hasNext?: boolean
+    }>({ items: [], isFetching: false, lastAccountIndex: 0 })
+
+    const { perPage = 5 } = params
+
+    const getAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+
+        const adapter = await dao.getSmv()
+        const codeHash = await adapter.getEventCodeHash()
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: result.sort((a, b) => b.last_paid - a.last_paid),
+        }))
+    }, [dao])
+
+    const getTopicList = useCallback(
+        async (lastAccountIndex: number) => {
+            //     if (accounts.isFetching) {
+            //         return
+            //     }
+            //     setTopics((state) => ({ ...state, isFetching: true }))
+            //     const endAccountIndex = lastAccountIndex + perPage
+            //     const items: TSmvEventListItem[] = await executeByChunk(
+            //         accounts.items.slice(lastAccountIndex, endAccountIndex),
+            //         MAX_PARALLEL_READ,
+            //         async ({ id }) => {
+            //             const event = await adapter.getEvent(id, false)
+            //             return { adapter, ...event }
+            //         },
+            //     )
+            //     setEvents((state) => ({
+            //         ...state,
+            //         isFetching: false,
+            //         items: [...state.items, ...items],
+            //         lastAccountIndex: endAccountIndex,
+            //         hasNext: endAccountIndex < accounts.items.length,
+            //     }))
+        },
+        [accounts.isFetching, accounts.items, perPage],
+    )
+
+    const getMore = async () => {
+        // await getEventList(events.lastAccountIndex)
+    }
+
+    const getItemDetails = async (item: any) => {
+        // if (item.isLoadDetailsFired) {
+        //     return
+        // }
+        // setEvents((state) => ({
+        //     ...state,
+        //     items: state.items.map((curr) => {
+        //         if (curr.address === item.address) {
+        //             return { ...curr, isLoadDetailsFired: true }
+        //         }
+        //         return curr
+        //     }),
+        // }))
+        // const details = {
+        //     status: await item.adapter.getEventStatus({ address: item.address }),
+        //     time: await item.adapter.getEventTime({ address: item.address }),
+        //     votes: await item.adapter.getEventVotes({ address: item.address }),
+        // }
+        // setEvents((state) => ({
+        //     ...state,
+        //     items: state.items.map((curr) => {
+        //         if (curr.address === item.address) return { ...curr, ...details }
+        //         return curr
+        //     }),
+        // }))
+    }
+
+    /** Get all topic accounts */
+    useEffect(() => {
+        getAccounts()
+    }, [getAccounts])
+
+    /** Initial loading */
+    useEffect(() => {
+        getTopicList(0)
+    }, [getTopicList])
+
+    /**
+     * Refresh event list
+     * Reset `isLoadDetailsFired` flag
+     * */
+    useEffect(() => {
+        // const interval = setInterval(async () => {
+        //     if (accounts.isFetching || events.isFetching) {
+        //         return
+        //     }
+        //     setEvents((state) => ({
+        //         ...state,
+        //         items: state.items.map((item) => ({
+        //             ...item,
+        //             isLoadDetailsFired: item.status?.completed,
+        //         })),
+        //     }))
+        // }, 20000)
+        // return () => {
+        //     clearInterval(interval)
+        // }
+    }, [accounts.isFetching, topics.isFetching])
+
+    return {
+        isFetching: accounts.isFetching || topics.isFetching,
+        isEmpty: !accounts.isFetching && !topics.isFetching && !topics.items.length,
+        items: topics.items,
+        hasNext: topics.hasNext,
         getMore,
         getItemDetails,
     }
