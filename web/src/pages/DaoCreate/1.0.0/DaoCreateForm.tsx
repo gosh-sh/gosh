@@ -33,9 +33,9 @@ const DaoCreateForm_1_0_0 = () => {
     }
 
     return (
-        <div className="container container--full mt-12 mb-5">
-            <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
-                <h1 className="font-semibold text-2xl text-center mb-8">
+        <div className="container my-12">
+            <div className="max-w-2xl mx-auto">
+                <h1 className="font-medium text-3xl text-center mb-14">
                     Create new organization
                 </h1>
 
