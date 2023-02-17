@@ -82,4 +82,5 @@ abstract contract Errors {
     uint constant ERR_ZERO_GRANT = 271;
     uint constant ERR_WRONG_LOCK = 272;
     uint constant ERR_TOO_MANY_PROPOSALS = 273;
+    uint constant ERR_TOO_FEW_PROPOSALS = 274;
 }
