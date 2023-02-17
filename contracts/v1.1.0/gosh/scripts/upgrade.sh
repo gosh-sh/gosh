@@ -1,8 +1,7 @@
-# Script for deployment VersionController contracts
-
 #!/bin/bash
 set -e
 set -o pipefail
+. /tmp/util.sh
 
 ### Set during docker run. See Makefile and README.
 ## -- empty --
@@ -32,7 +31,7 @@ echo "========== Set keys for VersionController"
 everdev signer add $SIGNER "$VERSIONCONTROLLER_SEED"
 
 # Prepare giver
-GIVER_ABI="../../multisig/MultisigWallet.abi.json"
+GIVER_ABI="../../../multisig/MultisigWallet.abi.json"
 GIVER_ADDR=`cat /tmp/Giver.addr`
 GIVER_SEED=`cat /tmp/Giver.seed`
 everdev signer add $GIVER_SIGNER "$GIVER_SEED"
@@ -57,9 +56,23 @@ DAO_CODE=$(everdev contract dt $GOSH_PATH/goshdao.tvc | tr -d ' ",' | sed -n '/c
 TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+TASK_CODE=$(everdev contract dt $GOSH_PATH/task.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+DAO_TAG_CODE=$(everdev contract dt $GOSH_PATH/daotag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+HELP_TAG_CODE=$(everdev contract dt $GOSH_PATH/taggosh.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+TOPIC_CODE=$(everdev contract dt $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 # Echo VersionController address
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
+
+# Upgrade VersionController (this step is not necessary for each upgrade)
+echo "========== Upgrade VersionController code"
+VERSIONCONTROLLER_CODE=$(everdev contract dt $GOSH_PATH/versioncontroller.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+everdev contract run $VERSIONCONTROLLER_ABI updateCode --input "{\"newcode\": \"$VERSIONCONTROLLER_CODE\", \"cell\": \"\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+
+delay 40
 
 # Apply VersionController setters
 echo "========== Run VersionController setters"
@@ -75,6 +88,9 @@ echo "========== Get SystemContract address"
 SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
 echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
+
+echo "***** awaiting SystemContract deploy *****"
+wait_account_active $SYSTEMCONTRACT_ADDR
 
 # Send tokens to SystemContract
 echo "     ====> Send tokens to SystemContract"
@@ -116,6 +132,14 @@ echo "     ====> Run setTree"
 everdev contract run $SYSTEMCONTRACT_ABI setTree --input "{\"code\":\"$TREE_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setTag"
 everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTask"
+everdev contract run $SYSTEMCONTRACT_ABI setTask --input "{\"code\":\"$TASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setDaoTag"
+everdev contract run $SYSTEMCONTRACT_ABI setDaoTag --input "{\"code\":\"$DAO_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setHelpTag"
+everdev contract run $SYSTEMCONTRACT_ABI setHelpTag --input "{\"code\":\"$HELP_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTopic"
+everdev contract run $SYSTEMCONTRACT_ABI setTopic --input "{\"code\":\"$TOPIC_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"

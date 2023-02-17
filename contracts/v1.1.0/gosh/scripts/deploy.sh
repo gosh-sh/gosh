@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 set -o pipefail
+. /tmp/util.sh
 
 ### Set during docker run. See Makefile and README.
 ## -- empty --
@@ -108,12 +109,10 @@ everdev contract run $VERSIONCONTROLLER_ABI deploySystemContract --input "{\"ver
 echo "========== Get SystemContract address"
 SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
 echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
+echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 
 echo "***** awaiting SystemContract deploy *****"
 wait_account_active $SYSTEMCONTRACT_ADDR
-
-echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract.addr
-echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 
 # Send tokens to SystemContract
 echo "     ====> Send tokens to SystemContract"
