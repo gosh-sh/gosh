@@ -5,8 +5,9 @@ import * as Yup from 'yup'
 import { Field, Form, Formik } from 'formik'
 import DockerClient from '../../client'
 import { useBranches, AppConfig } from 'react-gosh'
-import { TextField } from '../../../components/Formik'
 import { BranchSelect } from '../../../components/Branches'
+import { FormikInput } from '../../../components/Formik'
+import { Button } from '../../../components/Form'
 
 type TBuildFormValues = {
     tag: string
@@ -96,25 +97,21 @@ const BuildPage = () => {
                             <div className="mt-5">
                                 <Field
                                     name="tag"
-                                    component={TextField}
-                                    inputProps={{
-                                        className: 'text-sm py-1.5 w-full',
-                                        autoComplete: 'off',
-                                        placeholder: 'Image tag',
-                                        disabled: isSubmitting || isDisabled,
-                                    }}
+                                    component={FormikInput}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    placeholder="Image tag"
+                                    disabled={isSubmitting || isDisabled}
                                 />
                             </div>
                             <div className="mt-5">
                                 <Field
                                     name="imageDockerfile"
-                                    component={TextField}
-                                    inputProps={{
-                                        className: 'text-sm py-1.5 w-full',
-                                        autoComplete: 'off',
-                                        placeholder: 'Image dockerfile path',
-                                        disabled: isSubmitting || isDisabled,
-                                    }}
+                                    component={FormikInput}
+                                    className="w-full"
+                                    autoComplete="off"
+                                    placeholder="Image dockerfile path"
+                                    disabled={isSubmitting || isDisabled}
                                 />
                             </div>
                             {/* <div className="mt-5">
@@ -128,14 +125,13 @@ const BuildPage = () => {
                                 />
                             </div> */}
                             <div className="flex flex-wrap mt-4 items-center gap-3">
-                                <button
-                                    className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
+                                <Button
                                     type="submit"
                                     disabled={isSubmitting || isDisabled}
+                                    // isLoading={isSubmitting}
                                 >
-                                    {/* {isSubmitting && <Spinner className="mr-2" />} */}
                                     Build
-                                </button>
+                                </Button>
                             </div>
                         </Form>
                     )}
