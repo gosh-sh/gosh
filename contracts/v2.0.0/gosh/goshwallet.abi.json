@@ -285,6 +285,16 @@
 			]
 		},
 		{
+			"name": "getCellSetAbilityInvite",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "AloneNotAllowMint",
 			"inputs": [
 			],

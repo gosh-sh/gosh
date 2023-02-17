@@ -418,6 +418,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function getCellSetAbilityInvite(bool res,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = ABILITY_INVITE_PROPOSAL_KIND;
+        return abi.encode(proposalKind, res, comment, now);
+    }
+    
     function _setAbilityInvite(bool res) private view accept {
         tvm.accept();
         GoshDao(_goshdao).setAbilityInvite{value: 0.17 ton, flag: 1}(_pubaddr, _index, res);
