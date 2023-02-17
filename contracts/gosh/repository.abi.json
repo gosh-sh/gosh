@@ -363,38 +363,6 @@
 			"outputs": [
 				{"name":"value0","type":"bool"}
 			]
-		},
-		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getPrevious",
-			"inputs": [
-			],
-			"outputs": [
-				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"value0","type":"optional(tuple)"}
-			]
-		},
-		{
-			"name": "getTombstone",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
-			]
-		},
-		{
-			"name": "getReady",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
-			]
 		}
 	],
 	"data": [

@@ -472,12 +472,4 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousDaoAddr() external view returns(optional(address)) {
         return _previous;
     }
-        
-    function getOwner() external view returns(address) {
-        return _pubaddr;
-    }
-    
-    function getPreviousDaoAddr() external view returns(optional(address)) {
-        return _previous;
-    }
 }
