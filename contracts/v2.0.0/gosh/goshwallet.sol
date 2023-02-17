@@ -1703,7 +1703,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }*/
-    
+ 
+/*   
     function getCellTaskConfirm(
         string taskName,
         string repoName,
@@ -1712,6 +1713,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_PROPOSAL_KIND;
         return abi.encode(proposalKind, repoName, taskName, index, comment, now);
     }
+*/
 
     function startProposalForTaskDestroy(
         string taskName,

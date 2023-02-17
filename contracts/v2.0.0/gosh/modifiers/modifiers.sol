@@ -225,8 +225,8 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DEPLOY_WALLET_DAO_PROPOSAL_KIND = 5;
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
-    uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
-    uint256 constant TASK_PROPOSAL_KIND = 9;
+//    uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
+//    uint256 constant TASK_PROPOSAL_KIND = 9;
     uint256 constant TASK_DESTROY_PROPOSAL_KIND = 10;
     uint256 constant TASK_DEPLOY_PROPOSAL_KIND = 11;
     uint256 constant DEPLOY_REPO_PROPOSAL_KIND = 12;
