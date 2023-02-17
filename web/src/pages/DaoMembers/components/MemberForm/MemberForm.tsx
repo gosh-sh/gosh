@@ -2,8 +2,8 @@ import { TDao } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import successImage from '../../../../assets/images/success.png'
 import { supabase } from '../../../../helpers'
-import { DaoMemberForm_1_0_0 } from './1.0.0/MemberForm'
-import { DaoMemberForm_1_1_0 } from './1.1.0/MemberForm'
+import DAO_MEMBER_FORM_1_0_0 from './1.0.0/MemberForm'
+import DAO_MEMBER_FORM_2_0_0 from './2.0.0/MemberForm'
 
 type TDaoMemberFormProps = {
     dao: {
@@ -63,7 +63,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
 
     if (version === '1.0.0') {
         return (
-            <DaoMemberForm_1_0_0
+            <DAO_MEMBER_FORM_1_0_0
                 dao={dao}
                 getDaoInvites={getDaoInvites}
                 getUsernameByEmail={getUsernameByEmail}
@@ -72,7 +72,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
         )
     }
     return (
-        <DaoMemberForm_1_1_0
+        <DAO_MEMBER_FORM_2_0_0
             dao={dao}
             getDaoInvites={getDaoInvites}
             getUsernameByEmail={getUsernameByEmail}

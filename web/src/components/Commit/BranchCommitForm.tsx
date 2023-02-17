@@ -47,7 +47,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     } = props
 
     const getInitialValues = () => {
-        const version_1_1_0 = {
+        const version_2_0_0 = {
             task: '',
             assigners: '',
             reviewers: '',
@@ -56,12 +56,12 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
         }
         return {
             ...initialValues,
-            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
         }
     }
 
     const getValidationSchema = () => {
-        const version_1_1_0 = {
+        const version_2_0_0 = {
             task: yup.string(),
             assigners: yup.string(),
             reviewers: yup.string(),
@@ -83,7 +83,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
         return yup.object().shape({
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
         })
     }
 

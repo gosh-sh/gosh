@@ -30,7 +30,7 @@ CONTRACTS = {
         'smv/SMVClient',
         'smv/TokenRoot'
     ],
-    '1.1.0': [
+    '2.0.0': [
         'gosh/systemcontract',
         'gosh/goshdao',
         'gosh/goshwallet',

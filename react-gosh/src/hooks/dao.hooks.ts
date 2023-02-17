@@ -7,6 +7,7 @@ import {
     TDaoCreateProgress,
     TDaoListItem,
     TDaoMemberDetails,
+    TTaskDetails,
     TTaskListItem,
     TTopic,
     TTopicCreateParams,
@@ -241,7 +242,7 @@ function useDaoCreate() {
         setProgress((state) => ({ ...state, isFetching: false }))
     }
 
-    const _create_1_1_0 = async (
+    const _create_2_0_0 = async (
         name: string,
         options: {
             tags?: string[]
@@ -348,7 +349,7 @@ function useDaoCreate() {
     if (version === '1.0.0') {
         createFn = _create_1_0_0
     } else {
-        createFn = _create_1_1_0
+        createFn = _create_2_0_0
     }
 
     return { progress, create: createFn }
@@ -403,7 +404,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
         } else {
-            items = await _getMemberList_1_1_0()
+            items = await _getMemberList_2_0_0()
         }
 
         setMembers((state) => ({
@@ -432,7 +433,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         return items
     }
 
-    const _getMemberList_1_1_0 = async () => {
+    const _getMemberList_2_0_0 = async () => {
         const gosh = dao.getGosh()
 
         const members = await dao.getMembers()
@@ -503,7 +504,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
     }
 
-    const _create_1_1_0 = async (options: {
+    const _create_2_0_0 = async (options: {
         members?: { username: string; allowance: number; comment: string }[]
     }) => {
         const clean = (options.members || []).filter(({ username }) => !!username)
@@ -515,7 +516,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     if (version === '1.0.0') {
         return _create_1_0_0
     }
-    return _create_1_1_0
+    return _create_2_0_0
 }
 
 function useDaoMemberDelete(dao: IGoshDaoAdapter) {
@@ -775,6 +776,49 @@ function useTaskList(
     }
 }
 
+function useTask(dao: IGoshDaoAdapter, address: TAddress) {
+    const [task, setTask] = useState<{ isFetching: boolean; details?: TTaskDetails }>({
+        isFetching: false,
+    })
+
+    const getTask = useCallback(async () => {
+        setTask((state) => ({ ...state, isFetching: true }))
+        const details = await dao.getTask({ address })
+        setTask((state) => ({ ...state, details, isFetching: false }))
+    }, [dao, address])
+
+    /** Initial load */
+    useEffect(() => {
+        getTask()
+    }, [getTask])
+
+    /** Refresh task details */
+    useEffect(() => {
+        if (task.isFetching || task.details?.confirmed) {
+            return
+        }
+
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await getTask()
+                _intervalLock = false
+            }
+
+            if (task.details?.confirmed) {
+                clearInterval(interval)
+            }
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [task.isFetching, task.details?.confirmed, getTask])
+
+    return task
+}
+
 function useTopicCreate(dao: IGoshDaoAdapter) {
     const create = async (params: TTopicCreateParams) => {
         await dao.createTopic(params)
@@ -861,16 +905,69 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     }
 }
 
-function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
+function useTopic(dao: IGoshDaoAdapter, topic: TAddress, options: { perPage?: number }) {
     const [data, setData] = useState<{
         isFetching: boolean
         topic?: TTopic
     }>({ isFetching: false })
-    const [messages, setMessages] = useState<any[]>([])
+    const [messages, setMessages] = useState<{
+        isFetching: boolean
+        items: any[]
+        cursor?: string
+        hasNext?: boolean
+    }>({
+        isFetching: false,
+        items: [],
+    })
+
+    const { perPage = 5 } = options
 
     const sendMessage = async (params: { message: string; answerId?: string }) => {
         const { message, answerId } = params
         await dao.createTopicMessage({ topic, message, answerId })
+    }
+
+    const getMessages = useCallback(
+        async (from?: string) => {
+            if (!data.topic) {
+                return
+            }
+
+            setMessages((state) => ({ ...state, isFetching: true }))
+
+            const { messages, cursor, hasNext } = await data.topic.account.getMessages(
+                {
+                    msgType: ['IntIn'],
+                    allow_latest_inconsistent_data: true,
+                    limit: perPage,
+                    cursor: from,
+                },
+                true,
+                false,
+            )
+
+            setMessages((state) => ({
+                isFetching: false,
+                items: [
+                    ...state.items,
+                    ...messages
+                        .filter(
+                            ({ decoded }) => decoded && decoded.name === 'acceptMessage',
+                        )
+                        .map(({ message, decoded }) => ({
+                            id: message.id.replace('message/', ''),
+                            ...decoded.value,
+                        })),
+                ],
+                cursor,
+                hasNext,
+            }))
+        },
+        [data.topic, perPage],
+    )
+
+    const getMore = async () => {
+        await getMessages(messages.cursor)
     }
 
     useEffect(() => {
@@ -883,27 +980,7 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
     }, [dao, topic])
 
     useEffect(() => {
-        const _getMessages = async () => {
-            if (!data.topic) {
-                return
-            }
-            const { messages } = await data.topic.account.getMessages(
-                { msgType: ['IntIn'], allow_latest_inconsistent_data: true },
-                true,
-                true,
-            )
-            console.debug(messages)
-            setMessages(
-                messages
-                    .filter(({ decoded }) => decoded && decoded.name === 'acceptMessage')
-                    .map(({ message, decoded }) => ({
-                        id: message.id.replace('message/', ''),
-                        ...decoded.value,
-                    })),
-            )
-        }
-
-        _getMessages()
+        getMessages()
 
         // Subscribe messages
         if (data.topic) {
@@ -914,10 +991,10 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
                     0,
                 )
                 if (decoded) {
-                    setMessages((state) => [
-                        { id: message.id, ...decoded.value },
+                    setMessages((state) => ({
                         ...state,
-                    ])
+                        items: [{ id: message.id, ...decoded.value }, ...state.items],
+                    }))
                 }
             })
         }
@@ -925,11 +1002,12 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
         return () => {
             data.topic?.account.account.free()
         }
-    }, [data.topic])
+    }, [data.topic, getMessages])
 
     return {
         data,
         messages,
+        getMoreMessages: getMore,
         sendMessage,
     }
 }
@@ -946,6 +1024,7 @@ export {
     useDaoMint,
     useDaoSettingsManage,
     useTaskList,
+    useTask,
     useTopicCreate,
     useTopicList,
     useTopic,

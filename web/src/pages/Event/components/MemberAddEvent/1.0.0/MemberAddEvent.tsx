@@ -2,11 +2,11 @@ import { GoshAdapterFactory, shortString, TAddress, TSmvEvent } from 'react-gosh
 import { useEffect, useState } from 'react'
 import CopyClipboard from '../../../../../components/CopyClipboard'
 
-type TMemberAddEvent_1_0_0Props = {
+type TMemberAddEventProps = {
     event: TSmvEvent
 }
 
-const MemberAddEvent_1_0_0 = (props: TMemberAddEvent_1_0_0Props) => {
+const MemberAddEvent = (props: TMemberAddEventProps) => {
     const { event } = props
     const { data } = event
     const [members, setMembers] = useState<{ username: string; profile: TAddress }[]>([])
@@ -43,4 +43,4 @@ const MemberAddEvent_1_0_0 = (props: TMemberAddEvent_1_0_0Props) => {
     )
 }
 
-export default MemberAddEvent_1_0_0
+export default MemberAddEvent

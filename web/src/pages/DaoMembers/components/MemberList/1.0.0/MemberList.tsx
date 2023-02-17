@@ -5,7 +5,7 @@ import ToastError from '../../../../../components/Error/ToastError'
 import Loader from '../../../../../components/Loader'
 import DaoMemberListItem from './MemberListItem'
 
-type TMemeberList_1_0_0Props = {
+type TDaoMemeberListProps = {
     daoDetails: TDao
     members: {
         isFetching: boolean
@@ -21,7 +21,7 @@ type TMemeberList_1_0_0Props = {
     }
 }
 
-const MemeberList_1_0_0 = (props: TMemeberList_1_0_0Props) => {
+const DaoMemeberList = (props: TDaoMemeberListProps) => {
     const { daoDetails, members, removal } = props
     const { isFetching, items } = members
     const navigate = useNavigate()
@@ -73,4 +73,4 @@ const MemeberList_1_0_0 = (props: TMemeberList_1_0_0Props) => {
     )
 }
 
-export default MemeberList_1_0_0
+export default DaoMemeberList

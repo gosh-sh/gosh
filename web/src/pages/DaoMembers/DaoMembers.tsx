@@ -5,7 +5,7 @@ import ToastError from '../../components/Error/ToastError'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../helpers'
 import { EDaoInviteStatus } from '../../store/onboarding.types'
-import { DaoMemberInvites, MemberList, DaoMemberForm } from './components'
+import { DaoMemberInvites, DaoMemberList, DaoMemberForm } from './components'
 
 export type TDaoInvite = {
     id: string
@@ -82,7 +82,7 @@ const DaoMembersPage = () => {
 
     return (
         <>
-            <MemberList dao={dao} scrollToInviteRef={scrollToInviteRef} />
+            <DaoMemberList dao={dao} scrollToInviteRef={scrollToInviteRef} />
 
             {dao.details.isAuthMember && (
                 <div

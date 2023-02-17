@@ -13,7 +13,7 @@ import yup from '../../../../../yup-extended'
 import ToastError from '../../../../../components/Error/ToastError'
 import { TInvitationSentProps } from '../MemberForm'
 
-type TDaoMemberForm_1_0_0Props = {
+type TDaoMemberFormProps = {
     dao: {
         adapter: IGoshDaoAdapter
         details: TDao
@@ -29,7 +29,7 @@ type TMember = {
     validated: { valid: boolean; message?: string }
 }
 
-const DaoMemberForm_1_0_0 = (props: TDaoMemberForm_1_0_0Props) => {
+const DaoMemberForm = (props: TDaoMemberFormProps) => {
     const { dao, getDaoInvites, getUsernameByEmail, SuccessComponent } = props
     const { user } = useUser()
     const createDaoMember = useDaoMemberCreate(dao.adapter)
@@ -286,4 +286,4 @@ const DaoMemberForm_1_0_0 = (props: TDaoMemberForm_1_0_0Props) => {
     )
 }
 
-export { DaoMemberForm_1_0_0 }
+export default DaoMemberForm

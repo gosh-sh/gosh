@@ -6,7 +6,7 @@ import { Button } from '../../../Form'
 import { FormikCheckbox, FormikInput, FormikTextarea } from '../../../Formik'
 import CommitProgress from '../../CommitProgress'
 
-type TCommitFields_1_0_0Props = {
+type TCommitFieldsProps = {
     className?: string
     isSubmitting: boolean
     urlBack?: string
@@ -14,7 +14,7 @@ type TCommitFields_1_0_0Props = {
     progress?: TPushProgress
 }
 
-const CommitFields_1_0_0 = (props: TCommitFields_1_0_0Props) => {
+const CommitFields = (props: TCommitFieldsProps) => {
     const { className, isSubmitting, urlBack, extraButtons, progress } = props
     const navigate = useNavigate()
 
@@ -114,4 +114,4 @@ const CommitFields_1_0_0 = (props: TCommitFields_1_0_0Props) => {
     )
 }
 
-export default CommitFields_1_0_0
+export default CommitFields

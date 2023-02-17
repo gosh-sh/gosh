@@ -12,7 +12,7 @@ type TFormValues = {
     name: string
 }
 
-const RepoCreatePage_1_0_0 = () => {
+const RepoCreate = () => {
     const navigate = useNavigate()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { create: createRepository } = useRepoCreate(dao.adapter)
@@ -72,4 +72,4 @@ const RepoCreatePage_1_0_0 = () => {
     )
 }
 
-export default RepoCreatePage_1_0_0
+export default RepoCreate

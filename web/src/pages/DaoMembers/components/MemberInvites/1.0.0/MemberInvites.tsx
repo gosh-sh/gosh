@@ -7,7 +7,7 @@ import { supabase } from '../../../../../helpers'
 import { EDaoInviteStatus } from '../../../../../store/onboarding.types'
 import { TDaoInvite } from '../../../DaoMembers'
 
-type TDaoMemberInvites_1_0_0Props = {
+type TDaoMemberInvitesProps = {
     dao: IGoshDaoAdapter
     invites: { items: TDaoInvite[]; isFetching: boolean }
     setInvites: React.Dispatch<
@@ -16,7 +16,7 @@ type TDaoMemberInvites_1_0_0Props = {
     revoke(item: TDaoInvite): Promise<void>
 }
 
-const DaoMemberInvites_1_0_0 = (props: TDaoMemberInvites_1_0_0Props) => {
+const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
     const { dao, invites, setInvites, revoke } = props
     const createDaoMember = useDaoMemberCreate(dao)
 
@@ -129,4 +129,4 @@ const DaoMemberInvites_1_0_0 = (props: TDaoMemberInvites_1_0_0Props) => {
     )
 }
 
-export { DaoMemberInvites_1_0_0 }
+export default DaoMemberInvites

@@ -7,7 +7,7 @@ import { Button } from '../../../../../components/Form'
 import { FormikInput } from '../../../../../components/Formik'
 import yup from '../../../../../yup-extended'
 
-type TEventVotingForm_1_0_0Props = {
+type TEventVotingFormProps = {
     dao: {
         adapter: IGoshDaoAdapter
         details: TDao
@@ -20,7 +20,7 @@ type TFormValues = {
     amount: number
 }
 
-const EventVotingForm_1_0_0 = (props: TEventVotingForm_1_0_0Props) => {
+const EventVotingForm = (props: TEventVotingFormProps) => {
     const { dao, event } = props
     const smv = useSmv(dao)
     const { vote } = useSmvVote(dao.adapter, event)
@@ -121,4 +121,4 @@ const EventVotingForm_1_0_0 = (props: TEventVotingForm_1_0_0Props) => {
     )
 }
 
-export default EventVotingForm_1_0_0
+export default EventVotingForm

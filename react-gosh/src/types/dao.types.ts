@@ -92,7 +92,15 @@ type TTaskDetails = {
     address: TAddress
     name: string
     repository: string
-    candidates: any[]
+    team?: {
+        commit: {
+            branch: string
+            name: string
+        }
+        assigners: { username: string; address: string }[]
+        reviewers: { username: string; address: string }[]
+        managers: { username: string; address: string }[]
+    }
     config: any
     confirmed: boolean
     confirmedAt: number
