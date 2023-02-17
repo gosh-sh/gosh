@@ -27,7 +27,7 @@ anyhow = '1.0.69'
 async-trait = '0.1.64'
 base64 = '0.21.0'
 base64-serde = '0.7.0'
-bytes = '^1'
+bytes = '1.4.0'
 cached = {version = '0.38.0', features = ['default']}
 derive_builder = '0.11.2'
 form-data = '0.4.2'

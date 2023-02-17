@@ -338,20 +338,4 @@ contract Repository is Modifiers{
     function getReady() external view returns(bool) {
         return _ready;
     }
-
-    function getOwner() external view returns(address) {
-        return _pubaddr;
-    }
-
-    function getPrevious() external view returns(optional(AddrVersion)) {
-        return _previousversion;
-    }
-
-    function getTombstone() external view returns(bool) {
-        return _tombstone;
-    }
-
-    function getReady() external view returns(bool) {
-        return _ready;
-    }
 }

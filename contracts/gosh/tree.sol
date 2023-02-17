@@ -318,8 +318,4 @@ contract Tree is Modifiers {
     function getOwner() external view returns(address) {
         return _pubaddr;
     }
-
-    function getOwner() external view returns(address) {
-        return _pubaddr;
-    }
 }

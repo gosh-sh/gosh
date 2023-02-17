@@ -342,22 +342,6 @@
 			"outputs": [
 				{"name":"value0","type":"bool"}
 			]
-		},
-		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getInitUpgrade",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
-			]
 		}
 	],
 	"data": [

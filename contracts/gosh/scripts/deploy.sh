@@ -6,9 +6,6 @@ set -o pipefail
 ### Set during docker run. See Makefile and README.
 ## -- empty --
 
-### Set during docker run. See Makefile and README.
-## -- empty --
-
 # envs
 SIGNER="__gosh" # will be created automatically
 GIVER_SIGNER="__giver" # will be created automatically

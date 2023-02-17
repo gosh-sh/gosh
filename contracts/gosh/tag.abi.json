@@ -59,14 +59,6 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
-		},
-		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
 		}
 	],
 	"data": [

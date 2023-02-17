@@ -360,22 +360,6 @@
 			]
 		},
 		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getPreviousDaoAddr",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"optional(address)"}
-			]
-		},
-		{
 			"name": "onAcceptTokensTransfer",
 			"inputs": [
 				{"name":"value0","type":"address"},
