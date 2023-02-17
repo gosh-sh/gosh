@@ -25,6 +25,8 @@ services:
       - ADMIN_USER=${ADMIN_USER}
       - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
       - HOST_NAME=${HOST_NAME:-monitoring}
+      - PUBLIC_GRAFANA=${PUBLIC_GRAFANA}
+      - MONITORING_DOMAIN=${MONITORING_DOMAIN}
     restart: unless-stopped
     networks:
       - gosh-monitoring

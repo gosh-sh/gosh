@@ -1,4 +1,4 @@
-https://grafana.gosh.sh {
+https://{$PUBLIC_GRAFANA} {
     @forbidden {
         not method GET
         not {
@@ -20,11 +20,11 @@ https://grafana.gosh.sh {
     }
 }
 
-https://monitoring.gosh.sh {
+https://{$MONITORING_DOMAIN} {
 
 }
 
-https://grafana.monitoring.gosh.sh {
+https://grafana.{$MONITORING_DOMAIN} {
 #    basicauth {
 #        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
 #    }
@@ -37,7 +37,7 @@ https://grafana.monitoring.gosh.sh {
     }
 }
 
-https://pubgraf.monitoring.gosh.sh {
+https://pubgraf.{$MONITORING_DOMAIN} {
     basicauth {
         {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
     }
@@ -51,7 +51,7 @@ https://pubgraf.monitoring.gosh.sh {
 }
 
 
-https://prometheus.monitoring.gosh.sh {
+https://prometheus.{$MONITORING_DOMAIN} {
     basicauth { 
         {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
     }
@@ -62,7 +62,7 @@ https://prometheus.monitoring.gosh.sh {
     }
 }
 
-https://alertmanager.monitoring.gosh.sh {
+https://alertmanager.{$MONITORING_DOMAIN} {
     basicauth { 
         {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
     }
@@ -73,7 +73,7 @@ https://alertmanager.monitoring.gosh.sh {
     }
 }
 
-https://pushgateway.monitoring.gosh.sh {
+https://pushgateway.{$MONITORING_DOMAIN} {
     basicauth { 
         {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
     }
@@ -84,7 +84,7 @@ https://pushgateway.monitoring.gosh.sh {
     }
 }
 
-https://gmlogs.monitoring.gosh.sh {
+https://gmlogs.{$MONITORING_DOMAIN} {
     basicauth { 
         {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
     }
