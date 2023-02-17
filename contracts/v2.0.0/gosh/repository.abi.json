@@ -436,6 +436,19 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"description","type":"string"},
+				{"name":"name","type":"string"},
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"alladress","type":"tuple[]"},
+				{"name":"head","type":"string"},
+				{"name":"hashtag","type":"map(uint256,string)"},
+				{"name":"ready","type":"bool"}
+			]
+		},
+		{
 			"name": "_goshdao",
 			"inputs": [
 			],

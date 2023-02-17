@@ -430,4 +430,14 @@ contract Repository is Modifiers{
     function getReady() external view returns(bool) {
         return _ready;
     }
+    
+    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready)
+    {
+        Item[] AllBranches;
+        for ((uint256 key, Item value) : _Branches) {
+            key;
+            AllBranches.push(value);
+        }
+        return (_description, _name, AllBranches, _head, _hashtag, _ready);
+    }
 }

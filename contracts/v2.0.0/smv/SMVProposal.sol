@@ -580,6 +580,13 @@ function getDataFirst () external view
     (, num, data0, ) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
 }                
 
+function getDetails () external view 
+        returns(uint256, optional (bool), uint32, uint32, uint32, uint128, uint128, uint128, uint256, mapping(address => bool))
+{
+    TvmSlice s = propData.toSlice();
+    (uint256 proposalKind) = s.decode(uint256);
+    return (proposalKind, votingResult, startTime, finishTime, realFinishTime, votesYes, votesNo, totalSupply, platform_id, reviewers);
+}    
 ////////////////////////////////////
 
 function tryEarlyComplete (uint128 t) internal virtual {}

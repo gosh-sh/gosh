@@ -724,6 +724,25 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"allowMint","type":"bool"},
+				{"name":"hide_voting_results","type":"bool"},
+				{"name":"allow_discussion_on_proposals","type":"bool"},
+				{"name":"abilityInvite","type":"bool"},
+				{"name":"isRepoUpgraded","type":"bool"},
+				{"name":"nameDao","type":"string"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"reserve","type":"uint128"},
+				{"name":"allbalance","type":"uint128"},
+				{"name":"totalsupply","type":"uint128"},
+				{"name":"hashtag","type":"map(uint256,string)"}
+			]
+		},
+		{
 			"name": "onAcceptTokensTransfer",
 			"inputs": [
 				{"name":"value0","type":"address"},

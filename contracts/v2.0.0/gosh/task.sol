@@ -240,8 +240,8 @@ contract Task is Modifiers{
     }
     
     //Getters    
-    function getStatus() external view returns(string, address, ConfigCommitBase[], ConfigGrant, bool, uint128) {
-        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal);
+    function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);

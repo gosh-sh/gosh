@@ -637,6 +637,23 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"optional(bool)"},
+				{"name":"value2","type":"uint32"},
+				{"name":"value3","type":"uint32"},
+				{"name":"value4","type":"uint32"},
+				{"name":"value5","type":"uint128"},
+				{"name":"value6","type":"uint128"},
+				{"name":"value7","type":"uint128"},
+				{"name":"value8","type":"uint256"},
+				{"name":"value9","type":"map(address,bool)"}
+			]
+		},
+		{
 			"name": "continueUpdateHead",
 			"inputs": [
 				{"name":"_platform_id","type":"uint256"}
