@@ -140,25 +140,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmBuilder b;
-        b.store(uint128(101000), _wallets, _hashtag, _reserve, _allbalance, _totalsupply, _versions);
-        TvmCell a = b.toCell();
-        GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(a);
+        TvmCell a = abi.encode(_wallets, _hashtag, _reserve, _allbalance, _totalsupply, _versions);
+        GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
-    function getPreviousInfoVersion(TvmCell a) public internalMsg {
+    function getPreviousInfoVersion(string ver, TvmCell a) public internalMsg {
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
-        TvmSlice b = a.toSlice();
-        uint128 ver = b.decode(uint128);
-        if (ver == 101000){
+        if (ver == "1.1.0"){
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
-            (wallets, hashtag, _reserve, _allbalance, _totalsupply, _versions) = b.decode(mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string));
+            (wallets, hashtag, _reserve, _allbalance, , _versions) = abi.decode(a, (mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton}("1.1.0", zero, wallets);
+            this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets, hashtag);
         }
     }
     
@@ -173,16 +169,26 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.returnWallets{value: 0.1 ton}(zero, wallets);
     }
     
-    function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets) public internalMsg senderIs(address(this)) accept {
+    function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
+        uint256 zero;
         if (ver == "1.1.0"){
             optional(uint256, MemberToken) res = wallets.next(key);
+            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
             	MemberToken pub;
             	(key, pub) = res.get();
-            	_reserve += pub.count;
+            	uint128 count = pub.count;
+            	pub.count = 0;
                 pub.member = address.makeAddrStd(0, key);
             	deployWalletIn(pub);
-                this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets);
+                this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
+                address[] a1;
+                a1.push(pub.member);
+                bool[] a2;
+                a2.push(true);
+                uint128[] a3;
+                a3.push(count);
+                this.changeAllowanceIn{value:0.1 ton}(a1, a2, a3, 0);
             }
         }
         getMoney();
@@ -393,6 +399,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function smvdeploytag (address pub, uint128 index, string[] tag) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
+            _counttag++;
+            _hashtag[tvm.hash(tag[t])] = tag[t];
+            GoshWallet(getAddrWalletIn(pub, 0)).deployDaoTag{value:0.2 ton}(tag[t]);   	
+        }
+    }
+    
+    function smvdeploytagin (address pub, string[] tag) public senderIs(address(this))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
         for (uint8 t = 0; t < tag.length; t++){     

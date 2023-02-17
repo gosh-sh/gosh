@@ -46,6 +46,7 @@
 		{
 			"name": "getPreviousInfoVersion",
 			"inputs": [
+				{"name":"ver","type":"string"},
 				{"name":"a","type":"cell"}
 			],
 			"outputs": [
@@ -65,7 +66,8 @@
 			"inputs": [
 				{"name":"ver","type":"string"},
 				{"name":"key","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"tags","type":"map(uint256,string)"}
 			],
 			"outputs": [
 			]
@@ -256,6 +258,15 @@
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdeploytagin",
+			"inputs": [
+				{"name":"pub","type":"address"},
 				{"name":"tag","type":"string[]"}
 			],
 			"outputs": [
