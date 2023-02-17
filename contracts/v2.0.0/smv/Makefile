@@ -34,7 +34,7 @@ build-contracts-docker:
 	docker run -it --rm \
 		-v ${CURDIR}/../../:/opt/gosh/contracts \
 		everdev:latest \
-		/bin/bash -c 'cd /opt/gosh/contracts/v1.1.0/smv && make build-contracts'
+		/bin/bash -c 'cd /opt/gosh/contracts/v2.0.0/smv && make build-contracts'
 
 # build-contracts-docker:
 # 	docker run -it --rm \
