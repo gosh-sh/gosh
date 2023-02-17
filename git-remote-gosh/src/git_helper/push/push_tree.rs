@@ -25,7 +25,7 @@ use super::utilities::retry::default_retry_strategy;
 
 const MARKER_FLAG: u32 = 1u32;
 
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "info", skip_all)]
 async fn construct_tree_node(
     context: &mut GitHelper<impl BlockchainService>,
     e: &EntryRef<'_>,

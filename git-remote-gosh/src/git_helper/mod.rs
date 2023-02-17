@@ -256,7 +256,7 @@ pub async fn run(config: Config, url: &str) -> anyhow::Result<()> {
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        tracing::debug!("Line: {line}");
+        tracing::trace!("Line: {line}");
         tracing::debug!(
             "> {} {} {}",
             cmd.unwrap(),

@@ -31,7 +31,6 @@ impl BlockchainUserWalletService for Everscale {
     fn wallet_config(&self) -> &Option<UserWalletConfig> {
         &self.wallet_config
     }
-
     #[instrument(level = "info", skip_all)]
     async fn user_wallet(
         &self,
@@ -48,7 +47,7 @@ impl BlockchainUserWalletService for Everscale {
         if !_USER_WALLET.is_mirrors_ready().await {
             let init_mirrors_result = _USER_WALLET.try_init_mirrors(self).await;
             if let Err(e) = init_mirrors_result {
-                tracing::debug!("init mirrors error: {}", e);
+                tracing::trace!("init mirrors error: {}", e);
             }
         }
         let wallet: UserWallet = _USER_WALLET.clone();

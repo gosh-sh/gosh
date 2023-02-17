@@ -9,7 +9,7 @@ pub struct GenerateBlobDiffResult {
     pub after_patch: Vec<u8>,
 }
 
-#[instrument(level = "debug", skip(odb))]
+#[instrument(level = "info", skip_all)]
 pub async fn generate_blob_diff(
     odb: &OdbHandle,
     blob_id_from: Option<&ObjectId>,
