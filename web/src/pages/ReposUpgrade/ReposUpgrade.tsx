@@ -10,7 +10,7 @@ import {
     splitByChunk,
     TAddress,
 } from 'react-gosh'
-import { useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { Button } from '../../components/Form'
@@ -48,6 +48,7 @@ const progressReducer = (state: TProgress, action: { type: string; payload: any 
 
 const ReposUpgradePage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const navigate = useNavigate()
     const [progress, progressDispatch] = useReducer(progressReducer, progressInitialState)
 
     const onRepositoriesUpgrade = async () => {
@@ -90,29 +91,36 @@ const ReposUpgradePage = () => {
             progressDispatch({ type: 'prepare_repositories', payload: true })
             console.debug('Upgrade', upgrade)
 
-            // Create multiproposals for deploy repositories
-            await executeByChunk(
-                splitByChunk(upgrade, 50),
-                MAX_PARALLEL_WRITE,
-                async (chunk) => {
-                    await dao.adapter.createMultiProposal({
-                        proposals: chunk.map(({ name, address, version }) => ({
-                            fn: 'CREATE_REPOSITORY',
-                            params: {
-                                name,
-                                prev: { addr: address, version },
-                                cell: true,
-                            },
-                        })),
-                    })
-                },
-            )
+            // Create proposal/multiproposals for deploy repositories
+            const params = upgrade.map(({ name, address, version }) => ({
+                name,
+                prev: { addr: address, version },
+            }))
+            console.debug('Params', params)
+            if (params.length === 1) {
+                await dao.adapter.createRepository(params[0])
+            } else if (params.length > 1) {
+                await executeByChunk(
+                    splitByChunk(params, 50),
+                    MAX_PARALLEL_WRITE,
+                    async (chunk) => {
+                        await dao.adapter.createMultiProposal({
+                            proposals: chunk.map((p) => ({
+                                fn: 'CREATE_REPOSITORY',
+                                params: p,
+                            })),
+                        })
+                    },
+                )
+            }
             progressDispatch({ type: 'create_proposals', payload: true })
 
             // Set DAO repositories upgrade flag
             await dao.adapter.setRepositoriesUpgraded()
             progressDispatch({ type: 'update_dao', payload: true })
             progressDispatch({ type: 'reset', payload: null })
+
+            navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

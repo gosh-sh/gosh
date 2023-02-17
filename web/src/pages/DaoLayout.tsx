@@ -186,7 +186,9 @@ const DaoLayout = () => {
                                     <br />
                                     <button
                                         className="underline"
-                                        onClick={() => document.location.reload()}
+                                        onClick={() => {
+                                            document.location = `/o/${daoName}`
+                                        }}
                                     >
                                         Reload
                                     </button>{' '}
@@ -195,16 +197,17 @@ const DaoLayout = () => {
                             )}
                             {upgrades === 'isUpgradeAvailable' && (
                                 <>
-                                    New version of DAO is available.
+                                    New version of DAO available.
                                     <br />
-                                    Go to the{' '}
+                                    Check if corresponding proposal does not exist and go
+                                    to the{' '}
                                     <Link
                                         className="underline"
                                         to={`/o/${daoName}/settings/upgrade`}
                                     >
-                                        upgrade
+                                        DAO upgrade
                                     </Link>{' '}
-                                    page
+                                    page.
                                 </>
                             )}
                             {upgrades === 'isRepoUpgradeNeeded' && (
