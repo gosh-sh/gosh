@@ -633,8 +633,7 @@
 			],
 			"outputs": [
 				{"name":"num","type":"uint128"},
-				{"name":"data1","type":"cell"},
-				{"name":"data2","type":"cell"}
+				{"name":"data0","type":"cell"}
 			]
 		},
 		{
