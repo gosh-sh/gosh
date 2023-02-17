@@ -55,6 +55,7 @@ import {
     TDaoAskMembershipAllowanceParams,
     TTopic,
     TTopicCreateParams,
+    TTopicMessageCreateParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -643,7 +644,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             { useCachedBoc: true },
         )
         return {
-            address: topic.address,
+            account: topic,
             name: value0,
             content: value1,
             object: value2,
@@ -1190,12 +1191,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async createTopic(params: TTopicCreateParams): Promise<void> {
         const { name, content, object } = params
-
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-
         await this.wallet.run('deployTopic', { name, content, object })
+    }
+
+    async createTopicMessage(params: TTopicMessageCreateParams): Promise<void> {
+        const { topic, message, answerId } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        await this.wallet.run('deployMessage', { topic, message, answer: answerId })
     }
 
     private async _isAuthMember(): Promise<boolean> {

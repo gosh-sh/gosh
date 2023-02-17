@@ -53,6 +53,7 @@ import {
     TDaoAskMembershipAllowanceParams,
     TTopic,
     TTopicCreateParams,
+    TTopicMessageCreateParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -690,6 +691,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createTopic(params: TTopicCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTopicMessage(params: TTopicMessageCreateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

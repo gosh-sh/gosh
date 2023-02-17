@@ -864,6 +864,79 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     }
 }
 
+function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
+    const [data, setData] = useState<{
+        isFetching: boolean
+        topic?: TTopic
+    }>({ isFetching: false })
+    const [messages, setMessages] = useState<any[]>([])
+
+    const sendMessage = async (params: { message: string; answerId?: string }) => {
+        const { message, answerId } = params
+        await dao.createTopicMessage({ topic, message, answerId })
+    }
+
+    useEffect(() => {
+        const _getTopic = async () => {
+            setData((state) => ({ ...state, isFetching: true }))
+            const _topic = await dao.getTopic({ address: topic })
+            setData((state) => ({ ...state, isFetching: false, topic: _topic }))
+        }
+        _getTopic()
+    }, [dao, topic])
+
+    useEffect(() => {
+        const _getMessages = async () => {
+            if (!data.topic) {
+                return
+            }
+            const { messages } = await data.topic.account.getMessages(
+                { msgType: ['IntIn'], allow_latest_inconsistent_data: true },
+                true,
+                true,
+            )
+            console.debug(messages)
+            setMessages(
+                messages
+                    .filter(({ decoded }) => decoded && decoded.name === 'acceptMessage')
+                    .map(({ message, decoded }) => ({
+                        id: message.id.replace('message/', ''),
+                        ...decoded.value,
+                    })),
+            )
+        }
+
+        _getMessages()
+
+        // Subscribe messages
+        if (data.topic) {
+            data.topic.account.account.subscribeMessages('id body', async (message) => {
+                console.debug('Subscription', message)
+                const decoded = await data.topic?.account.decodeMessageBody(
+                    message.body,
+                    0,
+                )
+                if (decoded) {
+                    setMessages((state) => [
+                        { id: message.id, ...decoded.value },
+                        ...state,
+                    ])
+                }
+            })
+        }
+
+        return () => {
+            data.topic?.account.account.free()
+        }
+    }, [data.topic])
+
+    return {
+        data,
+        messages,
+        sendMessage,
+    }
+}
+
 export {
     useDaoList,
     useDao,
@@ -878,4 +951,5 @@ export {
     useTaskList,
     useTopicCreate,
     useTopicList,
+    useTopic,
 }

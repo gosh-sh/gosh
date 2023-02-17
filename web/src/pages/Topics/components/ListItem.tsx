@@ -13,7 +13,7 @@ const TopicListItem = (props: TTopicListItemProps) => {
         <div className="px-5 py-6">
             <div className="mb-2">
                 <Link
-                    to={`/o/${dao.name}/topics/${item.address}`}
+                    to={`/o/${dao.name}/topics/${item.account.address}`}
                     className="text-xl text-blue-348eff font-medium"
                 >
                     {item.name}

@@ -55,6 +55,7 @@ import {
     TDaoAskMembershipAllowanceParams,
     TTopic,
     TTopicCreateParams,
+    TTopicMessageCreateParams,
 } from '../types'
 
 interface IGoshAdapter {
@@ -172,6 +173,7 @@ interface IGoshDaoAdapter {
     updateEventAllowDiscussion(params: TDaoEventAllowDiscussionParams): Promise<void>
 
     createTopic(params: TTopicCreateParams): Promise<void>
+    createTopicMessage(params: TTopicMessageCreateParams): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {

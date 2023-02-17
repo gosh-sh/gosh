@@ -1,5 +1,5 @@
 import { KeyPair } from '@eversdk/core'
-import { IGoshDaoAdapter } from '../gosh/interfaces'
+import { IGoshDaoAdapter, IGoshTopic } from '../gosh/interfaces'
 import { TAddress, TEventCreateParams } from './types'
 
 enum ETaskBounty {
@@ -192,7 +192,7 @@ type TDaoEventSendReviewParams = {
 }
 
 type TTopic = {
-    address: TAddress
+    account: IGoshTopic
     name: string
     content: string
     object: TAddress
@@ -202,6 +202,12 @@ type TTopicCreateParams = {
     name: string
     content: string
     object: TAddress
+}
+
+type TTopicMessageCreateParams = {
+    topic: TAddress
+    message: string
+    answerId?: string
 }
 
 export {
@@ -234,4 +240,5 @@ export {
     TDaoEventSendReviewParams,
     TTopic,
     TTopicCreateParams,
+    TTopicMessageCreateParams,
 }

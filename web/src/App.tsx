@@ -51,6 +51,7 @@ import TasksPage from './pages/Tasks'
 import ReposUpgradePage from './pages/ReposUpgrade/ReposUpgrade'
 import TopicsPage from './pages/Topics'
 import TopicCreatePage from './pages/TopicCreate'
+import TopicPage from './pages/Topic'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -200,6 +201,7 @@ const App = () => {
                             <Route path="topics">
                                 <Route index element={<TopicsPage />} />
                                 <Route path="create" element={<TopicCreatePage />} />
+                                <Route path=":topic" element={<TopicPage />} />
                             </Route>
                         </Route>
                         <Route path="r/:repoName" element={<RepoLayout />}>
