@@ -68,7 +68,7 @@ impl DeployTree for Everscale {
             .map(|_| ());
         drop(wallet_contract);
         if let Err(ref e) = result {
-            tracing::trace!("deploy_tree_error: {}", e);
+            tracing::debug!("deploy_tree_error: {}", e);
         }
         result
     }
