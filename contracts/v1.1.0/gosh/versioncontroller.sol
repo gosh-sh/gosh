@@ -73,7 +73,8 @@ contract VersionController is Modifiers {
         tvm.accept();
         SystemContract(addr).upgradeTag3(namedao, namerepo, nametag, namecommit, commit, content);
     }
-    
+
+/*    
     function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
@@ -95,6 +96,7 @@ contract VersionController is Modifiers {
         tvm.accept();
         SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao);
     }
+*/
     
     function upgradeDao2(string namedao, string version, address previous, string previousversion) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);

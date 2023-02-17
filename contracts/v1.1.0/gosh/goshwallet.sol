@@ -1372,7 +1372,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton}(_pubaddr, _index, grant);
         getMoney();
     }
-    
+
+/*    
     function sendTokenToNewVersion(uint128 grant, string newversion) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;        
@@ -1384,6 +1385,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_pseudoDAOBalance += grant;        
         getMoney();
     }
+*/
 
     function receiveToken(
         address pubaddr,

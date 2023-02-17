@@ -47,6 +47,23 @@
 			]
 		},
 		{
+			"name": "checkUpdateRepoVer5",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"a","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdeployrepotagin",
+			"inputs": [
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployBranch",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -470,6 +487,7 @@
 		{"name":"_ready","type":"bool"},
 		{"name":"_limited","type":"bool"},
 		{"name":"_versions","type":"map(uint256,string)"},
-		{"name":"_description","type":"string"}
+		{"name":"_description","type":"string"},
+		{"name":"_creator","type":"address"}
 	]
 }

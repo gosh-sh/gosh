@@ -38,6 +38,7 @@ contract Repository is Modifiers{
     bool _limited = true;
     mapping(uint256 => string) public _versions;
     string public _description;
+    address _creator;
 
     constructor(
         address pubaddr,
@@ -80,13 +81,16 @@ contract Repository is Modifiers{
         TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
         _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
         _head = "main";
+        _creator = msg.sender;
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
         if (prev.addr != address(this)) {
-            Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(false, _Branches, _protectedBranch, _head);
+            TvmCell a = abi.encode(false, _Branches, _protectedBranch, _head, _hashtag);
+            Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
         }
-        Repository(answer).checkUpdateRepo5{value : 0.15 ton, flag: 1}(true, _Branches, _protectedBranch, _head);
+        TvmCell a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag);
+        Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
     function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
@@ -94,6 +98,28 @@ contract Repository is Modifiers{
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
+        _ready = true;
+    }
+    
+    function checkUpdateRepoVer5(string ver, TvmCell a) public senderIs(_previousversion.get().addr) accept {
+        if (ver == "1.1.0"){
+            (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
+            if (ans == false) { selfdestruct(giver); }
+            _Branches = Branches;
+            _protectedBranch = protectedBranch;
+            _head = head;
+            this.smvdeployrepotagin{value: 0.1 ton}(hashtag.values());
+        }
+    }
+    
+    function smvdeployrepotagin (string[] tag) public senderIs(address(this)) accept {
+        require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
+        for (uint8 t = 0; t < tag.length; t++){     
+            if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
+            _counttag++;
+            _hashtag[tvm.hash(tag[t])] = tag[t];
+            GoshWallet(_creator).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+        }
         _ready = true;
     }
 
