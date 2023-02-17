@@ -33,30 +33,28 @@ const DaoLayout = () => {
 
     const getTabs = () => {
         const tabs = [
-            { to: `/o/${daoName}`, title: 'Overview' },
-            { to: `/o/${daoName}/events`, title: 'DAO' },
-            { to: `/o/${daoName}/repos`, title: 'Repositories' },
-            { to: `/o/${daoName}/members`, title: 'Members' },
+            { to: `/o/${daoName}`, title: 'Overview', order: 0 },
+            { to: `/o/${daoName}/events`, title: 'DAO', order: 1 },
+            { to: `/o/${daoName}/repos`, title: 'Repositories', order: 2 },
+            { to: `/o/${daoName}/members`, title: 'Members', order: 3 },
         ]
 
-        if (dao.details?.isAuthMember) {
-            tabs.push(
-                { to: `/o/${daoName}/settings`, title: 'Settings' },
-                { to: `/o/${daoName}/wallet`, title: 'Wallet' },
-                { to: `/o/${daoName}/topics`, title: 'Topics' },
-            )
-        }
-        if (dao.details?.isAuthLimited) {
-            tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet' })
-        }
-        if (dao.details?.version !== '1.0.0') {
-            tabs.push({
-                to: `/o/${daoName}/tasks`,
-                title: 'Tasks',
-            })
+        if (dao.details?.isAuthMember || dao.details?.isAuthLimited) {
+            tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet', order: 4 })
         }
 
-        return tabs
+        if (dao.details?.isAuthMember) {
+            tabs.push({ to: `/o/${daoName}/settings`, title: 'Settings', order: 7 })
+            if (dao.details?.version !== '1.0.0') {
+                tabs.push({ to: `/o/${daoName}/topics`, title: 'Topics', order: 6 })
+            }
+        }
+
+        if (dao.details?.version !== '1.0.0') {
+            tabs.push({ to: `/o/${daoName}/tasks`, title: 'Tasks', order: 5 })
+        }
+
+        return tabs.sort((a, b) => a.order - b.order)
     }
 
     const getDaoShortDescription = useCallback(async () => {

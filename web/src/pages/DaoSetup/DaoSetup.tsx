@@ -83,7 +83,7 @@ const DaoSetupPage = () => {
     }
 
     if (dao.details.version === '1.0.0') {
-        return <Navigate to={`/o/${dao.details.name}`} />
+        return <Navigate to={`/o/${dao.details.name}/settings/upgrade`} />
     }
     return (
         <>

@@ -3,7 +3,7 @@ import { classNames } from 'react-gosh'
 import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../Form'
-import { FormikInput, FormikTextarea } from '../../../Formik'
+import { FormikCheckbox, FormikInput, FormikTextarea } from '../../../Formik'
 import CommitProgress from '../../CommitProgress'
 
 type TCommitFields_1_0_0Props = {
@@ -89,6 +89,17 @@ const CommitFields_1_0_0 = (props: TCommitFields_1_0_0Props) => {
                             </Button>
                         )}
                     </div>
+                </div>
+
+                <div>
+                    <Field
+                        name="isPullRequest"
+                        component={FormikCheckbox}
+                        disabled={isSubmitting}
+                        inputProps={{
+                            label: 'Create proposal',
+                        }}
+                    />
                 </div>
 
                 {extraButtons && <div>{extraButtons}</div>}

@@ -1,12 +1,12 @@
 import { Field, Form, Formik } from 'formik'
-import { TextField, TextareaField } from '../../../components/Formik'
+import { FormikInput, FormikTextarea } from '../../../components/Formik'
 import { useNavigate } from 'react-router-dom'
-import Spinner from '../../../components/Spinner'
 import { toast } from 'react-toastify'
 import { GoshError, useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
 import ToastError from '../../../components/Error/ToastError'
 import yup from '../../../yup-extended'
+import { Button } from '../../../components/Form'
 
 type TFormValues = {
     name: string
@@ -56,17 +56,16 @@ const DaoCreateForm_1_0_0 = () => {
                                 <Field
                                     label="Name"
                                     name="name"
-                                    component={TextField}
-                                    inputProps={{
-                                        placeholder: 'New organization name',
-                                        autoComplete: 'off',
-                                        disabled: isSubmitting,
-                                        onChange: (e: any) =>
-                                            setFieldValue(
-                                                'name',
-                                                e.target.value.toLowerCase(),
-                                            ),
-                                    }}
+                                    component={FormikInput}
+                                    placeholder="New organization name"
+                                    autoComplete="off"
+                                    disabled={isSubmitting}
+                                    onChange={(e: any) =>
+                                        setFieldValue(
+                                            'name',
+                                            e.target.value.toLowerCase(),
+                                        )
+                                    }
                                 />
                             </div>
 
@@ -74,30 +73,30 @@ const DaoCreateForm_1_0_0 = () => {
                                 <Field
                                     label="Add members (optional)"
                                     name="members"
-                                    component={TextareaField}
-                                    inputProps={{
-                                        placeholder: 'Username(s)',
-                                        autoComplete: 'off',
-                                        disabled: isSubmitting,
-                                        rows: 5,
-                                        onChange: (e: any) =>
-                                            setFieldValue(
-                                                'members',
-                                                e.target.value.toLowerCase(),
-                                            ),
-                                    }}
+                                    component={FormikTextarea}
+                                    placeholder="Username(s)"
+                                    autoComplete="off"
+                                    disabled={isSubmitting}
+                                    rows={5}
+                                    onChange={(e: any) =>
+                                        setFieldValue(
+                                            'members',
+                                            e.target.value.toLowerCase(),
+                                        )
+                                    }
                                     help="Put each username from new line"
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                className="btn btn--body px-3 py-3 w-full mt-8"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
-                                Create organization
-                            </button>
+                            <div className="mt-6">
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    isLoading={isSubmitting}
+                                >
+                                    Create organization
+                                </Button>
+                            </div>
                         </Form>
                     )}
                 </Formik>
