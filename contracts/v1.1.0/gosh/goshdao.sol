@@ -180,7 +180,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             	MemberToken pub;
             	(key, pub) = res.get();
             	_reserve += pub.count;
-            	_allbalance -= pub.count;
+                pub.member = address.makeAddrStd(0, key);
             	deployWalletIn(pub);
                 this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets);
             }
@@ -195,6 +195,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             (key, pub) = res.get();
             _reserve += pub.count;
             _totalsupply += pub.count;
+            pub.member = address.makeAddrStd(0, key);
             deployWalletIn(pub);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
