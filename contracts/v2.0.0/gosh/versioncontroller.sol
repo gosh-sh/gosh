@@ -184,7 +184,7 @@ contract VersionController is Modifiers {
     //Getters   
     function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
-            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version),
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), "1.0.0"),
             contr: ProfileIndex,
             pubkey: tvm.pubkey(),
             varInit: { _name : name }
@@ -197,7 +197,7 @@ contract VersionController is Modifiers {
     }
     
     function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
-        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version);
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), "1.0.0");
     }
     
     function _getProfileAddr(string name) private view returns(address) {
