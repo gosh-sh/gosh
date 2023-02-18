@@ -194,13 +194,14 @@
 			"inputs": [
 				{"name":"nameCommit","type":"string"},
 				{"name":"commit","type":"address"},
+				{"name":"ver","type":"string"},
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "fromInitUpgrade3",
+			"name": "fromInitUpgrade6",
 			"inputs": [
 				{"name":"nameCommit","type":"string"},
 				{"name":"commit","type":"address"},

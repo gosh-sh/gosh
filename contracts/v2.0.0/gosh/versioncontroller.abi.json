@@ -28,6 +28,21 @@
 			]
 		},
 		{
+			"name": "fromInitUpgrade4",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"version","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"},
+				{"name":"previousversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeTag2",
 			"inputs": [
 				{"name":"namedao","type":"string"},

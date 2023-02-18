@@ -39,6 +39,33 @@
 			]
 		},
 		{
+			"name": "fromInitUpgrade3",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"ver","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "fromInitUpgrade5",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeDao1",
 			"inputs": [
 				{"name":"namedao","type":"string"},

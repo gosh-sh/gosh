@@ -236,13 +236,13 @@ contract Repository is Modifiers{
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
-    function fromInitUpgrade2(string nameCommit, address commit, string branch) public view senderIs(getCommitAddr(nameCommit)) {       
+    function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton}();  return; }
-        Repository(_previousversion.get().addr).fromInitUpgrade3{value: 0.5 ton}(nameCommit, commit, branch, msg.sender);
+        SystemContract(_systemcontract).fromInitUpgrade3{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, nameCommit, commit, ver, branch, msg.sender);
     }
     
-    function fromInitUpgrade3(string nameCommit, address commit, string branch, address newcommit) public view minValue(0.4 ton) {       
+    function fromInitUpgrade6(string nameCommit, address commit, string branch, address newcommit) public view senderIs(_systemcontract) {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         Commit(getCommitAddr(nameCommit)).fromInitUpgrade(commit, branch, newcommit);
     }

@@ -195,7 +195,7 @@ contract Commit is Modifiers {
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0].addr); }
             else { 
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
-                else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton}(_nameCommit, _parents[0].addr, branch); } 
+                else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton}(_nameCommit, _parents[0].addr, _parents[0].version, branch); } 
             }
             _prevversion = oldversion;
             return;
@@ -438,6 +438,7 @@ contract Commit is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        if (_isCorrect == true) { return; }
         selfdestruct(giver);
     }
 
