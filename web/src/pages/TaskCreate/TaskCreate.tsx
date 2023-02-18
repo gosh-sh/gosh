@@ -180,10 +180,7 @@ const TaskCreatePage = () => {
         >
             {({ values, isSubmitting, setFieldValue }) => (
                 <Form>
-                    <h1 className="text-xl font-medium mb-10">
-                        Distributing tokens for task
-                    </h1>
-
+                    <h1 className="text-3xl font-medium mb-10">New task</h1>
                     <div className="w-1/3">
                         <div className="mb-4">
                             <Field
@@ -225,6 +222,9 @@ const TaskCreatePage = () => {
                                 help="Enter a space after each tag"
                             />
                         </div>
+                    </div>
+                    <hr className="my-12 bg-gray-e6edff" />
+                    <div className="w-1/3">
                         <div>
                             <Field
                                 component={FormikInput}
@@ -246,7 +246,6 @@ const TaskCreatePage = () => {
                             />
                         </div>
                     </div>
-
                     <div className="mt-14">
                         <h3 className="font-medium">Default task tokens distribution</h3>
                         <div className="text-sm text-gray-7c8db5">
@@ -309,20 +308,10 @@ const TaskCreatePage = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className="mt-14">
-                        <h3 className="font-medium">Vesting</h3>
+                        <h3 className="font-medium">Vesting and lock</h3>
                         <div className="mt-6 border border-gray-e6edff rounded-xl p-6">
                             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-6">
-                                <div className="basis-5/12">
-                                    <Field
-                                        component={FormikSlider}
-                                        label="Vesting period"
-                                        name="vesting"
-                                        inputProps={{ label: ' mo' }}
-                                        max={60}
-                                    />
-                                </div>
                                 <div className="basis-5/12">
                                     <Field
                                         component={FormikSlider}
@@ -332,11 +321,20 @@ const TaskCreatePage = () => {
                                         max={12}
                                     />
                                 </div>
+                                <div className="basis-5/12">
+                                    <Field
+                                        component={FormikSlider}
+                                        label="Vesting period"
+                                        name="vesting"
+                                        inputProps={{ label: ' mo' }}
+                                        max={60}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div className="mt-14 w-2/3">
+                    <hr className="my-12 bg-gray-e6edff" />
+                    <div className="w-2/3">
                         <div className="basis-5/12">
                             <Field
                                 component={FormikTextarea}
