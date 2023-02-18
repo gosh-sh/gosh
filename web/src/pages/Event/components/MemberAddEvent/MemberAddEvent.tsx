@@ -13,10 +13,7 @@ const MemberAddEvent = (props: TMemberEventProps) => {
     if (version === '1.0.0') {
         return <MemberAddEvent_1_0_0 event={event} />
     }
-    if (version === '1.1.0') {
-        return <MemberAddEvent_1_1_0 event={event} />
-    }
-    return null
+    return <MemberAddEvent_1_1_0 event={event} />
 }
 
 export { MemberAddEvent }
