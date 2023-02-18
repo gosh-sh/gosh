@@ -786,7 +786,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
-        address[] emptyArr;
+        AddrVersion[] emptyArr;
         if (previous.hasValue() == false) {
             _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
         }
@@ -899,7 +899,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commitName,
         string fullCommit,
-        address[] parents,
+        AddrVersion[] parents,
         address tree,
         bool upgrade
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
@@ -914,7 +914,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string branchName,
         string commitName,
         string fullCommit,
-        address[] parents,
+        AddrVersion[] parents,
         address tree,
         bool upgrade
     ) internal {

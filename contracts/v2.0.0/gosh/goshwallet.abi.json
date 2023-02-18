@@ -601,7 +601,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"name":"parents","type":"address[]"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
 				{"name":"tree","type":"address"},
 				{"name":"upgrade","type":"bool"}
 			],

@@ -38,7 +38,7 @@ contract Commit is Modifiers {
     string _name;
     bool check = false;
     mapping(uint8 => TvmCell) _code;
-    address[] _parents;
+    AddrVersion[] _parents;
     address _systemcontract;
     address _tree;
     string _branchName;
@@ -58,6 +58,7 @@ contract Commit is Modifiers {
     bool _initupgrade;
     optional(string) _prevversion;
     optional(ConfigCommit) _task;
+    bool _isCorrect = false;
 
     uint128 timeMoney = 0;
  
@@ -67,7 +68,7 @@ contract Commit is Modifiers {
         string nameRepo,
         string nameBranch,
         string commit,
-        address[] parents,
+        AddrVersion[] parents,
         address repo,
         TvmCell WalletCode,
         TvmCell CommitCode,
@@ -132,8 +133,18 @@ contract Commit is Modifiers {
 
     function allCorrect(uint128 number) public senderIs(_rootRepo){
         tvm.accept();
+        _isCorrect = true;
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number);
         getMoney();
+    }
+    
+    function fromInitUpgrade(string branch) public view minValue(0.3 ton) {
+        Commit(msg.sender).continueUpgrade{value: 0.1 ton}(_isCorrect, branch);
+    }
+    
+    function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) {
+        if (res == false) { selfdestruct(giver); }
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1);
     }
 
     function _acceptCommitRepo(uint128 index, uint128 number) public senderIs(address(this)) {
@@ -174,9 +185,12 @@ contract Commit is Modifiers {
         tvm.accept();
         getMoney();
         if (_initupgrade == true) {
-            require(_parents[0] == branchcommit, ERR_BAD_PARENT);
-            if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
-            else { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
+            require(_parents[0].addr == branchcommit, ERR_BAD_PARENT);
+            if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0].addr); }
+            else { 
+                if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
+                else { Commit(_parents[0].addr).fromInitUpgrade{value: 0.6 ton}(branch); } 
+            }
             _prevversion = oldversion;
             return;
         }
@@ -196,7 +210,7 @@ contract Commit is Modifiers {
     }
 
     function treeAccept(string branch, uint128 typer) public senderIs(_tree) {
-        if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
+        if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0].addr); }
         else { Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(branch, _nameCommit); }
         getMoney();
     }
@@ -252,7 +266,7 @@ contract Commit is Modifiers {
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
             if (numberCommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            Commit(_parents[0]).CommitCheckCommit{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1);
+            Commit(_parents[0].addr).CommitCheckCommit{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1);
         }
         getMoney();
     }
@@ -397,7 +411,7 @@ contract Commit is Modifiers {
     onBounce(TvmSlice body) external view {
         tvm.accept();
         body;
-        if ((msg.sender == _parents[0]) ||  (msg.sender == _tree)) {
+        if ((msg.sender == _parents[0].addr) ||  (msg.sender == _tree)) {
             this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
             return;
         }
@@ -407,7 +421,7 @@ contract Commit is Modifiers {
 
     fallback() external view {
         tvm.accept();
-        if ((msg.sender == _parents[0]) ||  (msg.sender == _tree)) {
+        if ((msg.sender == _parents[0].addr) ||  (msg.sender == _tree)) {
             this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, _number);
             return;
         }
@@ -439,7 +453,7 @@ contract Commit is Modifiers {
         return _tree;
     }
 
-     function getParents() external view returns(address[]) {
+     function getParents() external view returns(AddrVersion[]) {
         return (_parents);
     }
 
@@ -467,11 +481,12 @@ contract Commit is Modifiers {
         address repo,
         string branch,
         string sha,
-        address[] parents,
+        AddrVersion[] parents,
         string content,
-        bool initupgrade
+        bool initupgrade,
+        bool isCorrectCommit
     ) {
-        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade);
+        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
     }
 
     function getCount() external view returns(uint128, bool) {
