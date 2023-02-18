@@ -236,6 +236,17 @@ contract Repository is Modifiers{
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
+    function fromInitUpgrade2(string nameCommit, address commit, string branch) public view senderIs(getCommitAddr(nameCommit)) {       
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton}();  return; }
+        Repository(_previousversion.get().addr).fromInitUpgrade3{value: 0.5 ton}(nameCommit, commit, branch, msg.sender);
+    }
+    
+    function fromInitUpgrade3(string nameCommit, address commit, string branch, address newcommit) public view minValue(0.4 ton) {       
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        Commit(getCommitAddr(nameCommit)).fromInitUpgrade(commit, branch, newcommit);
+    }
+    
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(checkAccess(pubaddr, msg.sender, index),ERR_SENDER_NO_ALLOWED);

@@ -44,7 +44,9 @@
 		{
 			"name": "fromInitUpgrade",
 			"inputs": [
-				{"name":"branch","type":"string"}
+				{"name":"commit","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"}
 			],
 			"outputs": [
 			]
@@ -54,6 +56,13 @@
 			"inputs": [
 				{"name":"res","type":"bool"},
 				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "stopUpgrade",
+			"inputs": [
 			],
 			"outputs": [
 			]

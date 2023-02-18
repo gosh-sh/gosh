@@ -190,6 +190,27 @@
 			]
 		},
 		{
+			"name": "fromInitUpgrade2",
+			"inputs": [
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "fromInitUpgrade3",
+			"inputs": [
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setHEAD",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

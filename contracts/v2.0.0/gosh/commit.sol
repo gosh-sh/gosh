@@ -138,14 +138,20 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function fromInitUpgrade(string branch) public view minValue(0.3 ton) {
-        Commit(msg.sender).continueUpgrade{value: 0.1 ton}(_isCorrect, branch);
+    function fromInitUpgrade(address commit, string branch, address newcommit) public view senderIs(_rootRepo) {
+        if (commit != address(this)) { Commit(msg.sender).continueUpgrade{value: 0.1 ton}(false, branch); return; }
+        Commit(newcommit).continueUpgrade{value: 0.1 ton}(_isCorrect, branch);
     }
     
     function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) {
         if (res == false) { selfdestruct(giver); }
         Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1);
     }
+    
+    function stopUpgrade() public senderIs(_rootRepo) {
+        if (_isCorrect == false) { selfdestruct(giver); }
+    }
+
 
     function _acceptCommitRepo(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
@@ -189,7 +195,7 @@ contract Commit is Modifiers {
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0].addr); }
             else { 
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
-                else { Commit(_parents[0].addr).fromInitUpgrade{value: 0.6 ton}(branch); } 
+                else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton}(_nameCommit, _parents[0].addr, branch); } 
             }
             _prevversion = oldversion;
             return;

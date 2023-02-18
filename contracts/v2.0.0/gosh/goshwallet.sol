@@ -1792,7 +1792,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellTaskDeploy(
         string taskName,
         string repoName,
-        string tag,
+        string[] tag,
         ConfigGrant grant,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
