@@ -71,7 +71,7 @@ contract VersionController is Modifiers {
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
         tvm.accept();
-        SystemContract(addr).fromInitUpgrade5(name, namedao, nameCommit, commit, branch, newcommit);  
+        SystemContract(addr).fromInitUpgrade5{value: 0.1 ton, flag : 1}(name, namedao, nameCommit, commit, branch, newcommit);  
     }
     
     function upgradeTag2(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string version, string previousversion) public view {
@@ -93,7 +93,7 @@ contract VersionController is Modifiers {
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
         tvm.accept();
-        SystemContract(addr).upgradeTag3(namedao, namerepo, nametag, namecommit, commit, content);
+        SystemContract(addr).upgradeTag3{value: 0.1 ton, flag : 1}(namedao, namerepo, nametag, namecommit, commit, content);
     }
 
 /*    

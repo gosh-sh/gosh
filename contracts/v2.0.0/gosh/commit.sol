@@ -139,17 +139,17 @@ contract Commit is Modifiers {
         getMoney();
     }
     
-    function fromInitUpgrade(address commit, string branch, address newcommit) public view senderIs(_rootRepo) {
+    function fromInitUpgrade(address commit, string branch, address newcommit) public view senderIs(_rootRepo) accept {
         if (commit != address(this)) { Commit(msg.sender).continueUpgrade{value: 0.1 ton}(false, branch); return; }
         Commit(newcommit).continueUpgrade{value: 0.1 ton}(_isCorrect, branch);
     }
     
-    function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) {
+    function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) accept {
         if (res == false) { selfdestruct(giver); }
         Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1);
     }
     
-    function stopUpgrade() public senderIs(_rootRepo) {
+    function stopUpgrade() public senderIs(_rootRepo) accept {
         if (_isCorrect == false) { selfdestruct(giver); }
     }
 

@@ -77,10 +77,11 @@ contract SystemContract is Modifiers {
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);       
+        tvm.accept();
         VersionController(_versionController).fromInitUpgrade4{value : 0.3 ton, flag: 1}(name, namedao, nameCommit, commit, ver, branch, newcommit, version);   
     }
     
-    function fromInitUpgrade5(string name, string namedao, string nameCommit, address commit, string branch, address newcommit) public view senderIs(_versionController) {       
+    function fromInitUpgrade5(string name, string namedao, string nameCommit, address commit, string branch, address newcommit) public view senderIs(_versionController) accept {       
         TvmCell s1 = _composeDaoStateInit(namedao);
         address addr = address.makeAddrStd(0, tvm.hash(s1));     
         Repository(_buildRepositoryAddr(name, addr)).fromInitUpgrade6{value : 0.3 ton, flag: 1}(nameCommit, commit, branch, newcommit);   
