@@ -37,7 +37,7 @@ const TasksPage = () => {
                         <tbody>
                             {isFetching && !items.length && (
                                 <tr>
-                                    <td colSpan={5} className="px-5 py-3.5">
+                                    <td colSpan={5} className="px-5 py-2">
                                         <Loader className="text-sm">
                                             Loading tasks...
                                         </Loader>
@@ -48,7 +48,7 @@ const TasksPage = () => {
                                 <tr>
                                     <td
                                         colSpan={5}
-                                        className="px-5 py-3.5 text-gray-7c8db5 text-sm text-center"
+                                        className="px-5 py-2 text-gray-7c8db5 text-sm text-center"
                                     >
                                         There are no tasks
                                     </td>

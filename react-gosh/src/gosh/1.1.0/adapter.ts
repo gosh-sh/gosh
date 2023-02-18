@@ -612,11 +612,42 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             _hashtag.splice(_systemTagIndex, 1)
         }
 
+        // Parse candidates
+        let team
+        if (value2.length) {
+            const candidate = value2[0]
+            const commit = await repository.getCommit({ address: candidate.commit })
+            const assigners = await Promise.all(
+                Object.keys(candidate.pubaddrassign).map(async (address) => {
+                    const profile = await this.gosh.getProfile({ address })
+                    return { username: await profile.getName(), address }
+                }),
+            )
+            const reviewers = await Promise.all(
+                Object.keys(candidate.pubaddrreview).map(async (address) => {
+                    const profile = await this.gosh.getProfile({ address })
+                    return { username: await profile.getName(), address }
+                }),
+            )
+            const managers = await Promise.all(
+                Object.keys(candidate.pubaddrmanager).map(async (address) => {
+                    const profile = await this.gosh.getProfile({ address })
+                    return { username: await profile.getName(), address }
+                }),
+            )
+            team = {
+                commit: { branch: commit.branch, name: commit.name },
+                assigners,
+                reviewers,
+                managers,
+            }
+        }
+
         return {
             address: task.address,
             name: value0,
             repository: await repository.getName(),
-            candidates: value2,
+            team,
             config: value3,
             confirmed: value4,
             confirmedAt: _locktime,

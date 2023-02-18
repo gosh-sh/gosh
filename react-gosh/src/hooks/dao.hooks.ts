@@ -7,6 +7,7 @@ import {
     TDaoCreateProgress,
     TDaoListItem,
     TDaoMemberDetails,
+    TTaskDetails,
     TTaskListItem,
     TTopic,
     TTopicCreateParams,
@@ -775,6 +776,49 @@ function useTaskList(
     }
 }
 
+function useTask(dao: IGoshDaoAdapter, address: TAddress) {
+    const [task, setTask] = useState<{ isFetching: boolean; details?: TTaskDetails }>({
+        isFetching: false,
+    })
+
+    const getTask = useCallback(async () => {
+        setTask((state) => ({ ...state, isFetching: true }))
+        const details = await dao.getTask({ address })
+        setTask((state) => ({ ...state, details, isFetching: false }))
+    }, [dao, address])
+
+    /** Initial load */
+    useEffect(() => {
+        getTask()
+    }, [getTask])
+
+    /** Refresh task details */
+    useEffect(() => {
+        if (task.isFetching || task.details?.confirmed) {
+            return
+        }
+
+        let _intervalLock = false
+        const interval = setInterval(async () => {
+            if (!_intervalLock) {
+                _intervalLock = true
+                await getTask()
+                _intervalLock = false
+            }
+
+            if (task.details?.confirmed) {
+                clearInterval(interval)
+            }
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [task.isFetching, task.details?.confirmed, getTask])
+
+    return task
+}
+
 function useTopicCreate(dao: IGoshDaoAdapter) {
     const create = async (params: TTopicCreateParams) => {
         await dao.createTopic(params)
@@ -980,6 +1024,7 @@ export {
     useDaoMint,
     useDaoSettingsManage,
     useTaskList,
+    useTask,
     useTopicCreate,
     useTopicList,
     useTopic,
