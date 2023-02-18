@@ -95,6 +95,7 @@ contract Commit is Modifiers {
         _code[m_DiffCode] = codeDiff;
         _tree = tree;
         _initupgrade = upgrade;
+        _prevversion = _parents[0].version;
         if (_initupgrade == true) { require(parents.length == 1, ERR_BAD_COUNT_PARENTS); }
         getMoney();
     }
@@ -187,7 +188,7 @@ contract Commit is Modifiers {
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
 
-    function SendDiff(string branch, address branchcommit, string oldversion, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
         if (_initupgrade == true) {
@@ -197,7 +198,6 @@ contract Commit is Modifiers {
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
                 else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton}(_nameCommit, _parents[0].addr, _parents[0].version, branch); } 
             }
-            _prevversion = oldversion;
             return;
         }
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);

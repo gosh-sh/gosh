@@ -99,7 +99,6 @@
 			"inputs": [
 				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"},
-				{"name":"oldversion","type":"string"},
 				{"name":"number","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
