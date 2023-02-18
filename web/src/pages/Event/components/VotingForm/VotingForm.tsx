@@ -17,10 +17,7 @@ const EventVotingForm = (props: TVotingFormProps) => {
     if (version === '1.0.0') {
         return <EventVotingForm_1_0_0 dao={dao} event={event} />
     }
-    if (version === '1.1.0') {
-        return <EventVotingForm_1_1_0 dao={dao} event={event} />
-    }
-    return null
+    return <EventVotingForm_1_1_0 dao={dao} event={event} />
 }
 
 export { EventVotingForm }

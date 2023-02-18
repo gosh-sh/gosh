@@ -5,12 +5,7 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import {
-    executeByChunk,
-    getAllAccounts,
-    getRepositoryAccounts,
-    getTreeItemFullPath,
-} from '../helpers'
+import { executeByChunk, getRepositoryAccounts, getTreeItemFullPath } from '../helpers'
 import {
     branchesAtom,
     branchSelector,

@@ -347,7 +347,7 @@ function useDaoCreate() {
     let createFn = null
     if (version === '1.0.0') {
         createFn = _create_1_0_0
-    } else if (version === '1.1.0') {
+    } else {
         createFn = _create_1_1_0
     }
 
@@ -402,7 +402,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         const version = dao.getVersion()
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
-        } else if (version === '1.1.0') {
+        } else {
             items = await _getMemberList_1_1_0()
         }
 
@@ -515,10 +515,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     if (version === '1.0.0') {
         return _create_1_0_0
     }
-    if (version === '1.1.0') {
-        return _create_1_1_0
-    }
-    return null
+    return _create_1_1_0
 }
 
 function useDaoMemberDelete(dao: IGoshDaoAdapter) {
