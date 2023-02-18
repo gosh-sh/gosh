@@ -60,22 +60,26 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
     return (
         <div className="flex flex-col h-full">
             <div className="p-5 grow overflow-x-auto">
-                {version === '1.0.0' && (
-                    <DaoMemberInvites_1_0_0
-                        dao={dao}
-                        invites={invites}
-                        setInvites={setInvites}
-                        revoke={onInviteRevoke}
-                    />
-                )}
-                {version === '1.1.0' && (
-                    <DaoMemberInvites_1_1_0
-                        dao={dao}
-                        invites={invites}
-                        setInvites={setInvites}
-                        revoke={onInviteRevoke}
-                    />
-                )}
+                {(() => {
+                    if (version === '1.0.0') {
+                        return (
+                            <DaoMemberInvites_1_0_0
+                                dao={dao}
+                                invites={invites}
+                                setInvites={setInvites}
+                                revoke={onInviteRevoke}
+                            />
+                        )
+                    }
+                    return (
+                        <DaoMemberInvites_1_1_0
+                            dao={dao}
+                            invites={invites}
+                            setInvites={setInvites}
+                            revoke={onInviteRevoke}
+                        />
+                    )
+                })()}
             </div>
             <div>
                 <Button

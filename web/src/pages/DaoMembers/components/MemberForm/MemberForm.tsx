@@ -71,17 +71,14 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
             />
         )
     }
-    if (version === '1.1.0') {
-        return (
-            <DaoMemberForm_1_1_0
-                dao={dao}
-                getDaoInvites={getDaoInvites}
-                getUsernameByEmail={getUsernameByEmail}
-                SuccessComponent={InvitationSent}
-            />
-        )
-    }
-    return null
+    return (
+        <DaoMemberForm_1_1_0
+            dao={dao}
+            getDaoInvites={getDaoInvites}
+            getUsernameByEmail={getUsernameByEmail}
+            SuccessComponent={InvitationSent}
+        />
+    )
 }
 
 export { DaoMemberForm }

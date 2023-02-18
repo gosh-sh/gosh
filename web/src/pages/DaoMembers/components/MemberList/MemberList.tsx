@@ -46,20 +46,24 @@ const MemberList = (props: TMemberListProps) => {
 
             <div className="mt-8 mb-2">
                 <div className="border rounded-xl px-1 py-2 overflow-x-auto">
-                    {version === '1.0.0' && (
-                        <MemeberList_1_0_0
-                            daoDetails={dao.details}
-                            members={{ search, setSearch, ...restMembers }}
-                            removal={removal}
-                        />
-                    )}
-                    {version === '1.1.0' && (
-                        <MemeberList_1_1_0
-                            dao={dao}
-                            members={{ search, setSearch, ...restMembers }}
-                            removal={removal}
-                        />
-                    )}
+                    {(() => {
+                        if (version === '1.0.0') {
+                            return (
+                                <MemeberList_1_0_0
+                                    daoDetails={dao.details}
+                                    members={{ search, setSearch, ...restMembers }}
+                                    removal={removal}
+                                />
+                            )
+                        }
+                        return (
+                            <MemeberList_1_1_0
+                                dao={dao}
+                                members={{ search, setSearch, ...restMembers }}
+                                removal={removal}
+                            />
+                        )
+                    })()}
                 </div>
             </div>
         </>
