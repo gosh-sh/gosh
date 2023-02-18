@@ -17,14 +17,21 @@ type TMessageFormValues = {
 const TopicPage = () => {
     const { topic } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { data, messages, sendMessage } = useTopic(dao.adapter, topic!)
+    const { data, messages, getMoreMessages, sendMessage } = useTopic(
+        dao.adapter,
+        topic!,
+        {},
+    )
 
     const onMessageSend = async (
         values: TMessageFormValues,
         helpers: FormikHelpers<TMessageFormValues>,
     ) => {
         try {
-            await sendMessage(values)
+            await sendMessage({
+                message: `[text]${values.message}[/text]`,
+                answerId: values.answerId,
+            })
             helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
@@ -72,12 +79,23 @@ const TopicPage = () => {
             </div>
 
             <div className="divide-y divide-gray-e6edff">
-                {messages.map((item, index) => (
+                {messages.isFetching && !messages.items.length && (
+                    <Loader>Loading messages...</Loader>
+                )}
+                {messages.items.map((item, index) => (
                     <div key={index} className="py-3">
                         <div className="mb-2 text-gray-7c8db5 text-sm">Author</div>
-                        <div>{item.message}</div>
+                        <div>
+                            {item.message.replace('[text]', '').replace('[/text]', '')}
+                        </div>
                     </div>
                 ))}
+
+                {messages.hasNext && (
+                    <Button onClick={getMoreMessages} isLoading={messages.isFetching}>
+                        Load more
+                    </Button>
+                )}
             </div>
         </>
     )

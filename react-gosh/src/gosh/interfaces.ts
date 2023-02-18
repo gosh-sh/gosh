@@ -324,7 +324,7 @@ interface IContract {
         decode?: boolean,
         all?: boolean,
         messages?: any[],
-    ): Promise<{ cursor?: string; messages: any[] }>
+    ): Promise<{ cursor?: string; messages: any[]; hasNext?: boolean }>
     run(
         functionName: string,
         input: object,

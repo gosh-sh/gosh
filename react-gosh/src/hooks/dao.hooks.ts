@@ -861,16 +861,69 @@ function useTopicList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
     }
 }
 
-function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
+function useTopic(dao: IGoshDaoAdapter, topic: TAddress, options: { perPage?: number }) {
     const [data, setData] = useState<{
         isFetching: boolean
         topic?: TTopic
     }>({ isFetching: false })
-    const [messages, setMessages] = useState<any[]>([])
+    const [messages, setMessages] = useState<{
+        isFetching: boolean
+        items: any[]
+        cursor?: string
+        hasNext?: boolean
+    }>({
+        isFetching: false,
+        items: [],
+    })
+
+    const { perPage = 5 } = options
 
     const sendMessage = async (params: { message: string; answerId?: string }) => {
         const { message, answerId } = params
         await dao.createTopicMessage({ topic, message, answerId })
+    }
+
+    const getMessages = useCallback(
+        async (from?: string) => {
+            if (!data.topic) {
+                return
+            }
+
+            setMessages((state) => ({ ...state, isFetching: true }))
+
+            const { messages, cursor, hasNext } = await data.topic.account.getMessages(
+                {
+                    msgType: ['IntIn'],
+                    allow_latest_inconsistent_data: true,
+                    limit: perPage,
+                    cursor: from,
+                },
+                true,
+                false,
+            )
+
+            setMessages((state) => ({
+                isFetching: false,
+                items: [
+                    ...state.items,
+                    ...messages
+                        .filter(
+                            ({ decoded }) => decoded && decoded.name === 'acceptMessage',
+                        )
+                        .map(({ message, decoded }) => ({
+                            id: message.id.replace('message/', ''),
+                            ...decoded.value,
+                        })),
+                ],
+                cursor,
+                hasNext,
+            }))
+        },
+        [data.topic, perPage],
+    )
+
+    const getMore = async () => {
+        await getMessages(messages.cursor)
     }
 
     useEffect(() => {
@@ -883,27 +936,7 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
     }, [dao, topic])
 
     useEffect(() => {
-        const _getMessages = async () => {
-            if (!data.topic) {
-                return
-            }
-            const { messages } = await data.topic.account.getMessages(
-                { msgType: ['IntIn'], allow_latest_inconsistent_data: true },
-                true,
-                true,
-            )
-            console.debug(messages)
-            setMessages(
-                messages
-                    .filter(({ decoded }) => decoded && decoded.name === 'acceptMessage')
-                    .map(({ message, decoded }) => ({
-                        id: message.id.replace('message/', ''),
-                        ...decoded.value,
-                    })),
-            )
-        }
-
-        _getMessages()
+        getMessages()
 
         // Subscribe messages
         if (data.topic) {
@@ -914,10 +947,10 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
                     0,
                 )
                 if (decoded) {
-                    setMessages((state) => [
-                        { id: message.id, ...decoded.value },
+                    setMessages((state) => ({
                         ...state,
-                    ])
+                        items: [{ id: message.id, ...decoded.value }, ...state.items],
+                    }))
                 }
             })
         }
@@ -925,11 +958,12 @@ function useTopic(dao: IGoshDaoAdapter, topic: TAddress) {
         return () => {
             data.topic?.account.account.free()
         }
-    }, [data.topic])
+    }, [data.topic, getMessages])
 
     return {
         data,
         messages,
+        getMoreMessages: getMore,
         sendMessage,
     }
 }
