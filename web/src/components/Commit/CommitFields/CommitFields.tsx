@@ -20,10 +20,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
     if (version === '1.0.0') {
         return <CommitFields_1_0_0 {...rest} />
     }
-    if (version === '1.1.0') {
-        return <CommitFields_1_1_0 dao={dao} repository={repository} {...rest} />
-    }
-    return null
+    return <CommitFields_1_1_0 dao={dao} repository={repository} {...rest} />
 }
 
 export { CommitFields }

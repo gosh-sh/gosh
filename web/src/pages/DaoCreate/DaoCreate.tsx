@@ -8,9 +8,6 @@ const DaoCreatePage = () => {
     if (goshLatestVersion === '1.0.0') {
         return <DaoCreateForm_1_0_0 />
     }
-    if (goshLatestVersion === '1.1.0') {
-        return <DaoCreateForm_1_1_0 />
-    }
     return <DaoCreateForm_1_1_0 />
 }
 
