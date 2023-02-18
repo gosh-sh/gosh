@@ -22,11 +22,6 @@ const StatusBadge = (props: { item: TTaskListItem }) => {
             <span className="bg-gray-d6e4ee text-xs rounded px-2">Awaiting commits</span>
         )
     }
-    if (!item.confirmed) {
-        return (
-            <span className="bg-gray-d6e4ee text-xs rounded px-2">Awaiting decision</span>
-        )
-    }
     if (item.confirmed) {
         return <span className="bg-gray-d6e4ee text-xs rounded px-2">Confirmed</span>
     }
@@ -109,59 +104,21 @@ const TaskListItem = (props: TTaskListItemProps) => {
     }
 
     return (
-        <div className="px-5 py-6">
-            <div className="flex gap-3 items-center justify-between">
-                <div className="grow text-xl font-medium">
-                    {item.name}
-                    <span className="mx-2 align-super">
-                        <StatusBadge item={item} />
+        <tr className="hover:bg-gray-fafafd cursor-pointer">
+            <td className="px-5 py-2">{item.name}</td>
+            <td className="px-5 py-2 text-sm">{item.repository}</td>
+            <td className="px-5 py-2">{getTaskCost()}</td>
+            <td className="px-5 py-2">
+                <StatusBadge item={item} />
+            </td>
+            <td className="px-5 py-2">
+                {item.tags.map((tag, index) => (
+                    <span key={index} className={classNames('mx-1 text-sm')}>
+                        {tag}
                     </span>
-                    {item.tags.map((tag, index) => (
-                        <span
-                            key={index}
-                            className={classNames(
-                                'mx-1 border border-gray-e6edff rounded px-2',
-                                'text-xs text-gray-7c8db5 align-super',
-                            )}
-                        >
-                            {tag}
-                        </span>
-                    ))}
-                </div>
-                <div>
-                    <span className="text-xl font-medium">{getTaskCost()}</span>
-                </div>
-            </div>
-            <div className="mb-6">
-                <span className="text-gray-7c8db5 text-sm">
-                    Repository: {item.repository}
-                </span>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
-                {!item.confirmed && (
-                    <Button
-                        className={classNames(
-                            '!bg-gray-fafafd border border-gray-e6edff text-black',
-                            'hover:!text-black/50',
-                        )}
-                        onClick={onTaskDelete}
-                        disabled={isSubmitting}
-                        isLoading={isDeleting}
-                    >
-                        Delete
-                    </Button>
-                )}
-                {item.confirmed && (
-                    <Button
-                        onClick={onTaskClaim}
-                        disabled={isSubmitting}
-                        isLoading={isClaiming}
-                    >
-                        Claim reward
-                    </Button>
-                )}
-            </div>
-        </div>
+                ))}
+            </td>
+        </tr>
     )
 }
 
