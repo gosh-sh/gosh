@@ -12,10 +12,7 @@ const RepoCreatePage = () => {
     if (dao.details.version === '1.0.0') {
         return <RepoCreatePage_1_0_0 />
     }
-    if (dao.details.version === '1.1.0') {
-        return <RepoCreatePage_1_1_0 />
-    }
-    return null
+    return <RepoCreatePage_1_1_0 />
 }
 
 export default RepoCreatePage

@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { FormikInput, FormikTextarea } from '../../../components/Formik'
-import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
