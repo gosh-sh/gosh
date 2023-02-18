@@ -40,6 +40,18 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"address"},
+				{"name":"value2","type":"string"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"string"}
+			]
+		},
+		{
 			"name": "getCommit",
 			"inputs": [
 			],

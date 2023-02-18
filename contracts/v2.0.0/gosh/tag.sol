@@ -83,6 +83,10 @@ contract Tag is Modifiers{
     }
     
     //Getters
+    function getDetails() external view returns(string, address, string, string, string) {
+        return (_nametag, _commit, _nameCommit, _content, _repoName);
+    }
+    
     function getCommit() external view returns(address) {
         return _commit;
     }
