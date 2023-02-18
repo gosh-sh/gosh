@@ -245,8 +245,8 @@
 		{
 			"name": "getCellTagUpgrade",
 			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"nametag","type":"string"},
+				{"name":"repoName","type":"string[]"},
+				{"name":"nametag","type":"string[]"},
 				{"name":"newversion","type":"string"},
 				{"name":"comment","type":"string"}
 			],

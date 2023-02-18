@@ -358,8 +358,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
-    function getCellTagUpgrade(string repoName,
-        string nametag,
+    function getCellTagUpgrade(string[] repoName,
+        string[] nametag,
         string newversion,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
