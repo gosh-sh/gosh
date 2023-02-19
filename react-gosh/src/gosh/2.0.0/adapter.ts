@@ -198,9 +198,13 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         address?: TAddress
     }): Promise<IGoshProfile> {
         const { username, address } = options
-        if (address) return new GoshProfile(this.client, address)
+        if (address) {
+            return new GoshProfile(this.client, address)
+        }
+        if (!username) {
+            throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
+        }
 
-        if (!username) throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
         const { value0 } = await this.gosh.runLocal(
             'getProfileAddr',
             {
