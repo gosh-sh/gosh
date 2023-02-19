@@ -103,6 +103,7 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                         : null,
                                 )}
                                 onClick={() => setFieldValue('approve', false)}
+                                disabled={isSubmitting}
                             >
                                 Reject
                             </Button>
@@ -111,11 +112,8 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                             <Field
                                 name="note"
                                 component={FormikTextarea}
-                                inputProps={{
-                                    placeholder:
-                                        'Leave your opinion on this proposal there',
-                                    autoComplete: 'off',
-                                }}
+                                placeholder="Leave your opinion on this proposal there"
+                                autoComplete="off"
                                 disabled={isSubmitting}
                             />
                         </div>

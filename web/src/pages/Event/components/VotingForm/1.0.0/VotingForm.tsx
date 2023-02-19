@@ -86,6 +86,7 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                         : null,
                                 )}
                                 onClick={() => setFieldValue('approve', true)}
+                                disabled={isSubmitting}
                             >
                                 Accept
                             </Button>
@@ -100,6 +101,7 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                         : null,
                                 )}
                                 onClick={() => setFieldValue('approve', false)}
+                                disabled={isSubmitting}
                             >
                                 Reject
                             </Button>

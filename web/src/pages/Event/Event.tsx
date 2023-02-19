@@ -16,15 +16,21 @@ import {
     RepoBranchEvent,
     RepoPullRequestEvent,
     RepoCreateEvent,
-    RepoTaskCreateEvent,
-    RepoTaskConfirmEvent,
-    RepoTaskDeleteEvent,
+    TaskCreateEvent,
+    TaskDeleteEvent,
+    DaoEventShowProgressEvent,
+    DaoEventAllowDiscussionEvent,
+    DaoAskMembershipAllowanceEvent,
+    DaoTokenVotingAddEvent,
+    DaoTokenRegularAddEvent,
+    DaoTagAddEvent,
+    DaoTagRemoveEvent,
+    EventReviewForm,
+    RepoTagAddEvent,
+    RepoTagRemoveEvent,
+    RepoDescriptionEvent,
 } from './components'
 import ReactTooltip from 'react-tooltip'
-import { DaoEventShowProgressEvent } from './components/DaoEventShowProgressEvent/DaoEventShowProgressEvent'
-import { DaoEventAllowDiscussionEvent } from './components/DaoEventAllowDiscussionEvent/DaoEventAllowDiscussionEvent'
-import { EventReviewForm } from './components/ReviewForm/ReviewForm'
-import { DaoAskMembershipAllowanceEvent } from './components/DaoAskMembershipAllowanceEvent/DaoAskMembershipAllowanceEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -129,13 +135,10 @@ const EventPage = () => {
                             />
                         )}
                         {event.type.kind === ESmvEventType.TASK_CREATE && (
-                            <RepoTaskCreateEvent event={event} />
-                        )}
-                        {event.type.kind === ESmvEventType.TASK_CONFIRM && (
-                            <RepoTaskConfirmEvent event={event} />
+                            <TaskCreateEvent event={event} />
                         )}
                         {event.type.kind === ESmvEventType.TASK_DELETE && (
-                            <RepoTaskDeleteEvent event={event} />
+                            <TaskDeleteEvent event={event} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_EVENT_HIDE_PROGRESS && (
                             <DaoEventShowProgressEvent event={event} />
@@ -146,6 +149,27 @@ const EventPage = () => {
                         {event.type.kind ===
                             ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
                             <DaoAskMembershipAllowanceEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TOKEN_VOTING_ADD && (
+                            <DaoTokenVotingAddEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TOKEN_REGULAR_ADD && (
+                            <DaoTokenRegularAddEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TAG_ADD && (
+                            <DaoTagAddEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TAG_REMOVE && (
+                            <DaoTagRemoveEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.REPO_TAG_ADD && (
+                            <RepoTagAddEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.REPO_TAG_REMOVE && (
+                            <RepoTagRemoveEvent event={event} />
+                        )}
+                        {event.type.kind === ESmvEventType.REPO_UPDATE_DESCRIPTION && (
+                            <RepoDescriptionEvent event={event} />
                         )}
                     </div>
                 </div>

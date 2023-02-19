@@ -1063,7 +1063,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const _reviewers = await this.getReviewers(reviewers)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-        await this.wallet.run('startProposalForAddDaoTag', {
+        await this.wallet.run('startProposalForDestroyDaoTag', {
             tag: clean,
             comment,
             reviewers: _reviewers.map(({ wallet }) => wallet),
@@ -3643,17 +3643,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
-            const { num, data1, data2 } = await event.runLocal(
-                'getDataFirst',
-                {},
-                undefined,
-                { useCachedBoc: true },
-            )
+            const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
+                useCachedBoc: true,
+            })
             const count = parseInt(num)
-            const items = [await this._getMultiEventData(event, data1)]
+            const items = []
 
-            let rest = data2
-            for (let i = 1; i < count; i++) {
+            let rest = data0
+            for (let i = 0; i < count; i++) {
                 const { data1: curr, data2: next } = await event.runLocal(
                     'getHalfData',
                     { Data: rest },

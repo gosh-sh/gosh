@@ -58,6 +58,7 @@ const EventReviewForm = (props: TEventReviewFormProps) => {
                                     : null,
                             )}
                             onClick={() => setFieldValue('accept', false)}
+                            disabled={isSubmitting}
                         >
                             Reject
                         </Button>
