@@ -49,8 +49,6 @@ git add 1.txt
 git commit -m test1
 git push
 
-git log
-
 cd ..
 
 echo "Upgrade DAO"
@@ -74,7 +72,10 @@ git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-GOSH_TRACE=5 git push
+git push
+
+git log
+
 cd ..
 
 echo "***** cloning repo with new link *****"
@@ -93,11 +94,3 @@ echo "GOOD VERSION"
 cd ..
 
 echo "TEST SUCCEEDED"
-#
-#тест
-#старт ветки от непоследнего комита в паренте
-#
-#надо протестить пуш после апргрейда без предыдущего
-#тест с несколькими коммитами апгрейд
-#
-#

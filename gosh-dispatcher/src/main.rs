@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::process::{ExitStatus, Stdio};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::process::Command;
+use tokio::process::{Child, Command};
 
 use tracing::level_filters::LevelFilter;
 use version_compare::Version;
@@ -109,16 +109,7 @@ async fn main() -> anyhow::Result<()> {
     }
     let helper_path = proper_remote_version.unwrap();
     tracing::trace!("Proper remote version : {helper_path:?}");
-    let old_system = args[1].split("://").collect::<Vec<&str>>()[1]
-        .split("/")
-        .collect::<Vec<&str>>()[0]
-        .to_string();
-    let new_repo_link = args[1]
-        .clone()
-        .replace(&old_system, &system_contract_address);
-    tracing::trace!("New repo link: {new_repo_link}");
-    args[1] = new_repo_link;
-
+    get_new_args(&mut args, &system_contract_address)?;
     let mut main_helper = Command::new(&helper_path)
         .args(args.clone())
         .arg("--dispatcher")
@@ -128,22 +119,10 @@ async fn main() -> anyhow::Result<()> {
 
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
-    let mut prev_dispatched = None;
+    let mut dispatcher_cmd = None;
     tracing::trace!("Start dispatcher message interchange");
     while let Some(input_line) = lines.next_line().await? {
-        if let Some(prev) = &prev_dispatched {
-            if *prev == input_line {
-                continue;
-            }
-        }
-        tracing::trace!("stdin line: {input_line}");
-        if let Some(stdin) = main_helper.stdin.as_mut() {
-            stdin.write_all(input_line.as_bytes()).await?;
-            stdin.write_all("\n".as_bytes()).await?;
-            stdin.flush().await.unwrap();
-        } else {
-            panic!("Failed to take stdin");
-        }
+        write_to_helper(&mut main_helper, &input_line).await?;
         tracing::trace!("waiting for output");
         let mut output = vec![];
         if let Some(out) = main_helper.stdout.as_mut() {
@@ -154,8 +133,8 @@ async fn main() -> anyhow::Result<()> {
                     break;
                 }
                 if line.starts_with("dispatcher") {
-                    prev_dispatched = Some(input_line);
-                    call_helper_after_fail(line, &existing_to_supported_map, &args, &system_contracts).await?;
+                    output.clear();
+                    dispatcher_cmd = Some(line);
                     break;
                 }
                 output.push(line.clone());
@@ -165,8 +144,18 @@ async fn main() -> anyhow::Result<()> {
         }
         tracing::trace!("Output: {output:?}");
         for line in output {
-            stdout.write_all(format!("{line}\n").as_bytes()).await.unwrap();
-            stdout.flush().await;
+            stdout
+                .write_all(format!("{line}\n").as_bytes())
+                .await
+                .unwrap();
+            stdout.flush().await?;
+        }
+        if let Some(line) = dispatcher_cmd {
+            dispatcher_cmd = None;
+            let _main_res = main_helper.wait().await;
+            main_helper =
+                call_helper_after_fail(line, &existing_to_supported_map, &args, &system_contracts)
+                    .await?;
         }
         if let Ok(Some(code)) = main_helper.try_wait() {
             tracing::trace!("Loop finished with: {code:?}");
@@ -185,7 +174,7 @@ async fn run_binary_with_command(
     helper_path: String,
     args: Vec<String>,
     command: &str,
-) -> anyhow::Result<(tokio::io::Result<ExitStatus>, Vec<String>, String)> {
+) -> anyhow::Result<(io::Result<ExitStatus>, Vec<String>, String)> {
     let mut helper = Command::new(&helper_path)
         .args(args.clone())
         .stdin(Stdio::piped())
@@ -200,6 +189,7 @@ async fn run_binary_with_command(
         .take()
         .ok_or(format_err!("Failed to take stdout of child process"))?;
     stdin.write_all(format!("{command}\n\n").as_bytes()).await?;
+    stdin.flush().await?;
     let mut lines = BufReader::new(output).lines();
     let mut result = Vec::new();
     while let Some(line) = lines.next_line().await? {
@@ -260,7 +250,12 @@ async fn get_supported_version(binary_path: &str) -> anyhow::Result<String> {
         .ok_or(format_err!("Failed to get supported version"))
 }
 
-async fn call_helper_after_fail(remote_callback: String, existing_to_supported_map: &HashMap<String, String>, args: &Vec<String>, system_contracts: &HashMap<String, String> ) -> anyhow::Result<()> {
+async fn call_helper_after_fail(
+    remote_callback: String,
+    existing_to_supported_map: &HashMap<String, String>,
+    args: &Vec<String>,
+    system_contracts: &HashMap<String, String>,
+) -> anyhow::Result<Child> {
     // callback string = dispatcher {"value0":{"addr":"0:31e344f46732761e76f730c9d46722f070a8473e1e97aa550e53571e640e33b7","version":"1.0.0"}} fetch eeb077143f2d278dcf1628a5cee69c4aa52d62af refs/heads/main
     tracing::trace!("call_helper_after_fail {remote_callback}");
     let mut args = args.to_owned();
@@ -268,18 +263,13 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
     // skip 1 part
     parser.next();
     let previous = parser.next().unwrap();
-    let cmd = format!("{} {} {}",
-                      parser.next().unwrap(),
-                      parser.next().unwrap(),
-                      parser.next().unwrap());
-    /*
-    {
-        "value0" : {
-            "addr" : "0:31e344f46732761e76f730c9d46722f070a8473e1e97aa550e53571e640e33b7",
-            "version":"1.0.0"
-        }
-    }
-    */
+    let cmd = format!(
+        "{} {} {}",
+        parser.next().unwrap(),
+        parser.next().unwrap(),
+        parser.next().unwrap()
+    );
+
     tracing::trace!("previous repo: {previous}");
     let version = serde_json::Value::from_str(previous)?
         .as_object()
@@ -302,20 +292,14 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         }
     }
     tracing::trace!("proper_helper: {proper_helper:?}");
-    let proper_helper = proper_helper.ok_or(
-        format_err!("Helper with supported version {version} was not found.")
-    )?;
-    let new_system_contract = system_contracts.get(&version).ok_or(format_err!("Failed to get system contract address for version {version}"))?;
+    let proper_helper = proper_helper.ok_or(format_err!(
+        "Helper with supported version {version} was not found."
+    ))?;
+    let new_system_contract = system_contracts.get(&version).ok_or(format_err!(
+        "Failed to get system contract address for version {version}"
+    ))?;
 
-    let old_system = args[1].split("://").collect::<Vec<&str>>()[1]
-        .split("/")
-        .collect::<Vec<&str>>()[0]
-        .to_string();
-    let new_repo_link = args[1]
-        .clone()
-        .replace(&old_system, new_system_contract);
-    tracing::trace!("New repo link: {new_repo_link}");
-    args[1] = new_repo_link;
+    get_new_args(&mut args, &new_system_contract)?;
     tracing::trace!("new args: {args:?}");
 
     let mut previous_helper = Command::new(proper_helper)
@@ -325,17 +309,7 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         .stdout(Stdio::piped())
         .spawn()?;
 
-    tracing::trace!("send input: {cmd}");
-    if let Some(stdin) = previous_helper.stdin.as_mut() {
-        stdin.write_all(cmd.as_bytes()).await?;
-        stdin.write_all("\n".as_bytes()).await?;
-        stdin.write_all(cmd.as_bytes()).await?;
-        stdin.write_all("\n".as_bytes()).await?;
-        stdin.write_all("\n".as_bytes()).await?;
-        stdin.flush().await.unwrap();
-    } else {
-        panic!("Failed to take stdin");
-    }
+    write_to_helper(&mut previous_helper, &cmd).await?;
 
     let mut output = vec![];
     if let Some(out) = previous_helper.stdout.as_mut() {
@@ -357,5 +331,37 @@ async fn call_helper_after_fail(remote_callback: String, existing_to_supported_m
         io::stdout().flush().await.unwrap();
     }
 
+    Ok(previous_helper)
+}
+
+fn get_new_args(args: &mut Vec<String>, system_contract_address: &String) -> anyhow::Result<()> {
+    let old_system = args[1]
+        .split("://")
+        .collect::<Vec<&str>>()
+        .get(1)
+        .ok_or(format_err!("Wrong amount of args"))?
+        .split("/")
+        .collect::<Vec<&str>>()
+        .get(0)
+        .ok_or(format_err!("Wrong remote url format"))?
+        .to_string();
+    let new_repo_link = args[1]
+        .clone()
+        .replace(&old_system, system_contract_address);
+    tracing::trace!("New repo link: {new_repo_link}");
+    args[1] = new_repo_link;
+    Ok(())
+}
+
+async fn write_to_helper(helper: &mut Child, input_line: &String) -> anyhow::Result<()> {
+    tracing::trace!("send input: {input_line}");
+    if let Some(stdin) = helper.stdin.as_mut() {
+        stdin
+            .write_all(format!("{input_line}\n").as_bytes())
+            .await?;
+        stdin.flush().await?;
+    } else {
+        panic!("Failed to take stdin");
+    }
     Ok(())
 }

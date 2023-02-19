@@ -141,6 +141,8 @@ function add_protected_branch {
   NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | sed  's/last_paid:     //')
   echo "NOW_ARG=$NOW_ARG"
 
+  sleep 60
+
   echo "***** get data for proposal *****"
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
   echo "tip3VotingLocker=$tip3VotingLocker"
@@ -164,6 +166,7 @@ function set_commit_proposal {
   echo "***** start proposal for set commit *****"
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit --repoName $REPO_NAME --branchName $BRANCH_NAME --commit $COMMIT_ID --numberChangedFiles 1  --numberCommits 1 --num_clients 1
 
+  sleep 60
   echo "***** get data for proposal *****"
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
   echo "tip3VotingLocker=$tip3VotingLocker"

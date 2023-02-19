@@ -18,6 +18,7 @@ use crate::{
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
 use crate::blockchain::get_commit_address;
+use crate::git_helper::push::GetPreviousResult;
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
 
 use super::is_going_to_ipfs;
@@ -353,17 +354,14 @@ where
     };
     let (content, commit_id) = if upgrade {
         tracing::trace!("generate content for upgrade snapshot");
-        let previous: Value = blockchain
+        let repo_addr: GetPreviousResult = blockchain
             .repo_contract()
             .read_state(blockchain.client(), "getPrevious", None)
             .await?;
-        let previous_repo_addr = previous.as_object().unwrap()["value0"].as_object().unwrap()
-            ["addr"]
-            .as_str()
-            .unwrap()
-            .to_string();
-        tracing::trace!("Previous repo addr: {previous_repo_addr}");
-        let repo_addr = BlockchainContractAddress::new(previous_repo_addr);
+        let repo_addr = repo_addr.previous
+            .ok_or(anyhow::format_err!("Failed to get address of previous version"))?
+            .address;
+        tracing::trace!("Previous repo addr: {repo_addr}");
         let mut repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
         let snapshot_addr = Snapshot::calculate_address(
             blockchain.client(),

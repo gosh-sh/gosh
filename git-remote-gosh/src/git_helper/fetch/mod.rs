@@ -93,6 +93,7 @@ where
         commits_queue.push_back(sha);
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
+        let mut next_commit_of_prev_version = None;
         loop {
             if blobs_restore_plan.is_available() {
                 tracing::debug!("Restoring blobs");
@@ -189,8 +190,12 @@ where
                 };
                 tracing::debug!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
-                for parent_id in &obj.parents {
-                    commits_queue.push_back(*parent_id);
+                if onchain_commit.initupgrade {
+                    next_commit_of_prev_version = Some(obj.parents[0].clone());
+                } else {
+                    for parent_id in &obj.parents {
+                        commits_queue.push_back(*parent_id);
+                    }
                 }
                 dangling_commits.push(obj);
                 continue;
@@ -205,6 +210,10 @@ where
             }
             break;
         }
+        if next_commit_of_prev_version.is_some() {
+            return Err(anyhow::format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
+        }
+
         Ok(())
     }
 

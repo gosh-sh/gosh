@@ -5,4 +5,4 @@ tonos-cli.conf.json
 repo*
 upgrade_repo*
 gosh-cli.conf.json
-
+*.log

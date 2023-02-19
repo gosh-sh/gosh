@@ -79,7 +79,7 @@ echo "GOOD VERSION"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-GOSH_TRACE=5 git push
+git push
 
 cd ..
 

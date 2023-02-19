@@ -390,15 +390,24 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                 is_batching_fetch_in_progress = true;
                 let fetch_result = helper.fetch(sha, name).await;
                 if let Err(e) = fetch_result {
-                    if e.to_string().contains("Was trying to call getCommit") {
+                    let error_str = e.to_string();
+                    if error_str.contains("Was trying to call getCommit") {
                         let previous: Value = helper
                             .blockchain
                             .repo_contract()
                             .read_state(helper.blockchain.client(), "getPrevious", None)
                             .await?;
+                        let sha = if error_str.contains("SHA=") {
+                            error_str
+                                .trim_start_matches(|c| c != '\"')
+                                .trim_end_matches(|c| c != '\"')
+                                .replace(['\"'],"")
+                        } else {
+                            sha.to_owned()
+                        };
                         let out_str = format!("dispatcher {previous} fetch {sha} {name}");
                         stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
-                        continue;
+                        return Ok(());
                     } else {
                         return Err(e);
                     }
