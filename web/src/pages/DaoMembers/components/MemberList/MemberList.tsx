@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { TDao, useDaoMemberDelete, useDaoMemberList } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { ButtonLink, Input } from '../../../../components/Form'
-import MemeberList_1_0_0 from './1.0.0/MemberList'
-import MemeberList_1_1_0 from './1.1.0/MemberList'
+import DAO_MEMEBER_LIST_1_0_0 from './1.0.0/MemberList'
+import DAO_MEMEBER_LIST_2_0_0 from './2.0.0/MemberList'
 
 type TMemberListProps = {
     dao: {
@@ -14,7 +14,7 @@ type TMemberListProps = {
     scrollToInviteRef(): void
 }
 
-const MemberList = (props: TMemberListProps) => {
+const DaoMemberList = (props: TMemberListProps) => {
     const { dao, scrollToInviteRef } = props
     const { search, setSearch, ...restMembers } = useDaoMemberList(dao.adapter, 0)
     const removal = useDaoMemberDelete(dao.adapter)
@@ -49,7 +49,7 @@ const MemberList = (props: TMemberListProps) => {
                     {(() => {
                         if (version === '1.0.0') {
                             return (
-                                <MemeberList_1_0_0
+                                <DAO_MEMEBER_LIST_1_0_0
                                     daoDetails={dao.details}
                                     members={{ search, setSearch, ...restMembers }}
                                     removal={removal}
@@ -57,7 +57,7 @@ const MemberList = (props: TMemberListProps) => {
                             )
                         }
                         return (
-                            <MemeberList_1_1_0
+                            <DAO_MEMEBER_LIST_2_0_0
                                 dao={dao}
                                 members={{ search, setSearch, ...restMembers }}
                                 removal={removal}
@@ -70,4 +70,4 @@ const MemberList = (props: TMemberListProps) => {
     )
 }
 
-export { MemberList }
+export { DaoMemberList }

@@ -13,7 +13,7 @@ type TFormValues = {
     members: string
 }
 
-const DaoCreateForm_1_0_0 = () => {
+const DaoCreateForm = () => {
     const navigate = useNavigate()
     const daocreate = useDaoCreate()
 
@@ -107,4 +107,4 @@ const DaoCreateForm_1_0_0 = () => {
     )
 }
 
-export default DaoCreateForm_1_0_0
+export default DaoCreateForm

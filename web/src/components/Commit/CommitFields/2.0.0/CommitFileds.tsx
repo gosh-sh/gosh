@@ -1,12 +1,20 @@
 import { Field } from 'formik'
-import { classNames } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
+import { classNames, useTaskList } from 'react-gosh'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TPushProgress } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../Form'
-import { FormikCheckbox, FormikInput, FormikTextarea } from '../../../Formik'
+import {
+    FormikCheckbox,
+    FormikInput,
+    FormikSelect,
+    FormikTextarea,
+} from '../../../Formik'
 import CommitProgress from '../../CommitProgress'
 
 type TCommitFieldsProps = {
+    dao: IGoshDaoAdapter
+    repository: string
     className?: string
     isSubmitting: boolean
     urlBack?: string
@@ -15,8 +23,10 @@ type TCommitFieldsProps = {
 }
 
 const CommitFields = (props: TCommitFieldsProps) => {
-    const { className, isSubmitting, urlBack, extraButtons, progress } = props
+    const { dao, repository, className, isSubmitting, urlBack, extraButtons, progress } =
+        props
     const navigate = useNavigate()
+    const tasks = useTaskList(dao, { repository, perPage: 0 })
 
     return (
         <div
@@ -28,7 +38,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                     'divide-x divide-gray-e6edff py-5',
                 )}
             >
-                <div className="basis-7/12 px-5">
+                <div className="grow px-5">
                     <div>
                         <Field
                             name="title"
@@ -59,6 +69,58 @@ const CommitFields = (props: TCommitFieldsProps) => {
                         />
                     </div>
                 </div>
+                <div className="basis-5/12 px-5">
+                    <div>
+                        <Field
+                            name="task"
+                            component={FormikSelect}
+                            label="Select task (optional)"
+                            disabled={isSubmitting || tasks.isFetching}
+                        >
+                            <option value="">
+                                {tasks.isFetching ? 'Loading...' : 'Select task'}
+                            </option>
+                            {tasks.items.map(({ name }, index) => (
+                                <option value={name} key={index}>
+                                    {name}
+                                </option>
+                            ))}
+                        </Field>
+                    </div>
+                    <div className="mt-6">
+                        <Field
+                            name="assigners"
+                            component={FormikInput}
+                            label="Assigner(s)"
+                            placeholder="Assigners"
+                            help="Enter a space after each username"
+                            autoComplete="off"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="mt-6">
+                        <Field
+                            name="reviewers"
+                            component={FormikInput}
+                            label="Reviewer(s)"
+                            placeholder="Reviewers"
+                            help="Enter a space after each username"
+                            autoComplete="off"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="mt-6">
+                        <Field
+                            name="managers"
+                            component={FormikInput}
+                            label="Manager(s)"
+                            placeholder="Managers"
+                            help="Enter a space after each username"
+                            autoComplete="off"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div
@@ -79,8 +141,9 @@ const CommitFields = (props: TCommitFieldsProps) => {
                         {urlBack && (
                             <Button
                                 className={classNames(
-                                    'text-red-ff3b30 border border-red-ff3b30',
-                                    '!bg-white hover:!bg-red-ff3b30/5 hover:text-red-ff3b30',
+                                    '!bg-white text-red-ff3b30 border border-red-ff3b30',
+                                    'hover:!bg-red-ff3b30/5 hover:text-red-ff3b30',
+                                    'disabled:!border-gray-e6edff',
                                 )}
                                 disabled={isSubmitting}
                                 onClick={() => navigate(urlBack)}

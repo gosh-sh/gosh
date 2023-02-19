@@ -1,7 +1,7 @@
 import { AppConfig } from '../appconfig'
 import { GoshError } from '../errors'
 import { GoshAdapter_1_0_0 } from './1.0.0/adapter'
-import { GoshAdapter_1_1_0 } from './1.1.0/adapter'
+import { GoshAdapter_2_0_0 } from './2.0.0/adapter'
 import { IGoshAdapter } from './interfaces'
 
 class GoshAdapterFactory {
@@ -11,8 +11,8 @@ class GoshAdapterFactory {
         switch (version) {
             case '1.0.0':
                 return GoshAdapter_1_0_0.getInstance(goshroot, versions[version])
-            case '1.1.0':
-                return GoshAdapter_1_1_0.getInstance(goshroot, versions[version])
+            case '2.0.0':
+                return GoshAdapter_2_0_0.getInstance(goshroot, versions[version])
             default:
                 throw new GoshError('GoshAdapter is not implemented', { version })
         }

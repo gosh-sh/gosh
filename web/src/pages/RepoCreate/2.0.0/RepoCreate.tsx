@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { FormikInput } from '../../../components/Formik'
+import { FormikInput, FormikTextarea } from '../../../components/Formik'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
@@ -10,6 +10,7 @@ import { Button } from '../../../components/Form'
 
 type TFormValues = {
     name: string
+    description?: string
 }
 
 const RepoCreate = () => {
@@ -19,8 +20,8 @@ const RepoCreate = () => {
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await createRepository(values.name, {})
-            navigate(`/o/${dao.details.name}/r/${values.name}`, { replace: true })
+            await createRepository(values.name, { description: values.description })
+            navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -52,6 +53,16 @@ const RepoCreate = () => {
                                 onChange={(e: any) =>
                                     setFieldValue('name', e.target.value.toLowerCase())
                                 }
+                            />
+                        </div>
+
+                        <div className="mb-6">
+                            <Field
+                                name="description"
+                                component={FormikTextarea}
+                                autoComplete="off"
+                                placeholder="Repository description (optional)"
+                                disabled={isSubmitting}
                             />
                         </div>
 

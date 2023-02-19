@@ -72,7 +72,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const [codeLanguage, setCodeLanguage] = useState<string>('plaintext')
 
     const getInitialValues = () => {
-        const version_1_1_0 = {
+        const version_2_0_0 = {
             task: '',
             assigners: '',
             reviewers: '',
@@ -81,12 +81,12 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
         }
         return {
             ...initialValues,
-            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
         }
     }
 
     const getValidationSchema = () => {
-        const version_1_1_0 = {
+        const version_2_0_0 = {
             task: yup.string(),
             assigners: yup.string(),
             reviewers: yup.string(),
@@ -109,7 +109,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
             name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.details.version === '1.1.0' ? version_1_1_0 : {}),
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
         })
     }
 

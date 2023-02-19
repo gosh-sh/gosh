@@ -4,7 +4,7 @@ import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
 import ToastError from '../../../../../components/Error/ToastError'
 import { Button } from '../../../../../components/Form'
-import { FormikInput } from '../../../../../components/Formik'
+import { FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import yup from '../../../../../yup-extended'
 
 type TEventVotingFormProps = {
@@ -18,6 +18,7 @@ type TEventVotingFormProps = {
 type TFormValues = {
     approve: boolean
     amount: number
+    note?: string
 }
 
 const EventVotingForm = (props: TEventVotingFormProps) => {
@@ -58,9 +59,9 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                             <Field
                                 name="amount"
                                 component={FormikInput}
+                                placeholder="Enter amount"
+                                autoComplete="off"
                                 inputProps={{
-                                    placeholder: 'Enter amount',
-                                    autoComplete: 'off',
                                     after: (
                                         <div className="text-xs text-gray-7c8db5 pr-3">
                                             <div className="whitespace-nowrap leading-5 py-2">
@@ -72,6 +73,7 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                 help={`Available ${
                                     smv.details.smvAvailable - event.votes.yours
                                 }`}
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="mt-6 flex flex-nowrap">
@@ -86,6 +88,7 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                         : null,
                                 )}
                                 onClick={() => setFieldValue('approve', true)}
+                                disabled={isSubmitting}
                             >
                                 Accept
                             </Button>
@@ -103,6 +106,18 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                             >
                                 Reject
                             </Button>
+                        </div>
+                        <div className="mt-10">
+                            <Field
+                                name="note"
+                                component={FormikTextarea}
+                                inputProps={{
+                                    placeholder:
+                                        'Leave your opinion on this proposal there',
+                                    autoComplete: 'off',
+                                }}
+                                disabled={isSubmitting}
+                            />
                         </div>
                         <div className="mt-4">
                             <Button

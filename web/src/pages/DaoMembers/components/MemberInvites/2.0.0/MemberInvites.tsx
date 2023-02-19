@@ -34,7 +34,15 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             }
 
             // Create proposal for add member
-            await createDaoMember({ usernames: [item.recipientUsername] })
+            await createDaoMember({
+                members: [
+                    {
+                        username: item.recipientUsername,
+                        allowance: item.recipientAllowance || 0,
+                        comment: item.recipientComment || '',
+                    },
+                ],
+            })
 
             // Update database
             const { error } = await supabase
@@ -67,6 +75,7 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             <thead>
                 <tr className="text-gray-7c8db5 text-left text-xs">
                     <th className="font-normal w-1/2 whitespace-nowrap">Invited user</th>
+                    <th className="font-normal px-3">Allowance</th>
                     <th className="font-normal px-3">Status</th>
                     <th></th>
                 </tr>
@@ -74,7 +83,7 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             <tbody>
                 {!invites.items.length && (
                     <tr>
-                        <td colSpan={3} className="text-sm text-gray-7c8db5 pt-3">
+                        <td colSpan={4} className="text-sm text-gray-7c8db5 pt-3">
                             There are no unprocessed invites
                         </td>
                     </tr>
@@ -82,7 +91,15 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
 
                 {invites.items.map((item, index) => (
                     <tr key={index}>
-                        <td className="py-2 text-sm">{item.recipientUsername}</td>
+                        <td className="py-2 text-sm">
+                            {item.recipientUsername}
+                            {item.recipientComment && (
+                                <div className="text-xs text-gray-7c8db5">
+                                    {item.recipientComment}
+                                </div>
+                            )}
+                        </td>
+                        <td className="py-2 px-3 text-sm">{item.recipientAllowance}</td>
                         <td className="py-2 px-3 text-gray-7c8db5 font-light text-sm">
                             {item.recipientStatus || 'pending'}
                         </td>

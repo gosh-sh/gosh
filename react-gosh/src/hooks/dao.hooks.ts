@@ -242,7 +242,7 @@ function useDaoCreate() {
         setProgress((state) => ({ ...state, isFetching: false }))
     }
 
-    const _create_1_1_0 = async (
+    const _create_2_0_0 = async (
         name: string,
         options: {
             tags?: string[]
@@ -349,7 +349,7 @@ function useDaoCreate() {
     if (version === '1.0.0') {
         createFn = _create_1_0_0
     } else {
-        createFn = _create_1_1_0
+        createFn = _create_2_0_0
     }
 
     return { progress, create: createFn }
@@ -404,7 +404,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
         } else {
-            items = await _getMemberList_1_1_0()
+            items = await _getMemberList_2_0_0()
         }
 
         setMembers((state) => ({
@@ -433,7 +433,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         return items
     }
 
-    const _getMemberList_1_1_0 = async () => {
+    const _getMemberList_2_0_0 = async () => {
         const gosh = dao.getGosh()
 
         const members = await dao.getMembers()
@@ -504,7 +504,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
     }
 
-    const _create_1_1_0 = async (options: {
+    const _create_2_0_0 = async (options: {
         members?: { username: string; allowance: number; comment: string }[]
     }) => {
         const clean = (options.members || []).filter(({ username }) => !!username)
@@ -516,7 +516,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     if (version === '1.0.0') {
         return _create_1_0_0
     }
-    return _create_1_1_0
+    return _create_2_0_0
 }
 
 function useDaoMemberDelete(dao: IGoshDaoAdapter) {

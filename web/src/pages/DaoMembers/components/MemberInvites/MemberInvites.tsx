@@ -8,8 +8,8 @@ import { Button } from '../../../../components/Form'
 import { supabase } from '../../../../helpers'
 import { EDaoInviteStatus } from '../../../../store/onboarding.types'
 import { TDaoInvite } from '../../DaoMembers'
-import { DaoMemberInvites_1_0_0 } from './1.0.0/MemberInvites'
-import { DaoMemberInvites_1_1_0 } from './1.1.0/MemberInvites'
+import DAO_MEMBER_INVITES_1_0_0 from './1.0.0/MemberInvites'
+import DAO_MEMBER_INVITES_2_0_0 from './2.0.0/MemberInvites'
 
 type TDaoMemberInvitesProps = {
     dao: IGoshDaoAdapter
@@ -63,7 +63,7 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                 {(() => {
                     if (version === '1.0.0') {
                         return (
-                            <DaoMemberInvites_1_0_0
+                            <DAO_MEMBER_INVITES_1_0_0
                                 dao={dao}
                                 invites={invites}
                                 setInvites={setInvites}
@@ -72,7 +72,7 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                         )
                     }
                     return (
-                        <DaoMemberInvites_1_1_0
+                        <DAO_MEMBER_INVITES_2_0_0
                             dao={dao}
                             invites={invites}
                             setInvites={setInvites}
