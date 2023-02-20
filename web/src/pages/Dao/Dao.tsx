@@ -1,5 +1,5 @@
 import { Link, useOutletContext } from 'react-router-dom'
-import { AppConfig, classNames, useSmvEventList } from 'react-gosh'
+import { classNames, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
 import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'

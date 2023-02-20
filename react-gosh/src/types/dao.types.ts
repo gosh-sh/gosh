@@ -121,12 +121,18 @@ type TTaskCreateParams = TEventCreateParams & {
         manager: { grant: number; lock: number }[]
     }
     tags?: string[]
+    cell?: boolean
 }
+
+type TTaskCreateResult = Promise<void | string>
 
 type TTaskDeleteParams = TEventCreateParams & {
     repository: string
     name: string
+    cell?: boolean
 }
+
+type TTaskDeleteResult = Promise<void | string>
 
 type TTaskReceiveBountyParams = {
     repository: string
@@ -137,62 +143,101 @@ type TTaskReceiveBountyParams = {
 type TDaoMemberCreateParams = TEventCreateParams & {
     usernames?: string[]
     members?: { username: string; allowance: number; comment: string }[]
+    cell?: boolean
 }
+
+type TDaoMemberCreateResult = Promise<void | string>
 
 type TDaoMemberDeleteParams = TEventCreateParams & {
     usernames: string[]
+    cell?: boolean
 }
+
+type TDaoMemberDeleteResult = Promise<void | string>
 
 type TDaoMemberAllowanceUpdateParams = TEventCreateParams & {
     members: { profile: TAddress; increase: boolean; amount: number }[]
+    cell?: boolean
 }
+
+type TDaoMemberAllowanceUpdateResult = Promise<void | string>
 
 type TDaoAskMembershipAllowanceParams = TEventCreateParams & {
     decision: boolean
+    cell?: boolean
 }
+
+type TDaoAskMembershipAllowanceResult = Promise<void | string>
 
 type TDaoUpgradeParams = TEventCreateParams & {
     version: string
     description?: string
+    cell?: boolean
 }
+
+type TDaoUpgradeResult = Promise<void | string>
 
 type TDaoVotingTokenAddParams = TEventCreateParams & {
     username: string
     amount: number
     alone?: boolean
+    cell?: boolean
 }
+
+type TDaoVotingTokenAddResult = Promise<void | string>
 
 type TDaoRegularTokenAddParams = TEventCreateParams & {
     username: string
     amount: number
     alone?: boolean
+    cell?: boolean
 }
+
+type TDaoRegularTokenAddResult = Promise<void | string>
 
 type TDaoMintTokenParams = TEventCreateParams & {
     amount: number
     alone?: boolean
+    cell?: boolean
 }
+
+type TDaoMintTokenResult = Promise<void | string>
 
 type TDaoMintDisableParams = TEventCreateParams & {
     alone?: boolean
+    cell?: boolean
 }
+
+type TDaoMintDisableResult = Promise<void | string>
 
 type TDaoTagCreateParams = TEventCreateParams & {
     tags: string[]
     alone?: boolean
+    cell?: boolean
 }
+
+type TDaoTagCreateResult = Promise<void | string>
 
 type TDaoTagDeleteParams = TEventCreateParams & {
     tags: string[]
+    cell?: boolean
 }
 
+type TDaoTagDeleteResult = Promise<void | string>
+
 type TDaoEventShowProgressParams = TEventCreateParams & {
-    show: boolean
+    decision: boolean
+    cell?: boolean
 }
+
+type TDaoEventShowProgressResult = Promise<void | string>
 
 type TDaoEventAllowDiscussionParams = TEventCreateParams & {
     allow: boolean
+    cell?: boolean
 }
+
+type TDaoEventAllowDiscussionResult = Promise<void | string>
 
 type TDaoEventSendReviewParams = {
     event: TAddress
@@ -230,21 +275,36 @@ export {
     TTaskDetails,
     TTaskListItem,
     TTaskCreateParams,
+    TTaskCreateResult,
     TTaskDeleteParams,
+    TTaskDeleteResult,
     TTaskReceiveBountyParams,
     TDaoMemberCreateParams,
+    TDaoMemberCreateResult,
     TDaoMemberDeleteParams,
+    TDaoMemberDeleteResult,
     TDaoMemberAllowanceUpdateParams,
+    TDaoMemberAllowanceUpdateResult,
     TDaoAskMembershipAllowanceParams,
+    TDaoAskMembershipAllowanceResult,
     TDaoUpgradeParams,
+    TDaoUpgradeResult,
     TDaoVotingTokenAddParams,
+    TDaoVotingTokenAddResult,
     TDaoRegularTokenAddParams,
+    TDaoRegularTokenAddResult,
     TDaoMintTokenParams,
+    TDaoMintTokenResult,
     TDaoMintDisableParams,
+    TDaoMintDisableResult,
     TDaoTagCreateParams,
+    TDaoTagCreateResult,
     TDaoTagDeleteParams,
+    TDaoTagDeleteResult,
     TDaoEventShowProgressParams,
+    TDaoEventShowProgressResult,
     TDaoEventAllowDiscussionParams,
+    TDaoEventAllowDiscussionResult,
     TDaoEventSendReviewParams,
     TTopic,
     TTopicCreateParams,

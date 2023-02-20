@@ -1,28 +1,26 @@
-import { SYSTEM_TAG, TSmvEvent } from 'react-gosh'
+import { SYSTEM_TAG } from 'react-gosh'
 
 type TTaskCreateEventProps = {
-    event: TSmvEvent
+    data: any
 }
 
 const TaskCreateEvent = (props: TTaskCreateEventProps) => {
-    const { event } = props
+    const { data } = props
 
     return (
         <div className="flex flex-col gap-y-1">
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Task name:</div>
-                <div>{event.data.taskname}</div>
+                <div>{data.taskname}</div>
             </div>
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Repository name:</div>
-                <div>{event.data.reponame}</div>
+                <div>{data.reponame}</div>
             </div>
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Tags:</div>
                 <div>
-                    {event.data.tag
-                        .filter((tag: string) => tag !== SYSTEM_TAG)
-                        .join(', ')}
+                    {data.tag.filter((tag: string) => tag !== SYSTEM_TAG).join(', ')}
                 </div>
             </div>
             <div className="mt-4 overflow-hidden overflow-x-scroll">
@@ -36,9 +34,9 @@ const TaskCreateEvent = (props: TTaskCreateEventProps) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {event.data.grant.assign.map((assign: any, index: number) => {
-                            const review = event.data.grant.review[index]
-                            const manager = event.data.grant.manager[index]
+                        {data.grant.assign.map((assign: any, index: number) => {
+                            const review = data.grant.review[index]
+                            const manager = data.grant.manager[index]
                             return (
                                 <tr key={index}>
                                     <td className="px-2">{assign.lock}</td>

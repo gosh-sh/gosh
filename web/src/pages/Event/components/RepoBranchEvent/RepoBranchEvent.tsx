@@ -1,12 +1,15 @@
-import { ESmvEventType, TSmvEvent } from 'react-gosh'
+import { ESmvEventType } from 'react-gosh'
 
 type TRepoBranchEventProps = {
-    event: TSmvEvent
+    type: {
+        kind: number
+        name: string
+    }
+    data: any
 }
 
 const RepoBranchEvent = (props: TRepoBranchEventProps) => {
-    const { event } = props
-    const { data, type } = event
+    const { data, type } = props
 
     return (
         <div>

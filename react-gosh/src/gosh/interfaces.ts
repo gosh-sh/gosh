@@ -56,6 +56,25 @@ import {
     TTopic,
     TTopicCreateParams,
     TTopicMessageCreateParams,
+    TRepositoryChangeBranchProtectionResult,
+    TDaoMemberCreateResult,
+    TDaoMemberDeleteResult,
+    TDaoUpgradeResult,
+    TTaskCreateResult,
+    TTaskDeleteResult,
+    TDaoVotingTokenAddResult,
+    TDaoRegularTokenAddResult,
+    TDaoMintTokenResult,
+    TDaoMintDisableResult,
+    TDaoTagCreateResult,
+    TDaoTagDeleteResult,
+    TDaoMemberAllowanceUpdateResult,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteResult,
+    TRepositoryUpdateDescriptionResult,
+    TDaoEventAllowDiscussionResult,
+    TDaoEventShowProgressResult,
+    TDaoAskMembershipAllowanceResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -144,33 +163,43 @@ interface IGoshDaoAdapter {
 
     createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
 
-    createMember(params: TDaoMemberCreateParams): Promise<void>
-    deleteMember(params: TDaoMemberDeleteParams): Promise<void>
-    updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void>
-    updateAskMembershipAllowance(params: TDaoAskMembershipAllowanceParams): Promise<void>
+    createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult>
+    deleteMember(params: TDaoMemberDeleteParams): Promise<TDaoMemberDeleteResult>
+    updateMemberAllowance(
+        params: TDaoMemberAllowanceUpdateParams,
+    ): Promise<TDaoMemberAllowanceUpdateResult>
+    updateAskMembershipAllowance(
+        params: TDaoAskMembershipAllowanceParams,
+    ): Promise<TDaoAskMembershipAllowanceResult>
 
-    upgrade(params: TDaoUpgradeParams): Promise<void>
+    upgrade(params: TDaoUpgradeParams): Promise<TDaoUpgradeResult>
     setRepositoriesUpgraded(): Promise<void>
 
-    mint(params: TDaoMintTokenParams): Promise<void>
-    disableMint(params: TDaoMintDisableParams): Promise<void>
-    addVotingTokens(params: TDaoVotingTokenAddParams): Promise<void>
-    addRegularTokens(params: TDaoRegularTokenAddParams): Promise<void>
+    mint(params: TDaoMintTokenParams): Promise<TDaoMintTokenResult>
+    disableMint(params: TDaoMintDisableParams): Promise<TDaoMintDisableResult>
+    addVotingTokens(params: TDaoVotingTokenAddParams): Promise<TDaoVotingTokenAddResult>
+    addRegularTokens(
+        params: TDaoRegularTokenAddParams,
+    ): Promise<TDaoRegularTokenAddResult>
     sendInternal2Internal(username: string, amount: number): Promise<void>
     send2DaoReserve(amount: number): Promise<void>
 
-    createTag(params: TDaoTagCreateParams): Promise<void>
-    deleteTag(params: TDaoTagDeleteParams): Promise<void>
+    createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
+    deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
 
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
 
-    createTask(params: TTaskCreateParams): Promise<void>
+    createTask(params: TTaskCreateParams): Promise<TTaskCreateResult>
     receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
-    deleteTask(params: TTaskDeleteParams): Promise<void>
+    deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult>
 
     sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
-    updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void>
-    updateEventAllowDiscussion(params: TDaoEventAllowDiscussionParams): Promise<void>
+    updateEventShowProgress(
+        params: TDaoEventShowProgressParams,
+    ): Promise<TDaoEventShowProgressResult>
+    updateEventAllowDiscussion(
+        params: TDaoEventAllowDiscussionParams,
+    ): Promise<TDaoEventAllowDiscussionResult>
 
     createTopic(params: TTopicCreateParams): Promise<void>
     createTopicMessage(params: TTopicMessageCreateParams): Promise<void>
@@ -235,8 +264,12 @@ interface IGoshRepositoryAdapter {
         callback?: ITBranchOperateCallback,
     ): Promise<void>
     deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void>
-    lockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void>
-    unlockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void>
+    lockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult>
+    unlockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult>
 
     setHead(branch: string): Promise<void>
     push(
@@ -264,10 +297,12 @@ interface IGoshRepositoryAdapter {
         content: string,
     ): Promise<void>
 
-    createTag(params: TRepositoryTagCreateParams): Promise<void>
-    deleteTag(params: TRepositoryTagDeleteParams): Promise<void>
+    createTag(params: TRepositoryTagCreateParams): Promise<TRepositoryTagCreateResult>
+    deleteTag(params: TRepositoryTagDeleteParams): Promise<TRepositoryTagDeleteResult>
 
-    updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void>
+    updateDescription(
+        params: TRepositoryUpdateDescriptionParams,
+    ): Promise<TRepositoryUpdateDescriptionResult>
 }
 
 interface IGoshSmvAdapter {

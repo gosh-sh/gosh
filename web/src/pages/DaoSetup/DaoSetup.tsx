@@ -52,7 +52,7 @@ const DaoSetupPage = () => {
     const onEventShowProgress = async (values: TBooleanFormValues) => {
         try {
             const { value, comment } = values
-            await daoSettingsManage.updateEventShowProgress({ show: value, comment })
+            await daoSettingsManage.updateEventShowProgress({ decision: !value, comment })
             navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)

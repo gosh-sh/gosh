@@ -29,6 +29,7 @@ import {
     RepoTagAddEvent,
     RepoTagRemoveEvent,
     RepoDescriptionEvent,
+    MultiEvent,
 } from './components'
 import ReactTooltip from 'react-tooltip'
 
@@ -104,29 +105,32 @@ const EventPage = () => {
                     <div className="border border-gray-e6edff rounded-xl px-4 py-5">
                         <h3 className="mb-3 text-xl font-medium">Event details</h3>
                         {event.type.kind === ESmvEventType.DAO_MEMBER_ADD && (
-                            <MemberAddEvent version={dao.details.version} event={event} />
+                            <MemberAddEvent
+                                version={dao.details.version}
+                                data={event.data}
+                            />
                         )}
                         {event.type.kind === ESmvEventType.DAO_MEMBER_DELETE && (
-                            <MemberRemoveEvent event={event} />
+                            <MemberRemoveEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_ALLOWANCE_CHANGE && (
-                            <MemberAllowanceEvent event={event} />
+                            <MemberAllowanceEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_MINT && (
-                            <DaoMintReserveEvent event={event} />
+                            <DaoMintReserveEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_UPGRADE && (
-                            <DaoUpgradeEvent event={event} />
+                            <DaoUpgradeEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_MINT_DISABLE && (
-                            <DaoMintDisableEvent event={event} />
+                            <DaoMintDisableEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.REPO_CREATE && (
-                            <RepoCreateEvent event={event} />
+                            <RepoCreateEvent data={event.data} />
                         )}
                         {(event.type.kind === ESmvEventType.BRANCH_LOCK ||
                             event.type.kind === ESmvEventType.BRANCH_UNLOCK) && (
-                            <RepoBranchEvent event={event} />
+                            <RepoBranchEvent type={event.type} data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.PULL_REQUEST && (
                             <RepoPullRequestEvent
@@ -135,41 +139,44 @@ const EventPage = () => {
                             />
                         )}
                         {event.type.kind === ESmvEventType.TASK_CREATE && (
-                            <TaskCreateEvent event={event} />
+                            <TaskCreateEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.TASK_DELETE && (
-                            <TaskDeleteEvent event={event} />
+                            <TaskDeleteEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_EVENT_HIDE_PROGRESS && (
-                            <DaoEventShowProgressEvent event={event} />
+                            <DaoEventShowProgressEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION && (
-                            <DaoEventAllowDiscussionEvent event={event} />
+                            <DaoEventAllowDiscussionEvent data={event.data} />
                         )}
                         {event.type.kind ===
                             ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
-                            <DaoAskMembershipAllowanceEvent event={event} />
+                            <DaoAskMembershipAllowanceEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_VOTING_ADD && (
-                            <DaoTokenVotingAddEvent event={event} />
+                            <DaoTokenVotingAddEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_REGULAR_ADD && (
-                            <DaoTokenRegularAddEvent event={event} />
+                            <DaoTokenRegularAddEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TAG_ADD && (
-                            <DaoTagAddEvent event={event} />
+                            <DaoTagAddEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TAG_REMOVE && (
-                            <DaoTagRemoveEvent event={event} />
+                            <DaoTagRemoveEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.REPO_TAG_ADD && (
-                            <RepoTagAddEvent event={event} />
+                            <RepoTagAddEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.REPO_TAG_REMOVE && (
-                            <RepoTagRemoveEvent event={event} />
+                            <RepoTagRemoveEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.REPO_UPDATE_DESCRIPTION && (
-                            <RepoDescriptionEvent event={event} />
+                            <RepoDescriptionEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.MULTI_PROPOSAL && (
+                            <MultiEvent version={dao.details.version} event={event} />
                         )}
                     </div>
                 </div>

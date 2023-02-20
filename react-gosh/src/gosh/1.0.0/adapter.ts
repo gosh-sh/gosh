@@ -54,6 +54,25 @@ import {
     TTopic,
     TTopicCreateParams,
     TTopicMessageCreateParams,
+    TRepositoryChangeBranchProtectionResult,
+    TDaoMemberCreateResult,
+    TDaoMemberDeleteResult,
+    TDaoUpgradeResult,
+    TTaskCreateResult,
+    TTaskDeleteResult,
+    TDaoVotingTokenAddResult,
+    TDaoRegularTokenAddResult,
+    TDaoMintTokenResult,
+    TDaoMintDisableResult,
+    TDaoTagCreateResult,
+    TDaoTagDeleteResult,
+    TDaoMemberAllowanceUpdateResult,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteResult,
+    TRepositoryUpdateDescriptionResult,
+    TDaoEventAllowDiscussionResult,
+    TDaoEventShowProgressResult,
+    TDaoAskMembershipAllowanceResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -555,7 +574,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return repo
     }
 
-    async createMember(params: TDaoMemberCreateParams): Promise<void> {
+    async createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult> {
         const { usernames = [] } = params
 
         if (!usernames.length) {
@@ -574,7 +593,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async deleteMember(params: TDaoMemberDeleteParams): Promise<void> {
+    async deleteMember(params: TDaoMemberDeleteParams): Promise<TDaoMemberDeleteResult> {
         const { usernames } = params
 
         if (!this.wallet) {
@@ -598,17 +617,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
-    async updateMemberAllowance(params: TDaoMemberAllowanceUpdateParams): Promise<void> {
+    async updateMemberAllowance(
+        params: TDaoMemberAllowanceUpdateParams,
+    ): Promise<TDaoMemberAllowanceUpdateResult> {
         throw new Error('Method is unavailable in current version')
     }
 
     async updateAskMembershipAllowance(
         params: TDaoAskMembershipAllowanceParams,
-    ): Promise<void> {
+    ): Promise<TDaoAskMembershipAllowanceResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async upgrade(params: TDaoUpgradeParams): Promise<void> {
+    async upgrade(params: TDaoUpgradeParams): Promise<TDaoUpgradeResult> {
         const { version, description } = params
 
         if (!this.wallet) {
@@ -628,19 +649,23 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async mint(params: TDaoMintTokenParams): Promise<void> {
+    async mint(params: TDaoMintTokenParams): Promise<TDaoMintTokenResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async disableMint(params: TDaoMintDisableParams): Promise<void> {
+    async disableMint(params: TDaoMintDisableParams): Promise<TDaoMintDisableResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async addVotingTokens(params: TDaoVotingTokenAddParams): Promise<void> {
+    async addVotingTokens(
+        params: TDaoVotingTokenAddParams,
+    ): Promise<TDaoVotingTokenAddResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async addRegularTokens(params: TDaoRegularTokenAddParams): Promise<void> {
+    async addRegularTokens(
+        params: TDaoRegularTokenAddParams,
+    ): Promise<TDaoRegularTokenAddResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -652,11 +677,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createTag(params: TDaoTagCreateParams): Promise<void> {
+    async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTag(params: TDaoTagDeleteParams): Promise<void> {
+    async deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -664,7 +689,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createTask(params: TTaskCreateParams): Promise<void> {
+    async createTask(params: TTaskCreateParams): Promise<TTaskCreateResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -672,7 +697,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTask(params: TTaskDeleteParams): Promise<void> {
+    async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -680,13 +705,15 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async updateEventShowProgress(params: TDaoEventShowProgressParams): Promise<void> {
+    async updateEventShowProgress(
+        params: TDaoEventShowProgressParams,
+    ): Promise<TDaoEventShowProgressResult> {
         throw new Error('Method is unavailable in current version')
     }
 
     async updateEventAllowDiscussion(
         params: TDaoEventAllowDiscussionParams,
-    ): Promise<void> {
+    ): Promise<TDaoEventAllowDiscussionResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -1379,38 +1406,42 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         cb({ completed: true })
     }
 
-    async lockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
-        const { name } = params
+    async lockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult> {
+        const { repository, branch } = params
 
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        if (await this._isBranchProtected(name)) {
+        if (await this._isBranchProtected(branch)) {
             throw new GoshError('Branch is already protected')
         }
 
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
-            repoName: await this.getName(),
-            branchName: name,
+            repoName: repository,
+            branchName: branch,
             num_clients: smvClientsCount,
         })
     }
 
-    async unlockBranch(params: TRepositoryChangeBranchProtectionParams): Promise<void> {
-        const { name } = params
+    async unlockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult> {
+        const { repository, branch } = params
 
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        if (!(await this._isBranchProtected(name))) {
+        if (!(await this._isBranchProtected(branch))) {
             throw new GoshError('Branch is not protected')
         }
 
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
-            repoName: await this.getName(),
-            branchName: name,
+            repoName: repository,
+            branchName: branch,
             num_clients: smvClientsCount,
         })
     }
@@ -1583,15 +1614,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
     }
 
-    async createTag(params: TRepositoryTagCreateParams): Promise<void> {
+    async createTag(
+        params: TRepositoryTagCreateParams,
+    ): Promise<TRepositoryTagCreateResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async deleteTag(params: TRepositoryTagDeleteParams): Promise<void> {
+    async deleteTag(
+        params: TRepositoryTagDeleteParams,
+    ): Promise<TRepositoryTagDeleteResult> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async updateDescription(params: TRepositoryUpdateDescriptionParams): Promise<void> {
+    async updateDescription(
+        params: TRepositoryUpdateDescriptionParams,
+    ): Promise<TRepositoryUpdateDescriptionResult> {
         throw new Error('Method is unavailable in current version')
     }
 

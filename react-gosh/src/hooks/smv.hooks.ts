@@ -233,10 +233,17 @@ function useSmvEventList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
             }),
         }))
 
-        const details = {
-            status: await item.adapter.getEventStatus({ address: item.address }),
-            time: await item.adapter.getEventTime({ address: item.address }),
-            votes: await item.adapter.getEventVotes({ address: item.address }),
+        let details = {}
+        if (dao.getVersion() === '1.0.0') {
+            details = {
+                status: await item.adapter.getEventStatus({
+                    address: item.address,
+                }),
+                time: await item.adapter.getEventTime({ address: item.address }),
+                votes: await item.adapter.getEventVotes({ address: item.address }),
+            }
+        } else {
+            details = await item.adapter.getEvent(item.address, false)
         }
         setEvents((state) => ({
             ...state,
@@ -292,7 +299,9 @@ function useSmvEventList(dao: IGoshDaoAdapter, params: { perPage?: number }) {
 }
 
 function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
-    const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
+    const [adapter, setAdapter] = useState<
+        { version: string; instance: IGoshSmvAdapter } | undefined
+    >()
     const [event, setEvent] = useState<{ isFetching: boolean; item?: TSmvEvent | null }>({
         isFetching: false,
     })
@@ -300,7 +309,7 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
     useEffect(() => {
         const _getAdapter = async () => {
             const instance = await dao.getSmv()
-            setAdapter(instance)
+            setAdapter({ version: dao.getVersion(), instance })
         }
 
         _getAdapter()
@@ -313,7 +322,7 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
             }
 
             setEvent((state) => ({ ...state, isFetching: true }))
-            const data = (await adapter.getEvent(address, true)) as TSmvEvent
+            const data = (await adapter.instance.getEvent(address, true)) as TSmvEvent
             setEvent((state) => ({ ...state, item: data, isFetching: false }))
         }
 
@@ -324,19 +333,28 @@ function useSmvEvent(dao: IGoshDaoAdapter, address: TAddress) {
             if (adapter && !_intervalLock) {
                 _intervalLock = true
 
-                const status = await adapter.getEventStatus({ address })
-                const time = await adapter.getEventTime({ address })
-                const votes = await adapter.getEventVotes({ address })
-                const reviewers = await adapter.getEventReviewers({ address })
+                let details: any = {
+                    reviewers: await adapter.instance.getEventReviewers({ address }),
+                }
+                if (adapter.version === '1.0.0') {
+                    details = {
+                        ...details,
+                        status: await adapter.instance.getEventStatus({ address }),
+                        time: await adapter.instance.getEventTime({ address }),
+                        votes: await adapter.instance.getEventVotes({ address }),
+                    }
+                } else {
+                    const _details = await adapter.instance.getEvent(address, false)
+                    details = { ...details, ..._details }
+                }
+
                 setEvent((state) => ({
                     ...state,
-                    item: state.item
-                        ? { ...state.item, status, time, votes, reviewers }
-                        : state.item,
+                    item: state.item ? { ...state.item, ...details } : state.item,
                 }))
 
                 _intervalLock = false
-                if (status.completed) {
+                if (details.status.completed) {
                     clearInterval(interval)
                 }
             }

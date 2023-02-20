@@ -577,7 +577,7 @@ function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
 
 function useDaoSettingsManage(dao: IGoshDaoAdapter) {
     const updateEventShowProgress = async (params: {
-        show: boolean
+        decision: boolean
         comment?: string
     }) => {
         await dao.updateEventShowProgress(params)

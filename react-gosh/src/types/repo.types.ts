@@ -143,20 +143,36 @@ type TRepositoryCreateParams = TEventCreateParams & {
 type TRepositoryCreateResult = IGoshRepositoryAdapter | string
 
 type TRepositoryUpdateDescriptionParams = TEventCreateParams & {
+    repository: string
     description: string
+    cell?: boolean
 }
+
+type TRepositoryUpdateDescriptionResult = Promise<void | string>
 
 type TRepositoryChangeBranchProtectionParams = TEventCreateParams & {
-    name: string
+    repository: string
+    branch: string
+    cell?: boolean
 }
+
+type TRepositoryChangeBranchProtectionResult = Promise<void | string>
 
 type TRepositoryTagCreateParams = TEventCreateParams & {
+    repository: string
     tags: string[]
+    cell?: boolean
 }
 
+type TRepositoryTagCreateResult = Promise<void | string>
+
 type TRepositoryTagDeleteParams = TEventCreateParams & {
+    repository: string
     tags: string[]
+    cell?: boolean
 }
+
+type TRepositoryTagDeleteResult = Promise<void | string>
 
 interface IPushCallback {
     (params: TPushProgress): void
@@ -185,9 +201,13 @@ export {
     TRepositoryCreateParams,
     TRepositoryCreateResult,
     TRepositoryUpdateDescriptionParams,
+    TRepositoryUpdateDescriptionResult,
     TRepositoryChangeBranchProtectionParams,
+    TRepositoryChangeBranchProtectionResult,
     TRepositoryTagCreateParams,
+    TRepositoryTagCreateResult,
     TRepositoryTagDeleteParams,
+    TRepositoryTagDeleteResult,
     IPushCallback,
     ITBranchOperateCallback,
 }

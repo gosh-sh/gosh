@@ -1,6 +1,7 @@
 import { Form, Formik } from 'formik'
 import { useReducer } from 'react'
 import {
+    ESmvEventType,
     executeByChunk,
     getRepositoryAccounts,
     GoshAdapterFactory,
@@ -106,7 +107,7 @@ const ReposUpgradePage = () => {
                     async (chunk) => {
                         await dao.adapter.createMultiProposal({
                             proposals: chunk.map((p) => ({
-                                fn: 'CREATE_REPOSITORY',
+                                type: ESmvEventType.REPO_CREATE,
                                 params: p,
                             })),
                         })
