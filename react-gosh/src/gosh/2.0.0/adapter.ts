@@ -2003,7 +2003,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             useCachedBoc: true,
         })
         const codeHash = await this.client.boc.get_boc_hash({ boc: code.value0 })
-        const accounts: string[] = await getAllAccounts({
+        const accounts = await getAllAccounts({
             filters: [`code_hash: {eq:"${codeHash.hash}"}`],
         })
 
@@ -2011,8 +2011,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await executeByChunk<TAddress, TTag>(
             accounts,
             MAX_PARALLEL_READ,
-            async (address) => {
-                return await this._getCommitTag(address)
+            async (item: any) => {
+                return await this._getCommitTag(item.id)
             },
         )
     }
