@@ -13,6 +13,8 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use anyhow::format_err;
+
 mod restore_blobs;
 
 impl<Blockchain> GitHelper<Blockchain>
@@ -176,7 +178,8 @@ where
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await?;
+                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await
+                        .map_err(|e| format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", id.to_string()))?;
                 tracing::debug!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
@@ -213,7 +216,7 @@ where
             break;
         }
         if next_commit_of_prev_version.is_some() {
-            return Err(anyhow::format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
+            return Err(format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
         }
 
         Ok(())

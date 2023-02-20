@@ -11,12 +11,16 @@ echo "SYSTEM_CONTRACT balance"
 gosh-cli account $SYSTEM_CONTRACT_ADDR | grep balance
 echo "SYSTEM_CONTRACT_1 balance"
 gosh-cli account $SYSTEM_CONTRACT_ADDR_1 | grep balance
+echo "SYSTEM_CONTRACT_2 balance"
+gosh-cli account $SYSTEM_CONTRACT_ADDR_2 | grep balance
 
 gosh-cli callx --addr $SE_GIVER_ADDRESS --abi $SE_GIVER_ABI --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $SYSTEM_CONTRACT_ADDR
 gosh-cli callx --addr $SE_GIVER_ADDRESS --abi $SE_GIVER_ABI --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $SYSTEM_CONTRACT_ADDR_1
-
+gosh-cli callx --addr $SE_GIVER_ADDRESS --abi $SE_GIVER_ABI --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $SYSTEM_CONTRACT_ADDR_2
 
 echo "SYSTEM_CONTRACT balance"
 gosh-cli account $SYSTEM_CONTRACT_ADDR | grep balance
 echo "SYSTEM_CONTRACT_1 balance"
 gosh-cli account $SYSTEM_CONTRACT_ADDR_1 | grep balance
+echo "SYSTEM_CONTRACT_2 balance"
+gosh-cli account $SYSTEM_CONTRACT_ADDR_2 | grep balance

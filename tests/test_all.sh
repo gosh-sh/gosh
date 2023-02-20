@@ -38,9 +38,9 @@ fi
 ./upgrade_tests/02_3-push_after_upgrade_with_several_commits.test.sh
 ./upgrade_tests/03-branch_from_parent.test.sh ignore
 ./upgrade_tests/04-branch_from_grandparent.test.sh ignore
-./upgrade_tests/05_1-merge_branch_from_parent.test.sh ignore
-./upgrade_tests/06_1-merge_branch_from_grandparent.test.sh ignore
-./upgrade_tests/07-branch_from_unrelated_commit.test.sh ignore
+./upgrade_tests/05-merge_branch_from_parent.test.sh ignore
+./upgrade_tests/06-merge_branch_from_grandparent.test.sh ignore
+./upgrade_tests/07-branch_from_unrelated_commit.test.sh
 ./upgrade_tests/08-tagging_after_upgrade.test.sh ignore
 ./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
 ./upgrade_tests/10-tagless_after_upgrade.test.sh ignore

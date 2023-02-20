@@ -10,11 +10,15 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo05a
-DAO_NAME="dao-upgrade-test05a_$(date +%s)"
+REPO_NAME=upgrade_repo05
+DAO_NAME="dao-upgrade-test05_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo05_v2
+REPO_PATH_CHECK=upgrade_repo05_v2_check
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
+[ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
+[ -d $REPO_PATH_CHECK ] && rm -rf $REPO_PATH_CHECK
 
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
@@ -37,7 +41,7 @@ git checkout -b parent_branch
 
 echo parent > 1.txt
 git add 1.txt
-git commit -m test
+git commit -m testbranch
 git push --set-upstream origin parent_branch
 
 echo "***** Switch back to main *****"
@@ -57,9 +61,13 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
-cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+echo "NEW_LINK=$NEW_LINK"
+
+git clone $NEW_LINK $NEW_REPO_PATH
+cd $NEW_REPO_PATH
+
+echo "***** push to the new repo *****"
 echo new_ver > 2.txt
 git add 2.txt
 git commit -m test2
@@ -71,9 +79,16 @@ if [ $cur_ver != "main" ]; then
   exit 1
 fi
 echo "GOOD CONTENT"
+#exit 0
+
+git checkout -b parent_branch origin/parent_branch
+git checkout main
 
 echo "**** Merge parent branch *****"
-git merge parent_branch
+git merge parent_branch -m merge
+git push
+
+git log
 
 cur_ver=$(cat 1.txt)
 if [ $cur_ver != "parent" ]; then
@@ -83,5 +98,7 @@ fi
 echo "GOOD CONTENT"
 
 cd ..
+
+GOSH_TRACE=5 git clone $NEW_LINK $REPO_PATH_CHECK
 
 echo "TEST SUCCEEDED"

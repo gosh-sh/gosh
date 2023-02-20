@@ -118,7 +118,6 @@ async fn main() -> anyhow::Result<()> {
         .spawn()?;
 
     let mut lines = BufReader::new(io::stdin()).lines();
-    let mut stdout = io::stdout();
     let mut dispatcher_cmd = None;
     tracing::trace!("Start dispatcher message interchange");
     while let Some(input_line) = lines.next_line().await? {
@@ -144,11 +143,11 @@ async fn main() -> anyhow::Result<()> {
         }
         tracing::trace!("Output: {output:?}");
         for line in output {
-            stdout
+            io::stdout()
                 .write_all(format!("{line}\n").as_bytes())
                 .await
                 .unwrap();
-            stdout.flush().await?;
+            io::stdout().flush().await?;
         }
         if let Some(line) = dispatcher_cmd {
             dispatcher_cmd = None;
@@ -161,7 +160,7 @@ async fn main() -> anyhow::Result<()> {
             tracing::trace!("Loop finished with: {code:?}");
             if let Some(code) = code.code() {
                 if code != 0 {
-                    return Err(format_err!("Error: {code}"));
+                    return Err(format_err!("Remote status error: {code}"));
                 }
             }
             break;
@@ -256,13 +255,13 @@ async fn call_helper_after_fail(
     args: &Vec<String>,
     system_contracts: &HashMap<String, String>,
 ) -> anyhow::Result<Child> {
-    // callback string = dispatcher {"value0":{"addr":"0:31e344f46732761e76f730c9d46722f070a8473e1e97aa550e53571e640e33b7","version":"1.0.0"}} fetch eeb077143f2d278dcf1628a5cee69c4aa52d62af refs/heads/main
+    // callback string = dispatcher 1.0.0 fetch eeb077143f2d278dcf1628a5cee69c4aa52d62af refs/heads/main
     tracing::trace!("call_helper_after_fail {remote_callback}");
     let mut args = args.to_owned();
     let mut parser = remote_callback.split(' ');
     // skip 1 part
     parser.next();
-    let previous = parser.next().unwrap();
+    let version = parser.next().unwrap().to_string();
     let cmd = format!(
         "{} {} {}",
         parser.next().unwrap(),
@@ -270,20 +269,6 @@ async fn call_helper_after_fail(
         parser.next().unwrap()
     );
 
-    tracing::trace!("previous repo: {previous}");
-    let version = serde_json::Value::from_str(previous)?
-        .as_object()
-        .unwrap()
-        .values()
-        .next()
-        .unwrap()
-        .as_object()
-        .unwrap()
-        .get("version")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .to_owned();
     tracing::trace!("version: {version}");
     let mut proper_helper = None;
     for (helper, helper_version) in existing_to_supported_map {
