@@ -535,7 +535,7 @@ function useCommitList(
             }
 
             const commit = await _getCommit(prev)
-            const { name, initupgrade, parents, versionPrev } = commit
+            const { name, initupgrade, parents } = commit
             if (name !== ZERO_COMMIT && !initupgrade) {
                 list.push(commit)
             }
@@ -546,7 +546,7 @@ function useCommitList(
 
             const parent = await _getCommit({
                 address: parents[0].address,
-                version: versionPrev,
+                version: parents[0].version,
             })
             prev =
                 parent.name !== ZERO_COMMIT

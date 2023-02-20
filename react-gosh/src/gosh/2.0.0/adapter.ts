@@ -2498,7 +2498,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const check = await this.getBranch(commit.branch)
             return check.commit.address !== commit.address
         })
-        if (!wait) throw new GoshError('Push upgrade timeout reached')
+        if (!wait) {
+            throw new GoshError('Push upgrade timeout reached')
+        }
     }
 
     async deployContentSignature(
