@@ -16,7 +16,7 @@ echo "export TEST_VERSION1=$TEST_VERSION1" >> env.env
 echo "export TEST_VERSION2=$TEST_VERSION2" >> env.env
 
 export NETWORK="${NETWORK:-http://192.168.31.227}"
-SE_GIVER_ADDRESS="0:b5e9240fc2d2f1ff8cbb1d1dee7fb7cae155e5f6320e585fcc685698994a19a5"
+SE_GIVER_ADDRESS="0:96137b99dcd65afce5a54a48dac83c0fd276432abbe3ba7f1bfb0fb795e69025"
 SE_GIVER_ABI="$TESTS_PATH/node_se_scripts/local_giver.abi.json"
 SE_GIVER_KEYS="$TESTS_PATH/node_se_scripts/local_giver.keys.json"
 GIVER_VALUE=20000000000000000

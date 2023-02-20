@@ -2,7 +2,7 @@ if [ -e env.env ]; then
     . ./env.env
 fi
 
-SE_GIVER_ADDRESS="0:b5e9240fc2d2f1ff8cbb1d1dee7fb7cae155e5f6320e585fcc685698994a19a5"
+SE_GIVER_ADDRESS="0:96137b99dcd65afce5a54a48dac83c0fd276432abbe3ba7f1bfb0fb795e69025"
 SE_GIVER_ABI="node_se_scripts/local_giver.abi.json"
 SE_GIVER_KEYS="node_se_scripts/local_giver.keys.json"
 GIVER_VALUE=20000000000000000
