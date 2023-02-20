@@ -969,7 +969,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents,
+            parents: parents.map((address: string) => ({
+                address,
+                version: commit.version,
+            })),
             version: commit.version,
             versionPrev: versionPrev ?? commit.version,
             initupgrade,
@@ -982,7 +985,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${branch}/${treepath}`
@@ -1059,7 +1062,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get blob state at parent commit, get diffs and apply
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         let previous: string | Buffer
         let current: string | Buffer
@@ -1176,7 +1179,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [object.address],
+                    parents: [{ address: object.address, version: object.version }],
                 },
                 tree: {},
                 blobs: [],
@@ -1187,7 +1190,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { tree, items } = await this.getTree(object)
         const blobs = await this._getTreeBlobs(items, object.branch, commit)
         return {
-            commit: { ...object, parents: [object.address] },
+            commit: {
+                ...object,
+                parents: [{ address: object.address, version: object.version }],
+            },
             tree,
             blobs,
         }
@@ -1573,7 +1579,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit.branch,
             commit.name,
             commit.content,
-            commit.parents,
+            commit.parents.map((item) => item.address),
             commit.tree,
             true,
         )

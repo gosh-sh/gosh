@@ -191,37 +191,38 @@ function useRepo(dao: string, repo: string) {
         _getRepo()
     }, [dao, repo])
 
-    useEffect(() => {
-        const _getIncomingCommits = async () => {
-            if (!repository.adapter) return
+    // TODO: Fix this
+    // useEffect(() => {
+    //     const _getIncomingCommits = async () => {
+    //         if (!repository.adapter) return
 
-            const incoming = await repository.adapter.getIncomingCommits()
-            setRepository((state) => {
-                const { details } = state
-                if (!details) return state
-                return {
-                    ...state,
-                    details: { ...details, commitsIn: incoming },
-                }
-            })
-        }
+    //         const incoming = await repository.adapter.getIncomingCommits()
+    //         setRepository((state) => {
+    //             const { details } = state
+    //             if (!details) return state
+    //             return {
+    //                 ...state,
+    //                 details: { ...details, commitsIn: incoming },
+    //             }
+    //         })
+    //     }
 
-        _getIncomingCommits()
-        repository.adapter?.subscribeIncomingCommits((incoming) => {
-            setRepository((state) => {
-                const { details } = state
-                if (!details) return state
-                return {
-                    ...state,
-                    details: { ...details, commitsIn: incoming },
-                }
-            })
-        })
+    //     _getIncomingCommits()
+    //     repository.adapter?.subscribeIncomingCommits((incoming) => {
+    //         setRepository((state) => {
+    //             const { details } = state
+    //             if (!details) return state
+    //             return {
+    //                 ...state,
+    //                 details: { ...details, commitsIn: incoming },
+    //             }
+    //         })
+    //     })
 
-        return () => {
-            repository.adapter?.unsubscribe()
-        }
-    }, [repository.adapter])
+    //     return () => {
+    //         repository.adapter?.unsubscribe()
+    //     }
+    // }, [repository.adapter])
 
     return {
         isFetching,
@@ -282,15 +283,21 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
     const branch = useRecoilValue(branchSelector(current))
 
     const updateBranches = useCallback(async () => {
-        if (!repo) return
+        if (!repo) {
+            return
+        }
 
         const branches = await repo.getBranches()
-        if (branches) setBranches(branches)
+        if (branches) {
+            setBranches(branches)
+        }
     }, [repo, setBranches])
 
     const updateBranch = useCallback(
         async (name: string) => {
-            if (!repo) return
+            if (!repo) {
+                return
+            }
 
             console.debug('Update branch', name)
             const branch = await repo.getBranch(name)
@@ -523,23 +530,30 @@ function useCommitList(
         const list: TCommit[] = []
         let count = 0
         while (count < perPage) {
-            if (!prev) break
+            if (!prev) {
+                break
+            }
 
             const commit = await _getCommit(prev)
             const { name, initupgrade, parents, versionPrev } = commit
-            if (name !== ZERO_COMMIT && !initupgrade) list.push(commit)
+            if (name !== ZERO_COMMIT && !initupgrade) {
+                list.push(commit)
+            }
             if (!parents.length) {
                 prev = undefined
                 break
             }
 
-            const parent = await _getCommit({ address: parents[0], version: versionPrev })
+            const parent = await _getCommit({
+                address: parents[0].address,
+                version: versionPrev,
+            })
             prev =
                 parent.name !== ZERO_COMMIT
                     ? { address: parent.address, version: parent.version }
                     : undefined
             count++
-            await sleep(300)
+            await sleep(150)
         }
 
         setCommits((curr) => ({
@@ -566,7 +580,9 @@ function useCommitList(
 
     useEffect(() => {
         const _getCommits = async () => {
-            if (!isBranchUpdated) return
+            if (!isBranchUpdated) {
+                return
+            }
             if (branchData) {
                 const { address, versionPrev } = branchData.commit
                 _getCommitsPage({ address, version: versionPrev })

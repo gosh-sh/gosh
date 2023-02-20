@@ -139,6 +139,7 @@ import { GoshSmvClient } from './goshsmvclient'
 import { GoshTask } from './goshtask'
 import { GoshHelperTag } from './goshhelpertag'
 import { GoshTopic } from './goshtopic'
+import { GoshAdapterFactory } from '../factories'
 
 class GoshAdapter_2_0_0 implements IGoshAdapter {
     private static instance: GoshAdapter_2_0_0
@@ -1775,7 +1776,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commitData.forEach((item) => {
             const keys = ['tree', 'author', 'committer']
             keys.forEach((key) => {
-                if (item.search(key) >= 0) parsed[key] = item.replace(`${key} `, '')
+                if (item.search(key) >= 0) {
+                    parsed[key] = item.replace(`${key} `, '')
+                }
             })
         })
 
@@ -1789,7 +1792,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents,
+            parents: parents.map((item: any) => ({
+                address: item.addr,
+                version: item.version,
+            })),
             version: commit.version,
             versionPrev: versionPrev ?? commit.version,
             initupgrade,
@@ -1802,7 +1808,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${branch}/${treepath}`
@@ -1879,7 +1885,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get blob state at parent commit, get diffs and apply
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         let previous: string | Buffer
         let current: string | Buffer
@@ -1940,10 +1946,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getBranch(name: string): Promise<TBranch> {
         const { branchname, commitaddr, commitversion } = await this._getBranch(name)
+
+        // TODO: Make better?
+        let adapter: IGoshRepositoryAdapter = this
+        if (commitversion !== this.repo.version) {
+            const gosh = GoshAdapterFactory.create(commitversion)
+            const dao = await (await this._getDao()).getName()
+            const name = await this.getName()
+            adapter = await gosh.getRepository({ path: `${dao}/${name}` })
+        }
+        // END TODO
+
         return {
             name: branchname,
             commit: {
-                ...(await this.getCommit({ address: commitaddr })),
+                ...(await adapter.getCommit({ address: commitaddr })),
                 version: commitversion,
             },
             isProtected: await this._isBranchProtected(name),
@@ -1957,10 +1974,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             MAX_PARALLEL_READ,
             async (item) => {
                 const { branchname, commitaddr, commitversion } = item
+
+                // TODO: Make better?
+                let adapter: IGoshRepositoryAdapter = this
+                if (commitversion !== this.repo.version) {
+                    const gosh = GoshAdapterFactory.create(commitversion)
+                    const dao = await (await this._getDao()).getName()
+                    const name = await this.getName()
+                    adapter = await gosh.getRepository({ path: `${dao}/${name}` })
+                }
+                // END TODO
+
                 return {
                     name: branchname,
                     commit: {
-                        ...(await this.getCommit({ address: commitaddr })),
+                        ...(await adapter.getCommit({ address: commitaddr })),
                         version: commitversion,
                     },
                     isProtected: await this._isBranchProtected(branchname),
@@ -1996,7 +2024,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [object.address],
+                    parents: [{ address: object.address, version: object.version }],
                 },
                 tree: {},
                 blobs: [],
@@ -2007,7 +2035,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { tree, items } = await this.getTree(object)
         const blobs = await this._getTreeBlobs(items, object.branch, commit)
         return {
-            commit: { ...object, parents: [object.address] },
+            commit: {
+                ...object,
+                parents: [{ address: object.address, version: object.version }],
+            },
             tree,
             blobs,
         }
@@ -2366,8 +2397,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Generate commit data
-        const { commitHash, commitContent, commitParentAddrs } =
-            await this._generateCommit(branchTo, updatedTree.hash, message, branchParent)
+        const { commitHash, commitContent, commitParents } = await this._generateCommit(
+            branchTo,
+            updatedTree.hash,
+            message,
+            branchParent,
+        )
 
         // Deploy snapshots
         let snapCounter = 0
@@ -2402,7 +2437,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branch,
             commitHash,
             commitContent,
-            commitParentAddrs,
+            commitParents,
             updatedTree.hash,
             false,
         )
@@ -2858,9 +2893,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }): Promise<IGoshCommit> {
         const { name, address } = options
 
-        if (address) return new GoshCommit(this.client, address)
+        if (address) {
+            return new GoshCommit(this.client, address)
+        }
+        if (!name) {
+            throw new GoshError('Commit name is undefined')
+        }
 
-        if (!name) throw new GoshError('Commit name is undefined')
         const { value0 } = await this.repo.runLocal(
             'getCommitAddr',
             { nameCommit: name },
@@ -3137,15 +3176,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         content: string,
-        parents: TAddress[],
+        parents: { address: TAddress; version: string }[],
         treeHash: string,
         upgrade: boolean,
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         // Check if deployed
         const commitContract = await this._getCommit({ name: commit })
-        if (await commitContract.isDeployed()) return
+        if (await commitContract.isDeployed()) {
+            return
+        }
 
         // Deploy commit
         const tree = await this._getTree({ name: treeHash })
@@ -3154,7 +3197,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branchName: branch,
             commitName: commit,
             fullCommit: content,
-            parents,
+            parents: parents.map(({ address, version }) => ({ addr: address, version })),
             tree: tree.address,
             upgrade,
         })
@@ -3322,7 +3365,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<{
         commitHash: string
         commitContent: string
-        commitParentAddrs: TAddress[]
+        commitParents: { address: TAddress; version: string }[]
     }> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
@@ -3337,9 +3380,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             parentNames.push(`parent ${parent.commit.name}`)
         }
 
-        const parentAddrs = [branch.commit.address, parent?.commit.address].reduce(
-            (filtered: string[], item) => {
-                if (!!item) filtered.push(item)
+        const parentObjects = [branch.commit, parent?.commit].reduce(
+            (filtered: { address: TAddress; version: string }[], item) => {
+                if (!!item) {
+                    filtered.push({ address: item.address, version: item.version })
+                }
                 return filtered
             },
             [],
@@ -3359,7 +3404,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             commitHash: sha1(commitdata, 'commit', 'sha1'),
             commitContent: commitdata,
-            commitParentAddrs: parentAddrs,
+            commitParents: parentObjects,
         }
     }
 

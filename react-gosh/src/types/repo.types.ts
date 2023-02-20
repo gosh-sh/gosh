@@ -50,7 +50,7 @@ type TCommit = {
     message: string
     author: string
     committer: string
-    parents: TAddress[]
+    parents: { address: TAddress; version: string }[]
     version: string
     versionPrev: string
     initupgrade: boolean
