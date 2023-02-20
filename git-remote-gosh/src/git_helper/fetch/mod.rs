@@ -191,7 +191,9 @@ where
                 tracing::debug!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 if onchain_commit.initupgrade {
-                    next_commit_of_prev_version = Some(obj.parents[0].clone());
+                    if !obj.parents.is_empty() {
+                        next_commit_of_prev_version = Some(obj.parents[0].clone());
+                    }
                 } else {
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
