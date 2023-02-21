@@ -581,7 +581,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             TvmCell s1 = _composeWalletStateInit(pub, 0);
             new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pub, _nameDao, _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, 1, null,
