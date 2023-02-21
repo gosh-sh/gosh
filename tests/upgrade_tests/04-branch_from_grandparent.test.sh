@@ -49,8 +49,7 @@ wait_account_active $REPO_ADDR
 sleep 3
 
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+echo "**** Push parent *****"
 echo parent > 1.txt
 git add 1.txt
 git commit -m test2
@@ -59,7 +58,7 @@ git push
 cd ..
 
 echo "Upgrade DAO"
-upgrade_DAO 2
+upgrade_DAO_2
 
 echo "***** new repo04 deploy *****"
 gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
@@ -71,8 +70,7 @@ wait_account_active $REPO_ADDR
 sleep 3
 
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+echo "**** Push latest *****"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2

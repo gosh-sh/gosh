@@ -60,7 +60,7 @@ PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 cd ..
 
 echo "Upgrade DAO 2"
-upgrade_DAO 2
+upgrade_DAO_2
 
 echo "***** new repo07 deploy *****"
 gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \

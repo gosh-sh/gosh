@@ -38,10 +38,11 @@ echo "export DAO_ABI=$DAO_ABI" >> env.env
 
 # could be changed to genphrase --dump
 
-SEED=`gosh-cli genphrase | grep -o '".*"' | tr -d '"'`
-echo $SEED > user.seed
+#SEED=`gosh-cli genphrase | jq .phrase`
+#echo $SEED > user.seed
+#gosh-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_KEYS=test.keys.json
-gosh-cli getkeypair -o $DAO_KEYS -p "$SEED"
+gosh-cli genphrase --dump $DAO_KEYS
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile
