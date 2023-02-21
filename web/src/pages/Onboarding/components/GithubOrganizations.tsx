@@ -32,7 +32,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const repositoriesChecked = useRecoilValue(repositoriesCheckedSelector)
 
     const onPublicEmailChange = () => {
-        setOnboarding((state) => ({ ...state, isPublicEmail: !state.isEmailPublic }))
+        setOnboarding((state) => ({ ...state, isEmailPublic: !state.isEmailPublic }))
     }
 
     const onOrganizationClick = (id: number | string) => {
