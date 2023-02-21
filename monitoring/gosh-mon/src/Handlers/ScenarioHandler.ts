@@ -326,7 +326,7 @@ export default abstract class ScenarioHandler extends Handler {
             writeFileSync(fname + '.log', this.log.join('\n') + '\n' + add + '\n', 'utf8');
         }
         if (this.page && final)
-            await this.page.screenshot({ path: fname + '.png' });
+            await this.page.screenshot({ path: fname + '.png', captureBeyondViewport: false });
     }
 
     protected archiveLog(fname: string, archpath: string, archfname: string) {

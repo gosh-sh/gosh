@@ -138,7 +138,7 @@ impl ParallelDiffsUploadSupport {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
-        tracing::trace!(
+        tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
             self.expecting_deployed_contacts_addresses
         );
@@ -243,7 +243,7 @@ impl ParallelDiffsUploadSupport {
                 Ok(false) => {
                     //TODO: replace with web-socket listen
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                    tracing::trace!(
+                    tracing::debug!(
                         "diff {} is not ready yet. iteration {}",
                         expecting_address,
                         iteration
@@ -251,7 +251,7 @@ impl ParallelDiffsUploadSupport {
                 }
                 Err(ref e) => {
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                    tracing::trace!(
+                    tracing::debug!(
                         "Is diff deployed failed with: {}. iteration {}",
                         e,
                         iteration
@@ -308,7 +308,7 @@ impl ParallelDiffsUploadSupport {
                         )
                         .await
                     }
-                    .instrument(info_span!("tokio::spawn::push_diff").or_current()),
+                    .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
                 );
             }
         }
