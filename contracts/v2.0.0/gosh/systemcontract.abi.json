@@ -39,6 +39,28 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersion2",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion4",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"dao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "fromInitUpgrade3",
 			"inputs": [
 				{"name":"name","type":"string"},

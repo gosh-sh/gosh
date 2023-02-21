@@ -62,7 +62,7 @@ contract SystemContract is Modifiers {
         GoshDao(addr).upgradeTag4{value : 0.11 ton, flag: 1}(namerepo, nametag, namecommit, commit, content);
     }  
    
-/* 
+ 
     function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, uint128 grant, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
         VersionController(_versionController).sendTokenToNewVersion3{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao);
     }
@@ -71,7 +71,7 @@ contract SystemContract is Modifiers {
     function sendTokenToNewVersion4(uint128 grant, address  pubaddr, string dao) public view senderIs(_versionController) accept {
         GoshWallet(getAddrWalletIn(pubaddr, dao, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
     }
-*/
+
 
     function fromInitUpgrade3(string name, string namedao, string nameCommit, address commit, string ver, string branch, address newcommit) public view {
         TvmCell s1 = _composeDaoStateInit(namedao);
