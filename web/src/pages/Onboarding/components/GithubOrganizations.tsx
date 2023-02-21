@@ -17,6 +17,7 @@ import ListEmpty from './ListEmpty'
 import GithubRepositories from './GithubRepositories'
 import OAuthProfile from './OAuthProfile'
 import PreviousStep from './PreviousStep'
+import { Checkbox } from '../../../components/Form'
 
 type TGithubOrganizationsProps = {
     signoutOAuth(): Promise<void>
@@ -123,15 +124,16 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 <div className="mt-8">
                     <label className="flex flex-nowrap items-center gap-x-3">
                         <div>
-                            <input
-                                type="checkbox"
+                            <Checkbox
                                 checked={isEmailPublic}
                                 onChange={onPublicEmailChange}
+                                label={
+                                    <div className="text-sm leading-normal">
+                                        Enable other GOSH users to find me by email{' '}
+                                        {session?.user.email} (optional)
+                                    </div>
+                                }
                             />
-                        </div>
-                        <div className="text-sm leading-normal">
-                            Enable other GOSH users to find me by email{' '}
-                            {session?.user.email} (optional)
                         </div>
                     </label>
                 </div>
