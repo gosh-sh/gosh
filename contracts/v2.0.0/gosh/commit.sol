@@ -95,7 +95,7 @@ contract Commit is Modifiers {
         _code[m_DiffCode] = codeDiff;
         _tree = tree;
         _initupgrade = upgrade;
-        _prevversion = _parents[0].version;
+        if (parents.length != 0) { _prevversion = _parents[0].version; }
         if (_initupgrade == true) { require(parents.length == 1, ERR_BAD_COUNT_PARENTS); }
         getMoney();
     }
