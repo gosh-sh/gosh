@@ -60,7 +60,9 @@ const BlobUpdatePage = () => {
         }
     }, [blob.content, navigate, urlBack])
 
-    if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
+    if (!dao.details.isAuthMember) {
+        return <Navigate to={urlBack} />
+    }
     return (
         <>
             <div>
