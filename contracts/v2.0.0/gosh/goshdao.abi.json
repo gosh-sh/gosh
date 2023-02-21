@@ -370,6 +370,27 @@
 			]
 		},
 		{
+			"name": "changeAllowanceIn2",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnAllowance",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addVoteTokenTask",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

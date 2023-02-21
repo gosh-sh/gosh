@@ -804,6 +804,14 @@
 			]
 		},
 		{
+			"name": "addAllowanceC",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addRegularToken",
 			"inputs": [
 				{"name":"grant","type":"uint128"}

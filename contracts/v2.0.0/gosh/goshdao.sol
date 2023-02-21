@@ -499,10 +499,32 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(getAddrWalletIn(pubaddrs, index))  accept
     {
-        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, 0);
+        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0);
     }
     
     function changeAllowanceIn (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= grant.length) { return; }
+        if (increase[index] == true) {
+            (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
+            _;
+            require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
+            _wallets[keyaddr].count += grant[index];
+            _allbalance += grant[index];
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowanceC{value: 0.1 ton}(grant[index]);
+        } else {
+            (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
+            _;
+            require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
+            require(grant[index] <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
+            _wallets[keyaddr].count -= grant[index];
+            _allbalance -= grant[index];
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
+        }
+        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, index + 1);
+    }
+    
+    function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
     {
         if (index >= grant.length) { return; }
         if (increase[index] == true) {
@@ -521,7 +543,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
-        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, index + 1);
+    }
+    
+    function returnAllowance (uint128 grant, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {
+        (int8 _, uint256 keyaddr) = pubaddr.unpack();
+        _;
+         require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
+         if (grant > _wallets[keyaddr].count) {
+             _allbalance -= _wallets[keyaddr].count;
+             _wallets[keyaddr].count = 0;
+             return;
+         }
+        _wallets[keyaddr].count -= grant;
+        _allbalance -= grant;
     }
     
     function addVoteTokenTask (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
