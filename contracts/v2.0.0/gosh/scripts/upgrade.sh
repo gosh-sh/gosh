@@ -71,7 +71,7 @@ echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
 echo "========== Upgrade VersionController code"
 VERSIONCONTROLLER_CODE=$(everdev contract dt $GOSH_PATH/versioncontroller.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 everdev contract run $VERSIONCONTROLLER_ABI updateCode --input "{\"newcode\": \"$VERSIONCONTROLLER_CODE\", \"cell\": \"\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
-delay 4
+delay 40
 
 # Apply VersionController setters
 echo "========== Run VersionController setters"

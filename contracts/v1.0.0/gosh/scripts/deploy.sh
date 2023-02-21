@@ -66,10 +66,7 @@ PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' 
 # ############################################################
 # Calculate VersionController address
 # ############################################################
-VERSIONCONTROLLER_TVC="$GOSH_PATH/versioncontroller.tvc"
-echo "========== Generate VC address"
-VERSIONCONTROLLER_ADDR=$(tonos-cli -j genaddr --abi $VERSIONCONTROLLER_ABI --setkey "$seed" --save $VERSIONCONTROLLER_TVC | jq -M ".raw_address" | cut -d '"' -f 2)
-#VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
+VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
 echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 
@@ -80,12 +77,11 @@ echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 echo "========== Send 2000 tons for deploy VersionController"
 everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
 
-sleep 4
+delay 40
 
 # Deploy VersionController
 echo "========== Deploy VersionController"
-#everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
-tonos-cli -u $NETWORK deploy --abi $VERSIONCONTROLLER_ABI --sign "$seed" $VERSIONCONTROLLER_TVC "{}"
+everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
 
 echo "***** awaiting VersionController deploy *****"
 wait_account_active $VERSIONCONTROLLER_ADDR
