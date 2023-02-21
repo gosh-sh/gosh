@@ -614,6 +614,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
+				{"name":"isUpgrade","type":"bool"},
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"}
 			],

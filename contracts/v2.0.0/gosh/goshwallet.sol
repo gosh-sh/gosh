@@ -927,6 +927,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string commit,
+        bool isUpgrade,
         uint128 numberChangedFiles,
         uint128 numberCommits
     ) public onlyOwnerPubkeyOptional(_access)  {
@@ -937,7 +938,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
-        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task);
+        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task, isUpgrade);
         tvm.accept();
         _saveMsg();
         getMoney();
@@ -1474,10 +1475,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
-        optional(ConfigCommit) task
+        optional(ConfigCommit) task,
+        bool isUpgrade
     ) internal view  {
        require(_limited == false, ERR_WALLET_LIMITED);
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, _index);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
     }
 
     //SMV part
