@@ -15,7 +15,7 @@ import {
     TCommit,
     TDiff,
     TRepository,
-    TTag,
+    TCommitTag,
     TTree,
     TTreeItem,
     TUpgradeData,
@@ -75,6 +75,7 @@ import {
     TDaoEventAllowDiscussionResult,
     TDaoEventShowProgressResult,
     TDaoAskMembershipAllowanceResult,
+    TRepositoryCreateCommitTagParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1995,7 +1996,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getCommitTags(): Promise<TTag[]> {
+    async getCommitTags(): Promise<TCommitTag[]> {
         // Get repo tag code and all tag accounts addresses
         const code = await this.repo.runLocal('getTagCode', {}, undefined, {
             useCachedBoc: true,
@@ -2006,11 +2007,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Read each tag account details
-        return await executeByChunk<TAddress, TTag>(
+        return await executeByChunk<any, TCommitTag>(
             accounts,
             MAX_PARALLEL_READ,
-            async (item: any) => {
-                return await this._getCommitTag(item.id)
+            async ({ id }) => {
+                return await this._getCommitTag(id)
             },
         )
     }
@@ -2426,7 +2427,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Deploy tags
         let tagsCounter = 0
         await this._runMultiwallet(taglist, async (wallet, tag) => {
-            await this._deployTag(commitHash, tag, wallet)
+            await this.createCommitTag({
+                repository: await this.getName(),
+                commit: commitHash,
+                content: tag,
+                wallet,
+            })
             cb({ tagsDeploy: { count: ++tagsCounter } })
         })
 
@@ -2499,6 +2505,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!wait) {
             throw new GoshError('Push upgrade timeout reached')
         }
+    }
+
+    async createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void> {
+        const { repository, commit, content, wallet } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const commitContract = await this._getCommit({ name: commit })
+        const _wallet = wallet || this.auth.wallet0
+        await _wallet.run('deployTag', {
+            repoName: repository,
+            nametag: sha1(content, 'tag', 'sha1'),
+            nameCommit: commit,
+            content,
+            commit: commitContract.address,
+        })
     }
 
     async deployContentSignature(
@@ -2982,17 +3006,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getCommitTag(address: TAddress): Promise<TTag> {
+    private async _getCommitTag(address: TAddress): Promise<TCommitTag> {
         const tag = new GoshCommitTag(this.client, address)
-        const commit = await tag.runLocal('getCommit', {}, undefined, {
-            useCachedBoc: true,
-        })
-        const content = await tag.runLocal('getContent', {}, undefined, {
-            useCachedBoc: true,
-        })
+        const { value0, value1, value2, value3, value4 } = await tag.runLocal(
+            'getDetails',
+            {},
+        )
         return {
-            commit: commit.value0,
-            content: content.value0,
+            repository: value4,
+            name: value0,
+            content: value3,
+            commit: {
+                address: value1,
+                name: value2,
+            },
         }
     }
 
@@ -3151,24 +3178,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index1,
             index2: 0,
             last: true,
-        })
-    }
-
-    private async _deployTag(
-        commit: string,
-        content: string,
-        wallet?: IGoshWallet,
-    ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        const commitContract = await this._getCommit({ name: commit })
-        wallet = wallet || this.auth.wallet0
-        await wallet.run('deployTag', {
-            repoName: await this.getName(),
-            nametag: sha1(content, 'tag', 'sha1'),
-            nameCommit: commit,
-            content,
-            commit: commitContract.address,
         })
     }
 

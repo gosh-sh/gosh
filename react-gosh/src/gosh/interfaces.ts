@@ -31,7 +31,6 @@ import {
     TDaoEventAllowDiscussionParams,
     TDaoEventShowProgressParams,
     TTaskDetails,
-    ETaskBounty,
     IPushCallback,
     ITBranchOperateCallback,
     TBranch,
@@ -39,7 +38,7 @@ import {
     TRepositoryCreateParams,
     TRepositoryCreateResult,
     TRepository,
-    TTag,
+    TCommitTag,
     TTaskCommitConfig,
     TTree,
     TTreeItem,
@@ -75,6 +74,7 @@ import {
     TDaoEventAllowDiscussionResult,
     TDaoEventShowProgressResult,
     TDaoAskMembershipAllowanceResult,
+    TRepositoryCreateCommitTagParams,
 } from '../types'
 
 interface IGoshAdapter {
@@ -245,7 +245,7 @@ interface IGoshRepositoryAdapter {
     ): Promise<{ treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
-    getCommitTags(): Promise<TTag[]>
+    getCommitTags(): Promise<TCommitTag[]>
     getUpgrade(commit: string): Promise<TUpgradeData>
     getContentSignature(
         repository: string,
@@ -289,6 +289,7 @@ interface IGoshRepositoryAdapter {
         },
     ): Promise<void>
     pushUpgrade(data: TUpgradeData): Promise<void>
+    createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void>
 
     deployContentSignature(
         repository: string,

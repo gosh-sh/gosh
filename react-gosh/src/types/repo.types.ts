@@ -1,4 +1,4 @@
-import { IGoshRepositoryAdapter } from '../gosh/interfaces'
+import { IGoshRepositoryAdapter, IGoshWallet } from '../gosh/interfaces'
 import { TAddress, TEventCreateParams } from './types'
 
 enum EBlobFlag {
@@ -61,9 +61,14 @@ type TBranch = {
     isProtected: boolean
 }
 
-type TTag = {
-    commit: string
+type TCommitTag = {
+    repository: string
+    name: string
     content: string
+    commit: {
+        address: TAddress
+        name: string
+    }
 }
 
 type TDiff = {
@@ -173,6 +178,13 @@ type TRepositoryTagDeleteParams = TEventCreateParams & {
 
 type TRepositoryTagDeleteResult = Promise<void | string>
 
+type TRepositoryCreateCommitTagParams = {
+    repository: string
+    commit: string
+    content: string
+    wallet?: IGoshWallet
+}
+
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -189,7 +201,7 @@ export {
     TTreeItem,
     TCommit,
     TBranch,
-    TTag,
+    TCommitTag,
     TDiff,
     TUpgradeData,
     TPushBlobData,
@@ -207,6 +219,7 @@ export {
     TRepositoryTagCreateResult,
     TRepositoryTagDeleteParams,
     TRepositoryTagDeleteResult,
+    TRepositoryCreateCommitTagParams,
     IPushCallback,
     ITBranchOperateCallback,
 }
