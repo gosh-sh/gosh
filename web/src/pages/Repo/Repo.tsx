@@ -13,7 +13,6 @@ import {
     faChevronDown,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import Spinner from '../../components/Spinner'
 import { AppConfig, classNames, splitByPath, useBranches, useTree } from 'react-gosh'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { Menu, Transition } from '@headlessui/react'
@@ -22,6 +21,8 @@ import { shortString } from 'react-gosh'
 import { BranchSelect } from '../../components/Branches'
 import RepoReadme from './Readme'
 import { onExternalLinkClick } from '../../helpers'
+import { Button, ButtonLink } from '../../components/Form'
+import Loader from '../../components/Loader'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''

@@ -1,5 +1,5 @@
 import { Field, Form, Formik, FormikHelpers } from 'formik'
-import { Navigate, useOutletContext } from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { FormikInput } from '../../components/Formik'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useSmv, useSmvTokenTransfer } from 'react-gosh'
@@ -13,13 +13,14 @@ type TMoveBalanceFormValues = {
     amount: number
 }
 
-type TSend2InternalFormValues = {
+type TSend2FormValues = {
     username: string
     amount: number
 }
 
 const DaoWalletPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const navigate = useNavigate()
     const { adapter: smv, details } = useSmv(dao)
     const {
         transferToSmv,
@@ -60,8 +61,8 @@ const DaoWalletPage = () => {
     }
 
     const onSendToInternal = async (
-        values: TSend2InternalFormValues,
-        helpers: FormikHelpers<TSend2InternalFormValues>,
+        values: TSend2FormValues,
+        helpers: FormikHelpers<TSend2FormValues>,
     ) => {
         try {
             const { username, amount } = values
@@ -85,6 +86,38 @@ const DaoWalletPage = () => {
 
             toast.success('Tokens were successfuly sent')
             helpers.resetForm()
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onAddVotingTokens = async (
+        values: TSend2FormValues,
+        helpers: FormikHelpers<TSend2FormValues>,
+    ) => {
+        try {
+            const { username, amount } = values
+            await dao.adapter.addVotingTokens({ username, amount })
+
+            helpers.resetForm()
+            navigate(`/o/${dao.details.name}/events`)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onAddRegularTokens = async (
+        values: TSend2FormValues,
+        helpers: FormikHelpers<TSend2FormValues>,
+    ) => {
+        try {
+            const { username, amount } = values
+            await dao.adapter.addRegularTokens({ username, amount })
+
+            helpers.resetForm()
+            navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -303,6 +336,108 @@ const DaoWalletPage = () => {
                                             isLoading={isSubmitting}
                                         >
                                             Send tokens
+                                        </Button>
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
+
+                        <div className="py-5">
+                            <h3 className="text-lg font-medium mb-3">
+                                Add voting tokens for user
+                            </h3>
+                            <Formik
+                                initialValues={{
+                                    username: '',
+                                    amount: 0,
+                                }}
+                                onSubmit={onAddVotingTokens}
+                                validationSchema={yup.object().shape({
+                                    username: yup.string().username().required(),
+                                    amount: yup
+                                        .number()
+                                        .min(1)
+                                        .required('Field is required'),
+                                })}
+                                enableReinitialize
+                            >
+                                {({ isSubmitting }) => (
+                                    <Form className="flex flex-wrap items-baseline gap-3">
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="username"
+                                                component={FormikInput}
+                                                placeholder="Username"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="amount"
+                                                component={FormikInput}
+                                                placeholder="Amount"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            isLoading={isSubmitting}
+                                        >
+                                            Add tokens
+                                        </Button>
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
+
+                        <div className="py-5">
+                            <h3 className="text-lg font-medium mb-3">
+                                Add regular tokens for user
+                            </h3>
+                            <Formik
+                                initialValues={{
+                                    username: '',
+                                    amount: 0,
+                                }}
+                                onSubmit={onAddRegularTokens}
+                                validationSchema={yup.object().shape({
+                                    username: yup.string().username().required(),
+                                    amount: yup
+                                        .number()
+                                        .min(1)
+                                        .required('Field is required'),
+                                })}
+                                enableReinitialize
+                            >
+                                {({ isSubmitting }) => (
+                                    <Form className="flex flex-wrap items-baseline gap-3">
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="username"
+                                                component={FormikInput}
+                                                placeholder="Username"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <div className="grow sm:grow-0">
+                                            <Field
+                                                name="amount"
+                                                component={FormikInput}
+                                                placeholder="Amount"
+                                                autoComplete="off"
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            isLoading={isSubmitting}
+                                        >
+                                            Add tokens
                                         </Button>
                                     </Form>
                                 )}

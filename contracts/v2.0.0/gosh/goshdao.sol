@@ -177,15 +177,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
             if (res.hasValue()) {
             	MemberToken pub;
             	(key, pub) = res.get();
-            	_reserve += pub.count;
-/*            	
+//            	_reserve += pub.count;            	
  		uint128 count = pub.count;
             	pub.count = 0;
-*/
                 pub.member = address.makeAddrStd(0, key);
             	deployWalletIn(pub);
                 this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
-                /*
                 address[] a1;
                 a1.push(pub.member);
                 bool[] a2;
@@ -193,7 +190,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
                 uint128[] a3;
                 a3.push(count);
                 this.changeAllowanceIn{value:0.1 ton}(a1, a2, a3, 0);
-                */
             }
         }
         getMoney();
@@ -250,7 +246,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function asktotalSupply() public view minValue(0.2 ton) accept {
-        SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton}(_allbalance);
+        SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton}(math.min(_allbalance, _totalsupply - _reserve));
     }
     
     function volunteersnap(address[] snap, uint128 index) public senderIs(address(this)) accept {

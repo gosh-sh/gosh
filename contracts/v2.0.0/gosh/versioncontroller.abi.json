@@ -58,6 +58,18 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersion3",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeDao2",
 			"inputs": [
 				{"name":"namedao","type":"string"},

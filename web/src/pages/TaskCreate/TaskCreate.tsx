@@ -145,6 +145,11 @@ const TaskCreatePage = () => {
             validationSchema={yup.object().shape({
                 repository: yup.string().required(),
                 name: yup.string().required(),
+                tags: yup
+                    .string()
+                    .test('tags-check', 'Maximum number of tags is 3', (value) => {
+                        return !value || value.trim().split(' ').length <= 3
+                    }),
                 cost: yup
                     .number()
                     .integer()
