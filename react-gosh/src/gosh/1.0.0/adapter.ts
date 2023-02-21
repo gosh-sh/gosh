@@ -938,7 +938,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
-        const { value0: versionPrev } = await commit.runLocal('getPrevCommitVersion', {})
         const { branch, sha, parents, content, initupgrade } = details
 
         // Parse content
@@ -974,7 +973,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 version: commit.version,
             })),
             version: commit.version,
-            versionPrev: versionPrev ?? commit.version,
             initupgrade,
         }
     }

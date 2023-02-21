@@ -539,21 +539,15 @@ function useCommitList(
             if (name !== ZERO_COMMIT && !initupgrade) {
                 list.push(commit)
             }
-            if (!parents.length) {
+            if (name === ZERO_COMMIT || !parents.length) {
                 prev = undefined
                 break
             }
 
-            const parent = await _getCommit({
-                address: parents[0].address,
-                version: parents[0].version,
-            })
-            prev =
-                parent.name !== ZERO_COMMIT
-                    ? { address: parent.address, version: parent.version }
-                    : undefined
+            const parent = parents[0]
+            prev = { address: parent.address, version: parent.version }
             count++
-            await sleep(150)
+            await sleep(50)
         }
 
         setCommits((curr) => ({
@@ -584,8 +578,8 @@ function useCommitList(
                 return
             }
             if (branchData) {
-                const { address, versionPrev } = branchData.commit
-                _getCommitsPage({ address, version: versionPrev })
+                const { address, version } = branchData.commit
+                _getCommitsPage({ address, version })
             }
         }
 
