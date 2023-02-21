@@ -12,7 +12,13 @@ const ToastError = (props: TToastErrorProps) => {
         return (
             <>
                 <p>{error.title || 'Something went wrong'}</p>
-                <p className="text-sm">{error.message}</p>
+                {error.data && (
+                    <p className="text-sm">
+                        {typeof error.data === 'string'
+                            ? error.data
+                            : JSON.stringify(error.data)}
+                    </p>
+                )}
             </>
         )
     }

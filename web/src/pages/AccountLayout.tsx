@@ -1,5 +1,4 @@
-import { classNames } from 'react-gosh'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { onboardingDataAtom } from '../store/onboarding.state'
 import OnboardingComplete from './Onboarding/components/Complete'

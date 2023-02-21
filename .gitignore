@@ -12,7 +12,6 @@ Cargo.lock
 .DS_Store
 .vscode
 .idea
-*.tvc
 *.code
 
 *.seed
@@ -20,7 +19,6 @@ Cargo.lock
 *.addr
 *.network
 SafeMultisigWallet.abi.json
-contracts/gosh/updatever.sh
 
 package-lock.json
 deno.lock

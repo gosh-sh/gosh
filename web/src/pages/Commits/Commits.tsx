@@ -4,8 +4,9 @@ import Spinner from '../../components/Spinner'
 import { getCommitTime, useBranches, useCommitList } from 'react-gosh'
 import { shortString } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
-import Committer from '../../components/Commit/Committer'
 import { BranchSelect } from '../../components/Branches'
+import { Commiter } from '../../components/Commit'
+import Loader from '../../components/Loader'
 
 const CommitsPage = () => {
     const navigate = useNavigate()
@@ -20,7 +21,7 @@ const CommitsPage = () => {
     )
 
     return (
-        <div className="bordered-block px-7 py-8">
+        <>
             <BranchSelect
                 branch={branch}
                 branches={branches}
@@ -31,16 +32,13 @@ const CommitsPage = () => {
                 }}
             />
 
-            <div className="mt-5 divide-y divide-gray-c4c4c4">
+            <div className="mt-5 divide-y divide-gray-e6edff">
                 {isFetching && isEmpty && (
-                    <div className="text-sm text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading commits...
-                    </div>
+                    <Loader className="text-sm">Loading commits...</Loader>
                 )}
 
                 {!isFetching && isEmpty && (
-                    <div className="text-sm text-gray-606060 text-center">
+                    <div className="text-sm text-gray-7c8db5 text-center">
                         There are no commits yet
                     </div>
                 )}
@@ -57,15 +55,15 @@ const CommitsPage = () => {
                             >
                                 {commit.title}
                             </Link>
-                            <div className="mt-2 flex flex-wrap gap-x-4 text-gray-050a15/75 text-xs">
+                            <div className="mt-2 flex flex-wrap gap-x-4 text-gray-7c8db5 text-xs">
                                 <div className="flex items-center">
-                                    <span className="mr-2 text-gray-050a15/65">
+                                    <span className="mr-2 text-gray-7c8db5">
                                         Commit by
                                     </span>
-                                    <Committer committer={commit.committer} />
+                                    <Commiter committer={commit.committer} />
                                 </div>
                                 <div>
-                                    <span className="mr-2 text-gray-050a15/65">at</span>
+                                    <span className="mr-2 text-gray-7c8db5">at</span>
                                     {getCommitTime(
                                         commit.committer || '',
                                     ).toLocaleString()}
@@ -73,9 +71,9 @@ const CommitsPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">
+                        <div className="flex border border-gray-e6edff rounded items-center text-gray-7c8db5">
                             <Link
-                                className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-gray-0a1124"
+                                className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-black"
                                 to={`/o/${daoName}/r/${repoName}/commits/${branchName}/${commit.name}`}
                             >
                                 {shortString(commit.name || '', 7, 0, '')}
@@ -84,7 +82,7 @@ const CommitsPage = () => {
                                 componentProps={{
                                     text: commit.name || '',
                                 }}
-                                iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
+                                iconContainerClassName="px-2 border-l border-gray-e6edff hover:text-black"
                                 iconProps={{
                                     size: 'sm',
                                 }}
@@ -107,7 +105,7 @@ const CommitsPage = () => {
                     </button>
                 </div>
             )}
-        </div>
+        </>
     )
 }
 

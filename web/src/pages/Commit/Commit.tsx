@@ -2,9 +2,9 @@ import { Link, useParams } from 'react-router-dom'
 import { getCommitTime, useCommit } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
-import Spinner from '../../components/Spinner'
 import CommitBlobs from './CommitBlobs'
-import Committer from '../../components/Commit/Committer'
+import { Commiter } from '../../components/Commit'
+import Loader from '../../components/Loader'
 
 const CommitPage = () => {
     const { daoName, repoName, branchName, commitName } = useParams()
@@ -16,13 +16,8 @@ const CommitPage = () => {
     )
 
     return (
-        <div className="bordered-block px-7 py-8">
-            {isFetching && (
-                <div className="text-gray-606060 text-sm">
-                    <Spinner className="mr-3" />
-                    Loading commit...
-                </div>
-            )}
+        <>
+            {isFetching && <Loader className="text-sm">Loading commit...</Loader>}
 
             {!isFetching && commit && (
                 <>
@@ -30,24 +25,22 @@ const CommitPage = () => {
                         <div className="font-medium py-2">{commit.title}</div>
 
                         {commit.message && (
-                            <pre className="mb-3 text-gray-050a15/65 text-sm">
+                            <pre className="mb-3 text-gray-53596d text-sm">
                                 {commit.message}
                             </pre>
                         )}
 
-                        <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
+                        <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-7c8db5 text-xs">
                             <div className="flex items-center">
-                                <span className="mr-2 text-gray-050a15/65">
-                                    Commit by
-                                </span>
-                                <Committer committer={commit.committer} />
+                                <span className="mr-2 text-gray-7c8db5">Commit by</span>
+                                <Commiter committer={commit.committer} />
                             </div>
                             <div>
-                                <span className="mr-2 text-gray-050a15/65">at</span>
+                                <span className="mr-2 text-gray-7c8db5">at</span>
                                 {getCommitTime(commit.committer).toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
-                                <span className="mr-2 text-gray-050a15/65">commit</span>
+                                <span className="mr-2 text-gray-7c8db5">commit</span>
                                 <CopyClipboard
                                     label={shortString(commit.name, 10, 10)}
                                     componentProps={{
@@ -59,7 +52,7 @@ const CommitPage = () => {
                     </div>
 
                     {branchName !== commit.branch ? (
-                        <div className="mt-5 bg-blue-300 rounded px-4 py-2.5">
+                        <div className="mt-5 bg-blue-300 rounded-xl px-4 py-2.5">
                             <p>This commit is from another branch</p>
                             <p className="text-sm">
                                 Please, follow this{' '}
@@ -77,7 +70,7 @@ const CommitPage = () => {
                     )}
                 </>
             )}
-        </div>
+        </>
     )
 }
 

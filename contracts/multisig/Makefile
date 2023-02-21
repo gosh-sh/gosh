@@ -1,6 +1,5 @@
 tvcs = MultisigWallet
 KEYS_PATH = ${CURDIR}
-EXTRA_DOCKER_ARGS = '--network=host'
 clean:
 	rm -f *.tvc *.abi.json *.code
 	rm -rf .solc_imports
@@ -41,6 +40,5 @@ deploy-docker:
 		-v ${CURDIR}/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/Giver.network:/tmp/Giver.network \
-		${EXTRA_DOCKER_ARGS} \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/multisig/scripts && ./deploy.sh'

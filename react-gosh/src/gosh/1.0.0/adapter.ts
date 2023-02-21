@@ -15,13 +15,65 @@ import {
     TCommit,
     TDiff,
     TRepository,
-    TTag,
+    TCommitTag,
     TTree,
     TTreeItem,
     TUpgradeData,
     TSmvEvent,
     TSmvEventMinimal,
     TPushBlobData,
+    TDaoMember,
+    TTaskDetails,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TEventMultipleCreateProposalParams,
+    TSmvEventVotes,
+    TSmvEventStatus,
+    TSmvEventTime,
+    TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoUpgradeParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
+    TDaoMintDisableParams,
+    TDaoMemberAllowanceUpdateParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventShowProgressParams,
+    TTaskReceiveBountyParams,
+    TDaoEventSendReviewParams,
+    TDaoAskMembershipAllowanceParams,
+    TTopic,
+    TTopicCreateParams,
+    TTopicMessageCreateParams,
+    TRepositoryChangeBranchProtectionResult,
+    TDaoMemberCreateResult,
+    TDaoMemberDeleteResult,
+    TDaoUpgradeResult,
+    TTaskCreateResult,
+    TTaskDeleteResult,
+    TDaoVotingTokenAddResult,
+    TDaoRegularTokenAddResult,
+    TDaoMintTokenResult,
+    TDaoMintDisableResult,
+    TDaoTagCreateResult,
+    TDaoTagDeleteResult,
+    TDaoMemberAllowanceUpdateResult,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteResult,
+    TRepositoryUpdateDescriptionResult,
+    TDaoEventAllowDiscussionResult,
+    TDaoEventShowProgressResult,
+    TDaoAskMembershipAllowanceResult,
+    TRepositoryCreateCommitTagParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -41,6 +93,7 @@ import {
     IGoshSmvAdapter,
     IGoshSmvLocker,
     IGoshSmvProposal,
+    IGoshHelperTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -63,7 +116,7 @@ import {
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
-import { GoshTag } from './goshtag'
+import { GoshCommitTag } from './goshcommittag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
 import {
@@ -115,7 +168,9 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return this._isValidName(name, 'Repository name')
     }
 
-    async isValidProfile(username: string[]): Promise<TAddress[]> {
+    async isValidProfile(
+        username: string[],
+    ): Promise<{ username: string; address: TAddress }[]> {
         return await executeByChunk(username, MAX_PARALLEL_READ, async (member) => {
             member = member.trim()
             const { valid, reason } = this.isValidUsername(member)
@@ -126,7 +181,7 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
                 throw new GoshError(`${member}: Profile does not exist`)
             }
 
-            return profile.address
+            return { username: member, address: profile.address }
         })
     }
 
@@ -136,6 +191,10 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
 
     async resetAuth(): Promise<void> {
         this.auth = undefined
+    }
+
+    getVersion(): string {
+        return GoshAdapter_1_0_0.version
     }
 
     async getProfile(options: {
@@ -231,6 +290,26 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         return value0
     }
 
+    async getTaskTagGoshCodeHash(tag: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskTagDaoCodeHash(dao: string, tag: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskTagRepoCodeHash(
+        dao: string,
+        repository: string,
+        tag: string,
+    ): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getHelperTag(address: string): Promise<IGoshHelperTag> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -287,9 +366,9 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
 class GoshDaoAdapter implements IGoshDaoAdapter {
     private client: TonClient
     private gosh: IGoshAdapter
-    private dao: IGoshDao
+    dao: IGoshDao // TODO: remove public
     private profile?: IGoshProfile
-    private wallet?: IGoshWallet
+    wallet?: IGoshWallet // TODO: remove public
 
     constructor(gosh: IGoshAdapter, address: TAddress) {
         this.client = gosh.client
@@ -299,6 +378,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async isDeployed(): Promise<boolean> {
         return await this.dao.isDeployed()
+    }
+
+    async isRepositoriesUpgraded(): Promise<boolean> {
+        return true
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
@@ -337,17 +420,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getDetails(): Promise<TDao> {
         const smv = await this.getSmv()
         const owner = await this._getOwner()
+        const supply = await smv.getTotalSupply()
         return {
             address: this.dao.address,
             name: await this.getName(),
             version: this.dao.version,
-            members: await this._getProfiles(),
-            supply: await smv.getTotalSupply(),
+            members: await this.getMembers(),
+            supply: {
+                reserve: supply,
+                voting: supply,
+                total: supply,
+            },
             owner,
+            isMintOn: false,
+            isEventProgressOn: true,
+            isEventDiscussionOn: true,
+            isAskMembershipOn: false,
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
         }
+    }
+
+    async getShortDescription(): Promise<string | null> {
+        return null
+    }
+
+    async getDescription(): Promise<string | null> {
+        return null
     }
 
     async getRemoteConfig(): Promise<object> {
@@ -401,6 +501,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshRepositoryAdapter(this.gosh, value0, auth, config)
     }
 
+    async getMembers(): Promise<TDaoMember[]> {
+        const { value0 } = await this.dao.runLocal('getWalletsFull', {})
+        const profiles = []
+        for (const key in value0) {
+            const profile = `0:${key.slice(2)}`
+            profiles.push({ profile, wallet: value0[key].member })
+        }
+        return profiles
+    }
+
     async getMemberWallet(options: {
         profile?: string
         address?: TAddress
@@ -414,16 +524,40 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshWallet(this.client, addr)
     }
 
+    async getReviewers(
+        username: string[],
+    ): Promise<{ username: string; profile: string; wallet: string }[]> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskCodeHash(repository: string): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTopicCodeHash(): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTopic(params: { address?: string | undefined }): Promise<TTopic> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getSmv(): Promise<IGoshSmvAdapter> {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
 
-    async deployRepository(
-        name: string,
-        prev?: { addr: TAddress; version: string } | undefined,
-    ): Promise<IGoshRepositoryAdapter> {
-        if (!this.wallet) throw new GoshError(EGoshError.WALLET_UNDEFINED)
+    async createRepository(
+        params: TRepositoryCreateParams,
+    ): Promise<TRepositoryCreateResult> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
 
+        const { name, prev } = params
         const { valid, reason } = this.gosh.isValidRepoName(name)
         if (!valid) throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
 
@@ -441,52 +575,155 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return repo
     }
 
-    async createMember(username: string[]): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult> {
+        const { usernames = [] } = params
 
-        const profiles = await this.gosh.isValidProfile(username)
+        if (!usernames.length) {
+            return
+        }
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
+        const profiles = await this.gosh.isValidProfile(usernames)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForDeployWalletDao', {
-            pubaddr: profiles,
+            pubaddr: profiles.map(({ address }) => address),
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async deleteMember(username: string[]): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async deleteMember(params: TDaoMemberDeleteParams): Promise<TDaoMemberDeleteResult> {
+        const { usernames } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const profiles = await executeByChunk(
-            username,
+            usernames,
             MAX_PARALLEL_READ,
-            async (member) => {
-                const profile = await this.gosh.getProfile({ username: member })
+            async (username) => {
+                const profile = await this.gosh.getProfile({ username })
                 return profile.address
             },
         )
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForDeleteWalletDao', {
             pubaddr: profiles,
             num_clients: await smv.getClientsCount(),
         })
     }
 
-    async upgrade(version: string, description?: string | undefined): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    async updateMemberAllowance(
+        params: TDaoMemberAllowanceUpdateParams,
+    ): Promise<TDaoMemberAllowanceUpdateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateAskMembershipAllowance(
+        params: TDaoAskMembershipAllowanceParams,
+    ): Promise<TDaoAskMembershipAllowanceResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgrade(params: TDaoUpgradeParams): Promise<TDaoUpgradeResult> {
+        const { version, description } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-
         await this.wallet.run('startProposalForUpgradeDao', {
             newversion: version,
             description: description ?? `Upgrade DAO to version ${version}`,
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async setRepositoriesUpgraded(): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async mint(params: TDaoMintTokenParams): Promise<TDaoMintTokenResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async disableMint(params: TDaoMintDisableParams): Promise<TDaoMintDisableResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async addVotingTokens(
+        params: TDaoVotingTokenAddParams,
+    ): Promise<TDaoVotingTokenAddResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async addRegularTokens(
+        params: TDaoRegularTokenAddParams,
+    ): Promise<TDaoRegularTokenAddResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async sendInternal2Internal(username: string, amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async send2DaoReserve(amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTask(params: TTaskCreateParams): Promise<TTaskCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateEventShowProgress(
+        params: TDaoEventShowProgressParams,
+    ): Promise<TDaoEventShowProgressResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateEventAllowDiscussion(
+        params: TDaoEventAllowDiscussionParams,
+    ): Promise<TDaoEventAllowDiscussionResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTopic(params: TTopicCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createTopicMessage(params: TTopicMessageCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -516,16 +753,6 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         const address = await this._getWalletAddress(this.profile.address, index)
         return new GoshWallet(this.client, address, { keys })
-    }
-
-    private async _getProfiles(): Promise<{ profile: TAddress; wallet: TAddress }[]> {
-        const { value0 } = await this.dao.runLocal('getWalletsFull', {})
-        const profiles = []
-        for (const key in value0) {
-            const profile = `0:${key.slice(2)}`
-            profiles.push({ profile, wallet: value0[key].member })
-        }
-        return profiles
     }
 
     private async _getOwner(): Promise<TAddress> {
@@ -568,6 +795,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await this.repo.isDeployed()
     }
 
+    getGosh(): IGoshAdapter {
+        return this.gosh
+    }
+
     getAddress(): TAddress {
         return this.repo.address
     }
@@ -596,7 +827,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             address: this.repo.address,
             name: await this.getName(),
             version: this.repo.version,
-            branches: (await this._getBranches()).length,
+            branches: await this._getBranches(),
             head: await this.getHead(),
             commitsIn: [],
         }
@@ -708,7 +939,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
-        const { value0: versionPrev } = await commit.runLocal('getPrevCommitVersion', {})
         const { branch, sha, parents, content, initupgrade } = details
 
         // Parse content
@@ -739,9 +969,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents,
+            parents: parents.map((address: string) => ({
+                address,
+                version: commit.version,
+            })),
             version: commit.version,
-            versionPrev: versionPrev ?? commit.version,
             initupgrade,
         }
     }
@@ -752,7 +984,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${branch}/${treepath}`
@@ -829,7 +1061,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Get blob state at parent commit, get diffs and apply
-        const parent = await this.getCommit({ address: commit.parents[0] })
+        const parent = await this.getCommit({ address: commit.parents[0].address })
 
         let previous: string | Buffer
         let current: string | Buffer
@@ -919,22 +1151,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
     }
 
-    async getTags(): Promise<TTag[]> {
+    async getCommitTags(): Promise<TCommitTag[]> {
         // Get repo tag code and all tag accounts addresses
         const code = await this.repo.runLocal('getTagCode', {}, undefined, {
             useCachedBoc: true,
         })
         const codeHash = await this.client.boc.get_boc_hash({ boc: code.value0 })
-        const accounts: string[] = await getAllAccounts({
+        const accounts: any[] = await getAllAccounts({
             filters: [`code_hash: {eq:"${codeHash.hash}"}`],
         })
 
         // Read each tag account details
-        return await executeByChunk<TAddress, TTag>(
+        return await executeByChunk<any, TCommitTag>(
             accounts,
             MAX_PARALLEL_READ,
-            async (address) => {
-                return await this._getTag(address)
+            async ({ id }) => {
+                return await this._getCommitTag(id)
             },
         )
     }
@@ -946,7 +1178,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [object.address],
+                    parents: [{ address: object.address, version: object.version }],
                 },
                 tree: {},
                 blobs: [],
@@ -957,7 +1189,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { tree, items } = await this.getTree(object)
         const blobs = await this._getTreeBlobs(items, object.branch, commit)
         return {
-            commit: { ...object, parents: [object.address] },
+            commit: {
+                ...object,
+                parents: [{ address: object.address, version: object.version }],
+            },
             tree,
             blobs,
         }
@@ -1176,30 +1411,42 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         cb({ completed: true })
     }
 
-    async lockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        if (await this._isBranchProtected(name)) {
+    async lockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult> {
+        const { repository, branch } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        if (await this._isBranchProtected(branch)) {
             throw new GoshError('Branch is already protected')
         }
 
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
-            repoName: await this.getName(),
-            branchName: name,
+            repoName: repository,
+            branchName: branch,
             num_clients: smvClientsCount,
         })
     }
 
-    async unlockBranch(name: string): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        if (!(await this._isBranchProtected(name))) {
+    async unlockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult> {
+        const { repository, branch } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        if (!(await this._isBranchProtected(branch))) {
             throw new GoshError('Branch is not protected')
         }
 
         const smvClientsCount = await this._validateProposalStart()
         await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
-            repoName: await this.getName(),
-            branchName: name,
+            repoName: repository,
+            branchName: branch,
             num_clients: smvClientsCount,
         })
     }
@@ -1222,11 +1469,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        tags?: string,
-        branchParent?: string,
-        callback?: IPushCallback,
+        options: {
+            tags?: string
+            branchParent?: string
+            callback?: IPushCallback
+        },
     ): Promise<void> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        const { tags, branchParent, callback } = options
 
         const taglist = tags ? tags.split(' ') : []
         const cb: IPushCallback = (params) => callback && callback(params)
@@ -1286,7 +1536,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Deploy tags
         let tagsCounter = 0
         await this._runMultiwallet(taglist, async (wallet, tag) => {
-            await this._deployTag(commitHash, tag, wallet)
+            await this.createCommitTag({
+                repository: await this.getName(),
+                commit: commitHash,
+                content: tag,
+                wallet,
+            })
             cb({ tagsDeploy: { count: ++tagsCounter } })
         })
 
@@ -1328,7 +1583,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit.branch,
             commit.name,
             commit.content,
-            commit.parents,
+            commit.parents.map((item) => item.address),
             commit.tree,
             true,
         )
@@ -1353,6 +1608,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!wait) throw new GoshError('Push upgrade timeout reached')
     }
 
+    async createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void> {
+        const { repository, commit, content, wallet } = params
+
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const commitContract = await this._getCommit({ name: commit })
+        const _wallet = wallet || this.auth.wallet0
+        await _wallet.run('deployTag', {
+            repoName: repository,
+            nametag: sha1(content, 'tag', 'sha1'),
+            nameCommit: commit,
+            content,
+            commit: commitContract.address,
+        })
+    }
+
     async deployContentSignature(
         repository: string,
         commit: string,
@@ -1367,6 +1640,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             label,
             content,
         })
+    }
+
+    async createTag(
+        params: TRepositoryTagCreateParams,
+    ): Promise<TRepositoryTagCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteTag(
+        params: TRepositoryTagDeleteParams,
+    ): Promise<TRepositoryTagDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateDescription(
+        params: TRepositoryUpdateDescriptionParams,
+    ): Promise<TRepositoryUpdateDescriptionResult> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isBranchProtected(name: string): Promise<boolean> {
@@ -1718,17 +2009,25 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getTag(address: TAddress): Promise<TTag> {
-        const tag = new GoshTag(this.client, address)
-        const commit = await tag.runLocal('getCommit', {}, undefined, {
+    private async _getCommitTag(address: TAddress): Promise<TCommitTag> {
+        const tag = new GoshCommitTag(this.client, address)
+        const { value0: content } = await tag.runLocal('getContent', {}, undefined, {
             useCachedBoc: true,
         })
-        const content = await tag.runLocal('getContent', {}, undefined, {
+
+        const { value0 } = await tag.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })
+        const commit = await this.getCommit({ address: value0 })
+
         return {
-            commit: commit.value0,
-            content: content.value0,
+            repository: await this.getName(),
+            name: sha1(content, 'tag', 'sha1'),
+            content,
+            commit: {
+                address: commit.address,
+                name: commit.name,
+            },
         }
     }
 
@@ -1887,24 +2186,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index1,
             index2: 0,
             last: true,
-        })
-    }
-
-    private async _deployTag(
-        commit: string,
-        content: string,
-        wallet?: IGoshWallet,
-    ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        const commitContract = await this._getCommit({ name: commit })
-        wallet = wallet || this.auth.wallet0
-        await wallet.run('deployTag', {
-            repoName: await this.getName(),
-            nametag: sha1(content, 'tag', 'sha1'),
-            nameCommit: commit,
-            content,
-            commit: commitContract.address,
         })
     }
 
@@ -2256,14 +2537,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     async getDetails(): Promise<TSmvDetails> {
         if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
 
-        const { m_pseudoDAOBalance } = await this.wallet.runLocal(
-            'm_pseudoDAOBalance',
-            {},
-        )
         const smvBalance = await this._getLockerBalance()
-
         return {
-            balance: +m_pseudoDAOBalance,
+            smvBalance: await this.getWalletBalance(this.wallet),
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
             isLockerBusy: await this._isLockerBusy(),
@@ -2292,55 +2568,106 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         // Event type
         const { proposalKind } = await event.runLocal('getGoshProposalKind', {})
-        const type = { kind: +proposalKind, name: SmvEventTypes[+proposalKind] }
-
-        // Event status
-        const { value0: isCompleted } = await event.runLocal('_isCompleted', {})
-        const status = {
-            completed: isCompleted !== null,
-            accepted: !!isCompleted,
+        const kind = parseInt(proposalKind)
+        const type = { kind, name: SmvEventTypes[kind] }
+        const minimal = { address, type }
+        if (!isDetailed) {
+            return minimal
         }
 
-        const minimal = { address, type, status }
-        if (!isDetailed) return minimal
+        return {
+            ...minimal,
+            status: await this.getEventStatus({ event }),
+            time: await this.getEventTime({ event }),
+            data: await this._getEventData(event, type.kind),
+            votes: await this.getEventVotes({ event }),
+            reviewers: await this.getEventReviewers({ event }),
+        }
+    }
 
-        // Event period
-        const { startTime } = await event.runLocal('startTime', {})
-        const { finishTime } = await event.runLocal('finishTime', {})
-        const { realFinishTime } = await event.runLocal('realFinishTime', {})
-        const time = {
-            start: +startTime * 1000,
-            finish: +finishTime * 1000,
-            finishReal: +realFinishTime * 1000,
+    async getEventReviewers(params: {
+        address?: string | undefined
+        event?: IGoshSmvProposal | undefined
+    }): Promise<string[]> {
+        return []
+    }
+
+    async getEventVotes(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventVotes> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
         }
 
-        // Event data
-        const data = await this._getEventData(event, type.kind)
-
-        // Event votes
         const { votesYes } = await event.runLocal('votesYes', {})
         const { votesNo } = await event.runLocal('votesNo', {})
         const { totalSupply } = await event.runLocal('totalSupply', {})
-        const votes = {
-            yes: +votesYes,
-            no: +votesNo,
+        return {
+            yes: parseInt(votesYes),
+            no: parseInt(votesNo),
             yours: await this._getEventUserVotes(event),
-            total: +totalSupply,
+            total: parseInt(totalSupply),
+        }
+    }
+
+    async getEventStatus(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventStatus> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
         }
 
-        return { ...minimal, time, data, votes }
+        const { value0: isCompleted } = await event.runLocal('_isCompleted', {})
+        return {
+            completed: isCompleted !== null,
+            accepted: !!isCompleted,
+        }
+    }
+
+    async getEventTime(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventTime> {
+        const event = !params.address
+            ? params.event
+            : await this._getEvent(params.address)
+        if (!event) {
+            throw new GoshError('Event address or object should be provided')
+        }
+
+        const { startTime } = await event.runLocal('startTime', {})
+        const { finishTime } = await event.runLocal('finishTime', {})
+        const { realFinishTime } = await event.runLocal('realFinishTime', {})
+        return {
+            start: parseInt(startTime) * 1000,
+            finish: parseInt(finishTime) * 1000,
+            finishReal: parseInt(realFinishTime) * 1000,
+        }
     }
 
     async getWalletBalance(wallet: IGoshWallet): Promise<number> {
         const { m_pseudoDAOBalance } = await wallet.runLocal('m_pseudoDAOBalance', {})
-        return +m_pseudoDAOBalance
+        return parseInt(m_pseudoDAOBalance)
     }
 
-    async validateProposalStart(): Promise<void> {
-        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+    async validateProposalStart(min?: number): Promise<void> {
+        if (await this._isLockerBusy()) {
+            throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        }
 
+        min = min ?? 20
         const { total } = await this._getLockerBalance()
-        if (total < 20) throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+        if (total < min) {
+            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
+        }
     }
 
     async transferToSmv(amount: number): Promise<void> {
@@ -2416,7 +2743,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshAddProtectedBranchProposalParams'
         } else if (type === ESmvEventType.BRANCH_UNLOCK) {
             fn = 'getGoshDeleteProtectedBranchProposalParams'
-        } else if (type === ESmvEventType.PR) {
+        } else if (type === ESmvEventType.PULL_REQUEST) {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'

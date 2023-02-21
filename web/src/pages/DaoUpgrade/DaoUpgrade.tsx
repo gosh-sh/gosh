@@ -1,11 +1,12 @@
 import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
 import { toast } from 'react-toastify'
 import { useDaoUpgrade } from 'react-gosh'
 import ToastError from '../../components/Error/ToastError'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
+import { FormikSelect } from '../../components/Formik'
+import { Button } from '../../components/Form'
+import yup from '../../yup-extended'
 
 type TFormValues = {
     version: string
@@ -29,11 +30,11 @@ const DaoUpgradePage = () => {
 
     return (
         <div>
-            <h3 className="text-lg font-semibold">Upgrade DAO</h3>
-            <p className="mb-3">Upgrade DAO to newer version</p>
+            <h3 className="text-xl font-medium mb-4">Upgrade DAO</h3>
+            <p className="mb-3 text-gray-7c8db5 text-sm">Upgrade DAO to newer version</p>
 
             {!versions?.length && (
-                <p className="text-rose-600">
+                <p className="text-red-ff3b30 text-sm">
                     DAO can not be upgraded: there are no versions ahead
                 </p>
             )}
@@ -43,8 +44,8 @@ const DaoUpgradePage = () => {
                     version: versions ? versions[0] : '',
                 }}
                 onSubmit={onDaoUpgrade}
-                validationSchema={Yup.object().shape({
-                    version: Yup.string().required('Version is required'),
+                validationSchema={yup.object().shape({
+                    version: yup.string().required('Version is required'),
                 })}
                 enableReinitialize
             >
@@ -53,8 +54,7 @@ const DaoUpgradePage = () => {
                         <div>
                             <Field
                                 name="version"
-                                component={'select'}
-                                className="px-2 py-2 rounded-md border focus:outline-none"
+                                component={FormikSelect}
                                 disabled={isSubmitting || !versions?.length}
                             >
                                 {versions?.map((version, index) => (
@@ -65,14 +65,13 @@ const DaoUpgradePage = () => {
                             </Field>
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
-                            className="btn btn--body px-3 py-2"
                             disabled={isSubmitting || !versions?.length}
+                            isLoading={isSubmitting}
                         >
-                            {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                             Upgrade
-                        </button>
+                        </Button>
                     </Form>
                 )}
             </Formik>

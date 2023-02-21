@@ -117,7 +117,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
 
     return (
         <div
-            className={classNames('text-sm', className)}
+            className={classNames('relative text-sm', className)}
             dangerouslySetInnerHTML={{
                 __html: createDiffCodeBlock(),
             }}

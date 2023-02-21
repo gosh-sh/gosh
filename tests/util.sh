@@ -185,3 +185,24 @@ function set_commit_proposal {
 
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
 }
+
+
+function wait_account_balance {
+    stop_at=$((SECONDS+120))
+    contract_addr=$1
+    balance_min=$2
+    while [ $SECONDS -lt $stop_at ]; do
+        balance=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".balance'`
+        if [ "$balance" -ge "$balance_min" ]; then
+            is_ok=1
+            echo account has enough balance
+            break
+        fi
+        sleep 5
+    done
+
+    if [ "$is_ok" = "0" ]; then
+        echo account has not enough balance
+        exit 2
+    fi
+}

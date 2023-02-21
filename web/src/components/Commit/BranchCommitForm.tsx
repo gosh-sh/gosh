@@ -1,28 +1,44 @@
 import { Form, Formik } from 'formik'
-import * as Yup from 'yup'
-import { classNames } from 'react-gosh'
-import { TPushProgress } from 'react-gosh/dist/types/repo.types'
-import CommitFields from './CommitFileds'
+import { classNames, TDao } from 'react-gosh'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
+import yup from '../../yup-extended'
+import { CommitFields } from './CommitFields/CommitFields'
 
-type TCommitFormValues = {
+export type TBranchCommitFormValues = {
     title: string
     message?: string
     tags?: string
-    deleteBranch?: boolean
+    deleteSrcBranch?: boolean
+    task?: string
+    assigners?: string
+    reviewers?: string
+    managers?: string
+    isPullRequest?: boolean
 }
 
-type TCommitFormProps = {
+type TBranchCommitFormProps = {
     className?: string
-    initialValues: TCommitFormValues
+    dao: {
+        adapter: IGoshDaoAdapter
+        details: TDao
+    }
+    repository: {
+        adapter: IGoshRepositoryAdapter
+        details: TRepository
+    }
+    initialValues: TBranchCommitFormValues
     validationSchema?: object
     extraButtons?: any
     progress?: TPushProgress
-    onSubmit(values: TCommitFormValues): Promise<void>
+    onSubmit(values: TBranchCommitFormValues): Promise<void>
 }
 
-const BranchCommitForm = (props: TCommitFormProps) => {
+const BranchCommitForm = (props: TBranchCommitFormProps) => {
     const {
         className,
+        dao,
+        repository,
         initialValues,
         validationSchema,
         extraButtons,
@@ -30,19 +46,59 @@ const BranchCommitForm = (props: TCommitFormProps) => {
         onSubmit,
     } = props
 
+    const getInitialValues = () => {
+        const version_2_0_0 = {
+            task: '',
+            assigners: '',
+            reviewers: '',
+            managers: '',
+            isPullRequest: false,
+        }
+        return {
+            ...initialValues,
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+        }
+    }
+
+    const getValidationSchema = () => {
+        const version_2_0_0 = {
+            task: yup.string(),
+            assigners: yup.string(),
+            reviewers: yup.string(),
+            managers: yup.string(),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        return yup.object().shape({
+            title: yup.string().required('Field is required'),
+            ...validationSchema,
+            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+        })
+    }
+
     return (
-        <div className={classNames('border rounded px-4 py-3', className)}>
+        <div className={classNames(className)}>
             <Formik
-                initialValues={initialValues}
+                initialValues={getInitialValues()}
+                validationSchema={getValidationSchema()}
                 onSubmit={onSubmit}
-                validationSchema={Yup.object().shape({
-                    title: Yup.string().required('Field is required'),
-                    ...validationSchema,
-                })}
             >
                 {({ isSubmitting }) => (
                     <Form>
                         <CommitFields
+                            dao={dao.adapter}
+                            repository={repository.details.name}
                             isSubmitting={isSubmitting}
                             extraButtons={extraButtons}
                             progress={progress}
@@ -54,4 +110,4 @@ const BranchCommitForm = (props: TCommitFormProps) => {
     )
 }
 
-export default BranchCommitForm
+export { BranchCommitForm }

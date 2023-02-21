@@ -19,9 +19,13 @@ class GoshRoot extends BaseContract implements IGoshRoot {
         username?: string
     }): Promise<IGoshProfileIndex> {
         const { address, pubkey, username } = options
-        if (address) return new GoshProfileIndex(this.account.client, address)
+        if (address) {
+            return new GoshProfileIndex(this.account.client, address)
+        }
+        if (!pubkey || !username) {
+            throw new GoshError('Username and/or pubkey missing')
+        }
 
-        if (!pubkey || !username) throw new GoshError('Username and/or pubkey missing')
         const pub = !pubkey.startsWith('0x') ? `0x${pubkey}` : pubkey
         const { value0 } = await this.runLocal('getProfileIndexAddr', {
             pubkey: pub,
@@ -33,7 +37,9 @@ class GoshRoot extends BaseContract implements IGoshRoot {
     async getProfileIndexes(
         pubkey: string,
     ): Promise<{ pubkey: string; name: string; profile: TAddress }[]> {
-        if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
+        if (!pubkey.startsWith('0x')) {
+            pubkey = `0x${pubkey}`
+        }
         const { value0: code } = await this.runLocal('getProfileIndexCode', { pubkey })
         const { hash } = await this.account.client.boc.get_boc_hash({ boc: code })
         const accounts = await getAllAccounts({ filters: [`code_hash: {eq:"${hash}"}`] })

@@ -1,9 +1,5 @@
-import Spinner from '../../components/Spinner'
-import { useDaoMemberList, useDaoMemberDelete } from 'react-gosh'
-import DaoMemberListItem from './MemberListItem'
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import DaoMemberForm from './MemberForm'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import DaoMemberInvites from './MemberInvites'
@@ -20,8 +16,7 @@ export type TDaoInvite = {
 }
 
 const DaoMembersPage = () => {
-    const { daoName } = useParams()
-    const navigate = useNavigate()
+    const inviteRef = useRef<HTMLDivElement | null>(null)
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const deleteDaoMember = useDaoMemberDelete(dao.adapter)
     const { items, isFetching, search, setSearch, getItemDetails } = useDaoMemberList(
@@ -80,7 +75,32 @@ const DaoMembersPage = () => {
                 console.error(e.message)
                 toast.error(<ToastError error={e} />)
             }
+
+            setInvites((state) => ({
+                ...state,
+                items: (data || []).map((item) => ({
+                    id: item.id,
+                    recipientEmail: item.recipient_email,
+                    recipientStatus: item.recipient_status,
+                    recipientUsername: item.recipient_username || item.recipient_email,
+                    recipientAllowance: item.recipient_allowance,
+                    recipientComment: item.recipient_comment,
+                    isFetching: false,
+                })),
+            }))
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        } finally {
+            setInvites((state) => ({ ...state, isFetching: false }))
         }
+    }, [dao.details.name, dao.details.isAuthMember])
+
+    const scrollToInviteRef = () => {
+        inviteRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center',
+        })
     }
 
     useEffect(() => {

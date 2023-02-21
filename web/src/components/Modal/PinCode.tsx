@@ -71,7 +71,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 onUnlock && onUnlock()
             }
         },
-        [phrase, unlock, tmp, onUnlock, setModal],
+        [phrase, unlock, tmp, onUnlock, setModal, user],
     )
 
     useEffect(() => {
@@ -89,13 +89,16 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
 
             <div className="mt-4 w-full md:w-1/3 mx-auto">
                 <div className="input">
-                    <input
-                        type="password"
-                        className="element text-center"
-                        placeholder="PIN code"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value)}
-                    />
+                    <form>
+                        <input
+                            type="password"
+                            className="element text-center"
+                            placeholder="PIN code"
+                            autoComplete="off"
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value)}
+                        />
+                    </form>
                 </div>
             </div>
 
