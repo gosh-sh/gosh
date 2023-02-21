@@ -70,7 +70,10 @@ TOPIC_CODE=$(everdev contract dt $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/c
 # ############################################################
 # Calculate VersionController address
 # ############################################################
-VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
+VERSIONCONTROLLER_TVC="$GOSH_PATH/versioncontroller.tvc"
+echo "========== Generate VC address"
+VERSIONCONTROLLER_ADDR=$(gosh-cli -j genaddr --abi $VERSIONCONTROLLER_ABI --setkey "$seed" --save $VERSIONCONTROLLER_TVC | jq -M ".raw_address" | cut -d '"' -f 2)
+#VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
 echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 
