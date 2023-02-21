@@ -564,14 +564,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pubaddr.unpack();
         _;
-        require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
+        if (_wallets.exists(keyaddr) == false) {
+            GoshWallet(getAddrWalletIn(pubaddr, 0)).setLimitedWallet{value: 0.2 ton}(false, _limit_wallets);
+        }
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
-    }
-    
-    function addRegularTokenTask (address pubaddr, uint128 index, uint128 grant) public view senderIs(getAddrWalletIn(pubaddr, index))  accept
-    {
-        GoshWallet(getAddrWalletIn(pubaddr, 0)).addRegularToken{value:0.2 ton}(grant);
     }
     
     function addVoteToken (address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
