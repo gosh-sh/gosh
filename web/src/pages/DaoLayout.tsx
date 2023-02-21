@@ -46,7 +46,7 @@ const DaoLayout = () => {
         if (dao.details?.isAuthMember) {
             tabs.push({ to: `/o/${daoName}/settings`, title: 'Settings', order: 7 })
             if (dao.details?.version !== '1.0.0') {
-                tabs.push({ to: `/o/${daoName}/topics`, title: 'Topics', order: 6 })
+                // tabs.push({ to: `/o/${daoName}/topics`, title: 'Topics', order: 6 })
             }
         }
 
