@@ -566,6 +566,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _;
         if (_wallets.exists(keyaddr) == false) {
             GoshWallet(getAddrWalletIn(pubaddr, 0)).setLimitedWallet{value: 0.2 ton}(false, _limit_wallets);
+            _wallets[keyaddr] = MemberToken(getAddrWalletIn(pubaddr, 0), 0);
         }
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
