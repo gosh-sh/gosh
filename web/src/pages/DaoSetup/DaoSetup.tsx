@@ -110,7 +110,7 @@ const DaoSetupPage = () => {
                                         help={
                                             values.mint
                                                 ? 'This option enables the DAO token mint'
-                                                : 'If you uncheck this option, the DAO will never be able to mint tokens'
+                                                : `If you uncheck this option the DAO token supply will be capped to ${dao.details.supply.total}`
                                         }
                                         helpClassName={
                                             values.mint ? null : 'text-red-ff3b30'
@@ -290,7 +290,7 @@ const DaoSetupPage = () => {
                                         component={FormikCheckbox}
                                         disabled={isSubmitting}
                                         inputProps={{
-                                            label: 'Allow external users to ask DAO membership',
+                                            label: 'Allow external users to request DAO membership',
                                         }}
                                     />
                                 </div>
