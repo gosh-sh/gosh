@@ -785,7 +785,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _deployRepository(string nameRepo, string descr, optional(AddrVersion) previous) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         AddrVersion[] emptyArr;
         if (previous.hasValue() == false) {
             _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
@@ -802,11 +801,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(AddrVersion) previous,
         string comment,
         uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
+    ) public onlyOwnerPubkeyOptional(_access) accept {
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
         _saveMsg();
 
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
