@@ -78,10 +78,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                         </Button>
                         {urlBack && (
                             <Button
-                                className={classNames(
-                                    'text-red-ff3b30 border border-red-ff3b30',
-                                    '!bg-white hover:!bg-red-ff3b30/5 hover:text-red-ff3b30',
-                                )}
+                                variant="outline-danger"
                                 disabled={isSubmitting}
                                 onClick={() => navigate(urlBack)}
                             >

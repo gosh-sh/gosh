@@ -224,6 +224,7 @@ const TaskPage = () => {
                                                     <Form>
                                                         <Button
                                                             type="submit"
+                                                            variant="outline-danger"
                                                             className="w-full"
                                                             isLoading={isSubmitting}
                                                             disabled={isSubmitting}

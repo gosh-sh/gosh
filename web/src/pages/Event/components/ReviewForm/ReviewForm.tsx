@@ -34,10 +34,10 @@ const EventReviewForm = (props: TEventReviewFormProps) => {
                     <div className="mt-6 flex flex-nowrap">
                         <Button
                             type="button"
+                            variant="custom"
                             className={classNames(
-                                'grow !bg-white !text-black',
-                                'border !border-gray-e6edff',
-                                'rounded-l-lg rounded-r-none',
+                                'grow bg-white text-black',
+                                '!border-gray-e6edff rounded-l-lg rounded-r-none',
                                 values.accept === true
                                     ? '!bg-green-34c759 !text-white !border-transparent'
                                     : null,
@@ -49,10 +49,10 @@ const EventReviewForm = (props: TEventReviewFormProps) => {
                         </Button>
                         <Button
                             type="button"
+                            variant="custom"
                             className={classNames(
-                                'grow !bg-white !text-black',
-                                'border-y border-r !border-gray-e6edff',
-                                'rounded-r-lg rounded-l-none',
+                                'grow bg-white text-black',
+                                '!border-gray-e6edff rounded-r-lg rounded-l-none',
                                 values.accept !== true
                                     ? '!bg-red-ff3b30 !text-white !border-transparent'
                                     : null,
