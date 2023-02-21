@@ -53,8 +53,8 @@ echo "Upgrade DAO"
 upgrade_DAO
 
 echo "***** new repo05a deploy *****"
-gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
+gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
@@ -79,7 +79,6 @@ if [ $cur_ver != "main" ]; then
   exit 1
 fi
 echo "GOOD CONTENT"
-#exit 0
 
 git checkout -b parent_branch origin/parent_branch
 git checkout main
@@ -99,6 +98,6 @@ echo "GOOD CONTENT"
 
 cd ..
 
-GOSH_TRACE=5 git clone $NEW_LINK $REPO_PATH_CHECK
+git clone $NEW_LINK $REPO_PATH_CHECK
 
 echo "TEST SUCCEEDED"

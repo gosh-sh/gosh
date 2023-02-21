@@ -1,5 +1,5 @@
 use crate::abi as gosh_abi;
-use crate::blockchain::EverClient;
+use crate::blockchain::{AddrVersion, EverClient};
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 pub mod save;
@@ -16,9 +16,11 @@ pub struct GoshCommit {
     repo: String,
     pub branch: String,
     pub sha: String,
-    parents: Vec<String>,
+    parents: Vec<AddrVersion>,
     pub content: String,
     pub initupgrade: bool,
+    #[serde(rename = "isCorrectCommit")]
+    is_correct_commit: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

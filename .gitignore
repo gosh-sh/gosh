@@ -25,3 +25,6 @@ deno.lock
 
 !tests/node_se_scripts/prop_id_gen.tvc
 !tests/node_se_scripts/local_giver.keys.json
+
+gosh-cli.conf.json
+

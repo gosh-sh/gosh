@@ -6,7 +6,7 @@ use crate::{
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale, self,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };
@@ -19,6 +19,7 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
+use crate::blockchain::AddrVersion;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -30,7 +31,7 @@ pub struct DeployCommitParams {
     pub commit_id: String,
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
-    pub parents: Vec<BlockchainContractAddress>,
+    pub parents: Vec<AddrVersion>,
     #[serde(rename = "tree")]
     pub tree_addr: BlockchainContractAddress,
     upgrade: bool,
@@ -67,7 +68,7 @@ pub trait BlockchainCommitPusher {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents: &[BlockchainContractAddress],
+        parents:&Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
@@ -92,7 +93,7 @@ impl BlockchainCommitPusher for Everscale {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents: &[BlockchainContractAddress],
+        parents: &Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> anyhow::Result<()> {
         let args = DeployCommitParams {
@@ -100,7 +101,7 @@ impl BlockchainCommitPusher for Everscale {
             branch_name: branch.to_string(),
             commit_id: commit_id.clone().to_string(),
             raw_commit: raw_commit.to_owned(),
-            parents: parents.to_owned(),
+            parents: parents.to_vec(),
             tree_addr: tree_addr.clone(),
             upgrade: upgrade_commit,
         };

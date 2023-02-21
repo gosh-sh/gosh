@@ -14,7 +14,6 @@ use ton_client::{
         ParamsOfProcessMessage, ParamsOfSendMessage, ResultOfProcessMessage, ResultOfSendMessage,
     },
 };
-pub use crate::abi as gosh_abi;
 use tracing::Instrument;
 
 #[async_trait]

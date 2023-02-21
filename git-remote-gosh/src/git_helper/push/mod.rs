@@ -38,7 +38,7 @@ mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
 use crate::blockchain::contract::{ContractRead, GoshContract};
-use crate::blockchain::{get_commit_by_addr, gosh_abi};
+use crate::blockchain::{AddrVersion, get_commit_by_addr, GetNameCommitResult, gosh_abi};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
@@ -63,15 +63,6 @@ impl PushBlobStatistics {
         self.new_snapshots += another.new_snapshots;
         self.diffs += another.diffs;
     } */
-}
-
-#[derive(Deserialize, Debug)]
-pub struct AddrVersion {
-    #[serde(rename = "addr")]
-    pub address: BlockchainContractAddress,
-
-    #[serde(rename = "version")]
-    pub version: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -266,16 +257,21 @@ where
         }
         let remote_commit_addr =
             BlockchainContractAddress::todo_investigate_unexpected_convertion(remote_commit_addr);
-        let commit = self
-            .blockchain
-            .get_commit_by_addr(&remote_commit_addr)
-            .await?
-            .unwrap();
-        let prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
+        // let commit = self
+        //     .blockchain
+        //     .get_commit_by_addr(&remote_commit_addr)
+        //     .await?
+        //     .unwrap();
+        // TODO: get commit can fail due to changes in versions
+        let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
+        let sha: GetNameCommitResult = commit_contract.run_static(self.blockchain.client(), "getNameCommit", None).await?;
+        tracing::trace!("Commit sha: {sha:?}");
+        let sha = sha.name;
+        let prev_commit_id = Some(ObjectId::from_str(&sha)?);
 
         Ok((
-            if commit.sha != ZERO_SHA.to_owned() {
-                commit.sha
+            if sha != ZERO_SHA.to_owned() {
+                sha
             } else {
                 String::new()
             },
@@ -298,7 +294,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
         upgrade_commit: bool,
-        parents_for_upgrade: Vec<BlockchainContractAddress>,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -320,7 +316,7 @@ where
             // if parent_ids is empty, add bogus parent
             parent_ids.push(ZERO_SHA.to_string());
         }
-        let mut parents: Vec<BlockchainContractAddress> = vec![];
+        let mut parents: Vec<AddrVersion> = vec![];
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
         for id in parent_ids {
@@ -330,7 +326,9 @@ where
                 &id.to_string(),
             )
             .await?;
-            parents.push(parent);
+            let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+            let version = parent_contract.get_version(self.blockchain.client()).await.unwrap_or("Unknown".to_string());
+            parents.push(AddrVersion { address: parent, version });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
             parents = parents_for_upgrade;
@@ -369,7 +367,7 @@ where
                                     &remote,
                                     &dao_addr,
                                     &raw_commit,
-                                    &*parents,
+                                    &parents,
                                     upgrade_commit,
                                 )
                                 .await
@@ -482,7 +480,7 @@ where
         tracing::trace!("prev repo addr: {previous:?}");
 
         // 4) Get address of the ancestor commit of previous version
-        let previous_repo_addr = previous.previous
+        let previous_repo_addr = previous.previous.clone()
             .ok_or(anyhow::format_err!("Failed to get previous version of the repo"))?
             .address;
         let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
@@ -495,13 +493,15 @@ where
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
-        let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
-            .await?
-            .unwrap();
-        tracing::trace!("Prev version commit data: {commit:?}");
+        // let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
+        //     .await?
+        //     .unwrap();
+        // tracing::trace!("Prev version commit data: {commit:?}");
 
         // 6) For new version ancestor commit set parent to the ancestor commit of previous version
-        let parents_for_upgrade = vec![prev_ancestor_address.clone()];
+        let parents_for_upgrade = vec![
+            AddrVersion { address: prev_ancestor_address.clone(), version: previous.previous.unwrap().version}
+        ];
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?

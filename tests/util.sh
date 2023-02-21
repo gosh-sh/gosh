@@ -118,7 +118,7 @@ function upgrade_DAO {
   wallet_tombstone=$(gosh-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
   echo "WALLET tombstone: $wallet_tombstone"
 
-  if [ "$wallet_tombstone" = "false" ]; then
+  if [ "$wallet_tombstone" = " false" ]; then
     echo "Tombstone was not set"
     exit 1
   fi

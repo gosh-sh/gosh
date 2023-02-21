@@ -7,6 +7,8 @@ set -o pipefail
 # Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <network_name>
 DEFAULT_NETWORK=localhost
 
+GOSH_PATH=../contracts/v1.0.0/gosh
+
 if [ -z "$1" ]
   then
     export NETWORK=$DEFAULT_NETWORK
@@ -18,18 +20,18 @@ echo "TEST INDEX $TEST_INDEX"
 echo "export NETWORK=$NETWORK" > env.env
 
 tonos-cli config --url $NETWORK
-
+set -x
 # Should exist VersionConrtroler and SystemContract contracts
 
-export SYSTEM_CONTRACT_ADDR=`cat ../contracts/gosh/SystemContract.addr`
+export SYSTEM_CONTRACT_ADDR=`cat $GOSH_PATH/SystemContract.addr`
 echo "export SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR" >> env.env
 
-export SYSTEM_CONTRACT_ABI=../contracts/gosh/systemcontract.abi.json
-USER_PROFILE_ABI=../contracts/gosh/profile.abi.json
+export SYSTEM_CONTRACT_ABI=$GOSH_PATH/systemcontract.abi.json
+USER_PROFILE_ABI=../contracts/profile.abi.json
 echo "export SYSTEM_CONTRACT_ABI=$SYSTEM_CONTRACT_ABI" >> env.env
-export REPO_ABI=../contracts/gosh/repository.abi.json
+export REPO_ABI=$GOSH_PATH/repository.abi.json
 echo "export REPO_ABI=$REPO_ABI" >> env.env
-DAO_ABI=../contracts/gosh/goshdao.abi.json
+DAO_ABI=$GOSH_PATH/goshdao.abi.json
 echo "export DAO_ABI=$DAO_ABI" >> env.env
 
 # generate user keys
@@ -73,7 +75,7 @@ echo "export WALLET_PUBKEY=$WALLET_PUBKEY" >> env.env
 WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 export WALLET_ADDR
 echo "export WALLET_ADDR=$WALLET_ADDR" >> env.env
-export WALLET_ABI=../contracts/gosh/goshwallet.abi.json
+export WALLET_ABI=$GOSH_PATH/goshwallet.abi.json
 echo "export WALLET_ABI=$WALLET_ABI" >> env.env
 
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
