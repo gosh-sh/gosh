@@ -511,7 +511,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
-            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowanceC{value: 0.1 ton}(grant[index]);
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowanceC{value: 0.2 ton}(grant[index]);
         } else {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
@@ -521,7 +521,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
-        this.changeAllowanceIn{value:0.1 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
     }
     
     function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
@@ -533,7 +533,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
-            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.1 ton}(grant[index]);
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.2 ton}(grant[index]);
         } else {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
@@ -543,7 +543,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
-        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
     }
     
     function returnAllowance (uint128 grant, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index))  accept

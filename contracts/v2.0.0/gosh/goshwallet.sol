@@ -1347,7 +1347,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 diff = math.min(grant, m_pseudoDAOBalance - m_pseudoDAOVoteBalance);
         m_pseudoDAOVoteBalance += diff;
         if (diff != grant) {
-            GoshDao(_goshdao).returnAllowance(grant - diff, _pubaddr, _index);
+            GoshDao(_goshdao).returnAllowance{value: 0.2 ton}(grant - diff, _pubaddr, _index);
         }
         getMoney();
     }
