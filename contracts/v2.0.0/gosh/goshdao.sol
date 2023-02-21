@@ -575,6 +575,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
+        address wallet = getAddrWalletIn(pub, 0);
         require(_reserve >= grant, ERR_LOW_TOKEN_RESERVE);
         if (_wallets.exists(keyaddr) == false) {
             TvmCell s1 = _composeWalletStateInit(pub, 0);
@@ -586,7 +587,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, 1, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);           
-            GoshWallet(getAddrWalletIn(pubaddr, 0)).setLimitedWallet{value: 0.2 ton}(false, _limit_wallets);
+            GoshWallet(wallet).setLimitedWallet{value: 0.2 ton}(false, _limit_wallets);
+            _wallets[keyaddr] = MemberToken(wallet, 0);
         }
         GoshWallet(getAddrWalletIn(pub, 0)).addVoteToken{value:0.2 ton}(grant);
         _wallets[keyaddr].count += grant;
