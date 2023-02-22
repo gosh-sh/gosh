@@ -121,6 +121,12 @@ struct SendMessageResult {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct GetNameBranchResult {
+    #[serde(rename = "value0")]
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
