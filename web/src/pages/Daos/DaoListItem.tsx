@@ -30,7 +30,7 @@ const DaoListItem = (props: TDaoListItemProps) => {
                     <div className="mb-1 grow">
                         <Link
                             to={`/o/${item.name}`}
-                            className="text-xl font-medium leading-5"
+                            className="text-xl font-medium leading-5 capitalize"
                         >
                             {item.name}
                         </Link>

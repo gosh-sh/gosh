@@ -114,7 +114,10 @@ const DaoLayout = () => {
                 </div>
                 <div>
                     <h1 className="mb-2">
-                        <Link to={`/o/${daoName}`} className="font-medium text-2xl">
+                        <Link
+                            to={`/o/${daoName}`}
+                            className="font-medium text-2xl capitalize"
+                        >
                             {daoName}
                         </Link>
                         <span
