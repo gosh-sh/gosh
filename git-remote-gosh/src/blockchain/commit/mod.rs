@@ -16,7 +16,7 @@ pub struct GoshCommit {
     repo: String,
     pub branch: String,
     pub sha: String,
-    pub parents: Vec<AddrVersion>,
+    parents: Vec<AddrVersion>,
     pub content: String,
     pub initupgrade: bool,
     #[serde(rename = "isCorrectCommit")]

@@ -131,12 +131,6 @@ struct SendMessageResult {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GetNameBranchResult {
-    #[serde(rename = "value0")]
-    pub name: String,
-}
-
-#[derive(Deserialize, Debug)]
 pub struct GetNameCommitResult {
     #[serde(rename = "value0")]
     pub name: String,
