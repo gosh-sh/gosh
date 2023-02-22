@@ -1807,8 +1807,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: commit.parents[0].address })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
+
+        let parent: TCommit
+        if (commit.parents[0].version !== this.repo.version) {
+            const _gosh = GoshAdapterFactory.create(commit.parents[0].version)
+            const _dao = await (await this._getDao()).getName()
+            const _repo = await this.getName()
+            const _adapter = await _gosh.getRepository({ path: `${_dao}/${_repo}` })
+            parent = await _adapter.getCommit({ address: commit.parents[0].address })
+        } else {
+            parent = await this.getCommit({ address: commit.parents[0].address })
+        }
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${branch}/${treepath}`
@@ -1877,7 +1889,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         item: { treepath: string; index: number },
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
 
         // If commit was accepted, return blob state at commit
         if (item.index === -1) {
@@ -2450,7 +2464,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
-            await this._setCommit(branch, commitHash, blobsData.length, task)
+            await this._setCommit(branch, commitHash, blobsData.length, false, task)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
@@ -2498,7 +2512,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Set commit
-        await this._setCommit(commit.branch, commit.name, blobs.length)
+        await this._setCommit(commit.branch, commit.name, blobs.length, true)
         const wait = await whileFinite(async () => {
             const check = await this.getBranch(commit.branch)
             return check.commit.address !== commit.address
@@ -3217,6 +3231,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
+        isUpgrade: boolean,
         task?: {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
@@ -3234,6 +3249,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
+            isUpgrade,
             task,
         })
     }
