@@ -2,6 +2,7 @@ import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
+import { Checkbox } from '../../../components/Form'
 import Spinner from '../../../components/Spinner'
 import { octokitSelector, repositoriesSelector } from '../../../store/onboarding.state'
 import {
@@ -113,10 +114,12 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                     <div className="repoitem__header">
                         <FontAwesomeIcon icon={faHardDrive} className="repoitem__icon" />
                         <div className="repoitem__title">{item.name}</div>
-                        <div className="repoitem__check">
-                            <input
-                                type="checkbox"
+                        <div className="repoitem__check z-10">
+                            <Checkbox
                                 checked={item.isSelected}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                }}
                                 onChange={() => {}}
                             />
                         </div>
