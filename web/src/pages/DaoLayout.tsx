@@ -73,13 +73,13 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const _checkUpgrades = async () => {
-            if (!isReady || !dao.adapter || !dao.details?.isAuthMember) {
+            if (!isReady || !dao.details) {
                 return
             }
 
             // Check if using latest version of DAO or new version avaiable
             const latest = Object.keys(AppConfig.versions).reverse()[0]
-            if (dao.adapter.getVersion() !== latest) {
+            if (dao.details.version !== latest) {
                 const gosh = GoshAdapterFactory.createLatest()
                 const newest = await gosh.getDao({
                     name: dao.details.name,
@@ -94,7 +94,7 @@ const DaoLayout = () => {
             }
 
             // Check repositories upgraded flag
-            if (!(await dao.adapter.isRepositoriesUpgraded())) {
+            if (!dao.details.isRepoUpgraded) {
                 setUpgrades('isRepoUpgradeNeeded')
                 return
             }
@@ -104,20 +104,7 @@ const DaoLayout = () => {
         }
 
         _checkUpgrades()
-
-        let _intervalLock = false
-        const interval = setInterval(async () => {
-            if (!_intervalLock) {
-                _intervalLock = true
-                await _checkUpgrades()
-                _intervalLock = false
-            }
-        }, 15000)
-
-        return () => {
-            clearInterval(interval)
-        }
-    }, [isReady, dao.adapter, dao.details?.name, dao.details?.isAuthMember])
+    }, [isReady, dao.details])
 
     return (
         <SideMenuContainer>

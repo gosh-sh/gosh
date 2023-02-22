@@ -439,6 +439,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
+            isRepoUpgraded: true,
         }
     }
 

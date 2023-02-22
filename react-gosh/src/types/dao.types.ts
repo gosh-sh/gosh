@@ -24,6 +24,7 @@ type TDao = {
     isAuthOwner: boolean
     isAuthMember: boolean
     isAuthLimited?: boolean
+    isRepoUpgraded?: boolean
 }
 
 type TDaoListItem = Omit<
