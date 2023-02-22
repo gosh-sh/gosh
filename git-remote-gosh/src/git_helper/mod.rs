@@ -285,6 +285,36 @@ where
     fn set_verbosity(&mut self, verbosity: u8) {
         set_log_verbosity(verbosity)
     }
+
+    pub async fn find_commit(&self, commit_id: &String) -> anyhow::Result<(String, BlockchainContractAddress)> {
+        tracing::trace!("Find commit {commit_id}");
+        let mut repo_versions = self.get_repo_versions(true).await?;
+        repo_versions.pop();
+        tracing::trace!("Repo versions {repo_versions:?}");
+        for version in repo_versions {
+            tracing::trace!("Check {version}");
+            let mut iter = version.split(' ');
+            let version: &str = iter.next().unwrap();
+            let repo_address: &str = iter.next().unwrap();
+            let repo_address = BlockchainContractAddress::new(repo_address.to_string());
+            let mut repo_contract = GoshContract::new(&repo_address, gosh_abi::REPO);
+            let commit_address = get_commit_address(
+                self.blockchain.client(),
+                &mut repo_contract,
+                commit_id,
+            ).await?;
+            tracing::trace!("commit_address {commit_address}");
+            let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
+            let res: anyhow::Result<Value> = commit_contract
+                .run_static(self.blockchain.client(), "getVersion", None)
+                .await;
+            if res.is_err() {
+                continue;
+            }
+            return Ok((version.to_string(), commit_address));
+        }
+        anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
+    }
 }
 
 async fn build_blockchain(
@@ -411,7 +441,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                         //     .repo_contract()
                         //     .read_state(helper.blockchain.client(), "getPrevious", None)
                         //     .await?;
-                        let version = find_commit(&helper, &sha).await?;
+                        let version = helper.find_commit(&sha).await?.0;
                         let out_str = format!("dispatcher {version} fetch {sha} {name}");
                         stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
                         return Ok(());
@@ -452,36 +482,6 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
         }
     }
     Ok(())
-}
-
-async fn find_commit(helper: &GitHelper, commit_id: &String) -> anyhow::Result<String> {
-    tracing::trace!("Find commit {commit_id}");
-    let mut repo_versions = helper.get_repo_versions(true).await?;
-    repo_versions.pop();
-    tracing::trace!("Repo versions {repo_versions:?}");
-    for version in repo_versions {
-        tracing::trace!("Check {version}");
-        let mut iter = version.split(' ');
-        let version: &str = iter.next().unwrap();
-        let repo_address: &str = iter.next().unwrap();
-        let repo_address = BlockchainContractAddress::new(repo_address.to_string());
-        let mut repo_contract = GoshContract::new(&repo_address, gosh_abi::REPO);
-        let commit_address = get_commit_address(
-            helper.blockchain.client(),
-            &mut repo_contract,
-            commit_id,
-        ).await?;
-        tracing::trace!("commit_address {commit_address}");
-        let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
-        let res: anyhow::Result<Value> = commit_contract
-            .run_static(helper.blockchain.client(), "getVersion", None)
-            .await;
-        if res.is_err() {
-            continue;
-        }
-        return Ok(version.to_string());
-    }
-    anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
 }
 
 #[cfg(test)]

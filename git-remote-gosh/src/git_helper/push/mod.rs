@@ -302,15 +302,26 @@ where
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
         for id in parent_ids {
+            tracing::trace!("check parent: {id}");
             let parent = get_commit_address(
                 &self.blockchain.client(),
                 &mut repo_contract,
                 &id.to_string(),
             )
                 .await?;
+            tracing::trace!("parent address: {parent}");
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                self.check_and_upgrade_previous_commit(id.to_string(),local_branch_name, remote_branch_name).await?;
+                tracing::trace!("Failed to call parent");
+                let right_commit_address = self.find_commit(&id).await?.1;
+                let commit_contract  = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
+                let branch: GetNameCommitResult = commit_contract.run_static(
+                    self.blockchain.client(),
+                    "getNameBranch",
+                    None,
+                ).await?;
+                // TODO: local and remote branch are set equal here it can be wrong
+                self.check_and_upgrade_previous_commit(id.to_string(),&branch.name, &branch.name).await?;
             }
         }
         Ok(())
