@@ -78,7 +78,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     snapshot_address: &blockchain::BlockchainContractAddress,
     blobs: &mut HashSet<git_hash::ObjectId>,
     visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
     tracing::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
         let visited = visited.lock().unwrap();
@@ -86,7 +86,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     }
     tracing::info!("remaining: {:?}", blobs);
     if blobs.is_empty() {
-        return Ok(());
+        return Ok(blobs.to_owned());
     }
 
     // In general it is not nice to return tuples since
@@ -133,9 +133,10 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
-
+    let mut parsed = vec![];
     while !blobs.is_empty() {
         tracing::info!("Still expecting to restore blobs: {:?}", blobs);
+
         // take next a chunk of messages and reverse it on a snapshot
         // remove matching blob ids
         //
@@ -147,8 +148,11 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .await?
                 .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.")
         };
+        if parsed.contains(&message.diff.modified_blob_sha1) {
+            break;
+        }
         tracing::trace!("got message: {:?}", message);
-
+        parsed.push(message.diff.modified_blob_sha1.clone());
         let blob_data: Vec<u8> = if message.diff.remove_ipfs {
             let data = match message.diff.get_patch_data() {
                 Some(content) => content,
@@ -197,7 +201,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         }
         blobs.remove(&blob_id);
     }
-    Ok(())
+    Ok(blobs.to_owned())
 }
 
 async fn convert_snapshot_into_blob(
@@ -326,8 +330,10 @@ impl BlobsRebuildingPlan {
 
         tracing::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
-        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<()>>> =
+        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>> =
             FuturesUnordered::new();
+
+        let mut unvisited_blobs = HashSet::new();
 
         for (snapshot_address, blobs) in self.snapshot_address_to_blob_sha.iter_mut() {
             let es_client = Arc::clone(git_helper.blockchain.client());
@@ -385,10 +391,23 @@ impl BlobsRebuildingPlan {
                 Ok(Err(e)) => {
                     panic!("restore_a_set_of_blobs_from_a_known_snapshot inner: {}", e);
                 }
-                Ok(Ok(_)) => {}
+                Ok(Ok(blobs)) => {
+                    tracing::trace!("Blobs after restore: {blobs:?}");
+                    for blob in blobs {
+                        unvisited_blobs.insert(blob);
+                    }
+                }
             }
         }
+        tracing::trace!("unvisited_blobs: {unvisited_blobs:?}");
+        tracing::trace!("visited_blobs: {visited:?}");
 
+        for blob in unvisited_blobs {
+            let vis = visited.lock().unwrap();
+            if !vis.contains(&blob) {
+                panic!("Failed to restore: {blob}");
+            }
+        }
         Ok(())
     }
 }
