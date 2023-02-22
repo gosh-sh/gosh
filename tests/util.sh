@@ -172,7 +172,7 @@ function upgrade_DAO_2 {
   WALLET_ADDR=$(gosh-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
   echo "NEW_WALLET_ADDR=$WALLET_ADDR"
 
-  gosh-cli call --abi $USER_PROFILE_ABI_1 $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
+  gosh-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
     "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
 }
 

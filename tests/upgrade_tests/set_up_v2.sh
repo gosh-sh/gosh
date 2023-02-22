@@ -17,6 +17,7 @@ OLD_GOSH_PATH=../../v1.0.0/gosh
 
 echo "export CUR_VERSION=$CUR_VERSION" >> env.env
 echo "export TEST_VERSION1=$TEST_VERSION1" >> env.env
+echo "export TEST_VERSION2=9998.0.0" >> env.env
 
 export NETWORK="http://192.168.31.227"
 SE_GIVER_ADDRESS="0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415"

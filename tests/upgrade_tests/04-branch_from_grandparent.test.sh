@@ -88,7 +88,7 @@ echo "GOOD VERSION"
 echo branch > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+git push --set-upstream origin parent_branch
 
 cd ..
 
