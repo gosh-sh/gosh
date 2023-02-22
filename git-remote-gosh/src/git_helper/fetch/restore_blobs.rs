@@ -135,7 +135,6 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
     while !blobs.is_empty() {
-        // TODO: message уже могут повторяться а блоб не найден, и это ок надо идти дальше
         tracing::info!("Still expecting to restore blobs: {:?}", blobs);
 
         // take next a chunk of messages and reverse it on a snapshot
