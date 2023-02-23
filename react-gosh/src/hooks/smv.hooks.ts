@@ -30,6 +30,9 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
             }
 
             const data = await adapter.getDetails()
+            if (data.smvLocked) {
+                adapter.releaseAll()
+            }
             setDetails(data)
         }
 

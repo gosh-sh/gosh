@@ -264,6 +264,13 @@ type TTopicMessageCreateParams = {
     answerId?: string
 }
 
+type TIsMemberParams = {
+    username?: string
+    profile?: TAddress
+}
+
+type TIsMemberResult = Promise<boolean>
+
 export {
     ETaskBounty,
     TDao,
@@ -310,4 +317,6 @@ export {
     TTopic,
     TTopicCreateParams,
     TTopicMessageCreateParams,
+    TIsMemberParams,
+    TIsMemberResult,
 }

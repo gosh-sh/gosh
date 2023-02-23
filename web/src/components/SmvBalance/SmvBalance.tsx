@@ -1,11 +1,8 @@
 import { faCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { toast } from 'react-toastify'
-import { TSmvDetails, useSmvTokenTransfer } from 'react-gosh'
+import { TSmvDetails } from 'react-gosh'
 import { classNames } from 'react-gosh'
-import Spinner from '../Spinner'
 import { IGoshSmvAdapter } from 'react-gosh/dist/gosh/interfaces'
-import ToastError from '../Error/ToastError'
 
 type TSmvBalanceProps = {
     adapter?: IGoshSmvAdapter
@@ -14,18 +11,7 @@ type TSmvBalanceProps = {
 }
 
 const SmvBalance = (props: TSmvBalanceProps) => {
-    const { adapter, details, className } = props
-    const { releaseAll, progress } = useSmvTokenTransfer(adapter)
-
-    const onTokensRelease = async () => {
-        try {
-            await releaseAll()
-            toast.success('Token release was sent, balance will be updated soon')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
-    }
+    const { details, className } = props
 
     return (
         <>
@@ -57,17 +43,6 @@ const SmvBalance = (props: TSmvBalanceProps) => {
                             details.isLockerBusy ? 'text-rose-600' : 'text-green-900',
                         )}
                     />
-                </div>
-                <div>
-                    <button
-                        type="button"
-                        className="btn btn--body text-sm px-4 py-1.5"
-                        onClick={onTokensRelease}
-                        disabled={progress.releaseAll || details.isLockerBusy}
-                    >
-                        {progress.releaseAll && <Spinner className="mr-2" />}
-                        Release
-                    </button>
                 </div>
             </div>
         </>

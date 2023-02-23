@@ -3,7 +3,7 @@ export enum EGoshError {
 
     GOSH_UNDEFINED = 'Gosh undefined',
 
-    PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
+    PROFILE_NOT_EXIST = 'Profile does not exist',
     PROFILE_EXISTS = 'Profile already exists',
     PROFILE_PUBKEY_INVALID = 'Profile access denied with provided phrase/pubkey',
     PROFILE_UNDEFINED = 'Profile undefined',

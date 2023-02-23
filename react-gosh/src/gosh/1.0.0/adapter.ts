@@ -74,6 +74,8 @@ import {
     TDaoEventShowProgressResult,
     TDaoAskMembershipAllowanceResult,
     TRepositoryCreateCommitTagParams,
+    TIsMemberParams,
+    TIsMemberResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -382,6 +384,23 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     async isRepositoriesUpgraded(): Promise<boolean> {
         return true
+    }
+
+    async isMember(params: TIsMemberParams): TIsMemberResult {
+        const { username, profile } = params
+
+        let pubaddr: string
+        if (username) {
+            const _profiles = await this.gosh.isValidProfile([username])
+            pubaddr = _profiles[0].address
+        } else if (profile) {
+            pubaddr = profile
+        } else {
+            throw new GoshError('Either profile address or username should be provided')
+        }
+
+        const { value0 } = await this.dao.runLocal('isMember', { pubaddr })
+        return value0
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
@@ -728,12 +747,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     private async _isAuthMember(): Promise<boolean> {
-        if (!this.profile) return false
-
-        const { value0 } = await this.dao.runLocal('isMember', {
-            pubaddr: this.profile.address,
-        })
-        return value0
+        if (!this.profile) {
+            return false
+        }
+        return await this.isMember({ profile: this.profile.address })
     }
 
     private async _getWalletAddress(profile: TAddress, index: number): Promise<TAddress> {
