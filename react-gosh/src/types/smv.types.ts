@@ -34,6 +34,7 @@ type TSmvDetails = {
     smvAvailable: number
     smvLocked: number
     isLockerBusy: boolean
+    allowance: number
 }
 
 type TSmvEventVotes = {
