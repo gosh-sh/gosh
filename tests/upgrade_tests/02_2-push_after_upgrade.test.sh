@@ -44,7 +44,7 @@ echo old_ver > 1.txt
 git add 1.txt
 git commit -m test
 git push
-git log
+#git log
 
 cd ..
 
@@ -69,7 +69,7 @@ git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git log
+#git log
 git push
 cd ..
 

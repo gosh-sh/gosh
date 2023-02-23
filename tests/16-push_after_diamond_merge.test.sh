@@ -85,12 +85,12 @@ if [ "$cur_ver" != "new_ver" ]; then
 fi
 echo "GOOD CONTENT"
 
-echo "-after_merge" >> 1.txt
+echo "after_merge" > 1.txt
 git add 1.txt
 git commit -m after_merge1
 git push
 
-echo "-after_merge" >> 2.txt
+echo "after_merge" > 2.txt
 git add 2.txt
 git commit -m after_merge2
 git push
@@ -103,14 +103,14 @@ echo "***** check repo *****"
 cd "$CHECK_REPO_PATH"
 
 cur_ver=$(cat 1.txt)
-if [ "$cur_ver" != "parent-after_merge" ]; then
+if [ "$cur_ver" != "after_merge" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
 cur_ver=$(cat 2.txt)
-if [ "$cur_ver" != "new_ver-after_merge" ]; then
+if [ "$cur_ver" != "after_merge" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi

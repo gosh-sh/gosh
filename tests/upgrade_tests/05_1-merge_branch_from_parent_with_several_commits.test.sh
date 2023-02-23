@@ -92,7 +92,7 @@ echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
 git push
 
-git log
+#git log
 
 cur_ver=$(cat 1.txt)
 if [ "$cur_ver" != "parent2" ]; then

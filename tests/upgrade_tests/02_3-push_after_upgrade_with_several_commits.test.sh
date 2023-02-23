@@ -74,7 +74,7 @@ git add 1.txt
 git commit -m test2
 git push
 
-git log
+#git log
 
 cd ..
 
