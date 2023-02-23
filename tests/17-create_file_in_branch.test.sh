@@ -30,12 +30,12 @@ git push
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
 
-echo preparent > 1.txt
-git add 1.txt
+echo preparent > 2.txt
+git add 2.txt
 git commit -m testbranch
 
-echo parent > 1.txt
-git add 1.txt
+echo parent > 2.txt
+git add 2.txt
 git commit -m testbranch2
 
 git push --set-upstream origin parent_branch
@@ -44,8 +44,8 @@ echo "***** Switch back to main *****"
 git checkout main
 
 echo "***** push to main *****"
-echo new_ver > 2.txt
-git add 2.txt
+echo new_ver > 1.txt
+git add 1.txt
 git commit -m test2
 git push
 
@@ -53,10 +53,10 @@ echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
 git push
 
-git log
+#git log
 
-cur_ver=$(cat 1.txt)
-if [ $cur_ver != "parent" ]; then
+cur_ver=$(cat 2.txt)
+if [ "$cur_ver" != "parent" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
@@ -64,20 +64,20 @@ echo "GOOD CONTENT"
 
 echo "***** cloning repo *****"
 cd ..
-GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone" &> test_clone_15.log
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
-cur_ver=$(cat 1.txt)
-if [ $cur_ver != "parent" ]; then
+cur_ver=$(cat 2.txt)
+if [ "$cur_ver" != "parent" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
-cur_ver=$(cat 2.txt)
-if [ $cur_ver != "new_ver" ]; then
+cur_ver=$(cat 1.txt)
+if [ "$cur_ver" != "new_ver" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi

@@ -10,10 +10,10 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo05
-DAO_NAME="dao-upgrade-test05_$(date +%s)"
-NEW_REPO_PATH=upgrade_repo05_v2
-REPO_PATH_CHECK=upgrade_repo05_v2_check
+REPO_NAME=upgrade_repo05_1
+DAO_NAME="dao-upgrade-test05_1_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo05_1_v2
+REPO_PATH_CHECK=upgrade_repo05_1_v2_check
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -79,7 +79,7 @@ git commit -m test2
 git push
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "main" ]; then
+if [ "$cur_ver" != "main" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
@@ -95,7 +95,7 @@ git push
 git log
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "parent2" ]; then
+if [ "$cur_ver" != "parent2" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi

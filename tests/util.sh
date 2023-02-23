@@ -179,7 +179,7 @@ function upgrade_DAO_2 {
 function add_protected_branch {
   echo "***** start proposal for add protected branch *****"
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --num_clients 1
-  NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | sed  's/last_paid:     //')
+  NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 
   sleep 60

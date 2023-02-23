@@ -12,9 +12,11 @@ fi
 
 REPO_NAME=upgrade_repo06a
 DAO_NAME="dao-upgrade-test06a_$(date +%s)"
+REPO_PATH_CHECK=upgrade_repo06a_check
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
+[ -d $REPO_PATH_CHECK ] && rm -rf $REPO_PATH_CHECK
 
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
@@ -57,9 +59,8 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
+echo "***** push to new version *****"
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
 echo middle_ver > 2.txt
 git add 2.txt
 git commit -m test2
@@ -79,31 +80,34 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
+echo "***** push to latest version *****"
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
 echo new_ver > 2.txt
 git add 2.txt
 git commit -m test2
 git push
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "main" ]; then
+if [ "$cur_ver" != "main" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
 echo "**** Merge grandparent branch *****"
-git merge grandparent_branch
+git merge grandparent_branch -m merge
+git push
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "grandparent" ]; then
+if [ "$cur_ver" != "grandparent" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
 cd ..
+
+git clone $NEW_LINK $REPO_PATH_CHECK
+
 
 echo "TEST SUCCEEDED"

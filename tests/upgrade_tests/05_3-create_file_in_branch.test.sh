@@ -10,15 +10,17 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=upgrade_repo05
-DAO_NAME="dao-upgrade-test05_$(date +%s)"
-NEW_REPO_PATH=upgrade_repo05_v2
-REPO_PATH_CHECK=upgrade_repo05_v2_check
+REPO_NAME=upgrade_repo05_3
+DAO_NAME="dao-upgrade-test05_3_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo05_3_v2
+REPO_PATH_CHECK=upgrade_repo05_3_v2_check
+REPO_PATH_CHECK2=upgrade_repo05_3_v2_check2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
 [ -d $REPO_PATH_CHECK ] && rm -rf $REPO_PATH_CHECK
+[ -d $REPO_PATH_CHECK2 ] && rm -rf $REPO_PATH_CHECK2
 
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
@@ -39,9 +41,14 @@ git push
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
 
-echo parent > 1.txt
-git add 1.txt
+echo preparent > 2.txt
+git add 2.txt
 git commit -m testbranch
+
+echo parent > 2.txt
+git add 2.txt
+git commit -m testbranch2
+
 git push --set-upstream origin parent_branch
 
 echo "***** Switch back to main *****"
@@ -68,17 +75,10 @@ git clone $NEW_LINK $NEW_REPO_PATH
 cd $NEW_REPO_PATH
 
 echo "***** push to the new repo *****"
-echo new_ver > 2.txt
-git add 2.txt
+echo new_ver > 1.txt
+git add 1.txt
 git commit -m test2
 git push
-
-cur_ver=$(cat 1.txt)
-if [ "$cur_ver" != "main" ]; then
-  echo "WRONG CONTENT"
-  exit 1
-fi
-echo "GOOD CONTENT"
 
 git checkout -b parent_branch origin/parent_branch
 git checkout main
@@ -87,17 +87,51 @@ echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
 git push
 
-git log
+#git log
 
-cur_ver=$(cat 1.txt)
+cd ..
+
+git clone $NEW_LINK $REPO_PATH_CHECK
+
+cd $REPO_PATH_CHECK
+
+cur_ver=$(cat 2.txt)
 if [ "$cur_ver" != "parent" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
+echo "after_merge" > 1.txt
+git add 1.txt
+git commit -m after_merge1
+git push
+
+echo "after_merge" > 2.txt
+git add 2.txt
+git commit -m after_merge2
+git push
+
+echo "***** cloning repo *****"
 cd ..
+git clone $NEW_LINK "$REPO_PATH_CHECK2"
 
-git clone $NEW_LINK $REPO_PATH_CHECK
+echo "***** check repo *****"
+cd "$REPO_PATH_CHECK2"
 
+cur_ver=$(cat 2.txt)
+if [ "$cur_ver" != "after_merge" ]; then
+  echo "WRONG CONTENT"
+  exit 1
+fi
+echo "GOOD CONTENT"
+
+cur_ver=$(cat 1.txt)
+if [ "$cur_ver" != "after_merge" ]; then
+  echo "WRONG CONTENT"
+  exit 1
+fi
+echo "GOOD CONTENT"
+
+cd ..
 echo "TEST SUCCEEDED"

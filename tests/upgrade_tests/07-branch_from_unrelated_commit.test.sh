@@ -81,7 +81,7 @@ echo "***** push to new version *****"
 cd $NEW_REPO_PATH
 
 cur_ver=$(cat 1.txt)
-if [ $cur_ver != "cur_ver" ]; then
+if [ "$cur_ver" != "cur_ver" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
