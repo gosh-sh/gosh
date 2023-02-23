@@ -144,15 +144,16 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             preserved_message = None;
             unused_message
         } else {
-            messages.next(&es_client)
+            let message = messages.next(&es_client)
                 .await?
-                .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.")
+                .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
+            if parsed.contains(&message) {
+                break;
+            }
+            message
         };
-        if parsed.contains(&message.diff.modified_blob_sha1) {
-            break;
-        }
         tracing::trace!("got message: {:?}", message);
-        parsed.push(message.diff.modified_blob_sha1.clone());
+        parsed.push(message.clone());
         let blob_data: Vec<u8> = if message.diff.remove_ipfs {
             let data = match message.diff.get_patch_data() {
                 Some(content) => content,

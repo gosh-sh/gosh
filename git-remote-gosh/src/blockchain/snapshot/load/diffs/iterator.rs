@@ -9,7 +9,7 @@ use std::sync::Arc;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DiffMessage {
     pub diff: Diff,
     pub created_at: u64,
