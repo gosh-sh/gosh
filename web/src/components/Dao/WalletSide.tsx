@@ -56,12 +56,12 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
             className={classNames('border border-gray-e6edff rounded-xl p-5', className)}
         >
             <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Your balance</div>
+                <div className="mb-1 text-gray-7c8db5 text-sm">Your wallet balance</div>
                 <div className="text-xl font-medium">{getUserBalance()}</div>
             </div>
             <hr className="my-4 bg-gray-e6edff" />
             <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Your allowance</div>
+                <div className="mb-1 text-gray-7c8db5 text-sm">Allowance</div>
                 <div className="text-xl font-medium">{getUserAllowance()}</div>
             </div>
             {(dao.details.isAuthMember || dao.details.isAuthLimited) && (

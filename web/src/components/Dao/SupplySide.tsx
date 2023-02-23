@@ -39,7 +39,7 @@ const DaoSupplySide = (props: TDaoSupplySideProps) => {
             className={classNames('border border-gray-e6edff rounded-xl p-5', className)}
         >
             <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Total supply</div>
+                <div className="mb-1 text-gray-7c8db5 text-sm">DAO total supply</div>
                 <div className="text-3xl font-medium">{dao.details.supply.total}</div>
             </div>
             <hr className="my-4 bg-gray-e6edff" />
