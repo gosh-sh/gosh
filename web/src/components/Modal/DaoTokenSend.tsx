@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom'
 import ToastError from '../Error/ToastError'
 import { useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
 type TDaoTokenSendModalProps = {
     dao: {
@@ -69,7 +71,12 @@ const DaoTokenSendModal = (props: TDaoTokenSendModalProps) => {
     }
 
     return (
-        <Dialog.Panel className="rounded-xl bg-white p-10 w-full max-w-md">
+        <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-md">
+            <div className="absolute right-2 top-2">
+                <button className="px-3 py-2 text-gray-7c8db5" onClick={resetModal}>
+                    <FontAwesomeIcon icon={faTimes} size="lg" />
+                </button>
+            </div>
             <Dialog.Title className="mb-8 text-3xl text-center font-medium">
                 Send tokens from DAO
             </Dialog.Title>
