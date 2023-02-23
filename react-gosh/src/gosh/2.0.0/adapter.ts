@@ -2419,7 +2419,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PR_BRANCH)
         }
         if (isPullRequest) {
-            await this._validateProposalStart()
+            await this._validateProposalStart(0)
         }
 
         // Generate blobs push data array
