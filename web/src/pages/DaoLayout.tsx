@@ -40,7 +40,7 @@ const DaoLayout = () => {
         ]
 
         if (dao.details?.isAuthMember || dao.details?.isAuthLimited) {
-            tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet', order: 4 })
+            // tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet', order: 4 })
         }
 
         if (dao.details?.isAuthMember) {

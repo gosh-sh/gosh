@@ -12,6 +12,7 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
         smvAvailable: 0,
         smvLocked: 0,
         isLockerBusy: false,
+        allowance: 0,
     })
 
     useEffect(() => {
@@ -30,9 +31,6 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
             }
 
             const data = await adapter.getDetails()
-            if (data.smvLocked) {
-                adapter.releaseAll()
-            }
             setDetails(data)
         }
 
@@ -47,8 +45,13 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
             }
         }, 10000)
 
+        const intervalRelease = setInterval(async () => {
+            await adapter?.releaseAll()
+        }, 30000)
+
         return () => {
             clearInterval(interval)
+            clearInterval(intervalRelease)
         }
     }, [adapter])
 

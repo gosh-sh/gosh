@@ -1033,10 +1033,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        // Get profile by username
+        const profile = (await this.gosh.isValidProfile([username]))[0]
+
+        // TODO: May be better to move this to hook
+        // Deploy limited wallet if not a DAO member
+        if (!(await this.isMember({ profile: profile.address }))) {
+            await this._createLimitedWallet(profile.address)
+        }
+
         if (cell) {
-            const profiles = await this.gosh.isValidProfile([username])
             const { value0 } = await this.wallet.runLocal('getCellAddVoteToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
             })
@@ -1044,13 +1052,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneAddVoteTokenDao', { grant: amount })
         } else {
-            const profiles = await this.gosh.isValidProfile([username])
             const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
 
             await this.wallet.run('startProposalForAddVoteToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
@@ -1112,6 +1119,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             await this._createLimitedWallet(profile.address)
         }
 
+        await this._convertVoting2Regular(amount)
         await this.wallet.run('sendToken', { pubaddr: profile.address, grant: amount })
     }
 
@@ -1119,6 +1127,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
+
+        await this._convertVoting2Regular(amount)
         await this.wallet.run('sendTokenToDaoReserve', { grant: amount })
     }
 
@@ -1607,6 +1617,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
         if (!wait) {
             throw new GoshError('Create DAO wallet timeout reached')
+        }
+    }
+
+    private async _convertVoting2Regular(amount: number) {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const smv = await this.getSmv()
+        const regular = await smv.getWalletBalance(this.wallet)
+        if (amount > regular) {
+            const delta = amount - regular
+            await smv.transferToWallet(delta)
+
+            const check = await whileFinite(async () => {
+                const _regular = await smv.getWalletBalance(this.wallet!)
+                if (_regular >= amount) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Regular tokens topup failed')
+            }
         }
     }
 }
@@ -3614,34 +3647,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await dao.getReviewers(username)
     }
 
-    /**
-     * TODO
-     * This method is duplicating from GoshSmvAdapter
-     * Change class architecture and remove this...
-     * */
     private async _validateProposalStart(min?: number): Promise<number> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-
-        const address = await this.auth.wallet0.runLocal('tip3VotingLocker', {})
-        const locker = new GoshSmvLocker(this.client, address.tip3VotingLocker)
-
-        const { lockerBusy } = await locker.runLocal('lockerBusy', {})
-        if (lockerBusy) {
-            throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        if (this.auth.wallet0.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        min = min ?? 20
-        if (min > 0) {
-            const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
-            if (+m_tokenBalance < min) {
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
-            }
-        }
+        const dao = await this._getDao()
+        await dao.setAuth(this.auth.username, this.auth.wallet0.account.signer.keys)
 
-        const { m_num_clients } = await locker.runLocal('m_num_clients', {})
-        return +m_num_clients
+        const smv = await dao.getSmv()
+        await smv.validateProposalStart(min)
+        return await smv.getClientsCount()
     }
 }
 
@@ -3673,25 +3692,13 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        // Get allowance
-        // const { value0 } = await this.dao.runLocal('getWalletsFull', {})
-        // const profiles = []
-        // for (const key in value0) {
-        //     const profile = `0:${key.slice(2)}`
-        //     profiles.push({
-        //         profile,
-        //         wallet: value0[key].member,
-        //         allowance: value0[key].count,
-        //     })
-        // }
-        // return profiles
-
         const smvBalance = await this._getLockerBalance()
         return {
             smvBalance: await this.getWalletBalance(this.wallet),
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
             isLockerBusy: await this._isLockerBusy(),
+            allowance: await this._getAuthAllowance(),
         }
     }
 
@@ -3856,17 +3863,48 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async validateProposalStart(min?: number): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (await this._isLockerBusy()) {
             throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
         }
 
         min = min ?? 20
-        if (min > 0) {
-            const { total } = await this._getLockerBalance()
-            if (total < min) {
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
-            }
+        if (min === 0) {
+            return
         }
+
+        // Convert regular tokens to voting
+        const { total, locked } = await this._getLockerBalance()
+        if (total >= min || locked >= min) {
+            return
+        }
+
+        const allowance = await this._getAuthAllowance()
+        if (allowance < min) {
+            throw new GoshError('Allowance too low to start proposal', {
+                yours: allowance,
+                min,
+            })
+        }
+
+        const regular = await this.getWalletBalance(this.wallet)
+        if (regular >= min - total) {
+            await this.transferToSmv(0)
+            const check = await whileFinite(async () => {
+                const { total } = await this._getLockerBalance()
+                if (total >= min!) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Topup for start proposal failed')
+            }
+            return
+        }
+
+        throw new GoshError(EGoshError.SMV_NO_BALANCE)
     }
 
     async transferToSmv(amount: number): Promise<void> {
@@ -3914,6 +3952,38 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         const instance = await this._getEvent(event)
         const { platform_id } = await instance.runLocal('platform_id', {})
+
+        // Check available balance and convert regular tokens to voting if needed
+        const allowance = await this._getAuthAllowance()
+        if (allowance < amount) {
+            throw new GoshError('Allowance is less than amount', {
+                allowance,
+                amount,
+            })
+        }
+
+        const votesIn = await this._getEventUserVotes(platform_id)
+        const { total } = await this._getLockerBalance()
+        const voting = total - votesIn
+        if (voting < amount) {
+            const regular = await this.getWalletBalance(this.wallet)
+            const delta = amount - voting
+            if (regular < delta) {
+                throw new GoshError('Not enough tokens to vote')
+            }
+
+            await this.transferToSmv(delta)
+            const check = await whileFinite(async () => {
+                const { total } = await this._getLockerBalance()
+                if (total >= amount) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Topup voting tokens failed')
+            }
+        }
+
         await this.wallet.run('voteFor', {
             platform_id,
             choice,
@@ -3921,6 +3991,15 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             note: note ?? '',
             num_clients: await this.getClientsCount(),
         })
+    }
+
+    private async _getAuthAllowance() {
+        if (!this.wallet) {
+            return 0
+        }
+        const { value0 } = await this.dao.runLocal('getWalletsToken', {})
+        const member = value0.find((item: any) => item.member === this.wallet?.address)
+        return member ? parseInt(member.count) : 0
     }
 
     private async _isLockerBusy(): Promise<boolean> {

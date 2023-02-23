@@ -1,4 +1,5 @@
 import { Field, Form, Formik } from 'formik'
+import { useCallback } from 'react'
 import { classNames, TDao, TSmvEvent, useSmv, useSmvVote } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
@@ -26,6 +27,13 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
     const smv = useSmv(dao)
     const { vote } = useSmvVote(dao.adapter, event)
 
+    const getMaxAmount = useCallback(() => {
+        return Math.min(
+            smv.details.smvAvailable + smv.details.smvBalance - event.votes.yours,
+            smv.details.allowance,
+        )
+    }, [smv.details, event.votes.yours])
+
     const onSubmit = async (values: TFormValues) => {
         try {
             await vote(values.approve === true, values.amount)
@@ -40,14 +48,14 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
         <Formik
             initialValues={{
                 approve: true,
-                amount: smv.details.smvAvailable - event.votes.yours,
+                amount: getMaxAmount(),
             }}
             onSubmit={onSubmit}
             validationSchema={yup.object().shape({
                 amount: yup
                     .number()
                     .min(1, 'Should be a number >= 1')
-                    .max(smv.details.smvAvailable - event.votes.yours)
+                    .max(getMaxAmount())
                     .required('Field is required'),
             })}
             enableReinitialize
@@ -70,9 +78,6 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
                                         </div>
                                     ),
                                 }}
-                                help={`Available ${
-                                    smv.details.smvAvailable - event.votes.yours
-                                }`}
                                 disabled={isSubmitting}
                             />
                         </div>

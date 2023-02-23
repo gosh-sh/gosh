@@ -2561,6 +2561,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
             isLockerBusy: await this._isLockerBusy(),
+            allowance: 0,
         }
     }
 
