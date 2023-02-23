@@ -1,6 +1,6 @@
 use std::iter::Iterator;
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct Diff {
     #[serde(rename = "snap")]
     snapshot_contract_address: String,
