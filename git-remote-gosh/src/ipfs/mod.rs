@@ -111,7 +111,7 @@ impl IpfsService<MiddlewareHttpClient> {
         IpfsService::save_body(cli, url, body).await
     }
 
-    #[instrument(level = "info", skip_all)]
+    #[instrument(level = "trace", skip_all)]
     async fn load_retriable(cli: &MiddlewareHttpClient, url: &str) -> anyhow::Result<Vec<u8>> {
         tracing::info!("loading from: {}", url);
         let response = cli.get(url).send().await?;

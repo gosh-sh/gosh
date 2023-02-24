@@ -84,7 +84,7 @@ services:
       org.label-schema.group: "gosh-monitoring"
 
   gosh-grafana:
-    image: grafana/grafana:9.1.2
+    image: grafana/grafana:9.3.6
     container_name: gosh-grafana
     volumes:
       - ./data/grafana:/var/lib/grafana

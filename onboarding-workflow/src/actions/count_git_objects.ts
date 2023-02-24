@@ -10,6 +10,7 @@ import {
     createMediumGoshRepoProducer,
     createSmallGoshRepoProducer,
 } from '../queues/mod.ts'
+import { processOutputDump } from '../utils/deno_run.ts'
 
 export async function countGitObjects(github_id: string) {
     const github = await getGithubWithDaoBot(github_id)
@@ -24,10 +25,20 @@ export async function countGitObjects(github_id: string) {
     const git_clone = Deno.run({
         cmd: ['git', 'clone', github_full_repo_url, gitdir],
         cwd: workdir,
+        stdout: 'piped',
+        stderr: 'piped',
     })
     const clone_status = await git_clone.status()
     if (!clone_status.success) {
         console.log(`Can't clone`, github_id)
+
+        await getDb()
+            .from('github')
+            .update({
+                resolution: await processOutputDump(git_clone),
+                ignore: true,
+            })
+            .eq('id', github.id)
         return
     }
 
@@ -36,10 +47,18 @@ export async function countGitObjects(github_id: string) {
         cmd: ['git', 'rev-list', '--all', '--count', '--objects'],
         cwd: gitdir,
         stdout: 'piped',
+        stderr: 'piped',
     })
 
     if (!(await count_git_objects.status()).success) {
         console.log(`Fail to get number of git objects`, github_id)
+
+        await getDb()
+            .from('github')
+            .update({
+                resolution: await processOutputDump(count_git_objects),
+            })
+            .eq('id', github.id)
         return
     }
 

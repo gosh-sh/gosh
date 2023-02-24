@@ -285,7 +285,7 @@ class ScenarioHandler extends Handler_1.default {
             (0, fs_1.writeFileSync)(fname + '.log', this.log.join('\n') + '\n' + add + '\n', 'utf8');
         }
         if (this.page && final)
-            await this.page.screenshot({ path: fname + '.png' });
+            await this.page.screenshot({ path: fname + '.png', captureBeyondViewport: false });
     }
     archiveLog(fname, archpath, archfname) {
         this.mkdirs(archpath);

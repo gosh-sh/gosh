@@ -38,6 +38,7 @@ mod serde_number;
 pub mod snapshot;
 pub mod tag;
 pub mod tree;
+pub mod tag;
 mod tvm_hash;
 pub mod user_wallet;
 pub use crate::{
