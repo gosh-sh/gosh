@@ -77,8 +77,15 @@ includes:
 #    redis_pref: next_
 #    include: creds-next
 
+  branch-names:
+    - &root root
+    - &app-small app-small
+    - &app-large app-large
+    - &remote-small remote-small
+    - &remote-large remote-large-2
+
   cron-rotate: &cron-rotate
-    origin:       root
+    origin:       *root
     handler:      app-rotate
     cron:         true
     interval:     600
@@ -108,9 +115,9 @@ modes:
     <<: *script
     scriptname: app
 
-  app-script-next:
-    <<: *script
-    scriptname: app-next
+#  app-script-next:
+#    <<: *script
+#    scriptname: app-next
 
   app-script-test:
     <<: *script
@@ -119,40 +126,40 @@ modes:
 # app.gosh.sh
   app-setup: &app-setup
     handler: app-setup
-    branch: root
+    branch: *root
     branches:
-      - app-small
-      - app-large
-      - remote-small
-      - remote-large
+      - *app-small
+      - *app-large
+      - *remote-small
+      - *remote-large
     cron: true
     interval: 900
     do_lock: true
     redis_host: ""
 
   app-small-read: &app-small-read
-    branch:  app-small
+    branch:  *app-small
     handler: app-read
     large:   false
 
   app-small-write: &app-small-write
-    branch:  app-small
+    branch:  *app-small
     handler: app-write
     large:   false
     interval: 500  # ~ 10 min - 100 s
     do_lock: true
 
   app-large-read: &app-large-read
-    branch:     app-large
+    branch:     *app-large
     handler:    app-read
     large:      true
     timeout_ms: 25000
 
   app-large-write: &app-large-write
-    branch:     app-large
+    branch:     *app-large
     handler:    app-write
     large:      true
-    timeout_ms: 25000
+    timeout_ms: 15000
     interval:   1650  # ~ 30 min - 150 s
     do_lock:    true
 
@@ -179,14 +186,14 @@ modes:
 # git-remote-gosh
   rem-small-read: &rem-small-read
     <<: *use_log_counter_for_remote
-    branch:     remote-small
+    branch:     *remote-small
     handler:    remote-read
     large:      false
     timeout_ms: 50
 
   rem-small-write: &rem-small-write
     <<: *use_log_counter_for_remote
-    branch:     remote-small
+    branch:     *remote-small
     handler:    remote-write
     large:      false
     interval:   500  # ~ 10 min - 100 s
@@ -195,14 +202,14 @@ modes:
 
   rem-large-read: &rem-large-read
     <<: *use_log_counter_for_remote
-    branch:     remote-large
+    branch:     *remote-large
     handler:    remote-read
     large:      true
     timeout_ms: 50
 
   rem-large-write: &rem-large-write
     <<: *use_log_counter_for_remote
-    branch:  remote-large
+    branch:  *remote-large
     handler: remote-write
     large:   true
     interval:   1650  # ~ 30 min - 150 s
@@ -232,11 +239,12 @@ modes:
 
   cron-rem-rotate-small: &cron-rem-rotate-small
     <<: *cron-rotate
-    branch:  remote-small
+    branch:  *remote-small
+    large:   false
 
   cron-rem-rotate-large: &cron-rem-rotate-large
     <<: *cron-rotate
-    branch:  remote-large
+    branch:  *remote-large
     large:   true
 
 #  cron-rem-rotate-small-next:

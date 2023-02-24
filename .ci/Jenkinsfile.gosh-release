@@ -56,7 +56,7 @@ pipeline {
                 }
             }
         }
-        stage('Publish: push Git Helper Docker image') {
+        /*stage('Publish: push Git Helper Docker image') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -82,7 +82,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Publish: push Docker Extension image') {
             agent {
                 docker {
@@ -102,9 +102,9 @@ pipeline {
                             sh 'docker login -u $USERNAME -p $PASSWORD'
                         }
                         if (params.LATEST) {
-                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} DOCKER_BUILDX_ARGS='--tag=teamgosh/docker-extension:latest' PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                            sh "make push IMAGE=teamgosh/docker-extension TAG=${VERSION} DOCKER_BUILDX_ARGS='--tag=teamgosh/docker-extension:latest' PLATFORM=linux/amd64,linux/arm64"
                         } else {
-                            sh "make build-ci IMAGE=teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                            sh "make push IMAGE=teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64"
                         }
                     }
                 }
