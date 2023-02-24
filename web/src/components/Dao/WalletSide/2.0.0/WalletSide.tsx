@@ -2,9 +2,9 @@ import { useCallback } from 'react'
 import { classNames, TDao, TSmvDetails, useUser } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useSetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../store/app.state'
-import { Button } from '../Form'
-import WalletTokenSendModal from '../Modal/WalletTokenSend'
+import { appModalStateAtom } from '../../../../store/app.state'
+import { Button } from '../../../Form'
+import WalletTokenSendModal from '../../../Modal/WalletTokenSend'
 
 type TDaoWalletSideProps = {
     dao: {
@@ -78,4 +78,4 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
     )
 }
 
-export { DaoWalletSide }
+export default DaoWalletSide

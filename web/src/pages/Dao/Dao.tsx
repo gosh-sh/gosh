@@ -2,10 +2,9 @@ import { Link, useOutletContext } from 'react-router-dom'
 import { classNames, useSmv, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
-import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
+import { DaoMembersSide, DaoSupplySide, DaoWalletSide } from '../../components/Dao'
 import { useCallback, useEffect, useState } from 'react'
 import BlobPreview from '../../components/Blob/Preview'
-import { DaoWalletSide } from '../../components/Dao/WalletSide'
 
 const DaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()

@@ -4,8 +4,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import EventListItem from './ListItem'
 import Loader from '../../components/Loader'
 import { Button } from '../../components/Form'
-import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
-import { DaoWalletSide } from '../../components/Dao/WalletSide'
+import { DaoMembersSide, DaoSupplySide, DaoWalletSide } from '../../components/Dao'
 
 const EventsPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()

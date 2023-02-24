@@ -1,10 +1,10 @@
 import { classNames, TDao } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useSetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../store/app.state'
-import { Button } from '../Form'
-import DaoTokenMintModal from '../Modal/DaoTokenMint'
-import DaoTokenSendModal from '../Modal/DaoTokenSend'
+import { appModalStateAtom } from '../../../../store/app.state'
+import { Button } from '../../../Form'
+import DaoTokenMintModal from '../../../Modal/DaoTokenMint'
+import DaoTokenSendModal from '../../../Modal/DaoTokenSend'
 
 type TDaoSupplySideProps = {
     dao: {
@@ -81,4 +81,4 @@ const DaoSupplySide = (props: TDaoSupplySideProps) => {
     )
 }
 
-export { DaoSupplySide }
+export default DaoSupplySide
