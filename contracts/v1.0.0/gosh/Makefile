@@ -1,5 +1,41 @@
 EXTRA_DOCKER_ARGS = '--network=host'
 
+tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
+cpfl = profile profiledao profileindex
+KEYS_PATH = ${CURDIR}
+EXTRA_DOCKER_ARGS = '--network=host'
+
+clean:
+	rm -f *.tvc *.abi.json *.code
+	rm -rf .solc_imports
+
+build-contracts:
+# everdev sol compile $$i.sol || exit $$@;
+	for i in $(cpfl); do \
+		cp ../../$$i.sol . || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
+	for i in $(tvcs); do \
+		../../compiler/solc $$i.sol || exit $$@; \
+		../../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
+
+clean-contracts:
+	for i in $(cpfl); do \
+		rm $$i.sol  || exit $$@; \
+		rm $$i.code || exit $$@; \
+		rm $$i.tvc || exit $$@; \
+		rm $$i.abi.json || exit $$@; \
+		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
+	done
+
+build: clean build-contracts clean-contracts
+	if [ "${target-dir}" != "" ] ; then tar -cf gosh.tar ${target-dir}; fi;
+
+build-save: clean build-contracts
+	if [ "${target-dir}" != "" ] ; then tar -cf gosh.tar ${target-dir}; fi;
+
 deploy-docker:
 	docker run --rm \
 		-v ${CURDIR}/../../:/opt/gosh/contracts \
