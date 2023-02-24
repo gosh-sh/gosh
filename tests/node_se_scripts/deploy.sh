@@ -11,6 +11,9 @@ GIVER_VALUE=20000000000000000
 echo "NETWORK=$NETWORK"
 
 cd ../contracts/multisig
+echo "" > Giver.addr
+echo "" > Giver.network
+echo "" > Giver.seed
 
 make generate-docker
 export GIVER_ADDR=`cat Giver.addr`
@@ -21,8 +24,8 @@ gosh-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEY
 
 make deploy-docker
 
-cd ../smv
-make build-contracts
+#cd ../smv
+#make build-contracts
 
 # deploy giver for upgrade
 
@@ -32,5 +35,5 @@ echo "" > VersionController.addr
 echo "" > SystemContract.addr
 echo "" > SystemContract-1.0.0.addr
 
-make build
+#make build
 make deploy-docker
