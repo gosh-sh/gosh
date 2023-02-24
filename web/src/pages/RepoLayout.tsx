@@ -99,7 +99,7 @@ const RepoLayout = () => {
             <h1 className="flex flex-wrap items-center mb-6 px-5 sm:px-0">
                 <Link
                     to={`/o/${daoName}`}
-                    className="font-semibold text-xl hover:underline"
+                    className="font-semibold text-xl hover:underline capitalize"
                 >
                     {daoName}
                 </Link>
