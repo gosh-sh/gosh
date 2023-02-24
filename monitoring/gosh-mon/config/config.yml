@@ -153,7 +153,7 @@ modes:
     branch:     *app-large
     handler:    app-read
     large:      true
-    timeout_ms: 25000
+    timeout_ms: 15000
 
   app-large-write: &app-large-write
     branch:     *app-large
