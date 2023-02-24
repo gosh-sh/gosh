@@ -7,8 +7,8 @@ if [ $DEPLOY_LOCAL = TRUE ]; then
 #  docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 \
 #       -v /home/user/GOSH/dev/gosh/tests/node_se_scripts/blockchain.conf.json:/ton-node/blockchain.conf.json \
 #       tonlabs/local-node
-#  docker start local-node
-#  sleep 20
+  docker start local-node
+  sleep 20
 
   ./node_se_scripts/deploy.sh
 fi
@@ -30,17 +30,17 @@ fi
 ./13_push_protected_branch.test.sh
 ./14_pull_request_details.test.sh
 
-# TODO: proposals have delay 1 minute, for tests need to set it to 1 second
 # upgrade tests.   Failing tests have ignore argument
 ./upgrade_tests/set_up.sh
 ./upgrade_tests/01-clone_rewritten_repo.test.sh
-./upgrade_tests/02_1-clone_upgraded_repo.test.sh ignore
-./upgrade_tests/02_2-push_after_upgrade.test.sh ignore
+./upgrade_tests/02_1-clone_upgraded_repo.test.sh
+./upgrade_tests/02_2-push_after_upgrade.test.sh
+./upgrade_tests/02_3-push_after_upgrade_with_several_commits.test.sh
 ./upgrade_tests/03-branch_from_parent.test.sh ignore
 ./upgrade_tests/04-branch_from_grandparent.test.sh ignore
-./upgrade_tests/05_1-merge_branch_from_parent.test.sh ignore
-./upgrade_tests/06_1-merge_branch_from_grandparent.test.sh ignore
-./upgrade_tests/07-branch_from_unrelated_commit.test.sh ignore
+./upgrade_tests/05-merge_branch_from_parent.test.sh ignore
+./upgrade_tests/06-merge_branch_from_grandparent.test.sh ignore
+./upgrade_tests/07-branch_from_unrelated_commit.test.sh
 ./upgrade_tests/08-tagging_after_upgrade.test.sh ignore
 ./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
 ./upgrade_tests/10-tagless_after_upgrade.test.sh ignore

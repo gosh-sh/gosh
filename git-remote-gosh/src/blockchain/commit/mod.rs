@@ -16,8 +16,9 @@ pub struct GoshCommit {
     repo: String,
     pub branch: String,
     pub sha: String,
-    parents: Vec<String>,
+    pub parents: Vec<String>,
     pub content: String,
+    pub initupgrade: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

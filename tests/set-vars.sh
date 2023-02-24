@@ -13,9 +13,9 @@ if [ -z "$1" ]
 else
     export NETWORK=$1
 fi
-TEST_INDEX="${TEST_INDEX:-0}"
+TEST_INDEX="${TEST_INDEX:-$(date +%s)}"
 echo "TEST INDEX $TEST_INDEX"
-echo "NETWORK=$NETWORK" > env.env
+echo "export NETWORK=$NETWORK" > env.env
 
 tonos-cli config --url $NETWORK
 
@@ -102,7 +102,7 @@ tee $USER_CONFIG <<EOF
         "pubkey": "$WALLET_PUBKEY",
         "secret": "$WALLET_SECRET"
       },
-      "endpoints": ["$NETWORK"]
+      "endpoints": ["http://$NETWORK/"]
     }
   }
 }

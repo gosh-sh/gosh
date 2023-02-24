@@ -19,6 +19,8 @@ use std::{
     sync::Arc,
     vec::Vec,
 };
+
+use serde_json::Value;
 use tokio::{
     sync::Semaphore,
     task::{JoinError, JoinSet},
@@ -35,6 +37,8 @@ mod push_tag;
 mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
+use crate::blockchain::contract::{ContractRead, GoshContract};
+use crate::blockchain::{get_commit_by_addr, gosh_abi};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
@@ -59,6 +63,27 @@ impl PushBlobStatistics {
         self.new_snapshots += another.new_snapshots;
         self.diffs += another.diffs;
     } */
+}
+
+#[derive(Deserialize, Debug)]
+pub struct AddrVersion {
+    #[serde(rename = "addr")]
+    pub address: BlockchainContractAddress,
+
+    #[serde(rename = "version")]
+    pub version: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetPreviousResult {
+    #[serde(rename = "value0")]
+    pub previous: Option<AddrVersion>,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetTreeResult {
+    #[serde(rename = "value0")]
+    pub tree_address: BlockchainContractAddress,
 }
 
 impl<Blockchain> GitHelper<Blockchain>
@@ -107,16 +132,17 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
+        upgrade_commit: bool,
     ) -> anyhow::Result<()> {
         {
-            tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}");
+            tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
             let blockchain = self.blockchain.clone();
             let repo_address = self.repo_addr.clone();
             let dao_addr = self.dao_addr.clone();
             let remote_network = self.remote.network.clone();
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
-
+            let commit_str = commit_id.to_string();
             parallel_snapshot_uploads.spawn(
                 async move {
                     push_initial_snapshot(
@@ -126,6 +152,8 @@ where
                         remote_network,
                         branch_name,
                         file_path,
+                        upgrade_commit,
+                        commit_str,
                     )
                     .await
                 }
@@ -269,6 +297,8 @@ where
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
+        upgrade_commit: bool,
+        parents_for_upgrade: Vec<BlockchainContractAddress>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -301,6 +331,9 @@ where
             )
             .await?;
             parents.push(parent);
+        }
+        if upgrade_commit && !parents_for_upgrade.is_empty() {
+            parents = parents_for_upgrade;
         }
         let tree_addr = self.calculate_tree_address(tree_id).await?;
 
@@ -337,6 +370,7 @@ where
                                     &dao_addr,
                                     &raw_commit,
                                     &*parents,
+                                    upgrade_commit,
                                 )
                                 .await
                         },
@@ -365,36 +399,235 @@ where
                 statistics,
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
+                upgrade_commit,
             )
             .await?;
         }
+        if !upgrade_commit {
+            for update in tree_diff.updated {
+                self.push_blob_update(
+                    &update.1.filepath.to_string(),
+                    &update.0.oid,
+                    &update.1.oid,
+                    &object_id, // commit_id.as_ref().unwrap(),
+                    local_branch_name,
+                    statistics,
+                    parallel_diffs_upload_support,
+                )
+                .await?;
+            }
 
-        for update in tree_diff.updated {
-            self.push_blob_update(
-                &update.1.filepath.to_string(),
-                &update.0.oid,
-                &update.1.oid,
-                &object_id, // commit_id.as_ref().unwrap(),
-                local_branch_name,
-                statistics,
-                parallel_diffs_upload_support,
-            )
-            .await?;
+            for deleted in tree_diff.deleted {
+                self.push_blob_remove(
+                    &deleted.filepath.to_string(),
+                    &deleted.oid,
+                    &object_id,
+                    local_branch_name,
+                    statistics,
+                    parallel_diffs_upload_support,
+                )
+                .await?;
+            }
         }
-
-        for deleted in tree_diff.deleted {
-            self.push_blob_remove(
-                &deleted.filepath.to_string(),
-                &deleted.oid,
-                &object_id,
-                local_branch_name,
-                statistics,
-                parallel_diffs_upload_support,
-            )
-            .await?;
-        }
-
         *prev_commit_id = Some(object_id);
+        Ok(())
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn check_and_upgrade_previous_commit(
+        &mut self,
+        ancestor_commit: String,
+        local_branch_name: &str,
+        remote_branch_name: &str,
+    ) -> anyhow::Result<()> {
+        // check in cur repo if account with commit exists   eg call get version
+        // if not found need to init upgrade commit
+        // can get list of objects and push the last commit and objects
+        // last commit should be redeployed with flag init_upgrade
+        // tree for last commit should be redeployed ans addr of new tree goes to commit constructor
+        // parent for commit should be prev version of the same commit
+        // snapshot should be deployed with content of the last snapshot and new addr of commit
+
+        tracing::trace!("check check_and_upgrade_previous_commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
+
+        // 1) get ancestor commit address
+        let mut repo_contract = self.blockchain.repo_contract().clone();
+        let ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("ancestor address: {ancestor_address}");
+
+        // 2) Check that ancestor contract exists
+        let ancestor_contract = GoshContract::new(&ancestor_address, gosh_abi::COMMIT);
+        // if ancestor is valid return
+        let res = ancestor_contract
+            .get_version(self.blockchain.client())
+            .await;
+        if let Ok(_) = res {
+            return Ok(());
+        }
+
+        // If ancestor commit doesn't exist we need to deploy a new version of the commit with init_upgrade flag set to true
+        tracing::trace!("Failed to get contract version: {res:?}");
+
+        // 3) Get address of the previous version of the repo
+        let previous: GetPreviousResult = self
+            .blockchain
+            .repo_contract()
+            .read_state(self.blockchain.client(), "getPrevious", None)
+            .await?;
+        tracing::trace!("prev repo addr: {previous:?}");
+
+        // 4) Get address of the ancestor commit of previous version
+        let previous_repo_addr = previous.previous
+            .ok_or(anyhow::format_err!("Failed to get previous version of the repo"))?
+            .address;
+        let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
+        let prev_ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut prev_repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
+
+        // 5) get previous version commit data
+        let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
+            .await?
+            .unwrap();
+        tracing::trace!("Prev version commit data: {commit:?}");
+
+        // 6) For new version ancestor commit set parent to the ancestor commit of previous version
+        let parents_for_upgrade = vec![prev_ancestor_address.clone()];
+        let ancestor_id = self
+            .local_repository()
+            .find_object(ObjectId::from_str(&ancestor_commit)?)?
+            .id();
+
+        // 7) Get id of the next commit
+        let till_id = ancestor_id
+            .ancestors()
+            .all()?
+            .map(|e| e.expect("all entities should be present"))
+            .into_iter()
+            .skip(1)
+            .next()
+            .map(|id| id.object().expect("object should exist").id);
+
+        // 8) Get list of objects to push with the ancestor commit
+        tracing::trace!("Find objects till: {till_id:?}");
+        let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
+        tracing::trace!("List of commit objects: {commit_objects_list:?}");
+
+        // 9) push objects
+        let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
+        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut parents_of_commits: HashMap<&str, Vec<String>> =
+            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
+        let mut statistics = PushBlobStatistics::new();
+
+        let latest_commit_id = self
+            .local_repository()
+            .find_object(ObjectId::from_str(&ancestor_commit)?)?
+            .id;
+        let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
+
+        // iterate through the git objects list and push them
+        let mut prev_commit_id = None;
+        for oid in &commit_objects_list {
+            let object_id = git_hash::ObjectId::from_str(oid)?;
+            let object_kind = self.local_repository().find_object(object_id)?.kind;
+            match object_kind {
+                git_object::Kind::Commit => {
+                    // TODO: fix lifetimes (oid can be trivially inferred from object_id)
+                    self.push_commit_object(
+                        oid,
+                        object_id,
+                        remote_branch_name,
+                        local_branch_name,
+                        &mut parents_of_commits,
+                        &mut push_handlers,
+                        push_semaphore.clone(),
+                        &mut prev_commit_id,
+                        &mut statistics,
+                        &mut parallel_diffs_upload_support,
+                        &mut parallel_snapshot_uploads,
+                        true,
+                        parents_for_upgrade.clone(),
+                    )
+                    .await?;
+                }
+                git_object::Kind::Blob => {
+                    // Note: handled in the Commit section
+                    // branch
+                    // commit_id
+                    // commit_data
+                    // Vec<diff>
+                }
+                // Not supported yet
+                git_object::Kind::Tag => unimplemented!(),
+                git_object::Kind::Tree => {
+                    let _ = push_tree(
+                        self,
+                        &object_id,
+                        &mut visited_trees,
+                        &mut push_handlers,
+                        push_semaphore.clone(),
+                    )
+                    .await?;
+                }
+            }
+        }
+
+        // wait for all spawned collections to finish
+        parallel_diffs_upload_support.push_dangling(self).await?;
+        parallel_diffs_upload_support
+            .wait_all_diffs(self.blockchain.clone())
+            .await?;
+
+        while let Some(finished_task) = push_handlers.join_next().await {
+            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
+            match finished_task {
+                Err(e) => {
+                    bail!("obj join-hanlder: {}", e);
+                }
+                Ok(Err(e)) => {
+                    bail!("obj inner: {}", e)
+                }
+                Ok(Ok(_)) => {}
+            }
+        }
+
+        while let Some(finished_task) = parallel_snapshot_uploads.join_next().await {
+            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
+            match finished_task {
+                Err(e) => {
+                    bail!("snapshots join-hanlder: {}", e);
+                }
+                Ok(Err(e)) => {
+                    bail!("snapshots inner: {}", e)
+                }
+                Ok(Ok(_)) => {}
+            }
+        }
+
+        // 10) call set commit to the new version of the ancestor commit
+        self.blockchain
+            .notify_commit(
+                &latest_commit_id,
+                local_branch_name,
+                1,
+                1,
+                &self.remote,
+                &self.dao_addr,
+            )
+            .await?;
+
         Ok(())
     }
 
@@ -413,7 +646,6 @@ where
         let remote_branch_name: &str = get_ref_name(remote_ref)?;
 
         // 1. Check if branch exists and ready in the blockchain
-
         let remote_commit_addr = self
             .blockchain
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
@@ -432,18 +664,25 @@ where
                 // this means a branch is created and all initial states are filled there
                 ("".to_owned(), None)
             };
-
-        let latest_commit = self
-            .local_repository()
-            .find_reference(local_ref)?
-            .into_fully_peeled_id()?;
-
         let ancestor_commit_object = if ancestor_commit_id != "" {
             Some(ObjectId::from_str(&ancestor_commit_id)?)
         } else {
             None
         };
 
+        if ancestor_commit_id != "" {
+            self.check_and_upgrade_previous_commit(
+                ancestor_commit_id.clone(),
+                local_branch_name,
+                remote_branch_name,
+            )
+            .await?;
+        }
+
+        let latest_commit = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?;
         // get list of git objects in local repo, excluding ancestor ones
         let commit_objects_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
@@ -510,6 +749,8 @@ where
                         &mut statistics,
                         &mut parallel_diffs_upload_support,
                         &mut parallel_snapshot_uploads,
+                        false,
+                        vec![],
                     )
                     .await?;
                 }

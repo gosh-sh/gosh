@@ -121,6 +121,12 @@ struct SendMessageResult {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct GetNameBranchResult {
+    #[serde(rename = "value0")]
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug)]
 struct GetRepoAddrResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
@@ -314,6 +320,12 @@ async fn run_local(
         );
     }
     let account_boc = &query[0]["boc"].as_str();
+    if account_boc.is_none() {
+        anyhow::bail!(
+            "account with address {} does not contain boc",
+            contract.address,
+        );
+    }
     let call_set = match args {
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),

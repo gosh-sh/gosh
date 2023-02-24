@@ -49,6 +49,12 @@ async fn main_internal() -> anyhow::Result<()> {
         .version(option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))
         .arg(Arg::new("name"))
         .arg(Arg::new("url"))
+        .arg(
+            Arg::new("dispatcher")
+                .long("dispatcher")
+                .action(clap::ArgAction::SetTrue)
+                .hide(true),
+        )
         .subcommand(
             Command::new("supported_contract_version")
                 .about("Get list of supported contract version"),
@@ -69,7 +75,8 @@ async fn main_internal() -> anyhow::Result<()> {
                 .ok_or(anyhow::anyhow!(
                     "Wrong args for git-remote call\nRequired: <name> <url>"
                 ))?;
-            git_remote_gosh::git_helper::run(config, &url).await?;
+            let dispatcher_call = matches.get_flag("dispatcher");
+            git_remote_gosh::git_helper::run(config, &url, dispatcher_call).await?;
         }
     }
     Ok(())
