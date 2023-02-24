@@ -11,6 +11,7 @@ import { useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { useCallback } from 'react'
 
 type TWalletTokenSendModalProps = {
     dao: {
@@ -21,7 +22,6 @@ type TWalletTokenSendModalProps = {
         adapter?: IGoshSmvAdapter
         details: TSmvDetails
     }
-    balance: number
 }
 
 type TFormValues = {
@@ -30,12 +30,17 @@ type TFormValues = {
 }
 
 const WalletTokenSendModal = (props: TWalletTokenSendModalProps) => {
-    const { dao, wallet, balance } = props
+    const { dao, wallet } = props
     const resetModal = useResetRecoilState(appModalStateAtom)
     const { transferToInternal, transferToDaoReserve } = useSmvTokenTransfer(
         wallet.adapter,
         dao.adapter,
     )
+
+    const getMaxAmount = useCallback(() => {
+        const voting = wallet.details.smvAvailable - wallet.details.smvLocked
+        return voting + wallet.details.smvBalance
+    }, [wallet.details])
 
     const onSubmit = async (values: TFormValues) => {
         try {
@@ -75,8 +80,14 @@ const WalletTokenSendModal = (props: TWalletTokenSendModalProps) => {
                     }}
                     validationSchema={yup.object().shape({
                         username: yup.string().required(),
-                        amount: yup.number().integer().positive().max(balance).required(),
+                        amount: yup
+                            .number()
+                            .integer()
+                            .positive()
+                            .max(getMaxAmount())
+                            .required(),
                     })}
+                    enableReinitialize
                     onSubmit={onSubmit}
                 >
                     {({ isSubmitting }) => (
@@ -98,6 +109,7 @@ const WalletTokenSendModal = (props: TWalletTokenSendModalProps) => {
                                     autoComplete="off"
                                     placeholder="Amount of tokens to send"
                                     disabled={isSubmitting}
+                                    help={`Available ${getMaxAmount()}`}
                                 />
                             </div>
                             <div className="mt-4">

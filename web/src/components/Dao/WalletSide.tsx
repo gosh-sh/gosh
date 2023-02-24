@@ -41,13 +41,7 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         setModal({
             static: false,
             isOpen: true,
-            element: (
-                <WalletTokenSendModal
-                    dao={dao}
-                    wallet={wallet}
-                    balance={getUserBalance()}
-                />
-            ),
+            element: <WalletTokenSendModal dao={dao} wallet={wallet} />,
         })
     }
 
