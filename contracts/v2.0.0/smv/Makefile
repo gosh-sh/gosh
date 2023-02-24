@@ -28,7 +28,7 @@ build-contracts:
 	done \
 
 prepare-docker:
-	docker build -t everdev:latest ../../.ci/
+	docker build -t everdev:latest ../../../.ci/
 
 build-contracts-docker:
 	docker run -it --rm \
