@@ -368,11 +368,11 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
         _getAvailableVersions()
     }, [dao])
 
-    const upgrade = async (version: string) => {
+    const upgrade = async (version: string, comment?: string) => {
         if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
             throw new GoshError(`Gosh version ${version} is not supported`)
         }
-        await dao.upgrade({ version })
+        await dao.upgrade({ version, description: comment })
     }
 
     return { versions, upgrade }
