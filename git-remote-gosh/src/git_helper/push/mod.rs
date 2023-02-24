@@ -38,7 +38,7 @@ mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
 use crate::blockchain::contract::{ContractRead, GoshContract};
-use crate::blockchain::{get_commit_by_addr, gosh_abi};
+use crate::blockchain::{AddrVersion, get_commit_by_addr, GetNameCommitResult, gosh_abi};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
@@ -63,15 +63,6 @@ impl PushBlobStatistics {
         self.new_snapshots += another.new_snapshots;
         self.diffs += another.diffs;
     } */
-}
-
-#[derive(Deserialize, Debug)]
-pub struct AddrVersion {
-    #[serde(rename = "addr")]
-    pub address: BlockchainContractAddress,
-
-    #[serde(rename = "version")]
-    pub version: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -266,21 +257,74 @@ where
         }
         let remote_commit_addr =
             BlockchainContractAddress::todo_investigate_unexpected_convertion(remote_commit_addr);
-        let commit = self
-            .blockchain
-            .get_commit_by_addr(&remote_commit_addr)
-            .await?
-            .unwrap();
-        let prev_commit_id = Some(ObjectId::from_str(&commit.sha)?);
+        // let commit = self
+        //     .blockchain
+        //     .get_commit_by_addr(&remote_commit_addr)
+        //     .await?
+        //     .unwrap();
+        // TODO: get commit can fail due to changes in versions
+        let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
+        let sha: GetNameCommitResult = commit_contract.run_static(self.blockchain.client(), "getNameCommit", None).await?;
+        tracing::trace!("Commit sha: {sha:?}");
+        let sha = sha.name;
+        let prev_commit_id = Some(ObjectId::from_str(&sha)?);
 
         Ok((
-            if commit.sha != ZERO_SHA.to_owned() {
-                commit.sha
+            if sha != ZERO_SHA.to_owned() {
+                sha
             } else {
                 String::new()
             },
             prev_commit_id,
         ))
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn check_parents<'a>(
+        &mut self,
+        object_id: ObjectId,
+        remote_branch_name: &str,
+        local_branch_name: &str,
+    ) -> anyhow::Result<()> {
+        tracing::trace!("check_parents object_id:{object_id} remote_branch_name:{remote_branch_name}, local_branch_name:{local_branch_name}");
+        let mut buffer: Vec<u8> = Vec::new();
+        let commit = self
+            .local_repository()
+            .objects
+            .try_find(object_id, &mut buffer)?
+            .expect("Commit should exists");
+
+        let raw_commit = String::from_utf8(commit.data.to_vec())?;
+
+        let mut commit_iter = commit.try_into_commit_iter().unwrap();
+        let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
+
+        let mut repo_contract = self.blockchain.repo_contract().clone();
+
+        for id in parent_ids {
+            tracing::trace!("check parent: {id}");
+            let parent = get_commit_address(
+                &self.blockchain.client(),
+                &mut repo_contract,
+                &id.to_string(),
+            )
+                .await?;
+            tracing::trace!("parent address: {parent}");
+            let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+            if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
+                tracing::trace!("Failed to call parent");
+                let right_commit_address = self.find_commit(&id).await?.1;
+                let commit_contract  = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
+                let branch: GetNameCommitResult = commit_contract.run_static(
+                    self.blockchain.client(),
+                    "getNameBranch",
+                    None,
+                ).await?;
+                // TODO: local and remote branch are set equal here it can be wrong
+                self.check_and_upgrade_previous_commit(id.to_string(),&branch.name, &branch.name).await?;
+            }
+        }
+        Ok(())
     }
 
     #[instrument(level = "info", skip_all)]
@@ -298,7 +342,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
         upgrade_commit: bool,
-        parents_for_upgrade: Vec<BlockchainContractAddress>,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -320,7 +364,7 @@ where
             // if parent_ids is empty, add bogus parent
             parent_ids.push(ZERO_SHA.to_string());
         }
-        let mut parents: Vec<BlockchainContractAddress> = vec![];
+        let mut parents: Vec<AddrVersion> = vec![];
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
         for id in parent_ids {
@@ -330,7 +374,9 @@ where
                 &id.to_string(),
             )
             .await?;
-            parents.push(parent);
+            let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+            let version = parent_contract.get_version(self.blockchain.client()).await.unwrap_or("Unknown".to_string());
+            parents.push(AddrVersion { address: parent, version });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
             parents = parents_for_upgrade;
@@ -369,7 +415,7 @@ where
                                     &remote,
                                     &dao_addr,
                                     &raw_commit,
-                                    &*parents,
+                                    &parents,
                                     upgrade_commit,
                                 )
                                 .await
@@ -448,7 +494,7 @@ where
         // parent for commit should be prev version of the same commit
         // snapshot should be deployed with content of the last snapshot and new addr of commit
 
-        tracing::trace!("check check_and_upgrade_previous_commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
+        tracing::trace!("check and upgrade previous commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
 
         // 1) get ancestor commit address
         let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -482,7 +528,7 @@ where
         tracing::trace!("prev repo addr: {previous:?}");
 
         // 4) Get address of the ancestor commit of previous version
-        let previous_repo_addr = previous.previous
+        let previous_repo_addr = previous.previous.clone()
             .ok_or(anyhow::format_err!("Failed to get previous version of the repo"))?
             .address;
         let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
@@ -495,13 +541,15 @@ where
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
-        let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
-            .await?
-            .unwrap();
-        tracing::trace!("Prev version commit data: {commit:?}");
+        // let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
+        //     .await?
+        //     .unwrap();
+        // tracing::trace!("Prev version commit data: {commit:?}");
 
         // 6) For new version ancestor commit set parent to the ancestor commit of previous version
-        let parents_for_upgrade = vec![prev_ancestor_address.clone()];
+        let parents_for_upgrade = vec![
+            AddrVersion { address: prev_ancestor_address.clone(), version: previous.previous.unwrap().version}
+        ];
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?
@@ -670,14 +718,14 @@ where
             None
         };
 
-        if ancestor_commit_id != "" {
-            self.check_and_upgrade_previous_commit(
-                ancestor_commit_id.clone(),
-                local_branch_name,
-                remote_branch_name,
-            )
-            .await?;
-        }
+        // if ancestor_commit_id != "" {
+        //     self.check_and_upgrade_previous_commit(
+        //         ancestor_commit_id.clone(),
+        //         local_branch_name,
+        //         remote_branch_name,
+        //     )
+        //     .await?;
+        // }
 
         let latest_commit = self
             .local_repository()
@@ -737,6 +785,11 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
+                    self.check_parents(
+                        object_id,
+                        remote_branch_name,
+                        local_branch_name,
+                    ).await?;
                     self.push_commit_object(
                         oid,
                         object_id,

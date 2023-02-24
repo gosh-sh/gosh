@@ -128,6 +128,7 @@ async fn main() -> anyhow::Result<()> {
             let reader = BufReader::new(out);
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
+                tracing::trace!("caught output line: {line}");
                 if line.contains(DISPATCHER_ENDL) {
                     break;
                 }
@@ -141,14 +142,18 @@ async fn main() -> anyhow::Result<()> {
         } else {
             panic!("Failed to take stdout");
         }
-        tracing::trace!("Output: {output:?}");
+        tracing::trace!("Output lines buffer: {output:?}");
+        let mut buffer = vec![];
         for line in output {
-            io::stdout()
-                .write_all(format!("{line}\n").as_bytes())
-                .await
-                .unwrap();
-            io::stdout().flush().await?;
+            tracing::trace!("append to buffer: '{line}'");
+            buffer.append(&mut format!("{line}\n").as_bytes().to_vec());
         }
+        tracing::trace!("send output: '{buffer:?}'");
+        io::stdout()
+            .write_all(&buffer)
+            .await
+            .unwrap();
+        io::stdout().flush().await?;
         if let Some(line) = dispatcher_cmd {
             dispatcher_cmd = None;
             let _main_res = main_helper.wait().await;
@@ -296,11 +301,13 @@ async fn call_helper_after_fail(
 
     write_to_helper(&mut previous_helper, &cmd).await?;
 
+    // TODO: return helper and catch output in out cycle
     let mut output = vec![];
     if let Some(out) = previous_helper.stdout.as_mut() {
         let reader = BufReader::new(out);
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
+            tracing::trace!("Caught out line: {line}");
             if line.contains(DISPATCHER_ENDL) {
                 break;
             }
@@ -310,11 +317,16 @@ async fn call_helper_after_fail(
         panic!("Failed to take stdout");
     }
     tracing::trace!("Output: {output:?}");
+    let mut buffer = vec![];
     for line in output {
-        io::stdout().write_all(line.as_bytes()).await.unwrap();
-        io::stdout().write_all("\n".as_bytes()).await.unwrap();
-        io::stdout().flush().await.unwrap();
+        tracing::trace!("append to buffer: '{line}'");
+        buffer.append(&mut format!("{line}\n").as_bytes().to_vec());
     }
+    // tracing::trace!("send output: '{buffer:?}'");
+    io::stdout()
+        .write_all(&buffer)
+        .await
+        .unwrap();
 
     Ok(previous_helper)
 }

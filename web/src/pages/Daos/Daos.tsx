@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
 import { useDaoList, useUser } from 'react-gosh'
 import DaoListItem from './DaoListItem'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../helpers'
 import ExternalListItem from './ExternalListItem'
+import { Button, ButtonLink, Input } from '../../components/Form'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import Loader from '../../components/Loader'
 
 const DaosPage = () => {
     const { user } = useUser()
@@ -17,7 +19,7 @@ const DaosPage = () => {
         setSearch,
         getMore,
         getItemDetails,
-    } = useDaoList(5)
+    } = useDaoList(6)
     const [githubData, setGithubData] = useState<any[]>([])
 
     useEffect(() => {
@@ -57,23 +59,22 @@ const DaosPage = () => {
     return (
         <>
             <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
-                <div className="input basis-full sm:basis-1/2">
-                    <input
-                        className="element !py-1.5"
-                        type="search"
-                        placeholder="Search GOSH orgranization..."
-                        autoComplete="off"
-                        value={search}
-                        disabled={isFetching}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-                <Link
-                    to="/a/orgs/create"
-                    className="btn btn--body py-1.5 px-3 !font-normal text-center w-full sm:w-auto"
-                >
-                    New organization
-                </Link>
+                <Input
+                    className="grow"
+                    type="search"
+                    placeholder="Search GOSH DAO..."
+                    autoComplete="off"
+                    value={search}
+                    disabled={isFetching}
+                    onChange={(e) => setSearch(e.target.value)}
+                    before={
+                        <FontAwesomeIcon
+                            icon={faMagnifyingGlass}
+                            className="text-gray-7c8db5 font-extralight py-3 pl-4"
+                        />
+                    }
+                />
+                <ButtonLink to="/a/orgs/create">Create new DAO</ButtonLink>
             </div>
 
             {!!githubData.length && (
@@ -95,19 +96,14 @@ const DaosPage = () => {
             )}
 
             <div>
-                <div className="text-xl font-medium border-b pb-2 mb-4">
+                <div className="text-xl font-medium border-b border-b-gray-e6edff pb-2 mb-4">
                     GOSH organizations
                 </div>
 
-                {isFetching && (
-                    <div className="text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading organizations...
-                    </div>
-                )}
+                {isFetching && <Loader>Loading organizations...</Loader>}
                 {isEmpty && (
-                    <div className="text-gray-606060 text-center">
-                        You have no organizations yet
+                    <div className="text-sm text-gray-7c8db5 text-center">
+                        There are no organizations
                     </div>
                 )}
 
@@ -126,15 +122,14 @@ const DaosPage = () => {
 
                 {hasNext && (
                     <div className="text-center mt-6">
-                        <button
-                            className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
+                        <Button
                             type="button"
                             disabled={isFetching}
+                            isLoading={isFetching}
                             onClick={getMore}
                         >
-                            {isFetching && <Spinner className="mr-2" />}
                             Load more
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>

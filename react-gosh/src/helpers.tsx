@@ -2,8 +2,9 @@ import cryptoJs, { SHA1, SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import { sleep } from './utils'
 import { AppConfig } from './appconfig'
-import { TTreeItem } from './types/repo.types'
 import { GoshError } from './errors'
+import { TAddress, TTreeItem, TPaginatedAccountsResult } from './types'
+import { GoshAdapterFactory } from './gosh'
 
 export const retry = async (fn: Function, maxAttempts: number) => {
     const delay = (fn: Function, ms: number) => {
@@ -34,18 +35,20 @@ export const getPaginatedAccounts = async (params: {
     result?: string[]
     limit?: number
     lastId?: string
-}): Promise<{ results: any[]; lastId?: string; completed: boolean }> => {
-    const { filters = [], result = ['id'], limit = 10, lastId = null } = params
+}): Promise<TPaginatedAccountsResult> => {
+    const { filters = [], result = [], limit = 10, lastId } = params
     const query = `query AccountsQuery( $lastId: String, $limit: Int) {
         accounts(
             filter: {
                 id: { gt: $lastId },
                 ${filters.join(',')}
             }
-            orderBy: [{ path: "id", direction: ASC }]
+            orderBy: [
+                { path: "id", direction: ASC },
+            ]
             limit: $limit
         ) {
-            ${result.join(' ')}
+            id ${result.join(' ')}
         }
     }`
     const response = await AppConfig.goshclient.net.query({
@@ -77,7 +80,9 @@ export const getAllAccounts = async (params: {
         })
         results.push(...accounts.results)
         next = accounts.lastId
-        if (accounts.completed) break
+        if (accounts.completed) {
+            break
+        }
         await sleep(200)
     }
     return results
@@ -278,4 +283,38 @@ export const executeByChunk = async <Input, Output>(
         await sleep(300)
     }
     return result
+}
+
+export const getRepositoryAccounts = async (
+    dao: string,
+    options: { version?: string },
+) => {
+    const { version } = options
+    const versions = Object.keys(AppConfig.versions).reverse()
+    const items: { address: TAddress; last_paid: number; version: string }[] = []
+    for (const ver of versions) {
+        if (version && ver !== version) {
+            continue
+        }
+
+        const gosh = GoshAdapterFactory.create(ver)
+        const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
+        if (!(await daoAdapter.isDeployed())) {
+            continue
+        }
+
+        const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
+        })
+        items.push(
+            ...result.map(({ id, last_paid }) => ({
+                address: id,
+                last_paid,
+                version: ver,
+            })),
+        )
+    }
+    return items
 }

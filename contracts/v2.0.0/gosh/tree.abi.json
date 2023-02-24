@@ -1,0 +1,180 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"data","type":"map(uint256,tuple)"},
+				{"name":"ipfs","type":"optional(string)"},
+				{"name":"rootGosh","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeCommit","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkFull",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkTree",
+			"inputs": [
+				{"name":"index","type":"uint256"},
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "answerIs",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"_ready","type":"bool"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckTree",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gotCheckTree",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"res","type":"bool"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoDiff",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoCommit",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoTree",
+			"inputs": [
+				{"name":"sha","type":"string"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gettree",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"map(uint256,tuple)"},
+				{"name":"value1","type":"optional(string)"}
+			]
+		},
+		{
+			"name": "getsha",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_shaTree","type":"string"},
+		{"key":2,"name":"_repo","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_shaTreeLocal","type":"uint256"},
+		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"name":"_shaTree","type":"string"},
+		{"name":"_repo","type":"address"},
+		{"name":"_ipfs","type":"optional(string)"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_needAnswer","type":"uint128"},
+		{"name":"_check","type":"bool"},
+		{"name":"_root","type":"bool"},
+		{"name":"_checkbranch","type":"string"},
+		{"name":"_checkaddr","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"timeMoney","type":"uint128"}
+	]
+}

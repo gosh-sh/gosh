@@ -88,17 +88,11 @@ function deploy_DAO_and_repo {
   sleep 3
 }
 
-# upgrade_DAO 1 or 2 to deploy to TEST_VERSION1 or TEST_VERSION2
 function upgrade_DAO {
-  if [ "$1" = 2 ]; then
-    TEST_VERSION=$TEST_VERSION2
-    PROP_ID=$PROP_ID2
-    NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_2
-  else
-    TEST_VERSION=$TEST_VERSION1
-    PROP_ID=$PROP_ID1
-    NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_1
-  fi
+  TEST_VERSION=$TEST_VERSION1
+  PROP_ID=$PROP_ID1
+  NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_1
+
   echo "***** start proposal for upgrade *****"
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --num_clients 1
 
@@ -118,7 +112,7 @@ function upgrade_DAO {
   wallet_tombstone=$(gosh-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
   echo "WALLET tombstone: $wallet_tombstone"
 
-  if [ "$wallet_tombstone" = "false" ]; then
+  if [ "$wallet_tombstone" = " false" ]; then
     echo "Tombstone was not set"
     exit 1
   fi
@@ -135,10 +129,57 @@ function upgrade_DAO {
     "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
 }
 
+function upgrade_DAO_2 {
+  TEST_VERSION=$TEST_VERSION2
+  NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_2
+
+  echo "***** start proposal for upgrade *****"
+  gosh-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
+  NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+
+  sleep 60
+
+  echo "***** get data for proposal *****"
+  tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI_1 tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
+  echo "tip3VotingLocker=$tip3VotingLocker"
+
+  PROP_ID=$(tvm_linker test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+  --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_upgrade_prop_id_2 --abi-params \
+  "{\"newversion\":\"$TEST_VERSION\",\"description\":\"\",\"comment\":\"\",\"_now\":\"$NOW_ARG\"}"  --decode-c6 | grep value0 \
+  | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  platform_id=$(gosh-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI_1 --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "platform_id=$platform_id"
+
+  sleep 3
+
+  gosh-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1 --note ""
+
+  wallet_tombstone=$(gosh-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI_1 | sed -n '/value0/ p' | cut -d':' -f 2)
+  echo "WALLET tombstone: $wallet_tombstone"
+
+  if [ "$wallet_tombstone" = " false" ]; then
+    echo "Tombstone was not set"
+    exit 1
+  fi
+
+  echo "gosh-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI_1 --name $DAO_NAME"
+  DAO_ADDR=$(gosh-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI_1 --name $DAO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  echo "New DAO address: $DAO_ADDR"
+
+  WALLET_ADDR=$(gosh-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "NEW_WALLET_ADDR=$WALLET_ADDR"
+
+  gosh-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
+    "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
+}
+
 function add_protected_branch {
   echo "***** start proposal for add protected branch *****"
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --num_clients 1
-  NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | sed  's/last_paid:     //')
+  NOW_ARG=$(gosh-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 
   sleep 60
@@ -184,4 +225,25 @@ function set_commit_proposal {
   sleep 3
 
   gosh-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
+}
+
+
+function wait_account_balance {
+    stop_at=$((SECONDS+120))
+    contract_addr=$1
+    balance_min=$2
+    while [ $SECONDS -lt $stop_at ]; do
+        balance=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".balance'`
+        if [ "$balance" -ge "$balance_min" ]; then
+            is_ok=1
+            echo account has enough balance
+            break
+        fi
+        sleep 5
+    done
+
+    if [ "$is_ok" = "0" ]; then
+        echo account has not enough balance
+        exit 2
+    fi
 }

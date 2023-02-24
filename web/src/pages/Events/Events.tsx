@@ -1,67 +1,68 @@
-import { useOutletContext, useParams } from 'react-router-dom'
-import Spinner from '../../components/Spinner'
-import { useSmv, useSmvEventList } from 'react-gosh'
+import { useOutletContext } from 'react-router-dom'
+import { classNames, useSmv, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import EventListItem from './ListItem'
+import Loader from '../../components/Loader'
+import { Button } from '../../components/Form'
+import { DaoMembersSide, DaoSupplySide, DaoWalletSide } from '../../components/Dao'
 
 const EventsPage = () => {
-    const { daoName } = useParams()
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const smv = useSmv(dao)
+    const wallet = useSmv(dao)
     const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } =
-        useSmvEventList(dao.adapter, 10)
+        useSmvEventList(dao.adapter, { perPage: 5 })
 
     return (
-        <div className="bordered-block px-7 py-8">
-            <div>
-                {dao.details.isAuthMember && (
-                    <SmvBalance
-                        adapter={smv.adapter}
-                        details={smv.details}
-                        className="mb-5 bg-gray-100"
-                    />
-                )}
+        <div className="flex flex-wrap gap-4 justify-between">
+            <div className="basis-8/12">
+                <h3 className="text-xl font-medium mb-4">DAO events</h3>
+                <div className="border border-gray-e6edff rounded-xl overflow-hidden">
+                    {isFetching && !items.length && (
+                        <Loader className="p-4">Loading events...</Loader>
+                    )}
 
-                {isFetching && (
-                    <div className="text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading events...
+                    {isEmpty && (
+                        <div className="text-gray-7c8db5 text-sm text-center p-4">
+                            There are no events
+                        </div>
+                    )}
+
+                    <div className="divide-y divide-gray-e6edff">
+                        {items.map((item, index) => {
+                            getItemDetails(item)
+                            return (
+                                <EventListItem
+                                    key={index}
+                                    dao={dao.details}
+                                    event={item}
+                                />
+                            )
+                        })}
                     </div>
-                )}
 
-                {isEmpty && (
-                    <div className="text-gray-606060 text-center">
-                        There are no events yet
-                    </div>
-                )}
-
-                <div className="divide-y divide-gray-c4c4c4">
-                    {items.map((item, index) => {
-                        getItemDetails(item)
-                        return (
-                            <EventListItem
-                                key={index}
-                                daoName={daoName || ''}
-                                event={item}
-                            />
-                        )
-                    })}
-                </div>
-
-                {hasNext && (
-                    <div className="text-center mt-3">
-                        <button
-                            className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
+                    {hasNext && (
+                        <Button
                             type="button"
+                            className={classNames(
+                                'w-full',
+                                '!rounded-none',
+                                '!text-gray-7c8db5 !bg-gray-fafafd',
+                                'disabled:opacity-70',
+                            )}
                             disabled={isFetching}
+                            isLoading={isFetching}
                             onClick={getMore}
                         >
-                            {isFetching && <Spinner className="mr-2" />}
-                            Load more
-                        </button>
-                    </div>
-                )}
+                            Show more
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            <div className="grow flex flex-col gap-y-5">
+                <DaoSupplySide dao={dao} />
+                <DaoWalletSide dao={dao} wallet={wallet} />
+                <DaoMembersSide dao={dao.details} />
             </div>
         </div>
     )

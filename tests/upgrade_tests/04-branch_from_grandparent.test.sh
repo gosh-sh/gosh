@@ -40,8 +40,8 @@ echo "Upgrade DAO"
 upgrade_DAO
 
 echo "***** parent repo04 deploy *****"
-gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
+gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
@@ -49,8 +49,7 @@ wait_account_active $REPO_ADDR
 sleep 3
 
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+echo "**** Push parent *****"
 echo parent > 1.txt
 git add 1.txt
 git commit -m test2
@@ -59,11 +58,11 @@ git push
 cd ..
 
 echo "Upgrade DAO"
-upgrade_DAO 2
+upgrade_DAO_2
 
 echo "***** new repo04 deploy *****"
-gosh-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
+gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
 REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_2 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
@@ -71,8 +70,7 @@ wait_account_active $REPO_ADDR
 sleep 3
 
 cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+echo "**** Push latest *****"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
@@ -90,7 +88,7 @@ echo "GOOD VERSION"
 echo branch > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+git push --set-upstream origin parent_branch
 
 cd ..
 

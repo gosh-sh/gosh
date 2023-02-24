@@ -21,11 +21,17 @@ module.exports = {
                 'red-eb7979': '#eb7979',
 
                 extblue: '#61a3ff',
-                'blue-348eff': '#348eff',
                 'blue-1e7aec': '#1e7aec',
-                'gray-53596d': '#53596d',
+
+                // refactor
                 'gray-7c8db5': '#7c8db5',
                 'gray-fafafd': '#fafafd',
+                'gray-53596d': '#53596d',
+                'gray-e6edff': '#e6edff',
+                'gray-d6e4ee': '#d6e4ee',
+                'blue-348eff': '#348eff',
+                'green-34c759': '#34c759',
+                'green-deecdc': '#deecdc',
                 'red-ff3b30': '#ff3b30',
             },
             backgroundImage: {

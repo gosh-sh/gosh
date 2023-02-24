@@ -16,18 +16,21 @@ make generate-docker
 export GIVER_ADDR=`cat Giver.addr`
 echo "GIVER_ADDR = $GIVER_ADDR"
 
-tonos-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
+gosh-cli config -e localhost
+gosh-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
 
 make deploy-docker
 
 cd ../smv
 make build-contracts
 
-cd ../gosh
-echo > gosh.seed
-echo > VersionController.addr
-echo > SystemContract.addr
-echo > SystemContract-1.0.0.addr
+# deploy giver for upgrade
+
+cd ../v1.0.0/gosh
+echo "" > gosh.seed
+echo "" > VersionController.addr
+echo "" > SystemContract.addr
+echo "" > SystemContract-1.0.0.addr
 
 make build
 make deploy-docker

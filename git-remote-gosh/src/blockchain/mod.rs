@@ -102,6 +102,16 @@ pub struct AccountBoc {
     boc: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AddrVersion {
+    #[serde(rename = "addr")]
+    pub address: BlockchainContractAddress,
+
+    #[serde(rename = "version")]
+    pub version: String,
+}
+
+
 #[derive(Deserialize, Debug)]
 struct CallResult {
     #[serde(rename = "id")]
@@ -118,6 +128,12 @@ struct SendMessageResult {
     shard_block_id: String,
     message_id: String,
     sending_endpoints: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetNameCommitResult {
+    #[serde(rename = "value0")]
+    pub name: String,
 }
 
 #[derive(Deserialize, Debug)]

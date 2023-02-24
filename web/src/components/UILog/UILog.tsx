@@ -12,7 +12,8 @@ const UILog = (props: TUILogProps) => {
     return (
         <div
             className={classNames(
-                'text-sm text-gray-050a15/70 bg-gray-050a15/5 rounded p-3',
+                'text-sm text-gray-7c8db5 bg-gray-fafafd p-3',
+                'border border-gray-e6edff rounded-lg',
                 className,
             )}
         >

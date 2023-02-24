@@ -5,8 +5,6 @@ import yup from '../../../yup-extended'
 import { validateOnboardingDao, validateOnboardingRepo } from '../helpers'
 import { supabase } from '../../../helpers'
 import PinCodeModal from '../../../components/Modal/PinCode'
-import { TextField } from '../../../components/Formik'
-import Spinner from '../../../components/Spinner'
 import { SignupProgress } from '../../Signup/components/SignupProgress'
 import { appModalStateAtom } from '../../../store/app.state'
 import {
@@ -19,6 +17,8 @@ import { toast } from 'react-toastify'
 import ToastError from '../../../components/Error/ToastError'
 import { EDaoInviteStatus } from '../../../store/onboarding.types'
 import PreviousStep from './PreviousStep'
+import { FormikInput } from '../../../components/Formik'
+import { Button } from '../../../components/Form'
 
 type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
@@ -109,44 +109,44 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                 phrase: seed,
             })
 
-            // Get or create DB user
-            let dbUser = await getDbUser(username)
-            if (!dbUser) {
-                dbUser = await createDbUser(
-                    username,
-                    keypair.public,
-                    session.user.id,
-                    isEmailPublic ? session.user.email || null : null,
-                )
-            }
+            // // Get or create DB user
+            // let dbUser = await getDbUser(username)
+            // if (!dbUser) {
+            //     dbUser = await createDbUser(
+            //         username,
+            //         keypair.public,
+            //         session.user.id,
+            //         isEmailPublic ? session.user.email || null : null,
+            //     )
+            // }
 
-            // Save auto clone repositories
-            const goshAddress = Object.values(AppConfig.versions).reverse()[0]
-            const goshProtocol = `gosh://${goshAddress}`
-            for (const item of repositories) {
-                const { daoName, name } = item
-                await createDbGithubRecord({
-                    user_id: dbUser.id,
-                    github_url: `/${daoName}/${name}`,
-                    gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
-                })
-            }
+            // // Save auto clone repositories
+            // const goshAddress = Object.values(AppConfig.versions).reverse()[0]
+            // const goshProtocol = `gosh://${goshAddress}`
+            // for (const item of repositories) {
+            //     const { daoName, name } = item
+            //     await createDbGithubRecord({
+            //         user_id: dbUser.id,
+            //         github_url: `/${daoName}/${name}`,
+            //         gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
+            //     })
+            // }
 
-            // Update DAO invites status
-            for (const invite of invites) {
-                const { error } = await supabase
-                    .from('dao_invite')
-                    .update({
-                        recipient_username: username,
-                        recipient_status: invite.accepted
-                            ? EDaoInviteStatus.ACCEPTED
-                            : EDaoInviteStatus.REJECTED,
-                    })
-                    .eq('id', invite.id)
-                if (error) {
-                    throw new GoshError(error.message)
-                }
-            }
+            // // Update DAO invites status
+            // for (const invite of invites) {
+            //     const { error } = await supabase
+            //         .from('dao_invite')
+            //         .update({
+            //             recipient_username: username,
+            //             recipient_status: invite.accepted
+            //                 ? EDaoInviteStatus.ACCEPTED
+            //                 : EDaoInviteStatus.REJECTED,
+            //         })
+            //         .eq('id', invite.id)
+            //     if (error) {
+            //         throw new GoshError(error.message)
+            //     }
+            // }
 
             // Deploy GOSH account
             await signup({ phrase: seed, username })
@@ -235,16 +235,15 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                                 <div className="mb-3">
                                     <Field
                                         name="username"
-                                        component={TextField}
-                                        inputProps={{
-                                            autoComplete: 'off',
-                                            placeholder: 'Username',
-                                            onChange: (e: any) =>
-                                                setFieldValue(
-                                                    'username',
-                                                    e.target.value.toLowerCase(),
-                                                ),
-                                        }}
+                                        component={FormikInput}
+                                        autoComplete="off"
+                                        placeholder="Username"
+                                        onChange={(e: any) =>
+                                            setFieldValue(
+                                                'username',
+                                                e.target.value.toLowerCase(),
+                                            )
+                                        }
                                         help={
                                             <>
                                                 <p>GOSH username</p>
@@ -258,10 +257,13 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                                 </div>
 
                                 <div className="nickname-form__submit">
-                                    <button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting && <Spinner size={'lg'} />}
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        isLoading={isSubmitting}
+                                    >
                                         Create account
-                                    </button>
+                                    </Button>
                                 </div>
                             </Form>
                         )}

@@ -14,6 +14,18 @@
 			]
 		},
 		{
+			"name": "get_upgrade_prop_id_2",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "get_add_protected_prop_id",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -35,6 +47,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "unzip",
+			"inputs": [
+				{"name":"data","type":"bytes"}
+			],
+			"outputs": [
 			]
 		},
 		{

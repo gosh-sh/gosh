@@ -38,7 +38,7 @@ clear_abi:
 .PHONY: copy_abi
 copy_abi: clear_abi
 	-mkdir -p ./resources
-	-cp ../contracts/gosh/*.abi.json ./resources/
+	-cp ../contracts/v1.0.0/gosh/*.abi.json ./resources/
 
 .PHONY: build
 build: copy_abi clear_screen

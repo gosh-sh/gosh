@@ -5,7 +5,7 @@ import { MAX_PARALLEL_READ, ZERO_COMMIT } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { executeByChunk, getAllAccounts, getTreeItemFullPath } from '../helpers'
+import { executeByChunk, getRepositoryAccounts, getTreeItemFullPath } from '../helpers'
 import {
     branchesAtom,
     branchSelector,
@@ -21,35 +21,97 @@ import {
     TBranchOperateProgress,
     TCommit,
     TPushProgress,
-    TRepository,
     TRepositoryListItem,
+    TTaskCommitConfig,
     TTree,
     TTreeItem,
 } from '../types/repo.types'
 import { sleep } from '../utils'
 
-function useRepoList(dao: string, perPage: number) {
+function useRepoList(dao: string, params: { perPage?: number; version?: string }) {
     const [search, setSearch] = useState<string>('')
-    const [repos, setRepos] = useState<{
-        items: TRepositoryListItem[]
-        filtered: { search: string; items: string[] }
-        page: number
+    const [accounts, setAccounts] = useState<{
         isFetching: boolean
-    }>({
-        items: [],
-        filtered: { search: '', items: [] },
-        page: 1,
-        isFetching: true,
-    })
+        items: { address: TAddress; last_paid: number; version: string }[]
+    }>({ isFetching: false, items: [] })
+    const [repos, setRepos] = useState<{
+        isFetching: boolean
+        items: TRepositoryListItem[]
+        lastAccountIndex: number
+        hasNext?: boolean
+    }>({ isFetching: false, items: [], lastAccountIndex: 0 })
 
-    /** Get next chunk of DAO list items */
-    const getMore = () => {
-        setRepos((state) => ({ ...state, page: state.page + 1 }))
+    const { perPage = 5, version } = params
+
+    const getAccounts = useCallback(async () => {
+        setAccounts((state) => ({ ...state, isFetching: true }))
+        const items = await getRepositoryAccounts(dao, { version })
+        setAccounts((state) => ({
+            ...state,
+            isFetching: false,
+            items: items.sort((a, b) => b.last_paid - a.last_paid),
+        }))
+    }, [dao])
+
+    const getRepositoryList = useCallback(
+        async (lastAccountIndex: number, names: string[]) => {
+            if (accounts.isFetching) {
+                return
+            }
+
+            setRepos((state) => ({ ...state, isFetching: true }))
+
+            const _names = [...names]
+            const items: TRepositoryListItem[] = []
+            for (let i = lastAccountIndex; i < accounts.items.length; i++) {
+                lastAccountIndex = i
+                const account = accounts.items[i]
+                const gosh = GoshAdapterFactory.create(account.version)
+                const repository = await gosh.getRepository({ address: account.address })
+                const name = await repository.getName()
+                if (_names.findIndex((n) => n === name) >= 0) {
+                    continue
+                }
+
+                _names.push(name)
+                items.push({
+                    adapter: repository,
+                    address: account.address,
+                    name,
+                    version: account.version,
+                })
+
+                if (perPage > 0 && items.length === perPage) {
+                    break
+                }
+            }
+
+            setRepos((state) => ({
+                ...state,
+                isFetching: false,
+                items: [...state.items, ...items],
+                lastAccountIndex,
+                hasNext: lastAccountIndex < accounts.items.length - 1,
+            }))
+
+            for (const item of items) {
+                getItemDetails(item)
+            }
+        },
+        [accounts.isFetching, accounts.items, perPage],
+    )
+
+    const getMore = async () => {
+        await getRepositoryList(
+            repos.lastAccountIndex + 1,
+            repos.items.map(({ name }) => name),
+        )
     }
 
-    /** Load item details and update corresponging list item */
-    const setItemDetails = async (item: TRepositoryListItem) => {
-        if (item.isLoadDetailsFired) return
+    const getItemDetails = async (item: TRepositoryListItem) => {
+        if (item.isLoadDetailsFired) {
+            return
+        }
 
         setRepos((state) => ({
             ...state,
@@ -65,88 +127,33 @@ function useRepoList(dao: string, perPage: number) {
         setRepos((state) => ({
             ...state,
             items: state.items.map((curr) => {
-                if (curr.address === item.address) return { ...curr, ...details }
+                if (curr.address === item.address) {
+                    return { ...curr, ...details }
+                }
                 return curr
             }),
         }))
     }
 
-    /** Get initial repos list */
+    /** Get all repositories accounts from all GOSH versions */
     useEffect(() => {
-        const _getRepoList = async () => {
-            // Get repos details (prepare repo list items)
-            const names: string[] = []
-            const items: TRepositoryListItem[] = []
-            for (const version of Object.keys(AppConfig.versions).reverse()) {
-                const gosh = GoshAdapterFactory.create(version)
-                const daoAdapter = await gosh.getDao({ name: dao, useAuth: false })
-                if (!(await daoAdapter.isDeployed())) continue
+        getAccounts()
+    }, [getAccounts])
 
-                const codeHash = await gosh.getRepositoryCodeHash(daoAdapter.getAddress())
-                const accounts = await getAllAccounts({
-                    filters: [`code_hash: {eq:"${codeHash}"}`],
-                })
-                const veritems = await executeByChunk(
-                    accounts.map(({ id }) => id),
-                    MAX_PARALLEL_READ,
-                    async (address) => {
-                        const adapter = await daoAdapter.getRepository({ address })
-                        const name = await adapter.getName()
-                        if (names.indexOf(name) >= 0) return null
-
-                        names.push(name)
-                        return { adapter, address, name, version }
-                    },
-                )
-                items.push(...(veritems.filter((v) => !!v) as TRepositoryListItem[]))
-            }
-
-            setRepos((state) => {
-                const merged = [...state.items, ...items]
-                return {
-                    items: merged.sort((a, b) => (a.name > b.name ? 1 : -1)),
-                    filtered: { search: '', items: merged.map((item) => item.address) },
-                    page: 1,
-                    isFetching: false,
-                }
-            })
-        }
-
-        _getRepoList()
-    }, [dao])
-
-    /** Update filtered items and page depending on search */
+    /** Get repositories list per page */
     useEffect(() => {
-        setRepos((state) => {
-            return {
-                ...state,
-                page: search ? 1 : state.page,
-                filtered: {
-                    search,
-                    items: state.items
-                        .filter((item) => _searchItem(search, item.name))
-                        .map((item) => item.address),
-                },
-            }
-        })
-    }, [search])
-
-    const _searchItem = (what: string, where: string): boolean => {
-        const pattern = new RegExp(`^${what}`, 'i')
-        return !what || where.search(pattern) >= 0
-    }
+        getRepositoryList(0, [])
+    }, [getRepositoryList])
 
     return {
-        isFetching: repos.isFetching,
-        isEmpty: !repos.isFetching && !repos.filtered.items.length,
-        items: repos.items
-            .filter((item) => repos.filtered.items.indexOf(item.address) >= 0)
-            .slice(0, repos.page * perPage),
-        hasNext: repos.page * perPage < repos.filtered.items.length,
+        isFetching: accounts.isFetching || repos.isFetching,
+        isEmpty: !accounts.isFetching && !repos.isFetching && !repos.items.length,
+        items: repos.items,
+        hasNext: repos.hasNext,
         search,
         setSearch,
         getMore,
-        getItemDetails: setItemDetails,
+        getItemDetails,
     }
 }
 
@@ -184,37 +191,38 @@ function useRepo(dao: string, repo: string) {
         _getRepo()
     }, [dao, repo])
 
-    useEffect(() => {
-        const _getIncomingCommits = async () => {
-            if (!repository.adapter) return
+    // TODO: Fix this
+    // useEffect(() => {
+    //     const _getIncomingCommits = async () => {
+    //         if (!repository.adapter) return
 
-            const incoming = await repository.adapter.getIncomingCommits()
-            setRepository((state) => {
-                const { details } = state
-                if (!details) return state
-                return {
-                    ...state,
-                    details: { ...details, commitsIn: incoming },
-                }
-            })
-        }
+    //         const incoming = await repository.adapter.getIncomingCommits()
+    //         setRepository((state) => {
+    //             const { details } = state
+    //             if (!details) return state
+    //             return {
+    //                 ...state,
+    //                 details: { ...details, commitsIn: incoming },
+    //             }
+    //         })
+    //     }
 
-        _getIncomingCommits()
-        repository.adapter?.subscribeIncomingCommits((incoming) => {
-            setRepository((state) => {
-                const { details } = state
-                if (!details) return state
-                return {
-                    ...state,
-                    details: { ...details, commitsIn: incoming },
-                }
-            })
-        })
+    //     _getIncomingCommits()
+    //     repository.adapter?.subscribeIncomingCommits((incoming) => {
+    //         setRepository((state) => {
+    //             const { details } = state
+    //             if (!details) return state
+    //             return {
+    //                 ...state,
+    //                 details: { ...details, commitsIn: incoming },
+    //             }
+    //         })
+    //     })
 
-        return () => {
-            repository.adapter?.unsubscribe()
-        }
-    }, [repository.adapter])
+    //     return () => {
+    //         repository.adapter?.unsubscribe()
+    //     }
+    // }, [repository.adapter])
 
     return {
         isFetching,
@@ -227,8 +235,8 @@ function useRepo(dao: string, repo: string) {
 }
 
 function useRepoCreate(dao: IGoshDaoAdapter) {
-    const create = async (name: string) => {
-        await dao.deployRepository(name)
+    const create = async (name: string, options: { description?: string }) => {
+        await dao.createRepository({ name, ...options })
     }
 
     return { create }
@@ -258,9 +266,12 @@ function useRepoUpgrade(dao: IGoshDaoAdapter, repo: IGoshRepositoryAdapter) {
 
         const gosh = GoshAdapterFactory.create(version)
         const adapter = await gosh.getDao({ name: dao })
-        await adapter.deployRepository(await repo.getName(), {
-            addr: repo.getAddress(),
-            version: repo.getVersion(),
+        await adapter.createRepository({
+            name: await repo.getName(),
+            prev: {
+                addr: repo.getAddress(),
+                version: repo.getVersion(),
+            },
         })
     }
 
@@ -272,15 +283,21 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
     const branch = useRecoilValue(branchSelector(current))
 
     const updateBranches = useCallback(async () => {
-        if (!repo) return
+        if (!repo) {
+            return
+        }
 
         const branches = await repo.getBranches()
-        if (branches) setBranches(branches)
+        if (branches) {
+            setBranches(branches)
+        }
     }, [repo, setBranches])
 
     const updateBranch = useCallback(
         async (name: string) => {
-            if (!repo) return
+            if (!repo) {
+                return
+            }
 
             console.debug('Update branch', name)
             const branch = await repo.getBranch(name)
@@ -299,7 +316,7 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const setRepository = useSetRecoilState(repositoryAtom)
     const { updateBranches } = useBranches(repo)
-    const { pushUpgrade } = _usePush(dao, repo)
+    const { pushUpgrade } = usePush(dao, repo)
     const [progress, setProgress] = useState<{
         name?: string
         type?: 'create' | 'destroy' | '(un)lock' | 'sethead'
@@ -341,7 +358,10 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const lock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.lockBranch(name.toLowerCase())
+            await repo.lockBranch({
+                repository: await repo.getName(),
+                branch: name.toLowerCase(),
+            })
         } catch (e) {
             throw e
         } finally {
@@ -352,7 +372,10 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const unlock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.unlockBranch(name.toLowerCase())
+            await repo.unlockBranch({
+                repository: await repo.getName(),
+                branch: name.toLowerCase(),
+            })
         } catch (e) {
             throw e
         } finally {
@@ -507,23 +530,24 @@ function useCommitList(
         const list: TCommit[] = []
         let count = 0
         while (count < perPage) {
-            if (!prev) break
+            if (!prev) {
+                break
+            }
 
             const commit = await _getCommit(prev)
-            const { name, initupgrade, parents, versionPrev } = commit
-            if (name !== ZERO_COMMIT && !initupgrade) list.push(commit)
-            if (!parents.length) {
+            const { name, initupgrade, parents } = commit
+            if (name !== ZERO_COMMIT && !initupgrade) {
+                list.push(commit)
+            }
+            if (name === ZERO_COMMIT || !parents.length) {
                 prev = undefined
                 break
             }
 
-            const parent = await _getCommit({ address: parents[0], version: versionPrev })
-            prev =
-                parent.name !== ZERO_COMMIT
-                    ? { address: parent.address, version: parent.version }
-                    : undefined
+            const parent = parents[0]
+            prev = { address: parent.address, version: parent.version }
             count++
-            await sleep(300)
+            await sleep(50)
         }
 
         setCommits((curr) => ({
@@ -550,10 +574,12 @@ function useCommitList(
 
     useEffect(() => {
         const _getCommits = async () => {
-            if (!isBranchUpdated) return
+            if (!isBranchUpdated) {
+                return
+            }
             if (branchData) {
-                const { address, versionPrev } = branchData.commit
-                _getCommitsPage({ address, version: versionPrev })
+                const { address, version } = branchData.commit
+                _getCommitsPage({ address, version })
             }
         }
 
@@ -688,8 +714,8 @@ function useCommit(
     }
 }
 
-function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
-    const { branch: branchData, updateBranch } = useBranches(repo, branch)
+function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
+    const { branch, updateBranch } = useBranches(repo, branchName)
     const [progress, setProgress] = useState<TPushProgress>({})
 
     const push = async (
@@ -699,28 +725,33 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
             original: string | Buffer
             modified: string | Buffer
         }[],
-        isPullRequest: boolean,
-        message?: string,
-        tags?: string,
-        parent?: string,
+        options: {
+            isPullRequest?: boolean
+            message?: string
+            tags?: string
+            parent?: string
+            task?: TTaskCommitConfig
+        },
     ) => {
-        if (!branchData) throw new GoshError(EGoshError.NO_BRANCH)
-        if (!dao.isAuthMember) throw new GoshError(EGoshError.NOT_MEMBER)
+        if (!branch) {
+            throw new GoshError(EGoshError.NO_BRANCH)
+        }
+        if (!dao.isAuthMember) {
+            throw new GoshError(EGoshError.NOT_MEMBER)
+        }
 
-        const { name, version } = branchData.commit
-        await pushUpgrade(branchData.name, name, version)
+        const { message, tags, parent, task, isPullRequest = false } = options
+        const { name, version } = branch.commit
+        await pushUpgrade(branch.name, name, version)
 
-        message = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(
-            branchData.name,
-            blobs,
-            message,
-            isPullRequest,
+        const comment = [title, message].filter((v) => !!v).join('\n\n')
+        await repo.push(branch.name, blobs, comment, isPullRequest, {
             tags,
-            parent,
-            pushCallback,
-        )
-        !isPullRequest && (await updateBranch(branchData.name))
+            branchParent: parent,
+            task,
+            callback: pushCallback,
+        })
+        !isPullRequest && (await updateBranch(branch.name))
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
@@ -750,26 +781,7 @@ function _usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch?: string) {
         })
     }
 
-    return { branch: branchData, push, pushUpgrade, progress }
-}
-
-function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branch: string) {
-    const { push: _push, progress } = _usePush(dao, repo, branch)
-
-    const push = async (
-        title: string,
-        blobs: {
-            treepath: string[]
-            original: string | Buffer
-            modified: string | Buffer
-        }[],
-        message?: string,
-        tags?: string,
-    ) => {
-        await _push(title, blobs, false, message, tags)
-    }
-
-    return { push, progress }
+    return { branch, push, pushUpgrade, progress }
 }
 
 function _useMergeRequest(
@@ -925,8 +937,11 @@ function _useMergeRequest(
 function useMergeRequest(
     dao: TDao,
     repo: IGoshRepositoryAdapter,
-    showDiffNum: number = 5,
+    options: {
+        showDiffNum?: number
+    },
 ) {
+    const { showDiffNum = 5 } = options
     const { updateBranches } = useBranches(repo)
     const { destroy: deleteBranch, progress: branchProgress } = useBranchManagement(
         dao,
@@ -938,15 +953,26 @@ function useMergeRequest(
         build,
         progress: buildProgress,
     } = _useMergeRequest(dao.name, repo, showDiffNum)
-    const { push: _push, progress: pushProgress } = _usePush(dao, repo, dstBranch?.name)
+    const {
+        push: _push,
+        pushUpgrade: _pushUpgrade,
+        progress,
+    } = usePush(dao, repo, dstBranch?.name)
 
     const push = async (
         title: string,
-        message?: string,
-        tags?: string,
-        deleteSrcBranch?: boolean,
+        options: {
+            isPullRequest?: boolean
+            message?: string
+            tags?: string
+            deleteSrcBranch?: boolean
+            task?: TTaskCommitConfig
+        },
     ) => {
-        await _push(title, buildProgress.items, false, message, tags, srcBranch!.name)
+        const { deleteSrcBranch, ...rest } = options
+        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
+        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
+        await _push(title, buildProgress.items, { ...rest, parent: srcBranch!.name })
         if (deleteSrcBranch) {
             await deleteBranch(srcBranch!.name)
             await updateBranches()
@@ -959,52 +985,8 @@ function useMergeRequest(
         build,
         buildProgress,
         push,
-        pushProgress,
-        branchProgress,
-    }
-}
-
-function usePullRequest(
-    dao: TDao,
-    repo: IGoshRepositoryAdapter,
-    showDiffNum: number = 5,
-) {
-    const { updateBranches } = useBranches(repo)
-    const {
-        srcBranch,
-        dstBranch,
-        build,
-        progress: buildProgress,
-    } = _useMergeRequest(dao.name, repo, showDiffNum)
-    const {
-        push: _push,
-        pushUpgrade: _pushUpgrade,
-        progress,
-    } = _usePush(dao, repo, dstBranch?.name)
-
-    const push = async (
-        title: string,
-        message?: string,
-        tags?: string,
-        deleteSrcBranch?: boolean,
-    ) => {
-        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
-        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-
-        await _push(title, buildProgress.items, true, message, tags, srcBranch!.name)
-        if (deleteSrcBranch) {
-            await repo.deleteBranch(srcBranch!.name)
-            await updateBranches()
-        }
-    }
-
-    return {
-        srcBranch,
-        dstBranch,
-        build,
-        buildProgress,
-        push,
         pushProgress: progress,
+        branchProgress,
     }
 }
 
@@ -1102,6 +1084,5 @@ export {
     useCommit,
     usePush,
     useMergeRequest,
-    usePullRequest,
     usePullRequestCommit,
 }

@@ -3,7 +3,7 @@ export enum EGoshError {
 
     GOSH_UNDEFINED = 'Gosh undefined',
 
-    PROFILE_NOT_EXIST = 'Profile does not exist... Signup, please',
+    PROFILE_NOT_EXIST = 'Profile does not exist',
     PROFILE_EXISTS = 'Profile already exists',
     PROFILE_PUBKEY_INVALID = 'Profile access denied with provided phrase/pubkey',
     PROFILE_UNDEFINED = 'Profile undefined',
@@ -28,7 +28,7 @@ export enum EGoshError {
     DAO_EXISTS = 'DAO already exists',
     DAO_UNDEFINED = 'DAO undefined',
 
-    PR_BRANCH = 'Branch is resticted for direct commit. Make PR instead',
+    PR_BRANCH = 'Branch is protected. Please, make a proposal',
     PR_NO_MERGE = 'Nothing to merge',
 
     FILE_EXISTS = 'File already exists',
@@ -40,7 +40,7 @@ export enum EGoshError {
     SMV_LOCKER_BUSY = 'SMV locker busy',
     SMV_NO_PROPOSAL = 'SMV proposal undefined',
     SMV_NO_START = 'Voting for event is not started yet',
-    SMV_NO_BALANCE = 'SMV not enough balance',
+    SMV_NO_BALANCE = 'Not enough tokens to start proposal',
 }
 
 export class GoshError extends Error {
