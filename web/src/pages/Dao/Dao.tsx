@@ -1,13 +1,14 @@
 import { Link, useOutletContext } from 'react-router-dom'
-import { classNames, useSmvEventList } from 'react-gosh'
+import { classNames, useSmv, useSmvEventList } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import ReposPage from '../DaoRepos'
-import { DaoMembersSide, DaoSupplySide } from '../../components/Dao'
+import { DaoMembersSide, DaoSupplySide, DaoWalletSide } from '../../components/Dao'
 import { useCallback, useEffect, useState } from 'react'
 import BlobPreview from '../../components/Blob/Preview'
 
 const DaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const wallet = useSmv(dao)
     const { items: events, getItemDetails: getEventDetails } = useSmvEventList(
         dao.adapter!,
         { perPage: 3 },
@@ -110,9 +111,10 @@ const DaoPage = () => {
                     <ReposPage />
                 </div>
             </div>
-            <div className="grow">
-                <DaoSupplySide details={dao.details} />
-                <DaoMembersSide details={dao.details} />
+            <div className="grow flex flex-col gap-y-5">
+                <DaoSupplySide dao={dao} />
+                <DaoWalletSide dao={dao} wallet={wallet} />
+                <DaoMembersSide dao={dao.details} />
             </div>
         </div>
     )

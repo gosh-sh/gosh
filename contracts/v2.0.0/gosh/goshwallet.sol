@@ -785,7 +785,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _deployRepository(string nameRepo, string descr, optional(AddrVersion) previous) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         AddrVersion[] emptyArr;
         if (previous.hasValue() == false) {
             _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
@@ -802,11 +801,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(AddrVersion) previous,
         string comment,
         uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
+    ) public onlyOwnerPubkeyOptional(_access) accept {
         require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
         _saveMsg();
 
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
@@ -929,6 +927,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string branchName,
         string commit,
+        bool isUpgrade,
         uint128 numberChangedFiles,
         uint128 numberCommits
     ) public onlyOwnerPubkeyOptional(_access)  {
@@ -939,7 +938,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell s0 = _composeCommitStateInit(commit, repo);
         address addrC = address.makeAddrStd(0, tvm.hash(s0));
-        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task);
+        isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task, isUpgrade);
         tvm.accept();
         _saveMsg();
         getMoney();
@@ -1345,6 +1344,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function addAllowance(
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
+        uint128 diff = math.min(grant, m_pseudoDAOBalance - m_pseudoDAOVoteBalance);
+        m_pseudoDAOVoteBalance += diff;
+        if (diff != grant) {
+            GoshDao(_goshdao).returnAllowance{value: 0.2 ton}(grant - diff, _pubaddr, _index);
+        }
+        getMoney();
+    }
+    
+     function addAllowanceC(
+        uint128 grant
+    ) public senderIs(_goshdao) accept saveMsg {
         m_pseudoDAOVoteBalance += grant;
         getMoney();
     }
@@ -1476,10 +1486,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address commit,
         uint128 numberChangedFiles,
         uint128 numberCommits,
-        optional(ConfigCommit) task
+        optional(ConfigCommit) task,
+        bool isUpgrade
     ) internal view  {
        require(_limited == false, ERR_WALLET_LIMITED);
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, _index);
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
     }
 
     //SMV part
@@ -1538,9 +1549,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE); 
-        if (_limited == true) {
-           require(_lockedBalance + m_pseudoDAOBalance > 0, ERR_LOW_TOKEN);
-        }
+//        if (_limited == true) {
+//           require(_lockedBalance + m_pseudoDAOBalance > 0, ERR_LOW_TOKEN);
+//        }
         tvm.accept();
         _saveMsg();
 

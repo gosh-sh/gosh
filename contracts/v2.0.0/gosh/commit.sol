@@ -188,11 +188,13 @@ contract Commit is Modifiers {
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
 
-    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
+        require(isUpgrade == _initupgrade, ERR_WRONG_UPGRADE_STATUS);
         if (_initupgrade == true) {
             require(_parents[0].addr == branchcommit, ERR_BAD_PARENT);
+            require(numberCommits == 1, ERR_BAD_PARENT);
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0].addr); }
             else { 
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
@@ -200,6 +202,25 @@ contract Commit is Modifiers {
             }
             return;
         }
+        require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
+        require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
+        require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);
+        require(_diffcheck == false, ERR_PROCCESS_IS_EXIST);
+        require(_number == 0, ERR_PROCCESS_IS_EXIST);
+        _number = number;
+        _numbercommits = numberCommits;
+        _approved = 0;
+        _task = task;
+        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits);
+        _continueChain = true;
+        _continueDiff = true;
+    }
+    
+    function SendDiffSmv(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
+        tvm.accept();
+        getMoney();
+        require(_initupgrade == false, ERR_WRONG_UPGRADE_STATUS);
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
         require(_commitcheck == false, ERR_PROCCESS_IS_EXIST);

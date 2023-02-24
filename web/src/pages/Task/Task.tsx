@@ -215,7 +215,7 @@ const TaskPage = () => {
                                 </div>
                                 <div className="border-t border-gray-e6edff">
                                     <div className="p-5">
-                                        {!details.confirmed && (
+                                        {!details.confirmed && dao.details.isAuthMember && (
                                             <Formik
                                                 initialValues={{}}
                                                 onSubmit={onTaskDelete}

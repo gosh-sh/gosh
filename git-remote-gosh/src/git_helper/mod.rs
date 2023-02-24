@@ -405,7 +405,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
         let arg1 = iter.next();
         let arg2 = iter.next();
         let msg = line.clone();
-        tracing::trace!("Line: {line}");
+        tracing::debug!("Line: {line}");
         tracing::debug!(
             "> {} {} {}",
             cmd.unwrap(),

@@ -109,7 +109,6 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                 phrase: seed,
             })
 
-            // TODO: remove before push
             // // Get or create DB user
             // let dbUser = await getDbUser(username)
             // if (!dbUser) {

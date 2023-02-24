@@ -76,8 +76,8 @@ const DaoCreateForm = () => {
                 >
                     {({ isSubmitting, values, setFieldValue }) => (
                         <Form>
-                            <div className="flex flex-wrap items-start justify-between gap-x-24 gap-y-8">
-                                <div className="grow">
+                            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-8">
+                                <div className="w-2/3">
                                     <div>
                                         <Field
                                             label="Name"
@@ -150,7 +150,7 @@ const DaoCreateForm = () => {
                                             help={
                                                 values.mint
                                                     ? 'This option enables the DAO token mint'
-                                                    : 'If you uncheck this option, the DAO will never be able to mint tokens'
+                                                    : 'If you uncheck this option the DAO token supply will be capped to the number above'
                                             }
                                             helpClassName={
                                                 values.mint ? null : 'text-red-ff3b30'

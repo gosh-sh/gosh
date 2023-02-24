@@ -52,8 +52,8 @@ https://pubgraf.{$MONITORING_DOMAIN} {
 
 
 https://prometheus.{$MONITORING_DOMAIN} {
-    basicauth { 
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
     }
     reverse_proxy gosh-prometheus:9090 {
         header_up X-Real-IP {http.request.remote.host}
@@ -63,8 +63,8 @@ https://prometheus.{$MONITORING_DOMAIN} {
 }
 
 https://alertmanager.{$MONITORING_DOMAIN} {
-    basicauth { 
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
     }
     reverse_proxy gosh-alertmanager:9093 {
         header_up X-Real-IP {http.request.remote.host}
@@ -74,8 +74,8 @@ https://alertmanager.{$MONITORING_DOMAIN} {
 }
 
 https://pushgateway.{$MONITORING_DOMAIN} {
-    basicauth { 
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
     }
     reverse_proxy gosh-pushgateway:9091 {
         header_up X-Real-IP {http.request.remote.host}
@@ -85,8 +85,8 @@ https://pushgateway.{$MONITORING_DOMAIN} {
 }
 
 https://gmlogs.{$MONITORING_DOMAIN} {
-    basicauth { 
-        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH} 
+    basicauth {
+        {$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
     }
     reverse_proxy gosh-mon-nginx {
         header_up X-Real-IP {http.request.remote.host}

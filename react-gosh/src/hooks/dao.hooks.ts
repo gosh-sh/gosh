@@ -548,6 +548,21 @@ function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
         updated: (TDaoMemberDetails & { _allowance?: number })[],
         comment?: string,
     ) => {
+        // Validate allowance and DAO supply
+        const { supply } = await dao.getDetails()
+        const sum = updated.reduce((_sum: number, { allowance }) => {
+            return _sum + (allowance || 0)
+        }, 0)
+        if (sum > supply.total) {
+            throw new GoshError('Allowance error', {
+                allowance: sum,
+                supply: supply.total,
+                message:
+                    'Total member allowance can not be greater than DAO total supply',
+            })
+        }
+
+        // Prepare allowance changed data and update
         const prepared = updated
             .filter(({ allowance, _allowance }) => {
                 if (allowance === undefined || _allowance === undefined) {

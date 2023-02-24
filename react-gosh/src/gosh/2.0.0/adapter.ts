@@ -76,6 +76,8 @@ import {
     TDaoEventShowProgressResult,
     TDaoAskMembershipAllowanceResult,
     TRepositoryCreateCommitTagParams,
+    TIsMemberParams,
+    TIsMemberResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -426,6 +428,23 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return _isRepoUpgraded
     }
 
+    async isMember(params: TIsMemberParams): TIsMemberResult {
+        const { username, profile } = params
+
+        let pubaddr: string
+        if (username) {
+            const _profiles = await this.gosh.isValidProfile([username])
+            pubaddr = _profiles[0].address
+        } else if (profile) {
+            pubaddr = profile
+        } else {
+            throw new GoshError('Either profile address or username should be provided')
+        }
+
+        const { value0 } = await this.dao.runLocal('isMember', { pubaddr })
+        return value0
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         if (!(await this.isDeployed())) {
             return
@@ -434,7 +453,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         this.profile = await this.gosh.getProfile({ username })
         this.wallet = await this._getWallet(0, keys)
         if (!(await this.wallet.isDeployed())) {
-            await this._createLimitedWallet()
+            await this._createLimitedWallet(this.profile.address)
         }
 
         const { value0: pubkey } = await this.wallet.runLocal('getAccess', {})
@@ -486,6 +505,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthOwner: this.profile && this.profile.address === owner ? true : false,
             isAuthMember: await this._isAuthMember(),
             isAuthLimited: await this._isAuthLimited(),
+            isRepoUpgraded: details.isRepoUpgraded,
         }
     }
 
@@ -952,6 +972,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
+        if (!(await this._isMintOn())) {
+            throw new GoshError('Token mint is disabled')
+        }
 
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellMintToken', {
@@ -1010,10 +1033,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        // Get profile by username
+        const profile = (await this.gosh.isValidProfile([username]))[0]
+
+        // TODO: May be better to move this to hook
+        // Deploy limited wallet if not a DAO member
+        if (!(await this.isMember({ profile: profile.address }))) {
+            await this._createLimitedWallet(profile.address)
+        }
+
         if (cell) {
-            const profiles = await this.gosh.isValidProfile([username])
             const { value0 } = await this.wallet.runLocal('getCellAddVoteToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
             })
@@ -1021,13 +1052,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneAddVoteTokenDao', { grant: amount })
         } else {
-            const profiles = await this.gosh.isValidProfile([username])
             const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
 
             await this.wallet.run('startProposalForAddVoteToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
@@ -1045,10 +1075,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
+        // Get profile by username
+        const profile = (await this.gosh.isValidProfile([username]))[0]
+
+        // TODO: May be better to move this to hook
+        // Deploy limited wallet if not a DAO member
+        if (!(await this.isMember({ profile: profile.address }))) {
+            await this._createLimitedWallet(profile.address)
+        }
+
         if (cell) {
-            const profiles = await this.gosh.isValidProfile([username])
             const { value0 } = await this.wallet.runLocal('getCellAddRegularToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
             })
@@ -1056,13 +1094,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneAddTokenDao', { grant: amount })
         } else {
-            const profiles = await this.gosh.isValidProfile([username])
             const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart()
 
             await this.wallet.run('startProposalForAddRegularToken', {
-                pubaddr: profiles[0].address,
+                pubaddr: profile.address,
                 token: amount,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
@@ -1076,16 +1113,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const profile = await this.gosh.getProfile({ username })
-        if (!(await profile.isDeployed())) {
-            throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
-        }
-
+        const profile = (await this.gosh.isValidProfile([username]))[0]
         const wallet = await this.getMemberWallet({ profile: profile.address })
         if (!(await wallet.isDeployed())) {
-            throw new GoshError('User has no wallet in DAO')
+            await this._createLimitedWallet(profile.address)
         }
 
+        await this._convertVoting2Regular(amount)
         await this.wallet.run('sendToken', { pubaddr: profile.address, grant: amount })
     }
 
@@ -1093,6 +1127,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
+
+        await this._convertVoting2Regular(amount)
         await this.wallet.run('sendTokenToDaoReserve', { grant: amount })
     }
 
@@ -1435,11 +1471,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.profile) {
             return false
         }
-
-        const { value0 } = await this.dao.runLocal('isMember', {
-            pubaddr: this.profile.address,
-        })
-        return value0
+        return await this.isMember({ profile: this.profile.address })
     }
 
     private async _isAuthLimited(): Promise<boolean> {
@@ -1448,6 +1480,11 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
         const { _limited } = await this.wallet.runLocal('_limited', {})
         return _limited
+    }
+
+    private async _isMintOn(): Promise<boolean> {
+        const { _allowMint } = await this.dao.runLocal('_allowMint', {})
+        return _allowMint
     }
 
     private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
@@ -1477,7 +1514,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     private async _getWallet(index: number, keys?: KeyPair): Promise<IGoshWallet> {
-        if (!this.profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.profile) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const address = await this._getWalletAddress(this.profile.address, index)
         return new GoshWallet(this.client, address, { keys })
@@ -1563,20 +1602,44 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return null
     }
 
-    private async _createLimitedWallet(): Promise<void> {
-        if (!this.profile || !this.wallet) {
-            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+    private async _createLimitedWallet(profile: TAddress): Promise<void> {
+        const wallet = await this.getMemberWallet({ profile })
+        if (await wallet.isDeployed()) {
+            return
         }
 
         await this.dao.run('deployWalletsOutMember', {
-            pubmem: [{ member: this.profile.address, count: 0 }],
+            pubmem: [{ member: profile, count: 0 }],
             index: 0,
         })
         const wait = await whileFinite(async () => {
-            return await this.wallet?.isDeployed()
+            return await wallet.isDeployed()
         })
         if (!wait) {
             throw new GoshError('Create DAO wallet timeout reached')
+        }
+    }
+
+    private async _convertVoting2Regular(amount: number) {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const smv = await this.getSmv()
+        const regular = await smv.getWalletBalance(this.wallet)
+        if (amount > regular) {
+            const delta = amount - regular
+            await smv.transferToWallet(delta)
+
+            const check = await whileFinite(async () => {
+                const _regular = await smv.getWalletBalance(this.wallet!)
+                if (_regular >= amount) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Regular tokens topup failed')
+            }
         }
     }
 }
@@ -1806,8 +1869,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
-        const parent = await this.getCommit({ address: commit.parents[0].address })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
+
+        let parent: TCommit
+        if (commit.parents[0].version !== this.repo.version) {
+            const _gosh = GoshAdapterFactory.create(commit.parents[0].version)
+            const _dao = await (await this._getDao()).getName()
+            const _repo = await this.getName()
+            const _adapter = await _gosh.getRepository({ path: `${_dao}/${_repo}` })
+            parent = await _adapter.getCommit({ address: commit.parents[0].address })
+        } else {
+            parent = await this.getCommit({ address: commit.parents[0].address })
+        }
 
         // Get snapshot and read all incoming internal messages
         const fullpath = `${branch}/${treepath}`
@@ -1876,7 +1951,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         item: { treepath: string; index: number },
         commit: string | TCommit,
     ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
 
         // If commit was accepted, return blob state at commit
         if (item.index === -1) {
@@ -2375,7 +2452,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PR_BRANCH)
         }
         if (isPullRequest) {
-            await this._validateProposalStart()
+            await this._validateProposalStart(0)
         }
 
         // Generate blobs push data array
@@ -2449,7 +2526,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         if (!isPullRequest) {
-            await this._setCommit(branch, commitHash, blobsData.length, task)
+            await this._setCommit(branch, commitHash, blobsData.length, false, task)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
@@ -2497,7 +2574,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Set commit
-        await this._setCommit(commit.branch, commit.name, blobs.length)
+        await this._setCommit(commit.branch, commit.name, blobs.length, true)
         const wait = await whileFinite(async () => {
             const check = await this.getBranch(commit.branch)
             return check.commit.address !== commit.address
@@ -3216,6 +3293,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         branch: string,
         commit: string,
         numBlobs: number,
+        isUpgrade: boolean,
         task?: {
             task: TAddress
             pubaddrassign: { [address: string]: boolean }
@@ -3233,6 +3311,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit,
             numberChangedFiles: numBlobs,
             numberCommits: 1,
+            isUpgrade,
             task,
         })
     }
@@ -3263,7 +3342,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             },
         )
 
-        const smvClientsCount = await this._validateProposalStart()
+        const smvClientsCount = await this._validateProposalStart(0)
         await this.auth.wallet0.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
@@ -3568,27 +3647,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return await dao.getReviewers(username)
     }
 
-    /**
-     * TODO
-     * This method is duplicating from GoshSmvAdapter
-     * Change class architecture and remove this...
-     * */
-    private async _validateProposalStart(): Promise<number> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        const address = await this.auth.wallet0.runLocal('tip3VotingLocker', {})
-        const locker = new GoshSmvLocker(this.client, address.tip3VotingLocker)
-
-        const { lockerBusy } = await locker.runLocal('lockerBusy', {})
-        if (lockerBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-
-        const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
-        if (+m_tokenBalance < 20) {
-            throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 })
+    private async _validateProposalStart(min?: number): Promise<number> {
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        if (this.auth.wallet0.account.signer.type !== 'Keys') {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const { m_num_clients } = await locker.runLocal('m_num_clients', {})
-        return +m_num_clients
+        const dao = await this._getDao()
+        await dao.setAuth(this.auth.username, this.auth.wallet0.account.signer.keys)
+
+        const smv = await dao.getSmv()
+        await smv.validateProposalStart(min)
+        return await smv.getClientsCount()
     }
 }
 
@@ -3620,25 +3692,13 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        // Get allowance
-        // const { value0 } = await this.dao.runLocal('getWalletsFull', {})
-        // const profiles = []
-        // for (const key in value0) {
-        //     const profile = `0:${key.slice(2)}`
-        //     profiles.push({
-        //         profile,
-        //         wallet: value0[key].member,
-        //         allowance: value0[key].count,
-        //     })
-        // }
-        // return profiles
-
         const smvBalance = await this._getLockerBalance()
         return {
             smvBalance: await this.getWalletBalance(this.wallet),
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
             isLockerBusy: await this._isLockerBusy(),
+            allowance: await this._getAuthAllowance(),
         }
     }
 
@@ -3803,17 +3863,48 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async validateProposalStart(min?: number): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
         if (await this._isLockerBusy()) {
             throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
         }
 
         min = min ?? 20
-        if (min > 0) {
-            const { total } = await this._getLockerBalance()
-            if (total < min) {
-                throw new GoshError(EGoshError.SMV_NO_BALANCE, { min })
-            }
+        if (min === 0) {
+            return
         }
+
+        // Convert regular tokens to voting
+        const { total, locked } = await this._getLockerBalance()
+        if (total >= min || locked >= min) {
+            return
+        }
+
+        const allowance = await this._getAuthAllowance()
+        if (allowance < min) {
+            throw new GoshError('Allowance too low to start proposal', {
+                yours: allowance,
+                min,
+            })
+        }
+
+        const regular = await this.getWalletBalance(this.wallet)
+        if (regular >= min - total) {
+            await this.transferToSmv(0)
+            const check = await whileFinite(async () => {
+                const { total } = await this._getLockerBalance()
+                if (total >= min!) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Topup for start proposal failed')
+            }
+            return
+        }
+
+        throw new GoshError(EGoshError.SMV_NO_BALANCE)
     }
 
     async transferToSmv(amount: number): Promise<void> {
@@ -3861,6 +3952,38 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         const instance = await this._getEvent(event)
         const { platform_id } = await instance.runLocal('platform_id', {})
+
+        // Check available balance and convert regular tokens to voting if needed
+        const allowance = await this._getAuthAllowance()
+        if (allowance < amount) {
+            throw new GoshError('Allowance is less than amount', {
+                allowance,
+                amount,
+            })
+        }
+
+        const votesIn = await this._getEventUserVotes(platform_id)
+        const { total } = await this._getLockerBalance()
+        const voting = total - votesIn
+        if (voting < amount) {
+            const regular = await this.getWalletBalance(this.wallet)
+            const delta = amount - voting
+            if (regular < delta) {
+                throw new GoshError('Not enough tokens to vote')
+            }
+
+            await this.transferToSmv(delta)
+            const check = await whileFinite(async () => {
+                const { total } = await this._getLockerBalance()
+                if (total >= amount) {
+                    return true
+                }
+            })
+            if (!check) {
+                throw new GoshError('Topup voting tokens failed')
+            }
+        }
+
         await this.wallet.run('voteFor', {
             platform_id,
             choice,
@@ -3868,6 +3991,15 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             note: note ?? '',
             num_clients: await this.getClientsCount(),
         })
+    }
+
+    private async _getAuthAllowance() {
+        if (!this.wallet) {
+            return 0
+        }
+        const { value0 } = await this.dao.runLocal('getWalletsToken', {})
+        const member = value0.find((item: any) => item.member === this.wallet?.address)
+        return member ? parseInt(member.count) : 0
     }
 
     private async _isLockerBusy(): Promise<boolean> {

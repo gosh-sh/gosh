@@ -181,7 +181,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
             value: yup
                 .number()
                 .integer()
-                .test('is-zeropositive', 'Should be >= 0', (v) => !v || v >= 0),
+                .test('test-zeropositive', 'Should be >= 0', (v) => !v || v >= 0),
         })
         try {
             test.validateSync({ value })
@@ -223,6 +223,19 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
         try {
             if (!createDaoMember) {
                 throw new GoshError('Add DAO member is not supported')
+            }
+
+            // Check total allowance against reserve
+            const sumAllowance = members.reduce((_sum, { allowance }) => {
+                return _sum + allowance.value
+            }, 0)
+            if (sumAllowance > dao.details.supply.reserve) {
+                throw new GoshError('Allowance error', {
+                    allowance: sumAllowance,
+                    reserve: dao.details.supply.reserve,
+                    message:
+                        'Members total allowance can not be greater than DAO reserve',
+                })
             }
 
             // Save invites by emails to database
@@ -296,7 +309,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                                             'text-xs',
                                             name.validated.valid
                                                 ? 'text-gray-7c8db5'
-                                                : 'text-red-dd3a3a',
+                                                : 'text-red-ff3b30',
                                         )}
                                     >
                                         {name.validated.message}
@@ -313,7 +326,14 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                                         onChangeMemberAllowance(e.target.value, index)
                                     }}
                                 />
-                                <div className="text-xs text-gray-7c8db5">
+                                <div
+                                    className={classNames(
+                                        'text-xs',
+                                        reserve >= 0
+                                            ? 'text-gray-7c8db5'
+                                            : 'text-red-ff3b30',
+                                    )}
+                                >
                                     Available DAO reserve {reserve}
                                 </div>
 
@@ -323,7 +343,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                                             'text-xs',
                                             allowance.validated.valid
                                                 ? 'text-gray-7c8db5'
-                                                : 'text-red-dd3a3a',
+                                                : 'text-red-ff3b30',
                                         )}
                                     >
                                         {allowance.validated.message}

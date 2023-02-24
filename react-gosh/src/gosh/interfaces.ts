@@ -75,6 +75,8 @@ import {
     TDaoEventShowProgressResult,
     TDaoAskMembershipAllowanceResult,
     TRepositoryCreateCommitTagParams,
+    TIsMemberParams,
+    TIsMemberResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -128,6 +130,7 @@ interface IGoshDaoAdapter {
 
     isDeployed(): Promise<boolean>
     isRepositoriesUpgraded(): Promise<boolean>
+    isMember(params: TIsMemberParams): TIsMemberResult
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 

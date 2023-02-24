@@ -40,13 +40,15 @@ const DaoLayout = () => {
         ]
 
         if (dao.details?.isAuthMember || dao.details?.isAuthLimited) {
-            tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet', order: 4 })
+            if (dao.details?.version === '1.0.0') {
+                tabs.push({ to: `/o/${daoName}/wallet`, title: 'Wallet', order: 4 })
+            }
         }
 
         if (dao.details?.isAuthMember) {
             tabs.push({ to: `/o/${daoName}/settings`, title: 'Settings', order: 7 })
             if (dao.details?.version !== '1.0.0') {
-                tabs.push({ to: `/o/${daoName}/topics`, title: 'Topics', order: 6 })
+                // tabs.push({ to: `/o/${daoName}/topics`, title: 'Topics', order: 6 })
             }
         }
 
@@ -73,13 +75,13 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const _checkUpgrades = async () => {
-            if (!isReady || !dao.adapter || !dao.details?.isAuthMember) {
+            if (!isReady || !dao.details) {
                 return
             }
 
             // Check if using latest version of DAO or new version avaiable
             const latest = Object.keys(AppConfig.versions).reverse()[0]
-            if (dao.adapter.getVersion() !== latest) {
+            if (dao.details.version !== latest) {
                 const gosh = GoshAdapterFactory.createLatest()
                 const newest = await gosh.getDao({
                     name: dao.details.name,
@@ -94,7 +96,7 @@ const DaoLayout = () => {
             }
 
             // Check repositories upgraded flag
-            if (!(await dao.adapter.isRepositoriesUpgraded())) {
+            if (!dao.details.isRepoUpgraded) {
                 setUpgrades('isRepoUpgradeNeeded')
                 return
             }
@@ -104,20 +106,7 @@ const DaoLayout = () => {
         }
 
         _checkUpgrades()
-
-        let _intervalLock = false
-        const interval = setInterval(async () => {
-            if (!_intervalLock) {
-                _intervalLock = true
-                await _checkUpgrades()
-                _intervalLock = false
-            }
-        }, 15000)
-
-        return () => {
-            clearInterval(interval)
-        }
-    }, [isReady, dao.adapter, dao.details?.name, dao.details?.isAuthMember])
+    }, [isReady, dao.details])
 
     return (
         <SideMenuContainer>
@@ -127,7 +116,10 @@ const DaoLayout = () => {
                 </div>
                 <div>
                     <h1 className="mb-2">
-                        <Link to={`/o/${daoName}`} className="font-medium text-2xl">
+                        <Link
+                            to={`/o/${daoName}`}
+                            className="font-medium text-2xl capitalize"
+                        >
                             {daoName}
                         </Link>
                         <span

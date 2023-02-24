@@ -614,6 +614,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commit","type":"string"},
+				{"name":"isUpgrade","type":"bool"},
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"}
 			],
@@ -796,6 +797,14 @@
 		},
 		{
 			"name": "addAllowance",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addAllowanceC",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
 			],
