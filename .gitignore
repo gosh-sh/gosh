@@ -28,3 +28,5 @@ deno.lock
 
 gosh-cli.conf.json
 
+!/contracts/multisig/GiverV2.abi.json
+!/contracts/multisig/GiverV2.keys.json
