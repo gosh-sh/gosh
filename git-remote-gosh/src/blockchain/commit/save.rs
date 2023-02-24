@@ -6,7 +6,7 @@ use crate::{
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale, self,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };

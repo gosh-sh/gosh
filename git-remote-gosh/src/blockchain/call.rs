@@ -1,7 +1,6 @@
 use super::{
     contract::ContractInfo, BlockchainContractAddress, CallResult, Everscale, SendMessageResult,
 };
-pub use crate::abi as gosh_abi;
 use crate::blockchain::{default_callback, BlockchainService, GoshContract};
 use async_trait::async_trait;
 use std::{
