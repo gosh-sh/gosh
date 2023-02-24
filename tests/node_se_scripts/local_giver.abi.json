@@ -1,8 +1,14 @@
-{
-	"ABI version": 2,
-	"version": "2.3",
+{"ABI version": 2,
 	"header": ["time", "expire"],
 	"functions": [
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"newcode","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
 		{
 			"name": "sendTransaction",
 			"inputs": [
@@ -18,15 +24,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"hash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"messages","type":"tuple[]"}
-			]
-		},
-		{
-			"name": "upgrade",
-			"inputs": [
-				{"name":"newcode","type":"cell"}
-			],
-			"outputs": [
+				{"components":[{"name":"hash","type":"uint256"},{"name":"expireAt","type":"uint64"}],"name":"messages","type":"tuple[]"}
 			]
 		},
 		{
@@ -37,13 +35,6 @@
 			]
 		}
 	],
-	"data": [
-	],
 	"events": [
-	],
-	"fields": [
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_constructorFlag","type":"bool"},
-		{"name":"m_messages","type":"map(uint256,uint32)"}
 	]
 }
