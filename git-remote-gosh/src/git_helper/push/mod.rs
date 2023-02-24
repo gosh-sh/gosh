@@ -66,15 +66,6 @@ impl PushBlobStatistics {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct AddrVersion {
-    #[serde(rename = "addr")]
-    pub address: BlockchainContractAddress,
-
-    #[serde(rename = "version")]
-    pub version: String,
-}
-
-#[derive(Deserialize, Debug)]
 pub struct GetPreviousResult {
     #[serde(rename = "value0")]
     pub previous: Option<AddrVersion>,

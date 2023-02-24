@@ -1,2 +1,2 @@
 [env]
-CONTRACTS_DIR = { value = "../contracts/gosh/", relative = true }
+CONTRACTS_DIR = { value = "../contracts/v1.0.0/gosh/", relative = true }

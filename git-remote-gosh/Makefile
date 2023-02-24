@@ -37,6 +37,7 @@ clear_abi:
 
 .PHONY: copy_abi
 copy_abi: clear_abi
+# TODO: get path from .cargo/config.toml
 	-mkdir -p ./resources
 	-cp ../contracts/v2.0.0/gosh/*.abi.json ./resources/
 
@@ -51,11 +52,9 @@ install: copy_abi clear_screen
 
 .PHONY: install_for_test
 install_for_test: copy_abi clear_screen
-	cargo install --path .
+	GOSH_BUILD_VERSION=`git describe --tags` cargo install --path .
 	./scripts/set_version.sh
 	GOSH_SUPPORTED_CONTRACT_VERSION=9998.0.0 cargo install --path .
-	./scripts/set_version.sh
-	GOSH_SUPPORTED_CONTRACT_VERSION=9999.0.0 cargo install --path .
 	./scripts/set_version.sh
 
 .PHONY: test

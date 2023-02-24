@@ -206,7 +206,7 @@ where
                 let mut branches = HashSet::new();
                 branches.insert(onchain_commit.branch);
                 for parent in onchain_commit.parents {
-                    let parent = BlockchainContractAddress::new(parent);
+                    let parent = BlockchainContractAddress::new(parent.address);
                     let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                     let branch: GetNameBranchResult = parent_contract.run_static(
                         self.blockchain.client(),
