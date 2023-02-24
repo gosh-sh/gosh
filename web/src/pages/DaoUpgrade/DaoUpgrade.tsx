@@ -4,12 +4,13 @@ import { toast } from 'react-toastify'
 import { useDaoUpgrade } from 'react-gosh'
 import ToastError from '../../components/Error/ToastError'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
-import { FormikSelect } from '../../components/Formik'
+import { FormikSelect, FormikTextarea } from '../../components/Formik'
 import { Button } from '../../components/Form'
 import yup from '../../yup-extended'
 
 type TFormValues = {
     version: string
+    comment: string
 }
 
 const DaoUpgradePage = () => {
@@ -20,7 +21,10 @@ const DaoUpgradePage = () => {
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
-            await upgradeDao(values.version)
+            const comment = [new Date().toLocaleString(), values.comment]
+                .filter((i) => !!i)
+                .join('\n')
+            await upgradeDao(values.version, comment)
             navigate(`/o/${daoName}/events`)
         } catch (e: any) {
             console.error(e.message)
@@ -42,6 +46,7 @@ const DaoUpgradePage = () => {
             <Formik
                 initialValues={{
                     version: versions ? versions[0] : '',
+                    comment: '',
                 }}
                 onSubmit={onDaoUpgrade}
                 validationSchema={yup.object().shape({
@@ -50,7 +55,7 @@ const DaoUpgradePage = () => {
                 enableReinitialize
             >
                 {({ isSubmitting }) => (
-                    <Form className="flex flex-wrap items-baseline gap-3">
+                    <Form>
                         <div>
                             <Field
                                 name="version"
@@ -65,13 +70,24 @@ const DaoUpgradePage = () => {
                             </Field>
                         </div>
 
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting || !versions?.length}
-                            isLoading={isSubmitting}
-                        >
-                            Upgrade
-                        </Button>
+                        <div className="mt-4">
+                            <Field
+                                name="comment"
+                                component={FormikTextarea}
+                                disabled={isSubmitting || !versions?.length}
+                                placeholder="Leave comment (optional)"
+                            />
+                        </div>
+
+                        <div className="mt-4">
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting || !versions?.length}
+                                isLoading={isSubmitting}
+                            >
+                                Create proposal for DAO upgrade
+                            </Button>
+                        </div>
                     </Form>
                 )}
             </Formik>
