@@ -7,16 +7,6 @@ https://{$PUBLIC_GRAFANA} {
             path /api/frontend-metrics
         }
     }
-    @forbidden2 {
-        path /api/search* /api/dashboards/tags
-        path /api/ruler/* /api/alertmanager/*
-        path /api/alert-notifiers /api/alert*
-        path /api/prometheus/PBFA97CFB590B2093/api/v1/rules
-    }
-    @forbidden3 {
-        path /api/prometheus/grafana/api/v1/rules
-        not query dashboard_uid=4XsgA0pVk
-    }
     respond @forbidden "Method not allowed" 405 {
         close
     }
