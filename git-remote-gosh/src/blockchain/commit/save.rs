@@ -79,6 +79,7 @@ pub trait BlockchainCommitPusher {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        is_upgrade: bool,
     ) -> anyhow::Result<()>;
 }
 
@@ -141,13 +142,15 @@ impl BlockchainCommitPusher for Everscale {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        is_upgrade: bool,
     ) -> anyhow::Result<()> {
-        tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}");
+        tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}, is_upgrade={is_upgrade}");
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::json!({
             "repoName": remote.repo.clone(),
             "branchName": branch.to_string(),
             "commit": commit_id.to_string(),
+            "isUpgrade": is_upgrade,
             "numberChangedFiles": number_of_files_changed,
             "numberCommits": number_of_commits,
         });

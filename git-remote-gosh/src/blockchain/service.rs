@@ -272,6 +272,7 @@ pub mod tests {
                 number_of_commits: u64,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
+                is_upgrade: bool,
             ) -> anyhow::Result<()>;
         }
 

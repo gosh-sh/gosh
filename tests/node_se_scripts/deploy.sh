@@ -29,7 +29,7 @@ make deploy-docker
 
 # deploy giver for upgrade
 
-cd ../v1.0.0/gosh
+cd ../v2.0.0/gosh
 echo "" > gosh.seed
 echo "" > VersionController.addr
 echo "" > SystemContract.addr

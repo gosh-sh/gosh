@@ -11,14 +11,17 @@ if [ "$1" = "ignore" ]; then
 fi
 
 REPO_NAME=repo14
-DAO_NAME="dao-test14_$(date +%s)"
 BRANCH_NAME=tester
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 
-# deploy new DAO that will be upgraded
-deploy_DAO_and_repo
+tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
+REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+echo "***** awaiting repo deploy *****"
+wait_account_active $REPO_ADDR
 
 export OLD_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "OLD_LINK=$OLD_LINK"

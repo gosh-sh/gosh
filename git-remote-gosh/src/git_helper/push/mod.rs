@@ -311,17 +311,20 @@ where
                 .await?;
             tracing::trace!("parent address: {parent}");
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                tracing::trace!("Failed to call parent");
-                let right_commit_address = self.find_commit(&id).await?.1;
-                let commit_contract  = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
-                let branch: GetNameCommitResult = commit_contract.run_static(
-                    self.blockchain.client(),
-                    "getNameBranch",
-                    None,
-                ).await?;
-                // TODO: local and remote branch are set equal here it can be wrong
-                self.check_and_upgrade_previous_commit(id.to_string(),&branch.name, &branch.name).await?;
+                if let Err(_) = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await {
+                    tracing::trace!("Failed to call parent");
+                    let right_commit_address = self.find_commit(&id).await?.1;
+                    let commit_contract = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
+                    let branch: GetNameCommitResult = commit_contract.run_static(
+                        self.blockchain.client(),
+                        "getNameBranch",
+                        None,
+                    ).await?;
+                    // TODO: local and remote branch are set equal here it can be wrong
+                    self.check_and_upgrade_previous_commit(id.to_string(), &branch.name, &branch.name).await?;
+                }
             }
         }
         Ok(())
@@ -673,6 +676,7 @@ where
                 1,
                 &self.remote,
                 &self.dao_addr,
+                true,
             )
             .await?;
 
@@ -875,6 +879,7 @@ where
                 number_of_commits,
                 &self.remote,
                 &self.dao_addr,
+                false,
             )
             .await?;
 
