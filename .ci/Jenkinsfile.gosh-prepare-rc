@@ -36,36 +36,6 @@ pipeline {
                 }
             }
         }
-        stage('Compile: SMV') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-                }
-            }
-            steps {
-                script {
-                    dir('contracts/smv') {
-                        sh 'make build-contracts'
-                    }
-                }
-            }
-        }
-        stage('Compile: GOSH') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-                }
-            }
-            steps {
-                script {
-                    dir('contracts/gosh') {
-                        sh 'make build-contracts'
-                    }
-                }
-            }
-        }
         stage('Build: Git Helper') {
             agent {
                 node {
