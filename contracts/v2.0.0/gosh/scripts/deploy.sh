@@ -70,7 +70,11 @@ TOPIC_CODE=$(everdev contract dt $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/c
 # ############################################################
 # Calculate VersionController address
 # ############################################################
-VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
+VERSIONCONTROLLER_TVC="$GOSH_PATH/versioncontroller.tvc"
+echo "========== Generate VC address"
+VERSIONCONTROLLER_ADDR=$(tonos-cli -j genaddr --abi $VERSIONCONTROLLER_ABI --setkey "$seed" --save $VERSIONCONTROLLER_TVC | jq -M ".raw_address" | cut -d '"' -f 2)
+
+#VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
 echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 
@@ -84,7 +88,8 @@ wait_account_balance $VERSIONCONTROLLER_ADDR 1998000000000
 
 # Deploy VersionController
 echo "========== Deploy VersionController"
-everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+#everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+tonos-cli -u $NETWORK deploy --abi $VERSIONCONTROLLER_ABI --sign "$seed" $VERSIONCONTROLLER_TVC "{}"
 
 echo "***** awaiting VersionController deploy *****"
 wait_account_active $VERSIONCONTROLLER_ADDR
