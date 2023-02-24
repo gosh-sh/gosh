@@ -28,7 +28,7 @@ export enum EGoshError {
     DAO_EXISTS = 'DAO already exists',
     DAO_UNDEFINED = 'DAO undefined',
 
-    PR_BRANCH = 'Branch is resticted for direct commit. Please, make a proposal',
+    PR_BRANCH = 'Branch is protected. Please, make a proposal',
     PR_NO_MERGE = 'Nothing to merge',
 
     FILE_EXISTS = 'File already exists',
