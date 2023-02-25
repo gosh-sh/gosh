@@ -36,7 +36,7 @@ echo "export DAO_ABI=$DAO_ABI" >> env.env
 
 # generate user keys
 
-SEED=`tonos-cli genphrase | jq .phrase`
+SEED=`tonos-cli genphrase | grep -o '".*"' | tr -d '"'`
 echo $SEED > user.seed
 DAO_KEYS=test.keys.json
 tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
