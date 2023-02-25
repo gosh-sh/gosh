@@ -5,7 +5,8 @@ set -e
 REPO_OWNER=gosh-sh
 REPO=gosh
 RELEASE=rc-3.0.10
-SUPPORTED_CONTRACTS_VERSIONS=("1_0_0")
+# TODO: get it from one source with binary
+SUPPORTED_CONTRACTS_VERSIONS=("2_0_0")
 
 # Check OS and architecture
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
