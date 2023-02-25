@@ -208,8 +208,8 @@ pipeline {
                             set -e
                             set -x
 
-                            cp -r /tmp/${env.JOB_NAME}/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
-                            cp -r /tmp/${env.JOB_NAME}/git-remote-gosh/linux-amd64 ../git-remote-gosh/
+                            cp -r /tmp/${JOB_NAME}/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
+                            cp -r /tmp/${JOB_NAME}/git-remote-gosh/linux-amd64 ../git-remote-gosh/
 
                             mkdir /home/jenkins/bin
 
