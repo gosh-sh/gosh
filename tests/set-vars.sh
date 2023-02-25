@@ -36,14 +36,10 @@ echo "export DAO_ABI=$DAO_ABI" >> env.env
 
 # generate user keys
 
-# could be changed to genphrase --dump
-
-#SEED=`tonos-cli genphrase | jq .phrase`
-#echo $SEED > user.seed
-#tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
-DAO_KEYS=test.keys.json
-SEED=`tonos-cli genphrase --dump $DAO_KEYS | jq .phrase`
+SEED=`tonos-cli genphrase | jq .phrase`
 echo $SEED > user.seed
+DAO_KEYS=test.keys.json
+tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 
 # *create Profile

@@ -37,9 +37,9 @@ COPY --link index.html /ui/index.html
 
 ARG TARGETOS TARGETARCH
 
-COPY  ./install.sh ./
+COPY  .tmp/gosh/install.sh ./
 
-RUN apt install -y wget && bash install.sh
+RUN apt install -y wget curl && bash install.sh
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
