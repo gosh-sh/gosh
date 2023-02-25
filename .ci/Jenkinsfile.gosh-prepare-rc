@@ -208,7 +208,7 @@ pipeline {
                             set -e
                             set -x
 
-                            rm -rf git-remote-gosh/linux-amd64
+                            rm -rf ../git-remote-gosh/linux-amd64
 
                             cp -r /tmp/${JOB_NAME}/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
                             cp -r /tmp/${JOB_NAME}/git-remote-gosh/linux-amd64 ../git-remote-gosh/
