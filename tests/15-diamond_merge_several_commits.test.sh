@@ -24,7 +24,7 @@ cd $REPO_NAME
 # config git client
 git config user.email "foo@bar.com"
 git config user.name "My name"
-
+git branch -m main
 echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt

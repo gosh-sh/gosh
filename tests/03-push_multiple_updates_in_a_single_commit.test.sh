@@ -47,6 +47,8 @@ git push -u origin $BRANCH_NAME
 # echo "***** awaiting set commit into $BRANCH_NAME *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
 
+sleep 60
+
 echo "***** cloning repo *****"
 cd ..
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
