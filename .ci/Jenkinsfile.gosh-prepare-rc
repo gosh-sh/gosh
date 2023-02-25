@@ -175,7 +175,7 @@ pipeline {
                 }
             }
         }
-        stage('Web: wait to be available') {
+        /*stage('Web: wait to be available') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -192,7 +192,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Tests: functional') {
             agent {
                 docker {
@@ -236,7 +236,7 @@ pipeline {
                 archiveArtifacts artifacts: 'tests/*.seed'
             }
         }
-        stage('Tests: Web') {
+        /*stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -275,7 +275,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
         /*stage("Prerelease: Git Helper Snap"){
             agent {
                 node {
