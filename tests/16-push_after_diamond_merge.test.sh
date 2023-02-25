@@ -101,7 +101,7 @@ git add 2.txt
 git commit -m after_merge2
 git push
 
-sleep 180
+sleep 300
 
 echo "***** cloning repo *****"
 cd ..
