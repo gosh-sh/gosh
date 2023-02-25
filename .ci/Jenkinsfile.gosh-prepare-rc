@@ -140,7 +140,7 @@ pipeline {
                 archiveArtifacts artifacts: 'contracts/v2.0.0/gosh/*.addr'
             }
         }
-        stage('Web: deploy') {
+        /*stage('Web: deploy') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -192,12 +192,12 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Tests: functional') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace/${env.JOB_NAME}:/tmp'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace:/tmp'
                 }
             }
             steps {
@@ -208,8 +208,8 @@ pipeline {
                             set -e
                             set -x
 
-                            cp -r /tmp/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
-                            cp -r /tmp/git-remote-gosh/linux-amd64 ../git-remote-gosh/
+                            cp -r /tmp/${env.JOB_NAME}/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
+                            cp -r /tmp/${env.JOB_NAME}/git-remote-gosh/linux-amd64 ../git-remote-gosh/
 
                             mkdir /home/jenkins/bin
 
