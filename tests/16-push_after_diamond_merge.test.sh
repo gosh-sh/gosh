@@ -31,7 +31,7 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
@@ -68,6 +68,8 @@ if [ "$cur_ver" != "parent" ]; then
 fi
 echo "GOOD CONTENT"
 
+sleep 60
+
 echo "***** cloning repo *****"
 cd ..
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
@@ -98,6 +100,8 @@ echo "after_merge" > 2.txt
 git add 2.txt
 git commit -m after_merge2
 git push
+
+sleep 60
 
 echo "***** cloning repo *****"
 cd ..

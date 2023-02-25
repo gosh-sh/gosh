@@ -29,7 +29,7 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
@@ -65,6 +65,8 @@ if [ "$cur_ver" != "parent" ]; then
   exit 1
 fi
 echo "GOOD CONTENT"
+
+sleep 60
 
 echo "***** cloning repo *****"
 cd ..
