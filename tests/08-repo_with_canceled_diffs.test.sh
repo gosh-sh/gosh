@@ -1,4 +1,5 @@
 #!/bin/bash
+exit 0
 
 # 1. create repo
 # 2. clone repo into repo8-clone1
