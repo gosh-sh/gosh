@@ -4,7 +4,7 @@ set -o pipefail
 . ./util.sh
 set -x
 
-REPO_NAME="repo15_$(date +%s)"
+REPO_NAME="repo15"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
@@ -21,6 +21,10 @@ git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 #check
 cd $REPO_NAME
+# config git client
+git config user.email "foo@bar.com"
+git config user.name "My name"
+
 echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
