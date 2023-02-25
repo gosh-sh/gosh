@@ -42,7 +42,7 @@ echo "export DAO_ABI=$DAO_ABI" >> env.env
 #echo $SEED > user.seed
 #tonos-cli getkeypair -o $DAO_KEYS -p "$SEED"
 DAO_KEYS=test.keys.json
-SEED=`genphrase --dump $DAO_KEYS | jq .phrase`
+SEED=`tonos-cli genphrase --dump $DAO_KEYS | jq .phrase`
 echo $SEED > user.seed
 DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/p')
 

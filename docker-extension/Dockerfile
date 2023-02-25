@@ -37,8 +37,9 @@ COPY --link index.html /ui/index.html
 
 ARG TARGETOS TARGETARCH
 
-RUN apt install -y wget curl && \
-    wget -O - https://raw.githubusercontent.com/gosh-sh/gosh/dispatcher/install.sh | bash -s
+COPY  ./install.sh ./
+
+RUN apt install -y wget && bash install.sh
 
 ENV GOSH_PROTO=http
 ENV DOCKER_BUILDKIT=1
