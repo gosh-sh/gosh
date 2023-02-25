@@ -20,6 +20,10 @@ echo "***** cloning repo *****"
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
+
 echo 0 > 0.txt
 for i in {1..5}
 do
@@ -32,7 +36,7 @@ cd ../../../../../
 
 git add *
 git commit -m blabla
-git push
+git push -u origin main
 
 for i in {1..5}
 do
@@ -51,6 +55,8 @@ INIT_TREE=$(tree)
 echo $INIT_TREE
 
 cd ..
+
+sleep 60
 
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $CLONE_REPO_NAME
 
