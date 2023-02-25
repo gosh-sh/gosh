@@ -3,6 +3,7 @@ variables:
   value: 1.66.0 
 
 trigger: none
+pr: none
 
 strategy:
   matrix:
