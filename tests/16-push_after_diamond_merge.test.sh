@@ -91,6 +91,9 @@ if [ "$cur_ver" != "new_ver" ]; then
 fi
 echo "GOOD CONTENT"
 
+git config user.email "foo@bar.com"
+git config user.name "My name"
+
 echo "after_merge" > 1.txt
 git add 1.txt
 git commit -m after_merge1

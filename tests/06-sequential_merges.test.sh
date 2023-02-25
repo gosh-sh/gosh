@@ -60,7 +60,7 @@ git commit -m "foo-$CHANGE"
 
 echo "***** awaiting push in dev *****"
 git push -u origin $BRANCH_NAME
-delay 60
+delay 200
 
 # echo "***** awaiting set commit in dev *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -89,7 +89,7 @@ git commit -m "foo-$CHANGE v2"
 
 echo "***** awaiting push in dev2 *****"
 git push -u origin $BRANCH_NAME"2"
-delay 60
+delay 200
 
 # echo "***** awaiting set commit in dev2 *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME"2"
@@ -115,7 +115,7 @@ git merge $BRANCH_NAME"2"
 
 echo "***** awaiting push in dev *****"
 git push
-delay 60
+delay 200
 
 # echo "***** awaiting set commit in dev *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -138,7 +138,7 @@ git checkout -b main
 git merge $BRANCH_NAME
 echo "***** awaiting push in main *****"
 git push -u origin main
-delay 120
+delay 300
 
 # echo "***** awaiting set commit in main *****"
 # wait_set_commit $REPO_ADDR main
