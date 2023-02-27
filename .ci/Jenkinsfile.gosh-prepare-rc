@@ -50,23 +50,26 @@ pipeline {
                             set -ex
                             
                             # 2 = gosh-dispatcher
-                            PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
-                            PIPELINE_2_STATUS=inProgress
+                            #PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
+                            #PIPELINE_2_STATUS=inProgress
 
                             # 1 = git-remote-gosh
-                            PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${COMMIT} --project gosh | jq .id)
-                            PIPELINE_1_STATUS=inProgress
+                            #PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${COMMIT} --project gosh | jq .id)
+                            #PIPELINE_1_STATUS=inProgress
 
-                            until [ $PIPELINE_2_STATUS != "inProgress" ]
-                            do
-                                sleep 60
-                                PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
-                            done
-                            until [ $PIPELINE_1_STATUS != "inProgress" ]
-                            do
-                                sleep 60
-                                PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
-                            done
+                            #until [ $PIPELINE_2_STATUS != "inProgress" ]
+                            #do
+                            #    sleep 60
+                            #    PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
+                            #done
+                            #until [ $PIPELINE_1_STATUS != "inProgress" ]
+                            #do
+                            #    sleep 60
+                            #    PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
+                            #done
+
+                            PIPELINE_1_ID=287
+                            PIPELINE_2_ID=286
 
                             rm -rf ./linux-*
                             rm -rf ./darwin-*
@@ -118,7 +121,7 @@ pipeline {
             }
             steps {
                 script {
-                    dir('contracts/multisig') {
+                    dir('v2_x/contracts/multisig') {
                         // Deploy msig giver for GOSH deployment
                         sh 'make build-contracts-docker'
                         sh 'make generate-docker NETWORK=https://local-evernode.gosh.sh'
@@ -127,14 +130,14 @@ pipeline {
                         '''
                         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
-                    dir('contracts/v2.0.0/gosh') {
+                    dir('v2_x/contracts/gosh') {
                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/v2.0.0/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-                    env.REACT_APP_GOSH = sh script: "cat contracts/v2.0.0/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v2_x/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat v2_x/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
-                archiveArtifacts artifacts: 'contracts/v2.0.0/gosh/*.seed'
-                archiveArtifacts artifacts: 'contracts/v2.0.0/gosh/*.addr'
+                archiveArtifacts artifacts: 'v2_x/contracts/gosh/*.seed'
+                archiveArtifacts artifacts: 'v2_x/contracts/gosh/*.addr'
             }
         }
         stage('Web: deploy') {

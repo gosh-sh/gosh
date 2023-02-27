@@ -32,10 +32,14 @@ git clone $OLD_LINK
 # push 1 file
 echo "***** Pushing file to old repo *****"
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
+
 echo start > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 
 git checkout -b $BRANCH_NAME
 echo branch > 1.txt
