@@ -247,7 +247,7 @@ pub async fn load_messages_to(
     let query = r#"query($addr: String!, $before: String){
       blockchain {
         account(address: $addr) {
-          messages(msg_type: [IntIn], before: $before, last: 50) {
+          messages(msg_type: [IntIn], before: $before, last: 50, allow_latest_inconsistent_data: true) {
             edges {
               node { id body created_at created_lt status bounced }
             }
