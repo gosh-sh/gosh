@@ -58,7 +58,7 @@ const ReposUpgradePage = () => {
             version: string
             tags: {
                 isFetching: boolean
-                isVisible: boolean
+                isLoaded: boolean
                 items: TCommitTag[]
                 selected: TCommitTag[]
             }
@@ -105,11 +105,22 @@ const ReposUpgradePage = () => {
             upgradeable.push(item)
         }
 
+        if (!upgradeable.length) {
+            await dao.adapter.setRepositoriesUpgraded()
+            toast.success(
+                <>
+                    <h3 className="font-semibold">No repositories to upgrade</h3>
+                    <p className="text-sm">DAO was updated successfully</p>
+                </>,
+            )
+            navigate(`/o/${dao.details.name}`)
+        }
+
         setUpgrade((state) => ({
             ...state,
             items: upgradeable.map((item) => ({
                 ...item,
-                tags: { isFetching: false, isVisible: false, items: [], selected: [] },
+                tags: { isFetching: false, isLoaded: false, items: [], selected: [] },
             })),
             isFetching: false,
         }))
@@ -132,7 +143,15 @@ const ReposUpgradePage = () => {
                 if (i !== index) {
                     return item
                 }
-                return { ...item, tags: { ...item.tags, items: tags, isFetching: false } }
+                return {
+                    ...item,
+                    tags: {
+                        ...item.tags,
+                        items: tags,
+                        isLoaded: true,
+                        isFetching: false,
+                    },
+                }
             }),
         }))
     }
@@ -231,7 +250,7 @@ const ReposUpgradePage = () => {
                         <div key={index} className="py-3">
                             <div className="text-lg font-medium">{item.name}</div>
                             <div className="mt-2">
-                                {!item.tags.items.length && (
+                                {!item.tags.isLoaded && (
                                     <Button
                                         className={classNames(
                                             '!bg-transparent !text-gray-7c8db5 !text-sm',
@@ -243,6 +262,11 @@ const ReposUpgradePage = () => {
                                     >
                                         Load tags
                                     </Button>
+                                )}
+                                {item.tags.isLoaded && !item.tags.items.length && (
+                                    <div className="text-gray-7c8db5 text-sm">
+                                        Repository has no commit tags
+                                    </div>
                                 )}
                                 <div className="flex flex-wrap gap-x-5 gap-y-3">
                                     {item.tags.items.map((tag, j) => (
