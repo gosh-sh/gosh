@@ -66,7 +66,7 @@ steps:
 # Build
 - bash: |
     mkdir -p ./resources
-    cp ../v2_x/contracts/gosh/*.abi.json ./resources/
+    cp ../contracts/gosh/*.abi.json ./resources/
   workingDirectory: v2_x/git-remote-gosh
   displayName: Prepare resources
    
