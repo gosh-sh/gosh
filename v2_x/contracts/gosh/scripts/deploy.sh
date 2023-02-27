@@ -33,7 +33,7 @@ seed=`cat $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT| grep -o '".*"' | tr -d '"
 everdev signer add $SIGNER "$seed"
 
 # Prepare giver
-GIVER_ABI="../../../multisig/MultisigWallet.abi.json"
+GIVER_ABI="../../multisig/MultisigWallet.abi.json"
 GIVER_ADDR=`cat /tmp/Giver.addr`
 GIVER_SEED=`cat /tmp/Giver.seed`
 everdev signer add $GIVER_SIGNER "$GIVER_SEED"
@@ -59,9 +59,9 @@ TREE_CODE=$(everdev contract dt $GOSH_PATH/tree.tvc | tr -d ' ",' | sed -n '/cod
 TAG_CODE=$(everdev contract dt $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(everdev contract dt $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TASK_CODE=$(everdev contract dt $GOSH_PATH/task.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILE_CODE=$(everdev contract dt $GOSH_PATH/../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEINDEX_CODE=$(everdev contract dt $GOSH_PATH/../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILEDAO_CODE=$(everdev contract dt $GOSH_PATH/../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 DAO_TAG_CODE=$(everdev contract dt $GOSH_PATH/daotag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 HELP_TAG_CODE=$(everdev contract dt $GOSH_PATH/taggosh.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TOPIC_CODE=$(everdev contract dt $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')

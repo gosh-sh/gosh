@@ -7,7 +7,7 @@ set -o pipefail
 # Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <network_name>
 DEFAULT_NETWORK=localhost
 
-GOSH_PATH=../contracts/v2.0.0/gosh
+GOSH_PATH=../v2_x/contracts/gosh
 
 if [ -z "$1" ]
   then
@@ -27,7 +27,7 @@ export SYSTEM_CONTRACT_ADDR=`cat $GOSH_PATH/SystemContract.addr`
 echo "export SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR" >> env.env
 
 export SYSTEM_CONTRACT_ABI=$GOSH_PATH/systemcontract.abi.json
-USER_PROFILE_ABI=../contracts/profile.abi.json
+USER_PROFILE_ABI=$GOSH_PATH/../profile.abi.json
 echo "export SYSTEM_CONTRACT_ABI=$SYSTEM_CONTRACT_ABI" >> env.env
 export REPO_ABI=$GOSH_PATH/repository.abi.json
 echo "export REPO_ABI=$REPO_ABI" >> env.env

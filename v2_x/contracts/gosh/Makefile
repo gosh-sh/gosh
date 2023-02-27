@@ -10,12 +10,12 @@ clean:
 build-contracts:
 # everdev sol compile $$i.sol || exit $$@;
 	for i in $(cpfl); do \
-		cp ../../$$i.sol . || exit $$@; \
+		cp ../$$i.sol . || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 	for i in $(tvcs); do \
-		../../compiler/solc $$i.sol || exit $$@; \
-		../../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
+		../compiler/solc $$i.sol || exit $$@; \
+		../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../compiler/stdlib_sol.tvm || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 
@@ -45,16 +45,16 @@ prepare-docker:
 
 build-contracts-docker:
 	docker run --rm \
-		-v ${CURDIR}/../../:/opt/gosh/contracts \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh && make build'
 
 deploy-docker:
 	docker run --rm \
-		-v ${CURDIR}/../../:/opt/gosh/contracts \
-		-v ${CURDIR}/../../multisig/Giver.seed:/tmp/Giver.seed \
-		-v ${CURDIR}/../../multisig/Giver.addr:/tmp/Giver.addr \
-		-v ${CURDIR}/../../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
+		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
+		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
 		-v ${CURDIR}/../../../tests/util.sh:/tmp/util.sh \
 		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
@@ -63,10 +63,10 @@ deploy-docker:
 
 upgrade-docker:
 	docker run --rm \
-		-v ${CURDIR}/../../:/opt/gosh/contracts \
-		-v ${CURDIR}/../../multisig/Giver.seed:/tmp/Giver.seed \
-		-v ${CURDIR}/../../multisig/Giver.addr:/tmp/Giver.addr \
-		-v ${CURDIR}/../../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
+		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
+		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
 		-v ${CURDIR}/../../../tests/util.sh:/tmp/util.sh \
 		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \

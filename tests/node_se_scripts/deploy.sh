@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
-
-export NETWORK="${NETWORK:-http://192.168.1.237}"
+set -x
+export NETWORK="${NETWORK:-http://192.168.31.227}"
 #export NETWORK=http://172.16.0.62
 SE_GIVER_ADDRESS="0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415"
-SE_GIVER_ABI="../../tests/node_se_scripts/local_giver.abi.json"
-SE_GIVER_KEYS="../../tests/node_se_scripts/local_giver.keys.json"
+SE_GIVER_ABI="../../../tests/node_se_scripts/local_giver.abi.json"
+SE_GIVER_KEYS="../../../tests/node_se_scripts/local_giver.keys.json"
 GIVER_VALUE=20000000000000000
 
 echo "NETWORK=$NETWORK"
 
-cd ../contracts/multisig
+cd ../v2_x/contracts/multisig
 echo "" > Giver.addr
 echo "" > Giver.network
 echo "" > Giver.seed
@@ -29,7 +29,7 @@ make deploy-docker
 
 # deploy giver for upgrade
 
-cd ../v2.0.0/gosh
+cd ../gosh
 echo "" > gosh.seed
 echo "" > VersionController.addr
 echo "" > SystemContract.addr
