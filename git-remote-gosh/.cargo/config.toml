@@ -1,2 +1,0 @@
-[env]
-CONTRACTS_DIR = { value = "../contracts/v2.0.0/gosh/", relative = true }
