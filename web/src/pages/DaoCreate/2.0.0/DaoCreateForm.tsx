@@ -7,7 +7,8 @@ import ToastError from '../../../components/Error/ToastError'
 import yup from '../../../yup-extended'
 import { Button } from '../../../components/Form'
 import { FormikTextarea, FormikInput, FormikCheckbox } from '../../../components/Formik'
-import emptylogo from '../../../assets/images/emptylogo.svg'
+import { useState } from 'react'
+import { getIdenticonAvatar } from '../../../helpers'
 
 type TFormValues = {
     name: string
@@ -17,9 +18,12 @@ type TFormValues = {
     mint: boolean
 }
 
+const avatarInitialState = getIdenticonAvatar({ seed: '' }).toDataUriSync()
+
 const DaoCreateForm = () => {
     const navigate = useNavigate()
     const daocreate = useDaoCreate()
+    const [avatar, setAvatar] = useState<string>(avatarInitialState)
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
@@ -87,11 +91,16 @@ const DaoCreateForm = () => {
                                                 placeholder: 'New organization name',
                                                 autoComplete: 'off',
                                                 disabled: isSubmitting,
-                                                onChange: (e: any) =>
-                                                    setFieldValue(
-                                                        'name',
-                                                        e.target.value.toLowerCase(),
-                                                    ),
+                                                onChange: (e: any) => {
+                                                    const name =
+                                                        e.target.value.toLowerCase()
+                                                    setFieldValue('name', name)
+                                                    setAvatar(
+                                                        getIdenticonAvatar({
+                                                            seed: name,
+                                                        }).toDataUriSync(),
+                                                    )
+                                                },
                                             }}
                                         />
                                     </div>
@@ -164,7 +173,7 @@ const DaoCreateForm = () => {
                                         Organization picture
                                     </div>
                                     <div className="w-44 rounded-lg overflow-hidden">
-                                        <img src={emptylogo} className="w-full" alt="" />
+                                        <img src={avatar} className="w-full" alt="" />
                                     </div>
                                 </div>
                             </div>

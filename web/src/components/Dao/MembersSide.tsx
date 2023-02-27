@@ -1,6 +1,6 @@
 import { classNames, TDao } from 'react-gosh'
 import { Link } from 'react-router-dom'
-import avatar from '../../assets/images/avatar.png'
+import { getIdenticonAvatar } from '../../helpers'
 
 type TDaoMembersSideProps = {
     dao: TDao
@@ -22,9 +22,16 @@ const DaoMembersSide = (props: TDaoMembersSideProps) => {
             </div>
             <div>
                 <div className="flex flex-wrap gap-2 mb-3">
-                    {dao.members.slice(0, 8).map((_, index) => (
+                    {dao.members.slice(0, 8).map((item, index) => (
                         <div key={index} className="w-9 overflow-hidden rounded-full">
-                            <img src={avatar} alt="" className="w-full" />
+                            <img
+                                src={getIdenticonAvatar({
+                                    seed: item.profile,
+                                    radius: 50,
+                                }).toDataUriSync()}
+                                alt=""
+                                className="w-full"
+                            />
                         </div>
                     ))}
                 </div>

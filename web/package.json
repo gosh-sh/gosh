@@ -36,6 +36,8 @@
         ]
     },
     "dependencies": {
+        "@dicebear/collection": "^5.3.4",
+        "@dicebear/core": "^5.3.4",
         "@docker/extension-api-client": "^0.2.3",
         "@emotion/react": "^11.9.3",
         "@emotion/styled": "^11.9.3",

@@ -2,6 +2,8 @@ import { createClient, Provider } from '@supabase/supabase-js'
 import { AppConfig } from 'react-gosh'
 import { GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
+import { createAvatar } from '@dicebear/core'
+import { identicon } from '@dicebear/collection'
 
 const supabase = createClient(
     'https://auth.gosh.sh',
@@ -53,6 +55,15 @@ const signoutOAuthSupabase = async () => {
     }
 }
 
+const getIdenticonAvatar = (options: any) => {
+    return createAvatar(identicon, {
+        radius: 8,
+        scale: 60,
+        backgroundColor: ['fafafd'],
+        ...options,
+    })
+}
+
 /**
  * Toast shortcuts
  */
@@ -95,4 +106,5 @@ export {
     getClipboardData,
     onExternalLinkClick,
     ToastOptionsShortcuts,
+    getIdenticonAvatar,
 }

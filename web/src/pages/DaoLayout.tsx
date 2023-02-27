@@ -10,10 +10,10 @@ import {
 } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import SideMenuContainer from '../components/SideMenuContainer'
-import emptylogo from '../assets/images/emptylogo.svg'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
 import ReactTooltip from 'react-tooltip'
+import { getIdenticonAvatar } from '../helpers'
 
 export type TDaoLayoutOutletContext = {
     dao: {
@@ -112,7 +112,11 @@ const DaoLayout = () => {
         <SideMenuContainer>
             <div className="flex flex-nowrap gap-x-4 mb-6">
                 <div className="w-20 overflow-hidden rounded-lg">
-                    <img src={emptylogo} className="w-full" alt="" />
+                    <img
+                        src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
+                        className="w-full"
+                        alt=""
+                    />
                 </div>
                 <div>
                     <h1 className="mb-2">
