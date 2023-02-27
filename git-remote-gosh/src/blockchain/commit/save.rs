@@ -1,11 +1,12 @@
 use crate::{
     abi as gosh_abi,
     blockchain::{
+        self,
         call::BlockchainCall,
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale, self,
+        BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };
@@ -18,6 +19,7 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
+use crate::blockchain::AddrVersion;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -29,7 +31,7 @@ pub struct DeployCommitParams {
     pub commit_id: String,
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
-    pub parents: Vec<BlockchainContractAddress>,
+    pub parents: Vec<AddrVersion>,
     #[serde(rename = "tree")]
     pub tree_addr: BlockchainContractAddress,
     upgrade: bool,
@@ -66,7 +68,8 @@ pub trait BlockchainCommitPusher {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents: &[BlockchainContractAddress],
+        parents:&Vec<AddrVersion>,
+        upgrade_commit: bool,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
         &self,
@@ -76,6 +79,7 @@ pub trait BlockchainCommitPusher {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        is_upgrade: bool,
     ) -> anyhow::Result<()>;
 }
 
@@ -90,16 +94,17 @@ impl BlockchainCommitPusher for Everscale {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents: &[BlockchainContractAddress],
+        parents: &Vec<AddrVersion>,
+        upgrade_commit: bool,
     ) -> anyhow::Result<()> {
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
             branch_name: branch.to_string(),
             commit_id: commit_id.clone().to_string(),
             raw_commit: raw_commit.to_owned(),
-            parents: parents.to_owned(),
+            parents: parents.to_vec(),
             tree_addr: tree_addr.clone(),
-            upgrade: false,
+            upgrade: upgrade_commit,
         };
         tracing::trace!("push_commit: dao_addr={dao_addr}");
         tracing::trace!("deployCommit params: {:?}", args);
@@ -112,14 +117,16 @@ impl BlockchainCommitPusher for Everscale {
         // let mut repo_contract = self.repo_contract.clone();
         let repo_contract = &mut self.repo_contract.clone();
         let commit = commit_id.clone().to_string();
-        let expected_address = blockchain::get_commit_address(
-            &self.ever_client,
-            repo_contract,
-            &commit
-        ).await?;
+        let expected_address =
+            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit).await?;
 
         let result = self
-            .send_message(wallet_contract.deref(), "deployCommit", Some(params), Some(expected_address))
+            .send_message(
+                wallet_contract.deref(),
+                "deployCommit",
+                Some(params),
+                Some(expected_address),
+            )
             .await?;
         drop(wallet_contract);
         tracing::trace!("deployCommit result: {:?}", result);
@@ -135,13 +142,15 @@ impl BlockchainCommitPusher for Everscale {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        is_upgrade: bool,
     ) -> anyhow::Result<()> {
-        tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}");
+        tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}, is_upgrade={is_upgrade}");
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
         let params = serde_json::json!({
             "repoName": remote.repo.clone(),
             "branchName": branch.to_string(),
             "commit": commit_id.to_string(),
+            "isUpgrade": is_upgrade,
             "numberChangedFiles": number_of_files_changed,
             "numberCommits": number_of_commits,
         });

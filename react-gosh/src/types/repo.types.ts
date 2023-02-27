@@ -1,5 +1,5 @@
-import { IGoshRepositoryAdapter } from '../gosh/interfaces'
-import { TAddress } from './types'
+import { IGoshRepositoryAdapter, IGoshWallet } from '../gosh/interfaces'
+import { TAddress, TEventCreateParams } from './types'
 
 enum EBlobFlag {
     BINARY = 1,
@@ -11,14 +11,16 @@ type TRepository = {
     address: TAddress
     name: string
     version: string
-    branches: number
+    branches: any[]
     head: string
     commitsIn: { branch: string; commit: TCommit }[]
+    description?: string
+    tags?: string[]
 }
 
 type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {
     adapter: IGoshRepositoryAdapter
-    branches?: number
+    branches?: any[]
     head?: string
     commitsIn?: { branch: string; commit: TCommit }[]
     isLoadDetailsFired?: boolean
@@ -48,9 +50,8 @@ type TCommit = {
     message: string
     author: string
     committer: string
-    parents: TAddress[]
+    parents: { address: TAddress; version: string }[]
     version: string
-    versionPrev: string
     initupgrade: boolean
 }
 
@@ -60,9 +61,14 @@ type TBranch = {
     isProtected: boolean
 }
 
-type TTag = {
-    commit: string
+type TCommitTag = {
+    repository: string
+    name: string
     content: string
+    commit: {
+        address: TAddress
+        name: string
+    }
 }
 
 type TDiff = {
@@ -123,6 +129,62 @@ type TBranchOperateProgress = {
     completed?: boolean
 }
 
+type TTaskCommitConfig = {
+    task: string
+    assigners: string[]
+    reviewers: string[]
+    managers: string[]
+}
+
+type TRepositoryCreateParams = TEventCreateParams & {
+    name: string
+    description?: string
+    prev?: { addr: TAddress; version: string }
+    alone?: boolean
+    cell?: boolean
+}
+
+type TRepositoryCreateResult = IGoshRepositoryAdapter | string
+
+type TRepositoryUpdateDescriptionParams = TEventCreateParams & {
+    repository: string
+    description: string
+    cell?: boolean
+}
+
+type TRepositoryUpdateDescriptionResult = Promise<void | string>
+
+type TRepositoryChangeBranchProtectionParams = TEventCreateParams & {
+    repository: string
+    branch: string
+    cell?: boolean
+}
+
+type TRepositoryChangeBranchProtectionResult = Promise<void | string>
+
+type TRepositoryTagCreateParams = TEventCreateParams & {
+    repository: string
+    tags: string[]
+    cell?: boolean
+}
+
+type TRepositoryTagCreateResult = Promise<void | string>
+
+type TRepositoryTagDeleteParams = TEventCreateParams & {
+    repository: string
+    tags: string[]
+    cell?: boolean
+}
+
+type TRepositoryTagDeleteResult = Promise<void | string>
+
+type TRepositoryCreateCommitTagParams = {
+    repository: string
+    commit: string
+    content: string
+    wallet?: IGoshWallet
+}
+
 interface IPushCallback {
     (params: TPushProgress): void
 }
@@ -139,13 +201,25 @@ export {
     TTreeItem,
     TCommit,
     TBranch,
-    TTag,
+    TCommitTag,
     TDiff,
     TUpgradeData,
     TPushBlobData,
     TPushProgress,
     TBranchCompareProgress,
     TBranchOperateProgress,
+    TTaskCommitConfig,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TRepositoryUpdateDescriptionParams,
+    TRepositoryUpdateDescriptionResult,
+    TRepositoryChangeBranchProtectionParams,
+    TRepositoryChangeBranchProtectionResult,
+    TRepositoryTagCreateParams,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteParams,
+    TRepositoryTagDeleteResult,
+    TRepositoryCreateCommitTagParams,
     IPushCallback,
     ITBranchOperateCallback,
 }

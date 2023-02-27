@@ -36,8 +36,8 @@ pub use blockchain_contract_address::{BlockchainContractAddress, FormatShort};
 pub mod commit;
 mod serde_number;
 pub mod snapshot;
-pub mod tree;
 pub mod tag;
+pub mod tree;
 mod tvm_hash;
 pub mod user_wallet;
 pub use crate::{
@@ -102,6 +102,16 @@ pub struct AccountBoc {
     boc: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AddrVersion {
+    #[serde(rename = "addr")]
+    pub address: BlockchainContractAddress,
+
+    #[serde(rename = "version")]
+    pub version: String,
+}
+
+
 #[derive(Deserialize, Debug)]
 struct CallResult {
     #[serde(rename = "id")]
@@ -114,10 +124,22 @@ struct CallResult {
 }
 
 #[derive(Deserialize, Debug)]
-struct FFCallResult {
+struct SendMessageResult {
     shard_block_id: String,
     message_id: String,
     sending_endpoints: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetNameCommitResult {
+    #[serde(rename = "value0")]
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetNameBranchResult {
+    #[serde(rename = "value0")]
+    pub name: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -314,6 +336,12 @@ async fn run_local(
         );
     }
     let account_boc = &query[0]["boc"].as_str();
+    if account_boc.is_none() {
+        anyhow::bail!(
+            "account with address {} does not contain boc",
+            contract.address,
+        );
+    }
     let call_set = match args {
         Some(value) => CallSet::some_with_function_and_input(function_name, value),
         None => CallSet::some_with_function(function_name),
@@ -566,10 +594,7 @@ message_id: \"{message_id}\"\n\terror: \"{error}\"\n}}"
 async fn default_callback(pe: ProcessingEvent) {
     // TODO: improve formatting for potentially unlimited structs/enums.
     // TODO: Need to clarify Remp json field
-    tracing::trace!(
-        "callback: {}",
-        processing_event_to_string(pe)
-    );
+    tracing::trace!("callback: {}", processing_event_to_string(pe));
 }
 
 #[instrument(level = "info", skip_all)]
@@ -631,8 +656,8 @@ pub async fn tag_list(
 ) -> anyhow::Result<Vec<String>> {
     tracing::debug!("tag_list: repo_addr={repo_addr}");
 
-    let GetContractCodeResult { code }
-        = get_contract_code(context, repo_addr, ContractKind::Tag).await?;
+    let GetContractCodeResult { code } =
+        get_contract_code(context, repo_addr, ContractKind::Tag).await?;
 
     let hash = calculate_boc_hash(context, &code).await?;
     let query = r#"query($code_hash: String!) {
@@ -665,8 +690,8 @@ pub async fn tag_list(
     for account in accounts {
         let address = BlockchainContractAddress::new(account.address);
         let tag_contract = GoshContract::new(address, gosh_abi::TAG);
-        let GetTagContentResult { content }
-            = tag_contract.read_state(context, "getContent", None).await?;
+        let GetTagContentResult { content } =
+            tag_contract.read_state(context, "getContent", None).await?;
         let mut iter = content.split('\n');
         let first = iter.next().unwrap();
         let item = if first.starts_with("tag") {
@@ -757,8 +782,8 @@ pub async fn calculate_contract_address(
         ..Default::default()
     };
 
-    let ResultOfEncodeInitialData { data }
-        = encode_initial_data(Arc::clone(context), params).await?;
+    let ResultOfEncodeInitialData { data } =
+        encode_initial_data(Arc::clone(context), params).await?;
 
     let params = ParamsOfEncodeTvc {
         code: Some(code.to_owned()),

@@ -91,7 +91,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     }
     return (
         <div
-            className={classNames('text-sm', className)}
+            className={classNames('relative text-sm', className)}
             dangerouslySetInnerHTML={{
                 __html: getHighlightedCodeBlock(),
             }}

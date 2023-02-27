@@ -1,4 +1,5 @@
 #!/bin/bash
+exit 0
 
 # 1. create repo
 # 2. clone repo into repo8-clone1
@@ -22,8 +23,8 @@ REPO_NAME=repo8
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
 [ -d $REPO_NAME"-clone3" ] && rm -rf $REPO_NAME"-clone3"
 
-tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"

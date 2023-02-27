@@ -1,0 +1,5 @@
+# Build
+
+```
+cargo install --path .
+```

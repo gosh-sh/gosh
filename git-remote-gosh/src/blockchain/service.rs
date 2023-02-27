@@ -261,7 +261,8 @@ pub mod tests {
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
                 raw_commit: &str,
-                parents: &[BlockchainContractAddress],
+                parents: &Vec<AddrVersion>,
+                upgrade_commit: bool,
             ) -> anyhow::Result<()>;
             async fn notify_commit(
                 &self,
@@ -271,6 +272,7 @@ pub mod tests {
                 number_of_commits: u64,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
+                is_upgrade: bool,
             ) -> anyhow::Result<()>;
         }
 

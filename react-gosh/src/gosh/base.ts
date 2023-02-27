@@ -75,7 +75,7 @@ class BaseContract implements IContract {
         decode?: boolean,
         all?: boolean,
         messages?: any[],
-    ): Promise<{ cursor?: string; messages: any[] }> {
+    ): Promise<{ cursor?: string; messages: any[]; hasNext?: boolean }> {
         const {
             msgType,
             node = [],
@@ -145,7 +145,11 @@ class BaseContract implements IContract {
         messages.push(...page)
 
         if (!all || !pageInfo.hasPreviousPage) {
-            return { cursor: pageInfo.startCursor, messages }
+            return {
+                cursor: pageInfo.startCursor,
+                messages,
+                hasNext: pageInfo.hasPreviousPage,
+            }
         }
 
         await sleep(300)

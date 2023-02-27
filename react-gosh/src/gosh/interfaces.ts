@@ -7,24 +7,77 @@ import {
 } from '@eversdk/core'
 import {
     TAddress,
+    TEventMultipleCreateProposalParams,
     TDao,
+    TDaoMember,
     TProfileDetails,
     TSmvDetails,
     TSmvEvent,
     TSmvEventMinimal,
+    TSmvEventStatus,
+    TSmvEventTime,
+    TSmvEventVotes,
     TValidationResult,
-} from '../types'
-import {
+    TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
+    TDaoUpgradeParams,
+    TDaoVotingTokenAddParams,
+    TDaoRegularTokenAddParams,
+    TDaoMintTokenParams,
+    TDaoTagCreateParams,
+    TDaoTagDeleteParams,
+    TDaoMintDisableParams,
+    TDaoMemberAllowanceUpdateParams,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventShowProgressParams,
+    TTaskDetails,
     IPushCallback,
     ITBranchOperateCallback,
     TBranch,
     TCommit,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
     TRepository,
-    TTag,
+    TCommitTag,
+    TTaskCommitConfig,
     TTree,
     TTreeItem,
     TUpgradeData,
-} from '../types/repo.types'
+    TRepositoryUpdateDescriptionParams,
+    TRepositoryChangeBranchProtectionParams,
+    TTaskDeleteParams,
+    TTaskCreateParams,
+    TRepositoryTagCreateParams,
+    TRepositoryTagDeleteParams,
+    TTaskReceiveBountyParams,
+    TDaoEventSendReviewParams,
+    TDaoAskMembershipAllowanceParams,
+    TTopic,
+    TTopicCreateParams,
+    TTopicMessageCreateParams,
+    TRepositoryChangeBranchProtectionResult,
+    TDaoMemberCreateResult,
+    TDaoMemberDeleteResult,
+    TDaoUpgradeResult,
+    TTaskCreateResult,
+    TTaskDeleteResult,
+    TDaoVotingTokenAddResult,
+    TDaoRegularTokenAddResult,
+    TDaoMintTokenResult,
+    TDaoMintDisableResult,
+    TDaoTagCreateResult,
+    TDaoTagDeleteResult,
+    TDaoMemberAllowanceUpdateResult,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteResult,
+    TRepositoryUpdateDescriptionResult,
+    TDaoEventAllowDiscussionResult,
+    TDaoEventShowProgressResult,
+    TDaoAskMembershipAllowanceResult,
+    TRepositoryCreateCommitTagParams,
+    TIsMemberParams,
+    TIsMemberResult,
+} from '../types'
 
 interface IGoshAdapter {
     client: TonClient
@@ -34,11 +87,12 @@ interface IGoshAdapter {
     isValidUsername(username: string): TValidationResult
     isValidDaoName(name: string): TValidationResult
     isValidRepoName(name: string): TValidationResult
-    isValidProfile(username: string[]): Promise<TAddress[]>
+    isValidProfile(username: string[]): Promise<{ username: string; address: TAddress }[]>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
 
+    getVersion(): string
     getProfile(options: { username?: string; address?: TAddress }): Promise<IGoshProfile>
     getDao(options: {
         name?: string
@@ -56,12 +110,27 @@ interface IGoshAdapter {
     }): Promise<IGoshRepositoryAdapter>
     getRepositoryCodeHash(dao: TAddress): Promise<string>
     getTvmHash(data: string | Buffer): Promise<string>
+    getTaskTagGoshCodeHash(tag: string): Promise<string>
+    getTaskTagDaoCodeHash(dao: TAddress, tag: string): Promise<string>
+    getTaskTagRepoCodeHash(
+        dao: TAddress,
+        repository: TAddress,
+        tag: string,
+    ): Promise<string>
+    getHelperTag(address: TAddress): Promise<IGoshHelperTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
 
 interface IGoshDaoAdapter {
+    // TODO: remove from public
+    dao: IGoshDao
+    wallet?: IGoshWallet
+    // End todo
+
     isDeployed(): Promise<boolean>
+    isRepositoriesUpgraded(): Promise<boolean>
+    isMember(params: TIsMemberParams): TIsMemberResult
 
     setAuth(username: string, keys: KeyPair): Promise<void>
 
@@ -70,28 +139,73 @@ interface IGoshDaoAdapter {
     getName(): Promise<string>
     getVersion(): string
     getDetails(): Promise<TDao>
+    getShortDescription(): Promise<string | null>
+    getDescription(): Promise<string | null>
     getRemoteConfig(): Promise<object>
     getRepository(options: {
         name?: string
         address?: TAddress
     }): Promise<IGoshRepositoryAdapter>
+    getMembers(): Promise<TDaoMember[]>
     getMemberWallet(options: {
-        profile?: string
+        profile?: TAddress
         address?: TAddress
         index?: number
     }): Promise<IGoshWallet>
+    getReviewers(
+        username: string[],
+    ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
+
+    getTaskCodeHash(repository: string): Promise<string>
+    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+
+    getTopicCodeHash(): Promise<string>
+    getTopic(params: { address?: TAddress }): Promise<TTopic>
 
     getSmv(): Promise<IGoshSmvAdapter>
 
-    deployRepository(
-        name: string,
-        prev?: { addr: TAddress; version: string } | undefined,
-    ): Promise<IGoshRepositoryAdapter>
+    createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
 
-    createMember(username: string[]): Promise<void>
-    deleteMember(username: string[]): Promise<void>
+    createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult>
+    deleteMember(params: TDaoMemberDeleteParams): Promise<TDaoMemberDeleteResult>
+    updateMemberAllowance(
+        params: TDaoMemberAllowanceUpdateParams,
+    ): Promise<TDaoMemberAllowanceUpdateResult>
+    updateAskMembershipAllowance(
+        params: TDaoAskMembershipAllowanceParams,
+    ): Promise<TDaoAskMembershipAllowanceResult>
 
-    upgrade(version: string, description?: string): Promise<void>
+    upgrade(params: TDaoUpgradeParams): Promise<TDaoUpgradeResult>
+    setRepositoriesUpgraded(): Promise<void>
+
+    mint(params: TDaoMintTokenParams): Promise<TDaoMintTokenResult>
+    disableMint(params: TDaoMintDisableParams): Promise<TDaoMintDisableResult>
+    addVotingTokens(params: TDaoVotingTokenAddParams): Promise<TDaoVotingTokenAddResult>
+    addRegularTokens(
+        params: TDaoRegularTokenAddParams,
+    ): Promise<TDaoRegularTokenAddResult>
+    sendInternal2Internal(username: string, amount: number): Promise<void>
+    send2DaoReserve(amount: number): Promise<void>
+
+    createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
+    deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
+
+    createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
+
+    createTask(params: TTaskCreateParams): Promise<TTaskCreateResult>
+    receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
+    deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult>
+
+    sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
+    updateEventShowProgress(
+        params: TDaoEventShowProgressParams,
+    ): Promise<TDaoEventShowProgressResult>
+    updateEventAllowDiscussion(
+        params: TDaoEventAllowDiscussionParams,
+    ): Promise<TDaoEventAllowDiscussionResult>
+
+    createTopic(params: TTopicCreateParams): Promise<void>
+    createTopicMessage(params: TTopicMessageCreateParams): Promise<void>
 }
 
 interface IGoshRepositoryAdapter {
@@ -99,6 +213,7 @@ interface IGoshRepositoryAdapter {
 
     isDeployed(): Promise<boolean>
 
+    getGosh(): IGoshAdapter
     getAddress(): TAddress
     getName(): Promise<string>
     getHead(): Promise<string>
@@ -133,7 +248,7 @@ interface IGoshRepositoryAdapter {
     ): Promise<{ treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
-    getTags(): Promise<TTag[]>
+    getCommitTags(): Promise<TCommitTag[]>
     getUpgrade(commit: string): Promise<TUpgradeData>
     getContentSignature(
         repository: string,
@@ -152,8 +267,12 @@ interface IGoshRepositoryAdapter {
         callback?: ITBranchOperateCallback,
     ): Promise<void>
     deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void>
-    lockBranch(name: string): Promise<void>
-    unlockBranch(name: string): Promise<void>
+    lockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult>
+    unlockBranch(
+        params: TRepositoryChangeBranchProtectionParams,
+    ): Promise<TRepositoryChangeBranchProtectionResult>
 
     setHead(branch: string): Promise<void>
     push(
@@ -165,11 +284,15 @@ interface IGoshRepositoryAdapter {
         }[],
         message: string,
         isPullRequest: boolean,
-        tags?: string,
-        branchParent?: string,
-        callback?: IPushCallback,
+        options: {
+            tags?: string
+            branchParent?: string
+            task?: TTaskCommitConfig
+            callback?: IPushCallback
+        },
     ): Promise<void>
     pushUpgrade(data: TUpgradeData): Promise<void>
+    createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void>
 
     deployContentSignature(
         repository: string,
@@ -177,6 +300,13 @@ interface IGoshRepositoryAdapter {
         label: string,
         content: string,
     ): Promise<void>
+
+    createTag(params: TRepositoryTagCreateParams): Promise<TRepositoryTagCreateResult>
+    deleteTag(params: TRepositoryTagDeleteParams): Promise<TRepositoryTagDeleteResult>
+
+    updateDescription(
+        params: TRepositoryUpdateDescriptionParams,
+    ): Promise<TRepositoryUpdateDescriptionResult>
 }
 
 interface IGoshSmvAdapter {
@@ -188,15 +318,31 @@ interface IGoshSmvAdapter {
         address: TAddress,
         isDetailed?: boolean,
     ): Promise<TSmvEventMinimal | TSmvEvent>
+    getEventReviewers(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<string[]>
+    getEventVotes(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventVotes>
+    getEventStatus(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventStatus>
+    getEventTime(params: {
+        address?: TAddress
+        event?: IGoshSmvProposal
+    }): Promise<TSmvEventTime>
     getWalletBalance(wallet: IGoshWallet): Promise<number>
 
-    validateProposalStart(): Promise<void>
+    validateProposalStart(min?: number): Promise<void>
 
     transferToSmv(amount: number): Promise<void>
     transferToWallet(amount: number): Promise<void>
     releaseAll(): Promise<void>
 
-    vote(event: TAddress, choice: boolean, amount: number): Promise<void>
+    vote(event: TAddress, choice: boolean, amount: number, note?: string): Promise<void>
 }
 
 interface IContract {
@@ -217,7 +363,7 @@ interface IContract {
         decode?: boolean,
         all?: boolean,
         messages?: any[],
-    ): Promise<{ cursor?: string; messages: any[] }>
+    ): Promise<{ cursor?: string; messages: any[]; hasNext?: boolean }>
     run(
         functionName: string,
         input: object,
@@ -313,7 +459,19 @@ interface IGoshTree extends IContract {
     address: TAddress
 }
 
-interface IGoshTag extends IContract {
+interface IGoshCommitTag extends IContract {
+    address: TAddress
+}
+
+interface IGoshTask extends IContract {
+    address: TAddress
+}
+
+interface IGoshHelperTag extends IContract {
+    address: TAddress
+}
+
+interface IGoshTopic extends IContract {
     address: TAddress
 }
 
@@ -355,7 +513,10 @@ export {
     IGoshDiff,
     IGoshSnapshot,
     IGoshTree,
-    IGoshTag,
+    IGoshCommitTag,
+    IGoshTask,
+    IGoshHelperTag,
+    IGoshTopic,
     IGoshContentSignature,
     IGoshSmvProposal,
     IGoshSmvLocker,

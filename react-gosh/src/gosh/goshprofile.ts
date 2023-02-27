@@ -71,9 +71,11 @@ class GoshProfile extends BaseContract implements IGoshProfile {
 
         return await executeByChunk(
             messages.filter(({ decoded }) => {
-                if (!decoded) return false
+                if (!decoded) {
+                    return false
+                }
                 const { name, value } = decoded
-                return name === 'deployedWallet' && +value.index === 0
+                return name === 'deployedWallet' && parseInt(value.index) === 0
             }),
             MAX_PARALLEL_READ,
             async ({ decoded }) => {

@@ -9,7 +9,6 @@ pipeline {
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
-        booleanParam name: 'ONLYWEB', defaultValue: false, description: 'If enabled, will ONLY deploy contracts and web. Skipping helper and extension build steps.'
     }
 
     stages {
@@ -23,74 +22,79 @@ pipeline {
             steps {
                 script {
                     if (env.ghprbPullLink) {
-                        env.BRANCH = env.ghprbSourceBranch
+                        env.COMMIT = env.ghprbSourceBranch
                     } else {
-                        env.BRANCH = params.sha1
+                        env.COMMIT = params.sha1
                     }
                 }
-                echo "${BRANCH}"
-                git branch: "${BRANCH}", url: 'https://github.com/gosh-sh/gosh.git'
+                echo "${COMMIT}"
+                git branch: "${COMMIT}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
-                    currentBuild.displayName = "${BUILD_NUMBER}_${BRANCH}_${VERSION}"
-                }
-            }
-        }
-        stage('Compile: SMV') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-                }
-            }
-            steps {
-                script {
-                    dir('contracts/smv') {
-                        sh 'make build-contracts'
-                    }
-                }
-            }
-        }
-        stage('Compile: GOSH') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-                }
-            }
-            steps {
-                script {
-                    dir('contracts/gosh') {
-                        sh 'make build-contracts'
-                    }
+                    currentBuild.displayName = "${BUILD_NUMBER}_${COMMIT}_${VERSION}"
                 }
             }
         }
         stage('Build: Git Helper') {
             agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                node {
+                    label 'jenkins-main'
                 }
             }
             steps {
-                retry(3) {
-                    script {
-                        if (!params.ONLYWEB) {
-                            dir('git-remote-gosh') {
-                                sh "make prepare-builder DOCKER_BUILDER_ARGS='--driver-opt network=host'"
-                                sh "make publish FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} PLATFORM=linux/amd64,linux/arm64"
-                                sh "make bench FULL_IMAGE_NAME=localhost:5000/teamgosh/git:${VERSION} DOCKER_BUILDX_ARGS='--output type=local,dest=./' PLATFORM=linux/amd64,linux/arm64"
-                                sh 'cp linux_amd64/usr/local/bin/git-remote-gosh ./git-remote-gosh-amd64'
-                                sh 'cp linux_arm64/usr/local/bin/git-remote-gosh ./git-remote-gosh-arm64'
-                            }
-                        }
+                script {
+                    dir('git-remote-gosh') {
+                        sh '''
+                            #!/bin/bash
+                            set -ex
+                            
+                            # 2 = gosh-dispatcher
+                            PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
+                            PIPELINE_2_STATUS=inProgress
+
+                            # 1 = git-remote-gosh
+                            PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${COMMIT} --project gosh | jq .id)
+                            PIPELINE_1_STATUS=inProgress
+
+                            until [ $PIPELINE_2_STATUS != "inProgress" ]
+                            do
+                                sleep 60
+                                PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
+                            done
+                            until [ $PIPELINE_1_STATUS != "inProgress" ]
+                            do
+                                sleep 60
+                                PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
+                            done
+
+                            rm -rf ./linux-*
+                            rm -rf ./darwin-*
+                            rm -rf ./windows-*
+
+                            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_1_ID --path ./linux-arm64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_1_ID --path ./darwin-arm64
+
+                            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path ./linux-arm64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path ./darwin-arm64
+
+                            tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
+                            tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
+                            tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
+                            tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
+                            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
+                        '''
                     }
                 }
             }
         }
-        stage('Build: Docker Extension') {
+        /*stage('Build: Docker Extension') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -99,14 +103,12 @@ pipeline {
             }
             steps {
                 script {
-                    if (!params.ONLYWEB) {
-                        dir('docker-extension') {
-                            sh "make build-ci IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
-                        }
+                    dir('docker-extension') {
+                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
                     }
                 }
             }
-        }
+        }*/
         stage('Deploy: deploy smart-contracts') {
             agent {
                 docker {
@@ -125,14 +127,14 @@ pipeline {
                         '''
                         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
-                    dir('contracts/gosh') {
+                    dir('contracts/v2.0.0/gosh') {
                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
                     }
-                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-                    env.REACT_APP_GOSH = sh script: "cat contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat contracts/v2.0.0/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat contracts/v2.0.0/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
-                archiveArtifacts artifacts: 'contracts/gosh/*.seed'
-                archiveArtifacts artifacts: 'contracts/gosh/*.addr'
+                archiveArtifacts artifacts: 'contracts/v2.0.0/gosh/*.seed'
+                archiveArtifacts artifacts: 'contracts/v2.0.0/gosh/*.addr'
             }
         }
         stage('Web: deploy') {
@@ -143,7 +145,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.BUCKET_NAME = "app-" + "${BRANCH}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
+                    env.BUCKET_NAME = "app-" + "${COMMIT}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
                     sh """
                         sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
                         sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
@@ -192,22 +194,40 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
-
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace:/tmp'
                 }
             }
             steps {
                 script {
-                    if (!params.ONLYWEB) {
-                        dir('tests') {
-                            sh """
-                                mkdir /home/jenkins/bin && cp -r ../git-remote-gosh/git-remote-gosh-amd64 /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
-                                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-                                ./set-vars.sh https://local-evernode.gosh.sh
-                            """
-                            def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-                            runParallel items: (files).collect { "${it}" }
-                        }
+                    dir('tests') {
+                        sh '''
+                            #!/bin/bash
+                            set -e
+                            set -x
+
+                            rm -rf ../git-remote-gosh/linux-amd64
+
+                            cp -r /tmp/${JOB_NAME}/git-remote-gosh/git-remote-gosh* ../git-remote-gosh
+                            cp -r /tmp/${JOB_NAME}/git-remote-gosh/linux-amd64 ../git-remote-gosh/
+
+                            mkdir /home/jenkins/bin
+
+                            # dispatcher
+                            cp -r ../git-remote-gosh/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+
+                            # remote
+                            cd ../git-remote-gosh/linux-amd64
+                            ls -la
+                            REMOTE_VERSION=\$(find . -name "git-remote-gosh_v*" | tr -d "./")
+                            cd -
+                            cp -r ../git-remote-gosh/linux-amd64/$REMOTE_VERSION /home/jenkins/bin/$REMOTE_VERSION && chmod +x /home/jenkins/bin/$REMOTE_VERSION
+                            mkdir -p /home/jenkins/.gosh/
+                            echo $REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+                            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                            ./set-vars.sh https://local-evernode.gosh.sh
+                        '''
+                        def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+                        runParallel items: (files).collect { "${it}" }
                     }
                 }
                 archiveArtifacts artifacts: 'tests/*.seed'
@@ -287,44 +307,22 @@ pipeline {
             }
             steps {
                 script {
-                    if (!params.ONLYWEB) {
-                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-amd64'
-                        archiveArtifacts artifacts: 'git-remote-gosh/git-remote-gosh-arm64'
-                        if (!params.DRYRUN && !params.ONLYWEB) {
-                            dir('.ci/scripts') {
-                                withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                                    sh './create-github-release.sh $TOKEN ${VERSION} ${BRANCH}'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-amd64'
-                                    sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-arm64'
-                                }
+                    if (!params.DRYRUN) {
+                        dir('.ci/scripts') {
+                            withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                                sh './create-github-release.sh $TOKEN ${VERSION} ${COMMIT}'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-amd64.tar'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-amd64.tar'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-linux-arm64.tar'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-darwin-arm64.tar'
+                                sh './github-upload-assets.sh $TOKEN ${VERSION} ../../git-remote-gosh/git-remote-gosh-windows-amd64.zip'
                             }
                         }
                     }
                 }
             }
         }
-        stage('Prerelease: push rc Git Helper Docker image') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
-                }
-            }
-            steps {
-                retry(3) {
-                    script {
-                        if (!params.DRYRUN && !params.ONLYWEB) {
-                            dir('git-remote-gosh') {
-                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                                    sh 'docker login -u $USERNAME -p $PASSWORD'
-                                }
-                                sh "make publish FULL_IMAGE_NAME=teamgosh/git:rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
         stage('Prerelease: push rc Docker Extension image') {
             agent {
                 docker {
@@ -335,12 +333,12 @@ pipeline {
             steps {
                 retry(3) {
                     script {
-                        if (!params.DRYRUN && !params.ONLYWEB) {
+                        if (!params.DRYRUN) {
                             dir('docker-extension') {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                                     sh 'docker login -u $USERNAME -p $PASSWORD'
                                 }
-                                sh "make build-ci IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
                             }
                         }
                     }

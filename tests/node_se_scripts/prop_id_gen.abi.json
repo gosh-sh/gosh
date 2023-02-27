@@ -1,0 +1,77 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "get_upgrade_prop_id",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "get_upgrade_prop_id_2",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "get_add_protected_prop_id",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "get_set_commit_prop_id",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "unzip",
+			"inputs": [
+				{"name":"data","type":"bytes"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"}
+	]
+}

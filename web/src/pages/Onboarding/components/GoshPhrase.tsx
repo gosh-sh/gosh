@@ -140,6 +140,7 @@ const GoshPhrase = () => {
                                                 onChange={(event) =>
                                                     setWordsQuery(event.target.value)
                                                 }
+                                                autoComplete="off"
                                                 className="phrase-form__word-input"
                                             />
                                             <Combobox.Options className="phrase-form__word-suggestions">

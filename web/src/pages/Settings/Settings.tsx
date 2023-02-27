@@ -1,9 +1,33 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import CopyClipboard from '../../components/CopyClipboard'
-import { shortString, useUser } from 'react-gosh'
+import { classNames, shortString, useUser } from 'react-gosh'
+import { useSetRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../store/app.state'
+import PinCodeModal from '../../components/Modal/PinCode'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronUp, faLock } from '@fortawesome/free-solid-svg-icons'
+
+type TLockButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    isLocked: boolean
+}
+
+const LockButton = (props: TLockButtonProps) => {
+    const { isLocked, ...rest } = props
+    return (
+        <button type="button" className="text-gray-7c8db5 outline-none" {...rest}>
+            {isLocked ? 'Show' : 'Hide'}
+            <FontAwesomeIcon
+                icon={isLocked ? faLock : faChevronUp}
+                size="sm"
+                className="ml-2"
+            />
+        </button>
+    )
+}
 
 const SettingsPage = () => {
     const { user } = useUser()
+    const setModal = useSetRecoilState(appModalStateAtom)
     const [showPrivate, setShowPrivate] = useState<boolean>(false)
     const [showPhrase, setShowPhrase] = useState<boolean>(false)
     const [showRemote, setShowRemote] = useState<boolean>(false)
@@ -24,101 +48,143 @@ const SettingsPage = () => {
         },
     }
 
-    const onShowPrivateToggle = () => setShowPrivate(!showPrivate)
+    const onShowPrivateToggle = () => {
+        if (!showPrivate) {
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal unlock onUnlock={() => setShowPrivate(!showPrivate)} />
+                ),
+            })
+        } else {
+            setShowPrivate(!showPrivate)
+        }
+    }
 
-    const onShowPhraseToggle = () => setShowPhrase(!showPhrase)
+    const onShowPhraseToggle = () => {
+        if (!showPhrase) {
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal unlock onUnlock={() => setShowPhrase(!showPhrase)} />
+                ),
+            })
+        } else {
+            setShowPhrase(!showPhrase)
+        }
+    }
 
-    const onShowRemoteToggle = () => setShowRemote(!showRemote)
+    const onShowRemoteToggle = () => {
+        if (!showRemote) {
+            setModal({
+                static: true,
+                isOpen: true,
+                element: (
+                    <PinCodeModal unlock onUnlock={() => setShowRemote(!showRemote)} />
+                ),
+            })
+        } else {
+            setShowRemote(!showRemote)
+        }
+    }
 
     return (
         <div>
-            <div>
-                <h3 className="text-xl font-semibold">My profile name</h3>
-                <p>Share it with DAO owner to add you to members list</p>
-                {user.username && (
+            <h1 className="text-3xl font-medium">User settings</h1>
+
+            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-4 items-center">
+                <div className="basis-64">
+                    <h3 className="font-medium mb-1.5">My profile name</h3>
                     <CopyClipboard
-                        className="mt-2"
-                        label={shortString(user.username, 10, 10)}
+                        className="text-gray-7c8db5"
+                        label={shortString(user.username!, 10, 10)}
                         componentProps={{
-                            text: user.username,
+                            text: user.username!,
                         }}
                     />
-                )}
+                </div>
+                <div className="text-gray-53596d text-sm">
+                    Share it with DAO member to add you to members list
+                </div>
             </div>
 
-            <div className="mt-5">
-                <h3 className="text-xl font-semibold">My profile address</h3>
-                {user.profile && (
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-4 items-center">
+                <div className="basis-64">
+                    <h3 className="font-medium mb-1.5">My profile address</h3>
                     <CopyClipboard
-                        className="mt-2"
-                        label={shortString(user.profile, 10, 10)}
+                        className="text-gray-7c8db5"
+                        label={shortString(user.profile!, 10, 10)}
                         componentProps={{
-                            text: user.profile,
+                            text: user.profile!,
                         }}
                     />
-                )}
+                </div>
             </div>
 
-            <div className="mt-5">
-                <h3 className="text-xl font-semibold">My public key</h3>
-                {user.keys && (
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-4 items-center">
+                <div className="basis-64">
+                    <h3 className="font-medium mb-1.5">My public key</h3>
                     <CopyClipboard
-                        className="mt-2"
-                        label={shortString(`0x${user.keys.public}`, 10, 10)}
+                        className="text-gray-7c8db5"
+                        label={shortString(`0x${user.keys!.public}`, 10, 10)}
                         componentProps={{
-                            text: `0x${user.keys.public}`,
+                            text: `0x${user.keys!.public}`,
                         }}
                     />
-                )}
+                </div>
             </div>
 
-            <div className="mt-5">
-                <h3 className="text-xl font-semibold">My private key</h3>
-                <p>Don't share it with anybody</p>
-                {user.keys?.secret && showPrivate && (
-                    <CopyClipboard
-                        className="mt-4"
-                        label={shortString(`0x${user.keys.secret}`, 10, 10)}
-                        componentProps={{
-                            text: `0x${user.keys.secret}`,
-                        }}
-                    />
-                )}
-                <button
-                    className="btn btn--body btn--sm !font-normal px-4 py-1.5 mt-2"
-                    type="button"
-                    onClick={onShowPrivateToggle}
-                >
-                    {showPrivate ? 'Hide' : 'Show'}
-                </button>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-4 items-center">
+                <div className="basis-64">
+                    <h3 className="font-medium mb-1.5">My private key</h3>
+                    {showPrivate && (
+                        <CopyClipboard
+                            className="text-gray-7c8db5 mb-3"
+                            label={shortString(`0x${user.keys!.secret}`, 10, 10)}
+                            componentProps={{
+                                text: `0x${user.keys!.secret}`,
+                            }}
+                        />
+                    )}
+                    <LockButton isLocked={!showPrivate} onClick={onShowPrivateToggle} />
+                </div>
+                <div className="text-gray-53596d text-sm">
+                    Don't share it with anybody
+                </div>
             </div>
 
-            <div className="mt-5">
-                <h3 className="text-xl font-semibold">My seed phrase</h3>
-                <p>Don't share it with anybody</p>
-                {user.phrase && showPhrase && (
-                    <CopyClipboard
-                        className="mt-4"
-                        label={user.phrase}
-                        componentProps={{
-                            text: user.phrase,
-                        }}
-                    />
-                )}
-                <button
-                    className="btn btn--body btn--sm !font-normal px-4 py-1.5 mt-2"
-                    type="button"
-                    onClick={onShowPhraseToggle}
-                >
-                    {showPhrase ? 'Hide' : 'Show'}
-                </button>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-4 items-center">
+                <div className="basis-64">
+                    <h3 className="font-medium mb-1.5">My seed phrase</h3>
+                    {showPhrase && (
+                        <CopyClipboard
+                            className="text-gray-7c8db5 mb-3"
+                            label={user.phrase}
+                            componentProps={{
+                                text: user.phrase!,
+                            }}
+                        />
+                    )}
+                    <LockButton isLocked={!showPhrase} onClick={onShowPhraseToggle} />
+                </div>
+                <div className="text-gray-53596d text-sm">
+                    Don't share it with anybody
+                </div>
             </div>
 
-            <div className="mt-5">
-                <h3 className="text-xl font-semibold">Git remote config</h3>
-                <div>~/.gosh/config.json</div>
-                {user.keys && showRemote && (
-                    <div className="relative text-sm rounded-md mt-3">
+            <div className="mt-8">
+                <h3 className="font-medium mb-1.5">Git remote config</h3>
+                <div className="text-gray-7c8db5 mb-1.5">~/.gosh/config.json</div>
+                {showRemote && (
+                    <div
+                        className={classNames(
+                            'mb-3 relative px-4 py-3',
+                            'border border-gray-e6edff rounded-xl bg-gray-fafafd',
+                            'text-sm text-gray-7c8db5',
+                        )}
+                    >
                         <CopyClipboard
                             className="absolute right-3 top-3"
                             componentProps={{
@@ -126,19 +192,12 @@ const SettingsPage = () => {
                             }}
                             iconProps={{ size: 'lg' }}
                         />
-                        <pre className="bg-gray-050a15/5 px-4 py-3 overflow-x-auto">
+                        <pre className="overflow-x-auto">
                             {JSON.stringify(gitRemoteCredentials, undefined, 2)}
                         </pre>
                     </div>
                 )}
-
-                <button
-                    className="btn btn--body btn--sm !font-normal px-4 py-1.5 mt-2"
-                    type="button"
-                    onClick={onShowRemoteToggle}
-                >
-                    {showRemote ? 'Hide' : 'Show'}
-                </button>
+                <LockButton isLocked={!showRemote} onClick={onShowRemoteToggle} />
             </div>
         </div>
     )

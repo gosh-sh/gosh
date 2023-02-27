@@ -119,6 +119,7 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
                                             onPhrasePaste(setFieldValue, e)
                                         }}
                                         className="phrase-form__word-input"
+                                        autoComplete="off"
                                     />
                                     <Combobox.Options className="phrase-form__word-suggestions">
                                         {wordsSuggested.map((word) => (
