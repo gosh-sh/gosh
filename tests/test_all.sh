@@ -51,5 +51,5 @@ set -o pipefail
 #./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
 #./upgrade_tests/10-tagless_after_upgrade.test.sh ignore
 
-./clean.sh
+#./clean.sh
 echo "All tests passed"
