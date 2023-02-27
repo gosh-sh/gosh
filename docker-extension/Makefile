@@ -36,9 +36,9 @@ no-build-gosh-git-image:
 
 .PHONY: build-gosh-git-image
 build-gosh-git-image:
-	cd ../git-remote-gosh \
+	cd ../v2_x/git-remote-gosh \
 		&& make publish FULL_IMAGE_NAME=${GOSH_GIT_IMAGE} PLATFORM=${PLATFORM}
-	cd ../git-remote-gosh \
+	cd ../v2_x/git-remote-gosh \
 		&& make pull FULL_IMAGE_NAME=${GOSH_GIT_IMAGE} PLATFORM=${PLATFORM}
 
 .PHONY: prepare-builder

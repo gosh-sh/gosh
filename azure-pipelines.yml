@@ -71,21 +71,21 @@ steps:
 - bash: |
     mkdir -p ./resources
     cp ../contracts/v2.0.0/gosh/*.abi.json ./resources/
-  workingDirectory: git-remote-gosh
+  workingDirectory: v2_x/git-remote-gosh
   displayName: Prepare
   
 - script: |
     cargo build --release
-  workingDirectory: git-remote-gosh
+  workingDirectory: v2_x/git-remote-gosh
   displayName: Build
 
 # Publish
 # Linux and macOS.
-- publish: ./git-remote-gosh/target/release/git-remote-gosh
+- publish: ./v2_x/git-remote-gosh/target/release/git-remote-gosh
   artifact: $(binName)
   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Windows
-- publish: ./git-remote-gosh/target/release/git-remote-gosh.exe
+- publish: ./v2_x/git-remote-gosh/target/release/git-remote-gosh.exe
   artifact: $(binName).exe
   condition: eq(variables['Agent.OS'], 'Windows_NT')
