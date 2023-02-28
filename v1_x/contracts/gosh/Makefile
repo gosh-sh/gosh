@@ -36,6 +36,15 @@ build: clean build-contracts clean-contracts
 build-save: clean build-contracts
 	if [ "${target-dir}" != "" ] ; then tar -cf gosh.tar ${target-dir}; fi;
 
+prepare-docker:
+	docker build -t everdev:latest ../../../.ci/
+
+build-contracts-docker:
+	docker run --rm \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		everdev:latest \
+		/bin/bash -c 'cd /opt/gosh/contracts/gosh && make build'
+
 deploy-docker:
 	docker run --rm \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
@@ -47,3 +56,16 @@ deploy-docker:
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./deploy.sh'
+
+upgrade-docker:
+	docker run --rm \
+		-v ${CURDIR}/../:/opt/gosh/contracts \
+		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
+		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
+		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
+		-v ${CURDIR}/../../../tests/util.sh:/tmp/util.sh \
+		${EXTRA_DOCKER_ARGS} \
+		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \
+		-e VERSIONCONTROLLER_SEED="${VERSIONCONTROLLER_SEED}" \
+		everdev:latest \
+		/bin/bash -c 'cd /opt/gosh/contracts/gosh/scripts && ./upgrade.sh'
