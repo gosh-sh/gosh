@@ -36,43 +36,6 @@ pipeline {
                 }
             }
         }
-        stage('Build: Dispatcher') {
-            agent {
-                node {
-                    label 'jenkins-main'
-                }
-            }
-            steps {
-                script {
-                    dir('gosh-dispatcher') {
-                        sh '''
-                            #!/bin/bash
-                            set -ex
-                            
-                            # 2 = gosh-dispatcher
-                            PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
-                            PIPELINE_2_STATUS=inProgress
-
-                            until [ $PIPELINE_2_STATUS != "inProgress" ]
-                            do
-                                sleep 60
-                                PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
-                            done
-
-                            rm -rf ./linux-*
-                            rm -rf ./darwin-*
-                            rm -rf ./windows-*
-
-                            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
-                            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
-                            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
-                            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path ./linux-arm64
-                            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path ./darwin-arm64
-                        '''
-                    }
-                }
-            }
-        }
         stage('Build: Git Helper') {
             agent {
                 node {
@@ -81,8 +44,53 @@ pipeline {
             }
             steps {
                 script {
-                    runBuildRemoteGosh('v1_x')
-                    runBuildRemoteGosh('v2_x')
+                    dir('v2_x/git-remote-gosh') {
+                        sh '''
+                            #!/bin/bash
+                            set -ex
+                            
+                            # 2 = gosh-dispatcher
+                            PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
+                            PIPELINE_2_STATUS=inProgress
+
+                            # 1 = git-remote-gosh
+                            PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${COMMIT} --project gosh | jq .id)
+                            PIPELINE_1_STATUS=inProgress
+
+                            until [ $PIPELINE_2_STATUS != "inProgress" ]
+                            do
+                                sleep 60
+                                PIPELINE_2_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_2_ID | jq .status | tr -d '\"')
+                            done
+                            until [ $PIPELINE_1_STATUS != "inProgress" ]
+                            do
+                                sleep 60
+                                PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
+                            done
+
+                            rm -rf ./linux-*
+                            rm -rf ./darwin-*
+                            rm -rf ./windows-*
+
+                            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_1_ID --path ./linux-arm64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_1_ID --path ./darwin-arm64
+
+                            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path ./linux-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path ./darwin-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path ./windows-amd64
+                            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path ./linux-arm64
+                            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path ./darwin-arm64
+
+                            tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
+                            tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
+                            tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
+                            tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
+                            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
+                        '''
+                    }
                 }
             }
         }
@@ -361,29 +369,4 @@ def runParallel(args) {
 
 def webTestsList() {
   return "app-setup,app-small-write,app-small-read,app-large-write,app-large-read".split(",")
-}
-
-def runBuildRemoteGosh(version) {
-    dir("${version}/git-remote-gosh") {
-        sh '''
-            #!/bin/bash
-            set -ex
-
-            # 1 = git-remote-gosh
-            PIPELINE_1_ID=$(az pipelines build queue --definition-id 1 --branch \${COMMIT} --project gosh | jq .id)
-            PIPELINE_1_STATUS=inProgress
-
-            until [ $PIPELINE_1_STATUS != "inProgress" ]
-            do
-                sleep 60
-                PIPELINE_1_STATUS=$(az pipelines build show --project gosh --id $PIPELINE_1_ID | jq .status | tr -d '\"')
-            done
-
-            az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_1_ID --path ./linux-amd64
-            az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_1_ID --path ./darwin-amd64
-            az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_1_ID --path ./windows-amd64
-            az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_1_ID --path ./linux-arm64
-            az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_1_ID --path ./darwin-arm64
-        '''
-    }
 }
