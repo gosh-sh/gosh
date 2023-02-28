@@ -20,7 +20,9 @@ const DaoPage = () => {
             </div>
             <div className="grow flex flex-col gap-y-5">
                 <DaoSupplySide dao={dao} />
-                <DaoWalletSide dao={dao} wallet={wallet} />
+                {dao.details.isAuthenticated && (
+                    <DaoWalletSide dao={dao} wallet={wallet} />
+                )}
                 <DaoMembersSide dao={dao.details} />
             </div>
         </div>

@@ -4,6 +4,7 @@ import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interface
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { Button } from '../../../Form'
+import DaoRequestMembershipModal from '../../../Modal/DaoRequestMembership'
 import WalletTokenSendModal from '../../../Modal/WalletTokenSend'
 
 type TDaoWalletSideProps = {
@@ -45,6 +46,14 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         })
     }
 
+    const onDaoRequestMembershipClick = () => {
+        setModal({
+            static: false,
+            isOpen: true,
+            element: <DaoRequestMembershipModal dao={dao} />,
+        })
+    }
+
     return (
         <div
             className={classNames('border border-gray-e6edff rounded-xl p-5', className)}
@@ -52,28 +61,42 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">Your wallet balance</div>
                 <div className="text-xl font-medium">{getUserBalance()}</div>
+                {(dao.details.isAuthMember || dao.details.isAuthLimited) && (
+                    <div className="mt-3 flex flex-wrap gap-x-3">
+                        <div className="grow">
+                            <Button
+                                className={classNames(
+                                    'w-full !border-gray-e6edff bg-gray-fafafd',
+                                    'hover:!border-gray-53596d',
+                                )}
+                                variant="custom"
+                                onClick={onDaoTokenSendClick}
+                            >
+                                Send
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
             <hr className="my-4 bg-gray-e6edff" />
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">Allowance</div>
                 <div className="text-xl font-medium">{getUserAllowance()}</div>
-            </div>
-            {(dao.details.isAuthMember || dao.details.isAuthLimited) && (
-                <div className="mt-3 flex flex-wrap gap-x-3">
-                    <div className="grow">
+                {!dao.details.isAuthMember && dao.details.isAskMembershipOn && (
+                    <div className="mt-3">
                         <Button
                             className={classNames(
                                 'w-full !border-gray-e6edff bg-gray-fafafd',
                                 'hover:!border-gray-53596d',
                             )}
                             variant="custom"
-                            onClick={onDaoTokenSendClick}
+                            onClick={onDaoRequestMembershipClick}
                         >
-                            Send
+                            Send a request to DAO
                         </Button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     )
 }

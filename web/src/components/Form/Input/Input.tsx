@@ -1,7 +1,7 @@
 import { classNames } from 'react-gosh'
 
 type TInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
-    ref?: React.RefObject<HTMLInputElement>
+    ref?: React.LegacyRef<HTMLInputElement>
     before?: React.ReactNode
     after?: React.ReactNode
     hasError?: boolean
