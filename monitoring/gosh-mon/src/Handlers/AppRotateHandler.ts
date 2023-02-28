@@ -29,10 +29,11 @@ export default class AppRotateHandler extends AppHandler {
         const or = this.organization, re = this.repository, br = this.branch, fn = this.filename;
         const lck = this.redis_pref + this.lock_branch;
         let trash_count: number = 0;
-        return await this.redlock!.using([lck], 5000, {
-            retryCount: Math.round(this.lock_retry_s / (this.redlock_retry_delay_ms / 1000))
-        },
-        async() =>
+        const call: any = this.redlock ?
+            (f: any) => this.redlock!.using([lck], 5000, {
+            retryCount: Math.round(this.lock_retry_s / (this.redlock_retry_delay_ms / 1000))}, f) :
+            (f: any) => f();
+        return await call(async() =>
             await this.doSteps(
                 /* 0 - 9 */ ...this.initialSteps(debug, AppHandler.branchSteps),
                 'input branch name',       /*10*/ () => this.type("//input[@type='text' and @placeholder='Search branch...']", this.branch),
@@ -47,7 +48,7 @@ export default class AppRotateHandler extends AppHandler {
                     if (trash_count == 1) await this.click("svg.fa-trash");
                 },
                 'wait for spinner gone',   /*14*/ () => this.waitForGone('svg.fa-spin', this.longtimeout_ms),
-                'click code branch icon',  /*15*/ () => this.click("svg.fa-code-branch"),
+                'click code branch icon',  /*15*/ () => this.click("div.items-center > svg.fa-code-branch"),
                 'input src branch name',   /*16*/ () => this.type("//input[@type='text' and @placeholder='Search branch']", this.origin),
                 'click branch item',       /*17*/ () => this.click(`//li[contains(., '${this.origin}') and @role='option']`),
                 'wait 500ms', () => this.wait(500),
@@ -66,12 +67,12 @@ export default class AppRotateHandler extends AppHandler {
                 // /*27*/ () => this.click("svg.fa-copy", this.longtimeout_ms),
                 // () => this.wait(5000),
                 // /*28*/ async () => { try { return await this.processFileContents(); } catch (e) { console.error(e); return 0; } }
-                /*27*/ () => this.waitFor("svg.fa-copy", this.longtimeout_ms),
+                /*27*/ () => this.waitFor("div.bg-gray-100 > div > button > svg.fa-copy", this.longtimeout_ms),
                 'wait 1000ms', () => this.wait(1000),
                 'close page',              /*28*/ () => this.closePage(),
                 'wait 10000ms', () => this.wait(10000),
                 /*29 - 40*/ ...this.initialSteps(debug),
-                'click copy icon',         /*41*/ () => this.click("svg.fa-copy"),
+                'click copy icon',         /*41*/ () => this.click("div.bg-gray-100 > div > button > svg.fa-copy"),
                 'check file contents',     /*42*/ async () => {
                     const ret = await this.processFileContents();
                     if (ret == 0) throw new Error('Commit not applied');

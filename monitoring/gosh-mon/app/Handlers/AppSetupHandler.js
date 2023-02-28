@@ -50,7 +50,7 @@ class AppSetupHandler extends AppHandler_1.default {
         ]), 'click branches link', () => this.click(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/branches`)}]`, this.longtimeout_ms), 'wait for main br link', () => this.waitFor(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/main`)}]`), ...this.for_each(this.branches, 'branches', (s) => [
             'count wanted branches', async () => { found[`b${s}`] = (await this.count(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/${s}`)}]`)) == 1; },
             'branch exists', ...this.cond_ifnot(() => found[`b${s}`], [
-                'click code branch icon', () => this.click("svg.fa-code-branch"),
+                'click code branch icon', () => this.click("div.items-center > svg.fa-code-branch"),
                 'input src branch name', () => this.erasePaste("//input[@type='text' and @placeholder='Search branch']", this.branch),
                 'click branch item', () => this.click(`//li[contains(., '${this.branch}') and @role='option']`),
                 'input dst branch name', () => this.erasePaste("//input[@name='newName' and @placeholder='Branch name']", s),

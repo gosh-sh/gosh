@@ -13,8 +13,11 @@ export default class SeedReadHandler extends AppHandler {
             /* 0 -  7 */ ...this.initialSteps(debug, AppHandler.userSteps),
             'click settings',    /* 8*/ () => this.click(`//a[${ac_hrefs('/a/settings')}]`),
             'wait show button',  /* 9*/ () => this.waitFor("//button[contains(., 'Show') and @type='button']"),
-            'click show btn 2',  /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
-            'click copy icon 2', /*11*/ () => this.clickNow("svg.fa-copy", 3),
+            'click show btn',    /*10*/ () => this.clickNow("//button[contains(., 'Show') and @type='button']", 1),
+            'wait 100ms',               () => this.wait(100),
+            'input pin code',           () => this.type("//input[@type='password' and @placeholder='PIN code']", "1111"),
+            'wait 200ms',               () => this.wait(200),
+            'click copy icon',   /*11*/ () => this.clickNow("svg.fa-copy", 4),
             'check seed',        /*12*/ () => { return this.checkSeed(); }
         );
     }

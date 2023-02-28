@@ -42,6 +42,8 @@ class RemoteHandler extends GoshHandler_1.default {
         this.gosh_repo_url = '';
         this.gosh_bin_path = '';
         this.release_asset = '';
+        this.release_tared = '';
+        this.tar_sel_file = '';
         this.github_user = '';
         this.github_token = '';
         this.address = '';
@@ -52,7 +54,7 @@ class RemoteHandler extends GoshHandler_1.default {
     }
     applyConfiguration(c) {
         super.applyConfiguration(c);
-        this.useFields(c, ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'], ['gosh_bin_path', 'release_asset', 'github_user', 'github_token', 'address',
+        this.useFields(c, ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'], ['gosh_bin_path', 'release_asset', 'release_tared', 'tar_sel_file', 'github_user', 'github_token', 'address',
             'push_verbosity', 'pull_verbosity']);
         return this;
     }
@@ -161,6 +163,7 @@ class RemoteHandler extends GoshHandler_1.default {
         let data = null;
         let updated = '';
         let download = '';
+        let tared = false;
         return [
             'ensure .gosh dir', /* 0*/ () => this.ensureDir('../.gosh'),
             'request envs', /* 1*/ () => this.requestEnvs(),
@@ -178,8 +181,8 @@ class RemoteHandler extends GoshHandler_1.default {
                     `https://api.github.com/repos/${orgrepo}/releases` :
                     `https://api.github.com/repos/${orgrepo}/releases/${release_name}`;
                 // change -vX to invalidate current tag if something in algorithm noticeably changes and cache may cause problems
-                const tag_fn = 'data/last-tag-v2';
-                const etag_fn = 'data/last-etag-v2';
+                const tag_fn = 'data/last-tag-v3';
+                const etag_fn = 'data/last-etag-v3';
                 const etag = fs.existsSync(etag_fn) ? fs.readFileSync(etag_fn, 'utf-8') : '';
                 const headers = new node_fetch_1.Headers();
                 if (this.github_user !== '' && this.github_token !== '')
@@ -215,13 +218,13 @@ class RemoteHandler extends GoshHandler_1.default {
                                 continue;
                             let found = false;
                             for (let a of r['assets']) {
-                                if (a['name'] == this.release_asset) {
+                                if (a['name'] == this.release_asset || a['name'] == this.release_tared) {
                                     found = true;
                                     break;
                                 }
                             }
                             if (!found) {
-                                this.say(`warning: ${r['name']} does not contain ${this.release_asset}, skipping!`);
+                                this.say(`warning: ${r['name']} does not contain ${this.release_asset} and ${this.release_tared}, skipping!`);
                                 continue;
                             }
                             this.say(`selected first (latest) ${what} ${r.name}`);
@@ -250,15 +253,16 @@ class RemoteHandler extends GoshHandler_1.default {
                     return;
                 let found = false;
                 for (let a of data['assets']) {
-                    if (a['name'] == this.release_asset) {
+                    if (a['name'] == this.release_asset || a['name'] == this.release_tared) {
                         found = true;
+                        tared = a['name'] == this.release_tared;
                         updated = a['updated_at'];
                         download = a['browser_download_url'];
                         break;
                     }
                 }
                 if (!found) {
-                    throw Error(this.release_asset + ' not found');
+                    throw Error(this.release_asset + ' and ' + this.release_tared + ' not found');
                 }
             },
             'download release', /* 5*/ async () => {
@@ -268,9 +272,19 @@ class RemoteHandler extends GoshHandler_1.default {
                 this.say(`last updated: ${last_updated}, updated: ${updated}`);
                 if (last_updated != updated) {
                     const response = await (0, node_fetch_1.default)(download);
+                    const dlpath = tared ? './untar/archive.tar' : './data/last-git-remote-gosh';
+                    if (tared && !fs.existsSync('untar'))
+                        fs.mkdirSync('untar');
                     if (!response.ok || !response.body)
                         throw new Error(`unexpected response ${response.statusText}`);
-                    await streamPipeline(response.body, fs.createWriteStream('./data/last-git-remote-gosh'));
+                    await streamPipeline(response.body, fs.createWriteStream(dlpath));
+                    if (tared) {
+                        await this.execute(['tar', 'xf', 'archive.tar'], 'untar');
+                        if (!fs.existsSync('./untar/' + this.tar_sel_file)) {
+                            throw Error(`File ${this.tar_sel_file} not found in archive`);
+                        }
+                        fs.cpSync('./untar/' + this.tar_sel_file, './data/last-git-remote-gosh');
+                    }
                     fs.writeFileSync('data/last-updated', updated, 'utf-8');
                 }
             },
