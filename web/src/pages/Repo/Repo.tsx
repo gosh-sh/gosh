@@ -85,7 +85,10 @@ const RepoPage = () => {
                 </div>
 
                 <div className="flex grow gap-3 justify-end">
-                    <ButtonLink to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}>
+                    <ButtonLink
+                        to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
+                        test-id="link-goto-file"
+                    >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </ButtonLink>
@@ -94,6 +97,7 @@ const RepoPage = () => {
                             to={`/o/${daoName}/r/${repoName}/blobs/create/${
                                 branch?.name
                             }${treepath && `/${treepath}`}`}
+                            test-id="link-file-create"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
                             <span className="hidden sm:inline-block ml-2">Add file</span>
@@ -101,7 +105,7 @@ const RepoPage = () => {
                     )}
                     <Menu as="div" className="relative">
                         <Menu.Button as="div">
-                            <Button>
+                            <Button test-id="btn-clone-trigger">
                                 <FontAwesomeIcon icon={faCode} />
                                 <span className="hidden sm:inline-block ml-2">Clone</span>
                                 <FontAwesomeIcon
@@ -154,6 +158,7 @@ const RepoPage = () => {
                                                     'hover:text-gray-0a1124',
                                                 )}
                                                 iconProps={{ size: 'sm' }}
+                                                testId="btn-copy-clone"
                                             />
                                         </div>
 

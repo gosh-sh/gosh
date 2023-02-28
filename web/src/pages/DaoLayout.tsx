@@ -10,10 +10,10 @@ import {
 } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import SideMenuContainer from '../components/SideMenuContainer'
-import emptylogo from '../assets/images/emptylogo.svg'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
 import ReactTooltip from 'react-tooltip'
+import { getIdenticonAvatar } from '../helpers'
 
 export type TDaoLayoutOutletContext = {
     dao: {
@@ -112,7 +112,11 @@ const DaoLayout = () => {
         <SideMenuContainer>
             <div className="flex flex-nowrap gap-x-4 mb-6">
                 <div className="w-20 overflow-hidden rounded-lg">
-                    <img src={emptylogo} className="w-full" alt="" />
+                    <img
+                        src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
+                        className="w-full"
+                        alt=""
+                    />
                 </div>
                 <div>
                     <h1 className="mb-2">
@@ -140,7 +144,25 @@ const DaoLayout = () => {
                             </span>
                         ))}
                     </h1>
-                    {description && <div className="mb-2 text-sm">{description}</div>}
+                    <div className="mb-2 text-sm">
+                        {!description && dao.details?.isAuthMember && (
+                            <>
+                                Place description.txt to main branch of{' '}
+                                {dao.details.hasRepoIndex ? (
+                                    <Link
+                                        to={`/o/${dao.details.name}/r/_index`}
+                                        className="text-blue-348eff"
+                                    >
+                                        _index
+                                    </Link>
+                                ) : (
+                                    '_index'
+                                )}{' '}
+                                repo to add short description
+                            </>
+                        )}
+                        {!!description && description}
+                    </div>
                     {dao.adapter && (
                         <CopyClipboard
                             className="text-xs text-gray-7c8db5"

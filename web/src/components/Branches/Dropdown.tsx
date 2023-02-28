@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faCodeBranch, faLock } from '@fortawesome/free-solid-svg-icons'
 import { classNames } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
+import { Input } from '../Form'
 
 type TBranchSelectProps = {
     className?: string
@@ -66,17 +67,16 @@ const BranchSelect = (props: TBranchSelectProps) => {
                 onFocusCapture={() => searchRef.current?.focus()}
             >
                 <div className="px-2 py-2 border-b">
-                    <div className="input">
-                        <input
-                            ref={searchRef}
-                            type="text"
-                            className="element !py-1 !text-sm"
-                            autoComplete="off"
-                            placeholder="Search branch"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <Input
+                        ref={searchRef}
+                        type="text"
+                        inputClassName="!py-1"
+                        autoComplete="off"
+                        placeholder="Search branch"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        test-id="input-branch-search-dropdown"
+                    />
                 </div>
                 <div className="max-h-56 overflow-auto">
                     {!filtered.length && (

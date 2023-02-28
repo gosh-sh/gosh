@@ -506,6 +506,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthMember: await this._isAuthMember(),
             isAuthLimited: await this._isAuthLimited(),
             isRepoUpgraded: details.isRepoUpgraded,
+            hasRepoIndex: !!(await this._getSystemRepository()),
         }
     }
 

@@ -49,7 +49,10 @@ const BlobPage = () => {
                     />
                 </div>
                 <div className="grow text-right">
-                    <ButtonLink to={`/o/${daoName}/r/${repoName}/find/${branchName}`}>
+                    <ButtonLink
+                        to={`/o/${daoName}/r/${repoName}/find/${branchName}`}
+                        test-id="link-goto-file"
+                    >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </ButtonLink>
@@ -73,11 +76,13 @@ const BlobPage = () => {
                                     iconProps={{
                                         size: 'sm',
                                     }}
+                                    testId="btn-blob-copy"
                                 />
                                 {!branch?.isProtected && dao.details.isAuthMember && (
                                     <Link
                                         to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treepath}`}
                                         className="text-extblack/60 hover:text-extblack p-1 ml-2"
+                                        test-id="link-blob-edit"
                                     >
                                         <FontAwesomeIcon icon={faPencil} size="sm" />
                                     </Link>
@@ -88,6 +93,7 @@ const BlobPage = () => {
                                 name={treepath}
                                 content={blob.content}
                                 label={<FontAwesomeIcon icon={faFloppyDisk} />}
+                                test-id="btn-blob-download"
                             />
                         )}
 
@@ -95,6 +101,7 @@ const BlobPage = () => {
                             <Link
                                 to={`/o/${daoName}/r/${repoName}/blobs/delete/${branchName}/${treepath}`}
                                 className="text-rose-700/60 hover:text-rose-700 p-1 ml-2"
+                                test-id="link-blob-delete"
                             >
                                 <FontAwesomeIcon icon={faTrash} size="sm" />
                             </Link>

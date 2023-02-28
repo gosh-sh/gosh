@@ -57,6 +57,7 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
                             type="submit"
                             isLoading={isSubmitting}
                             disabled={isSubmitting}
+                            test-id="btn-merge-compare"
                         >
                             Compare
                         </Button>
