@@ -19,10 +19,12 @@ use tracing_subscriber::fmt::format::FmtSpan;
 use std::str::FromStr;
 
 #[cfg(target_family = "unix")]
-pub const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
+const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
 
 #[cfg(target_family = "windows")]
-pub const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
+const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
+
+const SHIPPING_INI_PATH: &str = "dispatcher.ini";
 
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 static DISPATCHER_ENDL: &str = "endl";
@@ -207,9 +209,14 @@ async fn run_binary_with_command(
 }
 
 fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
-    let path_str = std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| INI_LOCATION.to_string());
+    let path_str = std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| {
+        if Path::new(&shellexpand::tilde(INI_LOCATION).to_string()).exists() {
+            INI_LOCATION.to_string()
+        } else {
+            SHIPPING_INI_PATH.to_string()
+        }
+    });
     let path_str = shellexpand::tilde(&path_str).into_owned();
-    tracing::trace!("dispatcher ini path: {path_str}");
     let path = Path::new(&path_str);
     let file = File::open(path)
         .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", path_str, e))?;
