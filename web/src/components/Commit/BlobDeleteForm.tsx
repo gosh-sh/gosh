@@ -124,6 +124,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                                 <Button
                                     disabled={isSubmitting}
                                     onClick={() => navigate(urlBack)}
+                                    test-id="btn-commit-discard-top"
                                 >
                                     Discard changes
                                 </Button>

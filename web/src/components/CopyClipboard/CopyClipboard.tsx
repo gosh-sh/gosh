@@ -13,6 +13,7 @@ type TCopyClipboardProps = {
     labelClassName?: string
     iconContainerClassName?: string
     iconProps?: Omit<FontAwesomeIconProps, 'icon'>
+    testId?: string
 }
 
 const CopyClipboard = (props: TCopyClipboardProps) => {
@@ -23,6 +24,7 @@ const CopyClipboard = (props: TCopyClipboardProps) => {
         labelClassName,
         iconContainerClassName,
         iconProps,
+        testId,
     } = props
 
     return (
@@ -41,7 +43,7 @@ const CopyClipboard = (props: TCopyClipboardProps) => {
                         {label}
                     </div>
                 )}
-                <button type="button" className={iconContainerClassName}>
+                <button type="button" className={iconContainerClassName} test-id={testId}>
                     <FontAwesomeIcon {...iconProps} icon={faCopy} />
                 </button>
             </div>

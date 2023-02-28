@@ -181,6 +181,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                                 setFieldValue,
                                             )
                                         }}
+                                        test-id="input-file-name"
                                     />
                                 </div>
                                 <span className="mx-2">in</span>
@@ -191,6 +192,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                 <Button
                                     disabled={isSubmitting}
                                     onClick={() => navigate(urlBack)}
+                                    test-id="btn-commit-discard-top"
                                 >
                                     Discard changes
                                 </Button>

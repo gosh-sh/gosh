@@ -169,6 +169,7 @@ export const BranchesPage = () => {
                                                     e.target.value.toLowerCase(),
                                                 )
                                             }}
+                                            test-id="input-branch-name"
                                         />
                                     </div>
                                 </div>
@@ -176,6 +177,7 @@ export const BranchesPage = () => {
                                     type="submit"
                                     isLoading={isSubmitting}
                                     disabled={isSubmitting}
+                                    test-id="btn-branch-create"
                                 >
                                     Create branch
                                 </Button>
@@ -190,6 +192,7 @@ export const BranchesPage = () => {
                         placeholder="Search branch..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        test-id="input-branch-search"
                     />
                 </div>
             </div>

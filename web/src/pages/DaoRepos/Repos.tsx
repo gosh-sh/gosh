@@ -33,9 +33,15 @@ const DaoRepositoriesPage = () => {
                             className="text-gray-7c8db5 font-extralight py-3 pl-4"
                         />
                     }
+                    test-id="input-repo-search"
                 />
                 {dao.details.isAuthMember && (
-                    <ButtonLink to={`/o/${daoName}/repos/create`}>Create new</ButtonLink>
+                    <ButtonLink
+                        to={`/o/${daoName}/repos/create`}
+                        test-id="link-repo-create"
+                    >
+                        Create new
+                    </ButtonLink>
                 )}
             </div>
 

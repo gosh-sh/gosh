@@ -46,6 +46,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             autoComplete="off"
                             placeholder="Commit title"
                             disabled={isSubmitting}
+                            test-id="input-commit-title"
                         />
                     </div>
                     <div className="mt-6">
@@ -55,6 +56,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             label="Commit description (optional)"
                             placeholder="Commit description"
                             disabled={isSubmitting}
+                            test-id="input-commit-message"
                         />
                     </div>
                     <div className="mt-6">
@@ -66,6 +68,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             help="Enter a space after each tag"
                             autoComplete="off"
                             disabled={isSubmitting}
+                            test-id="input-commit-tags"
                         />
                     </div>
                 </div>
@@ -76,6 +79,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             component={FormikSelect}
                             label="Select task (optional)"
                             disabled={isSubmitting || tasks.isFetching}
+                            test-id="input-commit-task"
                         >
                             <option value="">
                                 {tasks.isFetching ? 'Loading...' : 'Select task'}
@@ -96,6 +100,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             help="Enter a space after each username"
                             autoComplete="off"
                             disabled={isSubmitting}
+                            test-id="input-commit-assigners"
                         />
                     </div>
                     <div className="mt-6">
@@ -107,6 +112,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             help="Enter a space after each username"
                             autoComplete="off"
                             disabled={isSubmitting}
+                            test-id="input-commit-reviewers"
                         />
                     </div>
                     <div className="mt-6">
@@ -118,6 +124,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             help="Enter a space after each username"
                             autoComplete="off"
                             disabled={isSubmitting}
+                            test-id="input-commit-managers"
                         />
                     </div>
                 </div>
@@ -135,6 +142,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             type="submit"
                             disabled={isSubmitting}
                             isLoading={isSubmitting}
+                            test-id="btn-commit-submit"
                         >
                             Commit changes
                         </Button>
@@ -143,6 +151,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                                 variant="outline-danger"
                                 disabled={isSubmitting}
                                 onClick={() => navigate(urlBack)}
+                                test-id="btn-commit-discard"
                             >
                                 Cancel
                             </Button>
@@ -158,6 +167,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                         inputProps={{
                             label: 'Create proposal',
                         }}
+                        test-id="input-commit-proposal"
                     />
                 </div>
 
