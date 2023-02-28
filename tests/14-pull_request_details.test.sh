@@ -23,7 +23,7 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 
-export OLD_LINK="gosh:://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
+export OLD_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "OLD_LINK=$OLD_LINK"
 
 echo "***** cloning old version repo *****"
