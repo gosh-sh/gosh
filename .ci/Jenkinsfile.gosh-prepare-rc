@@ -1,3 +1,15 @@
+def runFunctionSet(function_name) {
+    running_set = [
+        "v1_x": {
+            ${function_name}('v1_x')
+        },
+        "v2_x": {
+            {function_name}('v2_x')
+        }
+    ]
+    parallel(running_set)
+}
+
 pipeline {
     agent none
     //triggers {
@@ -54,8 +66,7 @@ pipeline {
             }
             steps {
                 script {
-                    runBuildRemoteGosh('v1_x')
-                    runBuildRemoteGosh('v2_x')
+                    runFunctionSet('runBuildRemoteGosh')
                 }
             }
         }
