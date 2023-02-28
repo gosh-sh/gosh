@@ -379,7 +379,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                     ))}
 
                     <div className="text-gray-7c8db5">
-                        {members.length < 20 && (
+                        {members.length < 10 && (
                             <button type="button" onClick={onAddMember}>
                                 <FontAwesomeIcon icon={faPlus} className="mr-2" />
                                 Add member

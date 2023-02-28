@@ -26,7 +26,7 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
 
     useEffect(() => {
         const _getSmvDetails = async () => {
-            if (!adapter) {
+            if (!adapter || !dao.details.isAuthenticated) {
                 return
             }
 
@@ -46,14 +46,16 @@ function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
         }, 10000)
 
         const intervalRelease = setInterval(async () => {
-            await adapter?.releaseAll()
+            if (adapter && dao.details.isAuthenticated) {
+                await adapter.releaseAll()
+            }
         }, 30000)
 
         return () => {
             clearInterval(interval)
             clearInterval(intervalRelease)
         }
-    }, [adapter])
+    }, [adapter, dao.details.isAuthenticated])
 
     return { adapter, details }
 }

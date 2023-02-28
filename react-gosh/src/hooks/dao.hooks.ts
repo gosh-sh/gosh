@@ -3,6 +3,7 @@ import { useRecoilState } from 'recoil'
 import { executeByChunk, getAllAccounts } from '../helpers'
 import { daoAtom } from '../store'
 import {
+    ESmvEventType,
     TAddress,
     TDaoCreateProgress,
     TDaoListItem,
@@ -509,7 +510,23 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     }) => {
         const clean = (options.members || []).filter(({ username }) => !!username)
         if (clean.length) {
-            await dao.createMember({ members: clean })
+            const memberAddCells: { type: number; params: object }[] = clean.map(
+                ({ username, comment }) => ({
+                    type: ESmvEventType.DAO_MEMBER_ADD,
+                    params: {
+                        members: [{ username, allowance: 0, comment }],
+                    },
+                }),
+            )
+            const memberAddVotingCells: { type: number; params: object }[] = clean.map(
+                ({ username, allowance }) => ({
+                    type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
+                    params: { username, amount: allowance },
+                }),
+            )
+            await dao.createMultiProposal({
+                proposals: [...memberAddCells, ...memberAddVotingCells],
+            })
         }
     }
 
