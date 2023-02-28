@@ -1,6 +1,8 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
   value: 1.66.0 
+- name: version
+  value: v1_x
 
 trigger: none
 pr: none
