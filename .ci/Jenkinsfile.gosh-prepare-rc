@@ -1,10 +1,10 @@
 def runFunctionSet(function_name) {
     running_set = [
         "v1_x": {
-            ${function_name}('v1_x')
+            "${function_name}"('v1_x')
         },
         "v2_x": {
-            ${function_name}('v2_x')
+            "${function_name}"('v2_x')
         }
     ]
     parallel(running_set)
