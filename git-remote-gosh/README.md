@@ -1,1 +1,0 @@
-Install guide and quick start can be found [here](https://docs.gosh.sh/working-with-gosh/git-remote-helper).

@@ -68,7 +68,7 @@ if [ "$cur_ver" != "parent" ]; then
 fi
 echo "GOOD CONTENT"
 
-sleep 180
+sleep 60
 
 echo "***** cloning repo *****"
 cd ..
@@ -104,7 +104,7 @@ git add 2.txt
 git commit -m after_merge2
 git push
 
-sleep 300
+sleep 60
 
 echo "***** cloning repo *****"
 cd ..

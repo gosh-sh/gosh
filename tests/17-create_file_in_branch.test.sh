@@ -66,7 +66,7 @@ if [ "$cur_ver" != "parent" ]; then
 fi
 echo "GOOD CONTENT"
 
-sleep 180
+sleep 60
 
 echo "***** cloning repo *****"
 cd ..

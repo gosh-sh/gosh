@@ -1,6 +1,6 @@
 #!/bin/bash
 # TODO this test passes locally but in ci cd takes too much time
-exit 0
+#exit 0
 
 # 1 create repo
 # 2 create branch dev from main
@@ -62,7 +62,7 @@ git commit -m "foo-$CHANGE"
 
 echo "***** awaiting push in dev *****"
 git push -u origin $BRANCH_NAME
-delay 300
+delay 60
 
 # echo "***** awaiting set commit in dev *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -91,7 +91,7 @@ git commit -m "foo-$CHANGE v2"
 
 echo "***** awaiting push in dev2 *****"
 git push -u origin $BRANCH_NAME"2"
-delay 300
+delay 60
 
 # echo "***** awaiting set commit in dev2 *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME"2"
@@ -117,7 +117,7 @@ git merge $BRANCH_NAME"2"
 
 echo "***** awaiting push in dev *****"
 git push
-delay 300
+delay 60
 
 # echo "***** awaiting set commit in dev *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -140,7 +140,7 @@ git checkout -b main
 git merge $BRANCH_NAME
 echo "***** awaiting push in main *****"
 git push -u origin main
-delay 300
+delay 60
 
 # echo "***** awaiting set commit in main *****"
 # wait_set_commit $REPO_ADDR main

@@ -26,9 +26,9 @@ set -o pipefail
 ./09-ipfs_onchain_transition.test.sh
 ./10-ensure_blobs_onchain.test.sh
 ./11-git_submodules.test.sh
-./12-clone_tree_with_rename.sh
-./13_push_protected_branch.test.sh
-./14_pull_request_details.test.sh
+./12-clone_tree_with_rename.test.sh
+./13-push_protected_branch.test.sh
+./14-pull_request_details.test.sh
 ./15-diamond_merge_several_commits.test.sh
 ./16-push_after_diamond_merge.test.sh
 ./17-create_file_in_branch.test.sh
@@ -51,5 +51,5 @@ set -o pipefail
 #./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
 #./upgrade_tests/10-tagless_after_upgrade.test.sh ignore
 
-./clean.sh
+#./clean.sh
 echo "All tests passed"

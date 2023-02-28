@@ -15,7 +15,7 @@ pipeline {
             steps {
                 script {
                     if (!params.ONLYWEB) {
-                        dir('git-remote-gosh') {
+                        dir('v2_x/git-remote-gosh') {
                         sh """
                             snapcraft release git-remote-gosh \$(snapcraft status git-remote-gosh | grep ${TAG} | head -n1 | awk '{print \$NF}') stable
                         """
@@ -65,7 +65,7 @@ pipeline {
             }
             steps {
                 script {
-                    dir('git-remote-gosh') {
+                    dir('v2_x/git-remote-gosh') {
                         withCredentials([[
                             $class: 'UsernamePasswordMultiBinding',
                             credentialsId: 'teamgosh-dockerhub',
