@@ -86,7 +86,6 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 ...state,
                 items: combined.map((item: any, index: number) => {
                     const isOpen = index === 0
-                    console.debug('ISOPEN', isOpen)
                     const found = state.items.find((i) => i.id === item.id)
                     if (found) {
                         return { ...found, ...item, isOpen }
