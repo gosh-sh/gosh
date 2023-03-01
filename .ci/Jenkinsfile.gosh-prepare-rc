@@ -95,7 +95,7 @@ pipeline {
                 runFunctionSet('deployContracts')
             }
         }
-        stage('Web: deploy') {
+        /*stage('Web: deploy') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -104,12 +104,12 @@ pipeline {
             steps {
                 deployWeb()
             }
-        }
+        }*/
         stage('Tests: functional') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker -v /root/jenkins-main/workspace:/tmp'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                 }
             }
             steps {
@@ -344,7 +344,7 @@ def testsFunctional(version) {
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 #./set-vars.sh https://local-evernode.gosh.sh
-                ./test_all.sh ${version} https://local-evernode.gosh.sh 
+                ./test_all.sh ${version} http://local-node-\$VERSION_PREFIX
 
             """
             /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
