@@ -360,7 +360,7 @@ def testsFunctional(version) {
                 #!/bin/bash
                 set -e
                 set -x
-                cd ../
+                cd ../tests
                 mkdir -p /home/jenkins/bin
 
                 VERSION_PREFIX=\$(echo ${version} | tr -d _x)
