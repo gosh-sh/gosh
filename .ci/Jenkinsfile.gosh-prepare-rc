@@ -233,7 +233,7 @@ def buildDispatcher() {
 def buildRemoteGosh(version) {
     script {
         dir("${version}/git-remote-gosh") {
-            """
+            sh """
                 #!/bin/bash
                 set -ex
 
