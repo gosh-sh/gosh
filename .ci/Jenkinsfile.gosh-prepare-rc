@@ -95,7 +95,16 @@ pipeline {
                 runFunctionSet('deployContracts')
             }
         }
-        
+        stage('Workspace: sync') {
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
+            steps {
+                sh 'cp -r gosh-prepare-rc gosh-prepare-rc@2'
+            }
+        }
         /*stage('Web: deploy') {
             agent {
                 node {
@@ -107,14 +116,29 @@ pipeline {
             }
         }*/
         stage('Tests: functional') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+            parallel {
+                stage('v1_x') {
+                    agent {
+                        docker {
+                            image 'jenkins-docker-agent:1'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                        }
+                    }
+                    steps {
+                        testsFunctional('v1_x')
+                    }
                 }
-            }
-            steps {
-                runFunctionSet('testsFunctional')
+                stage('v2_x') {
+                    agent {
+                        docker {
+                            image 'jenkins-docker-agent:1'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                        }
+                    }
+                    steps {
+                        testsFunctional('v2_x')
+                    }
+                }
             }
         }
         /*stage('Tests: Web') {
