@@ -102,7 +102,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'cp -r gosh-prepare-rc gosh-prepare-rc@2'
+                sh 'cd ../ && cp -r gosh-prepare-rc gosh-prepare-rc@2'
             }
         }
         /*stage('Web: deploy') {
