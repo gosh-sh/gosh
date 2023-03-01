@@ -264,7 +264,7 @@ def buildRemoteGosh(version) {
 
 def archiveAzureArtifacts() {
     script {
-        sh """
+        sh '''
             rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
             chmod +x linux-a*/*
             chmod +x darwin-a*/*
@@ -272,7 +272,7 @@ def archiveAzureArtifacts() {
             cd linux-amd64
             find . -name git-remote-gosh_v* | tr -d ./ > dispatcher.ini
             cd -
-            
+
             cp linux-amd64/dispatcher.ini darwin-amd64
             cp linux-amd64/dispatcher.ini linux-arm64
             cp linux-amd64/dispatcher.ini darwin-arm64
@@ -282,7 +282,7 @@ def archiveAzureArtifacts() {
             tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
             tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
             cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
-        """
+        '''
     }
 }
 
