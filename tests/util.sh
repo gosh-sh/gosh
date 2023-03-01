@@ -247,3 +247,13 @@ function wait_account_balance {
         exit 2
     fi
 }
+
+function deploy_repo {
+  if [ "$VERSION" = "v2_x" ]; then
+    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
+  else
+    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+  fi
+}

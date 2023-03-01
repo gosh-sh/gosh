@@ -20,6 +20,7 @@ fi
 TEST_INDEX="${TEST_INDEX:-$(date +%s)}"
 echo "TEST INDEX $TEST_INDEX"
 echo "export NETWORK=$NETWORK" > env.env
+echo "export VERSION=$1" >> env.env
 
 tonos-cli config --url $NETWORK
 set -x
