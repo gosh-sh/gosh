@@ -1,17 +1,7 @@
-# syntax=docker/dockerfile:1.5
+# syntax=docker/dockerfile:1.5.2
 
 FROM denoland/deno:debian-1.31.1 as base_deno
-RUN apt update && apt install -y jq ca-certificates git libssl1.1 libc6 curl
-
-FROM base_deno as git_remote_gosh
-WORKDIR /workdir
-RUN <<EOF
-    set -ex
-    curl -fsSLO --compressed https://github.com/gosh-sh/gosh/releases/download/3.0.10/git-remote-gosh-linux-amd64.tar
-    tar xf git-remote-gosh-linux-amd64.tar
-    chmod +x git-remote-gosh_v2_0_0
-    mv git-remote-gosh_v2_0_0 /usr/local/bin/git-remote-gosh
-EOF
+RUN apt update && apt install -y jq ca-certificates git wget libssl1.1 libc6 curl
 
 FROM base_deno
 # TODO: will go away after ever sdk supports deno land
@@ -20,7 +10,19 @@ COPY --link node_modules/@eversdk/lib-web/index.js ./
 COPY --link node_modules/@eversdk/lib-web/eversdk.wasm ./
 
 COPY --link --from=teamgosh/gosh-cli:0.2.0 /usr/local/bin/gosh-cli /usr/local/bin/gosh-cli
-COPY --link --from=git_remote_gosh /usr/local/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+
+WORKDIR /workdir
+RUN <<EOF
+    set -ex
+    git clone --branch dev --depth 1 https://github.com/gosh-sh/gosh.git gosh
+    cd gosh
+    bash install.sh
+    mv $HOME/.gosh/git-remote-gosh /usr/local/bin/git-remote-gosh
+    mv $HOME/.gosh/git-remote-gosh_v2_0_0 /usr/local/bin/git-remote-gosh_v2_0_0
+    cd ..
+    rm -rf gosh
+EOF
+# WARNING: change workdir after
 
 WORKDIR /app/src
 COPY --link src/_deps.ts _deps.ts
