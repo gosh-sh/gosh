@@ -43,27 +43,15 @@ import OnboardingStatusPage from './pages/OnboardingStatus'
 import './assets/scss/style.scss'
 import BaseModal from './components/Modal/BaseModal'
 import Spinner from './components/Spinner'
-import { ToastOptionsShortcuts, supabase } from './helpers'
+import { ToastOptionsShortcuts } from './helpers'
 import { shortString } from 'react-gosh'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
 import CopyClipboard from './components/CopyClipboard'
 import { NetworkQueriesProtocol } from '@eversdk/core'
-import React, { useLayoutEffect } from 'react'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
-
-    // supabase
-    useLayoutEffect(() => {
-        console.log('document.location', document.location)
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            console.log('Layout: Supabase User', user)
-            if (!user) {
-                console.warn('Supabase User is empty')
-            }
-        })
-    }, [])
 
     const getAppConfig = () => {
         const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')

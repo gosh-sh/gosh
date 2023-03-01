@@ -40,7 +40,7 @@ const singinOAuthSupabase = async (provider: Provider) => {
         const nounce = Date.now()
 
         const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'github',
+            provider,
             options: {
                 redirectTo: `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
                 scopes,

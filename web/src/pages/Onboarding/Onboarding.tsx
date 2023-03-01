@@ -43,10 +43,6 @@ const OnboardingPage = () => {
     useEffect(() => {
         const _getOAuthSession = async () => {
             setOAuth({ session: null, isLoading: true })
-            const {
-                data: { user },
-            } = await supabase.auth.getUser()
-            console.log('User:', user)
             const { data } = await supabase.auth.getSession()
             setOAuth({ session: data.session, isLoading: false })
         }
