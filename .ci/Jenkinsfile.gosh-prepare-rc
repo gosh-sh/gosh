@@ -106,7 +106,7 @@ pipeline {
                 deployWeb()
             }
         }*/
-        stage('Deploy: deploy smart-contracts') {
+        stage('Tests: functional') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
