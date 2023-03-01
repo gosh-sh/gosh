@@ -12,58 +12,69 @@ import {
 } from '../queues/mod.ts'
 import { processOutputDump } from '../utils/deno_run.ts'
 
+export const SMALL_REPO_OBJECTS_LIMIT = 1500
+export const MEDIUM_REPO_OBJECTS_LIMIT = 15000
+
 export async function countGitObjects(github_id: string) {
     const github = await getGithubWithDaoBot(github_id)
     console.log('count git objects for', github)
 
     const workdir = `/tmp/github/${github_id}`
-    const gitdir = `${workdir}/repo`
-    await Deno.mkdir(workdir, { recursive: true })
+    let number_of_git_objects: number
 
-    const github_full_repo_url = `https://github.com${github.github_url}`
+    if (github.objects !== null && github.objects > MEDIUM_REPO_OBJECTS_LIMIT) {
+        // do not recalculate big repositorioes
+        number_of_git_objects = github.objects
+    } else {
+        const gitdir = `${workdir}/repo`
+        await Deno.mkdir(workdir, { recursive: true })
 
-    const git_clone = Deno.run({
-        cmd: ['git', 'clone', github_full_repo_url, gitdir],
-        cwd: workdir,
-        stdout: 'piped',
-        stderr: 'piped',
-    })
-    const clone_status = await git_clone.status()
-    if (!clone_status.success) {
-        console.log(`Can't clone`, github_id)
+        const github_full_repo_url = `https://github.com${github.github_url}`
 
-        await getDb()
-            .from('github')
-            .update({
-                resolution: await processOutputDump(git_clone),
-                ignore: true,
-            })
-            .eq('id', github.id)
-        return
+        const git_clone = Deno.run({
+            cmd: ['git', 'clone', github_full_repo_url, gitdir],
+            cwd: workdir,
+            stdout: 'piped',
+            stderr: 'piped',
+        })
+        const clone_status = await git_clone.status()
+        if (!clone_status.success) {
+            console.log(`Can't clone`, github_id)
+
+            await getDb()
+                .from('github')
+                .update({
+                    resolution: await processOutputDump(git_clone),
+                    ignore: true,
+                })
+                .eq('id', github.id)
+            return
+        }
+
+        // count git objects
+        const count_git_objects = Deno.run({
+            cmd: ['git', 'rev-list', '--all', '--count', '--objects'],
+            cwd: gitdir,
+            stdout: 'piped',
+            stderr: 'piped',
+        })
+
+        if (!(await count_git_objects.status()).success) {
+            console.log(`Fail to get number of git objects`, github_id)
+
+            await getDb()
+                .from('github')
+                .update({
+                    resolution: await processOutputDump(count_git_objects),
+                })
+                .eq('id', github.id)
+            return
+        }
+
+        const out_str = new TextDecoder().decode(await count_git_objects.output()).trim()
+
+        number_of_git_objects = parseInt(out_str, 10)
     }
-
-    // count git objects
-    const count_git_objects = Deno.run({
-        cmd: ['git', 'rev-list', '--all', '--count', '--objects'],
-        cwd: gitdir,
-        stdout: 'piped',
-        stderr: 'piped',
-    })
-
-    if (!(await count_git_objects.status()).success) {
-        console.log(`Fail to get number of git objects`, github_id)
-
-        await getDb()
-            .from('github')
-            .update({
-                resolution: await processOutputDump(count_git_objects),
-            })
-            .eq('id', github.id)
-        return
-    }
-
-    const out_str = new TextDecoder().decode(await count_git_objects.output()).trim()
-    const number_of_git_objects = parseInt(out_str, 10)
 
     console.log(`Repo`, github_id, `contains`, number_of_git_objects)
 
@@ -80,9 +91,9 @@ export async function countGitObjects(github_id: string) {
     // EXPLANATION: we split repos to 3 buckets by size: small | medium | large
     // TODO: more logs
     let producer
-    if (number_of_git_objects < 1500) {
+    if (number_of_git_objects < SMALL_REPO_OBJECTS_LIMIT) {
         producer = createSmallGoshRepoProducer()
-    } else if (number_of_git_objects < 15000) {
+    } else if (number_of_git_objects < MEDIUM_REPO_OBJECTS_LIMIT) {
         producer = createMediumGoshRepoProducer()
     } else {
         producer = createLargeGoshRepoProducer()

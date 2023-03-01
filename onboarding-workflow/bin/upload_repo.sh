@@ -17,7 +17,7 @@ ensure_provided GOSH_REPO_NAME
 ensure_provided GOSH_BOT_NAME
 ensure_provided GOSH_CONFIG_PATH
 
-LOG_DIR=/tmp/logs/git-remote-gosh
+LOG_DIR=/tmp/logs-git-remote-gosh
 mkdir -p $LOG_DIR
 LOG_FILE="$LOG_DIR"/"$GOSH_DAO_NAME"-"$GOSH_REPO_NAME".log
 touch "$LOG_FILE"
