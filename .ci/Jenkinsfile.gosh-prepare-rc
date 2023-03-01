@@ -173,7 +173,7 @@ pipeline {
 def buildDispatcher() {
     script {
         dir('gosh-dispatcher') {
-            sh '''
+            /*sh '''
                 #!/bin/bash
                 set -ex
                 
@@ -197,6 +197,13 @@ def buildDispatcher() {
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64
                 az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64
+            '''*/
+            sh '''
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 325 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 325 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 325 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 325 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 325 --path darwin-arm64
             '''
         }
     }
@@ -205,7 +212,7 @@ def buildDispatcher() {
 def buildRemoteGosh(version) {
     script {
         dir("${version}/git-remote-gosh") {
-            sh """
+            /*sh """
                 #!/bin/bash
                 set -ex
 
@@ -229,6 +236,19 @@ def buildRemoteGosh(version) {
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64
                 az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64
+            """*/
+            sh """
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 326 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 326 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 326 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 326 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 326 --path darwin-arm64
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 327 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 327 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 327 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 327 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 327 --path darwin-arm64
             """
         }
     }
@@ -317,7 +337,7 @@ def testsFunctional(version) {
 
                 # remote
                 cd /tmp/${JOB_NAME}/linux-amd64/
-                REMOTE_VERSION=\$(find . -name "git-remote-gosh_\$(VERSION_PREFIX)*" | tr -d "./")
+                REMOTE_VERSION=\$(find . -name "git-remote-gosh_\$VERSION_PREFIX*" | tr -d "./")
                 cd -
                 cp -r /tmp/${JOB_NAME}/linux-amd64/\$REMOTE_VERSION /home/jenkins/bin/\$REMOTE_VERSION && chmod +x /home/jenkins/bin/\$REMOTE_VERSION
                 mkdir -p /home/jenkins/.gosh/
