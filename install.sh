@@ -4,9 +4,7 @@ set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
-RELEASE=rc-3.0.10
-# TODO: get it from one source with binary
-SUPPORTED_CONTRACTS_VERSIONS=("2_0_0")
+RELEASE=rc-3.0.11
 
 # Check OS and architecture
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -34,7 +32,6 @@ GH_TAGS="$GH_REPO/releases/tags/$TAG"
 # dir
 
 mkdir -p $HOME/.gosh
-echo git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} > $HOME/.gosh/dispatcher.ini
 
 # Download release
 echo ""
@@ -54,12 +51,9 @@ wget --content-disposition --no-cookie -q --header "Accept: application/octet-st
 tar -xf $TAR
 rm -f $TAR
 
-# make executable 
-chmod +x git-remote-gosh
-chmod +x git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]}
-
 mv git-remote-gosh $HOME/.gosh/
-mv git-remote-gosh_v${SUPPORTED_CONTRACTS_VERSIONS[0]} $HOME/.gosh/
+mv git-remote-gosh_v* $HOME/.gosh/
+mv dispatcher.ini $HOME/.gosh/
 
 echo "export PATH=\$PATH:\$HOME/.gosh" >> $HOME/.bash_profile
 echo "export PATH=\$PATH:\$HOME/.gosh" >> $HOME/.bashrc
