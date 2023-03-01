@@ -111,8 +111,9 @@ pipeline {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp:rw'
                         }
+                        customWorkspace 'workspace/justATest'
                     }
                     steps {
                         testsFunctional('v1_x')
@@ -122,7 +123,7 @@ pipeline {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp:rw'
                         }
                     }
                     steps {
