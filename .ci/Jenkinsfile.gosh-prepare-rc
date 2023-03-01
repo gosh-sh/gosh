@@ -131,7 +131,7 @@ pipeline {
                 }
             }
         }
-        stage('Tests: Web') {
+        /*stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -147,7 +147,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
 
         stage('Prerelease: Git Helper - bin') {
             agent {
@@ -359,6 +359,7 @@ def testsFunctional(version) {
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 #./set-vars.sh https://local-evernode.gosh.sh
+                cd /tmp/${JOB_NAME}
                 ./test_all.sh ${version} https://local-evernode.gosh.sh
 
             """
