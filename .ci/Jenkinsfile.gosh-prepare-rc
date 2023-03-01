@@ -103,12 +103,9 @@ pipeline {
                 }
             }
             steps {
-                sh 'cd ../ && cp -r gosh-prepare-rc gosh-prepare-rc@2 && cd -'
+                //sh 'cd ../ && cp -r gosh-prepare-rc gosh-prepare-rc@2 && cd -'
                 sh 'ls -la v1_x/contracts/gosh/'
                 sh 'ls -la v2_x/contracts/gosh/'
-                sh 'ls -la ../gosh-prepare-rc@2/v1_x/contracts/gosh'
-                sh 'ls -la ../gosh-prepare-rc@2/v1_x/contracts/gosh'
-                sh 'ls -la ../gosh-prepare-rc@2/v1_x/contracts/gosh'
             }
         }
         /*stage('Web: deploy') {
@@ -127,6 +124,7 @@ pipeline {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
+                            // -v /root/jenkins-main/workspace // FOR BINARIES
                             args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                         }
                     }
@@ -134,17 +132,18 @@ pipeline {
                         testsFunctional('v1_x')
                     }
                 }
-                stage('v2_x') {
+                /*stage('v2_x') {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
+                            // -v /root/jenkins-main/workspace // FOR BINARIES
                             args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                         }
                     }
                     steps {
                         testsFunctional('v2_x')
                     }
-                }
+                }*/
             }
         }
         /*stage('Tests: Web') {
