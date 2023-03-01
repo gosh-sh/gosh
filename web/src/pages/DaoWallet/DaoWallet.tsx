@@ -1,13 +1,13 @@
 import { Field, Form, Formik } from 'formik'
-import { useOutletContext } from 'react-router-dom'
-import { TextField } from '../../components/Formik'
-import Spinner from '../../components/Spinner'
-import * as Yup from 'yup'
+import { Navigate, useOutletContext } from 'react-router-dom'
+import { FormikInput } from '../../components/Formik'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useSmv, useSmvTokenTransfer } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
 import ToastError from '../../components/Error/ToastError'
+import { Button } from '../../components/Form'
+import yup from '../../yup-extended'
 
 type TMoveBalanceFormValues = {
     amount: number
@@ -16,7 +16,7 @@ type TMoveBalanceFormValues = {
 const DaoWalletPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { adapter: smv, details } = useSmv(dao)
-    const { transferToSmv, transferToWallet, releaseAll } = useSmvTokenTransfer(smv)
+    const { transferToSmv, transferToWallet } = useSmvTokenTransfer(smv, dao.adapter)
 
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
         try {
@@ -38,36 +38,28 @@ const DaoWalletPage = () => {
         }
     }
 
-    const onReleaseSmvTokens = async () => {
-        try {
-            await releaseAll()
-            toast.success('Release submitted, tokens will be released soon')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
+    if (!dao.details.isAuthMember && !dao.details.isAuthLimited) {
+        return <Navigate to={`/o/${dao.details.name}`} />
     }
-
     return (
         <>
-            {dao.details.isAuthMember && (
-                <SmvBalance adapter={smv} details={details} className="mb-4 !px-0" />
-            )}
+            <SmvBalance adapter={smv} details={details} className="mb-4 !px-0" />
 
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-e6edff">
                 <div className="py-5">
-                    <h3 className="text-lg font-semibold">Topup SMV balance</h3>
+                    <h3 className="text-lg font-medium">Topup SMV balance</h3>
                     <p className="mb-3">
                         Move tokens from wallet balance to SMV balance to get an ability
                         to create new proposals and vote
                     </p>
                     <Formik
-                        initialValues={{ amount: details.balance }}
+                        initialValues={{ amount: details.smvBalance }}
                         onSubmit={onMoveBalanceToSmvBalance}
-                        validationSchema={Yup.object().shape({
-                            amount: Yup.number()
-                                .min(1)
-                                .max(details.balance)
+                        validationSchema={yup.object().shape({
+                            amount: yup
+                                .number()
+                                .min(0)
+                                .max(details.smvBalance)
                                 .required('Field is required'),
                         })}
                         enableReinitialize
@@ -77,30 +69,32 @@ const DaoWalletPage = () => {
                                 <div className="grow sm:grow-0">
                                     <Field
                                         name="amount"
-                                        component={TextField}
-                                        inputProps={{
-                                            className: '!py-2',
-                                            placeholder: 'Amount',
-                                            autoComplete: 'off',
-                                            disabled: isSubmitting,
-                                        }}
+                                        component={FormikInput}
+                                        placeholder="Amount"
+                                        autoComplete="off"
+                                        disabled={isSubmitting}
+                                        help={
+                                            <div>
+                                                You can pass 0 to move all <br />
+                                                available voting tokens
+                                            </div>
+                                        }
                                     />
                                 </div>
-                                <button
-                                    className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
+                                <Button
                                     type="submit"
                                     disabled={isSubmitting || details.isLockerBusy}
+                                    isLoading={isSubmitting}
                                 >
-                                    {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to SMV balance
-                                </button>
+                                </Button>
                             </Form>
                         )}
                     </Formik>
                 </div>
 
                 <div className="py-5">
-                    <h3 className="text-lg font-semibold">Release tokens</h3>
+                    <h3 className="text-lg font-medium">Release tokens</h3>
                     <p className="mb-3">
                         Move tokens from SMV balance back to wallet balance
                     </p>
@@ -109,8 +103,9 @@ const DaoWalletPage = () => {
                             amount: details.smvAvailable - details.smvLocked,
                         }}
                         onSubmit={onMoveSmvBalanceToBalance}
-                        validationSchema={Yup.object().shape({
-                            amount: Yup.number()
+                        validationSchema={yup.object().shape({
+                            amount: yup
+                                .number()
                                 .min(1)
                                 .max(details.smvAvailable - details.smvLocked)
                                 .required('Field is required'),
@@ -122,49 +117,19 @@ const DaoWalletPage = () => {
                                 <div className="grow sm:grow-0">
                                     <Field
                                         name="amount"
-                                        component={TextField}
-                                        inputProps={{
-                                            className: '!py-2',
-                                            placeholder: 'Amount',
-                                            autoComplete: 'off',
-                                            disabled: isSubmitting,
-                                        }}
+                                        component={FormikInput}
+                                        placeholder="Amount"
+                                        autoComplete="off"
+                                        disabled={isSubmitting}
                                     />
                                 </div>
-                                <button
-                                    className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
+                                <Button
                                     type="submit"
                                     disabled={isSubmitting || details.isLockerBusy}
+                                    isLoading={isSubmitting}
                                 >
-                                    {isSubmitting && <Spinner className="mr-2" />}
                                     Move tokens to wallet
-                                </button>
-                            </Form>
-                        )}
-                    </Formik>
-                </div>
-
-                <div className="py-5">
-                    <h3 className="text-lg font-semibold">Release locked tokens</h3>
-                    <p className="mb-3">
-                        Release locked tokens from all completed proposals back to SMV
-                        balance
-                    </p>
-                    <Formik
-                        initialValues={{}}
-                        onSubmit={onReleaseSmvTokens}
-                        enableReinitialize
-                    >
-                        {({ isSubmitting }) => (
-                            <Form>
-                                <button
-                                    className="btn btn--body !font-normal px-4 py-2"
-                                    type="submit"
-                                    disabled={isSubmitting || details.isLockerBusy}
-                                >
-                                    {isSubmitting && <Spinner className="mr-2" />}
-                                    Release locked tokens
-                                </button>
+                                </Button>
                             </Form>
                         )}
                     </Formik>

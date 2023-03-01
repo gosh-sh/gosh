@@ -3,7 +3,7 @@ import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
-import BlobCommitForm from '../../components/Commit/BlobCommitForm'
+import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 
 const BlobCreatePage = () => {
     const treepath = useParams()['*']
@@ -20,28 +20,42 @@ const BlobCreatePage = () => {
         treepath && `/${treepath}`
     }`
 
-    const onPush = async (values: any) => {
+    const onPush = async (values: TBlobCommitFormValues) => {
         try {
-            const { name, title, message, tags, content } = values
-            const blobNew = {
+            const { name, content, title, message, tags, isPullRequest } = values
+            const blobObject = {
                 treepath: ['', `${treepath ? `${treepath}/` : ''}${name}`],
                 original: '',
                 modified: content,
             }
-            await push(title, [blobNew], message, tags)
-            navigate(urlBack)
+            const task = values.task
+                ? {
+                      task: values.task,
+                      assigners: values.assigners?.split(' ') || [],
+                      reviewers: values.reviewers?.split(' ') || [],
+                      managers: values.managers?.split(' ') || [],
+                  }
+                : undefined
+            await push(title, [blobObject], { isPullRequest, message, tags, task })
+            if (isPullRequest) {
+                navigate(`/o/${daoName}/events`, { replace: true })
+            } else {
+                navigate(urlBack)
+            }
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
         }
     }
 
-    if (!dao.details.isAuthMember) return <Navigate to={urlBack} />
+    if (!dao.details.isAuthMember) {
+        return <Navigate to={urlBack} />
+    }
     return (
-        <div className="bordered-block py-8">
+        <div>
             <BlobCommitForm
-                dao={daoName!}
-                repo={repoName!}
+                dao={dao}
+                repository={repository}
                 branch={branchName}
                 treepath={treepath!}
                 initialValues={{

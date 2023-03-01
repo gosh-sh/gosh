@@ -5,40 +5,42 @@ import { TDaoLayoutOutletContext } from './DaoLayout'
 const DaoSettingsLayout = () => {
     const { daoName } = useParams()
     const context = useOutletContext<TDaoLayoutOutletContext>()
+    const version = context.dao.details.version
 
-    const tabs = [
-        { to: `/o/${daoName}/settings/wallet`, title: 'Wallet' },
-        { to: `/o/${daoName}/settings/members`, title: 'Members' },
-        { to: `/o/${daoName}/settings/upgrade`, title: 'Upgrade' },
-    ]
+    const getTabs = () => {
+        const tabs = []
 
-    if (!context.dao.details.isAuthenticated) return <Navigate to={`/o/${daoName}`} />
+        if (version !== '1.0.0') {
+            tabs.push({ to: `/o/${daoName}/settings/setup`, title: 'DAO Set up' })
+        }
+
+        tabs.push({ to: `/o/${daoName}/settings/upgrade`, title: 'Upgrade' })
+        return tabs
+    }
+
+    if (!context.dao.details.isAuthMember) {
+        return <Navigate to={`/o/${daoName}`} />
+    }
     return (
-        <div className="container container--full mt-12 mb-5">
-            <div className="bordered-block px-7 py-8">
-                <h1 className="font-semibold text-2xl mb-5">DAO settings</h1>
-
-                <div className="flex gap-x-8 gap-y-8 flex-wrap md:flex-nowrap">
-                    <div className="basis-full md:basis-1/5 flex flex-col gap-y-1">
-                        {tabs.map((item, index) => (
-                            <NavLink
-                                key={index}
-                                to={item.to}
-                                className={({ isActive }) =>
-                                    classNames(
-                                        'py-2 text-base text-gray-050a15/50 hover:text-gray-050a15',
-                                        isActive ? '!text-gray-050a15' : null,
-                                    )
-                                }
-                            >
-                                {item.title}
-                            </NavLink>
-                        ))}
-                    </div>
-                    <div className="basis-full md:basis-4/5 overflow-hidden">
-                        <Outlet context={context} />
-                    </div>
-                </div>
+        <div className="flex gap-x-8 gap-y-8 flex-wrap md:flex-nowrap">
+            <div className="basis-full md:basis-1/5 flex flex-col gap-y-1">
+                {getTabs().map((item, index) => (
+                    <NavLink
+                        key={index}
+                        to={item!.to}
+                        className={({ isActive }) =>
+                            classNames(
+                                'py-2 text-gray-7c8db5 hover:text-black',
+                                isActive ? '!text-black' : null,
+                            )
+                        }
+                    >
+                        {item!.title}
+                    </NavLink>
+                ))}
+            </div>
+            <div className="basis-full md:basis-4/5 overflow-hidden">
+                <Outlet context={context} />
             </div>
         </div>
     )

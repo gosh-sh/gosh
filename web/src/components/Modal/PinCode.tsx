@@ -12,6 +12,7 @@ import {
 } from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
+import { Button, Input } from '../Form'
 
 type TPinCodeModalProps = {
     unlock?: boolean
@@ -71,7 +72,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 onUnlock && onUnlock()
             }
         },
-        [phrase, unlock, tmp, onUnlock, setModal],
+        [phrase, unlock, tmp, onUnlock, setModal, user],
     )
 
     useEffect(() => {
@@ -80,7 +81,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
 
     return (
         <Dialog.Panel className="rounded-xl bg-white px-8 py-8 w-full max-w-md">
-            <Dialog.Title className="text-3xl text-center font-semibold">
+            <Dialog.Title className="text-3xl text-center font-medium">
                 PIN code
             </Dialog.Title>
             <Dialog.Description className="text-center mt-4">
@@ -88,28 +89,32 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             </Dialog.Description>
 
             <div className="mt-4 w-full md:w-1/3 mx-auto">
-                <div className="input">
-                    <input
+                <form>
+                    <Input
                         type="password"
-                        className="element text-center"
+                        inputClassName="text-center w-full"
                         placeholder="PIN code"
+                        autoComplete="off"
                         value={pin}
                         onChange={(e) => setPin(e.target.value)}
+                        test-id="input-pin"
                     />
-                </div>
+                </form>
             </div>
 
             {unlock && (
-                <button
-                    type="button"
-                    className="btn btn--body w-full py-2 mt-4 leading-normal"
-                    onClick={() => {
-                        user.signout()
-                        resetModal()
-                    }}
-                >
-                    Sign out
-                </button>
+                <div className="mt-4 text-center">
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            user.signout()
+                            resetModal()
+                        }}
+                        test-id="btn-pin-signout"
+                    >
+                        Sign out
+                    </Button>
+                </div>
             )}
         </Dialog.Panel>
     )

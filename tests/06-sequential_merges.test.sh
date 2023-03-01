@@ -1,4 +1,6 @@
 #!/bin/bash
+# TODO this test passes locally but in ci cd takes too much time
+#exit 0
 
 # 1 create repo
 # 2 create branch dev from main
@@ -28,8 +30,8 @@ REPO_NAME=repo6
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 
-tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
 REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
@@ -138,7 +140,7 @@ git checkout -b main
 git merge $BRANCH_NAME
 echo "***** awaiting push in main *****"
 git push -u origin main
-delay 120
+delay 60
 
 # echo "***** awaiting set commit in main *****"
 # wait_set_commit $REPO_ADDR main

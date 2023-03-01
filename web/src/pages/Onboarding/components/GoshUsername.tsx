@@ -5,8 +5,6 @@ import yup from '../../../yup-extended'
 import { validateOnboardingDao, validateOnboardingRepo } from '../helpers'
 import { supabase } from '../../../helpers'
 import PinCodeModal from '../../../components/Modal/PinCode'
-import { TextField } from '../../../components/Formik'
-import Spinner from '../../../components/Spinner'
 import { SignupProgress } from '../../Signup/components/SignupProgress'
 import { appModalStateAtom } from '../../../store/app.state'
 import {
@@ -19,6 +17,8 @@ import { toast } from 'react-toastify'
 import ToastError from '../../../components/Error/ToastError'
 import { EDaoInviteStatus } from '../../../store/onboarding.types'
 import PreviousStep from './PreviousStep'
+import { FormikInput } from '../../../components/Formik'
+import { Button } from '../../../components/Form'
 
 type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
@@ -235,16 +235,15 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                                 <div className="mb-3">
                                     <Field
                                         name="username"
-                                        component={TextField}
-                                        inputProps={{
-                                            autoComplete: 'off',
-                                            placeholder: 'Username',
-                                            onChange: (e: any) =>
-                                                setFieldValue(
-                                                    'username',
-                                                    e.target.value.toLowerCase(),
-                                                ),
-                                        }}
+                                        component={FormikInput}
+                                        autoComplete="off"
+                                        placeholder="Username"
+                                        onChange={(e: any) =>
+                                            setFieldValue(
+                                                'username',
+                                                e.target.value.toLowerCase(),
+                                            )
+                                        }
                                         help={
                                             <>
                                                 <p>GOSH username</p>
@@ -258,10 +257,13 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                                 </div>
 
                                 <div className="nickname-form__submit">
-                                    <button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting && <Spinner size={'lg'} />}
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        isLoading={isSubmitting}
+                                    >
                                         Create account
-                                    </button>
+                                    </Button>
                                 </div>
                             </Form>
                         )}

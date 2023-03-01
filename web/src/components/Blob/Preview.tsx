@@ -4,6 +4,7 @@ import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import rehypeRaw from 'rehype-raw'
 
 type TBlobPreviewProps = {
     filename?: string
@@ -85,13 +86,13 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     if (filename.split('.').splice(-1)[0] === 'md') {
         return (
             <div className={classNames('markdown-body px-4 py-4', className)}>
-                <ReactMarkdown>{value || ''}</ReactMarkdown>
+                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{value || ''}</ReactMarkdown>
             </div>
         )
     }
     return (
         <div
-            className={classNames('text-sm', className)}
+            className={classNames('relative text-sm', className)}
             dangerouslySetInnerHTML={{
                 __html: getHighlightedCodeBlock(),
             }}

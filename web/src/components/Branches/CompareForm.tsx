@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Form, Formik } from 'formik'
 import { classNames, useBranches } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
-import * as Yup from 'yup'
+import yup from '../../yup-extended'
+import { Button } from '../Form'
 import { BranchSelect } from './Dropdown'
 
 type TBranchCompareFormProps = {
@@ -28,9 +29,9 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
                     dst: branch!,
                 }}
                 onSubmit={onBuild}
-                validationSchema={Yup.object().shape({
-                    src: Yup.object({ name: Yup.string().required('Field is required') }),
-                    dst: Yup.object({ name: Yup.string().required('Field is required') }),
+                validationSchema={yup.object().shape({
+                    src: yup.object({ name: yup.string().required('Field is required') }),
+                    dst: yup.object({ name: yup.string().required('Field is required') }),
                 })}
             >
                 {({ isSubmitting, values, setFieldValue }) => (
@@ -52,13 +53,14 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
                                 !!selected && setFieldValue('dst', selected)
                             }}
                         />
-                        <button
+                        <Button
                             type="submit"
-                            className="btn btn--body px-3 !py-1.5 !text-sm"
+                            isLoading={isSubmitting}
                             disabled={isSubmitting}
+                            test-id="btn-merge-compare"
                         >
                             Compare
-                        </button>
+                        </Button>
                     </Form>
                 )}
             </Formik>

@@ -42,6 +42,8 @@ class RemoteHandler extends GoshHandler_1.default {
         this.gosh_repo_url = '';
         this.gosh_bin_path = '';
         this.release_asset = '';
+        this.release_tared = '';
+        this.tar_sel_file = '';
         this.github_user = '';
         this.github_token = '';
         this.address = '';
@@ -52,7 +54,7 @@ class RemoteHandler extends GoshHandler_1.default {
     }
     applyConfiguration(c) {
         super.applyConfiguration(c);
-        this.useFields(c, ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'], ['gosh_bin_path', 'release_asset', 'github_user', 'github_token', 'address',
+        this.useFields(c, ['gosh_branch', 'gosh_repo_url', 'pubkey', 'secret'], ['gosh_bin_path', 'release_asset', 'release_tared', 'tar_sel_file', 'github_user', 'github_token', 'address',
             'push_verbosity', 'pull_verbosity']);
         return this;
     }
@@ -161,6 +163,7 @@ class RemoteHandler extends GoshHandler_1.default {
         let data = null;
         let updated = '';
         let download = '';
+        let tared = false;
         return [
             'ensure .gosh dir', /* 0*/ () => this.ensureDir('../.gosh'),
             'request envs', /* 1*/ () => this.requestEnvs(),
@@ -174,21 +177,24 @@ class RemoteHandler extends GoshHandler_1.default {
                 const split = this.gosh_repo_url.split('/');
                 const orgrepo = split[3] + '/' + split[4].replace('.git', '');
                 const release_name = this.gosh_branch.replace('release:', '');
-                const url = (release_name === 'latest-prerelease') ?
+                const url = (release_name === 'latest-prerelease' || release_name === 'latest') ?
                     `https://api.github.com/repos/${orgrepo}/releases` :
                     `https://api.github.com/repos/${orgrepo}/releases/${release_name}`;
-                const etag = fs.existsSync('data/last-etag') ? fs.readFileSync('data/last-etag', 'utf-8') : '';
+                // change -vX to invalidate current tag if something in algorithm noticeably changes and cache may cause problems
+                const tag_fn = 'data/last-tag-v3';
+                const etag_fn = 'data/last-etag-v3';
+                const etag = fs.existsSync(etag_fn) ? fs.readFileSync(etag_fn, 'utf-8') : '';
                 const headers = new node_fetch_1.Headers();
                 if (this.github_user !== '' && this.github_token !== '')
                     headers.set('Authorization', 'Basic ' + Buffer.from(`${this.github_user}:${this.github_token}`).toString('base64'));
-                if (etag !== '' && fs.existsSync('./data/last-git-remote-gosh') && fs.existsSync('data/last-updated') && fs.existsSync('data/last-tag'))
+                if (etag !== '' && fs.existsSync('./data/last-git-remote-gosh') && fs.existsSync('data/last-updated') && fs.existsSync(tag_fn))
                     headers.set('If-None-Match', etag);
                 const response = await (0, node_fetch_1.default)(url, { headers: headers });
                 if (!response.ok) {
                     if (response.statusText === 'Not Modified') {
                         this.say("github conditional result: not modified", true);
-                        if (fs.existsSync('data/last-tag'))
-                            this.say('using cached release from tag ' + fs.readFileSync('data/last-tag', 'utf-8'));
+                        if (fs.existsSync(tag_fn))
+                            this.say('using cached release from tag ' + fs.readFileSync(tag_fn, 'utf-8'));
                         data = null;
                     }
                     else if (response.statusText != 'rate limit exceeded')
@@ -204,29 +210,41 @@ class RemoteHandler extends GoshHandler_1.default {
                 else {
                     data = await response.json();
                     let sel = null;
-                    if (release_name === 'latest-prerelease') {
-                        // for (let r of data) {
-                        //     if (r.prerelease) {
-                        //         this.say('selected first prerelease ' + r.name);
-                        //         sel = r;
-                        //         break;
-                        //     }
-                        // }
-                        const r = data[0];
-                        this.say('selected first (pre)release ' + r.name);
-                        sel = r;
-                        if (!sel)
-                            throw new Error('Prerelease not found');
-                        else
-                            data = sel;
-                    }
-                    for (let [k, v] of response.headers) {
-                        if (k === 'etag') {
-                            fs.writeFileSync('data/last-etag', v, 'utf-8');
+                    const what = release_name === 'latest' ? 'release' : '(pre)release';
+                    if (release_name === 'latest-prerelease' || release_name === 'latest') {
+                        const cond = release_name === 'latest' ? (x) => !x.prerelease : (x) => true;
+                        for (let r of data) {
+                            if (!cond(r))
+                                continue;
+                            let found = false;
+                            for (let a of r['assets']) {
+                                if (a['name'] == this.release_asset || a['name'] == this.release_tared) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                this.say(`warning: ${r['name']} does not contain ${this.release_asset} and ${this.release_tared}, skipping!`);
+                                continue;
+                            }
+                            this.say(`selected first (latest) ${what} ${r.name}`);
+                            sel = r;
                             break;
                         }
                     }
-                    fs.writeFileSync('data/last-tag', data['tag_name'], 'utf-8');
+                    else
+                        sel = data;
+                    if (!sel)
+                        throw new Error(`${what} not found`);
+                    else
+                        data = sel;
+                    for (let [k, v] of response.headers) {
+                        if (k === 'etag') {
+                            fs.writeFileSync(etag_fn, v, 'utf-8');
+                            break;
+                        }
+                    }
+                    fs.writeFileSync(tag_fn, data['tag_name'], 'utf-8');
                     this.say('getting release with tag: ' + data['tag_name']);
                 }
             },
@@ -235,15 +253,16 @@ class RemoteHandler extends GoshHandler_1.default {
                     return;
                 let found = false;
                 for (let a of data['assets']) {
-                    if (a['name'] == this.release_asset) {
+                    if (a['name'] == this.release_asset || a['name'] == this.release_tared) {
                         found = true;
+                        tared = a['name'] == this.release_tared;
                         updated = a['updated_at'];
                         download = a['browser_download_url'];
                         break;
                     }
                 }
                 if (!found) {
-                    throw Error(this.release_asset + ' not found');
+                    throw Error(this.release_asset + ' and ' + this.release_tared + ' not found');
                 }
             },
             'download release', /* 5*/ async () => {
@@ -253,9 +272,19 @@ class RemoteHandler extends GoshHandler_1.default {
                 this.say(`last updated: ${last_updated}, updated: ${updated}`);
                 if (last_updated != updated) {
                     const response = await (0, node_fetch_1.default)(download);
+                    const dlpath = tared ? './untar/archive.tar' : './data/last-git-remote-gosh';
+                    if (tared && !fs.existsSync('untar'))
+                        fs.mkdirSync('untar');
                     if (!response.ok || !response.body)
                         throw new Error(`unexpected response ${response.statusText}`);
-                    await streamPipeline(response.body, fs.createWriteStream('./data/last-git-remote-gosh'));
+                    await streamPipeline(response.body, fs.createWriteStream(dlpath));
+                    if (tared) {
+                        await this.execute(['tar', 'xf', 'archive.tar'], 'untar');
+                        if (!fs.existsSync('./untar/' + this.tar_sel_file)) {
+                            throw Error(`File ${this.tar_sel_file} not found in archive`);
+                        }
+                        fs.cpSync('./untar/' + this.tar_sel_file, './data/last-git-remote-gosh');
+                    }
                     fs.writeFileSync('data/last-updated', updated, 'utf-8');
                 }
             },
