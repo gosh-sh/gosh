@@ -355,11 +355,12 @@ def deployWeb() {
 
 def testsFunctional(version) {
     script {
-        dir('tests') {
+        dir("${version}") {
             sh """
                 #!/bin/bash
                 set -e
                 set -x
+                cd ../
                 mkdir -p /home/jenkins/bin
 
                 VERSION_PREFIX=\$(echo ${version} | tr -d _x)
