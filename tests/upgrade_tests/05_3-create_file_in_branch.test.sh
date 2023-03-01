@@ -25,7 +25,7 @@ REPO_PATH_CHECK2=upgrade_repo05_3_v2_check2
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
 
-export REPO_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
+export REPO_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "REPO_LINK=$REPO_LINK"
 
 echo "***** cloning old version repo *****"
@@ -68,7 +68,7 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
-export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
 git clone $NEW_LINK $NEW_REPO_PATH

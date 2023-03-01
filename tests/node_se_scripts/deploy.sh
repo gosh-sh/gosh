@@ -10,7 +10,11 @@ GIVER_VALUE=20000000000000000
 
 echo "NETWORK=$NETWORK"
 
-cd ../v2_x/contracts/multisig
+# $1 = VERSION (v1_x, v2_x)
+
+VERSION=$1
+
+cd ../"$VERSION"/contracts/multisig
 echo "" > Giver.addr
 echo "" > Giver.network
 echo "" > Giver.seed
@@ -33,7 +37,11 @@ cd ../gosh
 echo "" > gosh.seed
 echo "" > VersionController.addr
 echo "" > SystemContract.addr
-echo "" > SystemContract-1.0.0.addr
+if [ "$VERSION" = "v1_x" ]; then
+  echo "" > SystemContract-1.0.0.addr
+else
+  echo "" > SystemContract-2.0.0.addr
+fi
 
 #make build
 make deploy-docker

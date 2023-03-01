@@ -19,7 +19,7 @@ DAO_NAME="dao-upgrade-test03_$(date +%s)"
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
 
-export REPO_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
+export REPO_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "REPO_LINK=$REPO_LINK"
 
 echo "***** cloning old version repo *****"
