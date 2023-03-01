@@ -289,6 +289,12 @@ def buildRemoteGosh(version) {
 def archiveAzureArtifacts() {
     sh '''
         rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
+        find ./linux-amd64 -name "git-remote-gosh_v*" | tr -d "./linux-amd64" > dispatcher.ini
+        cp dispatcher.ini linux-amd64
+        cp dispatcher.ini darwin-amd64
+        cp dispatcher.ini linux-arm64
+        cp dispatcher.ini darwin-arm64
+        cp dispatcher.ini windows-amd64
         tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
         tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
         tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
