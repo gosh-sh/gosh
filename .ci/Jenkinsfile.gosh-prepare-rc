@@ -65,9 +65,7 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    runFunctionSet('buildRemoteGosh')
-                }
+                runFunctionSet('buildRemoteGosh')
             }
         }
 
@@ -271,7 +269,7 @@ def archiveAzureArtifacts() {
         rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
         chmod +x linux-a*/*
         chmod +x darwin-a*/*
-        find ./linux-amd64 -name "git-remote-gosh_v*" | tr -d "./linux-amd64" > dispatcher.ini
+        find ./linux-amd64 -name \"git-remote-gosh_v*\" | tr -d \"./linux-amd64\" > dispatcher.ini
         cp dispatcher.ini linux-amd64
         cp dispatcher.ini darwin-amd64
         cp dispatcher.ini linux-arm64
