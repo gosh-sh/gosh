@@ -18,7 +18,7 @@ export default class AppWriteHandler extends AppHandler {
             'scroll down',                () => this.pageDown(true, 2),
             'wait for no spinner', /*17*/ () => this.waitForGone('svg.fa-spin', this.longtimeout_ms),
             'wait for edit icon',  /*18*/ () => this.waitFor("svg.fa-pencil"),
-            'click copy icon',     /*19*/ () => this.click("svg.fa-copy"),
+            'click copy icon',     /*19*/ () => this.click("div.bg-gray-100 > div > button > svg.fa-copy"),
             'check file contents', /*20*/ () => { return this.processFileContents(); }
         );
     }

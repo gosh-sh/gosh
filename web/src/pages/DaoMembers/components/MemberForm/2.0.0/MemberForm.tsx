@@ -379,10 +379,12 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                     ))}
 
                     <div className="text-gray-7c8db5">
-                        <button type="button" onClick={onAddMember}>
-                            <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                            Add member
-                        </button>
+                        {members.length < 10 && (
+                            <button type="button" onClick={onAddMember}>
+                                <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                                Add member
+                            </button>
+                        )}
                     </div>
                 </div>
                 <Formik initialValues={{}} onSubmit={onCreateMember}>

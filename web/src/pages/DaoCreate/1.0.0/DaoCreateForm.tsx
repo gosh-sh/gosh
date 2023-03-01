@@ -66,6 +66,7 @@ const DaoCreateForm = () => {
                                             e.target.value.toLowerCase(),
                                         )
                                     }
+                                    test-id="input-dao-name"
                                 />
                             </div>
 
@@ -85,6 +86,7 @@ const DaoCreateForm = () => {
                                         )
                                     }
                                     help="Put each username from new line"
+                                    test-id="input-dao-members"
                                 />
                             </div>
 
@@ -93,6 +95,7 @@ const DaoCreateForm = () => {
                                     type="submit"
                                     disabled={isSubmitting}
                                     isLoading={isSubmitting}
+                                    test-id="btn-dao-create"
                                 >
                                     Create organization
                                 </Button>

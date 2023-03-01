@@ -9,7 +9,7 @@ type TFileDownloadProps = {
 }
 
 const FileDownload = (props: TFileDownloadProps) => {
-    const { name, content, label, className } = props
+    const { name, content, label, className, ...rest } = props
 
     return (
         <button
@@ -18,6 +18,7 @@ const FileDownload = (props: TFileDownloadProps) => {
                 const _blob = new Blob([content], { type: 'application/octet-stream' })
                 saveAs(_blob, name)
             }}
+            {...rest}
         >
             {label}
         </button>

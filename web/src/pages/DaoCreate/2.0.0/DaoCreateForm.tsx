@@ -7,7 +7,8 @@ import ToastError from '../../../components/Error/ToastError'
 import yup from '../../../yup-extended'
 import { Button } from '../../../components/Form'
 import { FormikTextarea, FormikInput, FormikCheckbox } from '../../../components/Formik'
-import emptylogo from '../../../assets/images/emptylogo.svg'
+import { useState } from 'react'
+import { getIdenticonAvatar } from '../../../helpers'
 
 type TFormValues = {
     name: string
@@ -17,9 +18,12 @@ type TFormValues = {
     mint: boolean
 }
 
+const avatarInitialState = getIdenticonAvatar({ seed: '' }).toDataUriSync()
+
 const DaoCreateForm = () => {
     const navigate = useNavigate()
     const daocreate = useDaoCreate()
+    const [avatar, setAvatar] = useState<string>(avatarInitialState)
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
@@ -83,16 +87,19 @@ const DaoCreateForm = () => {
                                             label="Name"
                                             name="name"
                                             component={FormikInput}
-                                            inputProps={{
-                                                placeholder: 'New organization name',
-                                                autoComplete: 'off',
-                                                disabled: isSubmitting,
-                                                onChange: (e: any) =>
-                                                    setFieldValue(
-                                                        'name',
-                                                        e.target.value.toLowerCase(),
-                                                    ),
+                                            placeholder="New organization name"
+                                            autoComplete="off"
+                                            disabled={isSubmitting}
+                                            onChange={(e: any) => {
+                                                const name = e.target.value.toLowerCase()
+                                                setFieldValue('name', name)
+                                                setAvatar(
+                                                    getIdenticonAvatar({
+                                                        seed: name,
+                                                    }).toDataUriSync(),
+                                                )
                                             }}
+                                            test-id="input-dao-name"
                                         />
                                     </div>
 
@@ -101,12 +108,11 @@ const DaoCreateForm = () => {
                                             label="Theme tags"
                                             name="tags"
                                             component={FormikInput}
-                                            inputProps={{
-                                                placeholder: 'Up to 3 tags',
-                                                autoComplete: 'off',
-                                                disabled: isSubmitting,
-                                            }}
+                                            placeholder="Up to 3 tags"
+                                            autoComplete="off"
+                                            disabled={isSubmitting}
                                             help="Enter a space after each tag"
+                                            test-id="input-dao-tags"
                                         />
                                     </div>
 
@@ -115,11 +121,10 @@ const DaoCreateForm = () => {
                                             label="Description"
                                             name="description"
                                             component={FormikTextarea}
-                                            inputProps={{
-                                                placeholder: 'Short description',
-                                                autoComplete: 'off',
-                                                disabled: isSubmitting,
-                                            }}
+                                            placeholder="Short description"
+                                            autoComplete="off"
+                                            disabled={isSubmitting}
+                                            test-id="input-dao-description"
                                         />
                                     </div>
 
@@ -128,11 +133,10 @@ const DaoCreateForm = () => {
                                             label="Total supply"
                                             name="supply"
                                             component={FormikInput}
-                                            inputProps={{
-                                                placeholder: 'DAO total supply',
-                                                autoComplete: 'off',
-                                                disabled: isSubmitting,
-                                            }}
+                                            placeholder="DAO total supply"
+                                            autoComplete="off"
+                                            disabled={isSubmitting}
+                                            test-id="input-dao-supply"
                                         />
                                     </div>
 
@@ -143,10 +147,9 @@ const DaoCreateForm = () => {
                                             name="mint"
                                             component={FormikCheckbox}
                                             inputProps={{
-                                                className: 'inline-block',
                                                 label: 'Allow mint',
-                                                disabled: isSubmitting,
                                             }}
+                                            disabled={isSubmitting}
                                             help={
                                                 values.mint
                                                     ? 'This option enables the DAO token mint'
@@ -155,6 +158,7 @@ const DaoCreateForm = () => {
                                             helpClassName={
                                                 values.mint ? null : 'text-red-ff3b30'
                                             }
+                                            test-id="input-dao-mint"
                                         />
                                     </div>
                                 </div>
@@ -164,7 +168,7 @@ const DaoCreateForm = () => {
                                         Organization picture
                                     </div>
                                     <div className="w-44 rounded-lg overflow-hidden">
-                                        <img src={emptylogo} className="w-full" alt="" />
+                                        <img src={avatar} className="w-full" alt="" />
                                     </div>
                                 </div>
                             </div>
@@ -174,6 +178,7 @@ const DaoCreateForm = () => {
                                     className="w-full"
                                     disabled={isSubmitting}
                                     isLoading={isSubmitting}
+                                    test-id="btn-dao-create"
                                 >
                                     Create organization
                                 </Button>

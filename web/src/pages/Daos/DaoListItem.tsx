@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames, shortString, TDaoListItem } from 'react-gosh'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import emptylogo from '../../assets/images/emptylogo.svg'
 import ReactTooltip from 'react-tooltip'
+import { getIdenticonAvatar } from '../../helpers'
 
 type TDaoListItemProps = {
     className?: string
@@ -23,7 +23,11 @@ const DaoListItem = (props: TDaoListItemProps) => {
             )}
         >
             <div className="overflow-hidden rounded-xl">
-                <img src={emptylogo} alt="" className="w-14 h-14 md:w-20 md:h-20" />
+                <img
+                    src={getIdenticonAvatar({ seed: item.name }).toDataUriSync()}
+                    alt=""
+                    className="w-14 h-14 md:w-20 md:h-20"
+                />
             </div>
             <div className="grow pl-4">
                 <div className="flex flex-wrap items-center">

@@ -52,6 +52,7 @@ const RepoCreate = () => {
                                 onChange={(e: any) =>
                                     setFieldValue('name', e.target.value.toLowerCase())
                                 }
+                                test-id="input-repo-name"
                             />
                         </div>
 
@@ -61,6 +62,7 @@ const RepoCreate = () => {
                                 disabled={isSubmitting}
                                 isLoading={isSubmitting}
                                 className="w-full"
+                                test-id="btn-repo-create"
                             >
                                 Create repository
                             </Button>

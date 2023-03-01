@@ -25,6 +25,7 @@ type TDao = {
     isAuthMember: boolean
     isAuthLimited?: boolean
     isRepoUpgraded?: boolean
+    hasRepoIndex: boolean
 }
 
 type TDaoListItem = Omit<
@@ -39,6 +40,7 @@ type TDaoListItem = Omit<
     | 'isAuthOwner'
     | 'isAuthMember'
     | 'isAuthenticated'
+    | 'hasRepoIndex'
 > & {
     adapter: IGoshDaoAdapter
     members?: { profile: TAddress; wallet: TAddress }[]
@@ -52,6 +54,7 @@ type TDaoListItem = Omit<
     isAuthMember?: boolean
     isAuthenticated?: boolean
     isLoadDetailsFired?: boolean
+    hasRepoIndex?: boolean
 }
 
 type TDaoSupplyDetails = {

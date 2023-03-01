@@ -73,8 +73,11 @@ const DaosPage = () => {
                             className="text-gray-7c8db5 font-extralight py-3 pl-4"
                         />
                     }
+                    test-id="input-dao-search"
                 />
-                <ButtonLink to="/a/orgs/create">Create new DAO</ButtonLink>
+                <ButtonLink to="/a/orgs/create" test-id="link-dao-create">
+                    Create new DAO
+                </ButtonLink>
             </div>
 
             {!!githubData.length && (
@@ -127,6 +130,7 @@ const DaosPage = () => {
                             disabled={isFetching}
                             isLoading={isFetching}
                             onClick={getMore}
+                            test-id="btn-dao-more"
                         >
                             Load more
                         </Button>
