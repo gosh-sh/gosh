@@ -8,7 +8,6 @@ import ToastError from '../../components/Error/ToastError'
 import { useEffect, useState } from 'react'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
-import { onExternalLinkClick } from '../../helpers'
 
 const SigninPage = () => {
     const navigate = useNavigate()
@@ -66,35 +65,16 @@ const SigninPage = () => {
         }
     }, [setupPin, setModal, navigate])
 
-    if (persist.pin) return <Navigate to="/a/orgs" />
+    if (persist.pin) {
+        return <Navigate to="/a/orgs" />
+    }
     return (
         <div className="block-auth">
             <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-56px">
                 Sign in to Gosh
             </h1>
 
-            {!step && (
-                <>
-                    <SigninPhraseForm onSubmit={onPhraseSubmit} />
-                    {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
-                        <div className="text-center mt-8">
-                            <p className="text-lg font-medium">Don't have an account?</p>
-                            <p>
-                                Register at
-                                <a
-                                    href="https://app.gosh.sh/"
-                                    className="ml-1 text-blue-1e7aec underline"
-                                    onClick={(e) => {
-                                        onExternalLinkClick(e, 'https://app.gosh.sh/')
-                                    }}
-                                >
-                                    app.gosh.sh
-                                </a>
-                            </p>
-                        </div>
-                    )}
-                </>
-            )}
+            {!step && <SigninPhraseForm onSubmit={onPhraseSubmit} />}
             {step?.name === 'ProfileRequired' && (
                 <SigninProfileForm
                     profiles={step.data.profiles}
