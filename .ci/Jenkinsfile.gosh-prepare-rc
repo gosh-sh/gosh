@@ -92,7 +92,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('deployContracts')
+                deployContracts('v1_x')
+                deployContracts('v2_x')
             }
         }
         /*stage('Web: deploy') {
@@ -111,7 +112,7 @@ pipeline {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp:rw'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                         }
                     }
                     steps {
@@ -122,7 +123,7 @@ pipeline {
                     agent {
                         docker {
                             image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp:rw'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                         }
                     }
                     steps {
@@ -359,7 +360,6 @@ def testsFunctional(version) {
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 #./set-vars.sh https://local-evernode.gosh.sh
-                cp -r /tmp/${JOB_NAME}/tests/* ./
                 ./test_all.sh ${version} https://local-evernode.gosh.sh
 
             """
