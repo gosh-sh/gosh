@@ -92,10 +92,10 @@ pipeline {
                 }
             }
             steps {
-                deployContracts('v1_x')
-                deployContracts('v2_x')
+                runFunctionSet('deployContracts')
             }
         }
+        
         /*stage('Web: deploy') {
             agent {
                 node {
@@ -106,30 +106,15 @@ pipeline {
                 deployWeb()
             }
         }*/
-        stage('Tests: functional') {
-            parallel {
-                stage('v1_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                        }
-                    }
-                    steps {
-                        testsFunctional('v1_x')
-                    }
+        stage('Deploy: deploy smart-contracts') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                 }
-                stage('v2_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                        }
-                    }
-                    steps {
-                        testsFunctional('v2_x')
-                    }
-                }
+            }
+            steps {
+                runFunctionSet('testsFunctional')
             }
         }
         /*stage('Tests: Web') {
