@@ -1,3 +1,15 @@
+def runFunctionSet(function_name) {
+    running_set = [
+        "v1_x": {
+            "${function_name}"('v1_x')
+        },
+        "v2_x": {
+            "${function_name}"('v2_x')
+        }
+    ]
+    parallel(running_set)
+}
+
 pipeline {
     agent none
     //triggers {
@@ -46,29 +58,14 @@ pipeline {
                 buildDispatcher()
             }
         }*/
-
-        stage('Build: Remote') {
-            parallel {
-                stage('v1_x') {
-                    agent {
-                        node {
-                            label 'jenkins-main'
-                        }
-                    }
-                    steps {
-                        buildRemoteGosh('v1_x')
-                    }
+        stage('Build: Git Helper') {
+            agent {
+                node {
+                    label 'jenkins-main'
                 }
-                stage('v2_x') {
-                    agent {
-                        node {
-                            label 'jenkins-main'
-                        }
-                    }
-                    steps {
-                        buildRemoteGosh('v2_x')
-                    }
-                }
+            }
+            steps {
+                runFunctionSet('buildRemoteGosh')
             }
         }
 
@@ -79,9 +76,7 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    archiveAzureArtifacts()
-                }
+                archiveAzureArtifacts()
             }
         }
 
@@ -268,22 +263,24 @@ def buildRemoteGosh(version) {
 }
 
 def archiveAzureArtifacts() {
-    sh '''
-        rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
-        chmod +x linux-a*/*
-        chmod +x darwin-a*/*
-        find ./linux-amd64 -name "git-remote-gosh_v*" | tr -d "./linux-amd64" > dispatcher.ini
-        cp dispatcher.ini linux-amd64
-        cp dispatcher.ini darwin-amd64
-        cp dispatcher.ini linux-arm64
-        cp dispatcher.ini darwin-arm64
-        cp dispatcher.ini windows-amd64
-        tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
-        tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
-        tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
-        tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
-        cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
-    '''
+    script {
+        sh '''
+            rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
+            chmod +x linux-a*/*
+            chmod +x darwin-a*/*
+            find ./linux-amd64 -name "git-remote-gosh_v*" | tr -d "./linux-amd64" > dispatcher.ini
+            cp dispatcher.ini linux-amd64
+            cp dispatcher.ini darwin-amd64
+            cp dispatcher.ini linux-arm64
+            cp dispatcher.ini darwin-arm64
+            cp dispatcher.ini windows-amd64
+            tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
+            tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
+            tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
+            tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
+            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
+        '''
+    }
 }
 
 def deployContracts(version) {
