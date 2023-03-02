@@ -12,12 +12,16 @@ COPY --link node_modules/@eversdk/lib-web/eversdk.wasm ./
 COPY --link --from=teamgosh/gosh-cli:0.2.0 /usr/local/bin/gosh-cli /usr/local/bin/gosh-cli
 
 WORKDIR /workdir
+ARG BRANCH=dev
+ENV BRANCH=${BRANCH}
 RUN <<EOF
     set -ex
-    git clone --branch dev --depth 1 https://github.com/gosh-sh/gosh.git gosh
+    echo "$BRANCH"
+    git clone --branch "$BRANCH" --depth 1 https://github.com/gosh-sh/gosh.git gosh
     cd gosh
     bash install.sh
     mv $HOME/.gosh/git-remote-gosh /usr/local/bin/git-remote-gosh
+    mv $HOME/.gosh/git-remote-gosh_v1_0_0 /usr/local/bin/git-remote-gosh_v1_0_0
     mv $HOME/.gosh/git-remote-gosh_v2_0_0 /usr/local/bin/git-remote-gosh_v2_0_0
     cd ..
     rm -rf gosh

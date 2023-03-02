@@ -1,6 +1,8 @@
 # TODO refactor
 include .env
 
+BRANCH ?= dev
+
 .PHONY: docker
 docker:
 	rm -rf abi
@@ -13,6 +15,7 @@ docker:
 		--progress=plain \
 		-t gosh-onboarding \
 		--build-arg GOSH_ENDPOINTS=$(GOSH_ENDPOINTS) \
+		--build-arg BRANCH=$(BRANCH) \
 		.
 
 .PHONY: fmt
