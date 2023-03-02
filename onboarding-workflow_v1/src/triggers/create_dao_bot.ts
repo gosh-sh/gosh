@@ -30,10 +30,10 @@ async function updateGithubs() {
             const [root, dao_name] = internal_url.split(`/`)
 
 
-            if (root !== SYSTEM_CONTRACT_ADDR) {
-                console.log("Wrong version skip it")
-                continue
-            }
+            // if (root !== SYSTEM_CONTRACT_ADDR) {
+            //     console.log("Wrong version skip it")
+            //     continue
+            // }
 
             if (dao_name !== 'goshtester12345') {
                 continue

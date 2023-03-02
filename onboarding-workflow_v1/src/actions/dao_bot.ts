@@ -18,7 +18,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
 
     if (dao_bot.dao_name !== 'goshtester12345') {
-        continue
+        return
     }
 
     const bot_profile_addr = await calculateProfileAddr(bot_name)
