@@ -4,6 +4,7 @@ import { emailOnboardingFinished } from '../actions/emails/onboarding_finished.t
 import {
     deployAloneDaoWallet,
     deployAloneDaoWallet_v2,
+    AloneMintDaoReserve,
     getAddrDao,
     isDaoMember,
     setAloneDaoConfig,
@@ -103,6 +104,7 @@ while (true) {
                   await setAloneDaoConfig(100, walletAddress, seed)
                   await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
                 } else {
+                  await AloneMintDaoReserve(100, walletAddress, seed)
                   await deployAloneDaoWallet_v2(userProfileAddress, walletAddress, seed, 100)
                 }
             }),
