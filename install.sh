@@ -35,6 +35,7 @@ GH_TAGS="$GH_REPO/releases/tags/$TAG"
 
 mkdir -p "$HOME"/.gosh
 echo git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[0]}" >"$HOME"/.gosh/dispatcher.ini
+echo git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[1]}" >"$HOME"/.gosh/dispatcher.ini
 
 # Download release
 echo ""
