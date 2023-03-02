@@ -61,6 +61,7 @@ chmod +x git-remote-gosh
 chmod +x git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[0]}"
 chmod +x git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[1]}"
 
+mv dispatcher.ini "$HOME"/.gosh/
 mv git-remote-gosh "$HOME"/.gosh/
 mv git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[0]}" "$HOME"/.gosh/
 mv git-remote-gosh_v"${SUPPORTED_CONTRACTS_VERSIONS[1]}" "$HOME"/.gosh/
