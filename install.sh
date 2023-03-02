@@ -4,7 +4,7 @@ set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
-RELEASE=rc-3.0.11
+RELEASE=rc-3.0.13
 
 # Check OS and architecture
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
