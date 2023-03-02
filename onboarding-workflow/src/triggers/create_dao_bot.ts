@@ -35,9 +35,9 @@ async function updateGithubs() {
                 continue
             }
 
-            if (dao_name !== 'goshtester12345') {
-                continue
-            }
+            // if (dao_name !== 'aspengera') {
+            //     continue
+            // }
 
             try {
                 const dao_bot = await getOrCreateDaoBot(dao_name)

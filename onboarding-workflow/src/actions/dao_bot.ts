@@ -17,9 +17,9 @@ export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
 
-    if (dao_bot.dao_name !== 'goshtester12345') {
-        continue
-    }
+    // if (dao_bot.dao_name !== 'aspengera') {
+    //     return
+    // }
 
     const bot_profile_addr = await calculateProfileAddr(bot_name)
     console.log(`DAO bot profile_addr = ${bot_profile_addr}`)

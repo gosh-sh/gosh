@@ -35,7 +35,7 @@ async function updateGithubs() {
             //     continue
             // }
 
-            if (dao_name !== 'goshtester12345') {
+            if (dao_name !== 'di42g') {
                 continue
             }
 
