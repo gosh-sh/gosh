@@ -3,6 +3,7 @@ import { getDb } from '../db/db.ts'
 import { emailOnboardingFinished } from '../actions/emails/onboarding_finished.ts'
 import {
     deployAloneDaoWallet,
+    deployAloneDaoWallet_v2,
     getAddrDao,
     isDaoMember,
     setAloneDaoConfig,
@@ -96,8 +97,14 @@ while (true) {
                     daoAddress,
                 )
                 console.log('Wallet address', walletAddress)
-                await setAloneDaoConfig(100, walletAddress, seed)
-                await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
+                const version = Deno.env.get('GOSH_VERSION') ?? ''
+                console.log('Version ', version)
+                if (version === '1.0.0') {
+                  await setAloneDaoConfig(100, walletAddress, seed)
+                  await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
+                } else {
+                  await deployAloneDaoWallet_v2(userProfileAddress, walletAddress, seed, 100)
+                }
             }),
         )
 

@@ -1,5 +1,6 @@
 import { GOSH_DAO_ABI, GOSH_WALLET_ABI } from './abi.ts'
 import { goshCli } from '../shortcuts.ts'
+import { GOSH_VERSION } from '../db/dao_bot'
 
 export async function getAddrRepository(
     repo_name: string,
@@ -39,7 +40,9 @@ export async function deployRepository(
     wallet_addr: string,
     seed: string,
 ): Promise<string> {
-    const { value0: profile_addr } = await goshCli(
+    const version = GOSH_VERSION
+    if (version === '1.0.0') {
+      const { value0: profile_addr } = await goshCli(
         'call',
         '--abi',
         GOSH_WALLET_ABI,
@@ -48,9 +51,26 @@ export async function deployRepository(
         seed,
         'deployRepository',
         JSON.stringify({
-            nameRepo: repo_name,
-            previous: null,
+          nameRepo: repo_name,
+          previous: null,
         }),
-    )
-    return profile_addr
+      )
+      return profile_addr
+    } else {
+      const { value0: profile_addr } = await goshCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneDeployRepository',
+        JSON.stringify({
+          nameRepo: repo_name,
+          descr: '',
+          previous: null,
+        }),
+      )
+      return profile_addr
+    }
 }

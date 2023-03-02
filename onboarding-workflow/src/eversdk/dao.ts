@@ -24,6 +24,7 @@ export async function deployDao(
     profile_addr: string,
     seed: string,
 ): Promise<unknown> {
+    // arguments not like in profile but in system contract
     return await goshCli(
         'call',
         '--abi',
@@ -108,5 +109,23 @@ export async function deployAloneDaoWallet(
         seed,
         'AloneDeployWalletDao',
         JSON.stringify({ pubaddr: profile_address }),
+    )
+}
+
+export async function deployAloneDaoWallet_v2(
+  profile_address: string,
+  wallet_addr: string,
+  seed: string,
+  tokens: number,
+): Promise<boolean> {
+    return await goshCli(
+      'call',
+      '--abi',
+      GOSH_WALLET_ABI,
+      wallet_addr,
+      '--sign',
+      seed,
+      'AloneDeployWalletDao',
+      JSON.stringify({ pubaddr: [ { member: profile_address, count: tokens} ] }),
     )
 }

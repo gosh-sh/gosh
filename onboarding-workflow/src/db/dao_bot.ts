@@ -3,12 +3,14 @@ import { Database } from './types.ts'
 import { generateEverWallet } from '../eversdk/tasks.ts'
 
 export type DaoBot = Database['public']['Tables']['dao_bot']['Row']
-
+export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 export async function createDaoBot(dao_name: string): Promise<DaoBot> {
+    const version = GOSH_VERSION
     const { data, error } = await getDb()
         .from('dao_bot')
         .insert({
             dao_name,
+            version,
             ...(await generateEverWallet()),
         })
         .select()
@@ -50,16 +52,32 @@ export async function getOrCreateDaoBot(dao_name: string): Promise<DaoBot> {
 }
 
 export async function getDaoBotsForInit() {
-    const { data, error } = await getDb()
-        .from('dao_bot')
-        .select()
-        .is('initialized_at', null)
-        .order('created_at', { ascending: false })
-    if (error) {
-        console.log(error)
-        throw new Error(error.message)
+    const version = GOSH_VERSION
+    if (version === '1.0.0') {
+        const { data, error } = await getDb()
+          .from('dao_bot')
+          .select()
+          .is('initialized_at', null)
+          .is('version', null)
+          .order('created_at', { ascending: false })
+        if (error) {
+            console.log(error)
+            throw new Error(error.message)
+        }
+        return data
+    } else {
+        const { data, error } = await getDb()
+          .from('dao_bot')
+          .select()
+          .is('initialized_at', null)
+          .eq('version', version)
+          .order('created_at', { ascending: false })
+        if (error) {
+            console.log(error)
+            throw new Error(error.message)
+        }
+        return data
     }
-    return data
 }
 
 export async function updateDaoBot(
