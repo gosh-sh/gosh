@@ -75,7 +75,7 @@ const DaoLayout = () => {
 
     useEffect(() => {
         const _checkUpgrades = async () => {
-            if (!isReady || !dao.details) {
+            if (!isReady || !dao.details || !dao.details.isAuthMember) {
                 return
             }
 
