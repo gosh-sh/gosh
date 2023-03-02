@@ -1,7 +1,7 @@
 import { DaoBot, updateDaoBot } from '../db/dao_bot.ts'
 import { getGithubsForClone, Github, updateGithubByDaoBot } from '../db/github.ts'
 import { hasAccess, isAccountActive } from '../eversdk/account.ts'
-import { deployDao, getAddrDao, isDaoMember, turnOnDao } from '../eversdk/dao.ts'
+import { deployDao, getAddrDao, isDaoMember, setRepoUpdated, turnOnDao } from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
 import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 import { countGitObjectsProducer } from '../queues/mod.ts'
@@ -11,6 +11,8 @@ import { getDb } from '../db/db.ts'
 import { emailOnboardingRename } from './emails/onboarding_rename.ts'
 import { getUserByIdOrFail } from '../db/auth/users.ts'
 import { isValidName } from '../utils/validate_name.ts'
+
+export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 
 export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
@@ -114,6 +116,10 @@ export async function initDaoBot(dao_bot: DaoBot) {
         }
         console.log(`About to wait for access ${wallet_addr}`)
         await waitForWalletAccess(wallet_addr, dao_bot.pubkey)
+    }
+
+    if (GOSH_VERSION !== '1.0.0') {
+        await setRepoUpdated(wallet_addr, dao_bot.seed)
     }
 
     console.log(`Wallet access granted for ${wallet_addr}`)

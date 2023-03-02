@@ -19,26 +19,45 @@ export async function getAddrDao(dao_name: string): Promise<string> {
     return value0
 }
 
-export async function deployDao(
-    dao_name: string,
-    profile_addr: string,
+export async function setRepoUpdated(
+    wallet_addr: string,
     seed: string,
 ): Promise<unknown> {
     // arguments not like in profile but in system contract
     return await goshCli(
         'call',
         '--abi',
-        PROFILE_ABI,
-        profile_addr,
+        GOSH_WALLET_ABI,
+        wallet_addr,
         '--sign',
         seed,
-        'deployDao',
+        'setRepoUpgraded',
         JSON.stringify({
-            systemcontract: SYSTEM_CONTRACT_ADDR,
-            name: dao_name,
-            pubmem: [profile_addr],
-            previous: null,
+            res: true
         }),
+    )
+}
+
+export async function deployDao(
+  dao_name: string,
+  profile_addr: string,
+  seed: string,
+): Promise<unknown> {
+    // arguments not like in profile but in system contract
+    return await goshCli(
+      'call',
+      '--abi',
+      PROFILE_ABI,
+      profile_addr,
+      '--sign',
+      seed,
+      'deployDao',
+      JSON.stringify({
+          systemcontract: SYSTEM_CONTRACT_ADDR,
+          name: dao_name,
+          pubmem: [profile_addr],
+          previous: null,
+      }),
     )
 }
 
