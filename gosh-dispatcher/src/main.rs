@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use std::process::{ExitStatus, Stdio};
+use std::process::{exit, ExitStatus, Stdio};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
 
@@ -34,7 +34,22 @@ async fn main() -> anyhow::Result<()> {
     set_up_logger();
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     eprintln!("Dispatcher git-remote-gosh v{version}");
-
+    let mut args = std::env::args().collect::<Vec<String>>();
+    if args.len() > 1 && args[1] == "dispatcher_ini" {
+        let ini_path = get_ini_path();
+        let path = Path::new(&ini_path);
+        if path.is_absolute() {
+            println!("GOSH dispatcher ini path: {}", ini_path);
+        } else {
+            let mut abs_path = std::env::current_exe()?;
+            abs_path.pop();
+            abs_path.push(path);
+            println!("GOSH dispatcher ini path: {}", abs_path.to_str().unwrap());
+        }
+        let possible_versions = load_remote_versions_from_ini()?;
+        println!("Remote versions:\n{:#?}", possible_versions);
+        exit(0);
+    }
     let possible_versions = load_remote_versions_from_ini()?;
     let mut existing_to_supported_map = HashMap::new();
     for helper_path in possible_versions {
@@ -47,7 +62,6 @@ async fn main() -> anyhow::Result<()> {
         return Err(format_err!("No git-remote-gosh versions were found. Download git-remote-gosh binary and add path to it to ini file"));
     }
 
-    let mut args = std::env::args().collect::<Vec<String>>();
     // zero arg is always current binary path, we don't need it
     args.remove(0);
 
@@ -208,7 +222,7 @@ async fn run_binary_with_command(
     Ok((helper.wait().await, result, helper_path))
 }
 
-fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
+fn get_ini_path() -> String {
     let path_str = std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| {
         if Path::new(&shellexpand::tilde(INI_LOCATION).to_string()).exists() {
             INI_LOCATION.to_string()
@@ -216,8 +230,13 @@ fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
             SHIPPING_INI_PATH.to_string()
         }
     });
-    let path_str = shellexpand::tilde(&path_str).into_owned();
-    let path = Path::new(&path_str);
+    shellexpand::tilde(&path_str).into_owned()
+
+}
+
+fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
+    let path_str = get_ini_path();
+    let path = Path::new(&path_str).to_owned();
     let file = File::open(path)
         .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", path_str, e))?;
     let buf = std::io::BufReader::new(file);
