@@ -56,81 +56,79 @@ while (true) {
             return repos.every(({ updated_at }) => !!updated_at)
         })
 
-    // Made intentional to deploy one use manual and upgrade
-
     // Iterate ready for onboarding data
-    // console.log('Ready', ready_users)
-    // for (const user of ready_users) {
-    //     if (!user.auth_user) {
-    //         console.log(`Auth user for user ${user.id} does not exist`)
-    //         continue
-    //     }
-    //
-    //     // Collect unique DAOs for user
-    //     const github = Array.isArray(user.github) ? user.github : [user.github]
-    //     const daos: any[] = []
-    //     for (const repo of github) {
-    //         const bots = Array.isArray(repo!.dao_bot) ? repo!.dao_bot : [repo!.dao_bot]
-    //         for (const bot of bots) {
-    //             const index = daos.findIndex(({ dao_name }) => dao_name === bot!.dao_name)
-    //             if (index < 0) {
-    //                 daos.push(bot)
-    //             }
-    //         }
-    //     }
-    //     console.log('DAOs', daos)
-    //
-    //     // Get user profile address
-    //     const userProfileAddress = await calculateProfileAddr(user.gosh_username)
-    //     console.log('User profile address', userProfileAddress)
-    //
-    //     // Check if user is not a DAO member, add user to DAO
-    //     await Promise.all(
-    //         daos.map(async ({ dao_name, profile_gosh_address, seed }) => {
-    //             const daoAddress = await getAddrDao(dao_name)
-    //             console.log('DAO', dao_name, 'address', daoAddress)
-    //             const isMember = await isDaoMember(daoAddress, userProfileAddress)
-    //             console.log('User is DAO member', isMember)
-    //             if (isMember) {
-    //                 return
-    //             }
-    //
-    //             const walletAddress = await getAddrWallet(
-    //                 profile_gosh_address,
-    //                 daoAddress,
-    //             )
-    //             console.log('Wallet address', walletAddress)
-    //             const version = Deno.env.get('GOSH_VERSION') ?? ''
-    //             console.log('Version ', version)
-    //             if (version === '1.0.0') {
-    //               await setAloneDaoConfig(100, walletAddress, seed)
-    //               await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
-    //             } else {
-    //               await AloneMintDaoReserve(100, walletAddress, seed)
-    //               await deployAloneDaoWallet_v2(userProfileAddress, walletAddress, seed, 100)
-    //             }
-    //         }),
-    //     )
-    //
-    //     // Send onboarding message
-    //     const { data: authUser, error: authUserError } =
-    //         await getDb().auth.admin.getUserById(user.auth_user)
-    //     if (authUserError) {
-    //         throw new Error(authUserError.message)
-    //     }
-    //
-    //     await emailOnboardingFinished(authUser.user)
-    //
-    //     const { error } = await getDb()
-    //         .from('users')
-    //         .update({
-    //             onboarded_at: new Date().toISOString(),
-    //         })
-    //         .eq('id', user.id)
-    //     if (!error) {
-    //         console.log('User onboarding finished', user)
-    //     }
-    // }
+    console.log('Ready', ready_users)
+    for (const user of ready_users) {
+        if (!user.auth_user) {
+            console.log(`Auth user for user ${user.id} does not exist`)
+            continue
+        }
+
+        // Collect unique DAOs for user
+        const github = Array.isArray(user.github) ? user.github : [user.github]
+        const daos: any[] = []
+        for (const repo of github) {
+            const bots = Array.isArray(repo!.dao_bot) ? repo!.dao_bot : [repo!.dao_bot]
+            for (const bot of bots) {
+                const index = daos.findIndex(({ dao_name }) => dao_name === bot!.dao_name)
+                if (index < 0) {
+                    daos.push(bot)
+                }
+            }
+        }
+        console.log('DAOs', daos)
+
+        // Get user profile address
+        const userProfileAddress = await calculateProfileAddr(user.gosh_username)
+        console.log('User profile address', userProfileAddress)
+
+        // Check if user is not a DAO member, add user to DAO
+        await Promise.all(
+            daos.map(async ({ dao_name, profile_gosh_address, seed }) => {
+                const daoAddress = await getAddrDao(dao_name)
+                console.log('DAO', dao_name, 'address', daoAddress)
+                const isMember = await isDaoMember(daoAddress, userProfileAddress)
+                console.log('User is DAO member', isMember)
+                if (isMember) {
+                    return
+                }
+
+                const walletAddress = await getAddrWallet(
+                    profile_gosh_address,
+                    daoAddress,
+                )
+                console.log('Wallet address', walletAddress)
+                const version = Deno.env.get('GOSH_VERSION') ?? ''
+                console.log('Version ', version)
+                if (version === '1.0.0') {
+                  await setAloneDaoConfig(100, walletAddress, seed)
+                  await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
+                } else {
+                  await AloneMintDaoReserve(100, walletAddress, seed)
+                  await deployAloneDaoWallet_v2(userProfileAddress, walletAddress, seed, 100)
+                }
+            }),
+        )
+
+        // Send onboarding message
+        const { data: authUser, error: authUserError } =
+            await getDb().auth.admin.getUserById(user.auth_user)
+        if (authUserError) {
+            throw new Error(authUserError.message)
+        }
+
+        await emailOnboardingFinished(authUser.user)
+
+        const { error } = await getDb()
+            .from('users')
+            .update({
+                onboarded_at: new Date().toISOString(),
+            })
+            .eq('id', user.id)
+        if (!error) {
+            console.log('User onboarding finished', user)
+        }
+    }
 
     console.log('Sleep...')
     await sleep(30)

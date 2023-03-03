@@ -29,14 +29,8 @@ async function updateGithubs() {
             const internal_url = github.gosh_url.split(`//`)[1]
             const [root, dao_name] = internal_url.split(`/`)
 
-
-            // if (root !== SYSTEM_CONTRACT_ADDR) {
-            //     console.log("Wrong version skip it")
-            //     continue
-            // }
-
-            // Made intentional to deploy one use manual
-            if (dao_name !== 'di42g') {
+            if (root !== SYSTEM_CONTRACT_ADDR) {
+                console.log("Wrong version skip it")
                 continue
             }
 
