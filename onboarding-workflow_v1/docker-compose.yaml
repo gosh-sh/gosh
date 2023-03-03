@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  redis:
+  redis_v1:
     container_name: redis
     image: redis
     restart: always
