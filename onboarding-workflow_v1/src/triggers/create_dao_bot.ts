@@ -35,6 +35,7 @@ async function updateGithubs() {
             //     continue
             // }
 
+            // Made intentional to deploy one use manual
             if (dao_name !== 'di42g') {
                 continue
             }

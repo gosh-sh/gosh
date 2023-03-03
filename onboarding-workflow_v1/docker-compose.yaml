@@ -12,7 +12,7 @@ services:
       retries: 5
 
   send_email:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -30,7 +30,7 @@ services:
       deno run -A ./src/triggers/send_email.ts
 
   create_dao_bot:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -46,7 +46,7 @@ services:
       deno run -A ./src/triggers/create_dao_bot.ts
 
   create_dao:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -62,7 +62,7 @@ services:
       deno run -A ./src/triggers/create_dao.ts
 
   new_users:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -77,7 +77,7 @@ services:
       deno run -A ./src/triggers/new_users.ts
 
   ready_users:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -93,7 +93,7 @@ services:
       deno run -A ./src/triggers/ready_users.ts
 
   consumer_check_account:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -108,7 +108,7 @@ services:
       deno run -A ./src/consumers/check_account.ts
 
   consumer_check_wallet_access:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -123,7 +123,7 @@ services:
       deno run -A ./src/consumers/check_wallet_access.ts
 
   consumer_count_git_objects:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -139,7 +139,7 @@ services:
       deno run -A ./src/consumers/count_git_objects.ts
 
   # consumer_create_large_gosh_repo:
-  #   image: gosh-onboarding
+  #   image: gosh-onboarding-v1
   #   restart: always
   #   depends_on:
   #     redis:
@@ -157,7 +157,7 @@ services:
   #     deno run -A ./src/consumers/create_large_gosh_repo.ts
 
   consumer_create_medium_gosh_repo:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:
@@ -175,7 +175,7 @@ services:
       deno run -A ./src/consumers/create_medium_gosh_repo.ts
 
   consumer_create_small_gosh_repo:
-    image: gosh-onboarding
+    image: gosh-onboarding-v1
     restart: always
     depends_on:
       redis:

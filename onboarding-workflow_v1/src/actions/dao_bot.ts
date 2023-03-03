@@ -17,6 +17,7 @@ export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 export async function initDaoBot(dao_bot: DaoBot) {
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
 
+    // Made intentional to deploy one use manual
     if (dao_bot.dao_name !== 'di42g') {
         return
     }

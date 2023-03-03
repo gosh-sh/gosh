@@ -13,7 +13,7 @@ docker:
 	if [ -z "$(GOSH_ENDPOINTS)" ]; then echo GOSH_ENDPOINTS required; exit 1; fi
 	docker buildx build \
 		--progress=plain \
-		-t gosh-onboarding \
+		-t gosh-onboarding-v1 \
 		--build-arg GOSH_ENDPOINTS=$(GOSH_ENDPOINTS) \
 		--build-arg BRANCH=$(BRANCH) \
 		.

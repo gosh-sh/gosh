@@ -34,7 +34,7 @@ async function updateGithubs() {
                 console.log("Wrong version skip it")
                 continue
             }
-
+            // Made intentional to deploy one use manual
             // if (dao_name !== 'aspengera') {
             //     continue
             // }

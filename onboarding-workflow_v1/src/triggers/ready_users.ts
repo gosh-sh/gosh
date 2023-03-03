@@ -56,6 +56,8 @@ while (true) {
             return repos.every(({ updated_at }) => !!updated_at)
         })
 
+    // Made intentional to deploy one use manual and upgrade
+
     // Iterate ready for onboarding data
     // console.log('Ready', ready_users)
     // for (const user of ready_users) {
