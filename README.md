@@ -6,5 +6,5 @@ Smart-contracts deployment instructions - [contracts/README.md](contracts/README
 
 Installation
 ```
-wget -O - https://raw.githubusercontent.com/gosh-sh/gosh/dispatcher/install.sh | bash -s
+wget -O - https://raw.githubusercontent.com/gosh-sh/gosh/dev/install.sh | bash -s
 ```
