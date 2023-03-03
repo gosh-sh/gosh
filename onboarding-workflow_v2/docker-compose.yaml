@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  redis_v2:
-    container_name: redis
+  redis-v2:
+    container_name: redis-v2
     image: redis
     restart: always
     healthcheck:
@@ -15,12 +15,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
@@ -33,14 +33,14 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       GOSH_VERSION: ${GOSH_VERSION}
     command: >
       deno run -A ./src/triggers/create_dao_bot.ts
@@ -49,12 +49,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -65,12 +65,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
@@ -80,12 +80,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -96,12 +96,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
@@ -111,12 +111,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
@@ -126,12 +126,12 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -142,14 +142,14 @@ services:
      image: gosh-onboarding
      restart: always
      depends_on:
-       redis:
+       redis-v2:
          condition: service_healthy
      volumes:
        - './logs:/tmp/logs'
      environment:
        SUPABASE_URL: ${SUPABASE_URL}
        SUPABASE_KEY: ${SUPABASE_KEY}
-       REDIS_URL: redis://redis:6379
+       REDIS_URL: redis://redis-v2:6379
        SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
        GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
        GOSH_VERSION: ${GOSH_VERSION}
@@ -160,14 +160,14 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     volumes:
       - './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -178,14 +178,14 @@ services:
     image: gosh-onboarding
     restart: always
     depends_on:
-      redis:
+      redis-v2:
         condition: service_healthy
     volumes:
       - './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://redis-v2:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
