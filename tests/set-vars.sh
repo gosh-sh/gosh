@@ -4,20 +4,23 @@ set -e
 set -o pipefail
 . ./util.sh
 
-# Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <network_name>
+# Default network | But it cane be also provided by arguemnt like this ./set-vars.sh <version> <network_name>
 DEFAULT_NETWORK=localhost
 
-GOSH_PATH=../v2_x/contracts/gosh
+# $1 = VERSION (v1_x, v2_x)
 
-if [ -z "$1" ]
+GOSH_PATH=../$1/contracts/gosh
+
+if [ -z "$2" ]
   then
     export NETWORK=$DEFAULT_NETWORK
 else
-    export NETWORK=$1
+    export NETWORK=$2
 fi
 TEST_INDEX="${TEST_INDEX:-$(date +%s)}"
 echo "TEST INDEX $TEST_INDEX"
 echo "export NETWORK=$NETWORK" > env.env
+echo "export VERSION=$1" >> env.env
 
 tonos-cli config --url $NETWORK
 set -x

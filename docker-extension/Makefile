@@ -51,7 +51,6 @@ prepare-builder: ## prepare docker buildx builder
 
 build: clean_temp prepare-builder build-ui-v2
 	mkdir -p $(LOCAL_TEMP_DIR)/gosh
-	cp -r ../contracts/v2.0.0/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	cp -r ../install.sh $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
@@ -71,7 +70,6 @@ build: clean_temp prepare-builder build-ui-v2
 
 push: clean_temp prepare-builder build-ui-v2
 	mkdir -p $(LOCAL_TEMP_DIR)/gosh
-	cp -r ../contracts/v2.0.0/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
 	cp -r ../install.sh $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
@@ -87,7 +85,7 @@ push: clean_temp prepare-builder build-ui-v2
 
 build-debug: clean_temp prepare-builder build-ui-v2 ## Install the extension
 	-mkdir $(LOCAL_TEMP_DIR)/gosh
-	cp -r ../contracts/v2.0.0/gosh/*.abi.json $(LOCAL_TEMP_DIR)/gosh/
+	cp -r ../install.sh $(LOCAL_TEMP_DIR)/gosh/
 	${DOCKER_BUILDX} \
 	  --tag=$(IMAGE):$(TAG) \
 	  ${DOCKER_BUILDX_ARGS} \
