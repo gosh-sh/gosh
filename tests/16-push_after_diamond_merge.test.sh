@@ -11,8 +11,7 @@ CHECK_REPO_PATH="$REPO_NAME""_check"
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
 [ -d $CHECK_REPO_PATH ] && rm -rf $CHECK_REPO_PATH
 
-tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
+deploy_repo
 REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"

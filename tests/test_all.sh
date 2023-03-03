@@ -13,7 +13,9 @@ set -o pipefail
 #  ./node_se_scripts/deploy.sh
 #fi
 
-. set-vars.sh
+# $1 = VERSION (v1_x, v2_x)
+
+. set-vars.sh $1 $2
 #. build_remote.sh
 ./01-clone_empty_repo.test.sh
 ./02-create_branch.test.sh

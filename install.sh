@@ -4,7 +4,7 @@ set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
-RELEASE=rc-3.0.12
+RELEASE=rc-3.0.13
 # TODO: get it from one source with binary
 SUPPORTED_CONTRACTS_VERSIONS=("2_0_0" "1_0_0")
 
