@@ -82,6 +82,7 @@ type TDiff = {
 }
 
 type TPushProgress = {
+    isUpgrade?: boolean
     treesBuild?: boolean
     treesDeploy?: { count?: number; total?: number }
     snapsDeploy?: { count?: number; total?: number }

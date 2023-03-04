@@ -316,7 +316,7 @@ function useBranches(repo?: IGoshRepositoryAdapter, current: string = 'main') {
 function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const setRepository = useSetRecoilState(repositoryAtom)
     const { updateBranches } = useBranches(repo)
-    const { pushUpgrade } = usePush(dao, repo)
+    const { pushUpgrade, progress: pushProgress } = usePush(dao, repo)
     const [progress, setProgress] = useState<{
         name?: string
         type?: 'create' | 'destroy' | '(un)lock' | 'sethead'
@@ -417,7 +417,7 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
         })
     }
 
-    return { create, destroy, lock, unlock, sethead, progress }
+    return { create, destroy, lock, unlock, sethead, progress, pushProgress }
 }
 
 function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string) {
@@ -762,7 +762,9 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
 
             const upgradeData = await repoOld.getUpgrade(commit)
             upgradeData.commit.branch = branch // Force branch name
-            await repo.pushUpgrade(upgradeData)
+            await repo.pushUpgrade(upgradeData, { callback: pushCallback })
+        } else {
+            pushCallback({ completed: true })
         }
     }
 
