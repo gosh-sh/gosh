@@ -1,15 +1,15 @@
-import React from 'react'
 import Editor from '@monaco-editor/react'
 
 type TEditorPanelProps = {
     language?: string
     value?: string
     className?: string
+    disabled?: boolean
     onChange?(value: string | undefined): void
 }
 
 const BlobEditor = (props: TEditorPanelProps) => {
-    const { className, onChange, ...rest } = props
+    const { className, disabled, ...rest } = props
 
     return (
         <Editor
@@ -17,7 +17,9 @@ const BlobEditor = (props: TEditorPanelProps) => {
             wrapperProps={{
                 className,
             }}
-            onChange={onChange}
+            options={{
+                readOnly: disabled,
+            }}
             {...rest}
         />
     )

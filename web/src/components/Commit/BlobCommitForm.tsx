@@ -245,6 +245,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                         <BlobEditor
                                             language={codeLanguage}
                                             value={values.content}
+                                            disabled={isSubmitting}
                                             onChange={(value) => {
                                                 setFieldValue('content', value)
                                             }}
