@@ -1,6 +1,19 @@
+import { debounce } from 'lodash'
 import { GoshAdapterFactory } from 'react-gosh'
 import * as yup from 'yup'
 import { AnyObject, Maybe } from 'yup/lib/types'
+
+const _debounceDaoExists = debounce(async (value, resolve) => {
+    try {
+        const gosh = GoshAdapterFactory.createLatest()
+        const profile = await gosh.getDaoProfile({ name: value })
+        const exists = await profile.isDeployed()
+        resolve(!exists)
+    } catch (e: any) {
+        console.error(e.message)
+        resolve(false)
+    }
+}, 500)
 
 yup.addMethod<yup.StringSchema>(yup.string, 'username', function () {
     return this.test('test-username', 'Invalid username', function (value) {
@@ -28,6 +41,15 @@ yup.addMethod<yup.StringSchema>(yup.string, 'daoname', function () {
     })
 })
 
+yup.addMethod<yup.StringSchema>(yup.string, 'daoexists', function () {
+    return this.test('test-daoexists', 'DAO name is already taken', async (value) => {
+        if (!value) {
+            return true
+        }
+        return new Promise((resolve) => _debounceDaoExists(value, resolve))
+    })
+})
+
 yup.addMethod<yup.StringSchema>(yup.string, 'reponame', function () {
     return this.test('test-reponame', 'Invalid repository name', function (value) {
         if (!value) {
@@ -49,6 +71,7 @@ declare module 'yup' {
     > extends yup.BaseSchema<TType, TContext, TOut> {
         username(): StringSchema<TType, TContext>
         daoname(): StringSchema<TType, TContext>
+        daoexists(): StringSchema<TType, TContext>
         reponame(): StringSchema<TType, TContext>
     }
 }

@@ -99,6 +99,7 @@ interface IGoshAdapter {
         address?: TAddress
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter>
+    getDaoProfile(options: { name?: string; address?: string }): Promise<IGoshProfileDao>
     /**
      * Does not support repository authentication.
      * Good for use to get read-only repository.
