@@ -48,7 +48,7 @@ pipeline {
                 }
             }
         }
-        stage('Build: Dispatcher') {
+        /*stage('Build: Dispatcher') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -78,7 +78,7 @@ pipeline {
             steps {
                 archiveAzureArtifacts()
             }
-        }
+        }*/
 
         stage('Deploy: Clone v1 to test upgrades') {
             agent {
@@ -88,7 +88,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'cp -r v1_x v1_x_clone'
+                sh 'cp -r v1_x v1_x_clone && ls'
             }
         }
 
