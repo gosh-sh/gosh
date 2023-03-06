@@ -146,16 +146,7 @@ const App = () => {
             <Header />
             <main id="main" className="grow">
                 <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            process.env.REACT_APP_ISDOCKEREXT === 'true' ? (
-                                <SigninPage />
-                            ) : (
-                                <Navigate to="onboarding" replace />
-                            )
-                        }
-                    />
+                    <Route path="/" element={<Navigate to="onboarding" replace />} />
                     <Route path="/containers" element={<ProtectedLayout />}>
                         <Route index element={<Containers />} />
                     </Route>

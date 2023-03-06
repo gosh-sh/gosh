@@ -96,6 +96,7 @@ import {
     IGoshSmvLocker,
     IGoshSmvProposal,
     IGoshHelperTag,
+    IGoshProfileDao,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -134,6 +135,7 @@ import { GoshContentSignature } from './goshcontentsignature'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
 import { GoshSmvClient } from './goshsmvclient'
+import { GoshProfileDao } from '../goshprofiledao'
 
 class GoshAdapter_1_0_0 implements IGoshAdapter {
     private static instance: GoshAdapter_1_0_0
@@ -244,6 +246,29 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
             await adapter.setAuth(this.auth.username, this.auth.keys)
         }
         return adapter
+    }
+
+    async getDaoProfile(options: {
+        name?: string
+        address?: string
+    }): Promise<IGoshProfileDao> {
+        const { name, address } = options
+        if (address) {
+            return new GoshProfileDao(this.client, address)
+        }
+
+        if (!name) {
+            throw new GoshError('DAO name is not provided')
+        }
+        const { value0 } = await this.gosh.runLocal(
+            'getProfileDaoAddr',
+            {
+                name: name.trim().toLowerCase(),
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return new GoshProfileDao(this.client, value0)
     }
 
     async getRepository(options: {

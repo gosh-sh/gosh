@@ -100,6 +100,7 @@ import {
     IGoshTask,
     IGoshHelperTag,
     IGoshTopic,
+    IGoshProfileDao,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -143,6 +144,7 @@ import { GoshTask } from './goshtask'
 import { GoshHelperTag } from './goshhelpertag'
 import { GoshTopic } from './goshtopic'
 import { GoshAdapterFactory } from '../factories'
+import { GoshProfileDao } from '../goshprofiledao'
 
 class GoshAdapter_2_0_0 implements IGoshAdapter {
     private static instance: GoshAdapter_2_0_0
@@ -263,6 +265,29 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
             await adapter.setAuth(this.auth.username, this.auth.keys)
         }
         return adapter
+    }
+
+    async getDaoProfile(options: {
+        name?: string
+        address?: string
+    }): Promise<IGoshProfileDao> {
+        const { name, address } = options
+        if (address) {
+            return new GoshProfileDao(this.client, address)
+        }
+
+        if (!name) {
+            throw new GoshError('DAO name is not provided')
+        }
+        const { value0 } = await this.gosh.runLocal(
+            'getProfileDaoAddr',
+            {
+                name: name.trim().toLowerCase(),
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return new GoshProfileDao(this.client, value0)
     }
 
     async getRepository(options: {
@@ -2466,11 +2491,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get updated tree
         const updatedTree = await this._getTreePushData(items, blobsData)
         cb({
+            isUpgrade: false,
             treesBuild: true,
             treesDeploy: { count: 0, total: updatedTree.updated.length },
             snapsDeploy: { count: 0, total: blobsData.length },
             diffsDeploy: { count: 0, total: blobsData.length },
             tagsDeploy: { count: 0, total: taglist.length },
+            commitDeploy: undefined,
+            completed: undefined,
         })
 
         // Generate commit data
@@ -2545,12 +2573,30 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         cb({ completed: true })
     }
 
-    async pushUpgrade(data: TUpgradeData): Promise<void> {
+    async pushUpgrade(
+        data: TUpgradeData,
+        options: { callback?: IPushCallback },
+    ): Promise<void> {
         const { blobs, commit, tree } = data
+        const { callback } = options
+        const cb: IPushCallback = (params) => callback && callback(params)
+
+        cb({
+            isUpgrade: true,
+            treesBuild: true,
+            treesDeploy: { count: 0, total: Object.keys(tree).length },
+            snapsDeploy: { count: 0, total: blobs.length },
+            diffsDeploy: { count: 0, total: 0 },
+            tagsDeploy: { count: 0, total: 0 },
+            commitDeploy: undefined,
+            completed: undefined,
+        })
 
         // Deploy trees
+        let treeCounter = 0
         await this._runMultiwallet(Object.keys(tree), async (wallet, path) => {
             await this._deployTree(tree[path], wallet)
+            cb({ treesDeploy: { count: ++treeCounter } })
         })
 
         // Deploy commit
@@ -2562,8 +2608,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit.tree,
             true,
         )
+        cb({ commitDeploy: true })
 
         // Deploy snapshots
+        let snapCounter = 0
         await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
             await this._deploySnapshot(
                 commit.branch,
@@ -2572,6 +2620,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 content,
                 wallet,
             )
+            cb({ snapsDeploy: { count: ++snapCounter } })
         })
 
         // Set commit
@@ -2583,6 +2632,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!wait) {
             throw new GoshError('Push upgrade timeout reached')
         }
+        cb({ completed: true })
     }
 
     async createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void> {

@@ -60,7 +60,7 @@ const DaoRequestMembershipModal = (props: TDaoRequestMembershipModalProps) => {
                 <Formik initialValues={{ comment: '' }} onSubmit={onSubmit}>
                     {({ isSubmitting }) => (
                         <Form>
-                            <div className="mt-8">
+                            <div>
                                 <Field
                                     name="comment"
                                     component={FormikTextarea}

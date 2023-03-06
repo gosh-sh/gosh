@@ -100,7 +100,7 @@ const DaosPage = () => {
 
             <div>
                 <div className="text-xl font-medium border-b border-b-gray-e6edff pb-2 mb-4">
-                    GOSH organizations
+                    Your organizations
                 </div>
 
                 {isFetching && <Loader>Loading organizations...</Loader>}

@@ -54,7 +54,9 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     }
 
     const getOrganizations = useCallback(async () => {
-        if (!octokit || !session) return
+        if (!octokit || !session) {
+            return
+        }
 
         setOrganizations((state) => ({ ...state, isFetching: true }))
         try {
@@ -82,12 +84,17 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
             ]
             setOrganizations((state) => ({
                 ...state,
-                items: combined.map((item: any) => {
+                items: combined.map((item: any, index: number) => {
+                    const isOpen = index === 0
                     const found = state.items.find((i) => i.id === item.id)
                     if (found) {
-                        return { ...found, ...item }
+                        return { ...found, ...item, isOpen }
                     }
-                    return { ...item, repositories: { items: [], isFetching: false } }
+                    return {
+                        ...item,
+                        repositories: { items: [], isFetching: false },
+                        isOpen,
+                    }
                 }),
                 isFetching: false,
             }))
@@ -102,7 +109,9 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         getOrganizations()
     }, [])
 
-    if (!session) return null
+    if (!session) {
+        return null
+    }
     return (
         <div className="signup signup--organizations">
             <div className="signup__aside signup__aside--step aside-step">

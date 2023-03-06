@@ -35,16 +35,38 @@ const onExternalLinkClick = (e: any, url: string) => {
     AppConfig.dockerclient.host.openExternal(url)
 }
 
-const singinOAuthSupabase = async (provider: Provider, redirectTo: string) => {
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-            redirectTo,
-            scopes: 'read:user read:org',
-        },
-    })
-    if (error) {
-        throw new GoshError(error.message)
+const singinOAuthSupabase = async (provider: Provider) => {
+    const scopes = 'read:user read:org'
+
+    if (AppConfig.dockerclient) {
+        const nounce = Date.now()
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: {
+                redirectTo: `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
+                scopes,
+                skipBrowserRedirect: true,
+            },
+        })
+        if (error) {
+            throw new GoshError(error.message)
+        }
+
+        console.log('data url', data.url)
+
+        AppConfig.dockerclient.host.openExternal(data.url!)
+    } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: {
+                redirectTo: document.location.href,
+                scopes,
+            },
+        })
+        if (error) {
+            throw new GoshError(error.message)
+        }
     }
 }
 

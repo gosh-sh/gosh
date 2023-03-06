@@ -219,7 +219,9 @@ const GoshUsername = (props: TGoshUsernameProps) => {
 
                     <Formik
                         initialValues={{
-                            username: session?.user.user_metadata.user_name,
+                            username: (
+                                session?.user.user_metadata.user_name || ''
+                            ).toLowerCase(),
                             isConfirmed: false,
                         }}
                         onSubmit={onFormSubmit}

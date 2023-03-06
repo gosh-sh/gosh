@@ -3,6 +3,7 @@ import { UILog, UILogItem } from '../../components/UILog'
 
 const CommitProgress = (props: TPushProgress) => {
     const {
+        isUpgrade,
         treesBuild,
         treesDeploy,
         snapsDeploy,
@@ -16,7 +17,9 @@ const CommitProgress = (props: TPushProgress) => {
         count?: number
         total?: number
     }): boolean | undefined => {
-        if (!counter) return undefined
+        if (!counter) {
+            return undefined
+        }
 
         const { count = 0, total = 0 } = counter
         return count === total ? true : undefined
@@ -24,6 +27,10 @@ const CommitProgress = (props: TPushProgress) => {
 
     return (
         <UILog>
+            <div>
+                {isUpgrade === true && '[Pushing upgrade commit]'}
+                {isUpgrade === false && '[Pushing common commit]'}
+            </div>
             <UILogItem result={treesBuild}>Build updated tree...</UILogItem>
             <UILogItem result={getCountersFlag(snapsDeploy)}>
                 Deploy snapshots... ({snapsDeploy?.count}/{snapsDeploy?.total})

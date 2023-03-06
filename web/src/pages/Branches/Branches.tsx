@@ -19,6 +19,7 @@ import { TBranch } from 'react-gosh/dist/types/repo.types'
 import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
 import yup from '../../yup-extended'
 import { Button, Input } from '../../components/Form'
+import CommitProgress from '../../components/Commit/CommitProgress'
 
 type TCreateBranchFormValues = {
     newName: string
@@ -41,6 +42,7 @@ export const BranchesPage = () => {
         unlock: unlockBranch,
         sethead: setheadBranch,
         progress: branchProgress,
+        pushProgress,
     } = useBranchManagement(dao.details, repository.adapter)
     const [search, setSearch] = useState<string>('')
     const [filtered, setFiltered] = useState<TBranch[]>(branches)
@@ -199,10 +201,14 @@ export const BranchesPage = () => {
 
             {branchProgress.isFetching && branchProgress.type === 'create' && (
                 <div className="mt-4">
-                    <BranchOperateProgress
-                        operation="Deploy"
-                        progress={branchProgress.details}
-                    />
+                    {!pushProgress.completed ? (
+                        <CommitProgress {...pushProgress} />
+                    ) : (
+                        <BranchOperateProgress
+                            operation="Deploy"
+                            progress={branchProgress.details}
+                        />
+                    )}
                 </div>
             )}
 
