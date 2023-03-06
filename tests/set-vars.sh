@@ -26,7 +26,7 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-if [[ "$1" != "v1_x" && "$1" != "v2_x" && "$1" != "v1_x_clone"]]; then
+if [[ "$1" != "v1_x" && "$1" != "v2_x" && "$1" != "v1_x_clone" ]]; then
   echo "Error: First argument must be either 'v1_x' or 'v2_x'"
   exit 1
 fi
