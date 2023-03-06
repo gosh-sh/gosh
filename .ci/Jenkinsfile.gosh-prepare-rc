@@ -48,7 +48,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Build: Dispatcher') {
+        stage('Build: Dispatcher') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -78,7 +78,7 @@ pipeline {
             steps {
                 archiveAzureArtifacts()
             }
-        }*/
+        }
 
         stage('Deploy: deploy smart-contracts') {
             parallel {
