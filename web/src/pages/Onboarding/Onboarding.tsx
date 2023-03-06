@@ -23,7 +23,7 @@ const OnboardingPage = () => {
 
     const signinOAuth = async () => {
         try {
-            await singinOAuthSupabase('github', document.location.href)
+            await singinOAuthSupabase('github')
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
