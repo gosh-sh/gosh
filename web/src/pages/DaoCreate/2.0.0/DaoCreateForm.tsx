@@ -60,7 +60,11 @@ const DaoCreateForm = () => {
                     }}
                     onSubmit={onDaoCreate}
                     validationSchema={yup.object().shape({
-                        name: yup.string().daoname().required('Name is required'),
+                        name: yup
+                            .string()
+                            .daoname()
+                            .daoexists()
+                            .required('Name is required'),
                         tags: yup
                             .string()
                             .test(

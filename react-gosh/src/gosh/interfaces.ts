@@ -99,6 +99,7 @@ interface IGoshAdapter {
         address?: TAddress
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter>
+    getDaoProfile(options: { name?: string; address?: string }): Promise<IGoshProfileDao>
     /**
      * Does not support repository authentication.
      * Good for use to get read-only repository.
@@ -291,7 +292,7 @@ interface IGoshRepositoryAdapter {
             callback?: IPushCallback
         },
     ): Promise<void>
-    pushUpgrade(data: TUpgradeData): Promise<void>
+    pushUpgrade(data: TUpgradeData, options: { callback?: IPushCallback }): Promise<void>
     createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void>
 
     deployContentSignature(

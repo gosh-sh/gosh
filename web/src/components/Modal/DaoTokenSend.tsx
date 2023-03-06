@@ -78,7 +78,7 @@ const DaoTokenSendModal = (props: TDaoTokenSendModalProps) => {
                 </button>
             </div>
             <Dialog.Title className="mb-8 text-3xl text-center font-medium">
-                Send tokens from DAO
+                Send DAO tokens
             </Dialog.Title>
 
             <div>
@@ -126,7 +126,7 @@ const DaoTokenSendModal = (props: TDaoTokenSendModalProps) => {
                                     component={FormikCheckbox}
                                     disabled={isSubmitting}
                                     inputProps={{
-                                        label: `Increase member allowance by ${
+                                        label: `Increase member Voting allowance by ${
                                             parseInt(values.amount) || ''
                                         }`,
                                     }}

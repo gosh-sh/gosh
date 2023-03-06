@@ -14,7 +14,7 @@ import {
     TCommitTag,
 } from 'react-gosh'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import ToastError from '../../components/Error/ToastError'
 import { Button, Checkbox } from '../../components/Form'
@@ -240,6 +240,9 @@ const ReposUpgradePage = () => {
         }
     }
 
+    if (!dao.details.isAuthMember) {
+        return <Navigate to={`/o/${dao.details.name}`} />
+    }
     return (
         <>
             <h1 className="font-medium text-xl mb-4">Upgrade repositories</h1>
