@@ -109,9 +109,9 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh 'rm -rf v1_x_clone && mkdir v1_x_clone && cp -r v1_x v1_x_clone/'
+                            sh 'rm -rf v1_x_clone && cp -r v1_x v1_x_clone'
                         }
-                        deployContracts('v1_x_clone/v1_x')
+                        deployContracts('v1_x_clone')
                     }
                 }
                 stage('v2_x') {
@@ -161,7 +161,7 @@ pipeline {
                         }
                     }
                     steps {
-                        testsFunctionalUpgrade('v1_x')
+                        testsFunctionalUpgrade('v1_x_clone')
                     }
                 }
                 stage('v2_x') {
@@ -460,7 +460,7 @@ def testsFunctional(version) {
 
 def testsFunctionalUpgrade(version) {
     script {
-        dir("v1_x_clone/${version}") {
+        dir("${version}") {
             sh """
                 #!/bin/bash
                 set -e
