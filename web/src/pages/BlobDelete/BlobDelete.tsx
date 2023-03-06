@@ -2,7 +2,7 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { useBlob, usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import Loader from '../../components/Loader'
 import { BlobDeleteForm, TBlobDeleteFormValues } from '../../components/Commit'
 

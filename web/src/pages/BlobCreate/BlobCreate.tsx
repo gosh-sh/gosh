@@ -2,7 +2,7 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 
 const BlobCreatePage = () => {

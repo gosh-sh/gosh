@@ -5,7 +5,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { useSmv, useSmvTokenTransfer } from 'react-gosh'
 import { toast } from 'react-toastify'
 import SmvBalance from '../../components/SmvBalance/SmvBalance'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { Button } from '../../components/Form'
 import yup from '../../yup-extended'
 

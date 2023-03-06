@@ -1,7 +1,7 @@
 import { classNames, GoshError, useDaoMemberCreate } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
-import ToastError from '../../../../../components/Error/ToastError'
+import { ToastError } from '../../../../../components/Toast'
 import { Button } from '../../../../../components/Form'
 import { supabase } from '../../../../../helpers'
 import { EDaoInviteStatus } from '../../../../../store/onboarding.types'

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { GoshError, useDaoCreate } from 'react-gosh'
 import DaoCreateProgress from './DaoCreateProgress'
-import ToastError from '../../../components/Error/ToastError'
+import { ToastError } from '../../../components/Toast'
 import yup from '../../../yup-extended'
 import { Button } from '../../../components/Form'
 
