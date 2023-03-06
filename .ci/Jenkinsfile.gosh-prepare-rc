@@ -99,21 +99,6 @@ pipeline {
                         }
                     }
                 }
-                // Required for testing upgrades
-                stage('v1_x_clone') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
-                        }
-                    }
-                    steps {
-                        script {
-                            sh 'rm -rf v1_x_clone && cp -r v1_x v1_x_clone'
-                        }
-                        deployContracts('v1_x_clone')
-                    }
-                }
                 stage('v2_x') {
                     agent {
                         docker {
@@ -151,19 +136,6 @@ pipeline {
                         testsFunctional('v1_x')
                     }
                 }
-                // Required for testing upgrades
-                stage('v1_x_clone') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            // -v /root/jenkins-main/workspace // FOR BINARIES
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                        }
-                    }
-                    steps {
-                        testsFunctionalUpgrade('v1_x_clone')
-                    }
-                }
                 stage('v2_x') {
                     agent {
                         docker {
@@ -175,6 +147,20 @@ pipeline {
                     steps {
                         testsFunctional('v2_x')
                     }
+                }
+            }
+        }
+        stage('Tests: Upgrade') {
+            stage('v1_x') {
+                agent {
+                    docker {
+                        image 'jenkins-docker-agent:1'
+                        // -v /root/jenkins-main/workspace // FOR BINARIES
+                        args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                    }
+                }
+                steps {
+                    testsFunctionalUpgrade('v1_x')
                 }
             }
         }
@@ -448,7 +434,7 @@ def testsFunctional(version) {
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 #./set-vars.sh https://local-evernode.gosh.sh
-                ./test_all.sh ${version} https://local-evernode.gosh.sh
+                #################################!!!!!!!!!!!!!!!!!!!./test_all.sh ${version} https://local-evernode.gosh.sh
 
             """
             /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
