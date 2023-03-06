@@ -80,18 +80,6 @@ pipeline {
             }
         }*/
 
-        stage('Deploy: Clone v1 to test upgrades') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
-                }
-            }
-            steps {
-                sh 'rm -rf v1_x_clone && cp -r v1_x v1_x_clone && ls -la v1_x_clone && cat v1_x_clone/contracts/multisig/Makefile'
-            }
-        }
-
         stage('Deploy: deploy smart-contracts') {
             parallel {
                 stage('v1_x') {
@@ -118,6 +106,9 @@ pipeline {
                         }
                     }
                     steps {
+                        script {
+                            sh 'rm -rf v1_x_clone && cp -r v1_x v1_x_clone'
+                        }
                         deployContracts('v1_x_clone')
                     }
                 }
