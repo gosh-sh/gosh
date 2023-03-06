@@ -80,6 +80,18 @@ pipeline {
             }
         }
 
+        stage('Deploy: Clone v1 to test upgrades') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
+                }
+            }
+            steps {
+                sh 'cp -r v1_x v1_x_clone'
+            }
+        }
+
         stage('Deploy: deploy smart-contracts') {
             parallel {
                 stage('v1_x') {
@@ -91,6 +103,22 @@ pipeline {
                     }
                     steps {
                         deployContracts('v1_x')
+                        script {
+                            env.REACT_APP_GOSH_ROOTADDR = sh script: "cat ${version}/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                            env.REACT_APP_GOSH = sh script: "cat ${version}/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+                        }
+                    }
+                }
+                // Required for testing upgrades
+                stage('v1_x_clone') {
+                    agent {
+                        docker {
+                            image 'jenkins-docker-agent:1'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
+                        }
+                    }
+                    steps {
+                        deployContracts('v1_x_clone')
                     }
                 }
                 stage('v2_x') {
@@ -106,7 +134,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Web: deploy') {
+        stage('Web: deploy') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -115,7 +143,7 @@ pipeline {
             steps {
                 deployWeb()
             }
-        }*/
+        }
         stage('Tests: functional') {
             parallel {
                 stage('v1_x') {
@@ -128,6 +156,19 @@ pipeline {
                     }
                     steps {
                         testsFunctional('v1_x')
+                    }
+                }
+                // Required for testing upgrades
+                stage('v1_x_clone') {
+                    agent {
+                        docker {
+                            image 'jenkins-docker-agent:1'
+                            // -v /root/jenkins-main/workspace // FOR BINARIES
+                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
+                        }
+                    }
+                    steps {
+                        testsFunctionalUpgrade('v1_x_clone')
                     }
                 }
                 stage('v2_x') {
@@ -144,7 +185,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Tests: Web') {
+        stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -160,7 +201,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
 
         stage('Prerelease: Git Helper - bin') {
             agent {
@@ -303,8 +344,6 @@ def deployContracts(version) {
         dir("${version}/contracts/gosh") {
             sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
         }
-        env.REACT_APP_GOSH_ROOTADDR = sh script: "cat ${version}/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-        env.REACT_APP_GOSH = sh script: "cat ${version}/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
     }
     archiveArtifacts artifacts: "${version}/contracts/gosh/*.seed"
     archiveArtifacts artifacts: "${version}/contracts/gosh/*.addr"
@@ -355,7 +394,7 @@ def testsFunctional(version) {
                 cd ../tests
                 mkdir -p /home/jenkins/bin
 
-                VERSION_PREFIX=\$(echo ${version} | tr -d _x)
+                VERSION_PREFIX=\$(echo ${version} | tr -d _x | tr -d clone)
 
                 # dispatcher
                 cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
@@ -370,6 +409,39 @@ def testsFunctional(version) {
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 #./set-vars.sh https://local-evernode.gosh.sh
                 ./test_all.sh ${version} https://local-evernode.gosh.sh
+
+            """
+            /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+            runParallel items: (files).collect { "${it}" } */
+        }
+    }
+    archiveArtifacts artifacts: 'tests/*.seed'
+}
+
+def testsFunctionalUpgrade(version) {
+    script {
+        dir("${version}") {
+            sh """
+                #!/bin/bash
+                set -e
+                set -x
+                cd ../tests
+                mkdir -p /home/jenkins/bin
+
+                VERSION_PREFIX=\$(echo ${version} | tr -d _x | tr -d clone)
+
+                # dispatcher
+                cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+
+                # remote
+                cd /tmp/${JOB_NAME}/linux-amd64/
+                REMOTE_VERSION=\$(find . -name "git-remote-gosh_\$VERSION_PREFIX*" | tr -d "./")
+                cd -
+                cp -r /tmp/${JOB_NAME}/linux-amd64/\$REMOTE_VERSION /home/jenkins/bin/\$REMOTE_VERSION && chmod +x /home/jenkins/bin/\$REMOTE_VERSION
+                mkdir -p /home/jenkins/.gosh/
+                echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
+                ./test_upgrade.sh ${version} https://local-evernode.gosh.sh
 
             """
             /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
