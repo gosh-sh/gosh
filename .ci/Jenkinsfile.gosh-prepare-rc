@@ -151,17 +151,15 @@ pipeline {
             }
         }
         stage('Tests: Upgrade') {
-            stage('v1_x') {
-                agent {
-                    docker {
-                        image 'jenkins-docker-agent:1'
-                        // -v /root/jenkins-main/workspace // FOR BINARIES
-                        args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                    }
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    // -v /root/jenkins-main/workspace // FOR BINARIES
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
                 }
-                steps {
-                    testsFunctionalUpgrade('v1_x')
-                }
+            }
+            steps {
+                testsFunctionalUpgrade('v1_x')
             }
         }
         stage('Tests: Web') {
