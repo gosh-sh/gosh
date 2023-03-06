@@ -10,6 +10,16 @@ GIVER_VALUE=20000000000000000
 
 echo "NETWORK=$NETWORK"
 
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <version>"
+  exit 1
+fi
+
+if [[ "$1" != "v1_x" && "$1" != "v2_x" ]]; then
+  echo "Error: First argument must be either 'v1_x' or 'v2_x'"
+  exit 1
+fi
+
 # $1 = VERSION (v1_x, v2_x)
 
 VERSION=$1
