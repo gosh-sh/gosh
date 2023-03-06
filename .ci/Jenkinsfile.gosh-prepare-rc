@@ -55,7 +55,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -65,7 +66,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGosh')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -107,9 +109,9 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh 'rm -rf v1_x_clone && cp -r v1_x v1_x_clone'
+                            sh 'rm -rf v1_x_clone && mkdir v1_x_clone && cp -r v1_x v1_x_clone/'
                         }
-                        deployContracts('v1_x_clone')
+                        deployContracts('v1_x_clone/v1_x')
                     }
                 }
                 stage('v2_x') {
@@ -159,7 +161,7 @@ pipeline {
                         }
                     }
                     steps {
-                        testsFunctionalUpgrade('v1_x_clone')
+                        testsFunctionalUpgrade('v1_x')
                     }
                 }
                 stage('v2_x') {
@@ -262,6 +264,28 @@ def buildDispatcher() {
     }
 }
 
+def buildDispatcherDebug() {
+    script {
+        dir('gosh-dispatcher') {
+            sh '''
+                #!/bin/bash
+                set -ex
+
+                cd ${WORKSPACE}
+                rm -rf linux-*
+                rm -rf darwin-*
+                rm -rf windows-*
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 406 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 406 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 406 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 406 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 406 --path darwin-arm64
+            '''
+        }
+    }
+}
+
 def buildRemoteGosh(version) {
     script {
         dir("${version}/git-remote-gosh") {
@@ -289,6 +313,31 @@ def buildRemoteGosh(version) {
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64
                 az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64
+            """
+        }
+    }
+}
+
+def buildRemoteGoshDebug(version) {
+    script {
+        dir("${version}/git-remote-gosh") {
+            sh """
+                #!/bin/bash
+                set -ex
+
+                cd ${WORKSPACE}
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 407 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 407 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 407 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 407 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 407 --path darwin-arm64
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 408 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 408 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 408 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 408 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 408 --path darwin-arm64
             """
         }
     }
@@ -411,7 +460,7 @@ def testsFunctional(version) {
 
 def testsFunctionalUpgrade(version) {
     script {
-        dir("${version}") {
+        dir("v1_x_clone/${version}") {
             sh """
                 #!/bin/bash
                 set -e
