@@ -458,11 +458,11 @@ def testsFunctionalUpgrade(version) {
                 # remote
                 cd /tmp/${JOB_NAME}/linux-amd64/
                 # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
+                ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                 cd -
                 cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
                 mkdir -p /home/jenkins/.gosh/
                 # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
-                ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 ./test_upgrade.sh ${version} https://local-evernode.gosh.sh
 
