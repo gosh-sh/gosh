@@ -73,7 +73,6 @@ git clone $NEW_LINK $NEW_REPO_PATH
 
 echo "***** push to new version *****"
 cd $NEW_REPO_PATH
-cd $REPO_NAME
 git config user.email "foo@bar.com"
 git config user.name "My name"
 git branch -m main
