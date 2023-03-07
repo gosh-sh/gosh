@@ -452,16 +452,14 @@ def testsFunctionalUpgrade(version) {
                 cd ../tests
                 mkdir -p /home/jenkins/bin
 
-                VERSION_PREFIX=\$(echo ${version} | tr -d _x | tr -d clone)
-
                 # dispatcher
                 cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
 
                 # remote
                 cd /tmp/${JOB_NAME}/linux-amd64/
-                REMOTE_VERSION=\$(find . -name "git-remote-gosh_\$VERSION_PREFIX*" | tr -d "./")
+                REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
                 cd -
-                cp -r /tmp/${JOB_NAME}/linux-amd64/\$REMOTE_VERSION /home/jenkins/bin/\$REMOTE_VERSION && chmod +x /home/jenkins/bin/\$REMOTE_VERSION
+                cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
                 mkdir -p /home/jenkins/.gosh/
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
