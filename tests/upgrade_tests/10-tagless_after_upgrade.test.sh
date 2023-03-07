@@ -27,12 +27,15 @@ echo "***** cloning old version repo *****"
 git clone $REPO_LINK
 
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 # push 1 file
 echo "***** Pushing file to the repo *****"
 date +%s > last
 git add last
 git commit -m "added 'last'"
-git push
+git push -u origin main
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
 git tag $TAG_NAME

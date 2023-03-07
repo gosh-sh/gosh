@@ -27,12 +27,16 @@ git clone $REPO_LINK
 
 
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
+
 # push 1 file
 echo "***** Pushing file to the repo *****"
 echo old_ver > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
 cd ..

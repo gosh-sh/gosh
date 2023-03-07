@@ -70,11 +70,15 @@ wait_account_active $REPO_ADDR
 sleep 3
 
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
+
 echo "**** Push latest *****"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+git push -u origin main
 
 echo "***** create branch heading to old commit *****"
 git checkout -b parent_branch $GRANDPARENT_COMMIT_ID

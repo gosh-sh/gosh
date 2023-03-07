@@ -29,6 +29,9 @@ git clone $OLD_LINK
 
 # check
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 REPO_STATUS=1
 if git status | grep 'No commits yet'; then
     REPO_STATUS=0
@@ -43,7 +46,7 @@ echo "***** Pushing file to old repo *****"
 echo old_ver > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 
 cd ..
 
