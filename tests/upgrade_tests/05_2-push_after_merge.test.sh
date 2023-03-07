@@ -76,12 +76,15 @@ echo "NEW_LINK=$NEW_LINK"
 
 git clone $NEW_LINK $NEW_REPO_PATH
 cd $NEW_REPO_PATH
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 
 echo "***** push to the new repo *****"
 echo new_ver > 2.txt
 git add 2.txt
 git commit -m test2
-git push
+git push -u origin main
 
 cur_ver=$(cat 1.txt)
 if [ "$cur_ver" != "main" ]; then
@@ -104,6 +107,9 @@ cd ..
 git clone $NEW_LINK $REPO_PATH_CHECK
 
 cd $REPO_PATH_CHECK
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 
 cur_ver=$(cat 1.txt)
 if [ "$cur_ver" != "parent" ]; then

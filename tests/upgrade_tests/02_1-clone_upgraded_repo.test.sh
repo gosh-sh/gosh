@@ -71,6 +71,9 @@ git clone $NEW_LINK $NEW_REPO_PATH
 
 echo "***** push to new version *****"
 cd $NEW_REPO_PATH
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 
 cur_ver=$(cat 1.txt)
 if [ $cur_ver != "old_ver" ]; then
@@ -82,7 +85,7 @@ echo "GOOD VERSION"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+git push -u origin main
 
 cd ..
 

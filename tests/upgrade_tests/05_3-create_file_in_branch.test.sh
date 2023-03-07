@@ -76,12 +76,15 @@ echo "NEW_LINK=$NEW_LINK"
 
 git clone $NEW_LINK $NEW_REPO_PATH
 cd $NEW_REPO_PATH
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 
 echo "***** push to the new repo *****"
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+git push -u origin main
 
 git checkout -b parent_branch origin/parent_branch
 git checkout main
