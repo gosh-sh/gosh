@@ -107,12 +107,10 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                             {!item.recipientStatus && (
                                 <Button
                                     type="button"
+                                    variant="custom"
                                     className={classNames(
-                                        '!bg-white whitespace-nowrap',
-                                        'border border-gray-e6edff',
-                                        '!py-1 !px-6 text-black',
-                                        'hover:bg-gray-fafafd',
-                                        'disabled:opacity-60',
+                                        '!border-gray-e6edff !py-1 !px-6 text-black',
+                                        'hover:bg-gray-fafafd disabled:!opacity-60',
                                     )}
                                     disabled={item.isFetching}
                                     isLoading={item.isFetching}
@@ -124,11 +122,10 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
                             {item.recipientStatus === EDaoInviteStatus.ACCEPTED && (
                                 <Button
                                     type="button"
+                                    variant="custom"
                                     className={classNames(
-                                        '!bg-white whitespace-nowrap',
-                                        'border border-gray-e6edff',
-                                        '!py-1 !px-6 text-green-600',
-                                        'hover:!text-white hover:!bg-green-600 hover:!border-transparent',
+                                        '!border-gray-e6edff !py-1 !px-6 text-green-600',
+                                        'hover:text-white hover:bg-green-600 hover:!border-transparent',
                                         'disabled:opacity-60',
                                     )}
                                     disabled={item.isFetching}

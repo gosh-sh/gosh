@@ -141,6 +141,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                         recipient_status: invite.accepted
                             ? EDaoInviteStatus.ACCEPTED
                             : EDaoInviteStatus.REJECTED,
+                        token_expired: true,
                     })
                     .eq('id', invite.id)
                 if (error) {

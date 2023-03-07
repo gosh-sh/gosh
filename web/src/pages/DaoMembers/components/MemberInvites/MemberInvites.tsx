@@ -36,7 +36,10 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             // Update database
             const { error } = await supabase
                 .from('dao_invite')
-                .update({ recipient_status: EDaoInviteStatus.REVOKED })
+                .update({
+                    recipient_status: EDaoInviteStatus.REVOKED,
+                    token_expired: true,
+                })
                 .eq('id', item.id)
             if (error) {
                 throw new Error(error.message)
