@@ -2,6 +2,8 @@ if [ -e env.env ]; then
     . ./env.env
 fi
 
+export TVM_LINKER=~/.everdev/solidity/tvm_linker
+
 function delay {
     sleep_for=$1
 
@@ -144,7 +146,7 @@ function upgrade_DAO_2 {
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI_1 tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
   echo "tip3VotingLocker=$tip3VotingLocker"
 
-  PROP_ID=$(tvm_linker test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
   --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_upgrade_prop_id_2 --abi-params \
   "{\"newversion\":\"$TEST_VERSION\",\"description\":\"\",\"comment\":\"\",\"_now\":\"$NOW_ARG\"}"  --decode-c6 | grep value0 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -188,7 +190,7 @@ function add_protected_branch {
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
   echo "tip3VotingLocker=$tip3VotingLocker"
 
-  PROP_ID=$(tvm_linker test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
   --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_add_protected_prop_id --abi-params \
   "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"_now\":\"$NOW_ARG\"}"  --decode-c6 | grep value0 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -212,7 +214,7 @@ function set_commit_proposal {
   tip3VotingLocker=$(gosh-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
   echo "tip3VotingLocker=$tip3VotingLocker"
 
-  PROP_ID=$(tvm_linker test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
   --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_set_commit_prop_id --abi-params \
   "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1}"  --decode-c6 | grep value0 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)

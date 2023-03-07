@@ -57,7 +57,7 @@ echo "export SYSTEM_CONTRACT_ADDR_1=$SYSTEM_CONTRACT_ADDR_1" >> env.env
 
 tonos-cli -u "$NETWORK" runx --addr $SYSTEM_CONTRACT_ADDR_1 --abi $SYSTEM_CONTRACT_ABI -m getVersion
 
-PROP_ID=$(tvm_linker test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
   --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_upgrade_prop_id --abi-params \
   "{\"newversion\":\"$TEST_VERSION1\",\"description\":\"\"}"  --decode-c6 | grep value0 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)

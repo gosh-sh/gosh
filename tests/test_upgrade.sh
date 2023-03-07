@@ -17,7 +17,7 @@ set -o pipefail
 # $2 = NETWORK
 
 # put under flag deploy of 9999
-. set-vars.sh $1 $2
+. set-vars.sh v1_x $2
 ./upgrade_tests/set_up.sh
 ./upgrade_tests/01-clone_rewritten_repo.test.sh
 ./upgrade_tests/02_1-clone_upgraded_repo.test.sh
