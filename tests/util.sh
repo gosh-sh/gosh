@@ -2,7 +2,7 @@ if [ -e env.env ]; then
     . ./env.env
 fi
 
-export TVM_LINKER="${TVM_LINKER:-~/.everdev/solidity/tvm_linker}"
+export TVM_LINKER=~/.everdev/solidity/tvm_linker
 
 function delay {
     sleep_for=$1
