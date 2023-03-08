@@ -99,7 +99,7 @@ git push
 
 cd ..
 
-sleep 120
+sleep 300
 
 git clone $NEW_LINK $REPO_PATH_CHECK
 
@@ -125,7 +125,7 @@ git push
 echo "***** cloning repo *****"
 cd ..
 
-sleep 120
+sleep 300
 
 git clone $NEW_LINK "$REPO_PATH_CHECK2"
 
