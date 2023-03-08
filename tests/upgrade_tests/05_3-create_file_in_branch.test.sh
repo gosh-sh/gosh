@@ -74,6 +74,8 @@ sleep 3
 export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
+sleep 60
+
 git clone $NEW_LINK $NEW_REPO_PATH
 cd $NEW_REPO_PATH
 git config user.email "foo@bar.com"
@@ -96,6 +98,8 @@ git push
 #git log
 
 cd ..
+
+sleep 60
 
 git clone $NEW_LINK $REPO_PATH_CHECK
 
@@ -120,6 +124,9 @@ git push
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 60
+
 git clone $NEW_LINK "$REPO_PATH_CHECK2"
 
 echo "***** check repo *****"
