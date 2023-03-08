@@ -10,7 +10,7 @@ import { Transition } from '@headlessui/react'
 import { Button, Input } from '../../../../../components/Form'
 import { supabase } from '../../../../../helpers'
 import yup from '../../../../../yup-extended'
-import ToastError from '../../../../../components/Error/ToastError'
+import { ToastError } from '../../../../../components/Toast'
 import { TInvitationSentProps } from '../MemberForm'
 
 type TDaoMemberFormProps = {

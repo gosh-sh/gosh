@@ -8,10 +8,9 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
-import yup from '../../yup-extended'
-import ToastError from '../Error/ToastError'
+import { ToastError } from '../Toast'
 import { Button } from '../Form'
-import { FormikInput, FormikTextarea } from '../Formik'
+import { FormikTextarea } from '../Formik'
 
 type TDaoRequestMembershipModalProps = {
     dao: {

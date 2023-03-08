@@ -10,11 +10,20 @@ export async function emailDaoInvite(params: {
     dao_name: string
     sender_username: string
     recipient_email: string
+    token: string
 }) {
-    const { dao_name, sender_username, recipient_email } = params
+    const { dao_name, sender_username, recipient_email, token } = params
     const mail_to = recipient_email.trim()
-    const mail_html = nunjucks.render(EMAIL_HTML_FILE, { dao_name, sender_username })
-    const mail_text = nunjucks.render(EMAIL_TEXT_FILE, { dao_name, sender_username })
+    const mail_html = nunjucks.render(EMAIL_HTML_FILE, {
+        dao_name,
+        sender_username,
+        token,
+    })
+    const mail_text = nunjucks.render(EMAIL_TEXT_FILE, {
+        dao_name,
+        sender_username,
+        token,
+    })
 
     // Create email send queue record
     console.log(`Try create ${INTENT_DAO_INVITE} email ${mail_to}`)

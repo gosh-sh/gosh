@@ -8,10 +8,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Transition } from '@headlessui/react'
 import { Button, Input, Textarea } from '../../../../../components/Form'
-import { supabase } from '../../../../../helpers'
+import { supabase, ToastOptionsShortcuts } from '../../../../../helpers'
 import yup from '../../../../../yup-extended'
-import ToastError from '../../../../../components/Error/ToastError'
+import { ToastError } from '../../../../../components/Toast'
 import { TInvitationSentProps } from '../MemberForm'
+import { Buffer } from 'buffer'
+import * as clipboardy from 'clipboardy'
 
 type TDaoMemberFormProps = {
     dao: {
@@ -45,6 +47,9 @@ const emptyMemberItem: TMember = {
     comment: { value: '', validated: { valid: true } },
     type: 'username',
 }
+
+const isAskMembershipOnError =
+    'Enable "Allow external users to request DAO membership" option in DAO settings to enable invites by email/link'
 
 const DaoMemberForm = (props: TDaoMemberFormProps) => {
     const { dao, getDaoInvites, getUsernameByEmail, SuccessComponent } = props
@@ -137,6 +142,17 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                             },
                         },
                     })
+                } else if (!dao.details.isAskMembershipOn) {
+                    return updateMembersStateItem(index, {
+                        type: 'email',
+                        name: {
+                            value,
+                            validated: {
+                                valid: false,
+                                message: isAskMembershipOnError,
+                            },
+                        },
+                    })
                 } else {
                     return updateMembersStateItem(index, {
                         type: 'email',
@@ -193,6 +209,14 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
         }
     }
 
+    const getInvitationToken = () => {
+        const data = {
+            dao: dao.details.name,
+            nonce: Date.now() + Math.round(Math.random() * 1000),
+        }
+        return Buffer.from(JSON.stringify(data)).toString('base64')
+    }
+
     const onAddMember = () => {
         setMembers((state) => [...state, emptyMemberItem])
     }
@@ -242,9 +266,15 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
             const emailStringList = emailsSelector.map(
                 ({ recipient_email }) => recipient_email,
             )
-            const emailsUnique = emailsSelector.filter(({ recipient_email }, index) => {
-                return emailStringList.indexOf(recipient_email) === index
-            })
+            const emailsUnique = emailsSelector
+                .filter(({ recipient_email }, index) => {
+                    return emailStringList.indexOf(recipient_email) === index
+                })
+                .map((item) => ({
+                    ...item,
+                    token: getInvitationToken(),
+                    token_expired: false,
+                }))
             if (emailsUnique.length) {
                 const { error } = await supabase.from('dao_invite').insert(emailsUnique)
                 if (error) {
@@ -264,6 +294,28 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
 
             // Completion staff
             setTransition({ form: false, success: false })
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
+    const onCreateInvitationLink = async () => {
+        try {
+            const token = getInvitationToken()
+            await supabase.from('dao_invite').insert({
+                dao_name: dao.details.name,
+                sender_username: user.username,
+                is_recipient_sent: true,
+                token,
+                token_expired: false,
+            })
+            await clipboardy.write(
+                `${window.location.origin}/o/${dao.details.name}/onboarding?token=${token}`,
+            )
+            await getDaoInvites()
+
+            toast.success('Copied', ToastOptionsShortcuts.CopyMessage)
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -290,7 +342,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 afterLeave={() => setTransition({ form: false, success: true })}
             >
                 <h3 className="text-xl font-medium mb-4">Invite user to DAO</h3>
-                <div className="mb-12">
+                <div className="mb-8">
                     {members.map(({ name, allowance, comment }, index) => (
                         <div key={index} className="mb-8">
                             <div className="mb-3">
@@ -405,6 +457,36 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                         </Form>
                     )}
                 </Formik>
+
+                <hr className="mt-10 mb-6 bg-gray-e6edff" />
+
+                <div>
+                    <div className="mb-2 text-sm text-gray-7c8db5">
+                        Or send one-time invitation link to single user
+                    </div>
+                    <Formik onSubmit={onCreateInvitationLink} initialValues={{}}>
+                        {({ isSubmitting }) => (
+                            <Form>
+                                <Button
+                                    type="submit"
+                                    className="w-full"
+                                    isLoading={isSubmitting}
+                                    disabled={
+                                        isSubmitting || !dao.details.isAskMembershipOn
+                                    }
+                                >
+                                    Get one-time invitation link
+                                </Button>
+
+                                {!dao.details.isAskMembershipOn && (
+                                    <div className="mt-2 text-xs text-red-ff3b30">
+                                        {isAskMembershipOnError}
+                                    </div>
+                                )}
+                            </Form>
+                        )}
+                    </Formik>
+                </div>
             </Transition>
 
             <Transition

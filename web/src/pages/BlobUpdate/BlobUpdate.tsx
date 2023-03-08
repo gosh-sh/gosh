@@ -4,7 +4,7 @@ import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { EGoshError, splitByPath, useBlob, usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { Buffer } from 'buffer'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 import Loader from '../../components/Loader'
 

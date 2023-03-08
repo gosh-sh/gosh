@@ -8,4 +8,4 @@ Vote, contribute, and earn tokens — with security and decentralization guarant
 
 Join now to start building
 
-START BUILDING https://app.gosh.sh/a/signup
+START BUILDING https://app.gosh.sh/o/{{ dao_name }}/onboarding?token={{ token }}

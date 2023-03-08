@@ -1,16 +1,17 @@
 import { useSetRecoilState } from 'recoil'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { useUser } from 'react-gosh'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { useEffect, useState } from 'react'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
 
 const SigninPage = () => {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const { persist, signinProfiles, signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [step, setStep] = useState<{ name: string; data: any }>()
@@ -55,18 +56,14 @@ const SigninPage = () => {
             setModal({
                 static: true,
                 isOpen: true,
-                element: (
-                    <PinCodeModal
-                        phrase={setupPin}
-                        onUnlock={() => navigate('/a/orgs', { replace: true })}
-                    />
-                ),
+                element: <PinCodeModal phrase={setupPin} />,
             })
         }
-    }, [setupPin, setModal, navigate])
+    }, [setupPin, setModal, navigate, searchParams])
 
     if (persist.pin) {
-        return <Navigate to="/a/orgs" />
+        const to = searchParams.get('redirect_to') || '/a/orgs'
+        return <Navigate to={to} />
     }
     return (
         <div className="block-auth">
