@@ -1,6 +1,6 @@
 tvcs = MultisigWallet
 KEYS_PATH = ${CURDIR}
-EXTRA_DOCKER_ARGS = '--network host --add-host localnode:127.0.0.1'
+EXTRA_DOCKER_ARGS = --network host --add-host localnode:127.0.0.1
 clean:
 	rm -f *.tvc *.abi.json *.code
 	rm -rf .solc_imports
