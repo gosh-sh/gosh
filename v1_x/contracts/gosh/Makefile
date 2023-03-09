@@ -1,8 +1,9 @@
-EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
-
 tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex
 cpfl = profile profiledao profileindex
 KEYS_PATH = ${CURDIR}
+
+EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
+
 
 clean:
 	rm -f *.tvc *.abi.json *.code
