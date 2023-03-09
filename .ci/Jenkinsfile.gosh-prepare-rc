@@ -359,9 +359,9 @@ def deployContracts(version) {
         dir("${version}/contracts/multisig") {
             // Deploy msig giver for GOSH deployment
             sh 'make build-contracts-docker'
-            sh 'make generate-docker NETWORK=http://localhost:8088'
+            sh 'make generate-docker NETWORK=http://localnode:8088'
             sh '''
-                tonos-cli -u http://localhost:8088 call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 50000000000000000, \\"bounce\\": false}" --abi GiverV2.abi.json --sign GiverV2.keys.json
+                tonos-cli -u http://localnode:8088 call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 50000000000000000, \\"bounce\\": false}" --abi GiverV2.abi.json --sign GiverV2.keys.json
             '''
             sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host"'
         }
@@ -466,7 +466,7 @@ def testsFunctionalUpgrade(version) {
                 ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                 cd -
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
-                ./test_upgrade.sh ${version} http://localhost:8088
+                ./test_upgrade.sh ${version} http://localnode:8088
 
             """
             /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
