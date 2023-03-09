@@ -45,11 +45,14 @@ upgrade_DAO
 
 echo "***** new $REPO_NAME deploy *****"
 gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$TEST_VERSION1\"}}" || exit 1
-REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+    "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
+REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
+echo "REPO_ADDR=$REPO_ADDR"
+
 #
 # after repo was upgraded someone must redeploy all tags
 #
+delay 60
 cd $REPO_NAME
 git push --tags
 
@@ -61,7 +64,7 @@ echo "**** Fetch repo *****"
 git fetch
 FETCHED_TAG=$(git tag -l $TAG_NAME)
 
-if [ $FETCHED_TAG != $TAG_NAME ]; then
+if [ "$FETCHED_TAG" != "$TAG_NAME" ]; then
     echo "ERR: expected tag is missing ($FETCHED_TAG != $TAG_NAME)"
     exit 1
 fi
