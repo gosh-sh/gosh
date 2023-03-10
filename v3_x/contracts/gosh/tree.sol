@@ -141,8 +141,8 @@ contract Tree is Modifiers {
     function gotCheckTree(string name, bool res, uint128 typer) public senderIs(getTreeAddr(name)) {
         tvm.accept();
         getMoney();
-        require(_check == true, ERR_PROCCESS_END);
-        require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
+        if (_check == true) { return; }
+        if (_needAnswer > 0) { return; }
         if (res == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
