@@ -32,13 +32,13 @@ impl DeployBranch for Everscale {
             "newName": new_name,
             "fromCommit": from_commit,
         });
-        let wallet_contract = wallet.take_one().await?;
+        let wallet_contract = wallet.take_zero_wallet().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .call(wallet_contract.deref(), "deployBranch", Some(params))
+            .call(&wallet_contract, "deployBranch", Some(params))
             .await
             .map(|_| ());
-        drop(wallet_contract);
+        // drop(wallet_contract);
         if let Err(ref e) = result {
             tracing::trace!("deploy_branch_error: {}", e);
         }
