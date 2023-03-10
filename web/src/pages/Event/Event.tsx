@@ -92,7 +92,7 @@ const EventPage = () => {
                 </div>
             </div>
             <div className="mt-8 flex flex-wrap gap-4 justify-between">
-                <div className="basis-8/12">
+                <div className="grow">
                     {event.data.comment && (
                         <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-6">
                             <h3 className="mb-3 text-xl font-medium">
@@ -181,7 +181,7 @@ const EventPage = () => {
                     </div>
                 </div>
 
-                <div className="grow">
+                <div className="basis-4/12">
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         {(dao.details.isEventProgressOn || event.status?.completed) && (
                             <EventProgressBar votes={event.votes} />

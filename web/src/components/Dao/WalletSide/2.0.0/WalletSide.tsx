@@ -4,7 +4,6 @@ import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interface
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { Button } from '../../../Form'
-import DaoRequestMembershipModal from '../../../Modal/DaoRequestMembership'
 import WalletTokenSendModal from '../../../Modal/WalletTokenSend'
 
 type TDaoWalletSideProps = {
@@ -46,14 +45,6 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         })
     }
 
-    const onDaoRequestMembershipClick = () => {
-        setModal({
-            static: false,
-            isOpen: true,
-            element: <DaoRequestMembershipModal dao={dao} />,
-        })
-    }
-
     return (
         <div
             className={classNames('border border-gray-e6edff rounded-xl p-5', className)}
@@ -78,25 +69,16 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
                     </div>
                 )}
             </div>
-            <hr className="my-4 bg-gray-e6edff" />
-            <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Allowance</div>
-                <div className="text-xl font-medium">{getUserAllowance()}</div>
-                {!dao.details.isAuthMember && dao.details.isAskMembershipOn && (
-                    <div className="mt-3">
-                        <Button
-                            className={classNames(
-                                'w-full !border-gray-e6edff bg-gray-fafafd',
-                                'hover:!border-gray-53596d',
-                            )}
-                            variant="custom"
-                            onClick={onDaoRequestMembershipClick}
-                        >
-                            Send a request to DAO
-                        </Button>
+
+            {dao.details.isAuthMember && (
+                <>
+                    <hr className="my-4 bg-gray-e6edff" />
+                    <div>
+                        <div className="mb-1 text-gray-7c8db5 text-sm">Karma</div>
+                        <div className="text-xl font-medium">{getUserAllowance()}</div>
                     </div>
-                )}
-            </div>
+                </>
+            )}
         </div>
     )
 }
