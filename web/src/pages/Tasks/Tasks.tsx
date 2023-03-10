@@ -9,7 +9,7 @@ const TasksPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { items, isFetching, isEmpty, hasNext, getMore, getItemDetails } = useTaskList(
         dao.adapter,
-        { perPage: 1 },
+        { perPage: 5 },
     )
 
     return (
