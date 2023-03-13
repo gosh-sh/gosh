@@ -52,16 +52,16 @@ tonos-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployR
 REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 echo "REPO_ADDR=$REPO_ADDR"
 
+echo "***** awaiting repo deploy *****"
+wait_account_active $REPO_ADDR
+delay 3
+
 #
 # after repo was upgraded someone must redeploy all tags
 #
 delay 60
 cd $REPO_NAME
 git push --tags
-
-echo "***** awaiting repo deploy *****"
-wait_account_active $REPO_ADDR
-delay 3
 
 echo "**** Fetch repo *****"
 git fetch
