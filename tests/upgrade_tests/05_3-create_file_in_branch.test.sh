@@ -104,6 +104,9 @@ sleep 120
 git clone $NEW_LINK $REPO_PATH_CHECK
 
 cd $REPO_PATH_CHECK
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 
 cur_ver=$(cat 2.txt)
 if [ "$cur_ver" != "parent" ]; then
@@ -115,7 +118,7 @@ echo "GOOD CONTENT"
 echo "after_merge" > 1.txt
 git add 1.txt
 git commit -m after_merge1
-git push
+git push -u origin main
 
 echo "after_merge" > 2.txt
 git add 2.txt
