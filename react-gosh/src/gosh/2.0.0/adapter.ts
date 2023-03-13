@@ -2536,7 +2536,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             await this.createCommitTag({
                 repository: await this.getName(),
                 commit: commitHash,
-                content: tag,
+                tag,
                 wallet,
             })
             cb({ tagsDeploy: { count: ++tagsCounter } })
@@ -2636,7 +2636,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void> {
-        const { repository, commit, content, wallet } = params
+        const { repository, commit, tag, wallet } = params
 
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -2646,9 +2646,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const _wallet = wallet || this.auth.wallet0
         await _wallet.run('deployTag', {
             repoName: repository,
-            nametag: sha1(content, 'tag', 'sha1'),
+            nametag: tag,
             nameCommit: commit,
-            content,
+            content: `tag ${tag}\nobject ${commit}\n`,
             commit: commitContract.address,
         })
     }
