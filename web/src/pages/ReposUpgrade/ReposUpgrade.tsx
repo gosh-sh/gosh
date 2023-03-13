@@ -16,7 +16,7 @@ import {
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError, ToastSuccess } from '../../components/Toast'
 import { Button, Checkbox } from '../../components/Form'
 import { UILog, UILogItem } from '../../components/UILog'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -108,10 +108,12 @@ const ReposUpgradePage = () => {
         if (!upgradeable.length) {
             await dao.adapter.setRepositoriesUpgraded()
             toast.success(
-                <>
-                    <h3 className="font-semibold">No repositories to upgrade</h3>
-                    <p className="text-sm">DAO was updated successfully</p>
-                </>,
+                <ToastSuccess
+                    message={{
+                        title: 'No repositories to upgrade',
+                        content: 'DAO was updated successfully',
+                    }}
+                />,
             )
             navigate(`/o/${dao.details.name}`)
         }

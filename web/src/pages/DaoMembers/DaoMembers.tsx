@@ -1,11 +1,12 @@
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../helpers'
 import { EDaoInviteStatus } from '../../store/onboarding.types'
 import { DaoMemberInvites, DaoMemberList, DaoMemberForm } from './components'
+import { shortString } from 'react-gosh'
 
 export type TDaoInvite = {
     id: string
@@ -39,6 +40,7 @@ const DaoMembersPage = () => {
                 .from('dao_invite')
                 .select(`*`)
                 .eq('dao_name', dao.details.name)
+                .not('token_expired', 'eq', true)
                 .or(
                     [
                         'recipient_status.is.null',
@@ -55,7 +57,10 @@ const DaoMembersPage = () => {
                     id: item.id,
                     recipientEmail: item.recipient_email,
                     recipientStatus: item.recipient_status,
-                    recipientUsername: item.recipient_username || item.recipient_email,
+                    recipientUsername:
+                        item.recipient_username ||
+                        item.recipient_email ||
+                        shortString(item.token, 8, 8),
                     recipientAllowance: item.recipient_allowance,
                     recipientComment: item.recipient_comment,
                     isFetching: false,

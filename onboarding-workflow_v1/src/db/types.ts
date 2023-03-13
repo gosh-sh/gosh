@@ -48,6 +48,8 @@ export interface Database {
                     recipient_username: string | null
                     recipient_allowance: number | null
                     recipient_comment: string | null
+                    token: string | null
+                    token_expired: boolean | null
                 }
                 Insert: {
                     id?: string
@@ -61,6 +63,8 @@ export interface Database {
                     recipient_username?: string | null
                     recipient_allowance?: number | null
                     recipient_comment?: string | null
+                    token?: string | null
+                    token_expired?: boolean | null
                 }
                 Update: {
                     id?: string
@@ -74,6 +78,8 @@ export interface Database {
                     recipient_username?: string | null
                     recipient_allowance?: number | null
                     recipient_comment?: string | null
+                    token?: string | null
+                    token_expired?: boolean | null
                 }
             }
             emails: {

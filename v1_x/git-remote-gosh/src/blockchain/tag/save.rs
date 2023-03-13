@@ -100,7 +100,7 @@ impl Tagging for Everscale {
 
         let result = self
             .send_message(
-                wallet_contract.deref(),
+                &wallet_contract,
                 "deployTag",
                 Some(serde_json::to_value(params)?),
                 None,
@@ -108,7 +108,7 @@ impl Tagging for Everscale {
             .await
             .map(|_| ());
 
-        drop(wallet_contract);
+        // drop(wallet_contract);
 
         if let Err(ref e) = result {
             tracing::debug!("deploy_tag_error: {}", e);
@@ -124,7 +124,7 @@ impl Tagging for Everscale {
         repo_name: String,
         tag_name: String,
     ) -> anyhow::Result<()> {
-        let wallet_contract = wallet.take_one().await?;
+        let wallet_contract = wallet.take_zero_wallet().await?;
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
         let params = DeleteTagParams {
@@ -135,7 +135,7 @@ impl Tagging for Everscale {
 
         let result = self
             .send_message(
-                wallet_contract.deref(),
+                &wallet_contract,
                 "deleteTag",
                 Some(serde_json::to_value(params)?),
                 None,
@@ -143,7 +143,7 @@ impl Tagging for Everscale {
             .await
             .map(|_| ());
 
-        drop(wallet_contract);
+        // drop(wallet_contract);
 
         if let Err(ref e) = result {
             tracing::debug!("delete_tag_error: {}", e);

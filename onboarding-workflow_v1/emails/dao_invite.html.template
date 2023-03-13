@@ -93,7 +93,7 @@
                                     Join now to start building
                                 </p>
                                 <a
-                                    href="https://app.gosh.sh/a/signup"
+                                    href="https://app.gosh.sh/o/{{ dao_name }}/onboarding?token={{ token }}"
                                     target="_blank"
                                     style="
                                         display: block;

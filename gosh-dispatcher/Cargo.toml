@@ -7,7 +7,8 @@ keywords = ['git-remote', 'git', 'gosh']
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "^1.0"
+anyhow = "1.0.69"
+clap = "4.1.8"
 serde_json = "1.0.92"
 shellexpand = "3.0.0"
 tokio = { version = "1.21.2", features = ["full"] }

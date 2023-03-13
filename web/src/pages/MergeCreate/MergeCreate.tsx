@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router
 import { toast } from 'react-toastify'
 import { BranchCompareForm, BranchComparePreview } from '../../components/Branches'
 import { BranchCommitForm, TBranchCommitFormValues } from '../../components/Commit'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const MergeCreatePage = () => {

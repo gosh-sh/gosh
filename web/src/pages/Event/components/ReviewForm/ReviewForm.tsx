@@ -2,7 +2,7 @@ import { Form, Formik } from 'formik'
 import { classNames, TSmvEvent } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
-import ToastError from '../../../../components/Error/ToastError'
+import { ToastError } from '../../../../components/Toast'
 import { Button } from '../../../../components/Form'
 
 type TEventReviewFormProps = {

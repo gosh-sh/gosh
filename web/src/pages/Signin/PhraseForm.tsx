@@ -6,7 +6,7 @@ import { Form, Formik } from 'formik'
 import { useEffect, useState } from 'react'
 import { AppConfig } from 'react-gosh'
 import { toast } from 'react-toastify'
-import ToastError from '../../components/Error/ToastError'
+import { ToastError } from '../../components/Toast'
 import Spinner from '../../components/Spinner'
 import { getClipboardData } from '../../helpers'
 
