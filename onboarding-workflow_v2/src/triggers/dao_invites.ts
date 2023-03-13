@@ -6,7 +6,7 @@ while (true) {
     // Get unprocessed DAO invitations
     const { data, error } = await getDb()
         .from('dao_invite')
-        .select('id, recipient_email, dao_name, sender_username')
+        .select('id, recipient_email, dao_name, sender_username, token')
         .eq('is_recipient_sent', false)
     if (error) {
         throw new Error(error.message)
@@ -18,9 +18,20 @@ while (true) {
 
     // Create send email tasks, update db record flag
     for (const item of data) {
-        const { id, ...rest } = item
+        const { id } = item
 
-        await emailDaoInvite(rest)
+        const params = {
+            dao_name: item.dao_name!,
+            sender_username: item.sender_username!,
+            recipient_email: item.recipient_email!,
+            token: item.token!,
+        }
+        if (Object.values(params).findIndex((v) => !!v === false) >= 0) {
+            console.log('Required attribute is empty', params)
+            continue
+        }
+
+        await emailDaoInvite(params)
         const { error } = await getDb()
             .from('dao_invite')
             .update({ is_recipient_sent: true })

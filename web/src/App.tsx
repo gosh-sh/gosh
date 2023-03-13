@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import { NetworkQueriesProtocol } from '@eversdk/core'
 import { AppConfig } from 'react-gosh'
-
+import './assets/scss/style.scss'
+import { ToastOptionsShortcuts } from './helpers'
+import BaseModal from './components/Modal/BaseModal'
+import Spinner from './components/Spinner'
 import Header from './components/Header'
 import ProtectedLayout from './pages/ProtectedLayout'
 import AccountLayout from './pages/AccountLayout'
@@ -37,14 +41,8 @@ import EventPage from './pages/Event'
 import NotFoundPage from './pages/404'
 import OnboardingPage from './pages/Onboarding'
 import OnboardingStatusPage from './pages/OnboardingStatus'
-
-import './assets/scss/style.scss'
-import BaseModal from './components/Modal/BaseModal'
-import Spinner from './components/Spinner'
-import { ToastOptionsShortcuts } from './helpers'
 import Containers from './docker-extension/pages/Containers'
 import BuildPage from './docker-extension/pages/Build'
-import { NetworkQueriesProtocol } from '@eversdk/core'
 import DaoSetupPage from './pages/DaoSetup/DaoSetup'
 import TaskCreatePage from './pages/TaskCreate'
 import TasksPage from './pages/Tasks'
@@ -53,6 +51,7 @@ import TopicsPage from './pages/Topics'
 import TopicCreatePage from './pages/TopicCreate'
 import TopicPage from './pages/Topic'
 import TaskPage from './pages/Task'
+import OnboardingDaoPage from './pages/OnboardingDao'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -171,6 +170,7 @@ const App = () => {
                     >
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
+                            <Route path="onboarding" element={<OnboardingDaoPage />} />
                             <Route path="repos" element={<DaoReposPage />} />
                             <Route path="repos/create" element={<RepoCreatePage />} />
                             <Route path="repos/upgrade" element={<ReposUpgradePage />} />

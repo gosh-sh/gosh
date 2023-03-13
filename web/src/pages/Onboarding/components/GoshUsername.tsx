@@ -14,7 +14,7 @@ import {
     repositoriesCheckedSelector,
 } from '../../../store/onboarding.state'
 import { toast } from 'react-toastify'
-import ToastError from '../../../components/Error/ToastError'
+import { ToastError } from '../../../components/Toast'
 import { EDaoInviteStatus } from '../../../store/onboarding.types'
 import PreviousStep from './PreviousStep'
 import { FormikInput } from '../../../components/Formik'
@@ -141,6 +141,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                         recipient_status: invite.accepted
                             ? EDaoInviteStatus.ACCEPTED
                             : EDaoInviteStatus.REJECTED,
+                        token_expired: true,
                     })
                     .eq('id', invite.id)
                 if (error) {

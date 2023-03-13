@@ -226,6 +226,17 @@ impl UserWalletMirrors {
         Ok(())
     }
 
+    pub async fn take_zero_wallet(&self) -> anyhow::Result<GoshContract> {
+        let zero_wallet = self.find_zero_wallet().await;
+
+        let contract = match zero_wallet {
+            Some(Wallet::Contract(wallet)) => wallet,
+            _ => bail!(WalletError::ZeroWalletNotExists)
+        };
+
+        Ok(contract)
+    }
+
     pub async fn take_one(&self) -> anyhow::Result<UserWalletContractRef> {
         let permit = self.semaphore.acquire().await?;
         let inner_state = { self.inner.read().await.clone() };

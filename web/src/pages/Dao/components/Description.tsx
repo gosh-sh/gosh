@@ -5,7 +5,7 @@ import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import BlobPreview from '../../../components/Blob/Preview'
-import ToastError from '../../../components/Error/ToastError'
+import { ToastError } from '../../../components/Toast'
 import { Button } from '../../../components/Form'
 
 type TDaoDescriptionProps = {

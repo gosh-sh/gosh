@@ -154,12 +154,12 @@ impl BlockchainCommitPusher for Everscale {
             "numberChangedFiles": number_of_files_changed,
             "numberCommits": number_of_commits,
         });
-        let wallet_contract = wallet.take_one().await?;
+        let wallet_contract = wallet.take_zero_wallet().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .send_message(wallet_contract.deref(), "setCommit", Some(params), None)
+            .send_message(&wallet_contract, "setCommit", Some(params), None)
             .await?;
-        drop(wallet_contract);
+        // drop(wallet_contract);
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
         let start = Instant::now();

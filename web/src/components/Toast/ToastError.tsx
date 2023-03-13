@@ -11,7 +11,7 @@ const ToastError = (props: TToastErrorProps) => {
     if (error instanceof GoshError) {
         return (
             <>
-                <p>{error.title || 'Something went wrong'}</p>
+                <h3 className="font-semibold">{error.title || 'Something went wrong'}</h3>
                 {error.data && (
                     <p className="text-sm">
                         {typeof error.data === 'string'
@@ -25,7 +25,7 @@ const ToastError = (props: TToastErrorProps) => {
 
     return (
         <>
-            <p>{error.title || 'Internal error'}</p>
+            <h3 className="font-semibold">{error.title || 'Internal error'}</h3>
             <p className="text-xs">{error.message}</p>
             <CopyClipboard
                 label="Copy error message"
@@ -38,4 +38,4 @@ const ToastError = (props: TToastErrorProps) => {
     )
 }
 
-export default ToastError
+export { ToastError }

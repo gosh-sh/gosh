@@ -1,7 +1,7 @@
 import { TDao, TDaoMemberDetails } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import ToastError from '../../../../../components/Error/ToastError'
+import { ToastError } from '../../../../../components/Toast'
 import Loader from '../../../../../components/Loader'
 import DaoMemberListItem from './MemberListItem'
 

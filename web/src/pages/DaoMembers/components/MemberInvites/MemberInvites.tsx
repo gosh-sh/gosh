@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
-import ToastError from '../../../../components/Error/ToastError'
+import { ToastError } from '../../../../components/Toast'
 import { Button } from '../../../../components/Form'
 import { supabase } from '../../../../helpers'
 import { EDaoInviteStatus } from '../../../../store/onboarding.types'
@@ -36,7 +36,10 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             // Update database
             const { error } = await supabase
                 .from('dao_invite')
-                .update({ recipient_status: EDaoInviteStatus.REVOKED })
+                .update({
+                    recipient_status: EDaoInviteStatus.REVOKED,
+                    token_expired: true,
+                })
                 .eq('id', item.id)
             if (error) {
                 throw new Error(error.message)

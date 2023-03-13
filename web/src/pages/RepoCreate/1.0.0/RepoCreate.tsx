@@ -4,7 +4,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../DaoLayout'
 import { useRepoCreate } from 'react-gosh'
 import { toast } from 'react-toastify'
-import ToastError from '../../../components/Error/ToastError'
+import { ToastError } from '../../../components/Toast'
 import yup from '../../../yup-extended'
 import { Button } from '../../../components/Form'
 

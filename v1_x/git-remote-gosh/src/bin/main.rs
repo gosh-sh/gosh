@@ -46,7 +46,6 @@ async fn main_internal() -> anyhow::Result<()> {
     eprintln!("git-remote-gosh v{version}");
     let matches = Command::new("git-remote-gosh")
         .about("GOSH network helper for git")
-        .version(option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))
         .arg(Arg::new("name"))
         .arg(Arg::new("url"))
         .arg(
@@ -54,6 +53,11 @@ async fn main_internal() -> anyhow::Result<()> {
                 .long("dispatcher")
                 .action(clap::ArgAction::SetTrue)
                 .hide(true),
+        )
+        .arg(
+            Arg::new("version")
+                .long("version")
+                .action(clap::ArgAction::SetTrue)
         )
         .subcommand(
             Command::new("supported_contract_version")
@@ -69,6 +73,9 @@ async fn main_internal() -> anyhow::Result<()> {
             );
         }
         _ => {
+            if matches.get_flag("version") {
+                return Ok(());
+            }
             let url = matches
                 .get_one::<String>("url")
                 .map(|s| s.to_string())

@@ -53,18 +53,19 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\
 #
 # after repo was upgraded someone must redeploy all tags
 #
+delay 60
+cd $REPO_NAME
 git push --tags
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 delay 3
 
-cd $REPO_NAME
 echo "**** Fetch repo *****"
 git fetch
 FETCHED_TAG=$(git tag -l $TAG_NAME)
 
-if [ $FETCHED_TAG != $TAG_NAME ]; then
+if [ "$FETCHED_TAG" != "$TAG_NAME" ]; then
     echo "ERR: expected tag is missing ($FETCHED_TAG != $TAG_NAME)"
     exit 1
 fi
@@ -76,7 +77,10 @@ git push
 
 git tag -d $TAG_NAME
 git tag $TAG_NAME
+
+set +e
 git push origin $TAG_NAME
+set -e
 
 RESULT=$(echo $?)
 if [ $RESULT == 0 ]; then

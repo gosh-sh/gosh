@@ -36,7 +36,6 @@ date +%s > last
 git add last
 git commit -m "added 'last'"
 git push -u origin main
-PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
 git tag $TAG_NAME
 git push origin $TAG_NAME
@@ -55,13 +54,20 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 delay 3
 
-cd $REPO_NAME
-echo "**** Fetch repo *****"
-git fetch
+[ -d $REPO_NAME"-copy" ] && rm -rf $REPO_NAME"-copy"
+
+export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+echo "NEW_LINK=$NEW_LINK"
+
+echo "***** cloning repo with new link *****"
+git clone $NEW_LINK $REPO_NAME"-copy"
+cd $REPO_NAME"-copy"
+
 FETCHED_TAGS=$(git tag -l)
 
-if [ $FETCHED_TAGS != "" ]; then
+if [ "$FETCHED_TAGS" != "" ]; then
     echo "ERR: there should be no tags"
+    echo "TEST FAILED"
     exit 1
 fi
 

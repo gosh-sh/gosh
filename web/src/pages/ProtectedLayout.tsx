@@ -24,8 +24,12 @@ const ProtectedLayout = (props: TProtectedLayoutProps) => {
             })
     }, [persist.pin, user.phrase, setModal])
 
-    if (!persist.pin && redirect) return <Navigate to="/" />
-    if (persist.username && !user.username) return null
+    if (!persist.pin && redirect) {
+        return <Navigate to="/" />
+    }
+    if (persist.username && !user.username) {
+        return null
+    }
     return <Outlet />
 }
 

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use std::process::{exit, ExitStatus, Stdio};
+use std::process::{ExitStatus, Stdio};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
 
@@ -17,6 +17,7 @@ use tracing_subscriber::fmt;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 use std::str::FromStr;
+use clap::Arg;
 
 #[cfg(target_family = "unix")]
 const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
@@ -31,24 +32,55 @@ static DISPATCHER_ENDL: &str = "endl";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    set_up_logger();
+    let matches = clap::Command::new("gosh-dispatcher")
+        .about("Dispatcher of git-remote-gosh versions")
+        .arg(Arg::new("name"))
+        .arg(Arg::new("url"))
+        .arg(
+            Arg::new("version")
+                .long("version")
+                .action(clap::ArgAction::SetTrue)
+        )
+        .subcommand(
+            clap::Command::new("dispatcher_ini")
+                .about("Get path to the current dispatcher ini file and list of supported remote versions"),
+        )
+        .get_matches();
+
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-    eprintln!("Dispatcher git-remote-gosh v{version}");
-    let mut args = std::env::args().collect::<Vec<String>>();
-    if args.len() > 1 && args[1] == "dispatcher_ini" {
-        let ini_path = get_ini_path();
-        let path = Path::new(&ini_path);
-        if path.is_absolute() {
-            println!("GOSH dispatcher ini path: {}", ini_path);
-        } else {
-            let mut abs_path = std::env::current_exe()?;
-            abs_path.pop();
-            abs_path.push(path);
-            println!("GOSH dispatcher ini path: {}", abs_path.to_str().unwrap());
+    eprintln!("GOSH dispatcher v{version}");
+
+    match matches.subcommand() {
+        Some(("dispatcher_ini", _)) => {
+            let ini_path = get_ini_path();
+            let path = Path::new(&ini_path);
+            if path.is_absolute() {
+                println!("GOSH dispatcher ini path: {}", ini_path);
+            } else {
+                let mut abs_path = std::env::current_exe()?;
+                abs_path.pop();
+                abs_path.push(path);
+                println!("GOSH dispatcher ini path: {}", abs_path.to_str().unwrap());
+            }
+            let possible_versions = load_remote_versions_from_ini()?;
+            println!("Remote versions:\n{:#?}", possible_versions);
         }
-        let possible_versions = load_remote_versions_from_ini()?;
-        println!("Remote versions:\n{:#?}", possible_versions);
-        exit(0);
+        _ => {
+            if matches.get_flag("version") {
+                return Ok(());
+            }
+            return dispatcher_main().await;
+        }
+    }
+    Ok(())
+}
+
+
+async fn dispatcher_main() -> anyhow::Result<()> {
+    set_up_logger();
+    let mut args = std::env::args().collect::<Vec<String>>();
+    if args.len() < 3 {
+        anyhow::bail!("Wrong number of arguments.");
     }
     let possible_versions = load_remote_versions_from_ini()?;
     let mut existing_to_supported_map = HashMap::new();
@@ -85,7 +117,7 @@ async fn main() -> anyhow::Result<()> {
                 .map(|s| {
                     let mut iter = s.split(" ");
                     (
-                        Version::from(iter.next().unwrap_or("")).unwrap(),
+                        Version::from(iter.next().unwrap_or("Unknown")).unwrap(),
                         iter.next().unwrap_or("").to_string(),
                     )
                 })

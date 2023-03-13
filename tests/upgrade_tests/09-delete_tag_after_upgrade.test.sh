@@ -53,13 +53,13 @@ REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\
 #
 # after repo was upgraded someone must redeploy all tags
 #
+cd $REPO_NAME
 git push --tags
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 delay 3
 
-cd $REPO_NAME
 echo "**** Fetch repo *****"
 git fetch
 FETCHED_TAG=$(git tag -l $TAG_NAME)

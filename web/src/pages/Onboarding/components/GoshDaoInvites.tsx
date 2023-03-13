@@ -15,7 +15,7 @@ import emptylogo from '../../../assets/images/emptylogo.svg'
 import { TOnboardingInvite } from '../../../store/onboarding.types'
 import OAuthProfile from './OAuthProfile'
 import { toast } from 'react-toastify'
-import ToastError from '../../../components/Error/ToastError'
+import { ToastError } from '../../../components/Toast'
 
 type TGoshDaoInvitesProps = {
     signoutOAuth(): Promise<void>

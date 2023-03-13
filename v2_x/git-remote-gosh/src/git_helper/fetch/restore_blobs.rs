@@ -144,13 +144,15 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             preserved_message = None;
             unused_message
         } else {
-            let message = messages.next(&es_client)
-                .await?
-                .expect("If we reached an end of the messages queue and blobs are still missing it is better to fail. something is wrong and it needs an investigation.");
-            if parsed.contains(&message) {
-                break;
+            match messages.next(&es_client).await? {
+                None => { break; },
+                Some(message) => {
+                    if parsed.contains(&message) {
+                        break;
+                    }
+                    message
+                }
             }
-            message
         };
         tracing::trace!("got message: {:?}", message);
         parsed.push(message.clone());

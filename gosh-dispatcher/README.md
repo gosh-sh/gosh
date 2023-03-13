@@ -1,7 +1,7 @@
 # Build
 
 ```
-cargo install --path .
+make install
 ```
 
 # Usage

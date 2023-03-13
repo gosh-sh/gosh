@@ -14,7 +14,7 @@ const EventsPage = () => {
 
     return (
         <div className="flex flex-wrap gap-4 justify-between">
-            <div className="basis-8/12">
+            <div className="grow">
                 <h3 className="text-xl font-medium mb-4">DAO events</h3>
                 <div className="border border-gray-e6edff rounded-xl overflow-hidden">
                     {isFetching && !items.length && (
@@ -59,12 +59,12 @@ const EventsPage = () => {
                 </div>
             </div>
 
-            <div className="grow flex flex-col gap-y-5">
+            <div className="basis-4/12 flex flex-col gap-y-5">
                 <DaoSupplySide dao={dao} />
                 {dao.details.isAuthenticated && (
                     <DaoWalletSide dao={dao} wallet={wallet} />
                 )}
-                <DaoMembersSide dao={dao.details} />
+                <DaoMembersSide dao={dao} />
             </div>
         </div>
     )
