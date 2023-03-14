@@ -145,13 +145,6 @@
 			]
 		},
 		{
-			"name": "updateHead",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "returnExtraLockerFunds",
 			"inputs": [
 			],

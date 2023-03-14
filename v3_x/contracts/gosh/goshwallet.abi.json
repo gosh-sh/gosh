@@ -892,6 +892,13 @@
 			]
 		},
 		{
+			"name": "updateHead",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -1467,13 +1474,6 @@
 			"inputs": [
 				{"name":"address_to","type":"address"},
 				{"name":"value1","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateHead",
-			"inputs": [
 			],
 			"outputs": [
 			]

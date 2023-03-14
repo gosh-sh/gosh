@@ -1507,8 +1507,25 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //SMV part
+    
+    function updateHead() public onlyOwnerPubkey(_access.get())
+    {
+        getMoney();
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+
+                                    5*SMVConstants.VOTING_COMPLETION_FEE +
+                                    6*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+
+        tvm.accept();
+        _saveMsg();
+
+        ISMVTokenLocker(tip3VotingLocker).updateHead {value: 5*SMVConstants.VOTING_COMPLETION_FEE +
+                                                         5*SMVConstants.ACTION_FEE, flag: 1} ();
+    }
+
     function updateHeadIn() private
     {
+        getMoney();
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+
                                     5*SMVConstants.VOTING_COMPLETION_FEE +

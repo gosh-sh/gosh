@@ -470,20 +470,6 @@ function killAccount (address address_to, address /* tokens_to */) external only
                                           (amount, address_to, 0, address(this), true, empty) ;
 } */
 
-function updateHead() public onlyOwnerPubkey(_access.get())
-{
-    require(initialized, SMVErrors.error_not_initialized);
-    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+
-                                    5*SMVConstants.VOTING_COMPLETION_FEE +
-                                    6*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
-
-    tvm.accept();
-    _saveMsg();
-
-    ISMVTokenLocker(tip3VotingLocker).updateHead {value: 5*SMVConstants.VOTING_COMPLETION_FEE +
-                                                         5*SMVConstants.ACTION_FEE, flag: 1} ();
-}
-
 function returnExtraLockerFunds() public onlyOwnerPubkey(_access.get())
 {
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
