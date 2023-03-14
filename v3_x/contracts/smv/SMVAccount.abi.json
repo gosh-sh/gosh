@@ -89,6 +89,18 @@
 			]
 		},
 		{
+			"name": "voteForIn",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getPlatfotmId",
 			"inputs": [
 				{"name":"propId","type":"uint256"},

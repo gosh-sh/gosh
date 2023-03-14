@@ -274,6 +274,21 @@
 			]
 		},
 		{
+			"name": "daoVote",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "smvdeploytagin",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -372,8 +387,7 @@
 				{"name":"index","type":"uint128"},
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
-				{"name":"grant","type":"uint128[]"},
-				{"name":"isCheck","type":"bool"}
+				{"name":"grant","type":"uint128[]"}
 			],
 			"outputs": [
 			]
@@ -395,8 +409,7 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"index","type":"uint128"},
-				{"name":"isCheck","type":"bool"}
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -771,7 +784,8 @@
 				{"name":"reserve","type":"uint128"},
 				{"name":"allbalance","type":"uint128"},
 				{"name":"totalsupply","type":"uint128"},
-				{"name":"hashtag","type":"map(uint256,string)"}
+				{"name":"hashtag","type":"map(uint256,string)"},
+				{"name":"isCheck","type":"bool"}
 			]
 		},
 		{

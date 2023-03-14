@@ -431,6 +431,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
+    function daoVote (address pub, uint128 index, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        GoshWallet(wallet).voteForIn{value:0.2 ton}(platform_id, choice, amount, num_clients_base, note);   	
+    }
+    
     function smvdeploytagin (address pub, string[] tag) public senderIs(address(this))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
@@ -523,11 +528,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _isCheck = true;
     }
     
-    function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck) public senderIs(getAddrWalletIn(pubaddrs, index))  accept
+    function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(getAddrWalletIn(pubaddrs, index))  accept
     {
-        if ((isCheck == true) && (_isCheck == true)) { return; }
-        if (isCheck == true) { _isCheck = true; }
-        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0, isCheck);
+        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0);
     }
     
     function changeAllowanceIn (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
@@ -552,9 +555,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.changeAllowanceIn{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
     }
     
-    function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index, bool isCheck) public senderIs(address(this))  accept
+    function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
     {   
-        if ((isCheck == true) && (increase[index] == false)) { this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1, isCheck); return; }
         if (index >= grant.length) { return; }
         if (increase[index] == true) {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
@@ -562,7 +564,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
-            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.2 ton}(grant[index], isCheck);
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.2 ton}(grant[index]);
         } else {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
@@ -572,7 +574,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
-        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1, isCheck);
+        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
     }
     
     function returnAllowance (uint128 grant, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index))  accept
@@ -1003,7 +1005,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
-    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag) {
-    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag);
+    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, bool isCheck) {
+    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _isCheck);
     }
 }

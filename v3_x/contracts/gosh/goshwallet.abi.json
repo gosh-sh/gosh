@@ -128,6 +128,37 @@
 			]
 		},
 		{
+			"name": "startProposalForDaoVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellDaoVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForUpgradeDao",
 			"inputs": [
 				{"name":"newversion","type":"string"},
@@ -158,7 +189,6 @@
 				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"isCheck","type":"bool"},
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
@@ -170,7 +200,6 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"isCheck","type":"bool"},
 				{"name":"comment","type":"string"}
 			],
 			"outputs": [
@@ -816,8 +845,7 @@
 		{
 			"name": "addAllowance",
 			"inputs": [
-				{"name":"grant","type":"uint128"},
-				{"name":"isCheck","type":"bool"}
+				{"name":"grant","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -1422,6 +1450,18 @@
 		},
 		{
 			"name": "voteFor",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteForIn",
 			"inputs": [
 				{"name":"platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
