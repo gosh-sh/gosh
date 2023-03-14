@@ -2730,9 +2730,17 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async releaseAll(): Promise<void> {
-        if (!this.wallet) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-        if (await this._isLockerBusy()) throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
-        await this.wallet.run('updateHead', {})
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        if (await this._isLockerBusy()) {
+            throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
+        }
+
+        const balance = await this.wallet.account.getBalance()
+        if (parseInt(balance, 16) > 5000 * 10 ** 9) {
+            await this.wallet.run('updateHead', {})
+        }
     }
 
     async vote(event: TAddress, choice: boolean, amount: number): Promise<void> {
