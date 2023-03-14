@@ -457,5 +457,14 @@ contract Repository is Modifiers{
             AllBranches.push(value);
         }
         return (_description, _name, AllBranches, _head, _hashtag, _ready);
+    }    
+        
+    function getRepositoryIn() public view minValue(0.3 ton) {
+        Item[] AllBranches;
+        for ((uint256 key, Item value) : _Branches) {
+            key;
+            AllBranches.push(value);
+        }
+        IObject(msg.sender).returnRepo{value: 0.1 ton}(_description, _name, AllBranches, _head, _hashtag, _ready);
     }
 }

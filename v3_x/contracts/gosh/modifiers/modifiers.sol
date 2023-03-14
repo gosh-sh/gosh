@@ -8,6 +8,13 @@ pragma ever-solidity >=0.66.0;
 
 import "replayprotection.sol";
 
+interface IObject {
+    function returnSnap(string, bytes, optional(string), string, bytes, optional(string), string, bool) external;
+    function returnTree(mapping(uint256 => TreeObject), optional(string), uint256, string, address) external;
+    function returnRepo(string, string, Item[], string, mapping(uint256 => string), bool) external;
+    function returnCommit(address, string, string, AddrVersion[], string, bool, bool) external;
+}
+
 //Structs  
 struct MemberToken {
     address member;

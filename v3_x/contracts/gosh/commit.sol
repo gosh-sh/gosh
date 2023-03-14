@@ -516,6 +516,10 @@ contract Commit is Modifiers {
     ) {
         return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
     }
+    
+    function getCommitIn() public view minValue(0.2 ton) {
+        IObject(msg.sender).returnCommit{value: 0.1 ton}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
+    }
 
     function getCount() external view returns(uint128, bool) {
         return (_count, _countready);

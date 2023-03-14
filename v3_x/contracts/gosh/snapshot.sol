@@ -288,6 +288,11 @@ contract Snapshot is Modifiers {
     {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
+    
+    function getSnapshotIn() public view minValue(0.2 ton)
+    {
+        IObject(msg.sender).returnSnap{value: 0.1 ton}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
+    }
 
     function getName() external view returns(string) {
         return NameOfFile;

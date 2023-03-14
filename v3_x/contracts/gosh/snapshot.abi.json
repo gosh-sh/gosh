@@ -107,6 +107,13 @@
 			]
 		},
 		{
+			"name": "getSnapshotIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getName",
 			"inputs": [
 			],

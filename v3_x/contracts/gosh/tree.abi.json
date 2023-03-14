@@ -112,6 +112,25 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"map(uint256,tuple)"},
+				{"name":"value1","type":"optional(string)"},
+				{"name":"value2","type":"uint256"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "gettree",
 			"inputs": [
 			],

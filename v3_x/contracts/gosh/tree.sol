@@ -302,6 +302,13 @@ contract Tree is Modifiers {
     }
 
     //Getters
+    function getDetails() external view returns(mapping(uint256 => TreeObject), optional(string), uint256, string, address){
+        return (_tree, _ipfs, _shaTreeLocal, _shaTree, _pubaddr);
+    }
+        
+    function getTreeIn() public view minValue(0.2 ton) {
+        IObject(msg.sender).returnTree{value: 0.1 ton}(_tree, _ipfs, _shaTreeLocal, _shaTree, _pubaddr);
+    }
 
     function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
         return (_tree, _ipfs);
