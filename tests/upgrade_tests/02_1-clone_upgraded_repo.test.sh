@@ -48,6 +48,8 @@ git add 1.txt
 git commit -m test
 git push -u origin main
 
+wait_set_commit $REPO_ADDR main
+
 cd ..
 
 echo "Upgrade DAO"
