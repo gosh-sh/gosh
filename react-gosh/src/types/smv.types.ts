@@ -27,6 +27,7 @@ enum ESmvEventType {
     DAO_EVENT_HIDE_PROGRESS = 25,
     REPO_TAG_UPGRADE = 26,
     DAO_ASK_MEMBERSHIP_ALLOWANCE = 27,
+    DAO_VOTE = 28,
 }
 
 type TSmvDetails = {
