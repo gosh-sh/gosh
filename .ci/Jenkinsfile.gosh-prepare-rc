@@ -477,8 +477,8 @@ def testsFunctionalUpgrade(version) {
 
             """
         }
-        dir("tests/upgrade_tests") {
-            def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+        dir("tests") {
+            def files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
             runParallel items: (files).collect { "${it}" }
         }
     }
