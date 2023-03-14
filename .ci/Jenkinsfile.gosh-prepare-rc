@@ -55,8 +55,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -66,8 +66,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('buildRemoteGosh')
-                //runFunctionSet('buildRemoteGoshDebug')
+                //runFunctionSet('buildRemoteGosh')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -431,12 +431,14 @@ def testsFunctional(version) {
                 mkdir -p /home/jenkins/.gosh/
                 echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
-                #./set-vars.sh http://localnode
-                ./test_all.sh ${version} http://localnode
+                ./set-vars.sh ${version} http://localnode:8088
+
+                # SEQUENTIAL TESTS
+                #./test_all.sh ${version} http://localnode:8088
 
             """
-            /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-            runParallel items: (files).collect { "${it}" } */
+            def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+            runParallel items: (files).collect { "${it}" }
         }
     }
     archiveArtifacts artifacts: 'tests/*.seed'
@@ -466,11 +468,14 @@ def testsFunctionalUpgrade(version) {
                 ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                 cd -
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
-                ./test_upgrade.sh ${version} http://localnode:8088
+                ./set-vars.sh ${version} http://localnode:8088
+
+                # SEQUENTIAL TESTS
+                #./test_upgrade.sh ${version} http://localnode:8088
 
             """
-            /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-            runParallel items: (files).collect { "${it}" } */
+            def files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
+            runParallel items: (files).collect { "${it}" }
         }
     }
     archiveArtifacts artifacts: 'tests/*.seed'
