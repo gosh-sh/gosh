@@ -1,11 +1,14 @@
 use std::ops::Deref;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 
 use crate::blockchain::{
-    call::BlockchainCall, contract::ContractInfo, user_wallet::UserWallet,
-    BlockchainContractAddress, Everscale,
+    calculate_contract_address, call::BlockchainCall, contract::ContractInfo,
+    user_wallet::UserWallet, BlockchainContractAddress, Everscale, GetContractCodeResult,
+    GoshContract,
 };
+pub use crate::abi as gosh_abi;
 
 #[derive(Serialize, Debug)]
 pub struct DeployTagParams {
@@ -61,7 +64,29 @@ impl Tagging for Everscale {
         content: String,
         commit_address: BlockchainContractAddress,
     ) -> anyhow::Result<()> {
-        let wallet_contract = wallet.take_zero_wallet().await?;
+        let client = Arc::clone(&self.ever_client);
+        let GetContractCodeResult { code } =
+            crate::blockchain::get_contract_code(
+                &client,
+                &self.repo_contract.get_address(),
+                crate::blockchain::ContractKind::Tag
+            )
+            .await?;
+
+        let address = calculate_contract_address(
+            &client,
+            crate::blockchain::ContractKind::Tag,
+            &code,
+            Some(serde_json::json!({ "_nametag": tag_name })),
+        )
+        .await?;
+
+        let expected_tag_contract = GoshContract::new(&address, gosh_abi::TAG);
+        if expected_tag_contract.is_active(&client).await? {
+            anyhow::bail!("hint: Updates were rejected because the tag already exists in the remote.");
+        }
+
+        let wallet_contract = wallet.take_one().await?;
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
         let params = DeployTagParams {
@@ -75,7 +100,7 @@ impl Tagging for Everscale {
 
         let result = self
             .send_message(
-                &wallet_contract,
+                wallet_contract.deref(),
                 "deployTag",
                 Some(serde_json::to_value(params)?),
                 None,

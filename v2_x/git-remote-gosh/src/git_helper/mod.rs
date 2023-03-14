@@ -253,7 +253,11 @@ where
     async fn list(&self, for_push: bool) -> anyhow::Result<Vec<String>> {
         tracing::debug!("list: for_push={for_push}");
         let refs = list::get_refs(&self.blockchain.client(), &self.repo_addr).await?;
-        let mut ref_list: Vec<String> = refs.unwrap();
+        let mut ref_list: Vec<String> = if refs.is_none() {
+            Vec::new()
+        } else {
+            refs.unwrap()
+        };
         if !for_push {
             let tags = list::get_tags(&self.blockchain.client(), &self.repo_addr).await?;
             match tags {
