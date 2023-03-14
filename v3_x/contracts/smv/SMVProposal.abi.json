@@ -338,6 +338,20 @@
 			]
 		},
 		{
+			"name": "getDaoVoteProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshProposalKindData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -617,6 +631,21 @@
 				{"name":"repoName","type":"string[]"},
 				{"name":"nametag","type":"string[]"},
 				{"name":"newversion","type":"string"}
+			]
+		},
+		{
+			"name": "getDaoVoteProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"}
 			]
 		},
 		{

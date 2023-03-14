@@ -425,6 +425,13 @@ function getTagUpgradeProposalParams () external view
      (proposalKind, repoName, nametag, newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
 }
 
+function getDaoVoteProposalParams () external view
+         returns(uint proposalKind, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) 
+{
+
+     (proposalKind, wallet, platform_id, choice, amount, num_clients_base, note,,) = abi.decode(propData, (uint256, address, uint256, bool, uint128, uint128, string, string, uint32));
+}
+
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
 {
     TvmSlice s = Data.toSlice();
@@ -567,6 +574,13 @@ function getTagUpgradeProposalParamsData (TvmCell Data) external pure
          returns(uint proposalKind, string[] repoName, string[] nametag, string newversion) 
 {
      (proposalKind, repoName, nametag, newversion, ,) = abi.decode(Data, (uint256, string[], string[], string, string, uint32));
+}
+
+function getDaoVoteProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) 
+{
+
+     (proposalKind, wallet, platform_id, choice, amount, num_clients_base, note,,) = abi.decode(Data, (uint256, address, uint256, bool, uint128, uint128, string, string, uint32));
 }
 
 function getHalfData (TvmCell Data) external pure
