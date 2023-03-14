@@ -36,6 +36,7 @@ generate-docker:
 
 deploy-docker:
 	docker run --rm \
+		--network="host" \
 		-v ${CURDIR}/../:/opt/gosh/contracts \
 		-v ${CURDIR}/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/Giver.seed:/tmp/Giver.seed \
