@@ -138,6 +138,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
+        GoshWallet(_getWalletAddr(_walletcounter - 1)).askForLimitedBasic{value : 0.1 ton, flag: 1}(_limited, 0);
         getMoney();
     }
 
@@ -217,6 +218,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function askForLimited(bool decision) public senderIs(_getWalletAddr(_index - 1)) {
         _limited = decision;
         GoshWallet(_getWalletAddr(_index + 1)).askForLimited{value : 0.1 ton, flag: 1}(decision);
+    }
+    
+    function askForLimitedBasic(bool decision, uint128 index) public senderIs(_getWalletAddr(index)) {
+        _limited = decision;
     }
 
     function startProposalForUpgradeDao(
@@ -1496,7 +1501,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool isUpgrade
     ) internal view  {
        require(_limited == false, ERR_WALLET_LIMITED);
-       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:1.15 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
+       uint128 value = numberChangedFiles * 1 ton;
+       if (value > 1000 ton) { value = 1000 ton; }
+       Repository(_buildRepositoryAddr(repoName)).isNotProtected{value:value + 1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
     }
 
     //SMV part
@@ -1872,7 +1879,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                     abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
-                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
+                uint128 value = numberChangedFiles * 1 ton;
+                if (value > 1000 ton) { value = 1000 ton; }
+                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
@@ -2005,7 +2014,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                     abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
                 TvmCell s0 = _composeCommitStateInit(commit, _buildRepositoryAddr(repoName));
                 address addrC = address.makeAddrStd(0, tvm.hash(s0));
-                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: 0.83 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
+                uint128 value = numberChangedFiles * 1 ton;
+                if (value > 1000 ton) { value = 1000 ton; }
+                Repository(_buildRepositoryAddr(repoName)).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);

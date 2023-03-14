@@ -119,6 +119,15 @@
 			]
 		},
 		{
+			"name": "askForLimitedBasic",
+			"inputs": [
+				{"name":"decision","type":"bool"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForUpgradeDao",
 			"inputs": [
 				{"name":"newversion","type":"string"},
