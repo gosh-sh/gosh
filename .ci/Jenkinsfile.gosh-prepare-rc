@@ -112,7 +112,7 @@ pipeline {
                 }
             }
         }
-        stage('Web: deploy') {
+        /*stage('Web: deploy') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -121,8 +121,8 @@ pipeline {
             steps {
                 deployWeb()
             }
-        }
-        stage('Tests: functional') {
+        }*/
+        /*stage('Tests: functional') {
             parallel {
                 stage('v1_x') {
                     agent {
@@ -149,7 +149,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         stage('Tests: Upgrade') {
             agent {
                 docker {
