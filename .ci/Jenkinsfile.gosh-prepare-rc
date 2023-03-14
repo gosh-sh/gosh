@@ -471,6 +471,7 @@ def testsFunctionalUpgrade(version) {
                 cd -
                 export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
                 ./set-vars.sh ${version} http://localnode:8088
+                ./upgrade_tests/set_up.sh
 
                 # SEQUENTIAL TESTS
                 #./test_upgrade.sh ${version} http://localnode:8088
