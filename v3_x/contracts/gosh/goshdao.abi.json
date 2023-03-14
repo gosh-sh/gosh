@@ -446,6 +446,24 @@
 			]
 		},
 		{
+			"name": "addVoteTokenPub2",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPub3",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addRegularTokenPub",
 			"inputs": [
 				{"name":"pub","type":"address"},

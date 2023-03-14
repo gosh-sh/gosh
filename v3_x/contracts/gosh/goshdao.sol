@@ -603,8 +603,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += grant;
     }
  
-    function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(getAddrWalletIn(pubaddr, index))  accept
-    {
+    function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public view senderIs(getAddrWalletIn(pubaddr, index))  accept
+    {   
+        this.addVoteTokenPub2{value: 0.1 ton}(pub, grant);
+    }
+    
+    function addVoteTokenPub2 (address pub, uint128 grant) public pure senderIs(address(this))  accept  {    
+        this.addVoteTokenPub3{value: 0.1 ton}(pub, grant);
+    } 
+    
+    function addVoteTokenPub3 (address pub, uint128 grant) public senderIs(address(this)) accept {   
         (int8 _, uint256 keyaddr) = pub.unpack();
         _;
         address wallet = getAddrWalletIn(pub, 0);
@@ -666,11 +674,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function deployWalletIn(MemberToken pubaddr) private {
         tvm.accept();
         require(_reserve >= pubaddr.count, ERR_LOW_TOKEN_RESERVE);
+        (int8 _, uint256 keyaddr) = pubaddr.member.unpack();
+        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         _reserve -= pubaddr.count;
         _allbalance += pubaddr.count;
         TvmCell s1 = _composeWalletStateInit(pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        (int8 _, uint256 keyaddr) = pubaddr.member.unpack();
         _;
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
         new GoshWallet {

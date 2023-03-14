@@ -84,4 +84,5 @@ abstract contract Errors {
     uint constant ERR_TOO_MANY_PROPOSALS = 273;
     uint constant ERR_TOO_FEW_PROPOSALS = 274;
     uint constant ERR_WRONG_UPGRADE_STATUS = 275;
+    uint constant ERR_WALLET_EXIST = 276;
 }
