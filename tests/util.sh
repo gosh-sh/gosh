@@ -111,13 +111,7 @@ function upgrade_DAO {
 
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
 
-  wallet_tombstone=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
-  echo "WALLET tombstone: $wallet_tombstone"
-
-  if [ "$wallet_tombstone" = " false" ]; then
-    echo "Tombstone was not set"
-    exit 1
-  fi
+  wait_wallet_tonbstone $WALLET_ADDR
 
   echo "tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI --name $DAO_NAME"
   DAO_ADDR=$(tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI --name $DAO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -229,6 +223,27 @@ function set_commit_proposal {
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
 }
 
+
+function wait_wallet_tonbstone {
+    stop_at=$((SECONDS+120))
+    contract_addr=$1
+    while [ $SECONDS -lt $stop_at ]; do
+        wallet_tombstone=$(tonos-cli -j runx --addr $contract_addr -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
+        echo "WALLET tombstone: $wallet_tombstone"
+
+        if [ "$wallet_tombstone" = " true" ]; then
+          is_ok=1
+          echo "Tombstone is set"
+          break
+        fi
+        sleep 5
+    done
+
+    if [ "$is_ok" = "0" ]; then
+        echo "Wallet tombstone was not set"
+        exit 2
+    fi
+}
 
 function wait_account_balance {
     stop_at=$((SECONDS+120))
