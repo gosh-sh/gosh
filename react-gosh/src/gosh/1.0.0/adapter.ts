@@ -1750,7 +1750,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         ) => {
             const { original, modified } = content
             const flagsOriginal = treeitem?.flags || 0
-            const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
+            const isOriginalIpfs =
+                (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS ||
+                Buffer.isBuffer(original)
 
             const compressed = await zstd.compress(modified)
             let patch = null
