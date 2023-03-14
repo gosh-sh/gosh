@@ -158,6 +158,7 @@
 				{"name":"grant","type":"uint128[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
+				{"name":"isCheck","type":"bool"},
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
@@ -169,6 +170,7 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
+				{"name":"isCheck","type":"bool"},
 				{"name":"comment","type":"string"}
 			],
 			"outputs": [
@@ -534,6 +536,13 @@
 			]
 		},
 		{
+			"name": "setCheckDao",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployRepositoryDao",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
@@ -807,7 +816,8 @@
 		{
 			"name": "addAllowance",
 			"inputs": [
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"isCheck","type":"bool"}
 			],
 			"outputs": [
 			]

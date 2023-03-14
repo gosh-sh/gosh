@@ -72,6 +72,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     bool public _isRepoUpgraded = false;
     bool public _abilityInvite = false;
+    bool public _isCheck = false;
     
     constructor(
         address versionController,
@@ -517,9 +518,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         );
     }
     
-    function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(getAddrWalletIn(pubaddrs, index))  accept
+    function setCheck (address pubaddrs, uint128 index) public senderIs(getAddrWalletIn(pubaddrs, index))  accept
     {
-        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0);
+        _isCheck = true;
+    }
+    
+    function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck) public senderIs(getAddrWalletIn(pubaddrs, index))  accept
+    {
+        if ((isCheck == true) && (_isCheck == true)) { return; }
+        if (isCheck == true) { _isCheck = true; }
+        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0, isCheck);
     }
     
     function changeAllowanceIn (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
@@ -544,8 +552,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.changeAllowanceIn{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
     }
     
-    function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
-    {
+    function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index, bool isCheck) public senderIs(address(this))  accept
+    {   
+        if ((isCheck == true) && (increase[index] == false)) { this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1, isCheck); return; }
         if (index >= grant.length) { return; }
         if (increase[index] == true) {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
@@ -553,7 +562,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
-            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.2 ton}(grant[index]);
+            GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addAllowance{value: 0.2 ton}(grant[index], isCheck);
         } else {
             (int8 _, uint256 keyaddr) = pubaddr[index].unpack();
             _;
@@ -563,7 +572,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(getAddrWalletIn(pubaddr[index], 0)).addDoubt{value: 0.1 ton}(grant[index]);
         }
-        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1, isCheck);
     }
     
     function returnAllowance (uint128 grant, address pubaddr, uint128 index) public senderIs(getAddrWalletIn(pubaddr, index))  accept

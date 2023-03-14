@@ -357,13 +357,23 @@
 			]
 		},
 		{
+			"name": "setCheck",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "changeAllowance",
 			"inputs": [
 				{"name":"pubaddrs","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
-				{"name":"grant","type":"uint128[]"}
+				{"name":"grant","type":"uint128[]"},
+				{"name":"isCheck","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -385,7 +395,8 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"isCheck","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -892,6 +903,14 @@
 			"outputs": [
 				{"name":"_abilityInvite","type":"bool"}
 			]
+		},
+		{
+			"name": "_isCheck",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isCheck","type":"bool"}
+			]
 		}
 	],
 	"data": [
@@ -948,6 +967,7 @@
 		{"name":"_allbalance","type":"uint128"},
 		{"name":"_totalsupply","type":"uint128"},
 		{"name":"_isRepoUpgraded","type":"bool"},
-		{"name":"_abilityInvite","type":"bool"}
+		{"name":"_abilityInvite","type":"bool"},
+		{"name":"_isCheck","type":"bool"}
 	]
 }

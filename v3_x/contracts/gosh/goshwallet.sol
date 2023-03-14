@@ -254,7 +254,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool[] increase,
         uint128[] grant,
         string comment,
-        uint128 num_clients , address[] reviewers
+        uint128 num_clients , bool isCheck, address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
@@ -262,7 +262,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(pubaddr.length == increase.length, ERR_DIFFERENT_COUNT);
         require(pubaddr.length == grant.length, ERR_DIFFERENT_COUNT);
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, comment, now);
+        TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, isCheck, comment, now);
 
         _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients, reviewers);
 
@@ -272,10 +272,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellChangeAllowance(
         address[] pubaddr,
         bool[] increase,
-        uint128[] grant,
+        uint128[] grant, bool isCheck,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, increase, grant, comment, now);
+        return abi.encode(proposalKind, pubaddr, increase, grant, isCheck, comment, now);
     }
 
     function startProposalForSetTombstoneDao(
@@ -760,6 +760,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Topic(topic).acceptMessage{value:0.1 ton}(_pubaddr, _index, answer, message);
+    }       
+    
+    function setCheckDao() public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        GoshDao(_goshdao).setCheck{value:0.1 ton}(_pubaddr, _index);
     }       
 
     function _composeTopicStateInit(string name, string content, address object) internal view returns(TvmCell) {
@@ -1346,14 +1352,16 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function addAllowance(
-        uint128 grant
+        uint128 grant,
+        bool isCheck
     ) public senderIs(_goshdao) accept saveMsg {
+        getMoney();
+        if (isCheck == true) { m_pseudoDAOVoteBalance += grant; return; }
         uint128 diff = math.min(grant, m_pseudoDAOBalance - m_pseudoDAOVoteBalance);
         m_pseudoDAOVoteBalance += diff;
         if (diff != grant) {
             GoshDao(_goshdao).returnAllowance{value: 0.2 ton}(grant - diff, _pubaddr, _index);
         }
-        getMoney();
     }
     
      function addAllowanceC(
@@ -1971,8 +1979,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }  else
             if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (, address[] pubaddr, bool[] increase, uint128[] grant,) = abi.decode(propData,(uint256, address[], bool[], uint128[], uint32));
-               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
+               (, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck, , ) = abi.decode(propData,(uint256, address[], bool[], uint128[], bool, string, uint32));
+               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant, isCheck);
             }  else
             if (kind == REPOTAG_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
@@ -2105,8 +2113,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
             }  else
             if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (, address[] pubaddr, bool[] increase, uint128[] grant,) = abi.decode(propData,(uint256, address[], bool[], uint128[], uint32));
-               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
+               (, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck, ,) = abi.decode(propData,(uint256, address[], bool[], uint128[], bool, string, uint32));
+               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant, isCheck);
             }  else
             if (kind == REPOTAG_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));

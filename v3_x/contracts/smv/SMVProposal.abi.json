@@ -271,6 +271,7 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
+				{"name":"isCheck","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -546,6 +547,7 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
+				{"name":"isCheck","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},

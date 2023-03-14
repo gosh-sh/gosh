@@ -384,9 +384,9 @@ function getNotAllowMintProposalParams () external view
 }
 
 function getChangeAllowanceProposalParams () external view
-         returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
+         returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck, string comment)
 {
-    (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], string, uint32));
+    (proposalKind, pubaddr, increase, grant, isCheck, comment, ) = abi.decode(propData, (uint256, address[], bool[], uint128[], bool, string, uint32));
 }
 
 function getAbilityInviteProposalParams () external view
@@ -528,9 +528,9 @@ function getNotAllowMintProposalParamsData (TvmCell Data) external pure
 }
 
 function getChangeAllowanceProposalParamsData (TvmCell Data) external pure
-         returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, string comment)
+         returns(uint256  proposalKind, address[] pubaddr, bool[] increase, uint128[] grant, bool isCheck, string comment)
 {
-    (proposalKind, pubaddr, increase, grant, comment, ) = abi.decode(Data, (uint256, address[], bool[], uint128[], string, uint32));
+    (proposalKind, pubaddr, increase, grant, isCheck, comment, ) = abi.decode(Data, (uint256, address[], bool[], uint128[], bool, string, uint32));
 }
 
 function getAbilityInviteProposalParamsData (TvmCell Data) external pure
