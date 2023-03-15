@@ -10,7 +10,7 @@ set -o pipefail
 #  docker start local-node
 #  sleep 20
 
-  ./node_se_scripts/deploy.sh v2_x $2
+#  ./node_se_scripts/deploy.sh v2_x $2
 #fi
 
 # $1 = VERSION (v1_x, v2_x)
