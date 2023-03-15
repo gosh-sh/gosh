@@ -1383,6 +1383,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 treepath,
                 content,
                 wallet,
+                true,
             )
             cb({ snapshotsWrite: { count: ++counter } })
         })
@@ -2099,12 +2100,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         content?: string | Buffer,
         wallet?: IGoshWallet,
+        forceDelete?: boolean,
     ): Promise<IGoshSnapshot> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
-        const addr = await this._getSnapshotAddress(branch, treepath)
-        const snapshot = new GoshSnapshot(this.client, addr)
-        if (await snapshot.isDeployed()) return snapshot
+        wallet = wallet || this.auth.wallet0
+        const snapshot = await this._getSnapshot({ fullpath: `${branch}/${treepath}` })
+        if (await snapshot.isDeployed()) {
+            if (forceDelete) {
+                await wallet.run('deleteSnapshot', { snap: snapshot.address })
+            } else {
+                return snapshot
+            }
+        }
 
         const data: { snapshotData: string; snapshotIpfs: string | null } = {
             snapshotData: '',
@@ -2122,7 +2132,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet0
         await wallet.run('deployNewSnapshot', {
             branch,
             commit,
