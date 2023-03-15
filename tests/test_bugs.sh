@@ -18,6 +18,7 @@ set -o pipefail
 . set-vars.sh v2_x $2
 
 ./bug_tests/01-create_branch.test.sh
+./bug_tests/02-create_branch_without_commit.test.sh
 
 ./clean.sh
 echo "All tests passed"
