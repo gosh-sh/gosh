@@ -122,7 +122,7 @@ pipeline {
                 deployWeb()
             }
         }*/
-        /*stage('Tests: functional') {
+        stage('Tests: functional') {
             parallel {
                 stage('v1_x') {
                     agent {
@@ -149,7 +149,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Tests: Upgrade') {
             agent {
                 docker {
