@@ -85,7 +85,7 @@
                                     repositories to continue.
                                 </p>
                                 <a
-                                    href="https://app.gosh.sh/onboarding"
+                                    href="https://app.gosh.sh/onboarding/status"
                                     target="_blank"
                                     style="
                                         display: block;
@@ -103,7 +103,7 @@
                                         margin-bottom: 5.625rem;
                                         max-width: 21.875rem;
                                     "
-                                    >Start building</a
+                                    >Fix it</a
                                 >
                             </td>
                         </tr>
