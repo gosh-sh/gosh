@@ -318,7 +318,7 @@ where
                     let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
                         res.1
                     } else {
-                        // TODO: This situation happens cause of wrong order of commits
+                        // TODO: This situation happens because of wrong order of commits
                         // see comment before `get_list_of_commit_objects(latest_commit, ancestor_commit_object)`
                         // just skip check in this case
                         return Ok(());
@@ -743,14 +743,14 @@ where
             .find_reference(local_ref)?
             .into_fully_peeled_id()?;
         // get list of git objects in local repo, excluding ancestor ones
-        // TODO: list of commits is not in right order in case of merge commit
+        // TODO: list of commits is not in right order in case of merge commit with commits at the same time
         //
         // C
         // |\
         // | B
         // |/
         // A
-        // B comes before A and remote can't find parent version for B
+        // B can come before A and remote can't find parent version for B
         let commit_objects_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
