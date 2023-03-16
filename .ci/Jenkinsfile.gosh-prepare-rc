@@ -48,7 +48,7 @@ pipeline {
                 }
             }
         }
-        stage('Build: Dispatcher') {
+        /*stage('Build: Dispatcher') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -80,7 +80,7 @@ pipeline {
             steps {
                 archiveAzureArtifacts()
             }
-        }
+        }*/
 
         /*stage('Deploy: deploy smart-contracts') {
             parallel {
@@ -175,7 +175,7 @@ pipeline {
                                         sh """
                                             docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
                                         """
-                                        deployContracts("v1_x", "${port}")
+                                        //deployContracts("v1_x", "${port}")
                                     }
                                 }
                             }
