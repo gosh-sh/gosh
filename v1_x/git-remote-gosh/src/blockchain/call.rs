@@ -50,9 +50,7 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
-        tracing::trace!("blockchain call start");
-        tracing::trace!(
-            "contract.address: {:?}, function: {}, args: {:?}",
+        tracing::trace!("blockchain call start contract.address: {:?}, function: {}, args: {:?}",
             contract.get_address().clone(),
             function_name,
             args

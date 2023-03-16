@@ -273,7 +273,7 @@ async fn get_contracts_blocks(
             }
         }
         for r in query_result.iter() {
-            let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
+            let boc = r["boc"].as_str().ok_or(anyhow::format_err!("boc must be a string"))?.to_owned();
             let address = BlockchainContractAddress::new(
                 r["id"]
                     .as_str()
