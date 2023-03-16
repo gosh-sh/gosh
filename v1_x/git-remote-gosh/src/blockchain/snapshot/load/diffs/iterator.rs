@@ -67,6 +67,12 @@ struct Messages {
     page_info: PageInfo,
 }
 
+#[derive(PartialEq)]
+enum LoadStatus {
+    Success,
+    StopSearch,
+}
+
 impl DiffMessagesIterator {
     #[instrument(level = "info", skip_all, name = "new_DiffMessagesIterator")]
     pub fn new(
@@ -88,7 +94,9 @@ impl DiffMessagesIterator {
     #[instrument(level = "info", skip_all)]
     pub async fn next(&mut self, client: &EverClient) -> anyhow::Result<Option<DiffMessage>> {
         while !self.is_buffer_ready() && self.next.is_some() {
-            self.try_load_next_chunk(client).await?;
+            if self.try_load_next_chunk(client).await? == LoadStatus::StopSearch {
+                break;
+            };
         }
         Ok(self.try_take_next_item())
     }
@@ -149,7 +157,7 @@ impl DiffMessagesIterator {
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn try_load_next_chunk(&mut self, client: &EverClient) -> anyhow::Result<()> {
+    async fn try_load_next_chunk(&mut self, client: &EverClient) -> anyhow::Result<LoadStatus> {
         tracing::info!("loading next chunk -> {:?}", self.next);
         self.next = match &self.next {
             None => None,
@@ -184,9 +192,9 @@ impl DiffMessagesIterator {
                         if page.cursor.is_some() {
                             cursor = page.cursor;
                         } else {
-                            panic!(
-                                "We reached the end of the messages queue to a snapshot and were not able to find original commit there."
-                            )
+                            // Do not panic but stop search, because this commit can be found in the other branch
+                            tracing::info!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            return Ok(LoadStatus::StopSearch);
                         }
                     } else {
                         tracing::info!("Commit found at {}", index.unwrap());
@@ -215,7 +223,7 @@ impl DiffMessagesIterator {
                 .await?
             }
         };
-        Ok(())
+        Ok(LoadStatus::Success)
     }
 
     #[instrument(level = "info", skip_all)]
