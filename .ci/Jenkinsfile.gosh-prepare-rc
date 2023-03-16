@@ -168,8 +168,8 @@ pipeline {
 
                         for (int i = 0; i < nodesCount; i++) {
                             def port = basePort + i
-                            containerStages["Container ${i + 1}"] = {
-                                stage("Container ${i + 1}") {
+                            containerStages["Container ${i}"] = {
+                                stage("Container ${i}") {
                                         echo "Starting Docker container on port ${port}"
                                         sh """
                                             docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
