@@ -80,7 +80,7 @@ pipeline {
             }
         }
 
-        stage('Deploy: deploy smart-contracts') {
+        /*stage('Deploy: deploy smart-contracts') {
             parallel {
                 stage('v1_x') {
                     agent {
@@ -105,7 +105,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         /*stage('Web: deploy') {
             agent {
                 node {
