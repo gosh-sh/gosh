@@ -54,7 +54,7 @@ git commit -m testbranch2
 
 git push --set-upstream origin parent_branch
 
-wait_set_commit $REPO_ADDR main
+wait_set_commit $REPO_ADDR parent_branch
 
 echo "***** Switch back to main *****"
 git checkout main

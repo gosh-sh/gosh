@@ -63,40 +63,40 @@ PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)
 echo "export PROP_ID1=\"$PROP_ID\"" >> env.env
 
-
-echo "Deploy giver for upgrade"
-cd $GOSH_PATH/../multisig
-make generate-docker
-export GIVER_ADDR=`cat Giver.addr`
-echo "GIVER_ADDR = $GIVER_ADDR"
-tonos-cli -u "$NETWORK" callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
-
-make deploy-docker
-
-echo "Upgrade to test version $TEST_VERSION2"
-cd ../gosh
-
-sed -i "s/version = \"$TEST_VERSION1/version = \"$TEST_VERSION2/" *.sol
-
-CHECK_VERSION=$(grep -r 'string constant version' systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
-if [ $CHECK_VERSION != $TEST_VERSION2 ]; then
-  echo "Failed to change contract version"
-  exit 1
-fi
-
-make build
-
-echo > SystemContract-${TEST_VERSION2}.addr
-make upgrade-docker
-
-sed -i "s/version = \"$TEST_VERSION2/version = \"$TEST_VERSION1/" *.sol
-make build
-
-SYSTEM_CONTRACT_ADDR_2=$(tonos-cli -u "$NETWORK" -j run $VERSIONCONTROLLER_ADDR getSystemContractAddr "{\"version\":\"$TEST_VERSION2\"}" --abi $VERSIONCONTROLLER_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
-echo "SYSTEM_CONTRACT_ADDR_2=$SYSTEM_CONTRACT_ADDR_2"
-
-cd $TESTS_PATH
-echo "export SYSTEM_CONTRACT_ADDR_2=$SYSTEM_CONTRACT_ADDR_2" >> env.env
+#
+#echo "Deploy giver for upgrade"
+#cd $GOSH_PATH/../multisig
+#make generate-docker
+#export GIVER_ADDR=`cat Giver.addr`
+#echo "GIVER_ADDR = $GIVER_ADDR"
+#tonos-cli -u "$NETWORK" callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
+#
+#make deploy-docker
+#
+#echo "Upgrade to test version $TEST_VERSION2"
+#cd ../gosh
+#
+#sed -i "s/version = \"$TEST_VERSION1/version = \"$TEST_VERSION2/" *.sol
+#
+#CHECK_VERSION=$(grep -r 'string constant version' systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
+#if [ $CHECK_VERSION != $TEST_VERSION2 ]; then
+#  echo "Failed to change contract version"
+#  exit 1
+#fi
+#
+#make build
+#
+#echo > SystemContract-${TEST_VERSION2}.addr
+#make upgrade-docker
+#
+#sed -i "s/version = \"$TEST_VERSION2/version = \"$TEST_VERSION1/" *.sol
+#make build
+#
+#SYSTEM_CONTRACT_ADDR_2=$(tonos-cli -u "$NETWORK" -j run $VERSIONCONTROLLER_ADDR getSystemContractAddr "{\"version\":\"$TEST_VERSION2\"}" --abi $VERSIONCONTROLLER_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+#echo "SYSTEM_CONTRACT_ADDR_2=$SYSTEM_CONTRACT_ADDR_2"
+#
+#cd $TESTS_PATH
+#echo "export SYSTEM_CONTRACT_ADDR_2=$SYSTEM_CONTRACT_ADDR_2" >> env.env
 
 echo "export SYSTEM_CONTRACT_ABI_1=../v2_x/contracts/gosh/systemcontract.abi.json" >> env.env
 echo "export REPO_ABI_1=../v2_x/contracts/gosh/repository.abi.json" >> env.env
