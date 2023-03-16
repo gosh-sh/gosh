@@ -315,7 +315,14 @@ where
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
                 if let Err(_) = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await {
                     tracing::trace!("Failed to call parent");
-                    let right_commit_address = self.find_commit(&id).await?.1;
+                    let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
+                        res.1
+                    } else {
+                        // TODO: This situation happens cause of wrong order of commits
+                        // see comment before `get_list_of_commit_objects(latest_commit, ancestor_commit_object)`
+                        // just skip check in this case
+                        return Ok(());
+                    };
                     let commit_contract = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
                     let branch: GetNameCommitResult = commit_contract.run_static(
                         self.blockchain.client(),
@@ -378,7 +385,7 @@ where
             )
             .await?;
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-            let version = parent_contract.get_version(self.blockchain.client()).await.unwrap_or("Unknown".to_string());
+            let version = parent_contract.get_version(self.blockchain.client()).await.unwrap_or(env!("BUILD_SUPPORTED_VERSION").to_string());
             parents.push(AddrVersion { address: parent, version });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
@@ -736,6 +743,14 @@ where
             .find_reference(local_ref)?
             .into_fully_peeled_id()?;
         // get list of git objects in local repo, excluding ancestor ones
+        // TODO: list of commits is not in right order in case of merge commit
+        //
+        // C
+        // |\
+        // | B
+        // |/
+        // A
+        // B comes before A and remote can't find parent version for B
         let commit_objects_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
