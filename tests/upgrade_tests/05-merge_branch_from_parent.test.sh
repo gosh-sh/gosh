@@ -39,6 +39,8 @@ git add 1.txt
 git commit -m test
 git push -u origin main
 
+wait_set_commit $REPO_ADDR main
+
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
 
@@ -46,6 +48,8 @@ echo parent > 1.txt
 git add 1.txt
 git commit -m testbranch
 git push --set-upstream origin parent_branch
+
+wait_set_commit $REPO_ADDR main
 
 echo "***** Switch back to main *****"
 git checkout main
@@ -95,7 +99,7 @@ echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
 git push
 
-#git log
+wait_set_commit $REPO_ADDR main
 
 cur_ver=$(cat 1.txt)
 if [ "$cur_ver" != "parent" ]; then

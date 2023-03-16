@@ -39,6 +39,8 @@ git commit -m test
 git push -u origin main
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
+wait_set_commit $REPO_ADDR main
+
 cd ..
 
 echo "Upgrade DAO"

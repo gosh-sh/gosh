@@ -79,7 +79,7 @@ function deploy_DAO_and_repo {
   GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
   echo $GRANTED_PUBKEY
 
-  echo "***** repo01 deploy *****"
+  echo "***** repo deploy *****"
   tonos-cli -j call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
       "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
   REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)

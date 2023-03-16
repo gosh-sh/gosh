@@ -41,6 +41,8 @@ git add 1.txt
 git commit -m test
 git push -u origin main
 
+wait_set_commit $REPO_ADDR main
+
 echo "***** Create parent branch *****"
 git checkout -b parent_branch
 
@@ -53,6 +55,8 @@ git add 2.txt
 git commit -m testbranch2
 
 git push --set-upstream origin parent_branch
+
+wait_set_commit $REPO_ADDR main
 
 echo "***** Switch back to main *****"
 git checkout main
@@ -88,6 +92,8 @@ git add 1.txt
 git commit -m test2
 git push -u origin main
 
+wait_set_commit $REPO_ADDR main
+
 git checkout -b parent_branch origin/parent_branch
 git checkout main
 
@@ -95,7 +101,7 @@ echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
 git push
 
-#git log
+wait_set_commit $REPO_ADDR main
 
 cd ..
 
@@ -124,6 +130,8 @@ echo "after_merge" > 2.txt
 git add 2.txt
 git commit -m after_merge2
 git push
+
+wait_set_commit $REPO_ADDR main
 
 echo "***** cloning repo *****"
 cd ..

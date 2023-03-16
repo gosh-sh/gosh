@@ -73,8 +73,10 @@ git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-#git log
-git push
+git push -u origin main
+
+wait_set_commit $REPO_ADDR main
+
 cd ..
 
 echo "***** cloning repo with new link *****"

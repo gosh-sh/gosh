@@ -52,6 +52,8 @@ git add 1.txt
 git commit -m test1
 git push
 
+wait_set_commit $REPO_ADDR main
+
 cd ..
 
 echo "Upgrade DAO"
@@ -77,7 +79,7 @@ git add 1.txt
 git commit -m test2
 git push
 
-#git log
+wait_set_commit $REPO_ADDR main
 
 cd ..
 
