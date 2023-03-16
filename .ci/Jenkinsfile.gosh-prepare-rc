@@ -82,7 +82,7 @@ pipeline {
             }
         }
 
-        stage('Deploy: deploy smart-contracts') {
+        /*stage('Deploy: deploy smart-contracts') {
             parallel {
                 stage('v1_x') {
                     agent {
@@ -111,7 +111,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         /*stage('Web: deploy') {
             agent {
                 node {
@@ -150,6 +150,42 @@ pipeline {
                 }
             }
         }*/
+        stage('Run Docker Containers') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host --add-host localnode:127.0.0.1'
+                }
+            }
+            steps {
+                dir("tests/upgrade_tests/") {
+                    script {
+                        def containerStages = [:]
+
+                        // Count the number of files in the current directory
+                        def fileCount = sh(returnStdout: true, script: "ls -1 | grep -E '^[0-9]{2}' | wc -l").trim().toInteger()
+                        def basePort = 9000
+
+                        for (int i = 0; i < fileCount; i++) {
+                            def port = basePort + i
+                            containerStages["Container ${i + 1}"] = {
+                                stage("Container ${i + 1}") {
+                                    steps {
+                                        echo "Starting Docker container on port ${port}"
+                                        sh """
+                                            docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
+                                        """
+                                        deployContracts("v1_x", "${port}")
+                                    }
+                                }
+                            }
+                        }
+
+                        parallel containerStages
+                    }
+                }
+            }
+        }
         stage('Tests: Upgrade') {
             agent {
                 docker {
@@ -354,15 +390,17 @@ def archiveAzureArtifacts() {
     }
 }
 
-def deployContracts(version) {
+def deployContracts(version, port) {
     script {
         dir("${version}/contracts/multisig") {
             // Deploy msig giver for GOSH deployment
-            sh 'make build-contracts-docker'
-            sh 'make generate-docker NETWORK=http://localnode:8088'
-            sh '''
-                tonos-cli -u http://localnode:8088 call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 50000000000000000, \\"bounce\\": false}" --abi GiverV2.abi.json --sign GiverV2.keys.json
-            '''
+            env.port = "${port}"
+            env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
+            sh "make build-contracts-docker"
+            sh "make generate-docker NETWORK=http://localnode:${env.port}"
+            sh """
+                tonos-cli -u http://localnode:${env.port} call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest": "${env.giverAddr}", "value": 50000000000000000, "bounce": false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
+            """
             sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
         }
         dir("${version}/contracts/gosh") {
@@ -547,6 +585,22 @@ def runParallel(args) {
   parallel args.items.collectEntries { name -> [ "${name}": {
     stage("${name}") {
         sh """
+            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+            . ./env.env
+            ./${name}
+        """
+    }
+  }]}
+}
+
+def runUppgradeTestsParallel(args) {
+  parallel args.items.collectEntries { name -> [ "${name}": {
+    stage("${name}") {
+        sh """
+            docker run -d --name local-node-localhost -p80${id}:80 -v /opt/localnode/blockchain_v1_x.conf:/ton-node/blockchain.conf.json -e USER_AGREEMENT=yes tonlabs/local-node:latest
+        """
+        deployContracts('v1_x', 01)
+        sh"""
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             . ./env.env
             ./${name}
