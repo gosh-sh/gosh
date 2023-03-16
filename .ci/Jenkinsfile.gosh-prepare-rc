@@ -163,10 +163,10 @@ pipeline {
                         def containerStages = [:]
 
                         // Count the number of files in the current directory
-                        def fileCount = sh(returnStdout: true, script: "ls -1 | grep -E '^[0-9]{2}' | wc -l").trim().toInteger()
+                        def nodesCount = 20
                         def basePort = 9000
 
-                        for (int i = 0; i < fileCount; i++) {
+                        for (int i = 0; i < nodesCount; i++) {
                             def port = basePort + i
                             containerStages["Container ${i + 1}"] = {
                                 stage("Container ${i + 1}") {
@@ -174,7 +174,7 @@ pipeline {
                                         sh """
                                             docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
                                         """
-                                        //deployContracts("v1_x", "${port}")
+                                        deployContracts("v1_x", "${port}")
                                     
                                 }
                             }
